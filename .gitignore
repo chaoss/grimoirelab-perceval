@@ -1,0 +1,10 @@
+*.pyc
+*.pyo
+#*#
+build
+
+# Eclipse's files and directories
+.project
+.pydevproject
+.settings
+
