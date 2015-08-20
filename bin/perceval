@@ -22,11 +22,13 @@
 #
 
 import argparse
+import configparser
+import os.path
 import sys
 
 
 PERCEVAL_USAGE_MSG = \
-"""%(prog)s <backend> [<args>] | --help """
+"""%(prog)s [-c <file>] <backend> [<args>] | --help """
 
 PERCEVAL_DESC_MSG = \
 """Send Sir Perceval on a quest to retrieve and gather data from software
@@ -34,6 +36,11 @@ repositories.
 
 Repositories are reached using specific backends. Data is later stored on a
 NoSQL database.
+
+General options:
+  -h, --help            show this help message and exit
+  -c FILE, --config FILE
+                        set configuration file
 """
 
 PERCEVAL_EPILOG_MSG = \
@@ -43,8 +50,19 @@ PERCEVAL_EPILOG_MSG = \
 def main():
     args = parse_args()
 
+    # Read default parameters from a configuration file
+    if args.config_file:
+        defaults = read_config_file(args.config_file, args.backend)
+    else:
+        defaults = {}
+
+    for k, v in defaults.items():
+        print(k, v)
+
 
 def parse_args():
+    """Parse command line arguments"""
+
     parser = argparse.ArgumentParser(usage=PERCEVAL_USAGE_MSG,
                                      description=PERCEVAL_DESC_MSG,
                                      epilog=PERCEVAL_EPILOG_MSG,
@@ -53,6 +71,9 @@ def parse_args():
 
     parser.add_argument('-h', '--help', action='help',
                        help=argparse.SUPPRESS)
+    parser.add_argument('-c', '--config', dest='config_file',
+                        default=os.path.expanduser('~/.perceval'),
+                        help=argparse.SUPPRESS)
 
     parser.add_argument('backend', help=argparse.SUPPRESS)
     parser.add_argument('backend_args', nargs=argparse.REMAINDER,
@@ -63,6 +84,31 @@ def parse_args():
         sys.exit(1)
 
     return parser.parse_args()
+
+
+def read_config_file(filepath, backend):
+    """Read a Perceval configuration file.
+
+    This function reads common and `backend` configuration parameters
+    from the given file.
+
+    :param filepath: path to the configuration file
+    :param backend: name of the backend which its parameters will be read
+
+    :returns: a configuration parameters dictionary
+    """
+    config = configparser.SafeConfigParser()
+    config.read(filepath)
+
+    args = {}
+    sections = ['db', backend]
+
+    for section in sections:
+        if section in config.sections():
+            d = dict(config.items(section))
+            args.update(d)
+
+    return args
 
 
 if __name__ == '__main__':
