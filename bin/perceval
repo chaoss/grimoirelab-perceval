@@ -26,6 +26,8 @@ import configparser
 import os.path
 import sys
 
+from perceval.backend import Backend
+
 
 PERCEVAL_USAGE_MSG = \
 """%(prog)s [-c <file>] <backend> [<args>] | --help """
@@ -37,7 +39,7 @@ repositories.
 Repositories are reached using specific backends. Data is later stored on a
 NoSQL database.
 
-General options:
+optional arguments:
   -h, --help            show this help message and exit
   -c FILE, --config FILE
                         set configuration file
@@ -56,8 +58,8 @@ def main():
     else:
         defaults = {}
 
-    for k, v in defaults.items():
-        print(k, v)
+    backend_parser = Backend.get_argument_parser()
+    backend_parser.parse_args(args.backend_args)
 
 
 def parse_args():
