@@ -2,9 +2,9 @@
 *.pyo
 #*#
 build
+__pycache__
 
 # Eclipse's files and directories
 .project
 .pydevproject
 .settings
-
