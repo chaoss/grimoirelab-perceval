@@ -34,3 +34,9 @@ class BaseError(Exception):
 
     def __str__(self):
         return self.msg
+
+
+class InvalidDateError(BaseError):
+    """Exception raised when a date is invalid"""
+
+    message = "%(date)s is not a valid date"

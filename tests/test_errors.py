@@ -28,7 +28,7 @@ if not '..' in sys.path:
 
 import unittest
 
-from perceval.errors import BaseError
+from perceval.errors import BaseError, InvalidDateError
 
 
 # Mock classes to test BaseError class
@@ -66,6 +66,16 @@ class TestBaseError(unittest.TestCase):
         """
         kwargs = {'code' : 1, 'error' : 'Fatal error'}
         self.assertRaises(KeyError, MockErrorArgs, **kwargs)
+
+
+class TestInvalidDateError(unittest.TestCase):
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = InvalidDateError(date='1900-13-01')
+        self.assertEqual('1900-13-01 is not a valid date',
+                         str(e))
 
 
 if __name__ == "__main__":
