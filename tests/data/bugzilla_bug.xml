@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE bugzilla SYSTEM "https://example.com/bugzilla.dtd">
+<bugzilla version="4.2.1" urlbase="https://example.com/" maintainer="pgarcia@example.com" exporter="sduenas@example.org">
+    <bug>
+          <bug_id>355</bug_id>
+
+          <creation_ts>2013-06-25 11:49:00 +0200</creation_ts>
+          <short_desc>Mock bug for testing purposes</short_desc>
+          <delta_ts>2013-06-25 12:04:11 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Data Analysis Tools</classification>
+          <product>Kesi-tester</product>
+          <component>fake-component</component>
+          <version>unspecified</version>
+          <rep_platform>Macintosh</rep_platform>
+          <op_sys>Mac OS</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+
+          <bug_file_loc/>
+          <status_whiteboard/>
+          <keywords/>
+          <priority>high</priority>
+          <bug_severity>trivial</bug_severity>
+          <target_milestone>---</target_milestone>
+          <dependson>348</dependson>
+          <dependson>350</dependson>
+          <blocked>349</blocked>
+          <blocked>354</blocked>
+          <everconfirmed>0</everconfirmed>
+          <reporter name="Santiago Dueñas">sduenas@example.org</reporter>
+          <assigned_to name="Daniel Izquierdo Cortazar">dizquierdo@example.com</assigned_to>
+          <cc>sduenas@example.org</cc>
+          <cc>dizquierdo@example.com</cc>
+          <cc>lcanas@example.com</cc>
+          <qa_contact name="Luis Cañas">lcanas@example.com</qa_contact>
+          <token>1372154665-271ef21ec6e2cc69f01b00d49d140277</token>
+
+          <long_desc isprivate="0">
+            <commentid>1085</commentid>
+            <who name="Santiago Dueñas">sduenas@example.org</who>
+            <bug_when>2013-06-25 11:49:36 +0200</bug_when>
+            <thetext>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1086</commentid>
+              <attachid>172</attachid>
+            <who name="Santiago Dueñas">sduenas@example.org</who>
+            <bug_when>2013-06-25 11:55:46 +0200</bug_when>
+            <thetext>A mock patch for this bug</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1087</commentid>
+              <attachid>173</attachid>
+            <who name="Daniel Izquierdo">dizquierdo@example.com</who>
+            <bug_when>2013-06-25 11:57:23 +0200</bug_when>
+            <thetext>Invalid patch</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1088</commentid>
+            <who name="Santiago Dueñas">sduenas@example.org</who>
+            <bug_when>2013-06-25 11:59:07 +0200</bug_when>
+            <thetext>Bug fixed</thetext>
+          </long_desc>
+
+          <attachment isobsolete="1" ispatch="1" isprivate="0">
+            <attachid>172</attachid>
+            <date>2013-06-25 11:55:00 +0200</date>
+            <delta_ts>2013-06-25 11:57:23 +0200</delta_ts>
+            <desc>Mock patch</desc>
+            <filename>mock_patch.patch</filename>
+            <type>text/plain</type>
+            <size>14</size>
+            <attacher>sduenas@example.org</attacher>
+            <token>1372154665-f1f46ed9441d160e1e4fb84863451de3</token>
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0">
+            <attachid>173</attachid>
+            <date>2013-06-25 11:57:00 +0200</date>
+            <delta_ts>2013-06-25 11:57:23 +0200</delta_ts>
+            <desc>Invalid patch</desc>
+            <filename>invalid_patch.txt</filename>
+            <type>text/plain</type>
+            <size>8</size>
+            <attacher>dizquierdo@example.com</attacher>
+            <token>1372154665-576f61fb3a1a871931a84336db7020aa</token>
+          </attachment>
+    </bug>
+</bugzilla>

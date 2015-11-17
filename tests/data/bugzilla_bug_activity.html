@@ -1,0 +1,362 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+  <head>
+    <title>Changes made to bug 355</title>
+
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+<link rel="Top" href="https://bugzilla.example.com/">
+
+
+
+
+
+    <link rel="Show" title="Dependency Tree"
+          href="showdependencytree.cgi?id=355&amp;hide_resolved=1">
+      <link rel="Show" title="Dependency Graph"
+            href="showdependencygraph.cgi?id=355">
+
+      <link rel="Show" title="Bug Activity"
+            href="show_activity.cgi?id=355">
+      <link rel="Show" title="Printer-Friendly Version"
+            href="show_bug.cgi?format=multiple&amp;id=355">
+
+
+
+    <link rel="Saved&nbsp;Searches" title="My Bugs"
+          href="buglist.cgi?bug_status=UNCONFIRMED&amp;bug_status=NEW&amp;bug_status=ASSIGNED&amp;bug_status=REOPENED&amp;emailassigned_to1=1&amp;emailreporter1=1&amp;emailtype1=exact&amp;email1=sduenas%40example.com&amp;field0-0-0=bug_status&amp;type0-0-0=notequals&amp;value0-0-0=UNCONFIRMED&amp;field0-0-1=reporter&amp;type0-0-1=equals&amp;value0-0-1=sduenas%40example.com">
+
+
+
+
+
+    <link href="skins/standard/global.css"
+          rel="alternate stylesheet"
+          title="Classic"><link href="skins/standard/global.css" rel="stylesheet"
+        type="text/css" ><!--[if lte IE 7]>
+
+
+
+
+  <link href="skins/standard/IE-fixes.css" rel="stylesheet"
+        type="text/css" >
+<![endif]-->
+
+
+<link href="skins/contrib/Dusk/global.css" rel="alternate stylesheet"
+        type="text/css" title="Dusk">
+
+
+
+
+
+
+<script type="text/javascript" src="js/yui/yahoo-dom-event/yahoo-dom-event.js"></script><script type="text/javascript" src="js/yui/cookie/cookie-min.js"></script><script type="text/javascript" src="js/global.js"></script>
+
+    <script type="text/javascript">
+    <!--
+        YAHOO.namespace('bugzilla');
+        YAHOO.util.Event.addListener = function (el, sType, fn, obj, overrideContext) {
+               if ( ("onpagehide" in window || YAHOO.env.ua.gecko) && sType === "unload") { sType = "pagehide"; };
+               var capture = ((sType == "focusin" || sType == "focusout") && !YAHOO.env.ua.ie) ? true : false;
+               return this._addListener(el, this._getType(sType), fn, obj, overrideContext, capture);
+         };
+        if ( "onpagehide" in window || YAHOO.env.ua.gecko) {
+            YAHOO.util.Event._simpleRemove(window, "unload",
+                                           YAHOO.util.Event._unload);
+        }
+
+        function unhide_language_selector() {
+            YAHOO.util.Dom.removeClass(
+                'lang_links_container', 'bz_default_hidden'
+            );
+        }
+        YAHOO.util.Event.onDOMReady(unhide_language_selector);
+
+
+        var BUGZILLA = {
+            param: {
+                cookiepath: '\/',
+                maxusermatches: 1000
+            },
+            constant: {
+                COMMENT_COLS: 80
+            },
+            string: {
+
+
+                attach_desc_required:
+                    'You must enter a Description for this attachment.',
+                component_required:
+                    'You must select a Component for this bug.',
+                description_required:
+                    'You must enter a Description for this bug.',
+                short_desc_required:
+                    'You must enter a Summary for this bug.',
+                version_required:
+                    'You must select a Version for this bug.'
+            }
+        };
+
+    // -->
+    </script>
+
+
+
+
+
+    <link rel="search" type="application/opensearchdescription+xml"
+                       title="Bugzilla" href="./search_plugin.cgi">
+    <link rel="shortcut icon" href="images/favicon.ico" >
+  </head>
+
+
+
+  <body onload=""
+        class="bugzilla-libresoft-es yui-skin-sam">
+
+
+
+<div id="header">
+<div id="banner">
+  </div>
+
+<table border="0" cellspacing="0" cellpadding="0" id="titles">
+<tr>
+    <td id="title">
+      <p>Bugzilla &ndash; Activity log for bug 355: Mock bug for testing purposes</p>
+    </td>
+
+
+</tr>
+</table>
+
+<table id="lang_links_container" cellpadding="0" cellspacing="0"
+       class="bz_default_hidden"><tr><td>
+</td></tr></table>
+<ul class="links">
+  <li><a href="./">Home</a></li>
+  <li><span class="separator">| </span><a href="enter_bug.cgi">New</a></li>
+  <li><span class="separator">| </span><a href="describecomponents.cgi">Browse</a></li>
+  <li><span class="separator">| </span><a href="query.cgi">Search</a></li>
+
+  <li class="form">
+    <span class="separator">| </span>
+    <form action="buglist.cgi" method="get"
+        onsubmit="if (this.quicksearch.value == '')
+                  { alert('Please enter one or more search terms first.');
+                    return false; } return true;">
+    <input class="txt" type="text" id="quicksearch_top" name="quicksearch"
+           title="Quick Search" value="">
+    <input class="btn" type="submit" value="Search"
+           id="find_top"></form>
+  <a href="page.cgi?id=quicksearch.html" title="Quicksearch Help">[?]</a></li>
+
+  <li><span class="separator">| </span><a href="report.cgi">Reports</a></li>
+
+  <li></li>
+
+    <li><span class="separator">| </span><a href="userprefs.cgi">Preferences</a></li>
+
+
+    <li>
+      <span class="separator">| </span>
+        <a href="index.cgi?logout=1">Log&nbsp;out</a>
+        sduenas&#64;example.com</li>
+</ul>
+</div>
+
+<div id="bugzilla-body">
+
+<p><a class="bz_bug_link
+          bz_status_RESOLVED  bz_closed"
+   title="RESOLVED FIXED - Mock bug for testing purposes"
+   href="show_bug.cgi?id=355">Back to bug 355</a>
+</p>
+<table border cellpadding="4">
+    <tr>
+      <th>Who</th>
+      <th>When</th>
+      <th>What</th>
+      <th>Removed</th>
+      <th>Added</th>
+    </tr>
+
+      <tr>
+        <td rowspan="1" valign="top">sduenas&#64;example.org
+        </td>
+        <td rowspan="1" valign="top">2013-06-25 11:57:23 CEST
+        </td>
+            <td>
+                <a href="attachment.cgi?id=172">
+                Attachment #172</a>
+                Attachment is obsolete
+            </td><td>0
+  </td><td>1
+  </td>
+      </tr>
+      <tr>
+        <td rowspan="11" valign="top">sduenas&#64;example.org
+        </td>
+        <td rowspan="11" valign="top">2013-06-25 11:59:07 CEST
+        </td>
+            <td>
+                Priority
+            </td><td>medium
+  </td><td>high
+  </td></tr><tr>
+            <td>
+                Status
+            </td><td>UNCONFIRMED
+  </td><td>RESOLVED
+  </td></tr><tr>
+            <td>
+                CC
+            </td><td>kesitesting&#64;example.com
+  </td><td>
+  </td></tr><tr>
+            <td>
+                Hardware
+            </td><td>All
+  </td><td>Macintosh
+  </td></tr><tr>
+            <td>
+                Blocks
+            </td><td><a class="bz_bug_link
+          bz_status_RESOLVED  bz_closed"
+   title="RESOLVED NOTOURBUG - Testing KESI sensor"
+   href="show_bug.cgi?id=354">354</a>
+  </td><td>
+  </td></tr><tr>
+            <td>
+                Depends on
+            </td><td><a class="bz_bug_link
+          bz_status_ASSIGNED "
+   title="ASSIGNED --- - Testing Bugzilla sendmail"
+   href="show_bug.cgi?id=350">350</a>
+  </td><td>
+  </td></tr><tr>
+            <td>
+                Assignee
+            </td><td>sduenas&#64;example.org
+  </td><td>dizquierdo&#64;example.com
+  </td></tr><tr>
+            <td>
+                Resolution
+            </td><td>---
+  </td><td>FIXED
+  </td></tr><tr>
+            <td>
+                QA Contact
+            </td><td>lcanas&#64;example.com
+  </td><td>dizquierdo&#64;example.com
+  </td></tr><tr>
+            <td>
+                Severity
+            </td><td>normal
+  </td><td>trivial
+  </td></tr><tr>
+            <td>
+                OS
+            </td><td>All
+  </td><td>Mac OS
+  </td>
+      </tr>
+      <tr>
+        <td rowspan="2" valign="top">dizquierdo&#64;example.com
+        </td>
+        <td rowspan="2" valign="top">2013-06-25 12:04:11 CEST
+        </td>
+            <td>
+                Blocks
+            </td><td>
+  </td><td><a class="bz_bug_link
+          bz_status_RESOLVED  bz_closed"
+   title="RESOLVED NOTOURBUG - Testing KESI sensor"
+   href="show_bug.cgi?id=354">354</a>, <a class="bz_bug_link
+          bz_status_UNCONFIRMED "
+   title="UNCONFIRMED --- - Another test"
+   href="show_bug.cgi?id=349">349</a>
+  </td></tr><tr>
+            <td>
+                Depends on
+            </td><td>
+  </td><td><a class="bz_bug_link
+          bz_status_ASSIGNED "
+   title="ASSIGNED --- - Testing Bugzilla sendmail"
+   href="show_bug.cgi?id=350">350</a>
+  </td>
+      </tr>
+  </table>
+
+  <p><a class="bz_bug_link
+          bz_status_RESOLVED  bz_closed"
+   title="RESOLVED FIXED - Mock bug for testing purposes"
+   href="show_bug.cgi?id=355">Back to bug 355</a>
+  </p>
+</div>
+
+
+
+<div id="footer">
+  <div class="intro"></div>
+
+
+
+
+<ul id="useful-links">
+  <li id="links-actions"><ul class="links">
+  <li><a href="./">Home</a></li>
+  <li><span class="separator">| </span><a href="enter_bug.cgi">New</a></li>
+  <li><span class="separator">| </span><a href="describecomponents.cgi">Browse</a></li>
+  <li><span class="separator">| </span><a href="query.cgi">Search</a></li>
+
+  <li class="form">
+    <span class="separator">| </span>
+    <form action="buglist.cgi" method="get"
+        onsubmit="if (this.quicksearch.value == '')
+                  { alert('Please enter one or more search terms first.');
+                    return false; } return true;">
+    <input class="txt" type="text" id="quicksearch_bottom" name="quicksearch"
+           title="Quick Search" value="">
+    <input class="btn" type="submit" value="Search"
+           id="find_bottom"></form>
+  <a href="page.cgi?id=quicksearch.html" title="Quicksearch Help">[?]</a></li>
+
+  <li><span class="separator">| </span><a href="report.cgi">Reports</a></li>
+
+  <li></li>
+
+    <li><span class="separator">| </span><a href="userprefs.cgi">Preferences</a></li>
+
+
+    <li>
+      <span class="separator">| </span>
+        <a href="index.cgi?logout=1">Log&nbsp;out</a>
+        sduenas&#64;example.com</li>
+</ul>
+  </li>
+
+
+
+    <li id="links-saved">
+      <ul class="links">
+          <li><a href="buglist.cgi?bug_status=UNCONFIRMED&amp;bug_status=NEW&amp;bug_status=ASSIGNED&amp;bug_status=REOPENED&amp;emailassigned_to1=1&amp;emailreporter1=1&amp;emailtype1=exact&amp;email1=sduenas%40example.com&amp;field0-0-0=bug_status&amp;type0-0-0=notequals&amp;value0-0-0=UNCONFIRMED&amp;field0-0-1=reporter&amp;type0-0-1=equals&amp;value0-0-1=sduenas%40example.com">My Bugs</a></li>
+
+      </ul>
+    </li>
+
+
+
+
+
+</ul>
+
+  <div class="outro"></div>
+</div>
+
+
+</body>
+</html>

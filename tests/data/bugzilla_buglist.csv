@@ -1,0 +1,6 @@
+"bug_id","product","component","assigned_to","bug_status","resolution","short_desc","changeddate"
+15,"LibreGeoSocial (Android)","general","rocapal","RESOLVED","FIXED","The location service runs in GPS mode, always","2009-07-22 15:27:25"
+18,"LibreGeoSocial (Android)","general","rocapal","RESOLVED","FIXED","Crass application when showing notes","2009-07-28 20:09:20"
+17,"Bicho","General","dizquierdo","RESOLVED","FIXED","Bicho fail to concatenate  'str' and 'NoneType' objects","2009-07-29 00:16:01"
+20,"LibreGeoSocial (server)","general","jcaden","ASSIGNED","---","Default position for elements","2009-07-29 13:09:50"
+19,"CVSAnalY","general","carlosgc","UNCONFIRMED","---","crash loading a git repository downloaded in localhost","2009-07-30 11:35:32"
