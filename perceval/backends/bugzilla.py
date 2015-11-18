@@ -21,9 +21,65 @@
 #     Alvaro del Castillo San Felix <acs@bitergia.com>
 #
 
+import csv
+import datetime
+
 import requests
 
-from perceval.utils import DEFAULT_DATETIME
+from ..utils import DEFAULT_DATETIME, str_to_datetime
+
+
+class Bugzilla:
+    """Bugzilla backend.
+
+    This class allows the fetch the bugs stored in Bugzilla
+    repository. To initialize this class the URL of the server
+    must be provided.
+
+    :param url: Bugzilla server URL
+    """
+    def __init__(self, url):
+        self.url = url
+        self.client = BugzillaClient(url)
+
+    def fetch(self, from_date=DEFAULT_DATETIME):
+        """Fetch the bugs from the repository.
+
+        The method retrieves, from a Bugzilla repository, the bugs
+        updated since the given date.
+
+        :param from_date: obtain bugs updated since this date
+        """
+        buglist = self.__fetch_buglist(from_date)
+
+        return [bug for bug in buglist]
+
+    def __fetch_buglist(self, from_date):
+        buglist = self.__fetch_and_parse_buglist_page(from_date)
+
+        while buglist:
+            bug = buglist.pop(0)
+            last_date = bug['changeddate']
+            yield bug
+
+            # Bugzilla does not support pagination. Due to this,
+            # the next list of bugs is requested adding one second
+            # to the last date obtained.
+            if not buglist:
+                from_date = str_to_datetime(last_date)
+                from_date += datetime.timedelta(seconds=1)
+                buglist = self.__fetch_and_parse_buglist_page(from_date)
+
+    def __fetch_and_parse_buglist_page(self, from_date):
+        raw_csv = self.client.buglist(from_date=from_date)
+        buglist = self.__parse_buglist(raw_csv)
+        return [bug for bug in buglist]
+
+    def __parse_buglist(self, raw_csv):
+        reader = csv.DictReader(raw_csv.split('\n'),
+                                delimiter=',', quotechar='"')
+        for row in reader:
+            yield row
 
 
 class BugzillaClient:

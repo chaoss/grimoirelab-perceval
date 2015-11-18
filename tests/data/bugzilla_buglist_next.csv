@@ -1,0 +1,3 @@
+"bug_id","product","component","assigned_to","bug_status","resolution","short_desc","changeddate"
+30,"Bicho","general","dizquierdo","RESOLVED","FIXED","Unit tests went wrong","2015-03-20 16:15:55"
+888,"CVSAnalY","general","sduenas","RESOLVED","FIXED","Error parsing a log from git","2015-08-12 18:32:10"

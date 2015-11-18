@@ -21,17 +21,17 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+
 import datetime
 import sys
-
-if not '..' in sys.path:
-    sys.path.insert(0, '..')
-
 import unittest
 
 import httpretty
 
-from perceval.backends.bugzilla import BugzillaClient
+if not '..' in sys.path:
+    sys.path.insert(0, '..')
+
+from perceval.backends.bugzilla import Bugzilla, BugzillaClient
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'
@@ -45,6 +45,129 @@ def read_file(filename):
     with open(filename, 'r') as f:
         content = f.read()
     return content
+
+
+class TestBugzillaBackend(unittest.TestCase):
+    """Bugzilla backend tests"""
+
+    @httpretty.activate
+    def test_fetch(self):
+        """Test whether a list of bugs is returned"""
+
+        requests = []
+        bodies = [read_file('data/bugzilla_buglist.csv'),
+                  read_file('data/bugzilla_buglist_next.csv'),
+                  ""]
+
+        def request_callback(method, uri, headers):
+            requests.append(httpretty.last_request())
+            return (200, headers, bodies.pop(0))
+
+        httpretty.register_uri(httpretty.GET, BUGZILLA_BUGLIST_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback),
+                                    httpretty.Response(body=request_callback),
+                                    httpretty.Response(body=request_callback)
+                               ])
+
+        bg = Bugzilla(BUGZILLA_SERVER_URL)
+        bugs = [bug for bug in bg.fetch()]
+
+        self.assertEqual(len(bugs), 7)
+        self.assertEqual(bugs[0]['bug_id'], '15')
+        self.assertEqual(bugs[6]['bug_id'], '888')
+
+        # Check requests
+        expected = [{
+                     'ctype' : ['csv'],
+                     'order' : ['changeddate'],
+                     'chfieldfrom' : ['1970-01-01T00:00:00']
+                    },
+                    {
+                     'ctype' : ['csv'],
+                     'order' : ['changeddate'],
+                     'chfieldfrom' : ['2009-07-30T11:35:33']
+                    },
+                    {
+                     'ctype' : ['csv'],
+                     'order' : ['changeddate'],
+                     'chfieldfrom' : ['2015-08-12T18:32:11']
+                    }]
+
+        self.assertEqual(len(requests), 3)
+
+        for i in range(len(expected)):
+            self.assertDictEqual(requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_from_date(self):
+        """Test whether a list of bugs is returned from a given date"""
+
+        requests = []
+        bodies = [read_file('data/bugzilla_buglist_next.csv'),
+                  ""]
+
+        def request_callback(method, uri, headers):
+            requests.append(httpretty.last_request())
+            return (200, headers, bodies.pop(0))
+
+        httpretty.register_uri(httpretty.GET, BUGZILLA_BUGLIST_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback),
+                                    httpretty.Response(body=request_callback),
+                               ])
+
+        from_date = datetime.datetime(2015, 1, 1)
+
+        bg = Bugzilla(BUGZILLA_SERVER_URL)
+        bugs = [bug for bug in bg.fetch(from_date=from_date)]
+
+        self.assertEqual(len(bugs), 2)
+        self.assertEqual(bugs[0]['bug_id'], '30')
+        self.assertEqual(bugs[1]['bug_id'], '888')
+
+        # Check requests
+        expected = [{
+                     'ctype' : ['csv'],
+                     'order' : ['changeddate'],
+                     'chfieldfrom' : ['2015-01-01T00:00:00']
+                    },
+                    {
+                     'ctype' : ['csv'],
+                     'order' : ['changeddate'],
+                     'chfieldfrom' : ['2015-08-12T18:32:11']
+                    }]
+
+        self.assertEqual(len(requests), 2)
+
+        for i in range(len(expected)):
+            self.assertDictEqual(requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_empty(self):
+        """Test whethet it works when no bugs are fetched"""
+
+        httpretty.register_uri(httpretty.GET, BUGZILLA_BUGLIST_URL,
+                               body="", status=200)
+
+        from_date = datetime.datetime(2100, 1, 1)
+
+
+        bg = Bugzilla(BUGZILLA_SERVER_URL)
+        bugs = [bug for bug in bg.fetch(from_date=from_date)]
+
+        self.assertEqual(len(bugs), 0)
+
+        # Check request
+        expected = {
+                     'ctype' : ['csv'],
+                     'order' : ['changeddate'],
+                     'chfieldfrom' : ['2100-01-01T00:00:00']
+                    }
+
+        req = httpretty.last_request()
+
+        self.assertDictEqual(req.querystring, expected)
 
 
 class TestBugzillaClient(unittest.TestCase):
