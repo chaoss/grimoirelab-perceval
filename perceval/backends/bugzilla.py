@@ -152,13 +152,13 @@ class BugzillaClient:
 
         return response
 
-    def bug(self, bug_id):
-        """Get the information of a bug in XML format.
+    def bugs(self, *bug_ids):
+        """Get the information of a list of bugs in XML format.
 
-        :param bug_id: bug identifier
+        :param bug_ids: list of bug identifiers
         """
         params = {
-            self.PBUG_ID : bug_id,
+            self.PBUG_ID : bug_ids,
             self.PCTYPE : self.CTYPE_XML,
             self.PEXCLUDE_FIELD : 'attachmentdata'
         }

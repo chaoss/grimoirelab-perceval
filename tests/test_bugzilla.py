@@ -171,8 +171,13 @@ class TestBugzillaBackend(unittest.TestCase):
 
 
 class TestBugzillaClient(unittest.TestCase):
-    """Bugzilla API client tests"""
+    """Bugzilla API client tests
 
+    These tests not check the body of the response, only if the call
+    was well formed and if a response was obtained. Due to this, take
+    into account that the body returned on each request might not
+    match with the parameters from the request.
+    """
     @httpretty.activate
     def test_metadata(self):
         """Test metadata API call"""
@@ -279,8 +284,8 @@ class TestBugzillaClient(unittest.TestCase):
         self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
-    def test_bug(self):
-        """Test bug API call"""
+    def test_bugs(self):
+        """Test bugs API call"""
 
         # Set up a mock HTTP server
         body = read_file('data/bugzilla_bug.xml')
@@ -291,13 +296,13 @@ class TestBugzillaClient(unittest.TestCase):
 
         # Call API
         client = BugzillaClient(BUGZILLA_SERVER_URL)
-        response = client.bug('8')
+        response = client.bugs('8', '9')
 
         self.assertEqual(response, body)
 
         # Check request params
         expected = {
-                    'id' : ['8'],
+                    'id' : ['8', '9'],
                     'ctype' : ['xml'],
                     'excludefield' : ['attachmentdata']
                    }
