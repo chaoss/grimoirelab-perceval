@@ -40,3 +40,9 @@ class InvalidDateError(BaseError):
     """Exception raised when a date is invalid"""
 
     message = "%(date)s is not a valid date"
+
+
+class ParseError(BaseError):
+    """Exception raised a parsing errors occurs"""
+
+    message = "%(cause)s"

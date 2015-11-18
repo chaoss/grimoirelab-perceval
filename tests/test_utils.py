@@ -24,12 +24,19 @@
 import datetime
 import sys
 import unittest
+import xml.etree.ElementTree
 
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.errors import InvalidDateError
-from perceval.utils import str_to_datetime
+from perceval.errors import InvalidDateError, ParseError
+from perceval.utils import str_to_datetime, xml_to_dict
+
+
+def read_file(filename):
+    with open(filename, 'r') as f:
+        content = f.read()
+    return content
 
 
 class TestStrToDatetime(unittest.TestCase):
@@ -67,6 +74,38 @@ class TestStrToDatetime(unittest.TestCase):
         self.assertRaises(InvalidDateError, str_to_datetime, 'nodate')
         self.assertRaises(InvalidDateError, str_to_datetime, None)
         self.assertRaises(InvalidDateError, str_to_datetime, '')
+
+
+class TestXMLtoDict(unittest.TestCase):
+    """Unit tests for xml_to_dict"""
+
+    def test_xml_to_dict(self):
+        """Check whether it converts a XML file to a dict"""
+
+        raw_xml = read_file('data/bugzilla_bug.xml')
+        d = xml_to_dict(raw_xml)
+
+        self.assertIsInstance(d, dict)
+        self.assertEqual(d['version'], '4.2.1')
+        self.assertEqual(len(d['bug']), 1)
+
+        bug = d['bug'][0]
+        self.assertEqual(bug['short_desc'][0]['__text__'], 'Mock bug for testing purposes')
+        self.assertEqual(bug['reporter'][0]['name'], 'Santiago Dueñas')
+        self.assertEqual(bug['reporter'][0]['__text__'], 'sduenas@example.org')
+        self.assertEqual(len(bug['cc']), 3)
+        self.assertEqual(len(bug['long_desc']), 4)
+
+        long_desc = bug['long_desc'][2]
+        self.assertEqual(long_desc['isprivate'], '0')
+        self.assertEqual(long_desc['thetext'][0]['__text__'], 'Invalid patch')
+
+    def test_invalid_xml(self):
+        """Check whether it raises an exception when the XML is invalid"""
+
+        raw_xml = read_file('data/xml_invalid.xml')
+
+        self.assertRaises(ParseError, xml_to_dict, raw_xml)
 
 
 if __name__ == "__main__":

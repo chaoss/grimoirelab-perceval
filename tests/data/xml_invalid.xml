@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bugs>
+  <bug id="8">
+    <description>Mock bug</description>
+    <status>closed</status>
+    <comment id="1" submitted_by="johnsmith" submitted_on="2007-01-01">A comment</comment>
+    <comment id="2" submitted_by="sduenas" submitted_on="2013-01-01">Closed</comment>
+  </bug>
+  <bug id="9>
+    <description>Another test bug</description>
+    <status>open</status>
+  </bug>
+</bugs>

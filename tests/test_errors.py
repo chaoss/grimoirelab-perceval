@@ -28,15 +28,15 @@ if not '..' in sys.path:
 
 import unittest
 
-from perceval.errors import BaseError, InvalidDateError
+import perceval.errors as errors
 
 
 # Mock classes to test BaseError class
-class MockErrorNoArgs(BaseError):
+class MockErrorNoArgs(errors.BaseError):
     message = "Mock error without args"
 
 
-class MockErrorArgs(BaseError):
+class MockErrorArgs(errors.BaseError):
     message = "Mock error with args. Error: %(code)s %(msg)s"
 
 
@@ -73,9 +73,17 @@ class TestInvalidDateError(unittest.TestCase):
     def test_message(self):
         """Make sure that prints the correct error"""
 
-        e = InvalidDateError(date='1900-13-01')
+        e = errors.InvalidDateError(date='1900-13-01')
         self.assertEqual('1900-13-01 is not a valid date',
                          str(e))
+
+class TestParseError(unittest.TestCase):
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = errors.ParseError(cause='error on line 10')
+        self.assertEqual('error on line 10', str(e))
 
 
 if __name__ == "__main__":
