@@ -23,6 +23,8 @@
 
 import requests
 
+from perceval.utils import DEFAULT_DATETIME
+
 
 class BugzillaClient:
     """Bugzilla API client.
@@ -71,7 +73,7 @@ class BugzillaClient:
 
         return response
 
-    def buglist(self, from_date='1970-01-01', version=None):
+    def buglist(self, from_date=DEFAULT_DATETIME, version=None):
         """Get a summary of bugs in CSV format.
 
         :param from_date: retrieve bugs that where updated from that date
@@ -82,8 +84,10 @@ class BugzillaClient:
         else:
             order = 'changeddate'
 
+        date = from_date.strftime("%Y-%m-%dT%H:%M:%S")
+
         params = {
-            self.PCHFIELD_FROM : from_date,
+            self.PCHFIELD_FROM : date,
             self.PCTYPE : self.CTYPE_CSV,
             self.PORDER : order
         }

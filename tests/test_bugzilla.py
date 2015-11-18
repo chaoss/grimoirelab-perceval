@@ -21,6 +21,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import datetime
 import sys
 
 if not '..' in sys.path:
@@ -96,7 +97,7 @@ class TestBugzillaClient(unittest.TestCase):
         expected = {
                     'ctype' : ['csv'],
                     'order' : ['changeddate'],
-                    'chfieldfrom' : ['1970-01-01']
+                    'chfieldfrom' : ['1970-01-01T00:00:00']
                    }
 
         req = httpretty.last_request()
@@ -106,7 +107,8 @@ class TestBugzillaClient(unittest.TestCase):
         self.assertDictEqual(req.querystring, expected)
 
         # Call API with from_date and version args
-        response = client.buglist(from_date='2015-01-01', version='4.0')
+        response = client.buglist(from_date=datetime.datetime(2015, 1, 1),
+                                  version='4.0')
 
         self.assertEqual(response, body)
 
@@ -114,7 +116,7 @@ class TestBugzillaClient(unittest.TestCase):
         expected = {
                     'ctype' : ['csv'],
                     'order' : ['changeddate'],
-                    'chfieldfrom' : ['2015-01-01']
+                    'chfieldfrom' : ['2015-01-01T00:00:00']
                    }
 
         req = httpretty.last_request()
@@ -144,7 +146,7 @@ class TestBugzillaClient(unittest.TestCase):
         expected = {
                     'ctype' : ['csv'],
                     'order' : ['Last Changed'],
-                    'chfieldfrom' : ['1970-01-01']
+                    'chfieldfrom' : ['1970-01-01T00:00:00']
                     }
 
         req = httpretty.last_request()

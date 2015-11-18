@@ -20,9 +20,14 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import datetime
+
 import dateutil.parser
 
 from perceval.errors import InvalidDateError
+
+
+DEFAULT_DATETIME = datetime.datetime(1970, 1, 1, 0, 0, 0)
 
 
 def str_to_datetime(ts):
