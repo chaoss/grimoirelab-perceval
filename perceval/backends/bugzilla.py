@@ -26,7 +26,8 @@ import datetime
 
 import requests
 
-from ..utils import DEFAULT_DATETIME, str_to_datetime
+from ..errors import ParseError
+from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
 
 class Bugzilla:
@@ -80,6 +81,33 @@ class Bugzilla:
                                 delimiter=',', quotechar='"')
         for row in reader:
             yield row
+
+    @staticmethod
+    def parse_bugs_details(raw_xml):
+        """Parse a Bugilla bugs details XML stream.
+
+        This method returns a generator which parses the given XML,
+        producing an iterator of dictionaries. Each dictionary stores
+        the information related to a parsed bug.
+
+        If the given XML is invalid or does not contains any bug, the
+        method will raise a ParseError exception.
+
+        :param raw_xml: XML string to parse
+
+        :returns: a generator of parsed bugs
+
+        :raises ParseError: raised when an error occurs parsing
+            the given XML stream
+        """
+        bugs = xml_to_dict(raw_xml)
+
+        if 'bug' not in bugs:
+            cause = "No bugs found. XML stream seems to be invalid."
+            raise ParseError(cause=cause)
+
+        for bug in bugs['bug']:
+            yield bug
 
 
 class BugzillaClient:

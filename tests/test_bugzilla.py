@@ -31,6 +31,7 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
+from perceval.errors import ParseError
 from perceval.backends.bugzilla import Bugzilla, BugzillaClient
 
 
@@ -168,6 +169,31 @@ class TestBugzillaBackend(unittest.TestCase):
         req = httpretty.last_request()
 
         self.assertDictEqual(req.querystring, expected)
+
+    def test_parse_bugs_details(self):
+        """Test bugs details parsing"""
+
+        raw_xml = read_file('data/bugzilla_bugs_details.xml')
+
+        bugs = Bugzilla.parse_bugs_details(raw_xml)
+        result = [bug for bug in bugs]
+
+        self.assertEqual(len(result), 5)
+
+        bug_ids = [bug['bug_id'][0]['__text__'] \
+                   for bug in result]
+        expected = ['15', '18', '17', '20', '19']
+
+        self.assertListEqual(bug_ids, expected)
+
+    def test_parse_invalid_bug_details(self):
+        """Test whether it fails parsing an invalid XML with no bugs"""
+
+        raw_xml = read_file('data/bugzilla_bugs_details_not_valid.xml')
+
+        with self.assertRaises(ParseError):
+            bugs = Bugzilla.parse_bugs_details(raw_xml)
+            result = [bug for bug in bugs]
 
 
 class TestBugzillaClient(unittest.TestCase):
