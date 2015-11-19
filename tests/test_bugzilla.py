@@ -170,6 +170,18 @@ class TestBugzillaBackend(unittest.TestCase):
 
         self.assertDictEqual(req.querystring, expected)
 
+    def test_parse_buglist(self):
+        """Test buglist parsing"""
+
+        raw_csv = read_file('data/bugzilla_buglist.csv')
+
+        bugs = Bugzilla.parse_buglist(raw_csv)
+        result = [bug for bug in bugs]
+
+        self.assertEqual(len(result), 5)
+        self.assertEqual(result[0]['bug_id'], '15')
+        self.assertEqual(result[4]['bug_id'], '19')
+
     def test_parse_bugs_details(self):
         """Test bugs details parsing"""
 

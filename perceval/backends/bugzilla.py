@@ -73,10 +73,20 @@ class Bugzilla:
 
     def __fetch_and_parse_buglist_page(self, from_date):
         raw_csv = self.client.buglist(from_date=from_date)
-        buglist = self.__parse_buglist(raw_csv)
+        buglist = self.parse_buglist(raw_csv)
         return [bug for bug in buglist]
 
-    def __parse_buglist(self, raw_csv):
+    @staticmethod
+    def parse_buglist(raw_csv):
+        """Parse a Bugzilla CSV bug list.
+
+        The method parses the CSV file and returns an iterator of
+        dictionaries. Each one of this, contains the summary of a bug.
+
+        :param raw_csv: CSV string to parse
+
+        :returns: a generator of parsed bugs
+        """
         reader = csv.DictReader(raw_csv.split('\n'),
                                 delimiter=',', quotechar='"')
         for row in reader:
