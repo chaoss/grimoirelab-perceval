@@ -30,6 +30,9 @@ from ..errors import ParseError
 from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
 
+MAX_BUGS = 200 # Maximum number of bugs per query
+
+
 class Bugzilla:
     """Bugzilla backend.
 
@@ -38,9 +41,11 @@ class Bugzilla:
     must be provided.
 
     :param url: Bugzilla server URL
+    :param max_bugs: maximum number of bugs requested on the same query
     """
-    def __init__(self, url):
+    def __init__(self, url, max_bugs=MAX_BUGS):
         self.url = url
+        self.max_bugs = max(1, max_bugs)
         self.client = BugzillaClient(url)
 
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -51,9 +56,16 @@ class Bugzilla:
 
         :param from_date: obtain bugs updated since this date
         """
-        buglist = self.__fetch_buglist(from_date)
+        buglist = [bug for bug in self.__fetch_buglist(from_date)]
 
-        return [bug for bug in buglist]
+        for i in range(0, len(buglist), self.max_bugs):
+            chunk = buglist[i:i + self.max_bugs]
+            bugs_ids = [b['bug_id'] for b in chunk]
+
+            bugs = self.__fetch_and_parse_bugs_details(bugs_ids)
+
+            for bug in bugs:
+                yield bug
 
     def __fetch_buglist(self, from_date):
         buglist = self.__fetch_and_parse_buglist_page(from_date)
@@ -75,6 +87,10 @@ class Bugzilla:
         raw_csv = self.client.buglist(from_date=from_date)
         buglist = self.parse_buglist(raw_csv)
         return [bug for bug in buglist]
+
+    def __fetch_and_parse_bugs_details(self, *bug_ids):
+        raw_bugs = self.client.bugs(*bug_ids)
+        return self.parse_bugs_details(raw_bugs)
 
     @staticmethod
     def parse_buglist(raw_csv):

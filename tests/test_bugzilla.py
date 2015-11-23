@@ -42,8 +42,8 @@ BUGZILLA_BUG_URL = BUGZILLA_SERVER_URL + '/show_bug.cgi'
 BUGZILLA_BUG_ACTIVITY_URL = BUGZILLA_SERVER_URL + '/show_activity.cgi'
 
 
-def read_file(filename):
-    with open(filename, 'r') as f:
+def read_file(filename, mode='r'):
+    with open(filename, mode) as f:
         content = f.read()
     return content
 
@@ -56,13 +56,20 @@ class TestBugzillaBackend(unittest.TestCase):
         """Test whether a list of bugs is returned"""
 
         requests = []
-        bodies = [read_file('data/bugzilla_buglist.csv'),
-                  read_file('data/bugzilla_buglist_next.csv'),
-                  ""]
+        bodies_csv = [read_file('data/bugzilla_buglist.csv'),
+                      read_file('data/bugzilla_buglist_next.csv'),
+                      ""]
+        bodies_xml = [read_file('data/bugzilla_bugs_details.xml', mode='rb'),
+                      read_file('data/bugzilla_bugs_details_next.xml', mode='rb')]
 
         def request_callback(method, uri, headers):
             requests.append(httpretty.last_request())
-            return (200, headers, bodies.pop(0))
+
+            if uri.startswith(BUGZILLA_BUGLIST_URL):
+                body = bodies_csv.pop(0)
+            else:
+                body = bodies_xml.pop(0)
+            return (200, headers, body)
 
         httpretty.register_uri(httpretty.GET, BUGZILLA_BUGLIST_URL,
                                responses=[
@@ -70,13 +77,18 @@ class TestBugzillaBackend(unittest.TestCase):
                                     httpretty.Response(body=request_callback),
                                     httpretty.Response(body=request_callback)
                                ])
+        httpretty.register_uri(httpretty.GET, BUGZILLA_BUG_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback),
+                                    httpretty.Response(body=request_callback)
+                               ])
 
-        bg = Bugzilla(BUGZILLA_SERVER_URL)
+        bg = Bugzilla(BUGZILLA_SERVER_URL, max_bugs=5)
         bugs = [bug for bug in bg.fetch()]
 
         self.assertEqual(len(bugs), 7)
-        self.assertEqual(bugs[0]['bug_id'], '15')
-        self.assertEqual(bugs[6]['bug_id'], '888')
+        self.assertEqual(bugs[0]['bug_id'][0]['__text__'], '15')
+        self.assertEqual(bugs[6]['bug_id'][0]['__text__'], '888')
 
         # Check requests
         expected = [{
@@ -93,9 +105,19 @@ class TestBugzillaBackend(unittest.TestCase):
                      'ctype' : ['csv'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['2015-08-12T18:32:11']
-                    }]
+                    },
+                    {
+                     'ctype' : ['xml'],
+                     'id' : ['15', '18', '17', '20', '19'],
+                     'excludefield' : ['attachmentdata']
+                    },
+                    {
+                     'ctype' : ['xml'],
+                     'id' : ['30', '888'],
+                     'excludefield' : ['attachmentdata']
+                    },]
 
-        self.assertEqual(len(requests), 3)
+        self.assertEqual(len(requests), 5)
 
         for i in range(len(expected)):
             self.assertDictEqual(requests[i].querystring, expected[i])
@@ -105,17 +127,27 @@ class TestBugzillaBackend(unittest.TestCase):
         """Test whether a list of bugs is returned from a given date"""
 
         requests = []
-        bodies = [read_file('data/bugzilla_buglist_next.csv'),
-                  ""]
+        bodies_csv = [read_file('data/bugzilla_buglist_next.csv'),
+                      ""]
+        bodies_xml = [read_file('data/bugzilla_bugs_details_next.xml', mode='rb')]
 
         def request_callback(method, uri, headers):
             requests.append(httpretty.last_request())
-            return (200, headers, bodies.pop(0))
+
+            if uri.startswith(BUGZILLA_BUGLIST_URL):
+                body = bodies_csv.pop(0)
+            else:
+                body = bodies_xml.pop(0)
+            return (200, headers, body)
 
         httpretty.register_uri(httpretty.GET, BUGZILLA_BUGLIST_URL,
                                responses=[
                                     httpretty.Response(body=request_callback),
                                     httpretty.Response(body=request_callback),
+                               ])
+        httpretty.register_uri(httpretty.GET, BUGZILLA_BUG_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
                                ])
 
         from_date = datetime.datetime(2015, 1, 1)
@@ -124,8 +156,8 @@ class TestBugzillaBackend(unittest.TestCase):
         bugs = [bug for bug in bg.fetch(from_date=from_date)]
 
         self.assertEqual(len(bugs), 2)
-        self.assertEqual(bugs[0]['bug_id'], '30')
-        self.assertEqual(bugs[1]['bug_id'], '888')
+        self.assertEqual(bugs[0]['bug_id'][0]['__text__'], '30')
+        self.assertEqual(bugs[1]['bug_id'][0]['__text__'], '888')
 
         # Check requests
         expected = [{
@@ -137,9 +169,14 @@ class TestBugzillaBackend(unittest.TestCase):
                      'ctype' : ['csv'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['2015-08-12T18:32:11']
-                    }]
+                    },
+                    {
+                     'ctype' : ['xml'],
+                     'id' : ['30', '888'],
+                     'excludefield' : ['attachmentdata']
+                    },]
 
-        self.assertEqual(len(requests), 2)
+        self.assertEqual(len(requests), 3)
 
         for i in range(len(expected)):
             self.assertDictEqual(requests[i].querystring, expected[i])
@@ -197,6 +234,11 @@ class TestBugzillaBackend(unittest.TestCase):
         expected = ['15', '18', '17', '20', '19']
 
         self.assertListEqual(bug_ids, expected)
+
+        raw_xml = read_file('data/bugzilla_bugs_details_next.xml')
+
+        bugs = Bugzilla.parse_bugs_details(raw_xml)
+        result = [bug for bug in bugs]
 
     def test_parse_invalid_bug_details(self):
         """Test whether it fails parsing an invalid XML with no bugs"""
