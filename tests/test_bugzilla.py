@@ -61,26 +61,35 @@ class TestBugzillaBackend(unittest.TestCase):
                       ""]
         bodies_xml = [read_file('data/bugzilla_bugs_details.xml', mode='rb'),
                       read_file('data/bugzilla_bugs_details_next.xml', mode='rb')]
+        bodies_html = [read_file('data/bugzilla_bug_activity.html', mode='rb'),
+                       read_file('data/bugzilla_bug_activity_empty.html', mode='rb')]
 
         def request_callback(method, uri, headers):
-            requests.append(httpretty.last_request())
-
             if uri.startswith(BUGZILLA_BUGLIST_URL):
                 body = bodies_csv.pop(0)
-            else:
+            elif uri.startswith(BUGZILLA_BUG_URL):
                 body = bodies_xml.pop(0)
+            else:
+                body = bodies_html[len(requests) % 2]
+
+            requests.append(httpretty.last_request())
+
             return (200, headers, body)
 
         httpretty.register_uri(httpretty.GET, BUGZILLA_BUGLIST_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback),
-                                    httpretty.Response(body=request_callback),
-                                    httpretty.Response(body=request_callback)
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(3)
                                ])
         httpretty.register_uri(httpretty.GET, BUGZILLA_BUG_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback),
-                                    httpretty.Response(body=request_callback)
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET, BUGZILLA_BUG_ACTIVITY_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(7)
                                ])
 
         bg = Bugzilla(BUGZILLA_SERVER_URL, max_bugs=5)
@@ -88,7 +97,9 @@ class TestBugzillaBackend(unittest.TestCase):
 
         self.assertEqual(len(bugs), 7)
         self.assertEqual(bugs[0]['bug_id'][0]['__text__'], '15')
+        self.assertEqual(len(bugs[0]['activity']), 14)
         self.assertEqual(bugs[6]['bug_id'][0]['__text__'], '888')
+        self.assertEqual(len(bugs[6]['activity']), 0)
 
         # Check requests
         expected = [{
@@ -112,12 +123,33 @@ class TestBugzillaBackend(unittest.TestCase):
                      'excludefield' : ['attachmentdata']
                     },
                     {
+                     'id' : ['15']
+                    },
+                    {
+                     'id' : ['18']
+                    },
+                    {
+                     'id' : ['17']
+                    },
+                    {
+                     'id' : ['20']
+                    },
+                    {
+                     'id' : ['19']
+                    },
+                    {
                      'ctype' : ['xml'],
                      'id' : ['30', '888'],
                      'excludefield' : ['attachmentdata']
-                    },]
+                    },
+                    {
+                     'id' : ['30']
+                    },
+                    {
+                     'id' : ['888']
+                    }]
 
-        self.assertEqual(len(requests), 5)
+        self.assertEqual(len(requests), len(expected))
 
         for i in range(len(expected)):
             self.assertDictEqual(requests[i].querystring, expected[i])
@@ -130,24 +162,34 @@ class TestBugzillaBackend(unittest.TestCase):
         bodies_csv = [read_file('data/bugzilla_buglist_next.csv'),
                       ""]
         bodies_xml = [read_file('data/bugzilla_bugs_details_next.xml', mode='rb')]
+        bodies_html = [read_file('data/bugzilla_bug_activity.html', mode='rb'),
+                       read_file('data/bugzilla_bug_activity_empty.html', mode='rb')]
 
         def request_callback(method, uri, headers):
-            requests.append(httpretty.last_request())
-
             if uri.startswith(BUGZILLA_BUGLIST_URL):
                 body = bodies_csv.pop(0)
-            else:
+            elif uri.startswith(BUGZILLA_BUG_URL):
                 body = bodies_xml.pop(0)
+            else:
+                body = bodies_html[len(requests) % 2]
+
+            requests.append(httpretty.last_request())
+
             return (200, headers, body)
 
         httpretty.register_uri(httpretty.GET, BUGZILLA_BUGLIST_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback),
-                                    httpretty.Response(body=request_callback),
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET, BUGZILLA_BUG_URL,
                                responses=[
                                     httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET, BUGZILLA_BUG_ACTIVITY_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(2)
                                ])
 
         from_date = datetime.datetime(2015, 1, 1)
@@ -157,7 +199,9 @@ class TestBugzillaBackend(unittest.TestCase):
 
         self.assertEqual(len(bugs), 2)
         self.assertEqual(bugs[0]['bug_id'][0]['__text__'], '30')
+        self.assertEqual(len(bugs[0]['activity']), 0)
         self.assertEqual(bugs[1]['bug_id'][0]['__text__'], '888')
+        self.assertEqual(len(bugs[1]['activity']), 14)
 
         # Check requests
         expected = [{
@@ -174,9 +218,15 @@ class TestBugzillaBackend(unittest.TestCase):
                      'ctype' : ['xml'],
                      'id' : ['30', '888'],
                      'excludefield' : ['attachmentdata']
-                    },]
+                    },
+                    {
+                     'id' : ['30']
+                    },
+                    {
+                     'id' : ['888']
+                    }]
 
-        self.assertEqual(len(requests), 3)
+        self.assertEqual(len(requests), len(expected))
 
         for i in range(len(expected)):
             self.assertDictEqual(requests[i].querystring, expected[i])
@@ -257,7 +307,7 @@ class TestBugzillaBackend(unittest.TestCase):
         activity = Bugzilla.parse_bug_activity(raw_html)
         result = [event for event in activity]
 
-        self.assertEqual(14, len(result))
+        self.assertEqual(len(result), 14)
 
         expected = {
                     'Who' : 'sduenas@example.org',

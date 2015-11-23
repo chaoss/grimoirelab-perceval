@@ -67,6 +67,8 @@ class Bugzilla:
             bugs = self.__fetch_and_parse_bugs_details(bugs_ids)
 
             for bug in bugs:
+                bug_id = bug['bug_id'][0]['__text__']
+                bug['activity'] = self.__fetch_and_parse_bug_activity(bug_id)
                 yield bug
 
     def __fetch_buglist(self, from_date):
@@ -93,6 +95,11 @@ class Bugzilla:
     def __fetch_and_parse_bugs_details(self, *bug_ids):
         raw_bugs = self.client.bugs(*bug_ids)
         return self.parse_bugs_details(raw_bugs)
+
+    def __fetch_and_parse_bug_activity(self, bug_id):
+        raw_activity = self.client.bug_activity(bug_id)
+        activity = self.parse_bug_activity(raw_activity)
+        return [event for event in activity]
 
     @staticmethod
     def parse_buglist(raw_csv):
