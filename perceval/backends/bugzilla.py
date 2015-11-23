@@ -23,7 +23,9 @@
 
 import csv
 import datetime
+import re
 
+import bs4
 import requests
 
 from ..errors import ParseError
@@ -134,6 +136,83 @@ class Bugzilla:
 
         for bug in bugs['bug']:
             yield bug
+
+    @staticmethod
+    def parse_bug_activity(raw_html):
+        """Parse a Bugzilla bug activity HTML stream.
+
+        This method extracts the information about activity from the
+        given HTML stream. The bug activity is stored into a HTML
+        table. Each parsed activity event is returned into a dictionary.
+
+        If the given HTML is invalid, the method will raise a ParseError
+        exception.
+
+        :param raw_html: HTML string to parse
+
+        :returns: a generator of parsed activity events
+
+        :raises ParseError: raised when an error occurs parsing
+            the given HTML stream
+        """
+        def is_activity_empty(bs):
+            EMPTY_ACTIVITY = "No changes have been made to this bug yet."
+            tag = bs.find(text=re.compile(EMPTY_ACTIVITY))
+            return tag is not None
+
+        def find_activity_table(bs):
+            # The first table with 5 columns is the table of activity
+            tables = bs.find_all('table')
+
+            for tb in tables:
+                nheaders = len(tb.tr.find_all('th', recursive=False))
+                if nheaders == 5:
+                    return tb
+            raise ParseError(cause='Table of bug activity not found.')
+
+        def remove_tags(bs):
+            HTML_TAGS_TO_REMOVE = ['a', 'i', 'span']
+
+            for tag in bs.find_all(HTML_TAGS_TO_REMOVE):
+                tag.replaceWith(tag.text)
+
+        def format_text(bs):
+            strings = [s.strip(' \n\t') for s in bs.stripped_strings]
+            s = ' '.join(strings)
+            return s
+
+        # Parsing starts here
+        bs = bs4.BeautifulSoup(raw_html)
+
+        if is_activity_empty(bs):
+            fields = []
+        else:
+            activity_tb = find_activity_table(bs)
+            remove_tags(activity_tb)
+            fields = activity_tb.find_all('td')
+
+        while fields:
+            # First two fields: 'Who' and 'When'.
+            who = fields.pop(0)
+            when = fields.pop(0)
+
+            # The attribute 'rowspan' of 'who' field tells how many
+            # changes were made on the same date.
+            n = int(who.get('rowspan'))
+
+            # Next fields are split into chunks of three elements:
+            # 'What', 'Removed' and 'Added'. These chunks share
+            # 'Who' and 'When' values.
+            for _ in range(n):
+                what = fields.pop(0)
+                removed = fields.pop(0)
+                added = fields.pop(0)
+                event = {'Who'     : format_text(who),
+                         'When'    : format_text(when),
+                         'What'    : format_text(what),
+                         'Removed' : format_text(removed),
+                         'Added'   : format_text(added)}
+                yield event
 
 
 class BugzillaClient:

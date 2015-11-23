@@ -247,7 +247,53 @@ class TestBugzillaBackend(unittest.TestCase):
 
         with self.assertRaises(ParseError):
             bugs = Bugzilla.parse_bugs_details(raw_xml)
-            result = [bug for bug in bugs]
+            _ = [bug for bug in bugs]
+
+    def test_parse_activity(self):
+        """Test activity bug parsing"""
+
+        raw_html = read_file('data/bugzilla_bug_activity.html')
+
+        activity = Bugzilla.parse_bug_activity(raw_html)
+        result = [event for event in activity]
+
+        self.assertEqual(14, len(result))
+
+        expected = {
+                    'Who' : 'sduenas@example.org',
+                    'When' : '2013-06-25 11:57:23 CEST',
+                    'What' : 'Attachment #172 Attachment is obsolete',
+                    'Removed' : '0',
+                    'Added' : '1'
+                   }
+        self.assertDictEqual(result[0], expected)
+
+        expected = {
+                    'Who' : 'sduenas@example.org',
+                    'When' : '2013-06-25 11:59:07 CEST',
+                    'What' : 'Depends on',
+                    'Removed' : '350',
+                    'Added' : ''
+                   }
+        self.assertDictEqual(result[6], expected)
+
+    def test_parse_empty_activity(self):
+        """Test the parser when the activity table is empty"""
+
+        raw_html = read_file('data/bugzilla_bug_activity_empty.html')
+
+        activity = Bugzilla.parse_bug_activity(raw_html)
+        result = [event for event in activity]
+        self.assertEqual(len(result), 0)
+
+    def test_parse_activity_no_table(self):
+        """Test if it raises an exception the activity table is not found"""
+
+        raw_html = read_file('data/bugzilla_bug_activity_not_valid.html')
+
+        with self.assertRaises(ParseError):
+            activity = Bugzilla.parse_bug_activity(raw_html)
+            _ = [event for event in activity]
 
 
 class TestBugzillaClient(unittest.TestCase):
