@@ -36,6 +36,12 @@ class BaseError(Exception):
         return self.msg
 
 
+class BackendError(BaseError):
+    """Generic error for backends"""
+
+    message = "%(cause)s"
+
+
 class InvalidDateError(BaseError):
     """Exception raised when a date is invalid"""
 

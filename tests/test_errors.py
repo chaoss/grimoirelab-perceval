@@ -68,6 +68,15 @@ class TestBaseError(unittest.TestCase):
         self.assertRaises(KeyError, MockErrorArgs, **kwargs)
 
 
+class TestBackendError(unittest.TestCase):
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = errors.BackendError(cause='mock error on backend')
+        self.assertEqual('mock error on backend', str(e))
+
+
 class TestInvalidDateError(unittest.TestCase):
 
     def test_message(self):
