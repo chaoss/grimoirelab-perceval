@@ -20,7 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import argparse
+from .utils import DEFAULT_DATETIME
 
 
 class Backend:
@@ -28,17 +28,5 @@ class Backend:
     def __init__(self):
         pass
 
-    @classmethod
-    def get_argument_parser(cls):
-        parser = argparse.ArgumentParser()
-
-        # Options
-        group = parser.add_argument_group('general arguments')
-        group.add_argument('-u', '--backend-user', dest='backend_user',
-                           help='Backend user')
-        group.add_argument('-p', '--backend-password', dest='backend_password',
-                           help='Backend password')
-        group.add_argument('-t', '--backend-token', dest='backend_token',
-                           help='Backend authentication token')
-
-        return parser
+    def fetch(self, from_date=DEFAULT_DATETIME):
+        raise NotImplementedError
