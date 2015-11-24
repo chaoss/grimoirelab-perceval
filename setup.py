@@ -27,6 +27,6 @@ from distutils.core import setup
 setup(name="perceval",
       version="0.0.1",
       author="Bitergia",
-      author_email="metrics-grimoire@lists.libresoft.es",
-      packages=['perceval'],
+      author_email="sduenas@bitergia.com",
+      packages=['perceval', 'perceval.backends'],
       scripts=["bin/perceval"])
