@@ -31,8 +31,11 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.errors import ParseError
+from perceval.errors import BackendError, ParseError
 from perceval.backends.bugzilla import Bugzilla, BugzillaClient
+
+
+
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'
@@ -59,7 +62,8 @@ class TestBugzillaBackend(unittest.TestCase):
         bodies_csv = [read_file('data/bugzilla_buglist.csv'),
                       read_file('data/bugzilla_buglist_next.csv'),
                       ""]
-        bodies_xml = [read_file('data/bugzilla_bugs_details.xml', mode='rb'),
+        bodies_xml = [read_file('data/bugzilla_version.xml', mode='rb'),
+                      read_file('data/bugzilla_bugs_details.xml', mode='rb'),
                       read_file('data/bugzilla_bugs_details_next.xml', mode='rb')]
         bodies_html = [read_file('data/bugzilla_bug_activity.html', mode='rb'),
                        read_file('data/bugzilla_bug_activity_empty.html', mode='rb')]
@@ -76,17 +80,20 @@ class TestBugzillaBackend(unittest.TestCase):
 
             return (200, headers, body)
 
-        httpretty.register_uri(httpretty.GET, BUGZILLA_BUGLIST_URL,
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGLIST_URL,
                                responses=[
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(3)
                                ])
-        httpretty.register_uri(httpretty.GET, BUGZILLA_BUG_URL,
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUG_URL,
                                responses=[
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(2)
                                ])
-        httpretty.register_uri(httpretty.GET, BUGZILLA_BUG_ACTIVITY_URL,
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUG_ACTIVITY_URL,
                                responses=[
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(7)
@@ -97,12 +104,15 @@ class TestBugzillaBackend(unittest.TestCase):
 
         self.assertEqual(len(bugs), 7)
         self.assertEqual(bugs[0]['bug_id'][0]['__text__'], '15')
-        self.assertEqual(len(bugs[0]['activity']), 14)
+        self.assertEqual(len(bugs[0]['activity']), 0)
         self.assertEqual(bugs[6]['bug_id'][0]['__text__'], '888')
-        self.assertEqual(len(bugs[6]['activity']), 0)
+        self.assertEqual(len(bugs[6]['activity']), 14)
 
         # Check requests
         expected = [{
+                     'ctype' : ['xml']
+                    },
+                    {
                      'ctype' : ['csv'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['1970-01-01T00:00:00']
@@ -161,7 +171,8 @@ class TestBugzillaBackend(unittest.TestCase):
         requests = []
         bodies_csv = [read_file('data/bugzilla_buglist_next.csv'),
                       ""]
-        bodies_xml = [read_file('data/bugzilla_bugs_details_next.xml', mode='rb')]
+        bodies_xml = [read_file('data/bugzilla_version.xml', mode='rb'),
+                      read_file('data/bugzilla_bugs_details_next.xml', mode='rb')]
         bodies_html = [read_file('data/bugzilla_bug_activity.html', mode='rb'),
                        read_file('data/bugzilla_bug_activity_empty.html', mode='rb')]
 
@@ -177,16 +188,19 @@ class TestBugzillaBackend(unittest.TestCase):
 
             return (200, headers, body)
 
-        httpretty.register_uri(httpretty.GET, BUGZILLA_BUGLIST_URL,
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGLIST_URL,
                                responses=[
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(2)
                                ])
-        httpretty.register_uri(httpretty.GET, BUGZILLA_BUG_URL,
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUG_URL,
                                responses=[
                                     httpretty.Response(body=request_callback)
                                ])
-        httpretty.register_uri(httpretty.GET, BUGZILLA_BUG_ACTIVITY_URL,
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUG_ACTIVITY_URL,
                                responses=[
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(2)
@@ -199,12 +213,15 @@ class TestBugzillaBackend(unittest.TestCase):
 
         self.assertEqual(len(bugs), 2)
         self.assertEqual(bugs[0]['bug_id'][0]['__text__'], '30')
-        self.assertEqual(len(bugs[0]['activity']), 0)
+        self.assertEqual(len(bugs[0]['activity']), 14)
         self.assertEqual(bugs[1]['bug_id'][0]['__text__'], '888')
-        self.assertEqual(len(bugs[1]['activity']), 14)
+        self.assertEqual(len(bugs[1]['activity']), 0)
 
         # Check requests
         expected = [{
+                     'ctype' : ['xml']
+                    },
+                    {
                      'ctype' : ['csv'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['2015-01-01T00:00:00']
@@ -235,7 +252,12 @@ class TestBugzillaBackend(unittest.TestCase):
     def test_fetch_empty(self):
         """Test whethet it works when no bugs are fetched"""
 
-        httpretty.register_uri(httpretty.GET, BUGZILLA_BUGLIST_URL,
+        body = read_file('data/bugzilla_version.xml')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_METADATA_URL,
+                               body=body, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGLIST_URL,
                                body="", status=200)
 
         from_date = datetime.datetime(2100, 1, 1)
@@ -355,12 +377,37 @@ class TestBugzillaClient(unittest.TestCase):
     match with the parameters from the request.
     """
     @httpretty.activate
+    def test_init(self):
+        """Test initialization"""
+
+        # Set up a mock HTTP server
+        body = read_file('data/bugzilla_version.xml')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_METADATA_URL,
+                               body=body, status=200)
+
+        client = BugzillaClient(BUGZILLA_SERVER_URL)
+        self.assertEqual(client.version, '4.2.1')
+
+    @httpretty.activate
+    def test_init_not_found_version(self):
+        """Test if it fails when the server version is not found"""
+
+        # Set up a mock HTTP server
+        body = read_file('data/bugzilla_no_version.xml')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_METADATA_URL,
+                               body=body, status=200)
+
+        with self.assertRaises(BackendError):
+            BugzillaClient(BUGZILLA_SERVER_URL)
+
+    @httpretty.activate
     def test_metadata(self):
         """Test metadata API call"""
 
         # Set up a mock HTTP server
         body = read_file('data/bugzilla_version.xml')
-
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_METADATA_URL,
                                body=body, status=200)
@@ -385,8 +432,12 @@ class TestBugzillaClient(unittest.TestCase):
         """Test buglist API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_buglist.csv')
+        body = read_file('data/bugzilla_version.xml')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_METADATA_URL,
+                               body=body, status=200)
 
+        body = read_file('data/bugzilla_buglist.csv')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGLIST_URL,
                                body=body, status=200)
@@ -410,9 +461,8 @@ class TestBugzillaClient(unittest.TestCase):
         self.assertRegex(req.path, '/buglist.cgi')
         self.assertDictEqual(req.querystring, expected)
 
-        # Call API with from_date and version args
-        response = client.buglist(from_date=datetime.datetime(2015, 1, 1),
-                                  version='4.0')
+        # Call API with from_date
+        response = client.buglist(from_date=datetime.datetime(2015, 1, 1))
 
         self.assertEqual(response, body)
 
@@ -434,15 +484,20 @@ class TestBugzillaClient(unittest.TestCase):
         """Test buglist API call when the version of the server is less than 3.3"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_buglist.csv')
+        body = read_file('data/bugzilla_version.xml')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_METADATA_URL,
+                               body=body, status=200)
 
+        body = read_file('data/bugzilla_buglist.csv')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGLIST_URL,
                                body=body, status=200)
 
         # Call API without args
         client = BugzillaClient(BUGZILLA_SERVER_URL)
-        response = client.buglist(version='3.2.3')
+        client.version = '3.2.3'
+        response = client.buglist()
 
         self.assertEqual(response, body)
 
@@ -464,17 +519,20 @@ class TestBugzillaClient(unittest.TestCase):
         """Test bugs API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_bug.xml')
-
+        version_body = read_file('data/bugzilla_version.xml')
+        bug_body = read_file('data/bugzilla_bug.xml')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_URL,
-                               body=body, status=200)
+                               responses=[
+                                    httpretty.Response(body=version_body, status=200),
+                                    httpretty.Response(body=bug_body, status=200)
+                               ])
 
         # Call API
         client = BugzillaClient(BUGZILLA_SERVER_URL)
         response = client.bugs('8', '9')
 
-        self.assertEqual(response, body)
+        self.assertEqual(response, bug_body)
 
         # Check request params
         expected = {
@@ -494,8 +552,12 @@ class TestBugzillaClient(unittest.TestCase):
         """Test bug acitivity API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_bug_activity.html')
+        body = read_file('data/bugzilla_version.xml')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_METADATA_URL,
+                               body=body, status=200)
 
+        body = read_file('data/bugzilla_bug_activity.html')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_ACTIVITY_URL,
                                body=body, status=200)
@@ -517,4 +579,4 @@ class TestBugzillaClient(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(warnings='ignore')

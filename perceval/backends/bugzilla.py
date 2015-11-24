@@ -28,7 +28,7 @@ import re
 import bs4
 import requests
 
-from ..errors import ParseError
+from ..errors import BackendError, ParseError
 from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
 
@@ -175,7 +175,7 @@ class Bugzilla:
                 nheaders = len(tb.tr.find_all('th', recursive=False))
                 if nheaders == 5:
                     return tb
-            raise ParseError(cause='Table of bug activity not found.')
+            raise ParseError(cause="Table of bug activity not found.")
 
         def remove_tags(bs):
             HTML_TAGS_TO_REMOVE = ['a', 'i', 'span']
@@ -229,11 +229,20 @@ class BugzillaClient:
     kind of data from a Bugzilla repository. Currently, it only
     supports 3.x and 4.x servers.
 
-    :param base_url: URL of the Bugzilla server
-    """
+    When it is initialized, it checks if the given Bugzilla is
+    available and retrieves its version.
 
+    :param base_url: URL of the Bugzilla server
+
+    :raises BackendError: when an error occurs initilizing the
+        client
+    """
     URL = "%(base)s/%(cgi)s"
     HEADERS = {'User-Agent': 'perceval-bg-0.1'}
+
+    # Regular expression to check the Bugzilla version
+    VERSION_REGEX = re.compile(r'.+bugzilla version="([\d\.]+)"',
+                               flags=re.DOTALL)
 
     # Bugzilla versions that follow the old style queries
     OLD_STYLE_VERSIONS = ['3.2.3', '3.2.2']
@@ -257,6 +266,7 @@ class BugzillaClient:
 
     def __init__(self, base_url):
         self.base_url = base_url
+        self.version = self.__fetch_version()
 
     def metadata(self):
         """Get metadata information in XML format."""
@@ -269,13 +279,12 @@ class BugzillaClient:
 
         return response
 
-    def buglist(self, from_date=DEFAULT_DATETIME, version=None):
+    def buglist(self, from_date=DEFAULT_DATETIME):
         """Get a summary of bugs in CSV format.
 
         :param from_date: retrieve bugs that where updated from that date
-        :param version: version of the server
         """
-        if version in self.OLD_STYLE_VERSIONS:
+        if self.version in self.OLD_STYLE_VERSIONS:
             order = 'Last+Changed'
         else:
             order = 'changeddate'
@@ -334,3 +343,13 @@ class BugzillaClient:
         req.raise_for_status()
 
         return req.text
+
+    def __fetch_version(self):
+        response = self.metadata()
+        m = re.match(self.VERSION_REGEX, response)
+
+        if m:
+            return m.group(1)
+        else:
+            cause = "Bugzilla client could not determine the server version."
+            raise BackendError(cause=cause)
