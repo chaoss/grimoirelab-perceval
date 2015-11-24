@@ -28,6 +28,7 @@ import re
 import bs4
 import requests
 
+from ..backend import Backend
 from ..errors import BackendError, ParseError
 from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
@@ -35,7 +36,7 @@ from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 MAX_BUGS = 200 # Maximum number of bugs per query
 
 
-class Bugzilla:
+class Bugzilla(Backend):
     """Bugzilla backend.
 
     This class allows the fetch the bugs stored in Bugzilla
