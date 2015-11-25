@@ -36,8 +36,10 @@ PERCEVAL_DESC_MSG = \
 """Send Sir Perceval on a quest to retrieve and gather data from software
 repositories.
 
-Repositories are reached using specific backends. Data is later stored on a
-NoSQL database.
+Repositories are reached using specific backends. The most common backends
+are:
+
+    bugzilla         Fetch bugs from a Bugzilla server
 
 optional arguments:
   -h, --help            show this help message and exit
