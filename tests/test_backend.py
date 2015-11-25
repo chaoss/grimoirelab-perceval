@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2015 Bitergia
@@ -29,13 +29,29 @@ if not '..' in sys.path:
 import argparse
 import unittest
 
-from perceval.backend import Backend
+from perceval.backend import BackendCommand
 
 
-class TestBackend(unittest.TestCase):
+class TestBackendCommand(unittest.TestCase):
+
+    def test_parsing_on_init(self):
+        """Test if the arguments are parsed when the class is initialized"""
+
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--from-date', '2015-01-01']
+
+        cmd = BackendCommand(*args)
+
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.backend_user, 'jsmith')
+        self.assertEqual(cmd.parsed_args.backend_password, '1234')
+        self.assertEqual(cmd.parsed_args.backend_token, 'abcd')
+        self.assertEqual(cmd.parsed_args.from_date, '2015-01-01')
 
     def test_argument_parser(self):
-        parser = Backend.get_argument_parser()
+        """Test if it returns a argument parser object"""
+
+        parser = BackendCommand.create_argument_parser()
         self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
