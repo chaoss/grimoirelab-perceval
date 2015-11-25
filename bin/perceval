@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2015 Bitergia
@@ -26,7 +26,7 @@ import configparser
 import os.path
 import sys
 
-from perceval.backend import Backend
+from perceval.backends import PERCEVAL_CMDS
 
 
 PERCEVAL_USAGE_MSG = \
@@ -58,8 +58,12 @@ def main():
     else:
         defaults = {}
 
-    backend_parser = Backend.get_argument_parser()
-    backend_parser.parse_args(args.backend_args)
+    if args.backend not in PERCEVAL_CMDS:
+        raise RuntimeError("Unknown backend %s" % args.backend)
+
+    klass = PERCEVAL_CMDS[args.backend]
+    cmd = klass(*args.backend_args)
+    cmd.run()
 
 
 def parse_args():
