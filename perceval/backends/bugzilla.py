@@ -59,7 +59,12 @@ class Bugzilla(Backend):
         updated since the given date.
 
         :param from_date: obtain bugs updated since this date
+
+        :returns: a generator of bugs
         """
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
         buglist = [bug for bug in self.__fetch_buglist(from_date)]
 
         for i in range(0, len(buglist), self.max_bugs):
