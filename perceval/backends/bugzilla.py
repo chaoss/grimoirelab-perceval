@@ -23,12 +23,13 @@
 
 import csv
 import datetime
+import json
 import re
 
 import bs4
 import requests
 
-from ..backend import Backend
+from ..backend import Backend, BackendCommand
 from ..errors import BackendError, ParseError
 from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
@@ -221,6 +222,54 @@ class Bugzilla(Backend):
                          'Removed' : format_text(removed),
                          'Added'   : format_text(added)}
                 yield event
+
+
+class BugzillaCommand(BackendCommand):
+    """Class to run Bugzilla backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.url = self.parsed_args.url
+        self.max_bugs = self.parsed_args.max_bugs
+        self.from_date = str_to_datetime(self.parsed_args.from_date)
+        self.outfile = self.parsed_args.outfile
+
+        self.backend = Bugzilla(self.url, max_bugs=self.max_bugs)
+
+    def run(self):
+        """Fetch and print the bugs.
+
+        This method runs the backend to fetch the bugs from the given
+        repository. Bugs are converted to JSON objects and printed to the
+        defined output.
+        """
+        for bug in self.backend.fetch(from_date=self.from_date):
+            obj = json.dumps(bug, indent=4, sort_keys=True)
+
+            try:
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+            except IOError as e:
+                raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the Bugzilla argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # Bugzilla options
+        group = parser.add_argument_group('Bugzilla arguments')
+        group.add_argument('--max-bugs', dest='max_bugs',
+                           type=int, default=MAX_BUGS,
+                           help="Maximum number of bugs requested on the same query")
+
+        # Required arguments
+        parser.add_argument('url',
+                            help="URL of the Bugzilla server")
+
+        return parser
 
 
 class BugzillaClient:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2015 Bitergia
@@ -21,7 +21,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-
+import argparse
 import datetime
 import sys
 import unittest
@@ -32,10 +32,7 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.errors import BackendError, ParseError
-from perceval.backends.bugzilla import Bugzilla, BugzillaClient
-
-
-
+from perceval.backends.bugzilla import Bugzilla, BugzillaCommand, BugzillaClient
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'
@@ -366,6 +363,33 @@ class TestBugzillaBackend(unittest.TestCase):
         with self.assertRaises(ParseError):
             activity = Bugzilla.parse_bug_activity(raw_html)
             _ = [event for event in activity]
+
+
+class TestBugzillaCommand(unittest.TestCase):
+
+    @httpretty.activate
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        # Set up a mock HTTP server
+        body = read_file('data/bugzilla_version.xml')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_METADATA_URL,
+                               body=body, status=200)
+
+        args = ['--max-bugs', '10', BUGZILLA_SERVER_URL]
+
+        cmd = BugzillaCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.max_bugs, 10)
+        self.assertEqual(cmd.parsed_args.url, BUGZILLA_SERVER_URL)
+        self.assertIsInstance(cmd.backend, Bugzilla)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = BugzillaCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 class TestBugzillaClient(unittest.TestCase):
