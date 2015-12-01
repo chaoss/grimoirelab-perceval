@@ -24,7 +24,6 @@
 import datetime
 import sys
 import unittest
-import xml.etree.ElementTree
 
 if not '..' in sys.path:
     sys.path.insert(0, '..')
