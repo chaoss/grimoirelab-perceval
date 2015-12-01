@@ -29,10 +29,21 @@ if not '..' in sys.path:
 import argparse
 import unittest
 
-from perceval.backend import BackendCommand
+from perceval.backend import Backend, BackendCommand
+
+
+class TestBackend(unittest.TestCase):
+    """Unit tests for Backend"""
+
+    def test_cache_value_error(self):
+        """Test whether it raises a error on invalid cache istances"""
+
+        with self.assertRaises(ValueError):
+            Backend(cache=8)
 
 
 class TestBackendCommand(unittest.TestCase):
+    """Unit tests for BackendCommand"""
 
     def test_parsing_on_init(self):
         """Test if the arguments are parsed when the class is initialized"""

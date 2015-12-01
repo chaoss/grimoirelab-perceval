@@ -23,16 +23,53 @@
 import argparse
 import sys
 
+from .cache import Cache
 from .utils import DEFAULT_DATETIME
 
 
 class Backend:
+    """Abstract class for backends.
 
-    def __init__(self):
-        pass
+    Base class to fetch data from a repository. During the
+    initialization, a `Cache` object can be provided for caching
+    raw data from the repositories.
+
+    Derivated classes have to implement `fetch` and `fetch_from_cache`
+    methods. Otherwise, `NotImplementedError` exception will be raised.
+
+    :param cache: object to cache raw data
+
+    :raises ValueError: raised when `cache` is not an instance of
+        `Cache` class
+    """
+    def __init__(self, cache=None):
+        if cache and not isinstance(cache, Cache):
+            msg = "cache is not an instance of Cache. %s object given" \
+                % (str(type(cache)))
+            raise ValueError(msg)
+
+        self.cache = cache
+        self.cache_queue = []
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         raise NotImplementedError
+
+    def fetch_from_cache(self):
+        raise NotImplementedError
+
+    def _purge_cache_queue(self):
+        self.cache_queue = []
+
+    def _flush_cache_queue(self):
+        if not self.cache:
+            return
+        self.cache.store(*self.cache_queue)
+        self._purge_cache_queue()
+
+    def _push_cache_queue(self, item):
+        if not self.cache:
+            return
+        self.cache_queue.append(item)
 
 
 class BackendCommand:
