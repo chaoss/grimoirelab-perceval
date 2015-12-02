@@ -42,6 +42,12 @@ class BackendError(BaseError):
     message = "%(cause)s"
 
 
+class CacheError(BaseError):
+    """Generic error for cache objects"""
+
+    message = "%(cause)s"
+
+
 class InvalidDateError(BaseError):
     """Exception raised when a date is invalid"""
 

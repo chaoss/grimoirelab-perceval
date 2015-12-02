@@ -77,6 +77,15 @@ class TestBackendError(unittest.TestCase):
         self.assertEqual('mock error on backend', str(e))
 
 
+class TestCacheError(unittest.TestCase):
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = errors.CacheError(cause='invalid cache')
+        self.assertEqual('invalid cache', str(e))
+
+
 class TestInvalidDateError(unittest.TestCase):
 
     def test_message(self):
