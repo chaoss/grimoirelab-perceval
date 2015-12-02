@@ -411,10 +411,10 @@ class TestBugzillaClient(unittest.TestCase):
                                body=body, status=200)
 
         client = BugzillaClient(BUGZILLA_SERVER_URL)
-        self.assertEqual(client.version, '4.2.1')
+        self.assertEqual(client.version, None)
 
     @httpretty.activate
-    def test_init_not_found_version(self):
+    def test_not_found_version(self):
         """Test if it fails when the server version is not found"""
 
         # Set up a mock HTTP server
@@ -424,7 +424,8 @@ class TestBugzillaClient(unittest.TestCase):
                                body=body, status=200)
 
         with self.assertRaises(BackendError):
-            BugzillaClient(BUGZILLA_SERVER_URL)
+            client = BugzillaClient(BUGZILLA_SERVER_URL)
+            client.buglist()
 
     @httpretty.activate
     def test_metadata(self):
@@ -543,20 +544,16 @@ class TestBugzillaClient(unittest.TestCase):
         """Test bugs API call"""
 
         # Set up a mock HTTP server
-        version_body = read_file('data/bugzilla_version.xml')
-        bug_body = read_file('data/bugzilla_bug.xml')
+        body = read_file('data/bugzilla_bug.xml')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_URL,
-                               responses=[
-                                    httpretty.Response(body=version_body, status=200),
-                                    httpretty.Response(body=bug_body, status=200)
-                               ])
+                               body=body, status=200)
 
         # Call API
         client = BugzillaClient(BUGZILLA_SERVER_URL)
         response = client.bugs('8', '9')
 
-        self.assertEqual(response, bug_body)
+        self.assertEqual(response, body)
 
         # Check request params
         expected = {

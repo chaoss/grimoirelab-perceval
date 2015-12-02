@@ -321,7 +321,7 @@ class BugzillaClient:
 
     def __init__(self, base_url):
         self.base_url = base_url
-        self.version = self.__fetch_version()
+        self.version = None
 
     def metadata(self):
         """Get metadata information in XML format."""
@@ -339,6 +339,9 @@ class BugzillaClient:
 
         :param from_date: retrieve bugs that where updated from that date
         """
+        if not self.version:
+            self.version = self.__fetch_version()
+
         if self.version in self.OLD_STYLE_VERSIONS:
             order = 'Last+Changed'
         else:
