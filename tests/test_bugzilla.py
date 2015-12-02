@@ -279,94 +279,6 @@ class TestBugzillaBackend(unittest.TestCase):
 
         self.assertDictEqual(req.querystring, expected)
 
-    def test_parse_buglist(self):
-        """Test buglist parsing"""
-
-        raw_csv = read_file('data/bugzilla_buglist.csv')
-
-        bugs = Bugzilla.parse_buglist(raw_csv)
-        result = [bug for bug in bugs]
-
-        self.assertEqual(len(result), 5)
-        self.assertEqual(result[0]['bug_id'], '15')
-        self.assertEqual(result[4]['bug_id'], '19')
-
-    def test_parse_bugs_details(self):
-        """Test bugs details parsing"""
-
-        raw_xml = read_file('data/bugzilla_bugs_details.xml')
-
-        bugs = Bugzilla.parse_bugs_details(raw_xml)
-        result = [bug for bug in bugs]
-
-        self.assertEqual(len(result), 5)
-
-        bug_ids = [bug['bug_id'][0]['__text__'] \
-                   for bug in result]
-        expected = ['15', '18', '17', '20', '19']
-
-        self.assertListEqual(bug_ids, expected)
-
-        raw_xml = read_file('data/bugzilla_bugs_details_next.xml')
-
-        bugs = Bugzilla.parse_bugs_details(raw_xml)
-        result = [bug for bug in bugs]
-
-    def test_parse_invalid_bug_details(self):
-        """Test whether it fails parsing an invalid XML with no bugs"""
-
-        raw_xml = read_file('data/bugzilla_bugs_details_not_valid.xml')
-
-        with self.assertRaises(ParseError):
-            bugs = Bugzilla.parse_bugs_details(raw_xml)
-            _ = [bug for bug in bugs]
-
-    def test_parse_activity(self):
-        """Test activity bug parsing"""
-
-        raw_html = read_file('data/bugzilla_bug_activity.html')
-
-        activity = Bugzilla.parse_bug_activity(raw_html)
-        result = [event for event in activity]
-
-        self.assertEqual(len(result), 14)
-
-        expected = {
-                    'Who' : 'sduenas@example.org',
-                    'When' : '2013-06-25 11:57:23 CEST',
-                    'What' : 'Attachment #172 Attachment is obsolete',
-                    'Removed' : '0',
-                    'Added' : '1'
-                   }
-        self.assertDictEqual(result[0], expected)
-
-        expected = {
-                    'Who' : 'sduenas@example.org',
-                    'When' : '2013-06-25 11:59:07 CEST',
-                    'What' : 'Depends on',
-                    'Removed' : '350',
-                    'Added' : ''
-                   }
-        self.assertDictEqual(result[6], expected)
-
-    def test_parse_empty_activity(self):
-        """Test the parser when the activity table is empty"""
-
-        raw_html = read_file('data/bugzilla_bug_activity_empty.html')
-
-        activity = Bugzilla.parse_bug_activity(raw_html)
-        result = [event for event in activity]
-        self.assertEqual(len(result), 0)
-
-    def test_parse_activity_no_table(self):
-        """Test if it raises an exception the activity table is not found"""
-
-        raw_html = read_file('data/bugzilla_bug_activity_not_valid.html')
-
-        with self.assertRaises(ParseError):
-            activity = Bugzilla.parse_bug_activity(raw_html)
-            _ = [event for event in activity]
-
 
 class TestBugzillaBackendCache(unittest.TestCase):
     """Bugzilla backend tests using a cache"""
@@ -460,6 +372,98 @@ class TestBugzillaBackendCache(unittest.TestCase):
 
         with self.assertRaises(CacheError):
             _ = [bug for bug in bg.fetch_from_cache()]
+
+
+class TestBugzillaBackendParsers(unittest.TestCase):
+    """Bugzilla backend parsers tests"""
+
+    def test_parse_buglist(self):
+        """Test buglist parsing"""
+
+        raw_csv = read_file('data/bugzilla_buglist.csv')
+
+        bugs = Bugzilla.parse_buglist(raw_csv)
+        result = [bug for bug in bugs]
+
+        self.assertEqual(len(result), 5)
+        self.assertEqual(result[0]['bug_id'], '15')
+        self.assertEqual(result[4]['bug_id'], '19')
+
+    def test_parse_bugs_details(self):
+        """Test bugs details parsing"""
+
+        raw_xml = read_file('data/bugzilla_bugs_details.xml')
+
+        bugs = Bugzilla.parse_bugs_details(raw_xml)
+        result = [bug for bug in bugs]
+
+        self.assertEqual(len(result), 5)
+
+        bug_ids = [bug['bug_id'][0]['__text__'] \
+                   for bug in result]
+        expected = ['15', '18', '17', '20', '19']
+
+        self.assertListEqual(bug_ids, expected)
+
+        raw_xml = read_file('data/bugzilla_bugs_details_next.xml')
+
+        bugs = Bugzilla.parse_bugs_details(raw_xml)
+        result = [bug for bug in bugs]
+
+    def test_parse_invalid_bug_details(self):
+        """Test whether it fails parsing an invalid XML with no bugs"""
+
+        raw_xml = read_file('data/bugzilla_bugs_details_not_valid.xml')
+
+        with self.assertRaises(ParseError):
+            bugs = Bugzilla.parse_bugs_details(raw_xml)
+            _ = [bug for bug in bugs]
+
+    def test_parse_activity(self):
+        """Test activity bug parsing"""
+
+        raw_html = read_file('data/bugzilla_bug_activity.html')
+
+        activity = Bugzilla.parse_bug_activity(raw_html)
+        result = [event for event in activity]
+
+        self.assertEqual(len(result), 14)
+
+        expected = {
+                    'Who' : 'sduenas@example.org',
+                    'When' : '2013-06-25 11:57:23 CEST',
+                    'What' : 'Attachment #172 Attachment is obsolete',
+                    'Removed' : '0',
+                    'Added' : '1'
+                   }
+        self.assertDictEqual(result[0], expected)
+
+        expected = {
+                    'Who' : 'sduenas@example.org',
+                    'When' : '2013-06-25 11:59:07 CEST',
+                    'What' : 'Depends on',
+                    'Removed' : '350',
+                    'Added' : ''
+                   }
+        self.assertDictEqual(result[6], expected)
+
+    def test_parse_empty_activity(self):
+        """Test the parser when the activity table is empty"""
+
+        raw_html = read_file('data/bugzilla_bug_activity_empty.html')
+
+        activity = Bugzilla.parse_bug_activity(raw_html)
+        result = [event for event in activity]
+        self.assertEqual(len(result), 0)
+
+    def test_parse_activity_no_table(self):
+        """Test if it raises an exception the activity table is not found"""
+
+        raw_html = read_file('data/bugzilla_bug_activity_not_valid.html')
+
+        with self.assertRaises(ParseError):
+            activity = Bugzilla.parse_bug_activity(raw_html)
+            _ = [event for event in activity]
 
 
 class TestBugzillaCommand(unittest.TestCase):
