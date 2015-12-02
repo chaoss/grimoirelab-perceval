@@ -30,7 +30,7 @@ import bs4
 import requests
 
 from ..backend import Backend, BackendCommand
-from ..errors import BackendError, ParseError
+from ..errors import BackendError, CacheError, ParseError
 from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
 
@@ -46,8 +46,10 @@ class Bugzilla(Backend):
 
     :param url: Bugzilla server URL
     :param max_bugs: maximum number of bugs requested on the same query
+    :param cache: cache object to store raw data
     """
-    def __init__(self, url, max_bugs=MAX_BUGS):
+    def __init__(self, url, max_bugs=MAX_BUGS, cache=None):
+        super().__init__(cache=cache)
         self.url = url
         self.max_bugs = max(1, max_bugs)
         self.client = BugzillaClient(url)
@@ -65,6 +67,8 @@ class Bugzilla(Backend):
         if not from_date:
             from_date = DEFAULT_DATETIME
 
+        self._purge_cache_queue()
+
         buglist = [bug for bug in self.__fetch_buglist(from_date)]
 
         for i in range(0, len(buglist), self.max_bugs):
@@ -76,6 +80,48 @@ class Bugzilla(Backend):
             for bug in bugs:
                 bug_id = bug['bug_id'][0]['__text__']
                 bug['activity'] = self.__fetch_and_parse_bug_activity(bug_id)
+                yield bug
+
+            self._flush_cache_queue()
+
+    def fetch_from_cache(self):
+        """Fetch the bugs from the cache.
+
+        It returns the bugs stored in the cache object provided during
+        the initialization of the object. If this method is called but
+        no cache object was provided, the method will raise a `CacheError`
+        exception.
+
+        :returns: a generator of bugs
+
+        :raises CacheError: raised when an error occurs accesing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        cache_items = self.cache.retrieve()
+
+        while True:
+            try:
+                raw_bugs = next(cache_items)
+            except StopIteration:
+                break
+
+            bugs = self.parse_bugs_details(raw_bugs)
+
+            for bug in bugs:
+                try:
+                    raw_activity = next(cache_items)
+                except StopIteration:
+                    # Fatal error. The code should not reach here.
+                    # Cache should had stored an activity item per parsed bug.
+                    cause = "cache is exhausted but more items were expected"
+                    raise CacheError(cause=cause)
+
+                activity = self.parse_bug_activity(raw_activity)
+                bug['activity'] = [event for event in activity]
+
                 yield bug
 
     def __fetch_buglist(self, from_date):
@@ -101,10 +147,12 @@ class Bugzilla(Backend):
 
     def __fetch_and_parse_bugs_details(self, *bug_ids):
         raw_bugs = self.client.bugs(*bug_ids)
+        self._push_cache_queue(raw_bugs)
         return self.parse_bugs_details(raw_bugs)
 
     def __fetch_and_parse_bug_activity(self, bug_id):
         raw_activity = self.client.bug_activity(bug_id)
+        self._push_cache_queue(raw_activity)
         activity = self.parse_bug_activity(raw_activity)
         return [event for event in activity]
 
