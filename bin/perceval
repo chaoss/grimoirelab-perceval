@@ -80,7 +80,7 @@ def parse_args():
     parser.add_argument('-h', '--help', action='help',
                        help=argparse.SUPPRESS)
     parser.add_argument('-c', '--config', dest='config_file',
-                        default=os.path.expanduser('~/.perceval'),
+                        default=os.path.expanduser('~/.perceval/perceval.cfg'),
                         help=argparse.SUPPRESS)
 
     parser.add_argument('backend', help=argparse.SUPPRESS)
@@ -109,7 +109,7 @@ def read_config_file(filepath, backend):
     config.read(filepath)
 
     args = {}
-    sections = ['db', backend]
+    sections = ['cache', backend]
 
     for section in sections:
         if section in config.sections():
