@@ -344,7 +344,7 @@ class BugzillaClient:
     HEADERS = {'User-Agent': 'perceval-bg-0.1'}
 
     # Regular expression to check the Bugzilla version
-    VERSION_REGEX = re.compile(r'.+bugzilla version="([\d\.]+)"',
+    VERSION_REGEX = re.compile(r'.+bugzilla version="([^"]+)"',
                                flags=re.DOTALL)
 
     # Bugzilla versions that follow the old style queries

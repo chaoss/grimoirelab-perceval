@@ -572,6 +572,7 @@ class TestBugzillaClient(unittest.TestCase):
         client = BugzillaClient(BUGZILLA_SERVER_URL)
         response = client.buglist()
 
+        self.assertEqual(client.version, '4.2.1+')
         self.assertEqual(response, body)
 
         # Check request params
