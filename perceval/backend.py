@@ -105,6 +105,17 @@ class BackendCommand:
         group.add_argument('--from-date', dest='from_date', default='1970-01-01',
                            help="fetch items from this date")
 
+        # Cache arguments
+        group = parser.add_argument_group('cache arguments')
+        group.add_argument('--cache-path', dest='cache_path', default=None,
+                           help="directory path to the cache")
+        group.add_argument('--clean-cache', dest='clean_cache', action='store_true',
+                           help="clean the cache before the fetching process")
+        group.add_argument('--no-cache', dest='no_cache', action='store_true',
+                           help="do not store data in the cache")
+        group.add_argument('--fetch-cache', dest='fetch_cache', action='store_true',
+                           help="fetch data from the cache")
+
         # Output arguments
         group = parser.add_argument_group('output arguments')
         group.add_argument('-o', '--output', type=argparse.FileType('w'),
