@@ -24,12 +24,14 @@
 import csv
 import datetime
 import json
+import os.path
 import re
 
 import bs4
 import requests
 
 from ..backend import Backend, BackendCommand
+from ..cache import Cache
 from ..errors import BackendError, CacheError, ParseError
 from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
@@ -288,7 +290,25 @@ class BugzillaCommand(BackendCommand):
         self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.outfile = self.parsed_args.outfile
 
-        self.backend = Bugzilla(self.url, max_bugs=self.max_bugs)
+        if not self.parsed_args.no_cache:
+            if not self.parsed_args.cache_path:
+                base_path = os.path.expanduser('~/.perceval/cache/')
+            else:
+                base_path = self.parsed_args.cache_path
+
+            cache_path = os.path.join(base_path, self.url)
+
+            cache = Cache(cache_path)
+
+            if self.parsed_args.clean_cache:
+                cache.clean()
+            else:
+                cache.backup()
+        else:
+            cache = None
+
+        self.backend = Bugzilla(self.url, max_bugs=self.max_bugs,
+                                cache=cache)
 
     def run(self):
         """Fetch and print the bugs.
@@ -297,14 +317,22 @@ class BugzillaCommand(BackendCommand):
         repository. Bugs are converted to JSON objects and printed to the
         defined output.
         """
-        for bug in self.backend.fetch(from_date=self.from_date):
-            obj = json.dumps(bug, indent=4, sort_keys=True)
+        if self.parsed_args.fetch_cache:
+            bugs = self.backend.fetch_from_cache()
+        else:
+            bugs = self.backend.fetch(from_date=self.from_date)
 
-            try:
+        try:
+            for bug in bugs:
+                obj = json.dumps(bug, indent=4, sort_keys=True)
                 self.outfile.write(obj)
                 self.outfile.write('\n')
-            except IOError as e:
-                raise RuntimeError(str(e))
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            if self.backend.cache:
+                self.backend.cache.recover()
+            raise RuntimeError(str(e))
 
     @classmethod
     def create_argument_parser(cls):
