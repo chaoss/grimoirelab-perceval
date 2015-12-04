@@ -40,8 +40,8 @@ class GitHub(Backend):
     name = "github"
     users = {}
 
-    def __init__(self, owner = None, repository = None, token = None,
-                 cache = None):
+    def __init__(self, owner=None, repository=None, token=None,
+                 cache=None):
         super().__init__(cache=cache)
         self.owner = owner
         self.repository = repository
@@ -111,15 +111,15 @@ class GitHubClient:
         self.auth_token = token
         self.last_page = self.page = 1  # pagination in items downloading
 
-
     def _get_url(self):
         github_api = "https://api.github.com"
         github_api_repos = github_api + "/repos"
-        url_repo = github_api_repos + "/" + self.owner +"/" + self.repository
+        url_repo = github_api_repos + "/" + self.owner + "/" + self.repository
         return url_repo
 
-    def get_issues_url(self, startdate = None):
-        github_per_page = 30  # 100 in other items. 20 for pull requests. 30 issues
+    def get_issues_url(self, startdate=None):
+        # 100 in other items. 20 for pull requests. 30 issues
+        github_per_page = 30
 
         url_issues = self._get_url() + "/issues"
 
@@ -131,12 +131,11 @@ class GitHubClient:
             startdate = startdate.isoformat()
             url_params += "&since=" + startdate
 
-
         url = url_issues + url_params
 
         return url
 
-    def get_issues(self, start = None):
+    def get_issues(self, start=None):
         ''' Return the items from github API in iterations '''
 
         if self.page == 1:
@@ -149,7 +148,7 @@ class GitHubClient:
 
         logging.debug("Get GitHub issues from " + self.url_next)
         r = requests.get(self.url_next, verify=False,
-                         headers={'Authorization':'token ' + self.auth_token})
+                         headers={'Authorization': 'token ' + self.auth_token})
         issues = r.json()
 
         logging.debug("Rate limit: %s" %
@@ -161,7 +160,8 @@ class GitHubClient:
 
         if self.last_page == 1:
             if 'last' in r.links:
-                self.last_page = r.links['last']['url'].split('&page=')[1].split('&')[0]
+                last_url = r.links['last']['url']
+                self.last_page = last_url.split('&page=')[1].split('&')[0]
                 self.last_page = int(self.last_page)
 
         logging.debug("Page: %i/%i" % (self.page, self.last_page))
@@ -189,7 +189,8 @@ class GitHubCommand(BackendCommand):
             else:
                 base_path = self.parsed_args.cache_path
             # TODO: add get_id for backend to return the unique id
-            cache_path = os.path.join(base_path, self.owner+"_"+self.repository)
+            cache_path = os.path.join(base_path, self.owner + "_" +
+                                      self.repository)
 
             cache = Cache(cache_path)
 
@@ -236,11 +237,11 @@ class GitHubCommand(BackendCommand):
         # GitHub options
         group = parser.add_argument_group('GitHub arguments')
 
-        group.add_argument("--owner", required = True,
-                           help = "github owner")
-        group.add_argument("--repository", required = True,
-                           help = "github repository")
-        group.add_argument("--token", required = True,
-                           help = "github access token")
+        group.add_argument("--owner", required=True,
+                           help="github owner")
+        group.add_argument("--repository", required=True,
+                           help="github repository")
+        group.add_argument("--token", required=True,
+                           help="github access token")
 
         return parser
