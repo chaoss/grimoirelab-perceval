@@ -37,31 +37,27 @@ from ..errors import BackendError, CacheError
 from ..utils import DEFAULT_DATETIME, str_to_datetime
 
 
-
 class Gerrit(Backend):
 
     name = "gerrit"
 
-    def __init__(self, user = None, url = None, nreviews = None,
-                 cache = None, **nouse):
+    def __init__(self, user=None, url=None, nreviews=None,
+                 cache=None, **nouse):
         super().__init__(cache=cache)
         self.repository = url
         self.nreviews = nreviews
         self.last_item = None  # Start item for next iteration
         self.more_updates = True  # To check if reviews are updates
-        self.number_results = self.nreviews  # To control if there are more items
+        self.number_results = self.nreviews  # Check for more items
         self.client = GerritClient(self.repository, user, nreviews)
-
 
     def get_id(self):
         ''' Return gerrit unique identifier '''
 
         return self.repository
 
-
     def get_field_unique_id(self):
         return "id"
-
 
     def fetch(self, from_date=DEFAULT_DATETIME):
 
@@ -78,7 +74,6 @@ class Gerrit(Backend):
                 reviews = self.get_reviews(from_date)
                 self._push_cache_queue(reviews)
                 self._flush_cache_queue()
-
 
     def fetch_from_cache(self):
         """Fetch the bugs from the cache.
@@ -109,9 +104,7 @@ class Gerrit(Backend):
             for item in raw_items:
                 yield item
 
-
-
-    def get_reviews(self, from_date = None):
+    def get_reviews(self, from_date=None):
         """ Get all reviews from repository """
 
         reviews = []
@@ -130,12 +123,14 @@ class Gerrit(Backend):
 
         for entry in tickets:
             if 'project' in entry.keys():
-                entry_lastUpdated =  datetime.fromtimestamp(entry['lastUpdated'])
+                entry_lastUpdated = \
+                    datetime.fromtimestamp(entry['lastUpdated'])
                 entry['lastUpdated_date'] = entry_lastUpdated.isoformat()
 
-                if from_date: # Incremental mode
+                if from_date:  # Incremental mode
                     if entry_lastUpdated <= from_date:
-                        logging.debug("No more updates for %s" % (self.repository))
+                        logging.debug("No more updates for %s"
+                                      % (self.repository))
                         self.more_updates = False
                         break
 
@@ -160,7 +155,8 @@ class GerritClient():
         self.repository = repository
         self.project = None
         self.version = None
-        self.gerrit_cmd  = "ssh -p 29418 %s@%s" % (self.gerrit_user, self.repository)
+        self.gerrit_cmd = "ssh -p 29418 %s@%s" % (self.gerrit_user,
+                                                  self.repository)
         self.gerrit_cmd += " gerrit "
 
     def _get_version(self):
@@ -171,7 +167,7 @@ class GerritClient():
         cmd = self.gerrit_cmd + " version "
 
         logging.debug("Getting version: %s" % (cmd))
-        raw_data = subprocess.check_output(cmd, shell = True)
+        raw_data = subprocess.check_output(cmd, shell=True)
         raw_data = str(raw_data, "UTF-8")
         logging.debug("Gerrit version: %s" % (raw_data))
 
@@ -190,13 +186,13 @@ class GerritClient():
             raise BackendError(cause=cause)
 
         self.version = [mayor, minor]
-        return  self.version
+        return self.version
 
     def _get_gerrit_cmd(self, last_item):
 
         cmd = self.gerrit_cmd + " query "
         if self.project:
-            cmd +="project:"+self.project+" "
+            cmd += "project:"+self.project+" "
         cmd += "limit:" + str(self.nreviews)
 
         # This does not work for Wikimedia 2.8.1 version
@@ -218,10 +214,9 @@ class GerritClient():
         cmd = self._get_gerrit_cmd(last_item)
 
         logging.debug(cmd)
-        raw_data = subprocess.check_output(cmd, shell = True)
+        raw_data = subprocess.check_output(cmd, shell=True)
 
         return raw_data
-
 
     def get_next_item(self, last_item, entry):
         next_item = None
@@ -294,7 +289,6 @@ class GerritCommand(BackendCommand):
                 self.backend.cache.recover()
             raise RuntimeError(str(e))
 
-
     @classmethod
     def create_argument_parser(cls):
         """Returns the Gerrit argument parser."""
@@ -305,10 +299,10 @@ class GerritCommand(BackendCommand):
         group = parser.add_argument_group('Gerrit arguments')
 
         group.add_argument("--user",
-                            help="Gerrit ssh user")
+                           help="Gerrit ssh user")
         group.add_argument("--url", required=True,
-                            help="Gerrit url")
+                           help="Gerrit url")
         group.add_argument("--nreviews",  default=500, type=int,
-                            help="Number of reviews per ssh query")
+                           help="Number of reviews per ssh query")
 
         return parser
