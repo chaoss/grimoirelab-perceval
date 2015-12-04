@@ -24,7 +24,6 @@
 
 
 from datetime import datetime
-from dateutil import parser
 import json
 import logging
 import os.path
