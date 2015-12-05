@@ -46,34 +46,9 @@ class Gerrit(Backend):
         super().__init__(cache=cache)
         self.repository = url
         self.nreviews = nreviews
-        self.last_item = None  # Start item for next iteration
-        self.more_updates = True  # To check if reviews are updates
-        self.number_results = self.nreviews  # Check for more items
+        self.last_review = None  # last review processed
+        self.number_results = None  # last number of results
         self.client = GerritClient(self.repository, user, nreviews)
-
-    def get_id(self):
-        ''' Return gerrit unique identifier '''
-
-        return self.repository
-
-    def get_field_unique_id(self):
-        return "id"
-
-    def fetch(self, from_date=DEFAULT_DATETIME):
-
-        self._purge_cache_queue()
-
-        reviews = self.get_reviews(from_date)
-        self._push_cache_queue(reviews)
-
-        while reviews:
-            issue = reviews.pop(0)
-            yield issue
-
-            if not reviews:
-                reviews = self.get_reviews(from_date)
-                self._push_cache_queue(reviews)
-                self._flush_cache_queue()
 
     def fetch_from_cache(self):
         """Fetch the bugs from the cache.
@@ -98,52 +73,62 @@ class Gerrit(Backend):
                 raw_items = next(cache_items)
                 if raw_items is None:
                     break
+                reviews = self._parse_reviews(raw_items)
             except StopIteration:
                 break
 
-            for item in raw_items:
+            for item in reviews:
                 yield item
 
-    def get_reviews(self, from_date=None):
-        """ Get all reviews from repository """
+    def fetch(self, from_date=DEFAULT_DATETIME):
+        self._purge_cache_queue()
 
+        self.last_item = None
+        reviews = self._get_reviews()
+
+        while reviews:
+            review = reviews.pop(0)
+            updated = datetime.fromtimestamp(review['lastUpdated'])
+            if updated <= from_date:
+                logging.debug("No more updates for %s" % (self.repository))
+                break
+
+            yield review
+
+            if not reviews:
+                reviews = self._get_reviews()
+
+    def _get_reviews(self):
         reviews = []
 
-        if self.number_results < self.nreviews or not self.more_updates:
-            # No more reviews after last iteration
+        if self.number_results and self.number_results < self.nreviews:
+            # No more reviews
             return reviews
 
         task_init = time()
         raw_data = self.client.get_items(self.last_item)
-        raw_data = str(raw_data, "UTF-8")
-        tickets_raw = "[" + raw_data.replace("\n", ",") + "]"
-        tickets_raw = tickets_raw.replace(",]", "]")
-
-        tickets = json.loads(tickets_raw)
-
-        for entry in tickets:
-            if 'project' in entry.keys():
-                entry_lastUpdated = \
-                    datetime.fromtimestamp(entry['lastUpdated'])
-                entry['lastUpdated_date'] = entry_lastUpdated.isoformat()
-
-                if from_date:  # Incremental mode
-                    if entry_lastUpdated <= from_date:
-                        logging.debug("No more updates for %s"
-                                      % (self.repository))
-                        self.more_updates = False
-                        break
-
-                reviews.append(entry)
-
-                self.last_item = self.client.get_next_item(self.last_item,
-                                                           entry)
-            elif 'rowCount' in entry.keys():
-                # logging.info("CONTINUE FROM: " + str(last_item))
-                self.number_results = entry['rowCount']
-
+        self._push_cache_queue(raw_data)
+        self._flush_cache_queue()
+        reviews = self._parse_reviews(raw_data)
+        self.last_item = self.client.get_next_item(self.last_item, reviews[-1])
         logging.info("Received %i reviews in %.2fs" % (len(reviews),
                                                        time()-task_init))
+        return reviews
+
+    def _parse_reviews(self, raw_data):
+        # Join isolated reviews in JSON in array for parsing
+        items_raw = "[" + raw_data.replace("\n", ",") + "]"
+        items_raw = items_raw.replace(",]", "]")
+        items = json.loads(items_raw)
+        reviews = []
+
+        for item in items:
+            if 'rowCount' in item.keys():
+                # stats data, not a review
+                self.number_results = item['rowCount']
+            elif 'project' in item.keys():
+                reviews.append(item)
+
         return reviews
 
 
@@ -215,6 +200,7 @@ class GerritClient():
 
         logging.debug(cmd)
         raw_data = subprocess.check_output(cmd, shell=True)
+        raw_data = str(raw_data, "UTF-8")
 
         return raw_data
 
@@ -278,10 +264,13 @@ class GerritCommand(BackendCommand):
             bugs = self.backend.fetch(from_date=self.from_date)
 
         try:
+            total = 0
             for bug in bugs:
                 obj = json.dumps(bug, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
+                # self.outfile.write(obj)
+                # self.outfile.write('\n')
+                total += 1
+            logging.info("Total reviews: %i", total)
         except IOError as e:
             raise RuntimeError(str(e))
         except Exception as e:
