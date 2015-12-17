@@ -46,7 +46,6 @@ class Gerrit(Backend):
         super().__init__(cache=cache)
         self.repository = url
         self.nreviews = nreviews
-        self.last_review = None  # last review processed
         self.number_results = None  # last number of results
         self.client = GerritClient(self.repository, user, nreviews)
 
@@ -83,11 +82,13 @@ class Gerrit(Backend):
     def fetch(self, from_date=DEFAULT_DATETIME):
         self._purge_cache_queue()
 
-        self.last_item = self.client.next_retrieve_group_item()
-        reviews = self._get_reviews()
+        last_item = self.client.next_retrieve_group_item()
+        reviews = self._get_reviews(last_item)
+        last_nreviews = len(reviews)
 
         while reviews:
             review = reviews.pop(0)
+            last_item += 1
             updated = datetime.fromtimestamp(review['lastUpdated'])
             if updated <= from_date:
                 logging.debug("No more updates for %s" % (self.repository))
@@ -95,27 +96,22 @@ class Gerrit(Backend):
 
             yield review
 
-            if not reviews:
-                reviews = self._get_reviews()
+            if not reviews and last_nreviews >= self.nreviews:
+                last_item = self.client.next_retrieve_group_item(last_item, review)
+                reviews = self._get_reviews(last_item)
 
-    def _get_reviews(self):
-        reviews = []
-
-        if self.number_results and self.number_results < self.nreviews:
-            # No more reviews
-            return reviews
-
+    def _get_reviews(self, last_item):
         task_init = time()
-        raw_data = self.client.reviews(self.last_item)
+        raw_data = self.client.reviews(last_item)
         self._push_cache_queue(raw_data)
         self._flush_cache_queue()
-        reviews = self._parse_reviews(raw_data)
-        self.last_item = self.client.next_retrieve_group_item(self.last_item, reviews[-1])
+        reviews = Gerrit.parse_reviews(raw_data)
         logging.info("Received %i reviews in %.2fs" % (len(reviews),
                                                        time()-task_init))
         return reviews
 
-    def _parse_reviews(self, raw_data):
+    @classmethod
+    def parse_reviews(cls, raw_data):
         # Join isolated reviews in JSON in array for parsing
         items_raw = "[" + raw_data.replace("\n", ",") + "]"
         items_raw = items_raw.replace(",]", "]")
@@ -123,14 +119,8 @@ class Gerrit(Backend):
         reviews = []
 
         for item in items:
-            if 'rowCount' in item.keys():
-                # stats data, not a review
-                self.number_results = item['rowCount']
-            elif 'project' in item.keys():
+            if 'project' in item.keys():
                 reviews.append(item)
-                if isinstance(self.last_item, int):
-                    # Depending gerrit version last_item is int or str
-                    self.last_item += 1
 
         return reviews
 
@@ -148,6 +138,7 @@ class GerritClient():
         self.nreviews = nreviews
         self.repository = repository
         self.project = None
+        self._version = None
         self.gerrit_cmd = "ssh -p %s %s@%s" % (GerritClient.PORT, self.gerrit_user,
                                                self.repository)
         self.gerrit_cmd += " %s " % (GerritClient.CMD_GERRIT)
