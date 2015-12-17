@@ -83,7 +83,7 @@ class Gerrit(Backend):
     def fetch(self, from_date=DEFAULT_DATETIME):
         self._purge_cache_queue()
 
-        self.last_item = None
+        self.last_item = self.client.next_retrieve_group_item()
         reviews = self._get_reviews()
 
         while reviews:
@@ -106,11 +106,11 @@ class Gerrit(Backend):
             return reviews
 
         task_init = time()
-        raw_data = self.client.get_items(self.last_item)
+        raw_data = self.client.reviews(self.last_item)
         self._push_cache_queue(raw_data)
         self._flush_cache_queue()
         reviews = self._parse_reviews(raw_data)
-        self.last_item = self.client.get_next_item(self.last_item, reviews[-1])
+        self.last_item = self.client.next_retrieve_group_item(self.last_item, reviews[-1])
         logging.info("Received %i reviews in %.2fs" % (len(reviews),
                                                        time()-task_init))
         return reviews
@@ -128,28 +128,36 @@ class Gerrit(Backend):
                 self.number_results = item['rowCount']
             elif 'project' in item.keys():
                 reviews.append(item)
+                if isinstance(self.last_item, int):
+                    # Depending gerrit version last_item is int or str
+                    self.last_item += 1
 
         return reviews
 
 
 class GerritClient():
 
+    # Regular expression to check the Gerrit version
+    VERSION_REGEX = re.compile(r'gerrit version (\d+)\.(\d+).*')
+    CMD_GERRIT = 'gerrit'
+    CMD_VERSION = 'version'
+    PORT = '29418'
+
     def __init__(self, repository, user, nreviews):
         self.gerrit_user = user
         self.nreviews = nreviews
         self.repository = repository
         self.project = None
-        self.version = None
-        self.gerrit_cmd = "ssh -p 29418 %s@%s" % (self.gerrit_user,
-                                                  self.repository)
-        self.gerrit_cmd += " gerrit "
+        self.gerrit_cmd = "ssh -p %s %s@%s" % (GerritClient.PORT, self.gerrit_user,
+                                               self.repository)
+        self.gerrit_cmd += " %s " % (GerritClient.CMD_GERRIT)
 
-    def _get_version(self):
+    @property
+    def version(self):
+        if self._version:
+            return self._version
 
-        if self.version:
-            return self.version
-
-        cmd = self.gerrit_cmd + " version "
+        cmd = self.gerrit_cmd + " %s " % (GerritClient.CMD_VERSION)
 
         logging.debug("Getting version: %s" % (cmd))
         raw_data = subprocess.check_output(cmd, shell=True)
@@ -157,7 +165,7 @@ class GerritClient():
         logging.debug("Gerrit version: %s" % (raw_data))
 
         # output: gerrit version 2.10-rc1-988-g333a9dd
-        m = re.match("gerrit version (\d+)\.(\d+).*", raw_data)
+        m = re.match(GerritClient.VERSION_REGEX, raw_data)
 
         if not m:
             cause = "Invalid gerrit version %s" % raw_data
@@ -170,8 +178,8 @@ class GerritClient():
             cause = "Gerrit client could not determine the server version."
             raise BackendError(cause=cause)
 
-        self.version = [mayor, minor]
-        return self.version
+        self._version = [mayor, minor]
+        return self._version
 
     def _get_gerrit_cmd(self, last_item):
 
@@ -185,7 +193,7 @@ class GerritClient():
 
         cmd += " --all-approvals --comments --format=JSON"
 
-        gerrit_version = self._get_version()
+        gerrit_version = self.version
 
         if last_item is not None:
             if gerrit_version[0] == 2 and gerrit_version[1] >= 9:
@@ -195,7 +203,7 @@ class GerritClient():
 
         return cmd
 
-    def get_items(self, last_item):
+    def reviews(self, last_item):
         cmd = self._get_gerrit_cmd(last_item)
 
         logging.debug(cmd)
@@ -204,17 +212,21 @@ class GerritClient():
 
         return raw_data
 
-    def get_next_item(self, last_item, entry):
+    def next_retrieve_group_item(self, last_item = None, entry = None):
+        ''' Return the item to start from in next reviews group '''
+
         next_item = None
 
-        gerrit_version = self._get_version()
+        gerrit_version = self.version
 
         if gerrit_version[0] == 2 and gerrit_version[1] >= 9:
             if last_item is None:
                 next_item = 0
-            self.last_item += 1
+            else:
+                next_item = last_item
         else:
-            next_item = entry['sortKey']
+            if entry is not None:
+                next_item = entry['sortKey']
 
         return next_item
 
@@ -267,6 +279,7 @@ class GerritCommand(BackendCommand):
             total = 0
             for bug in bugs:
                 obj = json.dumps(bug, indent=4, sort_keys=True)
+                print (bug['url'])
                 # self.outfile.write(obj)
                 # self.outfile.write('\n')
                 total += 1
