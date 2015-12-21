@@ -24,6 +24,7 @@
 import csv
 import datetime
 import json
+import logging
 import os.path
 import re
 
@@ -37,6 +38,8 @@ from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
 
 MAX_BUGS = 200 # Maximum number of bugs per query
+
+logger = logging.getLogger(__name__)
 
 
 class Bugzilla(Backend):
@@ -69,22 +72,33 @@ class Bugzilla(Backend):
         if not from_date:
             from_date = DEFAULT_DATETIME
 
+        logger.info("Looking for bugs: '%s' updated from '%s'",
+                    self.url, str(from_date))
+
         self._purge_cache_queue()
 
         buglist = [bug for bug in self.__fetch_buglist(from_date)]
 
-        for i in range(0, len(buglist), self.max_bugs):
+        nbugs = 0
+        tbugs = len(buglist)
+
+        for i in range(0, tbugs, self.max_bugs):
             chunk = buglist[i:i + self.max_bugs]
             bugs_ids = [b['bug_id'] for b in chunk]
 
+            logger.info("Fetching bugs: %s/%s", i, tbugs)
             bugs = self.__fetch_and_parse_bugs_details(bugs_ids)
 
             for bug in bugs:
                 bug_id = bug['bug_id'][0]['__text__']
                 bug['activity'] = self.__fetch_and_parse_bug_activity(bug_id)
+                nbugs += 1
                 yield bug
 
             self._flush_cache_queue()
+
+        logger.info("Fetch process completed: %s/%s bugs fetched",
+                    nbugs, tbugs)
 
     def fetch_from_cache(self):
         """Fetch the bugs from the cache.
@@ -102,7 +116,11 @@ class Bugzilla(Backend):
         if not self.cache:
             raise CacheError(cause="cache instance was not provided")
 
+        logger.info("Retrieving cached bugs: '%s'", self.url)
+
         cache_items = self.cache.retrieve()
+
+        nbugs = 0
 
         while True:
             try:
@@ -123,8 +141,11 @@ class Bugzilla(Backend):
 
                 activity = self.parse_bug_activity(raw_activity)
                 bug['activity'] = [event for event in activity]
-
+                nbugs += 1
                 yield bug
+
+        logger.info("Retrieval process completed: %s bugs retrieved from cache",
+                    nbugs)
 
     def __fetch_buglist(self, from_date):
         buglist = self.__fetch_and_parse_buglist_page(from_date)
@@ -143,16 +164,19 @@ class Bugzilla(Backend):
                 buglist = self.__fetch_and_parse_buglist_page(from_date)
 
     def __fetch_and_parse_buglist_page(self, from_date):
+        logger.debug("Fetching and parsing buglist page from %s", str(from_date))
         raw_csv = self.client.buglist(from_date=from_date)
         buglist = self.parse_buglist(raw_csv)
         return [bug for bug in buglist]
 
     def __fetch_and_parse_bugs_details(self, *bug_ids):
+        logger.debug("Fetching and parsing bugs details")
         raw_bugs = self.client.bugs(*bug_ids)
         self._push_cache_queue(raw_bugs)
         return self.parse_bugs_details(raw_bugs)
 
     def __fetch_and_parse_bug_activity(self, bug_id):
+        logger.debug("Fetching and parsing bug #%s activity", bug_id)
         raw_activity = self.client.bug_activity(bug_id)
         self._push_cache_queue(raw_activity)
         activity = self.parse_bug_activity(raw_activity)
@@ -472,6 +496,9 @@ class BugzillaClient:
         """
         url = self.URL % {'base' : self.base_url, 'cgi' : cgi}
 
+        logger.debug("Bugzilla client calls method: %s params: %s",
+                     cgi, str(params))
+
         req = requests.get(url, params=params,
                            headers=self.HEADERS)
         req.raise_for_status()
@@ -483,7 +510,10 @@ class BugzillaClient:
         m = re.match(self.VERSION_REGEX, response)
 
         if m:
-            return m.group(1)
+            version = m.group(1)
+            logger.debug("Bugzilla server is online: %s (v. %s)",
+                         self.base_url, version)
+            return version
         else:
             cause = "Bugzilla client could not determine the server version."
             raise BackendError(cause=cause)
