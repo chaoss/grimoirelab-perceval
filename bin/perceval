@@ -23,6 +23,7 @@
 
 import argparse
 import configparser
+import logging
 import os.path
 import sys
 
@@ -45,10 +46,15 @@ optional arguments:
   -h, --help            show this help message and exit
   -c FILE, --config FILE
                         set configuration file
+  -g, --debug           set debug mode on
 """
 
 PERCEVAL_EPILOG_MSG = \
 """Run '%(prog)s <backend> --help' to get information about a specific backend."""
+
+# Logging formats
+PERCEVAL_LOG_FORMAT = "[%(asctime)s] - %(message)s"
+PERCEVAL_DEBUG_LOG_FORMAT = "[%(asctime)s - %(name)s - %(levelname)s] - %(message)s"
 
 
 def main():
@@ -63,9 +69,15 @@ def main():
     if args.backend not in PERCEVAL_CMDS:
         raise RuntimeError("Unknown backend %s" % args.backend)
 
+    configure_logging(args.debug)
+
+    logging.info("Sir Perceval is on his quest.")
+
     klass = PERCEVAL_CMDS[args.backend]
     cmd = klass(*args.backend_args)
     cmd.run()
+
+    logging.info("Sir Perceval completed his quest.")
 
 
 def parse_args():
@@ -81,6 +93,9 @@ def parse_args():
                        help=argparse.SUPPRESS)
     parser.add_argument('-c', '--config', dest='config_file',
                         default=os.path.expanduser('~/.perceval/perceval.cfg'),
+                        help=argparse.SUPPRESS)
+    parser.add_argument('-g', '--debug', dest='debug',
+                        action='store_true',
                         help=argparse.SUPPRESS)
 
     parser.add_argument('backend', help=argparse.SUPPRESS)
@@ -118,11 +133,29 @@ def read_config_file(filepath, backend):
 
     return args
 
+def configure_logging(debug=False):
+    """Configure Perceval logging
+
+    The function configures the log messages produced by Perceval.
+    By default, log messages are sent to stderr. Set the parameter
+    `debug` to activate the debug mode.
+
+    :param debug: set the debug mode
+    """
+    if not debug:
+        logging.basicConfig(level=logging.INFO,
+                            format=PERCEVAL_LOG_FORMAT)
+        logging.getLogger('requests').setLevel(logging.WARNING)
+        logging.getLogger('urrlib3').setLevel(logging.WARNING)
+    else:
+        logging.basicConfig(level=logging.DEBUG,
+                            format=PERCEVAL_DEBUG_LOG_FORMAT)
+
 
 if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
         s = "\n\nReceived Ctrl-C or other break signal. Exiting.\n"
-        sys.stdout.write(s)
+        sys.stderr.write(s)
         sys.exit(0)
