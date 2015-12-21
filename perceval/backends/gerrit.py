@@ -34,16 +34,17 @@ from ..cache import Cache
 from ..errors import BackendError, CacheError
 from ..utils import DEFAULT_DATETIME, str_to_datetime
 
+MAX_REVIEWS = 500 # Maximum number of reviews per query
 
 class Gerrit(Backend):
     """Gerrit backend."""
 
-    def __init__(self, user=None, url=None, nreviews=None, cache=None):
+    def __init__(self, user=None, url=None, max_reviews=None, cache=None):
         super().__init__(cache=cache)
         self.repository = url
-        self.nreviews = nreviews
+        self.max_reviews = max_reviews
         self.number_results = None  # last number of results
-        self.client = GerritClient(self.repository, user, nreviews)
+        self.client = GerritClient(self.repository, user, max_reviews)
 
     def fetch_from_cache(self):
         """Fetch the bugs from the cache.
@@ -64,7 +65,7 @@ class Gerrit(Backend):
         cache_items = self.cache.retrieve()
 
         for raw_items in cache_items:
-            reviews = Gerrit.parse_reviews(raw_items)
+            reviews = self.parse_reviews(raw_items)
             for review in reviews:
                 yield review
 
@@ -86,7 +87,7 @@ class Gerrit(Backend):
 
             yield review
 
-            if not reviews and last_nreviews >= self.nreviews:
+            if not reviews and last_nreviews >= self.max_reviews:
                 last_item = self.client.next_retrieve_group_item(last_item, review)
                 reviews = self._get_reviews(last_item)
 
@@ -123,9 +124,9 @@ class GerritClient():
     CMD_VERSION = 'version'
     PORT = '29418'
 
-    def __init__(self, repository, user, nreviews):
+    def __init__(self, repository, user, max_reviews):
         self.gerrit_user = user
-        self.nreviews = nreviews
+        self.max_reviews = max_reviews
         self.repository = repository
         self.project = None
         self._version = None
@@ -167,7 +168,7 @@ class GerritClient():
         cmd = self.gerrit_cmd + " query "
         if self.project:
             cmd += "project:"+self.project+" "
-        cmd += "limit:" + str(self.nreviews)
+        cmd += "limit:" + str(self.max_reviews)
 
         # This does not work for Wikimedia 2.8.1 version
         cmd += " '(status:open OR status:closed)' "
@@ -220,7 +221,7 @@ class GerritCommand(BackendCommand):
 
         self.user = self.parsed_args.user
         self.url = self.parsed_args.url
-        self.nreviews = self.parsed_args.nreviews
+        self.max_reviews = self.parsed_args.max_reviews
         self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.outfile = self.parsed_args.outfile
 
@@ -242,7 +243,7 @@ class GerritCommand(BackendCommand):
             cache = None
 
         self.backend = Gerrit(self.user, self.url,
-                              self.nreviews, cache=cache)
+                              self.max_reviews, cache=cache)
 
     def run(self):
         """Fetch and print the reviews.
@@ -284,7 +285,8 @@ class GerritCommand(BackendCommand):
                            help="Gerrit ssh user")
         group.add_argument("--url", required=True,
                            help="Gerrit url")
-        group.add_argument("--nreviews",  default=500, type=int,
-                           help="Number of reviews per ssh query")
+        group.add_argument("--max-reviews",  dest="max_reviews",
+                           type=int, default=MAX_REVIEWS,
+                           help="Max number of reviews per ssh query.")
 
         return parser
