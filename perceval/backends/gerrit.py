@@ -67,17 +67,11 @@ class Gerrit(Backend):
 
         cache_items = self.cache.retrieve()
 
-        while True:
-            try:
-                raw_items = next(cache_items)
-                if raw_items is None:
-                    break
-                reviews = self._parse_reviews(raw_items)
-            except StopIteration:
-                break
+        for raw_items in cache_items:
+            reviews = Gerrit.parse_reviews(raw_items)
+            for review in reviews:
+                yield review
 
-            for item in reviews:
-                yield item
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         self._purge_cache_queue()
