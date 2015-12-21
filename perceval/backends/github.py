@@ -63,6 +63,7 @@ class GitHub(Backend):
         issues = self.client.get_issues(from_date)
 
         self._push_cache_queue(issues)
+        self._flush_cache_queue()
 
         while issues:
             issue = issues.pop(0)
@@ -70,8 +71,9 @@ class GitHub(Backend):
 
             if not issues:
                 issues = self.client.get_issues()
-                self._push_cache_queue(issues)
-                self._flush_cache_queue()
+                if issues and len(issues)>0:
+                    self._push_cache_queue(issues)
+                    self._flush_cache_queue()
 
     def fetch_from_cache(self):
         """Fetch the bugs from the cache.
@@ -91,16 +93,9 @@ class GitHub(Backend):
 
         cache_items = self.cache.retrieve()
 
-        while True:
-            try:
-                raw_items = next(cache_items)
-                if raw_items is None:
-                    break
-            except StopIteration:
-                break
-
-            for item in raw_items:
-                yield item
+        for issues in cache_items:
+            for issue in issues:
+                yield issue
 
 
 class GitHubClient:
@@ -218,9 +213,10 @@ class GitHubCommand(BackendCommand):
 
         try:
             for bug in bugs:
-                obj = json.dumps(bug, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
+                self.outfile.write(bug['url']+"\n")
+                # obj = json.dumps(bug, indent=4, sort_keys=True)
+                # self.outfile.write(obj)
+                # self.outfile.write('\n')
         except IOError as e:
             raise RuntimeError(str(e))
         except Exception as e:
