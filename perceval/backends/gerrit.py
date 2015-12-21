@@ -20,8 +20,6 @@
 #   Alvaro del Castillo San Felix <acs@bitergia.com>
 #
 
-'''Gerrit backend for Perseval'''
-
 
 from datetime import datetime
 import json
@@ -38,11 +36,9 @@ from ..utils import DEFAULT_DATETIME, str_to_datetime
 
 
 class Gerrit(Backend):
+    """Gerrit backend."""
 
-    name = "gerrit"
-
-    def __init__(self, user=None, url=None, nreviews=None,
-                 cache=None, **nouse):
+    def __init__(self, user=None, url=None, nreviews=None, cache=None):
         super().__init__(cache=cache)
         self.repository = url
         self.nreviews = nreviews
@@ -52,7 +48,7 @@ class Gerrit(Backend):
     def fetch_from_cache(self):
         """Fetch the bugs from the cache.
 
-        It returns the bugs stored in the cache object provided during
+        It returns the issues stored in the cache object provided during
         the initialization of the object. If this method is called but
         no cache object was provided, the method will raise a `CacheError`
         exception.
@@ -198,7 +194,7 @@ class GerritClient():
         return raw_data
 
     def next_retrieve_group_item(self, last_item = None, entry = None):
-        ''' Return the item to start from in next reviews group '''
+        """ Return the item to start from in next reviews group """
 
         next_item = None
 
@@ -249,10 +245,10 @@ class GerritCommand(BackendCommand):
                               self.nreviews, cache=cache)
 
     def run(self):
-        """Fetch and print the bugs.
+        """Fetch and print the reviews.
 
-        This method runs the backend to fetch the bugs from the given
-        repository. Bugs are converted to JSON objects and printed to the
+        This method runs the backend to fetch the reviews from the given
+        repository. Reviews are converted to JSON objects and printed to the
         defined output.
         """
         if self.parsed_args.fetch_cache:
@@ -264,9 +260,8 @@ class GerritCommand(BackendCommand):
             total = 0
             for bug in bugs:
                 obj = json.dumps(bug, indent=4, sort_keys=True)
-                print (bug['url'])
-                # self.outfile.write(obj)
-                # self.outfile.write('\n')
+                self.outfile.write(obj)
+                self.outfile.write('\n')
                 total += 1
             logging.info("Total reviews: %i", total)
         except IOError as e:
