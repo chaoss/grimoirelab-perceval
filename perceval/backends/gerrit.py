@@ -36,6 +36,8 @@ from ..utils import DEFAULT_DATETIME, str_to_datetime
 
 MAX_REVIEWS = 500 # Maximum number of reviews per query
 
+logger = logging.getLogger(__name__)
+
 class Gerrit(Backend):
     """Gerrit backend."""
 
@@ -91,7 +93,7 @@ class Gerrit(Backend):
             last_item += 1
             updated = datetime.fromtimestamp(review['lastUpdated'])
             if updated <= from_date:
-                logging.debug("No more updates for %s" % (self.repository))
+                logger.debug("No more updates for %s" % (self.repository))
                 break
 
             yield review
@@ -106,7 +108,7 @@ class Gerrit(Backend):
         self._push_cache_queue(raw_data)
         self._flush_cache_queue()
         reviews = Gerrit.parse_reviews(raw_data)
-        logging.info("Received %i reviews in %.2fs" % (len(reviews),
+        logger.info("Received %i reviews in %.2fs" % (len(reviews),
                                                        time()-task_init))
         return reviews
 
@@ -133,7 +135,6 @@ class GerritClient():
     https://gerrit-documentation.storage.googleapis.com/Documentation/2.12/cmd-query.html
     Support for <2.8 and >=2.9 version incremental mode.
     """
-
 
     # Regular expression to check the Gerrit version
     VERSION_REGEX = re.compile(r'gerrit version (\d+)\.(\d+).*')
@@ -166,10 +167,10 @@ class GerritClient():
 
         cmd = self.gerrit_cmd + " %s " % (GerritClient.CMD_VERSION)
 
-        logging.debug("Getting version: %s" % (cmd))
+        logger.debug("Getting version: %s" % (cmd))
         raw_data = subprocess.check_output(cmd, shell=True)
         raw_data = str(raw_data, "UTF-8")
-        logging.debug("Gerrit version: %s" % (raw_data))
+        logger.debug("Gerrit version: %s" % (raw_data))
 
         # output: gerrit version 2.10-rc1-988-g333a9dd
         m = re.match(GerritClient.VERSION_REGEX, raw_data)
@@ -214,7 +215,7 @@ class GerritClient():
         """ Get the reviews starting from last_item """
         cmd = self._get_gerrit_cmd(last_item)
 
-        logging.debug(cmd)
+        logger.debug(cmd)
         raw_data = subprocess.check_output(cmd, shell=True)
         raw_data = str(raw_data, "UTF-8")
 
@@ -290,7 +291,7 @@ class GerritCommand(BackendCommand):
                 self.outfile.write(obj)
                 self.outfile.write('\n')
                 total += 1
-            logging.info("Total reviews: %i", total)
+            logger.info("Total reviews: %i", total)
         except IOError as e:
             raise RuntimeError(str(e))
         except Exception as e:
