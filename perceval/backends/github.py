@@ -20,7 +20,6 @@
 #   Alvaro del Castillo San Felix <acs@bitergia.com>
 #
 
-'''GitHub backend for Perseval'''
 
 
 import json
@@ -34,29 +33,38 @@ from ..cache import Cache
 from ..errors import CacheError
 from ..utils import DEFAULT_DATETIME, str_to_datetime
 
+logger = logging.getLogger(__name__)
 
 class GitHub(Backend):
+    """GitHub backend for Perceval
 
-    name = "github"
-    users = {}
+    This class allows the fetch the issues stored in GitHub
+    repository.
+    """
 
     def __init__(self, owner=None, repository=None, token=None,
                  cache=None):
+        """ Init a GitHub instance
+        :param owner: GitHub owener
+        :param repository: GitHub repository from the owner
+        :param token: GitHub auth token to access the API
+        :param cache: Use issues already retrieved in cache
+        """
         super().__init__(cache=cache)
         self.owner = owner
         self.repository = repository
         self.client = GitHubClient(owner, repository, token)
 
-    def get_id(self):
-
-        _id = "%s_%s" % (self.owner, self.repository)
-
-        return _id.lower()
-
-    def get_field_unique_id(self):
-        return "id"
-
     def fetch(self, from_date=DEFAULT_DATETIME):
+        """Fetch the issues from the repository.
+
+        The method retrieves, from a GitHub repository, the issues
+        updated since the given date.
+
+        :param from_date: obtain issues updated since this date
+
+        :returns: a generator of issues
+        """
 
         self._purge_cache_queue()
 
@@ -76,16 +84,16 @@ class GitHub(Backend):
                     self._flush_cache_queue()
 
     def fetch_from_cache(self):
-        """Fetch the bugs from the cache.
+        """Fetch the issues from the cache.
 
-        It returns the bugs stored in the cache object provided during
+        It returns the issues stored in the cache object provided during
         the initialization of the object. If this method is called but
         no cache object was provided, the method will raise a `CacheError`
         exception.
 
         :returns: a generator of items
 
-        :raises CacheError: raised when an error occurs accesing the
+        :raises CacheError: raised when an error occurs accessing the
             cache
         """
         if not self.cache:
@@ -112,7 +120,7 @@ class GitHubClient:
         url_repo = github_api_repos + "/" + self.owner + "/" + self.repository
         return url_repo
 
-    def get_issues_url(self, startdate=None):
+    def _get_issues_url(self, startdate=None):
         # 100 in other items. 20 for pull requests. 30 issues
         github_per_page = 30
 
@@ -131,23 +139,23 @@ class GitHubClient:
         return url
 
     def get_issues(self, start=None):
-        ''' Return the items from github API in iterations '''
+        """ Return the items from github API in iterations """
 
         if self.page == 1:
-            self.url_next = self.get_issues_url(start)
+            self.url_next = self._get_issues_url(start)
 
         else:
             if not self.url_next:
                 self.page = 1
                 return
 
-        logging.debug("Get GitHub issues from " + self.url_next)
+        logger.debug("Get GitHub issues from " + self.url_next)
         r = requests.get(self.url_next, verify=False,
                          headers={'Authorization': 'token ' + self.auth_token})
         issues = r.json()
 
-        logging.debug("Rate limit: %s" %
-                      (r.headers['X-RateLimit-Remaining']))
+        logger.debug("Rate limit: %s" %
+                     (r.headers['X-RateLimit-Remaining']))
 
         self.url_next = None
         if 'next' in r.links:
@@ -159,7 +167,7 @@ class GitHubClient:
                 self.last_page = last_url.split('&page=')[1].split('&')[0]
                 self.last_page = int(self.last_page)
 
-        logging.debug("Page: %i/%i" % (self.page, self.last_page))
+        logger.debug("Page: %i/%i" % (self.page, self.last_page))
 
         self.page += 1
 
@@ -200,23 +208,22 @@ class GitHubCommand(BackendCommand):
                               self.token, cache=cache)
 
     def run(self):
-        """Fetch and print the bugs.
+        """Fetch and print the issues.
 
-        This method runs the backend to fetch the bugs from the given
+        This method runs the backend to fetch the issues from the given
         repository. Bugs are converted to JSON objects and printed to the
         defined output.
         """
         if self.parsed_args.fetch_cache:
-            bugs = self.backend.fetch_from_cache()
+            issues = self.backend.fetch_from_cache()
         else:
-            bugs = self.backend.fetch(from_date=self.from_date)
+            issues = self.backend.fetch(from_date=self.from_date)
 
         try:
-            for bug in bugs:
-                self.outfile.write(bug['url']+"\n")
-                # obj = json.dumps(bug, indent=4, sort_keys=True)
-                # self.outfile.write(obj)
-                # self.outfile.write('\n')
+            for issue in issues:
+                obj = json.dumps(issue, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
         except IOError as e:
             raise RuntimeError(str(e))
         except Exception as e:
