@@ -71,6 +71,15 @@ class Gerrit(Backend):
 
 
     def fetch(self, from_date=DEFAULT_DATETIME):
+        """Fetch the bugs from the repository.
+
+        The method retrieves, from a Gerrit repository, the reviews
+        updated since the given date.
+
+        :param from_date: obtain reviews updated since this date
+
+        :returns: a generator of reviews
+        """
         self._purge_cache_queue()
 
         last_item = self.client.next_retrieve_group_item()
@@ -117,6 +126,14 @@ class Gerrit(Backend):
 
 
 class GerritClient():
+    """Gerrit API client.
+
+    This class implements a client to retrieve reviews
+    from a Gerrit repository using the ssh API.
+    https://gerrit-documentation.storage.googleapis.com/Documentation/2.12/cmd-query.html
+    Support for <2.8 and >=2.9 version incremental mode.
+    """
+
 
     # Regular expression to check the Gerrit version
     VERSION_REGEX = re.compile(r'gerrit version (\d+)\.(\d+).*')
@@ -125,6 +142,13 @@ class GerritClient():
     PORT = '29418'
 
     def __init__(self, repository, user, max_reviews):
+        """ Init a GerritClient instance
+
+        :param repository: URL of the gerrit server
+        :param user: ssh user to be used to connect to gerrit server
+        :param max_reviews: max number of reviews per query
+        """
+
         self.gerrit_user = user
         self.max_reviews = max_reviews
         self.repository = repository
@@ -136,6 +160,7 @@ class GerritClient():
 
     @property
     def version(self):
+        """ Return the gerrit server version. Read only property. """
         if self._version:
             return self._version
 
@@ -186,6 +211,7 @@ class GerritClient():
         return cmd
 
     def reviews(self, last_item):
+        """ Get the reviews starting from last_item """
         cmd = self._get_gerrit_cmd(last_item)
 
         logging.debug(cmd)
