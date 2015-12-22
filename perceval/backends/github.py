@@ -69,9 +69,10 @@ class GitHub(Backend):
         self._purge_cache_queue()
 
         issues = self.client.get_issues(from_date)
-
         self._push_cache_queue(issues)
         self._flush_cache_queue()
+
+        issues = json.loads(issues)
 
         while issues:
             issue = issues.pop(0)
@@ -101,7 +102,8 @@ class GitHub(Backend):
 
         cache_items = self.cache.retrieve()
 
-        for issues in cache_items:
+        for raw_items in cache_items:
+            issues = json.loads(raw_items)
             for issue in issues:
                 yield issue
 
@@ -112,7 +114,8 @@ class GitHubClient:
         self.owner = owner
         self.repository = repository
         self.auth_token = token
-        self.last_page = self.page = 1  # pagination in items downloading
+        self.last_page = 1  # pagination in items downloading
+        self.page = 1  # pagination in items downloading
 
     def _get_url(self):
         github_api = "https://api.github.com"
@@ -152,7 +155,7 @@ class GitHubClient:
         logger.debug("Get GitHub issues from " + self.url_next)
         r = requests.get(self.url_next, verify=False,
                          headers={'Authorization': 'token ' + self.auth_token})
-        issues = r.json()
+        issues = r.text
 
         logger.debug("Rate limit: %s" %
                      (r.headers['X-RateLimit-Remaining']))
