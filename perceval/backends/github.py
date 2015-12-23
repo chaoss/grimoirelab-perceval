@@ -36,24 +36,24 @@ from ..utils import DEFAULT_DATETIME, str_to_datetime
 logger = logging.getLogger(__name__)
 
 class GitHub(Backend):
-    """GitHub backend for Perceval
+    """GitHub backend for Perceval.
 
     This class allows the fetch the issues stored in GitHub
     repository.
+
+    :param owner: GitHub owener
+    :param repository: GitHub repository from the owner
+    :param token: GitHub auth token to access the API
+    :param base_url: GitHub URL in enterprise edition case
+    :param cache: Use issues already retrieved in cache
     """
 
     def __init__(self, owner=None, repository=None, token=None,
-                 cache=None):
-        """ Init a GitHub instance
-        :param owner: GitHub owener
-        :param repository: GitHub repository from the owner
-        :param token: GitHub auth token to access the API
-        :param cache: Use issues already retrieved in cache
-        """
+                 base_url=None, cache=None):
         super().__init__(cache=cache)
         self.owner = owner
         self.repository = repository
-        self.client = GitHubClient(owner, repository, token)
+        self.client = GitHubClient(owner, repository, token, base_url)
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the issues from the repository.
@@ -110,15 +110,18 @@ class GitHub(Backend):
 
 class GitHubClient:
 
-    def __init__(self, owner, repository, token):
+    def __init__(self, owner, repository, token, base_url = None):
         self.owner = owner
         self.repository = repository
         self.auth_token = token
+        self.base_url = base_url
         self.last_page = 1  # pagination in items downloading
         self.page = 1  # pagination in items downloading
 
     def _get_url(self):
         github_api = "https://api.github.com"
+        if self.base_url:
+            github_api = self.base_url
         github_api_repos = github_api + "/repos"
         url_repo = github_api_repos + "/" + self.owner + "/" + self.repository
         return url_repo
