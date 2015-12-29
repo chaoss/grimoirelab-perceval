@@ -69,20 +69,11 @@ class GitHub(Backend):
         self._purge_cache_queue()
 
         issues = self.client.get_issues(from_date)
-        self._push_cache_queue(issues)
-        self._flush_cache_queue()
 
-        issues = json.loads(issues)
-
-        while issues:
-            issue = issues.pop(0)
+        for issue in issues:
+            self._push_cache_queue(issue)
+            self._flush_cache_queue()
             yield issue
-
-            if not issues:
-                issues = self.client.get_issues()
-                if issues and len(issues)>0:
-                    self._push_cache_queue(issues)
-                    self._flush_cache_queue()
 
     def fetch_from_cache(self):
         """Fetch the issues from the cache.
@@ -102,10 +93,8 @@ class GitHub(Backend):
 
         cache_items = self.cache.retrieve()
 
-        for raw_items in cache_items:
-            issues = json.loads(raw_items)
-            for issue in issues:
-                yield issue
+        for issue in cache_items:
+            yield issue
 
 
 class GitHubClient:
@@ -115,8 +104,6 @@ class GitHubClient:
         self.repository = repository
         self.auth_token = token
         self.base_url = base_url
-        self.last_page = 1  # pagination in items downloading
-        self.page = 1  # pagination in items downloading
 
     def _get_url(self):
         github_api = "https://api.github.com"
@@ -145,40 +132,40 @@ class GitHubClient:
         return url
 
     def get_issues(self, start=None):
-        """ Return the items from github API in iterations """
+        """ Return the items from github API using links pagination """
 
-        if self.page == 1:
-            self.url_next = self._get_issues_url(start)
+        page = 0  # current page
+        last_page = None  # last page
+        url_next = self._get_issues_url(start)
 
-        else:
-            if not self.url_next:
-                self.page = 1
-                return
-
-        logger.debug("Get GitHub issues from " + self.url_next)
-        r = requests.get(self.url_next, verify=False,
+        logger.debug("Get GitHub issues from " + url_next)
+        r = requests.get(url_next, verify=False,
                          headers={'Authorization': 'token ' + self.auth_token})
-        issues = r.text
+        issues = r.json()
+        page += 1
+        logger.debug("Rate limit: %s" % (r.headers['X-RateLimit-Remaining']))
 
-        logger.debug("Rate limit: %s" %
-                     (r.headers['X-RateLimit-Remaining']))
+        if 'last' in r.links:
+            last_url = r.links['last']['url']
+            last_page = last_url.split('&page=')[1].split('&')[0]
+            last_page = int(last_page)
+            logger.debug("Page: %i/%i" % (page, last_page))
 
-        self.url_next = None
-        if 'next' in r.links:
-            self.url_next = r.links['next']['url']  # Loving requests :)
+        while issues:
+            issue = issues.pop(0)
+            yield issue
 
-        if self.last_page == 1:
-            if 'last' in r.links:
-                last_url = r.links['last']['url']
-                self.last_page = last_url.split('&page=')[1].split('&')[0]
-                self.last_page = int(self.last_page)
+            if len(issues) == 0:
+                if 'next' in r.links:
+                    url_next = r.links['next']['url']  # Loving requests :)
 
-        logger.debug("Page: %i/%i" % (self.page, self.last_page))
-
-        self.page += 1
-
-        return issues
-
+                    r = requests.get(url_next, verify=False,
+                                     headers={'Authorization': 'token ' + self.auth_token})
+                    page += 1
+                    issues = r.json()
+                    logger.debug("Page: %i/%i" % (page, last_page))
+                    logger.debug("Rate limit: %s" %
+                         (r.headers['X-RateLimit-Remaining']))
 
 class GitHubCommand(BackendCommand):
     """Class to run GitHub backend from the command line."""
@@ -228,6 +215,7 @@ class GitHubCommand(BackendCommand):
         try:
             for issue in issues:
                 obj = json.dumps(issue, indent=4, sort_keys=True)
+                # self.outfile.write(issue['url']+"\n")
                 self.outfile.write(obj)
                 self.outfile.write('\n')
         except IOError as e:
