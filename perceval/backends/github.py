@@ -68,12 +68,14 @@ class GitHub(Backend):
 
         self._purge_cache_queue()
 
-        issues = self.client.get_issues(from_date)
+        issues_groups = self.client.get_issues(from_date)
 
-        for issue in issues:
-            self._push_cache_queue(issue)
+        for raw_issues in issues_groups:
+            self._push_cache_queue(raw_issues)
             self._flush_cache_queue()
-            yield issue
+            issues = json.loads(raw_issues)
+            for issue in issues:
+                yield issue
 
     def fetch_from_cache(self):
         """Fetch the issues from the cache.
@@ -93,8 +95,10 @@ class GitHub(Backend):
 
         cache_items = self.cache.retrieve()
 
-        for issue in cache_items:
-            yield issue
+        for raw_issues in cache_items:
+            issues = json.loads(raw_issues)
+            for issue in issues:
+                yield issue
 
 
 class GitHubClient:
@@ -141,7 +145,7 @@ class GitHubClient:
         logger.debug("Get GitHub issues from " + url_next)
         r = requests.get(url_next, verify=False,
                          headers={'Authorization': 'token ' + self.auth_token})
-        issues = r.json()
+        issues = r.text
         page += 1
         logger.debug("Rate limit: %s" % (r.headers['X-RateLimit-Remaining']))
 
@@ -152,20 +156,20 @@ class GitHubClient:
             logger.debug("Page: %i/%i" % (page, last_page))
 
         while issues:
-            issue = issues.pop(0)
-            yield issue
+            yield issues
 
-            if len(issues) == 0:
-                if 'next' in r.links:
-                    url_next = r.links['next']['url']  # Loving requests :)
+            issues = None
 
-                    r = requests.get(url_next, verify=False,
-                                     headers={'Authorization': 'token ' + self.auth_token})
-                    page += 1
-                    issues = r.json()
-                    logger.debug("Page: %i/%i" % (page, last_page))
-                    logger.debug("Rate limit: %s" %
-                         (r.headers['X-RateLimit-Remaining']))
+            if 'next' in r.links:
+                url_next = r.links['next']['url']  # Loving requests :)
+
+                r = requests.get(url_next, verify=False,
+                                 headers={'Authorization': 'token ' + self.auth_token})
+                page += 1
+                issues = r.text
+                logger.debug("Page: %i/%i" % (page, last_page))
+                logger.debug("Rate limit: %s" %
+                     (r.headers['X-RateLimit-Remaining']))
 
 class GitHubCommand(BackendCommand):
     """Class to run GitHub backend from the command line."""
