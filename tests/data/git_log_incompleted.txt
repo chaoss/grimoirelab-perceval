@@ -1,0 +1,22 @@
+commit 456a68ee1407a77f3e804a30dff245bb6c6b872f ce8e0b86a1e9877f42fe9453ede418519115f367 51a3b654f252210572297f47597b31527c475fb8 (HEAD -> refs/heads/master)
+Merge: ce8e0b8 51a3b65
+Author:     Zhongpeng Lin (林中鹏) <lin.zhp@example.com>
+AuthorDate: Tue Feb 11 22:10:39 2014 -0800
+Commit:     Zhongpeng Lin (林中鹏) <lin.zhp@example.com>
+CommitDate: Tue Feb 11 22:10:39 2014 -0800
+
+    Merge branch 'lzp'
+    
+    Conflicts:
+    	aaa/otherthing
+
+1	0	aaa/otherthing.renamed
+::100644 100644 100644 e69de29... 58a6c75... 58a6c75... MR	aaa/otherthing.renamed
+
+commit 51a3b654f252210572297f47597b31527c475fb8 589bb080f059834829a2a5955bebfd7c2baa110a (refs/heads/lzp)
+Author:     Zhongpeng Lin (林中鹏) <lin.zhp@example.com>
+AuthorDate: Tue Feb 11 22:09:26 2014 -0800
+Commit:     Zhongpeng Lin (林中鹏) <lin.zhp@example.com>
+CommitDate: Tue Feb 11 22:09:26 2014 -0800
+
+    modify aaa/otherthing
