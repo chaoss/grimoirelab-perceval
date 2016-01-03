@@ -30,6 +30,70 @@ from ..backend import Backend
 logger = logging.getLogger(__name__)
 
 
+class Git(Backend):
+    """Git backend.
+
+    This class allows the fetch the commits from a Git log file.
+    To initialize this class, the file path to the log file must be
+    provided.
+
+    :param gitlog: path to the log file
+    :param cache: cache object to store raw data
+    """
+    def __init__(self, gitlog, cache=None):
+        super().__init__(cache=cache)
+        self.gitlog = gitlog
+
+    def fetch(self):
+        """Fetch the commits from the log file.
+
+        The method retrieves, from a Git log file, the commits listed
+        on that file.
+
+        By default, it returns the commits in reverse order or in other
+        words, commits from oldest to newest. This means that the log
+        needs to be parsed before returning any commit, in order to ensure
+        the log history.
+
+        :returns: a generator of commits
+        """
+        logger.info("Fetching commits: '%s' git log", self.gitlog)
+
+        ncommits = 0
+
+        commits = [commit for commit in self.parse_git_log(self.gitlog)]
+        commits.reverse()
+
+        for commit in commits:
+            yield commit
+            ncommits += 1
+
+        logger.info("Fetch process completed: %s commits fetched",
+                    ncommits)
+
+    @staticmethod
+    def parse_git_log(filepath):
+        """Parse a Git log file.
+
+        The method parses the Git log file and returns an iterator of
+        dictionaries. Each one of this, contains a commit.
+
+        :param filpath: path to the log file
+
+        :returns: a generator of parsed commits
+
+        :raises ParseError: raised when the format of the Git log file
+            is invalid
+        :raises IOError: raised when an error occurs reading the
+            given file
+        """
+        with open(filepath, 'r') as f:
+            parser = GitParser(f)
+
+            for commit in parser.parse():
+                yield commit
+
+
 class GitParser:
     """Git log parser.
 

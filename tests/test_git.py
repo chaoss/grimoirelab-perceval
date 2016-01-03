@@ -29,7 +29,48 @@ if not '..' in sys.path:
 
 
 from perceval.errors import ParseError
-from perceval.backends.git import GitParser
+from perceval.backends.git import Git, GitParser
+
+
+class TestGitBackend(unittest.TestCase):
+    """Git backend tests"""
+
+    def test_fetch(self):
+        """Test whether a list of commits is returned"""
+
+        git = Git("data/git_log.txt")
+        commits = [commit['commit'] for commit in git.fetch()]
+
+        # Commits are returned in reverse order
+        expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
+                    '87783129c3f00d2c81a3a8e585eb86a47e39891a',
+                    '7debcf8a2f57f86663809c58b5c07a398be7674c',
+                    'c0d66f92a95e31c77be08dc9d0f11a16715d1885',
+                    'c6ba8f7a1058db3e6b4bc6f1090e932b107605fb',
+                    '589bb080f059834829a2a5955bebfd7c2baa110a',
+                    'ce8e0b86a1e9877f42fe9453ede418519115f367',
+                    '51a3b654f252210572297f47597b31527c475fb8',
+                    '456a68ee1407a77f3e804a30dff245bb6c6b872f']
+
+        self.assertListEqual(commits, expected)
+
+    def test_git_parser(self):
+        """Test if the static method parses a git log file"""
+
+        commits = Git.parse_git_log("data/git_log.txt")
+        result = [commit['commit'] for commit in commits]
+
+        expected = ['456a68ee1407a77f3e804a30dff245bb6c6b872f',
+                    '51a3b654f252210572297f47597b31527c475fb8',
+                    'ce8e0b86a1e9877f42fe9453ede418519115f367',
+                    '589bb080f059834829a2a5955bebfd7c2baa110a',
+                    'c6ba8f7a1058db3e6b4bc6f1090e932b107605fb',
+                    'c0d66f92a95e31c77be08dc9d0f11a16715d1885',
+                    '7debcf8a2f57f86663809c58b5c07a398be7674c',
+                    '87783129c3f00d2c81a3a8e585eb86a47e39891a',
+                    'bc57a9209f096a130dcc5ba7089a8663f758a703']
+
+        self.assertListEqual(result, expected)
 
 
 class TestGitParser(unittest.TestCase):
