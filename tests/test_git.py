@@ -21,6 +21,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
 import sys
 import unittest
 
@@ -29,7 +30,7 @@ if not '..' in sys.path:
 
 
 from perceval.errors import ParseError
-from perceval.backends.git import Git, GitParser
+from perceval.backends.git import Git, GitCommand, GitParser
 
 
 class TestGitBackend(unittest.TestCase):
@@ -71,6 +72,25 @@ class TestGitBackend(unittest.TestCase):
                     'bc57a9209f096a130dcc5ba7089a8663f758a703']
 
         self.assertListEqual(result, expected)
+
+
+class TestGitCommand(unittest.TestCase):
+
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ["data/git_log.txt"]
+
+        cmd = GitCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.gitlog, "data/git_log.txt")
+        self.assertIsInstance(cmd.backend, Git)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = GitCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 class TestGitParser(unittest.TestCase):

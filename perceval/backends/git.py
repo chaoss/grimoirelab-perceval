@@ -20,11 +20,12 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import json
 import logging
 import re
 
 from ..errors import ParseError
-from ..backend import Backend
+from ..backend import Backend, BackendCommand
 
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,51 @@ class Git(Backend):
 
             for commit in parser.parse():
                 yield commit
+
+
+class GitCommand(BackendCommand):
+    """Class to run Git backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.gitlog = self.parsed_args.gitlog
+        self.outfile = self.parsed_args.outfile
+
+        cache = None
+
+        self.backend = Git(self.gitlog, cache=cache)
+
+    def run(self):
+        """Fetch and print the commits.
+
+        This method runs the backend to fetch the commits from the given
+        git log. Commits are converted to JSON objects and printed to the
+        defined output.
+        """
+        commits = self.backend.fetch()
+
+        try:
+            for commit in commits:
+                obj = json.dumps(commit, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the Git argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # Required arguments
+        parser.add_argument('gitlog',
+                            help="Path to the Git log file")
+
+        return parser
 
 
 class GitParser:
