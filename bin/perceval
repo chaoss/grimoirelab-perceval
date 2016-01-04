@@ -41,6 +41,7 @@ Repositories are reached using specific backends. The most common backends
 are:
 
     bugzilla         Fetch bugs from a Bugzilla server
+    git              Fetch commits from a Git log file
 
 optional arguments:
   -h, --help            show this help message and exit

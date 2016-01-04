@@ -21,6 +21,10 @@
 #
 
 from .bugzilla import BugzillaCommand
+from .git import GitCommand
 
 
-PERCEVAL_CMDS = {'bugzilla' : BugzillaCommand}
+PERCEVAL_CMDS = {
+                 'bugzilla' : BugzillaCommand,
+                 'git'      : GitCommand
+                }
