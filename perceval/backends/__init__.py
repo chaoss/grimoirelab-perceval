@@ -21,10 +21,14 @@
 #
 
 from .bugzilla import BugzillaCommand
+from .gerrit import GerritCommand
 from .git import GitCommand
+from .github import GitHubCommand
 
 
 PERCEVAL_CMDS = {
                  'bugzilla' : BugzillaCommand,
-                 'git'      : GitCommand
+                 'git'      : GitCommand,
+                 'gerrit'   : GerritCommand,
+                 'github'   : GitHubCommand
                 }
