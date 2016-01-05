@@ -107,9 +107,9 @@ class TestGitParser(unittest.TestCase):
 
         expected = {
                     'commit' : '456a68ee1407a77f3e804a30dff245bb6c6b872f',
-                    'parent' : 'ce8e0b86a1e9877f42fe9453ede418519115f367',
-                    'merge' : '51a3b654f252210572297f47597b31527c475fb8',
-                    'refs' : 'HEAD -> refs/heads/master',
+                    'parents' : ['ce8e0b86a1e9877f42fe9453ede418519115f367',
+                                 '51a3b654f252210572297f47597b31527c475fb8'],
+                    'refs' : ['HEAD -> refs/heads/master'],
                     'Merge' : 'ce8e0b8 51a3b65',
                     'Author' : 'Zhongpeng Lin (林中鹏) <lin.zhp@example.com>',
                     'AuthorDate' : 'Tue Feb 11 22:10:39 2014 -0800',
@@ -119,19 +119,16 @@ class TestGitParser(unittest.TestCase):
                     'files' : [{'file' : "aaa/otherthing.renamed",
                                 'added' : '1',
                                 'removed' : '0',
-                                'oldmode' : '100644',
-                                'newmode' : '100644',
-                                'mergemode' : '100644',
-                                'oldindex' : 'e69de29',
-                                'newindex' : '58a6c75',
-                                'mergeindex' : '58a6c75',
+                                'modes' : ['100644', '100644', '100644'],
+                                'indexes' : ['e69de29...', '58a6c75...', '58a6c75...'],
                                 'action' : 'MR'}]
                     }
         self.assertDictEqual(commits[0], expected)
 
         expected = {
                     'commit' : 'c0d66f92a95e31c77be08dc9d0f11a16715d1885',
-                    'parent' : '7debcf8a2f57f86663809c58b5c07a398be7674c',
+                    'parents' : ['7debcf8a2f57f86663809c58b5c07a398be7674c'],
+                    'refs' : [],
                     'Author' : 'Eduardo Morais <companheiro.vermelho@example.com>',
                     'AuthorDate' : 'Tue Aug 14 14:35:02 2012 -0300',
                     'Commit' : 'Eduardo Morais <companheiro.vermelho@example.com>',
@@ -140,19 +137,15 @@ class TestGitParser(unittest.TestCase):
                     'files' : [{'file': 'bbb/bthing',
                                 'added': '0',
                                 'removed' : '0',
-                                'oldmode' : '100644',
-                                'newmode' : '000000',
-                                'oldindex' : 'e69de29',
-                                'newindex' : '0000000',
+                                'modes' : ['100644', '000000'],
+                                'indexes' : ['e69de29...', '0000000...'],
                                 'action' : 'D'},
                                 {'file': 'bbb/something',
                                  'newfile' : 'bbb/something.renamed',
                                  'added': '0',
                                  'removed' : '0',
-                                 'oldmode' : '100644',
-                                 'newmode' : '100644',
-                                 'oldindex' : 'e69de29',
-                                 'newindex' : 'e69de29',
+                                 'modes' : ['100644', '100644'],
+                                 'indexes' : ['e69de29...', 'e69de29...'],
                                  'action' : 'R100'}
                               ]
                     }
@@ -178,19 +171,18 @@ class TestGitParser(unittest.TestCase):
         s = "commit ce8e0b86a1e9877f42fe9453ede418519115f367 589bb080f059834829a2a5955bebfd7c2baa110a"
         m = pattern.match(s)
         self.assertEqual(m.group('commit'), "ce8e0b86a1e9877f42fe9453ede418519115f367")
-        self.assertEqual(m.group('parent'), "589bb080f059834829a2a5955bebfd7c2baa110a")
+        self.assertEqual(m.group('parents'), "589bb080f059834829a2a5955bebfd7c2baa110a")
 
         s = "commit 51a3b654f252210572297f47597b31527c475fb8 589bb080f059834829a2a5955bebfd7c2baa110a (refs/heads/lzp)"
         m = pattern.match(s)
         self.assertEqual(m.group('commit'), "51a3b654f252210572297f47597b31527c475fb8")
-        self.assertEqual(m.group('parent'), "589bb080f059834829a2a5955bebfd7c2baa110a")
+        self.assertEqual(m.group('parents'), "589bb080f059834829a2a5955bebfd7c2baa110a")
         self.assertEqual(m.group('refs'), "refs/heads/lzp")
 
         s = "commit 456a68ee1407a77f3e804a30dff245bb6c6b872f ce8e0b86a1e9877f42fe9453ede418519115f367 51a3b654f252210572297f47597b31527c475fb8 (HEAD -> refs/heads/master)"
         m = pattern.match(s)
         self.assertEqual(m.group('commit'), "456a68ee1407a77f3e804a30dff245bb6c6b872f")
-        self.assertEqual(m.group('parent'), "ce8e0b86a1e9877f42fe9453ede418519115f367")
-        self.assertEqual(m.group('merge'), "51a3b654f252210572297f47597b31527c475fb8")
+        self.assertEqual(m.group('parents'), "ce8e0b86a1e9877f42fe9453ede418519115f367 51a3b654f252210572297f47597b31527c475fb8")
         self.assertEqual(m.group('refs'), "HEAD -> refs/heads/master")
 
     def test_header_pattern(self):
@@ -233,19 +225,15 @@ class TestGitParser(unittest.TestCase):
 
         s = ":100644 000000 e69de29... 0000000... D\tbbb/bthing"
         m = pattern.match(s)
-        self.assertEqual(m.group('oldmode'), "100644")
-        self.assertEqual(m.group('newmode'), "000000")
-        self.assertEqual(m.group('oldindex'), "e69de29")
-        self.assertEqual(m.group('newindex'), "0000000")
+        self.assertEqual(m.group('modes'), "100644 000000 ")
+        self.assertEqual(m.group('indexes'), "e69de29... 0000000... ")
         self.assertEqual(m.group('action'), "D")
         self.assertEqual(m.group('file'), "bbb/bthing")
 
         s = ":100644 100644 e69de29... e69de29... R100\taaa/otherthing\taaa/otherthing.renamed"
         m = pattern.match(s)
-        self.assertEqual(m.group('oldmode'), "100644")
-        self.assertEqual(m.group('newmode'), "100644")
-        self.assertEqual(m.group('oldindex'), "e69de29")
-        self.assertEqual(m.group('newindex'), "e69de29")
+        self.assertEqual(m.group('modes'), "100644 100644 ")
+        self.assertEqual(m.group('indexes'), "e69de29... e69de29... ")
         self.assertEqual(m.group('action'), "R100")
         self.assertEqual(m.group('file'), "aaa/otherthing")
         self.assertEqual(m.group('newfile'), "aaa/otherthing.renamed")

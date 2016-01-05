@@ -214,23 +214,20 @@ class GitParser:
     :param stream: a file object which stores the log
     """
     COMMIT_PATTERN = r"""^commit[ \t](?P<commit>[a-f0-9]{40})
-                     (?:[ \t](?P<parent>[a-f0-9]{40})
-                     (?:[ \t](?P<merge>[a-f0-9]{40}))?
-                     (?:[ \t](?P<extra>[a-f0-9 \t]))?
-                     )?(?:[ \t]\((?P<refs>.+)\))?$
+                     (?:[ \t](?P<parents>[a-f0-9][a-f0-9 \t]+))?
+                     (?:[ \t]\((?P<refs>.+)\))?$
                      """
 
     HEADER_PATTERN = r"^(?P<header>[a-zA-z0-9]+)\:[ \t]+(?P<value>.+)$"
 
     MESSAGE_LINE_PATTERN = r"^[\s]{4}(?P<msg>.*)$"
 
-    ACTION_PATTERN = r"""^\:\:?(?P<oldmode>\d{6})[ \t](?P<newmode>\d{6})[ \t]
-                     (?:(?P<mergemode>\d{6})[ \t])?
-                     (?P<oldindex>[a-f0-9]+)\.{,3}[ \t](?P<newindex>[a-f0-9]+)\.{,3}[ \t]
-                     (?:(?P<mergeindex>[a-f0-9]+)\.{,3}[ \t])?
-                     (?P<action>[^\t]+)\t+
-                     (?P<file>[^\t]+)
-                     (?:\t+(?P<newfile>.+))?$"""
+    ACTION_PATTERN = r"""^(?P<sc>\:+)
+                      (?P<modes>(?:\d{6}[ \t])+)
+                      (?P<indexes>(?:[a-f0-9]+\.{,3}[ \t])+)
+                      (?P<action>[^\t]+)\t+
+                      (?P<file>[^\t]+)
+                      (?:\t+(?P<newfile>.+))?$"""
 
     STATS_PATTERN = r"^(?P<added>\d+|-)[ \t]+(?P<removed>\d+|-)[ \t]+(?P<file>.+)$"
 
@@ -312,8 +309,15 @@ class GitParser:
             msg = "commit expected on line %s" % (str(self.nline))
             raise ParseError(cause=msg)
 
+        parents = self.__parse_data_list(m.group('parents'))
+        refs = self.__parse_data_list(m.group('refs'), sep=',')
+
         # Initialize a new commit
-        self.commit = m.groupdict()
+        self.commit = {}
+        self.commit['commit'] = m.group('commit')
+        self.commit['parents'] = parents
+        self.commit['refs'] = refs
+
         self.state = self.HEADER
 
         return True
@@ -382,12 +386,18 @@ class GitParser:
         return False
 
     def _handle_action_data(self, data):
+        modes = self.__parse_data_list(data['modes'])
+        indexes = self.__parse_data_list(data['indexes'])
         filename = data['file']
 
         if filename not in self.commit_files:
             self.commit_files[filename] = {}
 
-        self.commit_files[filename].update(data)
+        self.commit_files[filename]['modes'] = modes
+        self.commit_files[filename]['indexes'] = indexes
+        self.commit_files[filename]['action'] = data['action']
+        self.commit_files[filename]['file'] = filename
+        self.commit_files[filename]['newfile'] = data['newfile']
 
     def _handle_stats_data(self, data):
         filename = self.__get_old_filepath(data['file'])
@@ -397,6 +407,13 @@ class GitParser:
 
         self.commit_files[filename]['added'] = data['added']
         self.commit_files[filename]['removed'] = data['removed']
+
+    def __parse_data_list(self, data, sep=' '):
+        if data:
+            l = data.strip().split(sep)
+            return [e.strip() for e in l]
+        else:
+            return []
 
     def __get_old_filepath(self, f):
         """Get the old filepath of a moved/renamed file.
