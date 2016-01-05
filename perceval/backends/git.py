@@ -45,6 +45,10 @@ class Git(Backend):
         super().__init__(cache=cache)
         self.gitlog = gitlog
 
+    @property
+    def unique_id(self):
+        return self.gitlog
+
     def fetch(self):
         """Fetch the commits from the log file.
 

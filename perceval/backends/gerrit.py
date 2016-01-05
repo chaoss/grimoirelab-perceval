@@ -48,6 +48,10 @@ class Gerrit(Backend):
         self.number_results = None  # last number of results
         self.client = GerritClient(self.repository, user, max_reviews)
 
+    @property
+    def unique_id(self):
+        return self.repository
+
     def fetch_from_cache(self):
         """Fetch the bugs from the cache.
 

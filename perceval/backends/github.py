@@ -55,6 +55,10 @@ class GitHub(Backend):
         self.repository = repository
         self.client = GitHubClient(owner, repository, token, base_url)
 
+    @property
+    def unique_id(self):
+        return self.owner+"_"+self.repository
+
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the issues from the repository.
 

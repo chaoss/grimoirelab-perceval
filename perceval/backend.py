@@ -51,6 +51,11 @@ class Backend:
         self.cache = cache
         self.cache_queue = []
 
+    @property
+    def unique_id(self):
+        """ Return the unique id for the backend. """
+        raise NotImplementedError
+
     def fetch(self, from_date=DEFAULT_DATETIME):
         raise NotImplementedError
 
@@ -79,11 +84,14 @@ class BackendCommand:
     the defined argument parser on the class method. Those arguments
     will be stored in the attribute 'parsed_args'.
 
-    The method 'run' must be implemented to exectute the backend.
+    In self.backend is stored the backend created using 'parsed_args'.
+
+    The method 'run' must be implemented to execute the backend.
     """
     def __init__(self, *args):
         parser = self.create_argument_parser()
         self.parsed_args = parser.parse_args(args)
+        self.backend = None
 
     def run(self):
         raise NotImplementedError

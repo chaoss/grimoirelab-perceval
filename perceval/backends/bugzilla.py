@@ -59,6 +59,11 @@ class Bugzilla(Backend):
         self.max_bugs = max(1, max_bugs)
         self.client = BugzillaClient(url)
 
+    @property
+    def unique_id(self):
+        no_protocol_url = self.url.split("//")[1]
+        return no_protocol_url
+
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the bugs from the repository.
 
