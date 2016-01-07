@@ -22,11 +22,12 @@
 
 import json
 import logging
+import os
 import re
 
 from ..errors import ParseError
 from ..backend import Backend, BackendCommand
-
+from ..utils import DEFAULT_DATETIME, str_to_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +48,10 @@ class Git(Backend):
 
     @property
     def unique_id(self):
-        return self.gitlog
+        uid = os.path.abspath(self.gitlog).replace("/","_").lower()
+        return uid
 
-    def fetch(self):
+    def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the commits from the log file.
 
         The method retrieves, from a Git log file, the commits listed
@@ -107,6 +109,7 @@ class GitCommand(BackendCommand):
 
         self.gitlog = self.parsed_args.gitlog
         self.outfile = self.parsed_args.outfile
+        self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         cache = None
 
@@ -119,7 +122,7 @@ class GitCommand(BackendCommand):
         git log. Commits are converted to JSON objects and printed to the
         defined output.
         """
-        commits = self.backend.fetch()
+        commits = self.backend.fetch(from_date=self.from_date)
 
         try:
             for commit in commits:
