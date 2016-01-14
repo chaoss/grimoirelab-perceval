@@ -25,6 +25,7 @@
 import json
 import logging
 import os.path
+import urllib.parse
 
 import requests
 
@@ -33,7 +34,11 @@ from ..cache import Cache
 from ..errors import CacheError
 from ..utils import DEFAULT_DATETIME, str_to_datetime
 
+
+GITHUB_URL = "https://github.com/"
+
 logger = logging.getLogger(__name__)
+
 
 class GitHub(Backend):
     """GitHub backend for Perceval.
@@ -47,10 +52,14 @@ class GitHub(Backend):
     :param base_url: GitHub URL in enterprise edition case
     :param cache: Use issues already retrieved in cache
     """
+    version = '0.1.0'
 
     def __init__(self, owner=None, repository=None, token=None,
                  base_url=None, cache=None):
-        super().__init__(cache=cache)
+        origin = base_url if base_url else GITHUB_URL
+        origin = urllib.parse.urljoin(origin, owner, repository)
+
+        super().__init__(origin, cache=cache)
         self.owner = owner
         self.repository = repository
         self.client = GitHubClient(owner, repository, token, base_url)

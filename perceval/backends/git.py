@@ -41,8 +41,10 @@ class Git(Backend):
     :param gitlog: path to the log file
     :param cache: cache object to store raw data
     """
+    version = '0.1.0'
+
     def __init__(self, gitlog, cache=None):
-        super().__init__(cache=cache)
+        super().__init__(gitlog, cache=cache)
         self.gitlog = gitlog
 
     def fetch(self):

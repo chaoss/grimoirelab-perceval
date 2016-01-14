@@ -38,12 +38,14 @@ MAX_REVIEWS = 500 # Maximum number of reviews per query
 
 logger = logging.getLogger(__name__)
 
+
 class Gerrit(Backend):
     """Gerrit backend."""
 
-    def __init__(self, user=None, url=None, max_reviews=None, cache=None):
-        super().__init__(cache=cache)
-        self.repository = url
+    version = '0.1.0'
+
+    def __init__(self, url, user=None, max_reviews=None, cache=None):
+        super().__init__(url, cache=cache)
         self.max_reviews = max_reviews
         self.number_results = None  # last number of results
         self.client = GerritClient(self.repository, user, max_reviews)
@@ -246,8 +248,8 @@ class GerritCommand(BackendCommand):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.user = self.parsed_args.user
         self.url = self.parsed_args.url
+        self.user = self.parsed_args.user
         self.max_reviews = self.parsed_args.max_reviews
         self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.outfile = self.parsed_args.outfile
@@ -269,7 +271,7 @@ class GerritCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = Gerrit(self.user, self.url,
+        self.backend = Gerrit(self.url, self.user,
                               self.max_reviews, cache=cache)
 
     def run(self):

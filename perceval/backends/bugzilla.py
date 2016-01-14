@@ -53,8 +53,10 @@ class Bugzilla(Backend):
     :param max_bugs: maximum number of bugs requested on the same query
     :param cache: cache object to store raw data
     """
+    version = '0.1.0'
+
     def __init__(self, url, max_bugs=MAX_BUGS, cache=None):
-        super().__init__(cache=cache)
+        super().__init__(url, cache=cache)
         self.url = url
         self.max_bugs = max(1, max_bugs)
         self.client = BugzillaClient(url)
