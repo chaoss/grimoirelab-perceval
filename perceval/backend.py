@@ -21,6 +21,7 @@
 #
 
 import argparse
+import functools
 import sys
 
 from .cache import Cache
@@ -135,3 +136,36 @@ class BackendCommand:
                            help="output file")
 
         return parser
+
+
+def metadata(fdate):
+    """Add metadata to an item.
+
+    Decorator that adds metadata to a given item such as how and
+    when it was fetched.
+
+    As input parameters, this function requieres as function which
+    extracts from an item when it was updated.
+
+    Take into account that this decorator can only be called from a
+    'Backend' class due it needs access to some of the attributes
+    of this class.
+    """
+    from datetime import datetime as dt
+
+    META_KEY = '__metadata__'
+
+    def metadata_decorator(func):
+        @functools.wraps(func)
+        def decorator(self, *args, **kwargs):
+            for item in func(self, *args, **kwargs):
+                item[META_KEY] = {
+                                  'backend_name' : self.__class__.__name__,
+                                  'backend_version': self.version,
+                                  'timestamp' : dt.now().timestamp(),
+                                  'origin' : self.origin,
+                                  'updated_on' : fdate(item),
+                                 }
+                yield item
+        return decorator
+    return metadata_decorator
