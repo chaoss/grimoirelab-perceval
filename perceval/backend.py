@@ -30,26 +30,38 @@ from .utils import DEFAULT_DATETIME
 class Backend:
     """Abstract class for backends.
 
-    Base class to fetch data from a repository. During the
-    initialization, a `Cache` object can be provided for caching
-    raw data from the repositories.
+    Base class to fetch data from a repository. This repository
+    will be named as 'origin'. During the initialization, a `Cache`
+    object can be provided for caching raw data from the repositories.
 
     Derivated classes have to implement `fetch` and `fetch_from_cache`
     methods. Otherwise, `NotImplementedError` exception will be raised.
 
+    To track which version of the backend was used during the fetching
+    process, this class provides a `version` attribute that each backend
+    may override.
+
+    :param origin: identifier of the repository
     :param cache: object to cache raw data
 
     :raises ValueError: raised when `cache` is not an instance of
         `Cache` class
     """
-    def __init__(self, cache=None):
+    version = '0.1'
+
+    def __init__(self, origin, cache=None):
         if cache and not isinstance(cache, Cache):
             msg = "cache is not an instance of Cache. %s object given" \
                 % (str(type(cache)))
             raise ValueError(msg)
 
+        self._origin = origin
         self.cache = cache
         self.cache_queue = []
+
+    @property
+    def origin(self):
+        return self._origin
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         raise NotImplementedError

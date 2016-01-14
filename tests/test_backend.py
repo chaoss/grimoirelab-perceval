@@ -35,11 +35,25 @@ from perceval.backend import Backend, BackendCommand
 class TestBackend(unittest.TestCase):
     """Unit tests for Backend"""
 
+    def test_version(self):
+        """Test whether the backend version is initialized"""
+
+        self.assertEqual(Backend.version, '0.1')
+
+        b = Backend('test')
+        self.assertEqual(b.version, '0.1')
+
+    def test_origin(self):
+        """Test whether origin value is initialized"""
+
+        b = Backend('test')
+        self.assertEqual(b.origin, 'test')
+
     def test_cache_value_error(self):
         """Test whether it raises a error on invalid cache istances"""
 
         with self.assertRaises(ValueError):
-            Backend(cache=8)
+            Backend('test', cache=8)
 
 
 class TestBackendCommand(unittest.TestCase):
