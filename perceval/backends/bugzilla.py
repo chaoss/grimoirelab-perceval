@@ -31,7 +31,7 @@ import re
 import bs4
 import requests
 
-from ..backend import Backend, BackendCommand
+from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import BackendError, CacheError, ParseError
 from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
@@ -40,6 +40,11 @@ from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 MAX_BUGS = 200 # Maximum number of bugs per query
 
 logger = logging.getLogger(__name__)
+
+
+def get_update_time(item):
+    """Extracts the update time from a Bugzilla item"""
+    return item['delta_ts'][0]['__text__']
 
 
 class Bugzilla(Backend):
@@ -61,6 +66,7 @@ class Bugzilla(Backend):
         self.max_bugs = max(1, max_bugs)
         self.client = BugzillaClient(url)
 
+    @metadata(get_update_time)
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the bugs from the repository.
 
@@ -102,6 +108,7 @@ class Bugzilla(Backend):
         logger.info("Fetch process completed: %s/%s bugs fetched",
                     nbugs, tbugs)
 
+    @metadata(get_update_time)
     def fetch_from_cache(self):
         """Fetch the bugs from the cache.
 

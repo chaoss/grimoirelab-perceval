@@ -29,7 +29,7 @@ import urllib.parse
 
 import requests
 
-from ..backend import Backend, BackendCommand
+from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import CacheError
 from ..utils import DEFAULT_DATETIME, str_to_datetime
@@ -38,6 +38,11 @@ from ..utils import DEFAULT_DATETIME, str_to_datetime
 GITHUB_URL = "https://github.com/"
 
 logger = logging.getLogger(__name__)
+
+
+def get_update_time(item):
+    """Extracts the update time from a GitHub item"""
+    return item['updated_at']
 
 
 class GitHub(Backend):
@@ -64,6 +69,7 @@ class GitHub(Backend):
         self.repository = repository
         self.client = GitHubClient(owner, repository, token, base_url)
 
+    @metadata(get_update_time)
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the issues from the repository.
 
@@ -86,6 +92,7 @@ class GitHub(Backend):
             for issue in issues:
                 yield issue
 
+    @metadata(get_update_time)
     def fetch_from_cache(self):
         """Fetch the issues from the cache.
 

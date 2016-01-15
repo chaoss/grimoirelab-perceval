@@ -29,7 +29,7 @@ import re
 import subprocess
 from time import time
 
-from ..backend import Backend, BackendCommand
+from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import BackendError, CacheError
 from ..utils import DEFAULT_DATETIME, str_to_datetime
@@ -37,6 +37,11 @@ from ..utils import DEFAULT_DATETIME, str_to_datetime
 MAX_REVIEWS = 500 # Maximum number of reviews per query
 
 logger = logging.getLogger(__name__)
+
+
+def get_update_time(item):
+    """Extracts the update time from a Gerrit item"""
+    return item['lastUpdated']
 
 
 class Gerrit(Backend):
@@ -50,6 +55,7 @@ class Gerrit(Backend):
         self.number_results = None  # last number of results
         self.client = GerritClient(self.repository, user, max_reviews)
 
+    @metadata(get_update_time)
     def fetch_from_cache(self):
         """Fetch the bugs from the cache.
 
@@ -73,7 +79,7 @@ class Gerrit(Backend):
             for review in reviews:
                 yield review
 
-
+    @metadata(get_update_time)
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the bugs from the repository.
 

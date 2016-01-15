@@ -25,10 +25,15 @@ import logging
 import re
 
 from ..errors import ParseError
-from ..backend import Backend, BackendCommand
+from ..backend import Backend, BackendCommand, metadata
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_update_time(item):
+    """Extracts the update time from a Git item"""
+    return item['CommitDate']
 
 
 class Git(Backend):
@@ -47,6 +52,7 @@ class Git(Backend):
         super().__init__(gitlog, cache=cache)
         self.gitlog = gitlog
 
+    @metadata(get_update_time)
     def fetch(self):
         """Fetch the commits from the log file.
 
