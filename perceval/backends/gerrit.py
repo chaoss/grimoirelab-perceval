@@ -53,7 +53,8 @@ class Gerrit(Backend):
         super().__init__(url, cache=cache)
         self.max_reviews = max_reviews
         self.number_results = None  # last number of results
-        self.client = GerritClient(self.repository, user, max_reviews)
+        self.url = url
+        self.client = GerritClient(self.url, user, max_reviews)
 
     @metadata(get_update_time)
     def fetch_from_cache(self):
@@ -101,7 +102,7 @@ class Gerrit(Backend):
             last_item += 1
             updated = datetime.fromtimestamp(review['lastUpdated'])
             if updated <= from_date:
-                logger.debug("No more updates for %s" % (self.repository))
+                logger.debug("No more updates for %s" % (self.url))
                 break
 
             yield review
