@@ -54,6 +54,22 @@ def str_to_datetime(ts):
         raise InvalidDateError(date=str(ts))
 
 
+def urljoin(*args):
+    """Joins given arguments into a URL.
+
+    Trailing and leading slashes are stripped for each argument.
+
+    This code is based on a Rune Kaagaard's answer on StackOverflow.
+    See http://stackoverflow.com/questions/1793261 for more into. The
+    code was licensed as cc by-sa 3.0.
+
+    :params *args: list of arguments to join
+
+    :returns: a URL string
+    """
+    return '/'.join(map(lambda x: str(x).strip('/'), args))
+
+
 def xml_to_dict(raw_xml):
     """Convert a XML stream into a dictionary.
 

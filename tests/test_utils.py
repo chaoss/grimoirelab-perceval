@@ -29,7 +29,7 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.errors import InvalidDateError, ParseError
-from perceval.utils import str_to_datetime, xml_to_dict
+from perceval.utils import str_to_datetime, urljoin, xml_to_dict
 
 
 def read_file(filename):
@@ -73,6 +73,32 @@ class TestStrToDatetime(unittest.TestCase):
         self.assertRaises(InvalidDateError, str_to_datetime, 'nodate')
         self.assertRaises(InvalidDateError, str_to_datetime, None)
         self.assertRaises(InvalidDateError, str_to_datetime, '')
+
+
+class TestURLJoin(unittest.TestCase):
+    """Unit tests for urljoin"""
+
+    def test_join(self):
+        """Test basic joins"""
+
+        base_url = 'http://example.com/'
+        base_url_alt = 'http://example.com'
+        path0 = 'owner'
+        path1 = 'repository'
+        path2 = '/owner/repository'
+        path3 = 'issues/8'
+
+        url = urljoin(base_url, path0, path1)
+        self.assertEqual(url, 'http://example.com/owner/repository')
+
+        url = urljoin(base_url, path2)
+        self.assertEqual(url, 'http://example.com/owner/repository')
+
+        url = urljoin(base_url, path0, path1, path3)
+        self.assertEqual(url, 'http://example.com/owner/repository/issues/8')
+
+        url = urljoin(base_url_alt, path0, path1)
+        self.assertEqual(url, 'http://example.com/owner/repository')
 
 
 class TestXMLtoDict(unittest.TestCase):
