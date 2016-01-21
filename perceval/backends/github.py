@@ -36,6 +36,7 @@ from ..utils import DEFAULT_DATETIME, str_to_datetime, urljoin
 
 
 GITHUB_URL = "https://github.com/"
+GITHUB_API_URL = "https://api.github.com"
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,22 @@ class GitHub(Backend):
         self.owner = owner
         self.repository = repository
         self.client = GitHubClient(owner, repository, token, base_url)
+        self._users = {}  # internal users cache
+
+    def _add_users(self, issue):
+        """ Add the users data to the item """
+        # Add user data: user and assignee
+        user_raw = self.client.get_user(issue['user']['login'])
+        self._push_cache_queue(user_raw)
+        issue['user_data'] = json.loads(user_raw)
+        if issue['assignee']:
+            user_raw = self.client.get_user(issue['assignee']['login'])
+            issue['assignee_data'] = json.loads(user_raw)
+            self._push_cache_queue(user_raw)
+        else:
+            issue['assignee_data'] = None
+
+        self._flush_cache_queue()
 
     @metadata(get_update_time)
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -90,7 +107,19 @@ class GitHub(Backend):
             self._flush_cache_queue()
             issues = json.loads(raw_issues)
             for issue in issues:
+                self._add_users(issue)
                 yield issue
+
+    def _add_users_from_cache(self, issue):
+        """ Add the users data to the cache item """
+        # All user data is already in self._users
+        login = issue['user']['login']
+        issue['user_data'] = self._users[login]
+        if issue['assignee']:
+            login = issue['assignee']['login']
+            issue['assignee_data'] = self._users[login]
+        else:
+            issue['assignee_data'] = None
 
     @metadata(get_update_time)
     def fetch_from_cache(self):
@@ -111,13 +140,29 @@ class GitHub(Backend):
 
         cache_items = self.cache.retrieve()
 
-        for raw_issues in cache_items:
-            issues = json.loads(raw_issues)
-            for issue in issues:
-                yield issue
-
+        issues = []
+        # In the cache first is the item with issues and next users data
+        # Read issues and all their users before processing issues
+        for raw_item in cache_items:
+            item = json.loads(raw_item)
+            if 'login' in item:
+                self._users[item['login']] = item
+            else:
+                next_issues = item
+                for issue in issues:
+                    # Add user data to the issue
+                    self._add_users_from_cache(issue)
+                    yield issue
+                issues = next_issues
+        for issue in issues:
+            # Add user data to the issue
+            self._add_users_from_cache(issue)
+            yield issue
 
 class GitHubClient:
+    """ Client for retieving information from GitHub API """
+
+    _users = {}  # users cache
 
     def __init__(self, owner, repository, token, base_url = None):
         self.owner = owner
@@ -126,7 +171,7 @@ class GitHubClient:
         self.base_url = base_url
 
     def _get_url(self):
-        github_api = "https://api.github.com"
+        github_api = GITHUB_API_URL
         if self.base_url:
             github_api = self.base_url
         github_api_repos = github_api + "/repos"
@@ -186,6 +231,22 @@ class GitHubClient:
                 logger.debug("Page: %i/%i" % (page, last_page))
                 logger.debug("Rate limit: %s" %
                      (r.headers['X-RateLimit-Remaining']))
+
+    def get_user(self, login):
+        user = None
+
+        if login in self._users:
+            user = self._users[login]
+        else:
+            url_user = GITHUB_API_URL + "/users/" + login
+
+            logging.info("Getting info for %s" % (url_user))
+            r = requests.get(url_user, verify=False,
+                             headers={'Authorization':'token ' + self.auth_token})
+            user = r.text
+            self._users[login] = user
+
+        return user
 
 class GitHubCommand(BackendCommand):
     """Class to run GitHub backend from the command line."""
