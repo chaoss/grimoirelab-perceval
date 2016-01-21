@@ -32,7 +32,7 @@ import requests
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import CacheError
-from ..utils import DEFAULT_DATETIME, str_to_datetime
+from ..utils import DEFAULT_DATETIME, str_to_datetime, urljoin
 
 
 GITHUB_URL = "https://github.com/"
@@ -62,7 +62,7 @@ class GitHub(Backend):
     def __init__(self, owner=None, repository=None, token=None,
                  base_url=None, cache=None):
         origin = base_url if base_url else GITHUB_URL
-        origin = urllib.parse.urljoin(origin, owner, repository)
+        origin = urljoin(origin, owner, repository)
 
         super().__init__(origin, cache=cache)
         self.owner = owner
