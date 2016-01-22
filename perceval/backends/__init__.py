@@ -20,12 +20,18 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-from .bugzilla import BugzillaCommand
-from .gerrit import GerritCommand
-from .git import GitCommand
-from .github import GitHubCommand
+from .bugzilla import Bugzilla, BugzillaCommand
+from .gerrit import Gerrit, GerritCommand
+from .git import Git, GitCommand
+from .github import GitHub, GitHubCommand
 
 
+PERCEVAL_BACKENDS = {
+                     'bugzilla' : Bugzilla,
+                     'git'      : Git,
+                     'gerrit'   : Gerrit,
+                     'github'   : GitHub
+                    }
 PERCEVAL_CMDS = {
                  'bugzilla' : BugzillaCommand,
                  'git'      : GitCommand,
