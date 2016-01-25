@@ -289,7 +289,7 @@ class GitParser:
 
         # Check the state of the last parsed commit
         if self.commit:
-            if self.state != self.FILE:
+            if self.state in (self.COMMIT, self.HEADER):
                 msg = "unexpected end of log stream"
                 raise ParseError(cause=msg)
 
