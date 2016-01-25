@@ -80,7 +80,7 @@ class GitHub(Backend):
 
         if field not in fields:
             logging.warning("Wrong user field %s" % (field))
-            return []
+            return {}
 
         # Add user data: user and assignee
         if issue[field]:
