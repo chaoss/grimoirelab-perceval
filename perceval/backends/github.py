@@ -112,7 +112,10 @@ class GitHub(Backend):
             issues = json.loads(raw_issues)
             for issue in issues:
                 for field in ['user', 'assignee']:
-                    issue[field+"_data"] = self._get_user(issue[field]['login'])
+                    if issue[field]:
+                        issue[field+"_data"] = self._get_user(issue[field]['login'])
+                    else:
+                        issue[field+"_data"] = {}
                 yield issue
 
     @metadata(get_update_time)
