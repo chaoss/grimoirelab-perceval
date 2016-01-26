@@ -36,6 +36,7 @@ from ..utils import DEFAULT_DATETIME, str_to_datetime, urljoin
 
 
 GITHUB_URL = "https://github.com/"
+GITHUB_API_URL = "https://api.github.com"
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,26 @@ class GitHub(Backend):
         self.owner = owner
         self.repository = repository
         self.client = GitHubClient(owner, repository, token, base_url)
+        self._users = {}  # internal users cache
+
+    def _get_user(self, login):
+        """ Get user and org data for the login """
+
+        user = {}
+
+        if not login:
+            return user
+
+        user_raw = self.client.get_user(login)
+        user = json.loads(user_raw)
+        self._push_cache_queue(user_raw)
+        user_orgs_raw = \
+            self.client.get_user_orgs(login)
+        user['organizations'] = json.loads(user_orgs_raw)
+        self._push_cache_queue(user_orgs_raw)
+        self._flush_cache_queue()
+
+        return user
 
     @metadata(get_update_time)
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -90,6 +111,11 @@ class GitHub(Backend):
             self._flush_cache_queue()
             issues = json.loads(raw_issues)
             for issue in issues:
+                for field in ['user', 'assignee']:
+                    if issue[field]:
+                        issue[field+"_data"] = self._get_user(issue[field]['login'])
+                    else:
+                        issue[field+"_data"] = {}
                 yield issue
 
     @metadata(get_update_time)
@@ -111,13 +137,56 @@ class GitHub(Backend):
 
         cache_items = self.cache.retrieve()
 
-        for raw_issues in cache_items:
-            issues = json.loads(raw_issues)
-            for issue in issues:
-                yield issue
+        issues = None
 
+        while True:
+            try:
+                raw_item = next(cache_items)
+            except StopIteration:
+                if issues:
+                    for issue in self._build_issues(issues):
+                        yield issue
+                break
+
+            item = json.loads(raw_item)
+
+            if 'login' in item:
+                try:
+                    raw_orgs = next(cache_items)
+                except StopIteration:
+                    # Fatal error. Cache should had stored an organizations item
+                    # per parsed user.
+                    cause = "cache is exhausted but more items were expected"
+                    raise CacheError(cause=cause)
+
+                item['organizations'] = json.loads(raw_orgs)
+                self._users[item['login']] = item
+                continue
+
+            # A new set of issues has been read. It means we already
+            # have the enough information to build and return the
+            # previous set
+            if issues:
+                for issue in self._build_issues(issues):
+                    yield issue
+
+            # Next issues to parse
+            issues = item
+
+    def _build_issues(self, issues):
+        for issue in issues:
+            for field in ['user', 'assignee']:
+                issue[field + '_data'] = {}
+                if issue[field]:
+                    issue[field + '_data'] = \
+                        self._users[issue[field]['login']]
+            yield issue
 
 class GitHubClient:
+    """ Client for retieving information from GitHub API """
+
+    _users = {}       # users cache
+    _users_orgs = {}  # users orgs cache
 
     def __init__(self, owner, repository, token, base_url = None):
         self.owner = owner
@@ -126,7 +195,7 @@ class GitHubClient:
         self.base_url = base_url
 
     def _get_url(self):
-        github_api = "https://api.github.com"
+        github_api = GITHUB_API_URL
         if self.base_url:
             github_api = self.base_url
         github_api_repos = github_api + "/repos"
@@ -186,6 +255,37 @@ class GitHubClient:
                 logger.debug("Page: %i/%i" % (page, last_page))
                 logger.debug("Rate limit: %s" %
                      (r.headers['X-RateLimit-Remaining']))
+
+    def get_user(self, login):
+        user = None
+
+        if login in self._users:
+            return self._users[login]
+
+        url_user = GITHUB_API_URL + "/users/" + login
+
+        logging.info("Getting info for %s" % (url_user))
+        r = requests.get(url_user, verify=False,
+                         headers={'Authorization':'token ' + self.auth_token})
+        user = r.text
+        self._users[login] = user
+
+        return user
+
+    def get_user_orgs(self, login):
+        # Get the public organizations also
+
+        if login in self._users_orgs:
+            return self._users_orgs[login]
+
+        url = GITHUB_API_URL + "/users/" + login + "/orgs"
+        r = requests.get(url, verify=False,
+                         headers={'Authorization':'token ' + self.auth_token})
+        orgs = r.text
+
+        self._users_orgs[login] = orgs
+
+        return orgs
 
 class GitHubCommand(BackendCommand):
     """Class to run GitHub backend from the command line."""
