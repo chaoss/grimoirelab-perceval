@@ -137,35 +137,50 @@ class GitHub(Backend):
 
         cache_items = self.cache.retrieve()
 
-        # In the cache first is the item with issues and next users data
-        raw_issues = next(cache_items)
-        while raw_issues:
-            # Issues to be processed
-            issues = json.loads(raw_issues)
-            raw_issues = None
+        issues = None
 
-            # Read the users for the issues
-            for raw_item in cache_items:
-                item = json.loads(raw_item)
-                if 'login' in item:
-                    self._users[item['login']] = item
-                    # Next item are the orgs for this user
+        while True:
+            try:
+                raw_item = next(cache_items)
+            except StopIteration:
+                if issues:
+                    for issue in self._build_issues(issues):
+                        yield issue
+                break
+
+            item = json.loads(raw_item)
+
+            if 'login' in item:
+                try:
                     raw_orgs = next(cache_items)
-                    self._users[item['login']]["organizations"] = json.loads(raw_orgs)
-                    continue
-                else:
-                    raw_issues = item
-                    break
+                except StopIteration:
+                    # Fatal error. Cache should had stored an organizations item
+                    # per parsed user.
+                    cause = "cache is exhausted but more items were expected"
+                    raise CacheError(cause=cause)
 
-            # Process the issues
-            for issue in issues:
-                # Add user data to the issue
-                for field in ['user', 'assignee']:
-                    issue[field+"_data"] = {}
-                    if issue[field]:
-                        issue[field+"_data"] = \
-                            self._users[issue[field]['login']]
-                yield issue
+                item['organizations'] = json.loads(raw_orgs)
+                self._users[item['login']] = item
+                continue
+
+            # A new set of issues has been read. It means we already
+            # have the enough information to build and return the
+            # previous set
+            if issues:
+                for issue in self._build_issues(issues):
+                    yield issue
+
+            # Next issues to parse
+            issues = item
+
+    def _build_issues(self, issues):
+        for issue in issues:
+            for field in ['user', 'assignee']:
+                issue[field + '_data'] = {}
+                if issue[field]:
+                    issue[field + '_data'] = \
+                        self._users[issue[field]['login']]
+            yield issue
 
 class GitHubClient:
     """ Client for retieving information from GitHub API """
