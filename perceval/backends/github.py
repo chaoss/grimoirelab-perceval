@@ -71,32 +71,24 @@ class GitHub(Backend):
         self.client = GitHubClient(owner, repository, token, base_url)
         self._users = {}  # internal users cache
 
-    def _get_user(self, issue, field):
-        """ Add the users data to the item """
+    def _get_user(self, login):
+        """ Get user and org data for the login """
 
         user = {}
 
-        fields = ['user', 'assignee']
+        if not login:
+            return user
 
-        if field not in fields:
-            logging.warning("Wrong user field %s" % (field))
-            return {}
-
-        # Add user data: user and assignee
-        if issue[field]:
-            user_raw = self.client.get_user(issue[field]['login'])
-            user = json.loads(user_raw)
-            self._push_cache_queue(user_raw)
-            user_orgs_raw = \
-                self.client.get_user_orgs(issue[field]['login'])
-            user['organizations'] = json.loads(user_orgs_raw)
-            self._push_cache_queue(user_orgs_raw)
-        else:
-            issue[field+"_data"] = None
+        user_raw = self.client.get_user(login)
+        user = json.loads(user_raw)
+        self._push_cache_queue(user_raw)
+        user_orgs_raw = \
+            self.client.get_user_orgs(login)
+        user['organizations'] = json.loads(user_orgs_raw)
+        self._push_cache_queue(user_orgs_raw)
         self._flush_cache_queue()
 
         return user
-
 
     @metadata(get_update_time)
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -120,14 +112,8 @@ class GitHub(Backend):
             issues = json.loads(raw_issues)
             for issue in issues:
                 for field in ['user', 'assignee']:
-                    issue[field+"_data"] = self._get_user(issue, field)
+                    issue[field+"_data"] = self._get_user(issue[field]['login'])
                 yield issue
-
-    def _get_user_from_cache(self, issue, field):
-        user = {}
-        if issue[field]:
-            user = self._users[issue[field]['login']]
-        return user
 
     @metadata(get_update_time)
     def fetch_from_cache(self):
@@ -148,36 +134,35 @@ class GitHub(Backend):
 
         cache_items = self.cache.retrieve()
 
-        issues = []
         # In the cache first is the item with issues and next users data
-        # Read issues and their users and their orgs before processing issues
-        for raw_item in cache_items:
-            item = json.loads(raw_item)
-            if 'login' in item:
-                self._users[item['login']] = item
-                last_login = item['login']  # Orgs comes later
-                continue
-            if type(item) is list:
-                # List of orgs: empy or with members_url field
-                if len(item) == 0:
-                    self._users[last_login]["organizations"] = []
+        raw_issues = next(cache_items)
+        while raw_issues:
+            # Issues to be processed
+            issues = json.loads(raw_issues)
+            raw_issues = None
+
+            # Read the users for the issues
+            for raw_item in cache_items:
+                item = json.loads(raw_item)
+                if 'login' in item:
+                    self._users[item['login']] = item
+                    # Next item are the orgs for this user
+                    raw_orgs = next(cache_items)
+                    self._users[item['login']]["organizations"] = json.loads(raw_orgs)
                     continue
-                elif 'members_url' in item[0]:
-                    self._users[last_login]["organizations"] = item
-                    continue
-            # The item is an issues list
-            next_issues = item
+                else:
+                    raw_issues = item
+                    break
+
+            # Process the issues
             for issue in issues:
                 # Add user data to the issue
                 for field in ['user', 'assignee']:
-                    issue[field+"_data"] = self._get_user_from_cache(issue, field)
+                    issue[field+"_data"] = {}
+                    if issue[field]:
+                        issue[field+"_data"] = \
+                            self._users[issue[field]['login']]
                 yield issue
-            issues = next_issues
-        for issue in issues:
-            # Add user data to the issue
-            for field in ['user', 'assignee']:
-                issue[field+"_data"] = self._get_user_from_cache(issue, field)
-            yield issue
 
 class GitHubClient:
     """ Client for retieving information from GitHub API """
