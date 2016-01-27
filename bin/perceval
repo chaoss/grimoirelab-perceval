@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015 Bitergia
+# Copyright (C) 2015-2016 Bitergia
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ from perceval.backends import PERCEVAL_CMDS
 
 
 PERCEVAL_USAGE_MSG = \
-"""%(prog)s [-c <file>] <backend> [<args>] | --help """
+"""%(prog)s [-c <file>] [-g] <backend> [<args>] | --help """
 
 PERCEVAL_DESC_MSG = \
 """Send Sir Perceval on a quest to retrieve and gather data from software
@@ -41,7 +41,9 @@ Repositories are reached using specific backends. The most common backends
 are:
 
     bugzilla         Fetch bugs from a Bugzilla server
+    gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from a Git log file
+    github           Fetch issues from GitHub
 
 optional arguments:
   -h, --help            show this help message and exit
