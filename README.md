@@ -36,6 +36,9 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 ```
 $ python3 setup.py install
 ```
+## Documentation
+
+Documentation is generated automagically in the [ReadTheDocs Perceval site](http://perceval.readthedocs.org/).
 
 ## Examples
 
