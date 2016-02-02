@@ -456,7 +456,7 @@ class BugzillaClient:
         else:
             order = 'changeddate'
 
-        date = from_date.strftime("%Y-%m-%dT%H:%M:%S")
+        date = from_date.strftime("%Y-%m-%d %H:%M:%S")
 
         params = {
             self.PCHFIELD_FROM : date,

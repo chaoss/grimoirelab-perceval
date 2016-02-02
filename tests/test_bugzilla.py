@@ -121,17 +121,17 @@ class TestBugzillaBackend(unittest.TestCase):
                     {
                      'ctype' : ['csv'],
                      'order' : ['changeddate'],
-                     'chfieldfrom' : ['1970-01-01T00:00:00']
+                     'chfieldfrom' : ['1970-01-01 00:00:00']
                     },
                     {
                      'ctype' : ['csv'],
                      'order' : ['changeddate'],
-                     'chfieldfrom' : ['2009-07-30T11:35:33']
+                     'chfieldfrom' : ['2009-07-30 11:35:33']
                     },
                     {
                      'ctype' : ['csv'],
                      'order' : ['changeddate'],
-                     'chfieldfrom' : ['2015-08-12T18:32:11']
+                     'chfieldfrom' : ['2015-08-12 18:32:11']
                     },
                     {
                      'ctype' : ['xml'],
@@ -235,12 +235,12 @@ class TestBugzillaBackend(unittest.TestCase):
                     {
                      'ctype' : ['csv'],
                      'order' : ['changeddate'],
-                     'chfieldfrom' : ['2015-01-01T00:00:00']
+                     'chfieldfrom' : ['2015-01-01 00:00:00']
                     },
                     {
                      'ctype' : ['csv'],
                      'order' : ['changeddate'],
-                     'chfieldfrom' : ['2015-08-12T18:32:11']
+                     'chfieldfrom' : ['2015-08-12 18:32:11']
                     },
                     {
                      'ctype' : ['xml'],
@@ -283,7 +283,7 @@ class TestBugzillaBackend(unittest.TestCase):
         expected = {
                      'ctype' : ['csv'],
                      'order' : ['changeddate'],
-                     'chfieldfrom' : ['2100-01-01T00:00:00']
+                     'chfieldfrom' : ['2100-01-01 00:00:00']
                     }
 
         req = httpretty.last_request()
@@ -596,7 +596,7 @@ class TestBugzillaClient(unittest.TestCase):
         expected = {
                     'ctype' : ['csv'],
                     'order' : ['changeddate'],
-                    'chfieldfrom' : ['1970-01-01T00:00:00']
+                    'chfieldfrom' : ['1970-01-01 00:00:00']
                    }
 
         req = httpretty.last_request()
@@ -614,7 +614,7 @@ class TestBugzillaClient(unittest.TestCase):
         expected = {
                     'ctype' : ['csv'],
                     'order' : ['changeddate'],
-                    'chfieldfrom' : ['2015-01-01T00:00:00']
+                    'chfieldfrom' : ['2015-01-01 00:00:00']
                    }
 
         req = httpretty.last_request()
@@ -649,7 +649,7 @@ class TestBugzillaClient(unittest.TestCase):
         expected = {
                     'ctype' : ['csv'],
                     'order' : ['Last Changed'],
-                    'chfieldfrom' : ['1970-01-01T00:00:00']
+                    'chfieldfrom' : ['1970-01-01 00:00:00']
                     }
 
         req = httpretty.last_request()
