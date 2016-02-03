@@ -22,14 +22,21 @@
 #
 
 import datetime
+import os.path
+import shutil
 import sys
+import tempfile
 import unittest
+
+import bz2
+import gzip
 
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.errors import InvalidDateError, ParseError
-from perceval.utils import (remove_invalid_xml_chars,
+from perceval.utils import (check_compressed_file_type,
+                            remove_invalid_xml_chars,
                             str_to_datetime,
                             urljoin,
                             xml_to_dict)
@@ -39,6 +46,49 @@ def read_file(filename):
     with open(filename, 'r') as f:
         content = f.read()
     return content
+
+
+class TestCheckCompressedFileType(unittest.TestCase):
+    """Unit tests for check_compressed_file_type function"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+        cls.files = {'bz2' : os.path.join(cls.tmp_path, 'bz2'),
+                     'gz'  : os.path.join(cls.tmp_path, 'gz')}
+
+        # Copy compressed files
+        for ftype, fname in cls.files.items():
+            if ftype == 'bz2':
+                mod = bz2
+            else:
+                mod = gzip
+
+            with open('data/mbox_single.mbox', 'rb') as f_in:
+                with mod.open(fname, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+
+        # Copy a plain file
+        shutil.copy('data/mbox_single.mbox', cls.tmp_path)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp_path)
+
+    def test_compressed_type(self):
+        """Test the type of some compressed files"""
+
+        for ftype, fname in self.files.items():
+            filetype = check_compressed_file_type(fname)
+            self.assertEqual(filetype, ftype)
+
+    def test_not_supported_type(self):
+        """Test a non supported file"""
+
+        fname = os.path.join(self.tmp_path, 'mbox_single.mbox')
+        filetype = check_compressed_file_type(fname)
+        self.assertEqual(filetype, None)
 
 
 class TestStrToDatetime(unittest.TestCase):

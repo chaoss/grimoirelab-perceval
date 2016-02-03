@@ -18,6 +18,7 @@
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
+#     Germán Poo-Caamaño <gpoo@gnome.org>
 #
 
 import datetime
@@ -32,6 +33,34 @@ from .errors import InvalidDateError, ParseError
 
 
 DEFAULT_DATETIME = datetime.datetime(1970, 1, 1, 0, 0, 0)
+
+
+def check_compressed_file_type(filepath):
+    """Check if filename is a compressed file supported by the tool.
+
+    This function uses magic numbers (first four bytes) to determine
+    the type of the file. Supported types are 'gz' and 'bz2'. When
+    the filetype is not supported, the function returns `None`.
+
+    :param filepath: path to the file
+
+    :returns: 'gz' or 'bz2'; `None` if the type is not supported
+    """
+    def compressed_file_type(content):
+        magic_dict = {
+            b'\x1f\x8b\x08': 'gz',
+            b'\x42\x5a\x68': 'bz2'
+        }
+
+        for magic, filetype in magic_dict.items():
+            if content.startswith(magic):
+                return filetype
+
+        return None
+
+    with open(filepath, mode='rb') as f:
+        magic_number = f.read(4)
+    return compressed_file_type(magic_number)
 
 
 def str_to_datetime(ts):
