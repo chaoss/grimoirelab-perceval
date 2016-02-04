@@ -287,12 +287,8 @@ class GitParser:
                     logger.debug("Commit %s parsed", commit['commit'])
                     yield commit
 
-        # Check the state of the last parsed commit
+        # Return the last commit, if any
         if self.commit:
-            if self.state in (self.COMMIT, self.HEADER):
-                msg = "unexpected end of log stream"
-                raise ParseError(cause=msg)
-
             commit = self._build_commit()
             logger.debug("Commit %s parsed", commit['commit'])
             yield commit

@@ -170,14 +170,6 @@ class TestGitParser(unittest.TestCase):
                     }
         self.assertDictEqual(commits[5], expected)
 
-    def test_parse_incomplete_log(self):
-        """Test if it parsers fails when the log is incompleted"""
-
-        with self.assertRaisesRegex(ParseError, 'unexpected end of log stream'):
-            with open("data/git_log_incompleted.txt", 'r') as f:
-                parser = GitParser(f)
-                _ = [commit for commit in parser.parse()]
-
     def test_commit_pattern(self):
         """Test commit pattern"""
 
