@@ -29,7 +29,10 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.errors import InvalidDateError, ParseError
-from perceval.utils import str_to_datetime, urljoin, xml_to_dict
+from perceval.utils import (remove_invalid_xml_chars,
+                            str_to_datetime,
+                            urljoin,
+                            xml_to_dict)
 
 
 def read_file(filename):
@@ -101,6 +104,17 @@ class TestURLJoin(unittest.TestCase):
         self.assertEqual(url, 'http://example.com/owner/repository')
 
 
+class TestRemoveInvalidXMLChars(unittest.TestCase):
+    """Unit tests for remove_invalid_xml_characters"""
+
+    def test_remove_chars(self):
+        raw_xml = read_file('data/bugzilla_bugs_invalid_chars.xml')
+        purged_xml = remove_invalid_xml_chars(raw_xml)
+
+        self.assertNotEqual(purged_xml, raw_xml)
+        self.assertEqual(len(purged_xml), len(raw_xml))
+
+
 class TestXMLtoDict(unittest.TestCase):
     """Unit tests for xml_to_dict"""
 
@@ -124,6 +138,21 @@ class TestXMLtoDict(unittest.TestCase):
         long_desc = bug['long_desc'][2]
         self.assertEqual(long_desc['isprivate'], '0')
         self.assertEqual(long_desc['thetext'][0]['__text__'], 'Invalid patch')
+
+    def test_remove_invalid_xml_chars(self):
+        """Check whether it removes invalid characters and parses the stream"""
+
+        raw_xml = read_file('data/bugzilla_bugs_invalid_chars.xml')
+        d = xml_to_dict(raw_xml)
+
+        self.assertIsInstance(d, dict)
+        self.assertEqual(d['version'], '4.2.1')
+        self.assertEqual(len(d['bug']), 1)
+
+        bug = d['bug'][0]
+        self.assertEqual(bug['bug_id'][0]['__text__'], '25299')
+        self.assertEqual(len(bug['cc']), 2)
+        self.assertEqual(len(bug['long_desc']), 11)
 
     def test_invalid_xml(self):
         """Check whether it raises an exception when the XML is invalid"""

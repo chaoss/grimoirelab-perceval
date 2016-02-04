@@ -21,10 +21,12 @@
 #
 
 import datetime
-
-import dateutil.parser
+import re
+import sys
 
 import xml.etree.ElementTree
+
+import dateutil.parser
 
 from .errors import InvalidDateError, ParseError
 
@@ -70,6 +72,37 @@ def urljoin(*args):
     return '/'.join(map(lambda x: str(x).strip('/'), args))
 
 
+def remove_invalid_xml_chars(raw_xml):
+    """Remove control and invalid characters from an xml stream.
+
+    This solution is based on these two posts: Olemis Lang's reponse
+    on StackOverflow (http://stackoverflow.com/questions/1707890) and
+    lawlesst's on GitHub Gist (https://gist.github.com/lawlesst/4110923),
+    that is based on the previous answer.
+
+    :param xml: XML stream
+
+    :returns: a purged XML stream
+    """
+    illegal_unichrs = [(0x00, 0x08), (0x0B, 0x1F),
+                       (0x7F, 0x84), (0x86, 0x9F)]
+
+    illegal_ranges = ['%s-%s' % (chr(low), chr(high))
+                      for (low, high) in illegal_unichrs
+                      if low < sys.maxunicode]
+
+    illegal_xml_re = re.compile('[%s]' % ''.join(illegal_ranges))
+
+    purged_xml = ''
+
+    for c in raw_xml:
+        if illegal_xml_re.search(c) is not None:
+            c = ' '
+        purged_xml += c
+
+    return purged_xml
+
+
 def xml_to_dict(raw_xml):
     """Convert a XML stream into a dictionary.
 
@@ -106,8 +139,10 @@ def xml_to_dict(raw_xml):
 
         return d
 
+    purged_xml = remove_invalid_xml_chars(raw_xml)
+
     try:
-        tree = xml.etree.ElementTree.fromstring(raw_xml)
+        tree = xml.etree.ElementTree.fromstring(purged_xml)
     except xml.etree.ElementTree.ParseError as e:
         cause = "XML stream %s" % (str(e))
         raise ParseError(cause=cause)
