@@ -96,7 +96,7 @@ class Git(Backend):
         :raises IOError: raised when an error occurs reading the
             given file
         """
-        with open(filepath, 'r') as f:
+        with open(filepath, 'r', errors='surrogateescape') as f:
             parser = GitParser(f)
 
             for commit in parser.parse():

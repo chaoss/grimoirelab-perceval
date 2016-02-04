@@ -1,0 +1,12 @@
+commit cb24e4f2f7b2a7f3450bfb15d1cbaa97371e93fb d0f6b2f22a80e6131904bd1462dca06c6fd1140c
+Author:     rganor <rganor>
+AuthorDate: Thu Apr 29 10:18:26 2010 +0000
+Commit:     rganor <rganor>
+CommitDate: Thu Apr 29 10:18:26 2010 +0000
+
+    Calling “Open Type” (CTRL+SHIFT+T) after startup - performance improvement.
+
+:100644 100644 af69269... 2ba6d79... M	core/plugins/org.eclipse.dltk.core/environment/org/eclipse/dltk/core/internal/environment/EFSFileHandle.java
+:100644 100644 df763da... bbf51f5... M	core/plugins/org.eclipse.dltk.core/index/org/eclipse/dltk/internal/core/index2/AbstractIndexRequest.java
+10	0	core/plugins/org.eclipse.dltk.core/environment/org/eclipse/dltk/core/internal/environment/EFSFileHandle.java
+2	1	core/plugins/org.eclipse.dltk.core/index/org/eclipse/dltk/internal/core/index2/AbstractIndexRequest.java

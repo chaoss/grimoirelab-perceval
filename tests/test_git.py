@@ -80,6 +80,18 @@ class TestGitBackend(unittest.TestCase):
 
         self.assertListEqual(result, expected)
 
+    def test_git_encoding_error(self):
+        """Test if encoding errors are escaped when a git log is parsed"""
+
+        commits = Git.parse_git_log("data/git_bad_encoding.txt")
+        result = [commit for commit in commits]
+
+        self.assertEqual(len(result), 1)
+
+        commit = result[0]
+        self.assertEqual(commit['commit'], 'cb24e4f2f7b2a7f3450bfb15d1cbaa97371e93fb')
+        self.assertEqual(commit['message'], 'Calling \udc93Open Type\udc94 (CTRL+SHIFT+T) after startup - performance improvement.')
+
 
 class TestGitCommand(unittest.TestCase):
 
