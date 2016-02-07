@@ -17,9 +17,9 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 # Authors:
-#   Alvaro del Castillo San Felix <acs@bitergia.com>
+#     Alvaro del Castillo San Felix <acs@bitergia.com>
+#     Santiago Dueñas <sduenas@bitergia.com>
 #
-
 
 from datetime import datetime
 import json
@@ -34,6 +34,7 @@ from ..cache import Cache
 from ..errors import BackendError, CacheError
 from ..utils import DEFAULT_DATETIME, str_to_datetime
 
+
 MAX_REVIEWS = 500 # Maximum number of reviews per query
 
 logger = logging.getLogger(__name__)
@@ -45,8 +46,16 @@ def get_update_time(item):
 
 
 class Gerrit(Backend):
-    """Gerrit backend."""
+    """Gerrit backend.
 
+    Class to fetch the reviews from a Gerrit server. To initialize
+    this class the URL of the server must be provided.
+
+    :param url: Gerrit server URL
+    :param user: SSH user used to connect to the Gerrit server
+    :param max_reviews: maximum number of reviews requested on the same query
+    :param cache: cache object to store raw data
+    """
     version = '0.1.0'
 
     def __init__(self, url, user=None, max_reviews=None, cache=None):
@@ -58,9 +67,9 @@ class Gerrit(Backend):
 
     @metadata(get_update_time)
     def fetch_from_cache(self):
-        """Fetch the bugs from the cache.
+        """Fetch reviews from the cache.
 
-        It returns the issues stored in the cache object provided during
+        It returns the reviews stored in the cache object provided during
         the initialization of the object. If this method is called but
         no cache object was provided, the method will raise a `CacheError`
         exception.
@@ -82,7 +91,7 @@ class Gerrit(Backend):
 
     @metadata(get_update_time)
     def fetch(self, from_date=DEFAULT_DATETIME):
-        """Fetch the bugs from the repository.
+        """Fetch the reviews from the repository.
 
         The method retrieves, from a Gerrit repository, the reviews
         updated since the given date.
@@ -139,26 +148,24 @@ class Gerrit(Backend):
 class GerritClient():
     """Gerrit API client.
 
-    This class implements a client to retrieve reviews
-    from a Gerrit repository using the ssh API.
+    This class implements a client to retrieve reviews from a Gerrit
+    repository using the ssh API. Currently it supports <2.8 and >=2.9
+    versions in incremental mode.
+
+    Check the next link for more info:
     https://gerrit-documentation.storage.googleapis.com/Documentation/2.12/cmd-query.html
-    Support for <2.8 and >=2.9 version incremental mode.
+
+    :param repository: URL of the Gerrit server
+    :param user: SSH user to be used to connect to gerrit server
+    :param max_reviews: max number of reviews per query
     """
 
-    # Regular expression to check the Gerrit version
     VERSION_REGEX = re.compile(r'gerrit version (\d+)\.(\d+).*')
     CMD_GERRIT = 'gerrit'
     CMD_VERSION = 'version'
     PORT = '29418'
 
     def __init__(self, repository, user, max_reviews):
-        """ Init a GerritClient instance
-
-        :param repository: URL of the gerrit server
-        :param user: ssh user to be used to connect to gerrit server
-        :param max_reviews: max number of reviews per query
-        """
-
         self.gerrit_user = user
         self.max_reviews = max_reviews
         self.repository = repository
@@ -170,7 +177,8 @@ class GerritClient():
 
     @property
     def version(self):
-        """ Return the gerrit server version. Read only property. """
+        """ Return the Gerrit server version."""
+
         if self._version:
             return self._version
 
@@ -221,7 +229,8 @@ class GerritClient():
         return cmd
 
     def reviews(self, last_item):
-        """ Get the reviews starting from last_item """
+        """Get the reviews starting from last_item."""
+
         cmd = self._get_gerrit_cmd(last_item)
 
         logger.debug(cmd)
@@ -231,7 +240,7 @@ class GerritClient():
         return raw_data
 
     def next_retrieve_group_item(self, last_item = None, entry = None):
-        """ Return the item to start from in next reviews group """
+        """Return the item to start from in next reviews group."""
 
         next_item = None
 
