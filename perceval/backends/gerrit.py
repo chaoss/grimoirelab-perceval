@@ -21,13 +21,13 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-from datetime import datetime
+import datetime
 import json
 import logging
 import os.path
 import re
 import subprocess
-from time import time
+import time
 
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
@@ -60,10 +60,40 @@ class Gerrit(Backend):
 
     def __init__(self, url, user=None, max_reviews=None, cache=None):
         super().__init__(url, cache=cache)
-        self.max_reviews = max_reviews
-        self.number_results = None  # last number of results
         self.url = url
+        self.max_reviews = max_reviews
         self.client = GerritClient(self.url, user, max_reviews)
+
+    @metadata(get_update_time)
+    def fetch(self, from_date=DEFAULT_DATETIME):
+        """Fetch the reviews from the repository.
+
+        The method retrieves, from a Gerrit repository, the reviews
+        updated since the given date.
+
+        :param from_date: obtain reviews updated since this date
+
+        :returns: a generator of reviews
+        """
+        self._purge_cache_queue()
+
+        last_item = self.client.next_retrieve_group_item()
+        reviews = self._get_reviews(last_item)
+        last_nreviews = len(reviews)
+
+        while reviews:
+            review = reviews.pop(0)
+            last_item += 1
+            updated = datetime.datetime.fromtimestamp(review['lastUpdated'])
+            if updated <= from_date:
+                logger.debug("No more updates for %s" % (self.url))
+                break
+
+            yield review
+
+            if not reviews and last_nreviews >= self.max_reviews:
+                last_item = self.client.next_retrieve_group_item(last_item, review)
+                reviews = self._get_reviews(last_item)
 
     @metadata(get_update_time)
     def fetch_from_cache(self):
@@ -89,45 +119,14 @@ class Gerrit(Backend):
             for review in reviews:
                 yield review
 
-    @metadata(get_update_time)
-    def fetch(self, from_date=DEFAULT_DATETIME):
-        """Fetch the reviews from the repository.
-
-        The method retrieves, from a Gerrit repository, the reviews
-        updated since the given date.
-
-        :param from_date: obtain reviews updated since this date
-
-        :returns: a generator of reviews
-        """
-        self._purge_cache_queue()
-
-        last_item = self.client.next_retrieve_group_item()
-        reviews = self._get_reviews(last_item)
-        last_nreviews = len(reviews)
-
-        while reviews:
-            review = reviews.pop(0)
-            last_item += 1
-            updated = datetime.fromtimestamp(review['lastUpdated'])
-            if updated <= from_date:
-                logger.debug("No more updates for %s" % (self.url))
-                break
-
-            yield review
-
-            if not reviews and last_nreviews >= self.max_reviews:
-                last_item = self.client.next_retrieve_group_item(last_item, review)
-                reviews = self._get_reviews(last_item)
-
     def _get_reviews(self, last_item):
-        task_init = time()
+        task_init = time.time()
         raw_data = self.client.reviews(last_item)
         self._push_cache_queue(raw_data)
         self._flush_cache_queue()
         reviews = Gerrit.parse_reviews(raw_data)
         logger.info("Received %i reviews in %.2fs" % (len(reviews),
-                                                       time()-task_init))
+                                                       time.time()-task_init))
         return reviews
 
     @classmethod
@@ -159,7 +158,6 @@ class GerritClient():
     :param user: SSH user to be used to connect to gerrit server
     :param max_reviews: max number of reviews per query
     """
-
     VERSION_REGEX = re.compile(r'gerrit version (\d+)\.(\d+).*')
     CMD_GERRIT = 'gerrit'
     CMD_VERSION = 'version'
@@ -206,6 +204,35 @@ class GerritClient():
         self._version = [mayor, minor]
         return self._version
 
+    def reviews(self, last_item):
+        """Get the reviews starting from last_item."""
+
+        cmd = self._get_gerrit_cmd(last_item)
+
+        logger.debug(cmd)
+        raw_data = subprocess.check_output(cmd, shell=True)
+        raw_data = str(raw_data, "UTF-8")
+
+        return raw_data
+
+    def next_retrieve_group_item(self, last_item=None, entry=None):
+        """Return the item to start from in next reviews group."""
+
+        next_item = None
+
+        gerrit_version = self.version
+
+        if gerrit_version[0] == 2 and gerrit_version[1] >= 9:
+            if last_item is None:
+                next_item = 0
+            else:
+                next_item = last_item
+        else:
+            if entry is not None:
+                next_item = entry['sortKey']
+
+        return next_item
+
     def _get_gerrit_cmd(self, last_item):
 
         cmd = self.gerrit_cmd + " query "
@@ -228,35 +255,6 @@ class GerritClient():
 
         return cmd
 
-    def reviews(self, last_item):
-        """Get the reviews starting from last_item."""
-
-        cmd = self._get_gerrit_cmd(last_item)
-
-        logger.debug(cmd)
-        raw_data = subprocess.check_output(cmd, shell=True)
-        raw_data = str(raw_data, "UTF-8")
-
-        return raw_data
-
-    def next_retrieve_group_item(self, last_item = None, entry = None):
-        """Return the item to start from in next reviews group."""
-
-        next_item = None
-
-        gerrit_version = self.version
-
-        if gerrit_version[0] == 2 and gerrit_version[1] >= 9:
-            if last_item is None:
-                next_item = 0
-            else:
-                next_item = last_item
-        else:
-            if entry is not None:
-                next_item = entry['sortKey']
-
-        return next_item
-
 
 class GerritCommand(BackendCommand):
     """Class to run Gerrit backend from the command line."""
@@ -275,7 +273,6 @@ class GerritCommand(BackendCommand):
                 base_path = os.path.expanduser('~/.perceval/cache/')
             else:
                 base_path = self.parsed_args.cache_path
-            # TODO: add get_id for backend to return the unique id
             cache_path = os.path.join(base_path, self.url)
 
             cache = Cache(cache_path)
