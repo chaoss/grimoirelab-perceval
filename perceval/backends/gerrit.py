@@ -124,13 +124,15 @@ class Gerrit(Backend):
         raw_data = self.client.reviews(last_item)
         self._push_cache_queue(raw_data)
         self._flush_cache_queue()
-        reviews = Gerrit.parse_reviews(raw_data)
+        reviews = self.parse_reviews(raw_data)
         logger.info("Received %i reviews in %.2fs" % (len(reviews),
                                                        time.time()-task_init))
         return reviews
 
-    @classmethod
-    def parse_reviews(cls, raw_data):
+    @staticmethod
+    def parse_reviews(raw_data):
+        """Parse a Gerrit reviews list."""
+
         # Join isolated reviews in JSON in array for parsing
         items_raw = "[" + raw_data.replace("\n", ",") + "]"
         items_raw = items_raw.replace(",]", "]")
