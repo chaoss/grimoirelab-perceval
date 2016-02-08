@@ -75,6 +75,7 @@ def urljoin(*args):
 def remove_invalid_xml_chars(raw_xml):
     """Remove control and invalid characters from an xml stream.
 
+    Looks for invalid characters and subtitutes them with whitespaces.
     This solution is based on these two posts: Olemis Lang's reponse
     on StackOverflow (http://stackoverflow.com/questions/1707890) and
     lawlesst's on GitHub Gist (https://gist.github.com/lawlesst/4110923),
