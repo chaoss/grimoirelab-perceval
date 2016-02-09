@@ -47,7 +47,7 @@ class StackExchange(Backend):
 
     This class retrieves the questions stored in any of the
     StackExchange sites. To initialize this class the
-    site and the tag must be provided.
+    site must be provided.
 
     :param site: StackExchange site
     :param tagged: filter items by question Tag
@@ -56,7 +56,7 @@ class StackExchange(Backend):
     """
     version = '0.1.0'
 
-    def __init__(self, site=None, tagged=None, token=None,
+    def __init__(self, site, tagged=None, token=None,
                  max_questions=None, cache=None):
 
         super().__init__(site, cache=cache)
@@ -284,9 +284,9 @@ class StackExchangeCommand(BackendCommand):
 
         group.add_argument("--site", required=True,
                            help="StackExchange site")
-        group.add_argument("--tagged", required=True,
+        group.add_argument("--tagged",
                            help="filter items by question Tag")
-        group.add_argument("--token", required=True,
+        group.add_argument("--token",
                            help="StackExchange token for the API")
         group.add_argument('--max-questions', dest='max_questions',
                            type=int, default=MAX_QUESTIONS,
