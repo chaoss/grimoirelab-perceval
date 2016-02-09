@@ -32,16 +32,7 @@ from ..cache import Cache
 from ..errors import CacheError
 from ..utils import str_to_datetime, DEFAULT_DATETIME, urljoin
 
-# Filters are immutable and non-expiring. This filter allows to retrieve all
-# the information regarding Each question. To know more, visit
-# https://api.stackexchange.com/docs/questions and paste the filter in the
-# whitebox filter. It will display a list of checkboxes with the selected
-# values for the filter provided.
-
-QUESTIONS_FILTER = 'Bf*y*ByQD_upZqozgU6lXL_62USGOoV3)MFNgiHqHpmO_Y-jHR'
 MAX_QUESTIONS = 100  # Maximum number of reviews per query
-STACKEXCHANGE_API_URL = 'https://api.stackexchange.com'
-VERSION_API = '2.2'
 
 logger = logging.getLogger(__name__)
 
@@ -132,17 +123,25 @@ class StackExchangeClient:
 
     :raises HTTPError: when an error occurs doing the request
     """
+    # Filters are immutable and non-expiring. This filter allows to retrieve all
+    # the information regarding Each question. To know more, visit
+    # https://api.stackexchange.com/docs/questions and paste the filter in the
+    # whitebox filter. It will display a list of checkboxes with the selected
+    # values for the filter provided.
+
+    QUESTIONS_FILTER = 'Bf*y*ByQD_upZqozgU6lXL_62USGOoV3)MFNgiHqHpmO_Y-jHR'
+    STACKEXCHANGE_API_URL = 'https://api.stackexchange.com'
+    VERSION_API = '2.2'
 
     def __init__(self, site, tagged, token, max_questions):
         self.site = site
         self.tagged = tagged
         self.token = token
         self.max_questions = max_questions
-        self.version = VERSION_API
 
     def __build_base_url(self, type='questions'):
-        base_api_url = STACKEXCHANGE_API_URL
-        base_api_url = urljoin(base_api_url, self.version, type)
+        base_api_url = self.STACKEXCHANGE_API_URL
+        base_api_url = urljoin(base_api_url, self.VERSION_API, type)
         return base_api_url
 
     def __build_payload(self, page, from_date, order='desc', sort='activity'):
@@ -153,7 +152,7 @@ class StackExchangeClient:
                    'tagged': self.tagged,
                    'site': self.site,
                    'key': self.token,
-                   'filter': QUESTIONS_FILTER}
+                   'filter': self.QUESTIONS_FILTER}
         if from_date:
             timestamp = int(time.mktime(from_date.timetuple()))
             payload['min'] = timestamp
