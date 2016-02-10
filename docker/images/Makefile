@@ -13,7 +13,7 @@ help:
 
 .PHONY: perceval
 perceval:
-	docker build -t grimoirelab/perceval:$(PERCEVAL_VERSION) perceval/$(PERCEVAL_VERSION)/
+	docker build -t grimoirelab/perceval:$(PERCEVAL_VERSION) $(PERCEVAL_VERSION)/
 
 .PHONY: all
 all: perceval
