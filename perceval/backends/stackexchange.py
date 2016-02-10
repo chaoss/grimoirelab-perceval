@@ -179,15 +179,12 @@ class StackExchangeClient:
 
     def __log_status(self, quota_remaining, quota_max, page_size, total):
 
-        logger.info("Rate limit: %s/%s" % (quota_remaining,
-                                           quota_max))
+        logger.debug("Rate limit: %s/%s" % (quota_remaining,
+                                            quota_max))
         if (total != 0):
-            if (total <= page_size):
-                logger.info("Fetching questions: %s/%s" % (total,
-                                                           total))
-            else:
-                logger.info("Fetching questions: %s/%s" % (page_size,
-                                                           total))
+            nquestions = min(page_size, total)
+            logger.info("Fetching questions: %s/%s" % (nquestions,
+                                                       total))
         else:
             logger.info("No questions were found.")
 
@@ -203,34 +200,31 @@ class StackExchangeClient:
         req.raise_for_status()
         questions = req.text
 
-        if (req.json()['page_size'] >= req.json()['total']):
-            fetched = req.json()['total']
-        else:
-            fetched = req.json()['page_size']
+        data = req.json()
+        tquestions = data['total']
+        nquestions = data['page_size']
 
-        self.__log_status(req.json()['quota_remaining'],
-                          req.json()['quota_max'],
-                          fetched,
-                          req.json()['total'])
+        self.__log_status(data['quota_remaining'],
+                          data['quota_max'],
+                          nquestions,
+                          tquestions)
 
         while questions:
             yield questions
             questions = None
 
-            if req.json()['has_more']:
+            if data['has_more']:
                 page += 1
                 req = requests.get(self.__build_base_url(),
                                    params=self.__build_payload(page, from_date))
                 req.raise_for_status()
+                data = req.json()
                 questions = req.text
-                if (req.json()['page_size'] >= req.json()['total']):
-                    fetched += req.json()['total']
-                else:
-                    fetched += req.json()['page_size']
-                self.__log_status(req.json()['quota_remaining'],
-                                  req.json()['quota_max'],
-                                  fetched,
-                                  req.json()['total'])
+                nquestions += data['page_size']
+                self.__log_status(data['quota_remaining'],
+                                  data['quota_max'],
+                                  nquestions,
+                                  tquestions)
 
 
 class StackExchangeCommand(BackendCommand):
