@@ -8,11 +8,9 @@ ENV GIT_REV_PERCEVAL master
 # install dependencies
 
 RUN apt-get update && \
-    apt-get install -y git --no-install-recommends
-
-RUN pip install python-dateutil requests beautifulsoup4 git+${GIT_URL_PERCEVAL}@${GIT_REV_PERCEVAL}
-
-RUN apt-get clean && \
+    apt-get install -y git --no-install-recommends && \
+    pip install python-dateutil requests beautifulsoup4 git+${GIT_URL_PERCEVAL}@${GIT_REV_PERCEVAL} && \
+    apt-get clean && \
     apt-get purge -y git && \
     apt-get autoremove --purge -y && \
     find /var/lib/apt/lists -type f -delete
