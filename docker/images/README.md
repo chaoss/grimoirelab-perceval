@@ -1,6 +1,6 @@
 ## Perceval Docker minimal image
 
-Perceval Docker image to work in standalone mode.
+Perceval Docker image to work in standalone mode. Available in [DockerHub](https://hub.docker.com/r/grimoirelab/perceval/).
 
 ## Image contents
 
@@ -10,7 +10,7 @@ Perceval Docker image to work in standalone mode.
 ## Image build
 
 For building your Perceval image, the only thing you need is having Docker installed in your system.
-After that, building your own image is as easy as running the following command from the path `docker/images/perceval`:
+After that, building your own image is as easy as running the following command from the path `docker/images`:
 
 ```
 make perceval
@@ -22,7 +22,7 @@ Perceval Docker image is (until now), an image for testing purposes. Due to that
 for each command mapping a volume providing persistence to the cache:
 
 ```
-docker run --rm -it --name perceval -v ~/.perceval/cache:/root/.perceval/cache bitergia/perceval:master {PERCEVAL_PARAMS}
+docker run --rm -it --name perceval -v ~/.perceval/cache:/root/.perceval/cache bitergia/perceval:master [PERCEVAL_PARAMS]
 ```
 
 ## User feedback
