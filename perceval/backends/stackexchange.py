@@ -89,8 +89,9 @@ class StackExchange(Backend):
         for whole_page in whole_pages:
             self._push_cache_queue(whole_page)
             self._flush_cache_queue()
-            question = self.parse_questions(whole_page)
-            return question
+            questions = self.parse_questions(whole_page)
+            for question in questions:
+                yield question
 
     @metadata(get_update_time)
     def fetch_from_cache(self):
@@ -107,11 +108,12 @@ class StackExchange(Backend):
         cache_items = self.cache.retrieve()
 
         for items in cache_items:
-            question = self.parse_questions(items)
-            return question
+            questions = self.parse_questions(items)
+            for question in questions:
+                yield question
 
     @staticmethod
-    def parse_questions(items):
+    def parse_questions(raw_page):
         """Parse a StackExchange API raw response.
 
         The method parses the API response retrieving the
@@ -121,7 +123,7 @@ class StackExchange(Backend):
 
         :returns: a generator of questions
         """
-        raw_questions = json.loads(items)
+        raw_questions = json.loads(raw_page)
         questions = raw_questions['items']
         for question in questions:
             yield question
