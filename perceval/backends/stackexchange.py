@@ -84,13 +84,13 @@ class StackExchange(Backend):
 
         self._purge_cache_queue()
 
-        whole_page = self.client.get_questions(from_date)
+        whole_pages = self.client.get_questions(from_date)
 
-        for questions in whole_page:
-            for question in questions:
-                self._push_cache_queue(question)
-                self._flush_cache_queue()
-                yield question
+        for whole_page in whole_pages:
+            self._push_cache_queue(whole_page)
+            self._flush_cache_queue()
+            question = self.parse_questions(whole_page)
+            return question
 
     @metadata(get_update_time)
     def fetch_from_cache(self):
@@ -106,7 +106,24 @@ class StackExchange(Backend):
 
         cache_items = self.cache.retrieve()
 
-        for question in cache_items:
+        for items in cache_items:
+            question = self.parse_questions(items)
+            return question
+
+    @staticmethod
+    def parse_questions(items):
+        """Parse a StackExchange API raw response.
+
+        The method parses the API response retrieving the
+        questions from the received items
+
+        :param items: items from where to parse the questions
+
+        :returns: a generator of questions
+        """
+        raw_questions = json.loads(items)
+        questions = raw_questions['items']
+        for question in questions:
             yield question
 
 
@@ -182,7 +199,7 @@ class StackExchangeClient:
         req = requests.get(self.__build_base_url(),
                            params=self.__build_payload(page, from_date))
         req.raise_for_status()
-        questions = req.json()['items']
+        questions = req.text
 
         if (req.json()['page_size'] >= req.json()['total']):
             fetched = req.json()['total']
@@ -203,7 +220,7 @@ class StackExchangeClient:
                 req = requests.get(self.__build_base_url(),
                                    params=self.__build_payload(page, from_date))
                 req.raise_for_status()
-                questions = req.json()['items']
+                questions = req.text
                 if (req.json()['page_size'] >= req.json()['total']):
                     fetched += req.json()['total']
                 else:
