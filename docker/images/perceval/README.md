@@ -1,0 +1,36 @@
+## Perceval Docker minimal image
+
+Perceval Docker image to work in standalone mode.
+
+## Image contents
+
+- [x] `python:3.4-slim` official image available [here](https://hub.docker.com/_/python/)
+- [x] Perceval
+
+## Image build
+
+For building your Perceval image, the only thing you need is having Docker installed in your system.
+After that, building your own image is as easy as running the following command from the path `docker/images/perceval`:
+
+```
+make perceval
+```
+
+## Usage
+
+Perceval Docker image is (until now), an image for testing purposes. Due to that, the initial approach is generate a container
+for each command mapping a volume providing persistence to the cache:
+
+```
+docker run --rm -it --name perceval -v ~/.perceval/cache:/root/.perceval/cache bitergia/perceval:master {PERCEVAL_PARAMS}
+```
+
+## User feedback
+
+### Documentation
+
+All the information regarding the image generation is hosted publicly in [Github](https://github.com/grimoirelab/perceval/tree/master/images/perceval).
+
+### Issues
+
+If you find any issue with this image, feel free to contact us via [Github issue tracking system](https://github.com/grimoirelab/perceval/issues).
