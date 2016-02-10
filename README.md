@@ -37,6 +37,13 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 ```
 $ python3 setup.py install
 ```
+
+## Docker
+
+A Perceval Docker image is available at [DockerHub](https://hub.docker.com/r/grimoirelab/perceval/).
+
+Detailed information on how to run and/or build this image can be found [here](https://github.com/grimoirelab/perceval/tree/master/docker/images/).
+
 ## Documentation
 
 Documentation is generated automagically in the [ReadTheDocs Perceval site](http://perceval.readthedocs.org/).
