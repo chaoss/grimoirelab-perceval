@@ -3,12 +3,18 @@
 import email
 import mailbox
 import os
+import tempfile
 
 import gzip
 import bz2
 
-from ..backend import Backend
+from ..backend import Backend, metadata
 from ..utils import check_compressed_file_type
+
+
+def get_update_time(item):
+    """Extracts the update time from a message item"""
+    return item['Date']
 
 
 class MBox(Backend):
@@ -28,6 +34,33 @@ class MBox(Backend):
     def __init__(self, origin, dirpath, cache=None):
         super().__init__(origin, cache=cache)
         self.dirpath = dirpath
+
+    @metadata(get_update_time)
+    def fetch(self):
+        """Fetch the commits from a set of mbox files.
+
+        The method retrieves, from mbox files, the messages stored in
+        these containers.
+
+        :returns: a generator of messages
+        """
+        mailing_list = MailingList(self.origin, self.dirpath)
+
+        for mbox in mailing_list.mboxes:
+            try:
+                tmp_path = tempfile.mktemp(prefix='perceval_')
+
+                with mbox.container as f_in:
+                    with open(tmp_path, mode='wb') as f_out:
+                        for l in f_in:
+                            f_out.write(l)
+
+                for message in self.parse_mbox(tmp_path):
+                    yield message
+                os.remove(tmp_path)
+            except Exception as e:
+                os.remove(tmp_path)
+                raise e
 
     @staticmethod
     def parse_mbox(filepath):

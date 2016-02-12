@@ -144,6 +144,26 @@ class TestMailingList(TestBaseMBox):
 class TestMBoxBackend(TestBaseMBox):
     """Tests for MBox backend"""
 
+    def test_fetch(self):
+        """Test whether it parses a set of mbox files"""
+
+        backend = MBox('http://example.com/', self.tmp_path)
+        messages = [m for m in backend.fetch()]
+
+        expected = [('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100'),
+                    ('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100'),
+                    ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'Wed, 22 Sep 2004 02:03:40 -0700'),
+                    ('<87iqzlofqu.fsf@avet.kvota.net>', 'Mon, 17 Mar 2008 10:35:05 +0100'),
+                    ('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100')]
+
+        self.assertEqual(len(messages), len(expected))
+
+        for x in range(len(messages)):
+            message = messages[x]
+            self.assertEqual(message['Message-ID'], expected[x][0])
+            self.assertEqual(message['__metadata__']['origin'], 'http://example.com/')
+            self.assertEqual(message['__metadata__']['updated_on'], expected[x][1])
+
     def test_parse_mbox(self):
         """Test whether it parses a mbox file"""
 
