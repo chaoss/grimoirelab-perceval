@@ -1,11 +1,81 @@
 # -*- coding: utf-8 -*-
 
+import email
+import mailbox
 import os
 
 import gzip
 import bz2
 
+from ..backend import Backend
 from ..utils import check_compressed_file_type
+
+
+class MBox(Backend):
+    """MBox backend.
+
+    This class allows the fetch the email messages stored one or several
+    mbox files. Initialize this class passing the directory path where
+    the mbox files are stored.
+
+    :param origin: origin of the mboxes; typically, the URL of their
+        mailing list
+    :param dirpath: directory path where the mboxes are stored
+    :param cache: cache object to store raw data
+    """
+    version = '0.1.0'
+
+    def __init__(self, origin, dirpath, cache=None):
+        super().__init__(origin, cache=cache)
+        self.dirpath = dirpath
+
+    @staticmethod
+    def parse_mbox(filepath):
+        """Parse a mbox file.
+
+        This method parses a mbox file and returns an iterator of dictionaries.
+        Each one of this contains an email message.
+
+        :param filepath: path of the mbox to parse
+        """
+        mbox = mailbox.mbox(filepath, create=False)
+
+        for msg in mbox:
+            message = {}
+            message['unixfrom'] = msg.get_from()
+
+            # Parse headers
+            for header, value in msg.items():
+                hv = []
+                for text, charset in email.header.decode_header(value):
+                    if type(text) == bytes:
+                        charset = charset if charset else 'utf-8'
+                        text = text.decode(charset)
+                    hv.append(text)
+                v = ' '.join(hv)
+                message[header] = v if v else None
+
+            # Parse message body
+            body = {}
+
+            if not msg.is_multipart():
+                subtype = msg.get_content_subtype()
+                charset = msg.get_content_charset()
+                charset = charset if charset else 'utf-8'
+                body[subtype] = [msg.get_payload(decode=True).decode(charset)]
+            else:
+                # Include all the attached texts if it is multipart
+                # Ignores binary parts by default
+                for part in email.iterators.typed_subpart_iterator(msg):
+                    charset = part.get_content_charset()
+                    payload = part.get_payload(decode=True)
+                    payload = payload.encode(charset)
+                    subtype = part.get_content_subtype()
+                    body.setdefault(subtype, []).append(payload)
+
+            message['body'] = {k : '\n'.join(v) for k, v in body.items()}
+
+            yield message
 
 
 class MBoxArchive(object):

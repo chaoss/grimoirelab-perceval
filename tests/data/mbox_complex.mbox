@@ -1,0 +1,206 @@
+From eloli@hotmail.com  Wed Sep 22 05:05:28 2004
+Return-Path: <eloli@hotmail.com>
+X-Original-To: desktop-devel-list@gnome.org
+Delivered-To: desktop-devel-list@gnome.org
+Received: from localhost (unknown [127.0.0.1])
+	by menubar.gnome.org (Postfix) with ESMTP
+	id 1CD323B0C99; Wed, 22 Sep 2004 05:05:27 -0400 (EDT)
+Received: from menubar.gnome.org ([12.107.209.248])
+	by localhost (menubar.gnome.org [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id 32539-04; Wed, 22 Sep 2004 05:05:25 -0400 (EDT)
+Received: from hotmail.com (bay12-dav6.bay12.hotmail.com [64.4.35.180])
+	by menubar.gnome.org (Postfix) with ESMTP
+	id 8C2133B0EFD; Wed, 22 Sep 2004 05:04:21 -0400 (EDT)
+Received: from mail pickup service by hotmail.com with Microsoft SMTPSVC;
+	Wed, 22 Sep 2004 02:04:00 -0700
+Received: from 67.169.166.201 by bay12-dav6.bay12.hotmail.com with DAV;
+	Wed, 22 Sep 2004 09:03:47 +0000
+X-Originating-IP: [67.169.166.201]
+X-Originating-Email: [eloli@hotmail.com]
+X-Sender: eloli@hotmail.com
+From: "Eugenia Loli-Queru" <eloli@hotmail.com>
+To: <language-bindings@gnome.org>, <desktop-devel-list@gnome.org>
+Date: Wed, 22 Sep 2004 02:03:40 -0700
+MIME-Version: 1.0
+Content-Type: text/plain; format=flowed; charset="iso-8859-1";
+	reply-type=original
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2900.2180
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2900.2180
+Message-ID: <BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>
+X-OriginalArrivalTime: 22 Sep 2004 09:04:00.0449 (UTC)
+	FILETIME=[19A30310:01C4A083]
+X-Virus-Scanned: by amavisd-new at gnome.org
+Cc:
+Subject: Re: Revisiting the Gnome Bindings
+X-BeenThere: desktop-devel-list@gnome.org
+X-Mailman-Version: 2.1.5
+Precedence: list
+List-Id: GNOME Desktop Development List <desktop-devel-list.gnome.org>
+List-Unsubscribe: <http://mail.gnome.org/mailman/listinfo/desktop-devel-list>,
+	<mailto:desktop-devel-list-request@gnome.org?subject=unsubscribe>
+List-Archive: </archives>
+List-Post: <mailto:desktop-devel-list@gnome.org>
+List-Help: <mailto:desktop-devel-list-request@gnome.org?subject=help>
+List-Subscribe: <http://mail.gnome.org/mailman/listinfo/desktop-devel-list>,
+	<mailto:desktop-devel-list-request@gnome.org?subject=subscribe>
+X-List-Received-Date: Wed, 22 Sep 2004 09:05:28 -0000
+
+>I don't think it's fair to blame the Foundation [...]
+>of packaging since it's really not (just) a case [...]
+>marketing.
+
+No matter what is really to blame, it ultimately [...]
+
+[...]
+
+Rgds,
+Eugenia
+
+From danilo@adsl-236-193.eunet.yu  Mon Mar 17 09:35:25 2008
+Return-Path: <danilo@adsl-236-193.eunet.yu>
+X-Original-To: desktop-devel-list@gnome.org
+Delivered-To: desktop-devel-list@gnome.org
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by menubar.gnome.org (Postfix) with ESMTP id 8CF08750115
+	for <desktop-devel-list@gnome.org>;
+	Mon, 17 Mar 2008 09:35:25 +0000 (GMT)
+X-Virus-Scanned: by amavisd-new at gnome.org
+X-Spam-Flag: NO
+X-Spam-Score: -0.76
+X-Spam-Level:
+X-Spam-Status: No, score=-0.76 tagged_above=-999 required=2 tests=[AWL=-1.427,
+	BAYES_00=-2.599, DNS_FROM_RFC_ABUSE=0.2,
+	HELO_DYNAMIC_DHCP=3.066]
+X-Amavis-OS-Fingerprint: Linux 2.6 (newer, 3) (NAT!) (up: 150 hrs), (distance
+	27, link: unknown-1460), [213.198.236.193]
+Received: from menubar.gnome.org ([127.0.0.1])
+	by localhost (menubar.gnome.org [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id uLNO6UpWz-bB for <desktop-devel-list@gnome.org>;
+	Mon, 17 Mar 2008 09:35:22 +0000 (GMT)
+Received: from adsl-236-193.eunet.yu (adsl-236-193.eunet.yu [213.198.236.193])
+	by menubar.gnome.org (Postfix) with ESMTP id 370F3750095
+	for <desktop-devel-list@gnome.org>;
+	Mon, 17 Mar 2008 09:35:21 +0000 (GMT)
+Received: by adsl-236-193.eunet.yu (Postfix, from userid 1000)
+	id 417517C13A; Mon, 17 Mar 2008 10:35:04 +0100 (CET)
+To: Simos Xenitellis <simos.lists@googlemail.com>
+Subject: Re: Low memory hacks
+References: <1204225143.12769.9.camel@localhost.localdomain>
+	<1204236062.14337.5.camel@localhost.localdomain>
+From: danilo@gnome.org (Danilo =?utf-8?Q?=C5=A0egan?=)
+Mail-Followup-To: Simos Xenitellis <simos.lists@googlemail.com>,
+	Bastien Nocera <hadess@hadess.net>,
+	"Nikolay V. Shmyrev" <nshmyrev@yandex.ru>,
+	Brian Nitz <Brian.Nitz@sun.com>, desktop-devel-list@gnome.org
+Date: Mon, 17 Mar 2008 10:35:05 +0100
+In-Reply-To: <1205676169.6819.27.camel@user-computer.NETWORK> (Simos
+	Xenitellis's message of "Sun\, 16 Mar 2008 14\:02\:49 +0000")
+Message-ID: <87iqzlofqu.fsf@avet.kvota.net>
+User-Agent: Gnus/5.11 (Gnus v5.11) Emacs/22.1 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Cc: desktop-devel-list@gnome.org, "Nikolay V. Shmyrev" <nshmyrev@yandex.ru>,
+	Brian Nitz <Brian.Nitz@sun.com>, Bastien Nocera <hadess@hadess.net>
+X-BeenThere: desktop-devel-list@gnome.org
+X-Mailman-Version: 2.1.8
+Precedence: list
+List-Id: GNOME Desktop Development List <desktop-devel-list.gnome.org>
+List-Unsubscribe: <http://mail.gnome.org/mailman/listinfo/desktop-devel-list>,
+	<mailto:desktop-devel-list-request@gnome.org?subject=unsubscribe>
+List-Archive: </archives/desktop-devel-list>
+List-Post: <mailto:desktop-devel-list@gnome.org>
+List-Help: <mailto:desktop-devel-list-request@gnome.org?subject=help>
+List-Subscribe: <http://mail.gnome.org/mailman/listinfo/desktop-devel-list>,
+	<mailto:desktop-devel-list-request@gnome.org?subject=subscribe>
+X-List-Received-Date: Mon, 17 Mar 2008 09:35:25 -0000
+
+Hi Simos,
+
+Yesterday at 15:02, Simos Xenitellis wrote:
+
+>> I'll like to see some real numbers on the memory usage instead of
+>> numbers being thrown around.
+>
+> In Ubuntu 7.10, the PO files for en_GB are
+> $ du
+> -h /usr/share/locale/en_GB/LC_MESSAGES /usr/share/locale-langpack/en_GB/L=
+C_MESSAGES/
+> 2.3M    /usr/share/locale/en_GB/LC_MESSAGES
+> 17M     /usr/share/locale-langpack/en_GB/LC_MESSAGES/
+> $_=20
+>
+> In Ubuntu 8.04 (alpha 6), the PO files for en_GB are
+> $ du
+> -h /usr/share/locale/en_GB/LC_MESSAGES /usr/share/locale-langpack/en_GB/L=
+C_MESSAGES/
+> 84K    /usr/share/locale/en_GB/LC_MESSAGES
+> 2.2M     /usr/share/locale-langpack/en_GB/LC_MESSAGES/
+> $_=20
+>
+> What I am missing here is that I do not know when/how Ubuntu adds this
+> functionality. It would benefit other distros as well. Did Debian
+> introduce with feature? Danilo, any links?
+
+I am not handling Ubuntu packaging stuff=E2=80=94it'd be worth checking with
+Ubuntu guys instead.  Martin Pitt is probably the right person to ask
+about it, but looking at the language pack sourcepackage should give a
+clue as well.
+
+However, I'd note that en_GB is not really the right locale to do
+the metrics on.
+
+>>>From the 2.3M + 17M MO files in Ubuntu 7.10, a typical GNOME session
+> loads up a subset of the MO files,
+>
+> # lsof | grep \.mo\$ | awk '{print $7,$9}' | sort -n | uniq
+>
+> At this moment, my 7.10 is a bit messed up (I have en_GB.UTF-8 but most
+> apps have en_US?!?). The figures for 8.04 with el_GR should be
+> comparative of what you get now with 7.10 and en_GB:
+
+They wouldn't be. A majority of el_GR probably uses two-byte UTF-8
+sequences, while en_GB would use a majority of single byte UTF-8
+sequences (i.e. ASCII).
+
+> # lsof | grep \.mo\$ | awk '{print $7,$9}' | sort -n | uniq | awk
+> '{printf "%d+",$1}' > /tmp/bc_sums
+>
+> Using "bc" with /tmp/bc_sums gives the figure
+> 3.6M (3624412) for a standard session. This figure is a bit
+> conservative, because en_GB probably did more work than el.
+>
+> With Ubuntu 8.04 (alpha6) and en_GB, the figure for the MO files is
+> less than 600K (585375).
+> Bastien, could you provide the proper figure for your system?
+>
+> That is a saving of at least 3M in memory.
+
+As Bastien explained, mmap() doesn't read the entire file into memory,
+but only reads it as needed.
+
+> The stripping of "unneeded" messages is good, and should happen at the
+> package generation level (not in GNOME, or when creating tarballs).=20
+
+Technically, I've opposed introducing this in intltool because of a
+one incompatible difference:
+
+  current gettext("Something") !=3D such gettext("Something")
+
+i.e. if "Something" was (un)translated as "Something" in the MO file,
+gettext would return a static pointer with the string "Something".  If
+it was untranslated, it would return the passed pointer.
+
+That can and was used to detect whether there is a translation in some
+programs (I've seen it done), so, until gains are proven to be big
+enough to warrant breaking a few programs in strange ways, I wouldn't
+do it on the packaging/build time.
+
+Of course, providing numbers to show what the gains are would help
+make the decision.
+
+Cheers,
+Danilo
