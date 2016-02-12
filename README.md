@@ -89,6 +89,11 @@ $ perceval gerrit --user user --url review.openstack.org --from-date '2016-01-01
 $ perceval github --owner elastic --repository filebeat --from-date '2016-01-01' --token abcdabcdabcdabcd
 ```
 
+### MBox
+```
+$ perceval mbox "http://example.com" /tmp/mboxes/
+```
+
 ### StackExchange
 ```
 $ perceval stackexchange --site stackoverflow --tagged python --from-date 2016-01-01 --token abcdabcdabcdabcd

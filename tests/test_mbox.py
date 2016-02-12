@@ -21,8 +21,9 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import sys
+import argparse
 import os.path
+import sys
 import shutil
 import tempfile
 import unittest
@@ -33,8 +34,10 @@ import gzip
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.utils import check_compressed_file_type
-from perceval.backends.mbox import MBox, MBoxArchive, MailingList
+from perceval.backends.mbox import (MBox,
+                                    MBoxCommand,
+                                    MBoxArchive,
+                                    MailingList)
 
 
 class TestBaseMBox(unittest.TestCase):
@@ -227,6 +230,27 @@ class TestMBoxBackend(TestBaseMBox):
                                    'Bastien Nocera <hadess@hadess.net>')
         self.assertEqual(m1['Subject'], 'Re: Low memory hacks')
         self.assertEqual(m1['unixfrom'], 'danilo@adsl-236-193.eunet.yu  Mon Mar 17 09:35:25 2008')
+
+
+class TestMBoxCommand(unittest.TestCase):
+    """Tests for MBoxCommand backend"""
+
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['http://example.com/', '/tmp/perceval/']
+
+        cmd = MBoxCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.origin, 'http://example.com/')
+        self.assertEqual(cmd.parsed_args.mboxes, '/tmp/perceval/')
+        self.assertIsInstance(cmd.backend, MBox)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = MBoxCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 if __name__ == "__main__":

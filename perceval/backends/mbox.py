@@ -1,6 +1,30 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2015-2016 Bitergia
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# Authors:
+#     Santiago Dueñas <sduenas@bitergia.com>
+#     Germán Poo-Caamaño <gpoo@gnome.org>
+#
+# Note: some ot this code was taken from the MailingListStats project
+#
 
 import email
+import json
 import mailbox
 import os
 import tempfile
@@ -8,7 +32,7 @@ import tempfile
 import gzip
 import bz2
 
-from ..backend import Backend, metadata
+from ..backend import Backend, BackendCommand, metadata
 from ..utils import check_compressed_file_type
 
 
@@ -109,6 +133,55 @@ class MBox(Backend):
             message['body'] = {k : '\n'.join(v) for k, v in body.items()}
 
             yield message
+
+
+class MBoxCommand(BackendCommand):
+    """Class to run MBox backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.origin = self.parsed_args.origin
+        self.mboxes = self.parsed_args.mboxes
+        self.outfile = self.parsed_args.outfile
+
+        cache = None
+
+        self.backend = MBox(self.origin, self.mboxes,
+                            cache=cache)
+
+    def run(self):
+        """Fetch and print the email messages.
+
+        This method runs the backend to fetch the email messages from
+        the given directory. Messages are converted to JSON objects
+        and printed to the defined output.
+        """
+        messages = self.backend.fetch()
+
+        try:
+            for message in messages:
+                obj = json.dumps(message, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the MBox argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # Required arguments
+        parser.add_argument('origin',
+                            help='Origin of the mboxes, usually the URL to their mailing list')
+        parser.add_argument('mboxes',
+                            help="Path to the mbox directory")
+
+        return parser
 
 
 class MBoxArchive(object):

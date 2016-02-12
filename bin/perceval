@@ -44,6 +44,7 @@ are:
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from a Git log file
     github           Fetch issues from GitHub
+    mbox             Fetch messages from MBox files
     stackexchange    Fetch questions from StackExchange sites
 
 optional arguments:
