@@ -126,7 +126,7 @@ class MBox(Backend):
                 for part in email.iterators.typed_subpart_iterator(msg):
                     charset = part.get_content_charset()
                     payload = part.get_payload(decode=True)
-                    payload = payload.encode(charset)
+                    payload = payload.decode(charset)
                     subtype = part.get_content_subtype()
                     body.setdefault(subtype, []).append(payload)
 
