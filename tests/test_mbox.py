@@ -62,11 +62,13 @@ class TestBaseMBox(unittest.TestCase):
                     shutil.copyfileobj(f_in, f_out)
 
         # Copy a plain file
-        cls.files = {'single'  : os.path.join(cls.tmp_path, 'mbox_single.mbox'),
-                     'complex' : os.path.join(cls.tmp_path, 'mbox_complex.mbox')}
+        cls.files = {'single'    : os.path.join(cls.tmp_path, 'mbox_single.mbox'),
+                     'complex'   : os.path.join(cls.tmp_path, 'mbox_complex.mbox'),
+                     'multipart' : os.path.join(cls.tmp_path, 'mbox_multipart.mbox')}
 
         shutil.copy('data/mbox_single.mbox', cls.tmp_path)
         shutil.copy('data/mbox_complex.mbox', cls.tmp_path)
+        shutil.copy('data/mbox_multipart.mbox', cls.tmp_path)
 
     @classmethod
     def tearDownClass(cls):
@@ -132,16 +134,17 @@ class TestMailingList(TestBaseMBox):
         self.assertEqual(mls.dirpath, self.tmp_path)
 
     def test_mboxes(self):
-        """Check whether it gets a list of mboxes"""
+        """Check whether it gets a list of mboxes sorted by name"""
 
         mls = MailingList('test', self.tmp_path)
 
         mboxes = mls.mboxes
-        self.assertEqual(len(mboxes), 4)
+        self.assertEqual(len(mboxes), 5)
         self.assertEqual(mboxes[0].filepath, self.cfiles['bz2'])
         self.assertEqual(mboxes[1].filepath, self.cfiles['gz'])
         self.assertEqual(mboxes[2].filepath, self.files['complex'])
-        self.assertEqual(mboxes[3].filepath, self.files['single'])
+        self.assertEqual(mboxes[3].filepath, self.files['multipart'])
+        self.assertEqual(mboxes[4].filepath, self.files['single'])
 
 
 class TestMBoxBackend(TestBaseMBox):
@@ -157,6 +160,7 @@ class TestMBoxBackend(TestBaseMBox):
                     ('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100'),
                     ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'Wed, 22 Sep 2004 02:03:40 -0700'),
                     ('<87iqzlofqu.fsf@avet.kvota.net>', 'Mon, 17 Mar 2008 10:35:05 +0100'),
+                    ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', 'Thu, 12 Nov 2009 03:29:24 +0100'),
                     ('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100')]
 
         self.assertEqual(len(messages), len(expected))
@@ -230,6 +234,31 @@ class TestMBoxBackend(TestBaseMBox):
                                    'Bastien Nocera <hadess@hadess.net>')
         self.assertEqual(m1['Subject'], 'Re: Low memory hacks')
         self.assertEqual(m1['unixfrom'], 'danilo@adsl-236-193.eunet.yu  Mon Mar 17 09:35:25 2008')
+
+    def test_parse_multpart_mbox(self):
+        """Test if it parses a message with a multipart body"""
+
+        messages = MBox.parse_mbox(self.files['multipart'])
+        result = [msg for msg in messages]
+
+
+        self.assertEqual(len(result), 1)
+
+        plain_body = result[0]['body']['plain']
+        html_body = result[0]['body']['html']
+        self.assertEqual(plain_body , 'technology.esl Committers,\n\n'
+                                      'This automatically generated message marks the successful completion of\n'
+                                      'voting for Chuwei Huang to receive full Committer status on the\n'
+                                      'technology.esl project. The next step is for the PMC to approve this vote,\n'
+                                      'followed by the EMO processing the paperwork and provisioning the account.\n\n\n\n'
+                                      'Vote summary: 4/0/0 with 0 not voting\n\n'
+                                      '  +1  Thomas Guiu\n\n'
+                                      '  +1  Jin Liu\n\n'
+                                      '  +1  Yves YANG\n\n'
+                                      '  +1  Bo Zhou\n\n\n\n'
+                                      'If you have any questions, please do not hesitate to contact your project\n'
+                                      'lead, PMC member, or the EMO <emo@eclipse.org>\n\n\n\n\n\n')
+        self.assertEqual(len(html_body), 3103)
 
 
 class TestMBoxCommand(unittest.TestCase):
