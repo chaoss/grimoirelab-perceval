@@ -124,7 +124,7 @@ class MBox(Backend):
                 # Include all the attached texts if it is multipart
                 # Ignores binary parts by default
                 for part in email.iterators.typed_subpart_iterator(msg):
-                    charset = part.get_content_charset()
+                    charset = part.get_content_charset('utf-8')
                     payload = part.get_payload(decode=True)
                     payload = payload.decode(charset)
                     subtype = part.get_content_subtype()

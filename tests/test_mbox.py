@@ -161,6 +161,7 @@ class TestMBoxBackend(TestBaseMBox):
                     ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'Wed, 22 Sep 2004 02:03:40 -0700'),
                     ('<87iqzlofqu.fsf@avet.kvota.net>', 'Mon, 17 Mar 2008 10:35:05 +0100'),
                     ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', 'Thu, 12 Nov 2009 03:29:24 +0100'),
+                    ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 'Wed, 29 Jan 2003 17:02:30 -0600'),
                     ('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100')]
 
         self.assertEqual(len(messages), len(expected))
@@ -242,8 +243,9 @@ class TestMBoxBackend(TestBaseMBox):
         result = [msg for msg in messages]
 
 
-        self.assertEqual(len(result), 1)
+        self.assertEqual(len(result), 2)
 
+        # Multipart message
         plain_body = result[0]['body']['plain']
         html_body = result[0]['body']['html']
         self.assertEqual(plain_body , 'technology.esl Committers,\n\n'
@@ -257,8 +259,26 @@ class TestMBoxBackend(TestBaseMBox):
                                       '  +1  Yves YANG\n\n'
                                       '  +1  Bo Zhou\n\n\n\n'
                                       'If you have any questions, please do not hesitate to contact your project\n'
-                                      'lead, PMC member, or the EMO <emo@eclipse.org>\n\n\n\n\n\n')
+                                      'lead, PMC member, or the EMO <emo@example.org>\n\n\n\n\n\n')
         self.assertEqual(len(html_body), 3103)
+
+        # Multipart message without defined encoding
+        plain_body = result[1]['body']['plain']
+        html_body = result[1]['body']['html']
+        self.assertEqual(plain_body , 'I am fairly new to eclipse. I am evaluating the use of eclipse for a generic\n'
+                                      'UI framework that is not necessarily related to code generation.\n'
+                                      'Eclipse is very flexible and adding functionality seems straightforward. I\n'
+                                      'can still use the project concept for what I need but there are things in\n'
+                                      'the Workbench window that I don\'t want. For example the Open perspective\n'
+                                      'icon, or some of the menus, like the Windows and project menu .\n\n'
+                                      'I understand that by using retargetable actions I can have my view taking\n'
+                                      'over most of the actions, but I could not figure out how to block the core\n'
+                                      'plug-in to put their own actions. In the workbench plug-in (org.eclipse.ui)\n'
+                                      'I could not find where menus are defined and where actionsviews for all\n'
+                                      'generic toolbars are defined.\n\nHow do I do this?\nCan this be done?\n'
+                                      'Is anybody using eclipse as a generic UI framework?\n\nI appreciate any help.\n\n'
+                                      'Thanks,\n\nDaniel Nehren\n\n')
+        self.assertEqual(len(html_body), 1557)
 
 
 class TestMBoxCommand(unittest.TestCase):
