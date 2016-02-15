@@ -25,6 +25,7 @@
 
 import email
 import json
+import logging
 import mailbox
 import os
 import tempfile
@@ -34,6 +35,9 @@ import bz2
 
 from ..backend import Backend, BackendCommand, metadata
 from ..utils import check_compressed_file_type
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_update_time(item):
@@ -80,11 +84,29 @@ class MBox(Backend):
                             f_out.write(l)
 
                 for message in self.parse_mbox(tmp_path):
+                    if not self._validate_message(message):
+                        continue
                     yield message
+
                 os.remove(tmp_path)
             except Exception as e:
                 os.remove(tmp_path)
                 raise e
+
+    def _validate_message(self, message):
+        """Check if the given message has the mandatory fields"""
+
+        if 'Message-ID' not in message and \
+           'Message-Id' not in message:
+            logger.warning("Field 'Message-ID' not found in message %s. Skipping.",
+                           message['unixfrom'])
+            return False
+        elif 'Date' not in message:
+            logger.warning("Field 'Date' not found in message %s. Skipping.",
+                           message['unixfrom'])
+            return False
+        else:
+            return True
 
     @staticmethod
     def parse_mbox(filepath):

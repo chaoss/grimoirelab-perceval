@@ -150,6 +150,13 @@ class TestMailingList(TestBaseMBox):
 class TestMBoxBackend(TestBaseMBox):
     """Tests for MBox backend"""
 
+    def setUp(self):
+        self.tmp_error_path = tempfile.mkdtemp(prefix='perceval_')
+        shutil.copy('data/mbox_no_fields.mbox', self.tmp_error_path)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_error_path)
+
     def test_fetch(self):
         """Test whether it parses a set of mbox files"""
 
@@ -171,6 +178,33 @@ class TestMBoxBackend(TestBaseMBox):
             self.assertEqual(message['Message-ID'], expected[x][0])
             self.assertEqual(message['__metadata__']['origin'], 'http://example.com/')
             self.assertEqual(message['__metadata__']['updated_on'], expected[x][1])
+
+    def test_ignore_messages(self):
+        """Test if it ignores some messages without mandatory fields"""
+
+        backend = MBox('http://example.com/', self.tmp_error_path)
+        messages = [m for m in backend.fetch()]
+
+        # There's only one valid message on the mbox
+        self.assertEqual(len(messages), 1)
+
+        message = messages[0]
+        messages[0].pop('__metadata__')
+
+        expected = {
+                    'From' : 'goran at domain.com ( Göran Lastname )',
+                    'Date' : 'Wed, 01 Dec 2010 14:26:40 +0100',
+                    'Subject' : '[List-name] Protocol Buffers anyone?',
+                    'Message-ID' : '<4CF64D10.9020206@domain.com>',
+                    'unixfrom' : 'goran at domain.com  Wed Dec  1 08:26:40 2010',
+                    'body': {
+                             'plain' : "Hi!\n\nA message in English, with a signature "
+                                       "with a different encoding.\n\nregards, G?ran"
+                                       "\n",
+                            }
+                   }
+
+        self.assertDictEqual(message, expected)
 
     def test_parse_mbox(self):
         """Test whether it parses a mbox file"""
