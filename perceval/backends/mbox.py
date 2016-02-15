@@ -72,7 +72,12 @@ class MBox(Backend):
 
         :returns: a generator of messages
         """
+        logger.info("Looking for messages from '%s' on '%s'",
+                    self.origin, self.dirpath)
+
         mailing_list = MailingList(self.origin, self.dirpath)
+
+        nmsgs, imsgs, tmsgs = (0, 0, 0)
 
         for mbox in mailing_list.mboxes:
             try:
@@ -84,8 +89,15 @@ class MBox(Backend):
                             f_out.write(l)
 
                 for message in self.parse_mbox(tmp_path):
+                    tmsgs += 1
+
                     if not self._validate_message(message):
+                        imsgs += 1
                         continue
+
+                    nmsgs += 1
+                    logger.debug("Message from %s parsed", message['unixfrom'])
+
                     yield message
 
                 os.remove(tmp_path)
@@ -93,16 +105,19 @@ class MBox(Backend):
                 os.remove(tmp_path)
                 raise e
 
+        logger.info("Fetch process completed: %s/%s messages fetched; %s ignored",
+                    nmsgs, tmsgs, imsgs)
+
     def _validate_message(self, message):
         """Check if the given message has the mandatory fields"""
 
         if 'Message-ID' not in message and \
            'Message-Id' not in message:
-            logger.warning("Field 'Message-ID' not found in message %s. Skipping.",
+            logger.warning("Field 'Message-ID' not found in message %s; ignoring",
                            message['unixfrom'])
             return False
         elif 'Date' not in message:
-            logger.warning("Field 'Date' not found in message %s. Skipping.",
+            logger.warning("Field 'Date' not found in message %s; ignoring",
                            message['unixfrom'])
             return False
         else:
