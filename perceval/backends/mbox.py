@@ -34,6 +34,7 @@ import gzip
 import bz2
 
 from ..backend import Backend, BackendCommand, metadata
+from ..errors import ParseError
 from ..utils import check_compressed_file_type
 
 
@@ -132,6 +133,34 @@ class MBox(Backend):
 
         :param filepath: path of the mbox to parse
         """
+        def parse_payload(msg):
+            body = {}
+
+            if not msg.is_multipart():
+                payload = decode_payload(msg)
+                subtype = msg.get_content_subtype()
+                body[subtype] = [payload]
+            else:
+                # Include all the attached texts if it is multipart
+                # Ignores binary parts by default
+                for part in email.iterators.typed_subpart_iterator(msg):
+                    payload = decode_payload(part)
+                    subtype = part.get_content_subtype()
+                    body.setdefault(subtype, []).append(payload)
+
+            return {k : '\n'.join(v) for k, v in body.items()}
+
+        def decode_payload(msg_or_part):
+            charset = msg_or_part.get_content_charset('utf-8')
+            payload = msg_or_part.get_payload(decode=True)
+
+            try:
+                payload = payload.decode(charset, errors='surrogateescape')
+            except (UnicodeError, LookupError):
+                # Try again with a 7bit encoding
+                payload = payload.decode('ascii', errors='surrogateescape')
+            return payload
+
         mbox = mailbox.mbox(filepath, create=False)
 
         for msg in mbox:
@@ -150,25 +179,10 @@ class MBox(Backend):
                 message[header] = v if v else None
 
             # Parse message body
-            body = {}
-
-            if not msg.is_multipart():
-                subtype = msg.get_content_subtype()
-                charset = msg.get_content_charset()
-                charset = charset if charset else 'utf-8'
-                body[subtype] = [msg.get_payload(decode=True).\
-                                    decode(charset, errors='surrogateescape')]
-            else:
-                # Include all the attached texts if it is multipart
-                # Ignores binary parts by default
-                for part in email.iterators.typed_subpart_iterator(msg):
-                    charset = part.get_content_charset('utf-8')
-                    payload = part.get_payload(decode=True)
-                    payload = payload.decode(charset, errors='surrogateescape')
-                    subtype = part.get_content_subtype()
-                    body.setdefault(subtype, []).append(payload)
-
-            message['body'] = {k : '\n'.join(v) for k, v in body.items()}
+            try:
+                message['body'] = parse_payload(msg)
+            except UnicodeError as e:
+                raise ParseError(str(e))
 
             yield message
 
