@@ -33,6 +33,8 @@ import tempfile
 import gzip
 import bz2
 
+import requests.structures
+
 from ..backend import Backend, BackendCommand, metadata
 from ..errors import ParseError
 from ..utils import check_compressed_file_type
@@ -99,6 +101,9 @@ class MBox(Backend):
                     nmsgs += 1
                     logger.debug("Message from %s parsed", message['unixfrom'])
 
+                    # Convert 'CaseInsensitiveDict' to dict
+                    message = {k : v for k, v in message.items()}
+
                     yield message
 
                 os.remove(tmp_path)
@@ -112,8 +117,10 @@ class MBox(Backend):
     def _validate_message(self, message):
         """Check if the given message has the mandatory fields"""
 
-        if 'Message-ID' not in message and \
-           'Message-Id' not in message:
+        # This check is "case insensitive" because we're
+        # using 'CaseInsensitiveDict' from requests.structures
+        # module to store the contents of a message.
+        if 'Message-ID' not in message:
             logger.warning("Field 'Message-ID' not found in message %s; ignoring",
                            message['unixfrom'])
             return False
@@ -132,6 +139,9 @@ class MBox(Backend):
         Each one of this contains an email message.
 
         :param filepath: path of the mbox to parse
+
+        :returns : generator of messages; each message is stored in a
+            dictionary of type `requests.structures.CaseInsensitiveDict`
         """
         def parse_headers(msg):
             headers = {}
@@ -185,9 +195,12 @@ class MBox(Backend):
         mbox = mailbox.mbox(filepath, create=False)
 
         for msg in mbox:
+            message = requests.structures.CaseInsensitiveDict()
+            message['unixfrom'] = msg.get_from()
+
             try:
-                message = parse_headers(msg)
-                message['unixfrom'] = msg.get_from()
+                for k, v in parse_headers(msg).items():
+                    message[k] = v
                 message['body'] = parse_payload(msg)
             except UnicodeError as e:
                 raise ParseError(str(e))

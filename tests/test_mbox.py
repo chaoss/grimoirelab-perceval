@@ -190,17 +190,14 @@ class TestMBoxBackend(TestBaseMBox):
         backend = MBox('http://example.com/', self.tmp_error_path)
         messages = [m for m in backend.fetch()]
 
-        # There's only one valid message on the mbox
-        self.assertEqual(len(messages), 1)
-
-        message = messages[0]
-        messages[0].pop('__metadata__')
+        # There are only two valid message on the mbox
+        self.assertEqual(len(messages), 2)
 
         expected = {
                     'From' : 'goran at domain.com ( Göran Lastname )',
                     'Date' : 'Wed, 01 Dec 2010 14:26:40 +0100',
                     'Subject' : '[List-name] Protocol Buffers anyone?',
-                    'Message-ID' : '<4CF64D10.9020206@domain.com>',
+                    'Message-id' : '<4CF64D10.9020206@domain.com>',
                     'unixfrom' : 'goran at domain.com  Wed Dec  1 08:26:40 2010',
                     'body': {
                              'plain' : "Hi!\n\nA message in English, with a signature "
@@ -209,6 +206,17 @@ class TestMBoxBackend(TestBaseMBox):
                             }
                    }
 
+        message = messages[0]
+        messages[0].pop('__metadata__')
+        self.assertDictEqual(message, expected)
+
+        # On the second message, the only change is that 'Message-id'
+        # is replaced by 'Message-ID'
+        msg_id = expected.pop('Message-id')
+        expected['Message-ID'] = msg_id
+
+        message = messages[1]
+        messages[1].pop('__metadata__')
         self.assertDictEqual(message, expected)
 
     def test_parse_mbox(self):
@@ -218,6 +226,8 @@ class TestMBoxBackend(TestBaseMBox):
         result = [msg for msg in messages]
 
         self.assertEqual(len(result), 1)
+
+        message = {k: v for k,v in result[0].items()}
 
         expected = {
                     'From' : 'goran at domain.com ( Göran Lastname )',
@@ -231,7 +241,8 @@ class TestMBoxBackend(TestBaseMBox):
                                        "\n\n\n",
                             }
                     }
-        self.assertDictEqual(result[0], expected)
+
+        self.assertDictEqual(message, expected)
 
     def test_parse_complex_mbox(self):
         """Test whether it parses a complex mbox file"""
@@ -241,7 +252,7 @@ class TestMBoxBackend(TestBaseMBox):
 
         self.assertEqual(len(result), 2)
 
-        m0 = result[0]
+        m0 = {k: v for k,v in result[0].items()}
         self.assertEqual(len(m0.keys()), 34)
         self.assertEqual(m0['Message-ID'], '<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>')
         self.assertEqual(m0['Date'], 'Wed, 22 Sep 2004 02:03:40 -0700')
@@ -262,7 +273,7 @@ class TestMBoxBackend(TestBaseMBox):
                         }
         self.assertDictEqual(m0['body'], expected_body)
 
-        m1 = result[1]
+        m1 = {k: v for k,v in result[1].items()}
         self.assertEqual(len(m1.keys()), 35)
         self.assertEqual(m1['Message-ID'], '<87iqzlofqu.fsf@avet.kvota.net>')
         self.assertEqual(m1['Date'], 'Mon, 17 Mar 2008 10:35:05 +0100')
