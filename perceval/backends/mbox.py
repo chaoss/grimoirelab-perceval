@@ -133,6 +133,27 @@ class MBox(Backend):
 
         :param filepath: path of the mbox to parse
         """
+        def parse_headers(msg):
+            headers = {}
+
+            for header, value in msg.items():
+                hv = []
+
+                for text, charset in email.header.decode_header(value):
+                    if type(text) == bytes:
+                        charset = charset if charset else 'utf-8'
+                        try:
+                            text = text.decode(charset, errors='surrogateescape')
+                        except (UnicodeError, LookupError):
+                            # Try again with a 7bit encoding
+                            text = text.decode('ascii', errors='surrogateescape')
+                    hv.append(text)
+
+                v = ' '.join(hv)
+                headers[header] = v if v else None
+
+            return headers
+
         def parse_payload(msg):
             body = {}
 
@@ -164,22 +185,9 @@ class MBox(Backend):
         mbox = mailbox.mbox(filepath, create=False)
 
         for msg in mbox:
-            message = {}
-            message['unixfrom'] = msg.get_from()
-
-            # Parse headers
-            for header, value in msg.items():
-                hv = []
-                for text, charset in email.header.decode_header(value):
-                    if type(text) == bytes:
-                        charset = charset if charset else 'utf-8'
-                        text = text.decode(charset)
-                    hv.append(text)
-                v = ' '.join(hv)
-                message[header] = v if v else None
-
-            # Parse message body
             try:
+                message = parse_headers(msg)
+                message['unixfrom'] = msg.get_from()
                 message['body'] = parse_payload(msg)
             except UnicodeError as e:
                 raise ParseError(str(e))

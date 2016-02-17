@@ -64,11 +64,13 @@ class TestBaseMBox(unittest.TestCase):
         # Copy a plain file
         cls.files = {'single'    : os.path.join(cls.tmp_path, 'mbox_single.mbox'),
                      'complex'   : os.path.join(cls.tmp_path, 'mbox_complex.mbox'),
-                     'multipart' : os.path.join(cls.tmp_path, 'mbox_multipart.mbox')}
+                     'multipart' : os.path.join(cls.tmp_path, 'mbox_multipart.mbox'),
+                     'unknown'   : os.path.join(cls.tmp_path, 'mbox_unknown_encoding.mbox')}
 
         shutil.copy('data/mbox_single.mbox', cls.tmp_path)
         shutil.copy('data/mbox_complex.mbox', cls.tmp_path)
         shutil.copy('data/mbox_multipart.mbox', cls.tmp_path)
+        shutil.copy('data/mbox_unknown_encoding.mbox', cls.tmp_path)
 
     @classmethod
     def tearDownClass(cls):
@@ -139,12 +141,14 @@ class TestMailingList(TestBaseMBox):
         mls = MailingList('test', self.tmp_path)
 
         mboxes = mls.mboxes
-        self.assertEqual(len(mboxes), 5)
+        self.assertEqual(len(mboxes), 6)
         self.assertEqual(mboxes[0].filepath, self.cfiles['bz2'])
         self.assertEqual(mboxes[1].filepath, self.cfiles['gz'])
         self.assertEqual(mboxes[2].filepath, self.files['complex'])
         self.assertEqual(mboxes[3].filepath, self.files['multipart'])
         self.assertEqual(mboxes[4].filepath, self.files['single'])
+        self.assertEqual(mboxes[5].filepath, self.files['unknown'])
+
 
 
 class TestMBoxBackend(TestBaseMBox):
@@ -169,7 +173,8 @@ class TestMBoxBackend(TestBaseMBox):
                     ('<87iqzlofqu.fsf@avet.kvota.net>', 'Mon, 17 Mar 2008 10:35:05 +0100'),
                     ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', 'Thu, 12 Nov 2009 03:29:24 +0100'),
                     ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 'Wed, 29 Jan 2003 17:02:30 -0600'),
-                    ('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100')]
+                    ('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100'),
+                    ('<20020823171132.541DB44147@example.com>', 'Sat, 24 Aug 2002 01:24:49 +0800')]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -270,12 +275,11 @@ class TestMBoxBackend(TestBaseMBox):
         self.assertEqual(m1['Subject'], 'Re: Low memory hacks')
         self.assertEqual(m1['unixfrom'], 'danilo@adsl-236-193.eunet.yu  Mon Mar 17 09:35:25 2008')
 
-    def test_parse_multpart_mbox(self):
+    def test_parse_multipart_mbox(self):
         """Test if it parses a message with a multipart body"""
 
         messages = MBox.parse_mbox(self.files['multipart'])
         result = [msg for msg in messages]
-
 
         self.assertEqual(len(result), 2)
 
@@ -313,6 +317,16 @@ class TestMBoxBackend(TestBaseMBox):
                                       'Is anybody using eclipse as a generic UI framework?\n\nI appreciate any help.\n\n'
                                       'Thanks,\n\nDaniel Nehren\n\n')
         self.assertEqual(len(html_body), 1557)
+
+    def test_parse_unknown_encoding_mbox(self):
+        """Check whether it parses a mbox that contains an unknown encoding"""
+
+        messages = MBox.parse_mbox(self.files['unknown'])
+        result = [msg for msg in messages]
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['From'],
+            '"\udcc3\udc94\udcc2\udcac\udcc2\udcb4\udcc3\udc8f" <yuancong@example.com>')
 
 
 class TestMBoxCommand(unittest.TestCase):

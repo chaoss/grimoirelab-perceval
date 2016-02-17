@@ -1,0 +1,35 @@
+From yuancong@example.com  Fri Aug 23 13:11:33 2002
+Return-Path: <yuancong@example.com>
+Delivered-To: platform-swt-dev@eclipse.org
+From: "Ô¬´Ï" <yuancong@example.com>
+To: platform-swt-dev@eclipse.org
+Date: Sat, 24 Aug 2002 01:24:49 +0800
+Content-Type: text/plain
+Message-ID: <20020823171132.541DB44147@example.com>
+Subject: [platform-swt-dev] How to refresh a control in another thread?
+Sender: platform-swt-dev-admin@eclipse.org
+Errors-To: platform-swt-dev-admin@eclipse.org
+X-BeenThere: platform-swt-dev@eclipse.org
+X-Mailman-Version: 2.0.6
+Precedence: bulk
+Reply-To: platform-swt-dev@eclipse.org
+X-Reply-To: "Ô¬´Ï" <yuancong@example.com>
+List-Help: <mailto:platform-swt-dev-request@eclipse.org?subject=help>
+List-Post: <mailto:platform-swt-dev@eclipse.org>
+List-Subscribe: <http://dev.eclipse.org/mailman/listinfo/platform-swt-dev>,
+    <mailto:platform-swt-dev-request@eclipse.org?subject=subscribe>
+List-Id: Eclipse Platform SWT component developers list. <platform-swt-dev.eclipse.org>
+List-Unsubscribe: <http://dev.eclipse.org/mailman/listinfo/platform-swt-dev>,
+    <mailto:platform-swt-dev-request@eclipse.org?subject=unsubscribe>
+List-Archive: <http://dev.eclipse.org/pipermail/platform-swt-dev/>
+
+Hi,
+   In my application, the main thread creats the UI, and another thread collects
+data that should be showed in UI.
+   I want to refresh the UI when collecting is completed, but when I called
+SomeControl.refreshUI(), I got a "thread invalid access" exception. I saw the
+source of SWT, and found that Display check whether current thread is the thread
+created UI.
+   My qustion is, how can I refresh the control which created by main thread in
+another thread?
+   Thanks
