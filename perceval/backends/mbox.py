@@ -45,7 +45,9 @@ logger = logging.getLogger(__name__)
 
 def get_update_time(item):
     """Extracts the update time from a message item"""
-    return item['Date']
+
+    date = item['Date'] if 'Date' in item else item['date']
+    return date
 
 
 class MBox(Backend):
