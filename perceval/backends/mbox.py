@@ -102,16 +102,16 @@ class MBox(Backend):
                     message = {k : v for k, v in message.items()}
 
                     yield message
-
-                    os.remove(tmp_path)
             except OSError as e:
                 logger.warning("Ignoring %s mbox due to: %s", mbox.filepath, str(e))
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
             except Exception as e:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
                 raise e
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
 
         logger.info("Fetch process completed: %s/%s messages fetched; %s ignored",
                     nmsgs, tmsgs, imsgs)
