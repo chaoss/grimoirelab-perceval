@@ -219,6 +219,27 @@ class TestMBoxBackend(TestBaseMBox):
         messages[1].pop('__metadata__')
         self.assertDictEqual(message, expected)
 
+    def test_ignore_file_errors(self):
+        """Files with IO errors should be ignored"""
+
+        tmp_path_ign = tempfile.mkdtemp(prefix='perceval_')
+
+        shutil.copy('data/mbox_single.mbox', tmp_path_ign)
+        shutil.copy('data/mbox_multipart.mbox', tmp_path_ign)
+
+        # Update file mode to make it unable to access
+        os.chmod(os.path.join(tmp_path_ign, 'mbox_multipart.mbox'), 0o000)
+
+        backend = MBox('http://example.com/', tmp_path_ign)
+        messages = [m for m in backend.fetch()]
+
+        # Only one message is read
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]['Message-ID'], '<4CF64D10.9020206@domain.com>')
+        self.assertEqual(messages[0]['Date'], 'Wed, 01 Dec 2010 14:26:40 +0100')
+
+        shutil.rmtree(tmp_path_ign)
+
     def test_parse_mbox(self):
         """Test whether it parses a mbox file"""
 
@@ -338,6 +359,8 @@ class TestMBoxBackend(TestBaseMBox):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['From'],
             '"\udcc3\udc94\udcc2\udcac\udcc2\udcb4\udcc3\udc8f" <yuancong@example.com>')
+
+
 
 
 class TestMBoxCommand(unittest.TestCase):

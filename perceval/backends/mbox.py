@@ -86,12 +86,7 @@ class MBox(Backend):
 
         for mbox in mailing_list.mboxes:
             try:
-                tmp_path = tempfile.mktemp(prefix='perceval_')
-
-                with mbox.container as f_in:
-                    with open(tmp_path, mode='wb') as f_out:
-                        for l in f_in:
-                            f_out.write(l)
+                tmp_path = self._copy_mbox(mbox)
 
                 for message in self.parse_mbox(tmp_path):
                     tmsgs += 1
@@ -108,13 +103,29 @@ class MBox(Backend):
 
                     yield message
 
-                os.remove(tmp_path)
+                    os.remove(tmp_path)
+            except OSError as e:
+                logger.warning("Ignoring %s mbox due to: %s", mbox.filepath, str(e))
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
             except Exception as e:
-                os.remove(tmp_path)
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
                 raise e
 
         logger.info("Fetch process completed: %s/%s messages fetched; %s ignored",
                     nmsgs, tmsgs, imsgs)
+
+    def _copy_mbox(self, mbox):
+        """Copy the contents of a mbox to a temporary file"""
+
+        tmp_path = tempfile.mktemp(prefix='perceval_')
+
+        with mbox.container as f_in:
+            with open(tmp_path, mode='wb') as f_out:
+                for l in f_in:
+                    f_out.write(l)
+        return tmp_path
 
     def _validate_message(self, message):
         """Check if the given message has the mandatory fields"""
@@ -317,10 +328,16 @@ class MailingList(object):
         archives = []
 
         if os.path.isfile(self.dirpath):
-            archives.append(MBoxArchive(self.dirpath))
+            try:
+                archives.append(MBoxArchive(self.dirpath))
+            except OSError as e:
+                logger.warning("Ignoring %s mbox due to: %s", self.dirpath, str(e))
         else:
             for root, _, files in os.walk(self.dirpath):
                 for filename in sorted(files):
-                    location = os.path.join(root, filename)
-                    archives.append(MBoxArchive(location))
+                    try:
+                        location = os.path.join(root, filename)
+                        archives.append(MBoxArchive(location))
+                    except OSError as e:
+                        logger.warning("Ignoring %s mbox due to: %s", filename, str(e))
         return archives
