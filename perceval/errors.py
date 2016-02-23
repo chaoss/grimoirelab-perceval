@@ -54,6 +54,12 @@ class InvalidDateError(BaseError):
     message = "%(date)s is not a valid date"
 
 
+class RepositoryError(BaseError):
+    """Generic error for repositories"""
+
+    message = "%(cause)s"
+
+
 class ParseError(BaseError):
     """Exception raised a parsing errors occurs"""
 

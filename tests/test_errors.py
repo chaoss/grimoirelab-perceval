@@ -95,6 +95,16 @@ class TestInvalidDateError(unittest.TestCase):
         self.assertEqual('1900-13-01 is not a valid date',
                          str(e))
 
+
+class TestRepositoryError(unittest.TestCase):
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = errors.RepositoryError(cause='error cloning repository')
+        self.assertEqual('error cloning repository', str(e))
+
+
 class TestParseError(unittest.TestCase):
 
     def test_message(self):
