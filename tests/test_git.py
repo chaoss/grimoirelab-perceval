@@ -307,10 +307,19 @@ class TestGitRepository(unittest.TestCase):
     def test_init(self):
         """Test initialization"""
 
-        repo = GitRepository('http://example.org', '/tmp/test/')
+        repo = GitRepository('http://example.git', self.git_path)
 
-        self.assertEqual(repo.uri, 'http://example.org')
-        self.assertEqual(repo.dirpath, '/tmp/test/')
+        self.assertIsInstance(repo, GitRepository)
+        self.assertEqual(repo.uri, 'http://example.git')
+        self.assertEqual(repo.dirpath, self.git_path)
+
+    def test_not_existing_repo_on_init(self):
+        """Test if init fails when the repos does not exists"""
+
+        expected = "git repository '%s' does not exist" % (self.tmp_path)
+
+        with self.assertRaisesRegex(RepositoryError, expected):
+            _ = GitRepository('http://example.org', self.tmp_path)
 
     def test_clone(self):
         """Test if a git repository is cloned"""

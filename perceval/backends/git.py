@@ -446,11 +446,19 @@ class GitRepository:
 
     This class provides access to a Git repository running some
     common commands such as `clone`, `pull` or `log`.
+    To create an instance from a remote repository, use `clone()`
+    class method.
 
     :param uri: URI of the repository
     :param dirpath: local directory where the repository is stored
     """
     def __init__(self, uri, dirpath):
+        gitdir = os.path.join(dirpath, '.git')
+
+        if not os.path.exists(gitdir):
+            cause = "git repository '%s' does not exist" % dirpath
+            raise RepositoryError(cause=cause)
+
         self.uri = uri
         self.dirpath = dirpath
 
