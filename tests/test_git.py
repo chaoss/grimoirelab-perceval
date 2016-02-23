@@ -22,15 +22,22 @@
 #
 
 import argparse
+import os
+import shutil
+import subprocess
 import sys
+import tempfile
 import unittest
 
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 
-from perceval.errors import ParseError
-from perceval.backends.git import Git, GitCommand, GitParser
+from perceval.errors import ParseError, RepositoryError
+from perceval.backends.git import (Git,
+                                   GitCommand,
+                                   GitParser,
+                                   GitRepository)
 
 
 class TestGitBackend(unittest.TestCase):
@@ -280,6 +287,66 @@ class TestGitParser(unittest.TestCase):
         s = ""
         m = pattern.match(s)
         self.assertIsNotNone(m)
+
+
+class TestGitRepository(unittest.TestCase):
+    """GitRepository tests"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+        cls.git_path = os.path.join(cls.tmp_path, 'gittest')
+
+        subprocess.check_call(['tar', '-xzf', 'data/gittest.tar.gz',
+                               '-C', cls.tmp_path])
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp_path)
+
+    def test_init(self):
+        """Test initialization"""
+
+        repo = GitRepository('http://example.org', '/tmp/test/')
+
+        self.assertEqual(repo.uri, 'http://example.org')
+        self.assertEqual(repo.dirpath, '/tmp/test/')
+
+    def test_clone(self):
+        """Test if a git repository is cloned"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        self.assertIsInstance(repo, GitRepository)
+        self.assertEqual(repo.uri, self.git_path)
+        self.assertEqual(repo.dirpath, new_path)
+        self.assertTrue(os.path.exists(new_path))
+        self.assertTrue(os.path.exists(os.path.join(new_path, '.git')))
+
+    def test_clone_error(self):
+        """Test if it raises an exception when an error occurs cloning a repository"""
+
+        # Clone a non-git repository
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        expected = "git command - fatal: repository '%s' does not exist" \
+            % self.tmp_path
+
+        self.assertRaisesRegex(RepositoryError, expected,
+                               GitRepository.clone,
+                               self.tmp_path, new_path)
+
+    def test_clone_existing_directory(self):
+        """Test if it raises an exception when tries to clone an existing directory"""
+
+        expected = "git command - fatal: destination path '%s' already exists" \
+            % (self.tmp_path)
+
+        self.assertRaisesRegex(RepositoryError, expected,
+                               GitRepository.clone,
+                               self.git_path, self.tmp_path)
 
 
 if __name__ == "__main__":

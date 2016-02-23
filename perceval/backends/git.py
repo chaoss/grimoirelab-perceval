@@ -22,9 +22,11 @@
 
 import json
 import logging
+import os
 import re
+import subprocess
 
-from ..errors import ParseError
+from ..errors import RepositoryError, ParseError
 from ..backend import Backend, BackendCommand, metadata
 
 
@@ -437,3 +439,44 @@ class GitParser:
             return prefix + inner + suffix
         else:
             return f
+
+
+class GitRepository:
+    """Manage a Git repository.
+
+    This class provides access to a Git repository running some
+    common commands such as `clone`, `pull` or `log`.
+
+    :param uri: URI of the repository
+    :param dirpath: local directory where the repository is stored
+    """
+    def __init__(self, uri, dirpath):
+        self.uri = uri
+        self.dirpath = dirpath
+
+    @classmethod
+    def clone(cls, uri, dirpath):
+        """Clone a Git repository.
+
+        Clone the repository stored in `uri` into `dirpath`. The repository
+        would be either local or remote.
+
+        :param uri: URI of the repository
+        :param dirtpath: directory where the repository will be cloned
+
+        :returns: a `GitRepository` class having cloned the repository
+
+        :raises RepositoryError: when an error occurs cloning the given
+            repository
+        """
+        cmd = ['git', 'clone', uri, dirpath]
+
+        try:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                    env={'LANG' : 'C'})
+        except subprocess.CalledProcessError as e:
+            err = e.output.decode('utf-8', errors='surrogateescape')
+            cause = "git command - %s" % err
+            raise RepositoryError(cause=cause)
+
+        return cls(uri, dirpath)
