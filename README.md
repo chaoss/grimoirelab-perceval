@@ -15,6 +15,8 @@ are:
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from a Git log file
     github           Fetch issues from GitHub
+    jira             Fetch issues from JIRA issue tracker
+    mbox             Fetch messages from MBox files
     stackexchange    Fetch questions from StackExchange sites
 
 optional arguments:
@@ -91,6 +93,11 @@ $ perceval gerrit --user user --url review.openstack.org --from-date '2016-01-01
 ### GitHub
 ```
 $ perceval github --owner elastic --repository filebeat --from-date '2016-01-01' --token abcdabcdabcdabcd
+```
+
+### JIRA
+```
+$ perceval jira --url "https://tickets.puppetlabs.com" --project PUP --from-date '2016-01-01'
 ```
 
 ### MBox
