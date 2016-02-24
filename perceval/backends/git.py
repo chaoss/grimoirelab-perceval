@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015 Bitergia
+# Copyright (C) 2015-2016 Bitergia
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -488,3 +488,28 @@ class GitRepository:
             raise RepositoryError(cause=cause)
 
         return cls(uri, dirpath)
+
+    def pull(self):
+        """Update repository from 'origin' remote.
+
+        Calling this method, the repository will be synchronized with
+        'origin' repository. Any commit stored in the local copy will
+        be removed.
+
+        :raises RepositoryError: when an error occurs updating the
+            repository
+        """
+        cmd_fetch = ['git', 'fetch', 'origin']
+        cmd_reset = ['git', 'reset', '--hard', 'origin']
+
+        try:
+            subprocess.check_output(cmd_fetch, stderr=subprocess.STDOUT,
+                                    cwd=self.dirpath,
+                                    env={'LANG' : 'C'})
+            subprocess.check_output(cmd_reset, stderr=subprocess.STDOUT,
+                                    cwd=self.dirpath,
+                                    env={'LANG' : 'C'})
+        except subprocess.CalledProcessError as e:
+            err = e.output.decode('utf-8', errors='surrogateescape')
+            cause = "git command - %s" % err
+            raise RepositoryError(cause=cause)

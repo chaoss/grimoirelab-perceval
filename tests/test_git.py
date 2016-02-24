@@ -334,6 +334,8 @@ class TestGitRepository(unittest.TestCase):
         self.assertTrue(os.path.exists(new_path))
         self.assertTrue(os.path.exists(os.path.join(new_path, '.git')))
 
+        shutil.rmtree(new_path)
+
     def test_clone_error(self):
         """Test if it raises an exception when an error occurs cloning a repository"""
 
@@ -356,6 +358,55 @@ class TestGitRepository(unittest.TestCase):
         self.assertRaisesRegex(RepositoryError, expected,
                                GitRepository.clone,
                                self.git_path, self.tmp_path)
+
+    def test_pull(self):
+        """Test if the repository is updated to 'origin' status"""
+
+        def count_commits():
+            """Get the number of commits counting the entries on the log"""
+
+            cmd = ['git', 'log', '--oneline']
+            gitlog = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                             cwd=new_path,
+                                             env={'LANG' : 'C', 'PAGER' : ''})
+            commits = gitlog.strip(b'\n').split(b'\n')
+            return len(commits)
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        new_file = os.path.join(new_path, 'newfile')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        # Count the number of commits before adding a new one
+        ncommits = count_commits()
+        self.assertEqual(ncommits, 9)
+
+        # Create a new file and commit it to the repository
+        with open(new_file, 'w') as f:
+            f.write("Testing pull method")
+
+        cmd = ['git', 'add', new_file]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=new_path, env={'LANG' : 'C'})
+
+        cmd = ['git', '-c', 'user.name="mock"',
+               '-c', 'user.email="mock@example.com"',
+               'commit', '-m', 'Testing pull']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=new_path, env={'LANG' : 'C'})
+
+        # Count the number of commits after the adding a new one
+        ncommits = count_commits()
+        self.assertEqual(ncommits, 10)
+
+        # Update the repository to its original status
+        repo.pull()
+
+        # The number of commits should be updated to its original value
+        ncommits = count_commits()
+        self.assertEqual(ncommits, 9)
+
+        shutil.rmtree(new_path)
 
 
 if __name__ == "__main__":
