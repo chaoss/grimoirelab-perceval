@@ -51,13 +51,13 @@ class GitHub(Backend):
 
     :param owner: GitHub owener
     :param repository: GitHub repository from the owner
-    :param token: GitHub auth token to access the API
+    :param backend_token: GitHub auth token to access the API
     :param base_url: GitHub URL in enterprise edition case
     :param cache: Use issues already retrieved in cache
     """
     version = '0.1.0'
 
-    def __init__(self, owner=None, repository=None, token=None,
+    def __init__(self, owner=None, repository=None, backend_token=None,
                  base_url=None, cache=None):
         origin = base_url if base_url else GITHUB_URL
         origin = urljoin(origin, owner, repository)
@@ -65,7 +65,8 @@ class GitHub(Backend):
         super().__init__(origin, cache=cache)
         self.owner = owner
         self.repository = repository
-        self.client = GitHubClient(owner, repository, token, base_url)
+        self.backend_token = backend_token
+        self.client = GitHubClient(owner, repository, backend_token, base_url)
         self._users = {}  # internal users cache
 
     def __get_user(self, login):
@@ -186,10 +187,10 @@ class GitHubClient:
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
-    def __init__(self, owner, repository, token, base_url=None):
+    def __init__(self, owner, repository, backend_token, base_url=None):
         self.owner = owner
         self.repository = repository
-        self.auth_token = token
+        self.backend_token = backend_token
         self.base_url = base_url
 
     def __get_url(self):
@@ -216,8 +217,9 @@ class GitHubClient:
         return payload
 
     def __get_headers(self):
-        headers = {'Authorization': 'token ' + self.auth_token}
-        return headers
+        if self.backend_token:
+            headers = {'Authorization': 'token ' + self.backend_token}
+            return headers
 
     def get_issues(self, start=None):
         """ Return the items from github API using links pagination """
@@ -298,7 +300,7 @@ class GitHubCommand(BackendCommand):
 
         self.owner = self.parsed_args.owner
         self.repository = self.parsed_args.repository
-        self.token = self.parsed_args.token
+        self.backend_token = self.parsed_args.backend_token
         self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.outfile = self.parsed_args.outfile
 
@@ -321,7 +323,7 @@ class GitHubCommand(BackendCommand):
             cache = None
 
         self.backend = GitHub(self.owner, self.repository,
-                              self.token, cache=cache)
+                              self.backend_token, cache=cache)
 
     def run(self):
         """Fetch and print the issues.
@@ -363,7 +365,5 @@ class GitHubCommand(BackendCommand):
                            help="github owner")
         group.add_argument("--repository", required=True,
                            help="github repository")
-        group.add_argument("--token", required=True,
-                           help="github access token")
 
         return parser
