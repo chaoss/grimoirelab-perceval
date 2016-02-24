@@ -26,8 +26,8 @@ import os
 import re
 import subprocess
 
-from ..errors import RepositoryError, ParseError
 from ..backend import Backend, BackendCommand, metadata
+from ..errors import RepositoryError, ParseError
 
 
 logger = logging.getLogger(__name__)
@@ -514,7 +514,7 @@ class GitRepository:
             cause = "git command - %s" % err
             raise RepositoryError(cause=cause)
 
-    def log(self):
+    def log(self, from_date=None):
         """Read the commit log from the repository.
 
         The method returns the Git log of the repository using the
@@ -524,6 +524,12 @@ class GitRepository:
                 --all --reverse --topo-order --parents -M -C -c
                 --remotes=origin
 
+        When `from_date` is given, it gets the commits equal or older
+        than that date. This date is given in a datetime object.
+
+        :param from_date: fetch commits older than a specific
+            date (inclusive)
+
         :returns: a Git log in bytes
 
         :raises RepositoryError: when an error occurs fetching the log
@@ -531,6 +537,10 @@ class GitRepository:
         cmd_log = ['git', 'log', '--raw', '--numstat', '--pretty=fuller',
                    '--decorate=full', '--all', '--reverse', '--topo-order',
                    '--parents', '-M', '-C', '-c', '--remotes=origin']
+
+        if from_date:
+            dt = from_date.strftime("%Y-%m-%d %H:%M:%S")
+            cmd_log.append('--since=' + dt)
 
         try:
             gitlog = subprocess.check_output(cmd_log,

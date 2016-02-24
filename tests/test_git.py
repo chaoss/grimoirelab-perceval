@@ -22,6 +22,7 @@
 #
 
 import argparse
+import datetime
 import os
 import shutil
 import subprocess
@@ -419,6 +420,20 @@ class TestGitRepository(unittest.TestCase):
 
         self.assertEqual(len(gitlog), 4077)
         self.assertEqual(gitlog[:14], "commit bc57a92")
+
+        shutil.rmtree(new_path)
+
+    def test_log_from_date(self):
+        """Test if commits are returned from the given date"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        gitlog = repo.log(from_date=datetime.datetime(2014, 2, 11, 22, 7, 49))
+        gitlog = gitlog.decode('utf-8')
+
+        self.assertEqual(len(gitlog), 1437)
+        self.assertEqual(gitlog[:14], "commit ce8e0b8")
 
         shutil.rmtree(new_path)
 
