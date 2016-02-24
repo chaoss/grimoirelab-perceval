@@ -26,8 +26,6 @@ import os.path
 
 import requests
 
-import time
-
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import CacheError
@@ -167,7 +165,6 @@ class JiraClient:
 
     def __build_base_url(self, type='search'):
         base_api_url = self.url
-        resource = 'rest/api'
         base_api_url = urljoin(base_api_url, self.RESOURCE, self.VERSION_API, type)
         return base_api_url
 
