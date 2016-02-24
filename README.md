@@ -57,10 +57,14 @@ $ perceval bugzilla https://bugzilla.redhat.com --from-date '2016-01-01'
 ```
 
 ### Git
-Git backend requieres as input a Git log file. We recommend to use the next command to get the most complete log file.
+```
+$ perceval git 'https://github.com/grimoirelab/perceval.git --from-date '2016-01-01'
+```
+
+Git backend can also work with a Git log file as input. We recommend to use the next command to get the most complete log file.
 
 ```
-git log --raw --numstat --pretty=fuller --decorate=full --parents --topo-order -M -C -c --remotes=origin --all > /tmp/gitlog.log
+git log --raw --numstat --pretty=fuller --decorate=full --parents --reverse --topo-order -M -C -c --remotes=origin --all > /tmp/gitlog.log
 ```
 
 Then, to run the backend, just execute the next command:
