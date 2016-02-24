@@ -41,33 +41,44 @@ def get_update_time(item):
 class Git(Backend):
     """Git backend.
 
-    This class allows the fetch the commits from a Git log file.
-    To initialize this class, the file path to the log file must be
-    provided.
+    This class allows the fetch the commits from a Git repository
+    (local or remote) or from a log file. To initialize this class,
+    you have to provide the URI repository and a value for `gitpath`.
 
-    :param gitlog: path to the log file
+    When `gitpath` is a directory or does not exist, it will be
+    considered as the place where the repository is/will be cloned;
+    when `gitpath` is a file it will be considered as a Git log file.
+
+    :param uri: URI of the Git repository
+    :param gitpath: path to the repository or to the log file
     :param cache: cache object to store raw data
+
+    :raises RepositoryError: raised when there was an error cloning or
+        updating the repository.
     """
     version = '0.1.0'
 
-    def __init__(self, gitlog, cache=None):
-        super().__init__(gitlog, cache=cache)
-        self.gitlog = gitlog
+    def __init__(self, uri, gitpath, cache=None):
+        super().__init__(uri, cache=cache)
+        self.uri = uri
+        self.gitpath = gitpath
 
     @metadata(get_update_time)
     def fetch(self):
-        """Fetch the commits from the log file.
+        """Fetch commits.
 
-        The method retrieves, from a Git log file, the commits listed
-        on that file. Commits are returned in the same order they were
-        parsed.
+        The method retrieves, from a Git repository or a log file its commits
+        Commits are returned in the same order they were parsed.
+
+        The class raises a `RepositoryError` exception when an error occurs
+        accessing the repository.
 
         :returns: a generator of commits
         """
-        logger.info("Fetching commits: '%s' git log", self.gitlog)
+        logger.info("Fetching commits: '%s' git repository", self.uri)
 
         ncommits = 0
-        commits = self.parse_git_log(self.gitlog)
+        commits = self.__fetch_and_parse_log()
 
         for commit in commits:
             yield commit
@@ -76,20 +87,36 @@ class Git(Backend):
         logger.info("Fetch process completed: %s commits fetched",
                     ncommits)
 
+    def __fetch_and_parse_log(self):
+        if os.path.isfile(self.gitpath):
+            return self.parse_git_log_from_file(self.gitpath)
+        else:
+            repo = self.__create_and_update_git_repository()
+            return self.parse_git_log_from_repository(repo)
+
+    def __create_and_update_git_repository(self):
+        if not os.path.exists(self.gitpath):
+            repo = GitRepository.clone(self.uri, self.gitpath)
+        elif os.path.isdir(self.gitpath):
+            repo = GitRepository(self.uri, self.gitpath)
+        repo.pull()
+
+        return repo
+
     @staticmethod
-    def parse_git_log(filepath):
+    def parse_git_log_from_file(filepath):
         """Parse a Git log file.
 
         The method parses the Git log file and returns an iterator of
         dictionaries. Each one of this, contains a commit.
 
-        :param filpath: path to the log file
+        :param filepath: path to the log file
 
         :returns: a generator of parsed commits
 
         :raises ParseError: raised when the format of the Git log file
             is invalid
-        :raises IOError: raised when an error occurs reading the
+        :raises OSError: raised when an error occurs reading the
             given file
         """
         with open(filepath, 'r', errors='surrogateescape') as f:
@@ -126,12 +153,20 @@ class GitCommand(BackendCommand):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.gitlog = self.parsed_args.gitlog
+        self.uri = self.parsed_args.uri
         self.outfile = self.parsed_args.outfile
+
+        if self.parsed_args.git_log:
+            git_path = self.parsed_args.git_log
+        elif not self.parsed_args.git_path:
+            base_path = os.path.expanduser('~/.perceval/repositories/')
+            git_path = os.path.join(base_path, self.uri)
+        else:
+            git_path = self.parsed_args.git_path
 
         cache = None
 
-        self.backend = Git(self.gitlog, cache=cache)
+        self.backend = Git(self.uri, git_path, cache=cache)
 
     def run(self):
         """Fetch and print the commits.
@@ -147,7 +182,7 @@ class GitCommand(BackendCommand):
                 obj = json.dumps(commit, indent=4, sort_keys=True)
                 self.outfile.write(obj)
                 self.outfile.write('\n')
-        except IOError as e:
+        except OSError as e:
             raise RuntimeError(str(e))
         except Exception as e:
             raise RuntimeError(str(e))
@@ -158,9 +193,16 @@ class GitCommand(BackendCommand):
 
         parser = super().create_argument_parser()
 
+        # Mutual exclusive parameters
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument('--git-path', dest='git_path',
+                           help="Path where the Git repository will be cloned")
+        group.add_argument('--git-log', dest='git_log',
+                           help="Path to the Git log file")
+
         # Required arguments
-        parser.add_argument('gitlog',
-                            help="Path to the Git log file")
+        parser.add_argument('uri',
+                            help="URI of the Git log repository")
 
         return parser
 
