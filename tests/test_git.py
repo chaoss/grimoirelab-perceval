@@ -408,6 +408,20 @@ class TestGitRepository(unittest.TestCase):
 
         shutil.rmtree(new_path)
 
+    def test_log(self):
+        """Test log command"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        gitlog = repo.log()
+        gitlog = gitlog.decode('utf-8')
+
+        self.assertEqual(len(gitlog), 4077)
+        self.assertEqual(gitlog[:14], "commit bc57a92")
+
+        shutil.rmtree(new_path)
+
 
 if __name__ == "__main__":
     unittest.main()

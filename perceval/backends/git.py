@@ -513,3 +513,32 @@ class GitRepository:
             err = e.output.decode('utf-8', errors='surrogateescape')
             cause = "git command - %s" % err
             raise RepositoryError(cause=cause)
+
+    def log(self):
+        """Read the commit log from the repository.
+
+        The method returns the Git log of the repository using the
+        following options:
+
+            git log --raw --numstat --pretty=fuller --decorate=full
+                --all --reverse --topo-order --parents -M -C -c
+                --remotes=origin
+
+        :returns: a Git log in bytes
+
+        :raises RepositoryError: when an error occurs fetching the log
+        """
+        cmd_log = ['git', 'log', '--raw', '--numstat', '--pretty=fuller',
+                   '--decorate=full', '--all', '--reverse', '--topo-order',
+                   '--parents', '-M', '-C', '-c', '--remotes=origin']
+
+        try:
+            gitlog = subprocess.check_output(cmd_log,
+                                             cwd=self.dirpath,
+                                             env={'LANG' : 'C', 'PAGER' : ''})
+        except subprocess.CalledProcessError as e:
+            err = e.output.decode('utf-8', errors='surrogateescape')
+            cause = "git command - %s" % err
+            raise RepositoryError(cause=cause)
+
+        return gitlog
