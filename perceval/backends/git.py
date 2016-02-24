@@ -28,6 +28,7 @@ import subprocess
 
 from ..backend import Backend, BackendCommand, metadata
 from ..errors import RepositoryError, ParseError
+from ..utils import DEFAULT_DATETIME
 
 
 logger = logging.getLogger(__name__)
@@ -64,21 +65,33 @@ class Git(Backend):
         self.gitpath = gitpath
 
     @metadata(get_update_time)
-    def fetch(self):
+    def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch commits.
 
-        The method retrieves, from a Git repository or a log file its commits
-        Commits are returned in the same order they were parsed.
+        The method retrieves from a Git repository or a log file
+        a list of commits since the given date. Commits are returned
+        in the same order they were parsed.
+
+        Take into account that `from_date` is ignored when the commits
+        are fetched from a Git log file.
 
         The class raises a `RepositoryError` exception when an error occurs
         accessing the repository.
 
+        :param from_date: obtain commits newer than a specific date
+            (inclusive)
+
         :returns: a generator of commits
         """
-        logger.info("Fetching commits: '%s' git repository", self.uri)
+        logger.info("Fetching commits: '%s' git repository from %s",
+                    self.uri, str(from_date))
+
+        # Ignore default datetime to avoid problems with git
+        if from_date == DEFAULT_DATETIME:
+            from_date = None
 
         ncommits = 0
-        commits = self.__fetch_and_parse_log()
+        commits = self.__fetch_and_parse_log(from_date)
 
         for commit in commits:
             yield commit
@@ -87,12 +100,12 @@ class Git(Backend):
         logger.info("Fetch process completed: %s commits fetched",
                     ncommits)
 
-    def __fetch_and_parse_log(self):
+    def __fetch_and_parse_log(self, from_date):
         if os.path.isfile(self.gitpath):
             return self.parse_git_log_from_file(self.gitpath)
         else:
             repo = self.__create_and_update_git_repository()
-            gitlog = repo.log()
+            gitlog = repo.log(from_date)
             return self.parse_git_log_from_iter(gitlog)
 
     def __create_and_update_git_repository(self):
@@ -572,7 +585,7 @@ class GitRepository:
         When `from_date` is given, it gets the commits equal or older
         than that date. This date is given in a datetime object.
 
-        :param from_date: fetch commits older than a specific
+        :param from_date: fetch commits newer than a specific
             date (inclusive)
         :param encoding: encode the log using this format
 

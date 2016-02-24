@@ -92,6 +92,29 @@ class TestGitBackend(unittest.TestCase):
 
         shutil.rmtree(new_path)
 
+    def test_fetch_since_date(self):
+        """Test whether commits are fetched from a Git repository since the given date"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        from_date = datetime.datetime(2014, 2, 11, 22, 7, 49)
+        git = Git(self.git_path, new_path)
+        commits = [commit for commit in git.fetch(from_date=from_date)]
+
+        expected = [('ce8e0b86a1e9877f42fe9453ede418519115f367', 'Tue Feb 11 22:07:49 2014 -0800'),
+                    ('51a3b654f252210572297f47597b31527c475fb8', 'Tue Feb 11 22:09:26 2014 -0800'),
+                    ('456a68ee1407a77f3e804a30dff245bb6c6b872f', 'Tue Feb 11 22:10:39 2014 -0800')]
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            commit = commits[x]
+            self.assertEqual(commit['commit'], expected[x][0])
+            self.assertEqual(commit['__metadata__']['origin'], self.git_path)
+            self.assertEqual(commit['__metadata__']['updated_on'], expected[x][1])
+
+        shutil.rmtree(new_path)
+
     def test_fetch_from_file(self):
         """Test whether commits are fetched from a Git log file"""
 
