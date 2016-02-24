@@ -20,12 +20,9 @@
 #   Alvaro del Castillo San Felix <acs@bitergia.com>
 #
 
-
-
 import json
 import logging
 import os.path
-import urllib.parse
 
 import requests
 
@@ -182,13 +179,14 @@ class GitHub(Backend):
                         self._users[issue[field]['login']]
             yield issue
 
+
 class GitHubClient:
     """ Client for retieving information from GitHub API """
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
-    def __init__(self, owner, repository, token, base_url = None):
+    def __init__(self, owner, repository, token, base_url=None):
         self.owner = owner
         self.repository = repository
         self.auth_token = token
@@ -253,8 +251,7 @@ class GitHubClient:
                 page += 1
                 issues = r.text
                 logger.debug("Page: %i/%i" % (page, last_page))
-                logger.debug("Rate limit: %s" %
-                     (r.headers['X-RateLimit-Remaining']))
+                logger.debug("Rate limit: %s" % (r.headers['X-RateLimit-Remaining']))
 
     def get_user(self, login):
         user = None
@@ -266,7 +263,7 @@ class GitHubClient:
 
         logging.info("Getting info for %s" % (url_user))
         r = requests.get(url_user, verify=False,
-                         headers={'Authorization':'token ' + self.auth_token})
+                         headers={'Authorization': 'token ' + self.auth_token})
         user = r.text
         self._users[login] = user
 
@@ -280,12 +277,13 @@ class GitHubClient:
 
         url = GITHUB_API_URL + "/users/" + login + "/orgs"
         r = requests.get(url, verify=False,
-                         headers={'Authorization':'token ' + self.auth_token})
+                         headers={'Authorization': 'token ' + self.auth_token})
         orgs = r.text
 
         self._users_orgs[login] = orgs
 
         return orgs
+
 
 class GitHubCommand(BackendCommand):
     """Class to run GitHub backend from the command line."""
