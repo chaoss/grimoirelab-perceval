@@ -98,6 +98,27 @@ class Git(Backend):
             for commit in parser.parse():
                 yield commit
 
+    @staticmethod
+    def parse_git_log_from_repository(repository):
+        """Parse a Git log obtained from a repository.
+
+        The method parses the Git log fetched from the given repository
+        and returns and iterator of dictionaries. Each dictionary
+        contains a commit.
+
+        :param repository: instance of `GitRepository`
+
+        :raises ParseError: raised when the format of the Git log
+            is invalid
+        :raises RepositoryError: raised when an error occurs accesing
+            the repository
+        """
+        gitlog = repository.log()
+        parser = GitParser(gitlog)
+
+        for commit in parser.parse():
+            yield commit
+
 
 class GitCommand(BackendCommand):
     """Class to run Git backend from the command line."""

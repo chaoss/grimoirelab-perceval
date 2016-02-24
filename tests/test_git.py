@@ -44,6 +44,18 @@ from perceval.backends.git import (Git,
 class TestGitBackend(unittest.TestCase):
     """Git backend tests"""
 
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+        cls.git_path = os.path.join(cls.tmp_path, 'gittest')
+
+        subprocess.check_call(['tar', '-xzf', 'data/gittest.tar.gz',
+                               '-C', cls.tmp_path])
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp_path)
+
     def test_fetch(self):
         """Test whether a list of commits is returned"""
 
@@ -98,6 +110,25 @@ class TestGitBackend(unittest.TestCase):
         commit = result[0]
         self.assertEqual(commit['commit'], 'cb24e4f2f7b2a7f3450bfb15d1cbaa97371e93fb')
         self.assertEqual(commit['message'], 'Calling \udc93Open Type\udc94 (CTRL+SHIFT+T) after startup - performance improvement.')
+
+    def test_git_parser_from_repository(self):
+        """Test if the static method parses a git log from a repository"""
+
+        repo = GitRepository(self.git_path, self.git_path)
+        commits = Git.parse_git_log_from_repository(repo)
+        result = [commit['commit'] for commit in commits]
+
+        expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
+                    '87783129c3f00d2c81a3a8e585eb86a47e39891a',
+                    '7debcf8a2f57f86663809c58b5c07a398be7674c',
+                    'c0d66f92a95e31c77be08dc9d0f11a16715d1885',
+                    'c6ba8f7a1058db3e6b4bc6f1090e932b107605fb',
+                    '589bb080f059834829a2a5955bebfd7c2baa110a',
+                    'ce8e0b86a1e9877f42fe9453ede418519115f367',
+                    '51a3b654f252210572297f47597b31527c475fb8',
+                    '456a68ee1407a77f3e804a30dff245bb6c6b872f']
+
+        self.assertListEqual(result, expected)
 
 
 class TestGitCommand(unittest.TestCase):
