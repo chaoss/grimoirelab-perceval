@@ -478,14 +478,10 @@ class GitRepository:
             repository
         """
         cmd = ['git', 'clone', uri, dirpath]
+        cls._exec(cmd, env={'LANG' : 'C'})
 
-        try:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                    env={'LANG' : 'C'})
-        except subprocess.CalledProcessError as e:
-            err = e.output.decode('utf-8', errors='surrogateescape')
-            cause = "git command - %s" % err
-            raise RepositoryError(cause=cause)
+        logging.debug("Git %s repository cloned into %s",
+                      uri, dirpath)
 
         return cls(uri, dirpath)
 
@@ -502,17 +498,11 @@ class GitRepository:
         cmd_fetch = ['git', 'fetch', 'origin']
         cmd_reset = ['git', 'reset', '--hard', 'origin']
 
-        try:
-            subprocess.check_output(cmd_fetch, stderr=subprocess.STDOUT,
-                                    cwd=self.dirpath,
-                                    env={'LANG' : 'C'})
-            subprocess.check_output(cmd_reset, stderr=subprocess.STDOUT,
-                                    cwd=self.dirpath,
-                                    env={'LANG' : 'C'})
-        except subprocess.CalledProcessError as e:
-            err = e.output.decode('utf-8', errors='surrogateescape')
-            cause = "git command - %s" % err
-            raise RepositoryError(cause=cause)
+        self._exec(cmd_fetch, cwd=self.dirpath, env={'LANG' : 'C'})
+        self._exec(cmd_reset, cwd=self.dirpath, env={'LANG' : 'C'})
+
+        logging.debug("Git %s repository pulled into %s",
+                      self.uri, self.dirpath)
 
     def log(self, from_date=None):
         """Read the commit log from the repository.
@@ -542,13 +532,42 @@ class GitRepository:
             dt = from_date.strftime("%Y-%m-%d %H:%M:%S")
             cmd_log.append('--since=' + dt)
 
-        try:
-            gitlog = subprocess.check_output(cmd_log,
-                                             cwd=self.dirpath,
-                                             env={'LANG' : 'C', 'PAGER' : ''})
-        except subprocess.CalledProcessError as e:
-            err = e.output.decode('utf-8', errors='surrogateescape')
-            cause = "git command - %s" % err
-            raise RepositoryError(cause=cause)
+        gitlog = self._exec(cmd_log, cwd=self.dirpath,
+                            env={'LANG' : 'C', 'PAGER' : ''})
+
+        logging.debug("Git log fetched from %s repository (%s)",
+                      self.uri, self.dirpath)
 
         return gitlog
+
+    @staticmethod
+    def _exec(cmd, cwd=None, env=None):
+        """Run a command.
+
+        Execute `cmd` command in the directory set by `cwd`. Enviroment
+        variables can be set using the `env` dictionary. The output
+        data is returned as encoded bytes.
+
+        :returns: the output of the command as encoded bytes
+
+        :raises RepositoryError: when an error occurs running the command
+        """
+        logging.debug("Running command %s (cwd: %s, env: %s)",
+                      ' '.join(cmd), cwd, str(env))
+
+        try:
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    cwd=cwd, env=env)
+            (outs, errs) = proc.communicate()
+        except OSError as e:
+            raise RepositoryError(cause=str(e))
+
+        if proc.returncode != 0:
+            err = errs.decode('utf-8', errors='surrogateescape')
+            cause = "git command - %s" % err
+            raise RepositoryError(cause=cause)
+        else:
+            logging.debug(errs.decode('utf-8', errors='surrogateescape'))
+
+        return outs
