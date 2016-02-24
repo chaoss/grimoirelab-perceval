@@ -68,7 +68,7 @@ class GitHub(Backend):
         self.client = GitHubClient(owner, repository, token, base_url)
         self._users = {}  # internal users cache
 
-    def _get_user(self, login):
+    def __get_user(self, login):
         """ Get user and org data for the login """
 
         user = {}
@@ -110,7 +110,7 @@ class GitHub(Backend):
             for issue in issues:
                 for field in ['user', 'assignee']:
                     if issue[field]:
-                        issue[field+"_data"] = self._get_user(issue[field]['login'])
+                        issue[field+"_data"] = self.__get_user(issue[field]['login'])
                     else:
                         issue[field+"_data"] = {}
                 yield issue
@@ -141,7 +141,7 @@ class GitHub(Backend):
                 raw_item = next(cache_items)
             except StopIteration:
                 if issues:
-                    for issue in self._build_issues(issues):
+                    for issue in self.__build_issues(issues):
                         yield issue
                 break
 
@@ -164,13 +164,13 @@ class GitHub(Backend):
             # have the enough information to build and return the
             # previous set
             if issues:
-                for issue in self._build_issues(issues):
+                for issue in self.__build_issues(issues):
                     yield issue
 
             # Next issues to parse
             issues = item
 
-    def _build_issues(self, issues):
+    def __build_issues(self, issues):
         for issue in issues:
             for field in ['user', 'assignee']:
                 issue[field + '_data'] = {}
@@ -192,7 +192,7 @@ class GitHubClient:
         self.auth_token = token
         self.base_url = base_url
 
-    def _get_url(self):
+    def __get_url(self):
         github_api = GITHUB_API_URL
         if self.base_url:
             github_api = self.base_url
@@ -200,11 +200,11 @@ class GitHubClient:
         url_repo = github_api_repos + "/" + self.owner + "/" + self.repository
         return url_repo
 
-    def _get_issues_url(self, startdate=None):
+    def __get_issues_url(self, startdate=None):
         # 100 in other items. 20 for pull requests. 30 issues
         github_per_page = 30
 
-        url_issues = self._get_url() + "/issues"
+        url_issues = self.__get_url() + "/issues"
 
         url_params = "?per_page=" + str(github_per_page)
         url_params += "&state=all"  # open and close pull requests
@@ -223,7 +223,7 @@ class GitHubClient:
 
         page = 0  # current page
         last_page = None  # last page
-        url_next = self._get_issues_url(start)
+        url_next = self.__get_issues_url(start)
 
         logger.debug("Get GitHub issues from " + url_next)
         r = requests.get(url_next, verify=False,
