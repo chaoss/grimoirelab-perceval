@@ -201,22 +201,23 @@ class GitHubClient:
         return url_repo
 
     def __get_issues_url(self, startdate=None):
-        # 100 in other items. 20 for pull requests. 30 issues
-        github_per_page = 30
-
         url_issues = self.__get_url() + "/issues"
+        return url_issues
 
-        url_params = "?per_page=" + str(github_per_page)
-        url_params += "&state=all"  # open and close pull requests
-        url_params += "&sort=updated"  # sort by last updated
-        url_params += "&direction=asc"  # first older pull request
+    def __get_payload(self, startdate=None):
+        # 100 in other items. 20 for pull requests. 30 issues
+        payload = {'per_page': 30,
+                   'state': 'all',
+                   'sort': 'updated',
+                   'direction': 'asc'}
         if startdate:
             startdate = startdate.isoformat()
-            url_params += "&since=" + startdate
+            payload['since'] = startdate
+        return payload
 
-        url = url_issues + url_params
-
-        return url
+    def __get_headers(self):
+        headers = {'Authorization': 'token ' + self.auth_token}
+        return headers
 
     def get_issues(self, start=None):
         """ Return the items from github API using links pagination """
@@ -226,7 +227,9 @@ class GitHubClient:
         url_next = self.__get_issues_url(start)
 
         logger.debug("Get GitHub issues from " + url_next)
-        r = requests.get(url_next, headers={'Authorization': 'token ' + self.auth_token})
+        r = requests.get(url_next,
+                         params=self.__get_payload(start),
+                         headers=self.__get_headers())
         issues = r.text
         page += 1
         logger.debug("Rate limit: %s" % (r.headers['X-RateLimit-Remaining']))
@@ -245,7 +248,9 @@ class GitHubClient:
             if 'next' in r.links:
                 url_next = r.links['next']['url']  # Loving requests :)
 
-                r = requests.get(url_next, headers={'Authorization': 'token ' + self.auth_token})
+                r = requests.get(url_next,
+                                 params=self.__get_payload(start),
+                                 headers=self.__get_headers())
                 page += 1
                 issues = r.text
                 logger.debug("Page: %i/%i" % (page, last_page))
@@ -260,7 +265,7 @@ class GitHubClient:
         url_user = GITHUB_API_URL + "/users/" + login
 
         logging.info("Getting info for %s" % (url_user))
-        r = requests.get(url_user, headers={'Authorization': 'token ' + self.auth_token})
+        r = requests.get(url_user, headers=self.__get_headers())
         user = r.text
         self._users[login] = user
 
@@ -273,7 +278,7 @@ class GitHubClient:
             return self._users_orgs[login]
 
         url = GITHUB_API_URL + "/users/" + login + "/orgs"
-        r = requests.get(url, headers={'Authorization': 'token ' + self.auth_token})
+        r = requests.get(url, headers=self.__get_headers())
         orgs = r.text
 
         self._users_orgs[login] = orgs
