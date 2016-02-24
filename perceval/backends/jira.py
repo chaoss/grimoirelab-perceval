@@ -314,9 +314,6 @@ class JiraCommand(BackendCommand):
 
         # JIRA options
         group = parser.add_argument_group('JIRA arguments')
-
-        group.add_argument("--url", required=True,
-                           help="JIRA's url")
         group.add_argument("--project",
                            help="filter issues by Project")
         group.add_argument("--verify", default=True,
@@ -326,5 +323,8 @@ class JiraCommand(BackendCommand):
         group.add_argument('--max-issues', dest='max_issues',
                            type=int, default=MAX_ISSUES,
                            help="Maximum number of issues requested in the same query")
+
+        # Required arguments
+        parser.add_argument("url", help="JIRA's url")
 
         return parser
