@@ -28,7 +28,7 @@ import subprocess
 
 from ..backend import Backend, BackendCommand, metadata
 from ..errors import RepositoryError, ParseError
-from ..utils import DEFAULT_DATETIME
+from ..utils import DEFAULT_DATETIME, str_to_datetime
 
 
 logger = logging.getLogger(__name__)
@@ -166,6 +166,7 @@ class GitCommand(BackendCommand):
 
         self.uri = self.parsed_args.uri
         self.outfile = self.parsed_args.outfile
+        self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         if self.parsed_args.git_log:
             git_path = self.parsed_args.git_log
@@ -186,7 +187,7 @@ class GitCommand(BackendCommand):
         git log. Commits are converted to JSON objects and printed to the
         defined output.
         """
-        commits = self.backend.fetch()
+        commits = self.backend.fetch(from_date=self.from_date)
 
         try:
             for commit in commits:
