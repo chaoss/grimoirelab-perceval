@@ -296,6 +296,9 @@ class JiraCommand(BackendCommand):
                 self.outfile.write('\n')
         except requests.exceptions.HTTPError as e:
             raise requests.exceptions.HTTPError(str(e.response.json()))
+        except requests.exceptions.SSLError as e:
+            logging.error('SSL ERROR: Try adding a --cert or use --verify False')
+            raise requests.exceptions.SSLError(e)
         except IOError as e:
             raise RuntimeError(str(e))
         except Exception as e:
