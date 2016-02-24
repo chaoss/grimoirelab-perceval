@@ -146,11 +146,11 @@ class TestGitBackend(unittest.TestCase):
         self.assertEqual(commit['commit'], 'cb24e4f2f7b2a7f3450bfb15d1cbaa97371e93fb')
         self.assertEqual(commit['message'], 'Calling \udc93Open Type\udc94 (CTRL+SHIFT+T) after startup - performance improvement.')
 
-    def test_git_parser_from_repository(self):
+    def test_git_parser_from_iter(self):
         """Test if the static method parses a git log from a repository"""
 
         repo = GitRepository(self.git_path, self.git_path)
-        commits = Git.parse_git_log_from_repository(repo)
+        commits = Git.parse_git_log_from_iter(repo.log())
         result = [commit['commit'] for commit in commits]
 
         expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',

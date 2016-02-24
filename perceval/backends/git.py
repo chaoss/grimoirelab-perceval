@@ -92,7 +92,8 @@ class Git(Backend):
             return self.parse_git_log_from_file(self.gitpath)
         else:
             repo = self.__create_and_update_git_repository()
-            return self.parse_git_log_from_repository(repo)
+            gitlog = repo.log()
+            return self.parse_git_log_from_iter(gitlog)
 
     def __create_and_update_git_repository(self):
         if not os.path.exists(self.gitpath):
@@ -126,22 +127,19 @@ class Git(Backend):
                 yield commit
 
     @staticmethod
-    def parse_git_log_from_repository(repository):
-        """Parse a Git log obtained from a repository.
+    def parse_git_log_from_iter(iterator):
+        """Parse a Git log obtained from an iterator.
 
-        The method parses the Git log fetched from the given repository
-        and returns and iterator of dictionaries. Each dictionary
-        contains a commit.
+        The method parses the Git log fetched from an iterator, where
+        each item is a line of the log. It returns and iterator of
+        dictionaries. Each dictionary contains a commit.
 
-        :param repository: instance of `GitRepository`
+        :param iterator: iterator of Git log lines
 
         :raises ParseError: raised when the format of the Git log
             is invalid
-        :raises RepositoryError: raised when an error occurs accesing
-            the repository
         """
-        gitlog = repository.log()
-        parser = GitParser(gitlog)
+        parser = GitParser(iterator)
 
         for commit in parser.parse():
             yield commit
