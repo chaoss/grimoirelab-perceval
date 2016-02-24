@@ -498,7 +498,7 @@ class GitRepository:
         logging.debug("Git %s repository pulled into %s",
                       self.uri, self.dirpath)
 
-    def log(self, from_date=None):
+    def log(self, from_date=None, encoding='utf-8'):
         """Read the commit log from the repository.
 
         The method returns the Git log of the repository using the
@@ -513,9 +513,9 @@ class GitRepository:
 
         :param from_date: fetch commits older than a specific
             date (inclusive)
+        :param encoding: encode the log using this format
 
-        :returns: a generator where each item is a encoded bytes line
-            from the log
+        :returns: a generator where each item is a line from the log
 
         :raises RepositoryError: when an error occurs fetching the log
         """
@@ -535,6 +535,7 @@ class GitRepository:
                       self.uri, self.dirpath)
 
         for line in gitlog:
+            line = line.decode(encoding, errors='surrogateescape')
             yield line
 
     @staticmethod

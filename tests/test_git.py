@@ -413,7 +413,7 @@ class TestGitRepository(unittest.TestCase):
 
         repo = GitRepository.clone(self.git_path, new_path)
         gitlog = repo.log()
-        gitlog = [line.decode('utf-8') for line in gitlog]
+        gitlog = [line for line in gitlog]
 
         self.assertEqual(len(gitlog), 109)
         self.assertEqual(gitlog[0][:14], "commit bc57a92")
@@ -427,7 +427,7 @@ class TestGitRepository(unittest.TestCase):
 
         repo = GitRepository.clone(self.git_path, new_path)
         gitlog = repo.log(from_date=datetime.datetime(2014, 2, 11, 22, 7, 49))
-        gitlog = [line.decode('utf-8') for line in gitlog]
+        gitlog = [line for line in gitlog]
 
         self.assertEqual(len(gitlog), 37)
         self.assertEqual(gitlog[0][:14], "commit ce8e0b8")
