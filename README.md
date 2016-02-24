@@ -97,7 +97,7 @@ $ perceval github --owner elastic --repository filebeat --from-date '2016-01-01'
 
 ### JIRA
 ```
-$ perceval jira --url "https://tickets.puppetlabs.com" --project PUP --from-date '2016-01-01'
+$ perceval jira "https://tickets.puppetlabs.com" --project PUP --from-date '2016-01-01'
 ```
 
 ### MBox
