@@ -514,7 +514,8 @@ class GitRepository:
         :param from_date: fetch commits older than a specific
             date (inclusive)
 
-        :returns: a Git log in bytes
+        :returns: a generator where each item is a encoded bytes line
+            from the log
 
         :raises RepositoryError: when an error occurs fetching the log
         """
@@ -528,11 +529,13 @@ class GitRepository:
 
         gitlog = self._exec(cmd_log, cwd=self.dirpath,
                             env={'LANG' : 'C', 'PAGER' : ''})
+        gitlog = gitlog.split(b'\n')
 
         logging.debug("Git log fetched from %s repository (%s)",
                       self.uri, self.dirpath)
 
-        return gitlog
+        for line in gitlog:
+            yield line
 
     @staticmethod
     def _exec(cmd, cwd=None, env=None):
