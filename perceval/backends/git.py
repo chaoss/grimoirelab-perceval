@@ -59,21 +59,15 @@ class Git(Backend):
         """Fetch the commits from the log file.
 
         The method retrieves, from a Git log file, the commits listed
-        on that file.
-
-        By default, it returns the commits in reverse order or in other
-        words, commits from oldest to newest. This means that the log
-        needs to be parsed before returning any commit, in order to ensure
-        the log history.
+        on that file. Commits are returned in the same order they were
+        parsed.
 
         :returns: a generator of commits
         """
         logger.info("Fetching commits: '%s' git log", self.gitlog)
 
         ncommits = 0
-
-        commits = [commit for commit in self.parse_git_log(self.gitlog)]
-        commits.reverse()
+        commits = self.parse_git_log(self.gitlog)
 
         for commit in commits:
             yield commit

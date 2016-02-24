@@ -50,16 +50,15 @@ class TestGitBackend(unittest.TestCase):
         git = Git("data/git_log.txt")
         commits = [commit for commit in git.fetch()]
 
-        # Commits are returned in reverse order
-        expected = [('bc57a9209f096a130dcc5ba7089a8663f758a703', 'Tue Aug 14 14:30:13 2012 -0300'),
-                    ('87783129c3f00d2c81a3a8e585eb86a47e39891a', 'Tue Aug 14 14:32:15 2012 -0300'),
-                    ('7debcf8a2f57f86663809c58b5c07a398be7674c', 'Tue Aug 14 14:33:27 2012 -0300'),
-                    ('c0d66f92a95e31c77be08dc9d0f11a16715d1885', 'Tue Aug 14 14:35:02 2012 -0300'),
-                    ('c6ba8f7a1058db3e6b4bc6f1090e932b107605fb', 'Tue Aug 14 14:45:51 2012 -0300'),
-                    ('589bb080f059834829a2a5955bebfd7c2baa110a', 'Tue Aug 14 15:04:01 2012 -0300'),
-                    ('ce8e0b86a1e9877f42fe9453ede418519115f367', 'Tue Feb 11 22:07:49 2014 -0800'),
+        expected = [('456a68ee1407a77f3e804a30dff245bb6c6b872f', 'Tue Feb 11 22:10:39 2014 -0800'),
                     ('51a3b654f252210572297f47597b31527c475fb8', 'Tue Feb 11 22:09:26 2014 -0800'),
-                    ('456a68ee1407a77f3e804a30dff245bb6c6b872f', 'Tue Feb 11 22:10:39 2014 -0800')]
+                    ('ce8e0b86a1e9877f42fe9453ede418519115f367', 'Tue Feb 11 22:07:49 2014 -0800'),
+                    ('589bb080f059834829a2a5955bebfd7c2baa110a', 'Tue Aug 14 15:04:01 2012 -0300'),
+                    ('c6ba8f7a1058db3e6b4bc6f1090e932b107605fb', 'Tue Aug 14 14:45:51 2012 -0300'),
+                    ('c0d66f92a95e31c77be08dc9d0f11a16715d1885', 'Tue Aug 14 14:35:02 2012 -0300'),
+                    ('7debcf8a2f57f86663809c58b5c07a398be7674c', 'Tue Aug 14 14:33:27 2012 -0300'),
+                    ('87783129c3f00d2c81a3a8e585eb86a47e39891a', 'Tue Aug 14 14:32:15 2012 -0300'),
+                    ('bc57a9209f096a130dcc5ba7089a8663f758a703', 'Tue Aug 14 14:30:13 2012 -0300')]
 
         self.assertEqual(len(commits), len(expected))
 
