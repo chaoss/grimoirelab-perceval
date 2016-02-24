@@ -346,9 +346,8 @@ class TestGitRepository(unittest.TestCase):
         expected = "git command - fatal: repository '%s' does not exist" \
             % self.tmp_path
 
-        self.assertRaisesRegex(RepositoryError, expected,
-                               GitRepository.clone,
-                               self.tmp_path, new_path)
+        with self.assertRaisesRegex(RepositoryError, expected):
+            _ = GitRepository.clone(self.tmp_path, new_path)
 
     def test_clone_existing_directory(self):
         """Test if it raises an exception when tries to clone an existing directory"""
@@ -356,9 +355,8 @@ class TestGitRepository(unittest.TestCase):
         expected = "git command - fatal: destination path '%s' already exists" \
             % (self.tmp_path)
 
-        self.assertRaisesRegex(RepositoryError, expected,
-                               GitRepository.clone,
-                               self.git_path, self.tmp_path)
+        with self.assertRaisesRegex(RepositoryError, expected):
+            _ = GitRepository.clone(self.git_path, self.tmp_path)
 
     def test_pull(self):
         """Test if the repository is updated to 'origin' status"""
