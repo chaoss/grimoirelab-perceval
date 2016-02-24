@@ -226,8 +226,7 @@ class GitHubClient:
         url_next = self.__get_issues_url(start)
 
         logger.debug("Get GitHub issues from " + url_next)
-        r = requests.get(url_next, verify=False,
-                         headers={'Authorization': 'token ' + self.auth_token})
+        r = requests.get(url_next, headers={'Authorization': 'token ' + self.auth_token})
         issues = r.text
         page += 1
         logger.debug("Rate limit: %s" % (r.headers['X-RateLimit-Remaining']))
@@ -246,8 +245,7 @@ class GitHubClient:
             if 'next' in r.links:
                 url_next = r.links['next']['url']  # Loving requests :)
 
-                r = requests.get(url_next, verify=False,
-                                 headers={'Authorization': 'token ' + self.auth_token})
+                r = requests.get(url_next, headers={'Authorization': 'token ' + self.auth_token})
                 page += 1
                 issues = r.text
                 logger.debug("Page: %i/%i" % (page, last_page))
@@ -262,8 +260,7 @@ class GitHubClient:
         url_user = GITHUB_API_URL + "/users/" + login
 
         logging.info("Getting info for %s" % (url_user))
-        r = requests.get(url_user, verify=False,
-                         headers={'Authorization': 'token ' + self.auth_token})
+        r = requests.get(url_user, headers={'Authorization': 'token ' + self.auth_token})
         user = r.text
         self._users[login] = user
 
@@ -276,8 +273,7 @@ class GitHubClient:
             return self._users_orgs[login]
 
         url = GITHUB_API_URL + "/users/" + login + "/orgs"
-        r = requests.get(url, verify=False,
-                         headers={'Authorization': 'token ' + self.auth_token})
+        r = requests.get(url, headers={'Authorization': 'token ' + self.auth_token})
         orgs = r.text
 
         self._users_orgs[login] = orgs
