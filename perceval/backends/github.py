@@ -230,6 +230,7 @@ class GitHubClient:
         r = requests.get(url_next,
                          params=self.__get_payload(start),
                          headers=self.__get_headers())
+        r.raise_for_status()
         issues = r.text
         page += 1
         logger.debug("Rate limit: %s" % (r.headers['X-RateLimit-Remaining']))
@@ -251,6 +252,7 @@ class GitHubClient:
                 r = requests.get(url_next,
                                  params=self.__get_payload(start),
                                  headers=self.__get_headers())
+                r.raise_for_status()
                 page += 1
                 issues = r.text
                 logger.debug("Page: %i/%i" % (page, last_page))
@@ -266,6 +268,7 @@ class GitHubClient:
 
         logging.info("Getting info for %s" % (url_user))
         r = requests.get(url_user, headers=self.__get_headers())
+        r.raise_for_status()
         user = r.text
         self._users[login] = user
 
@@ -279,6 +282,7 @@ class GitHubClient:
 
         url = GITHUB_API_URL + "/users/" + login + "/orgs"
         r = requests.get(url, headers=self.__get_headers())
+        r.raise_for_status()
         orgs = r.text
 
         self._users_orgs[login] = orgs
@@ -337,6 +341,8 @@ class GitHubCommand(BackendCommand):
                 # self.outfile.write(issue['url']+"\n")
                 self.outfile.write(obj)
                 self.outfile.write('\n')
+        except requests.exceptions.HTTPError as e:
+            raise requests.exceptions.HTTPError(str(e.response.json()))
         except IOError as e:
             raise RuntimeError(str(e))
         except Exception as e:
