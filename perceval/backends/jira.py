@@ -232,7 +232,7 @@ class JiraClient:
             yield issues
             issues = None
 
-            if data['startAt'] + nissues <= tissues:
+            if data['startAt'] + nissues < tissues:
                 req = s.get(self.__build_base_url(),
                             params=self.__build_payload(start_at, from_date))
                 req.raise_for_status()
