@@ -154,11 +154,11 @@ class JiraClient:
     VERSION_API = '2'
     RESOURCE = 'rest/api'
 
-    def __init__(self, url, project, backend_user, backend_password, verify, cert, max_issues):
+    def __init__(self, url, project, user, password, verify, cert, max_issues):
         self.url = url
         self.project = project
-        self.backend_user = backend_user
-        self.backend_password = backend_password
+        self.user = user
+        self.password = password
         self.verify = verify
         self.cert = cert
         self.max_issues = max_issues
@@ -203,8 +203,8 @@ class JiraClient:
         """
         s = requests.Session()
 
-        if (self.backend_user and self.backend_password) is not None:
-            s.auth = (self.backend_user, self.backend_password)
+        if (self.user and self.password) is not None:
+            s.auth = (self.user, self.password)
 
         if self.cert:
             s.cert = self.cert
