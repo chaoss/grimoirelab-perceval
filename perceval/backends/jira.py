@@ -143,6 +143,8 @@ class JiraClient:
 
     :param URL: URL of the JIRA server
     :param project: filter issues by project
+    :param user: JIRA's username
+    :param password: JIRA's password
     :param verify: allows to disable SSL verification
     :param cert: SSL certificate
     :param max_issues: max number of issues per query
