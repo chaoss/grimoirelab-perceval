@@ -86,7 +86,7 @@ $ perceval gerrit --user user --url review.openstack.org --from-date '2016-01-01
 
 ### GitHub
 ```
-$ perceval github --owner elastic --repository filebeat --from-date '2016-01-01' --token abcdabcdabcdabcd
+$ perceval github --owner elastic --repository filebeat --from-date '2016-01-01'
 ```
 
 ### MBox
