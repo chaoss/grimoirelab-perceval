@@ -187,10 +187,10 @@ class GitHubClient:
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
-    def __init__(self, owner, repository, backend_token, base_url=None):
+    def __init__(self, owner, repository, token, base_url=None):
         self.owner = owner
         self.repository = repository
-        self.backend_token = backend_token
+        self.token = token
         self.base_url = base_url
 
     def __get_url(self):
@@ -217,8 +217,8 @@ class GitHubClient:
         return payload
 
     def __get_headers(self):
-        if self.backend_token:
-            headers = {'Authorization': 'token ' + self.backend_token}
+        if self.token:
+            headers = {'Authorization': 'token ' + self.token}
             return headers
 
     def get_issues(self, start=None):
