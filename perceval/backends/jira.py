@@ -25,12 +25,12 @@ import logging
 import os.path
 
 import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import CacheError
 from ..utils import str_to_datetime, DEFAULT_DATETIME, urljoin
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 MAX_ISSUES = 100  # Maximum number of issues per query
 
