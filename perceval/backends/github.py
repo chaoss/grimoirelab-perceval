@@ -20,12 +20,9 @@
 #   Alvaro del Castillo San Felix <acs@bitergia.com>
 #
 
-
-
 import json
 import logging
 import os.path
-import urllib.parse
 
 import requests
 
@@ -54,13 +51,13 @@ class GitHub(Backend):
 
     :param owner: GitHub owener
     :param repository: GitHub repository from the owner
-    :param token: GitHub auth token to access the API
+    :param backend_token: GitHub auth token to access the API
     :param base_url: GitHub URL in enterprise edition case
     :param cache: Use issues already retrieved in cache
     """
     version = '0.1.0'
 
-    def __init__(self, owner=None, repository=None, token=None,
+    def __init__(self, owner=None, repository=None, backend_token=None,
                  base_url=None, cache=None):
         origin = base_url if base_url else GITHUB_URL
         origin = urljoin(origin, owner, repository)
@@ -68,10 +65,11 @@ class GitHub(Backend):
         super().__init__(origin, cache=cache)
         self.owner = owner
         self.repository = repository
-        self.client = GitHubClient(owner, repository, token, base_url)
+        self.backend_token = backend_token
+        self.client = GitHubClient(owner, repository, backend_token, base_url)
         self._users = {}  # internal users cache
 
-    def _get_user(self, login):
+    def __get_user(self, login):
         """ Get user and org data for the login """
 
         user = {}
@@ -113,7 +111,7 @@ class GitHub(Backend):
             for issue in issues:
                 for field in ['user', 'assignee']:
                     if issue[field]:
-                        issue[field+"_data"] = self._get_user(issue[field]['login'])
+                        issue[field+"_data"] = self.__get_user(issue[field]['login'])
                     else:
                         issue[field+"_data"] = {}
                 yield issue
@@ -144,7 +142,7 @@ class GitHub(Backend):
                 raw_item = next(cache_items)
             except StopIteration:
                 if issues:
-                    for issue in self._build_issues(issues):
+                    for issue in self.__build_issues(issues):
                         yield issue
                 break
 
@@ -167,13 +165,13 @@ class GitHub(Backend):
             # have the enough information to build and return the
             # previous set
             if issues:
-                for issue in self._build_issues(issues):
+                for issue in self.__build_issues(issues):
                     yield issue
 
             # Next issues to parse
             issues = item
 
-    def _build_issues(self, issues):
+    def __build_issues(self, issues):
         for issue in issues:
             for field in ['user', 'assignee']:
                 issue[field + '_data'] = {}
@@ -182,19 +180,20 @@ class GitHub(Backend):
                         self._users[issue[field]['login']]
             yield issue
 
+
 class GitHubClient:
     """ Client for retieving information from GitHub API """
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
-    def __init__(self, owner, repository, token, base_url = None):
+    def __init__(self, owner, repository, token, base_url=None):
         self.owner = owner
         self.repository = repository
-        self.auth_token = token
+        self.token = token
         self.base_url = base_url
 
-    def _get_url(self):
+    def __get_url(self):
         github_api = GITHUB_API_URL
         if self.base_url:
             github_api = self.base_url
@@ -202,34 +201,38 @@ class GitHubClient:
         url_repo = github_api_repos + "/" + self.owner + "/" + self.repository
         return url_repo
 
-    def _get_issues_url(self, startdate=None):
+    def __get_issues_url(self, startdate=None):
+        url_issues = self.__get_url() + "/issues"
+        return url_issues
+
+    def __get_payload(self, startdate=None):
         # 100 in other items. 20 for pull requests. 30 issues
-        github_per_page = 30
-
-        url_issues = self._get_url() + "/issues"
-
-        url_params = "?per_page=" + str(github_per_page)
-        url_params += "&state=all"  # open and close pull requests
-        url_params += "&sort=updated"  # sort by last updated
-        url_params += "&direction=asc"  # first older pull request
+        payload = {'per_page': 30,
+                   'state': 'all',
+                   'sort': 'updated',
+                   'direction': 'asc'}
         if startdate:
             startdate = startdate.isoformat()
-            url_params += "&since=" + startdate
+            payload['since'] = startdate
+        return payload
 
-        url = url_issues + url_params
-
-        return url
+    def __get_headers(self):
+        if self.token:
+            headers = {'Authorization': 'token ' + self.token}
+            return headers
 
     def get_issues(self, start=None):
         """ Return the items from github API using links pagination """
 
         page = 0  # current page
         last_page = None  # last page
-        url_next = self._get_issues_url(start)
+        url_next = self.__get_issues_url(start)
 
         logger.debug("Get GitHub issues from " + url_next)
-        r = requests.get(url_next, verify=False,
-                         headers={'Authorization': 'token ' + self.auth_token})
+        r = requests.get(url_next,
+                         params=self.__get_payload(start),
+                         headers=self.__get_headers())
+        r.raise_for_status()
         issues = r.text
         page += 1
         logger.debug("Rate limit: %s" % (r.headers['X-RateLimit-Remaining']))
@@ -248,13 +251,14 @@ class GitHubClient:
             if 'next' in r.links:
                 url_next = r.links['next']['url']  # Loving requests :)
 
-                r = requests.get(url_next, verify=False,
-                                 headers={'Authorization': 'token ' + self.auth_token})
+                r = requests.get(url_next,
+                                 params=self.__get_payload(start),
+                                 headers=self.__get_headers())
+                r.raise_for_status()
                 page += 1
                 issues = r.text
                 logger.debug("Page: %i/%i" % (page, last_page))
-                logger.debug("Rate limit: %s" %
-                     (r.headers['X-RateLimit-Remaining']))
+                logger.debug("Rate limit: %s" % (r.headers['X-RateLimit-Remaining']))
 
     def get_user(self, login):
         user = None
@@ -265,8 +269,8 @@ class GitHubClient:
         url_user = GITHUB_API_URL + "/users/" + login
 
         logging.info("Getting info for %s" % (url_user))
-        r = requests.get(url_user, verify=False,
-                         headers={'Authorization':'token ' + self.auth_token})
+        r = requests.get(url_user, headers=self.__get_headers())
+        r.raise_for_status()
         user = r.text
         self._users[login] = user
 
@@ -279,13 +283,14 @@ class GitHubClient:
             return self._users_orgs[login]
 
         url = GITHUB_API_URL + "/users/" + login + "/orgs"
-        r = requests.get(url, verify=False,
-                         headers={'Authorization':'token ' + self.auth_token})
+        r = requests.get(url, headers=self.__get_headers())
+        r.raise_for_status()
         orgs = r.text
 
         self._users_orgs[login] = orgs
 
         return orgs
+
 
 class GitHubCommand(BackendCommand):
     """Class to run GitHub backend from the command line."""
@@ -295,7 +300,7 @@ class GitHubCommand(BackendCommand):
 
         self.owner = self.parsed_args.owner
         self.repository = self.parsed_args.repository
-        self.token = self.parsed_args.token
+        self.backend_token = self.parsed_args.backend_token
         self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.outfile = self.parsed_args.outfile
 
@@ -318,7 +323,7 @@ class GitHubCommand(BackendCommand):
             cache = None
 
         self.backend = GitHub(self.owner, self.repository,
-                              self.token, cache=cache)
+                              self.backend_token, cache=cache)
 
     def run(self):
         """Fetch and print the issues.
@@ -338,6 +343,8 @@ class GitHubCommand(BackendCommand):
                 # self.outfile.write(issue['url']+"\n")
                 self.outfile.write(obj)
                 self.outfile.write('\n')
+        except requests.exceptions.HTTPError as e:
+            raise requests.exceptions.HTTPError(str(e.response.json()))
         except IOError as e:
             raise RuntimeError(str(e))
         except Exception as e:
@@ -358,7 +365,5 @@ class GitHubCommand(BackendCommand):
                            help="github owner")
         group.add_argument("--repository", required=True,
                            help="github repository")
-        group.add_argument("--token", required=True,
-                           help="github access token")
 
         return parser
