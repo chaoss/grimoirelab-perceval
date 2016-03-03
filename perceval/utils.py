@@ -28,6 +28,7 @@ import sys
 import xml.etree.ElementTree
 
 import dateutil.parser
+import dateutil.tz
 
 from .errors import InvalidDateError, ParseError
 
@@ -67,7 +68,9 @@ def str_to_datetime(ts):
     """Format a string to a datetime object.
 
     This functions supports several date formats like YYYY-MM-DD,
-    MM-DD-YYYY and YY-MM-DD.
+    MM-DD-YYYY, YY-MM-DD, YYYY-MM-DD HH:mm:SS +HH:MM, among others.
+    When the timezone is not provided, UTC+0 will be set as default
+    (using `dateutil.tz.tzutc` object).
 
     :param ts: string to convert
 
@@ -80,7 +83,11 @@ def str_to_datetime(ts):
         raise InvalidDateError(date=str(ts))
 
     try:
-        return dateutil.parser.parse(ts).replace(tzinfo=None)
+        dt = dateutil.parser.parse(ts)
+
+        if not dt.tzinfo:
+            dt = dt.replace(tzinfo=dateutil.tz.tzutc())
+        return dt
     except Exception:
         raise InvalidDateError(date=str(ts))
 

@@ -31,6 +31,8 @@ import unittest
 import bz2
 import gzip
 
+import dateutil.tz
+
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
@@ -98,20 +100,37 @@ class TestStrToDatetime(unittest.TestCase):
         """Check if it converts some dates to datetime objects"""
 
         date = str_to_datetime('2001-12-01')
+        expected = datetime.datetime(2001, 12, 1, tzinfo=dateutil.tz.tzutc())
         self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, datetime.datetime(2001, 12, 1))
+        self.assertEqual(date, expected)
 
         date = str_to_datetime('13-01-2001')
+        expected = datetime.datetime(2001, 1, 13, tzinfo=dateutil.tz.tzutc())
         self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, datetime.datetime(2001, 1, 13))
+        self.assertEqual(date, expected)
 
         date = str_to_datetime('12-01-01')
+        expected = datetime.datetime(2001, 12, 1, tzinfo=dateutil.tz.tzutc())
         self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, datetime.datetime(2001, 12, 1))
+        self.assertEqual(date, expected)
 
         date = str_to_datetime('2001-12-01 23:15:32')
+        expected = datetime.datetime(2001, 12, 1, 23, 15, 32,
+                                     tzinfo=dateutil.tz.tzutc())
         self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, datetime.datetime(2001, 12, 1, 23, 15, 32))
+        self.assertEqual(date, expected)
+
+        date = str_to_datetime('2001-12-01 23:15:32 -0600')
+        expected = datetime.datetime(2001, 12, 1, 23, 15, 32,
+                                     tzinfo=dateutil.tz.tzoffset(None, -21600))
+        self.assertIsInstance(date, datetime.datetime)
+        self.assertEqual(date, expected)
+
+        date = str_to_datetime('2001-12-01 23:15:32Z')
+        expected = datetime.datetime(2001, 12, 1, 23, 15, 32,
+                                     tzinfo=dateutil.tz.tzutc())
+        self.assertIsInstance(date, datetime.datetime)
+        self.assertEqual(date, expected)
 
     def test_invalid_date(self):
         """Check whether it fails with an invalid date"""
@@ -123,6 +142,7 @@ class TestStrToDatetime(unittest.TestCase):
         """Check whether it fails with invalid formats"""
 
         self.assertRaises(InvalidDateError, str_to_datetime, '2001-12-01mm')
+        self.assertRaises(InvalidDateError, str_to_datetime, '2001-12-01 02:00 +08888')
         self.assertRaises(InvalidDateError, str_to_datetime, 'nodate')
         self.assertRaises(InvalidDateError, str_to_datetime, None)
         self.assertRaises(InvalidDateError, str_to_datetime, '')
