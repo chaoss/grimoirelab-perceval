@@ -64,6 +64,30 @@ def check_compressed_file_type(filepath):
     return compressed_file_type(magic_number)
 
 
+def datetime_to_utc(ts):
+    """Convert a timestamp to UTC+0 timezone.
+
+    Returns the given datetime object converted to a date with
+    UTC+0 timezone. For naive datetimes, it will be assumed that
+    they are in UTC+0.
+
+    :param dt: timestamp to convert
+
+    :returns: a datetime object
+
+    :raises InvalidDateError: when the given parameter is not an
+        instance of datetime
+    """
+    if not isinstance(ts, datetime.datetime):
+        msg = '<%s> object' % type(ts)
+        raise InvalidDateError(date=msg)
+
+    if not ts.tzinfo:
+        ts = ts.replace(tzinfo=dateutil.tz.tzutc())
+
+    return ts.astimezone(dateutil.tz.tzutc())
+
+
 def str_to_datetime(ts):
     """Format a string to a datetime object.
 

@@ -38,6 +38,7 @@ if not '..' in sys.path:
 
 from perceval.errors import InvalidDateError, ParseError
 from perceval.utils import (check_compressed_file_type,
+                            datetime_to_utc,
                             remove_invalid_xml_chars,
                             str_to_datetime,
                             urljoin,
@@ -91,6 +92,43 @@ class TestCheckCompressedFileType(unittest.TestCase):
         fname = os.path.join(self.tmp_path, 'mbox_single.mbox')
         filetype = check_compressed_file_type(fname)
         self.assertEqual(filetype, None)
+
+
+class TestDatetimeToUTC(unittest.TestCase):
+    """Unit tests for datetime_to_utc function"""
+
+    def test_conversion(self):
+        """Check if it converts some timestamps to timestamps with UTC+0"""
+
+        date = datetime.datetime(2001, 12, 1, 23, 15, 32,
+                                 tzinfo=dateutil.tz.tzoffset(None, -21600))
+        expected = datetime.datetime(2001, 12, 2, 5, 15, 32,
+                                     tzinfo=dateutil.tz.tzutc())
+        utc = datetime_to_utc(date)
+        self.assertIsInstance(utc, datetime.datetime)
+        self.assertEqual(utc, expected)
+
+        date = datetime.datetime(2001, 12, 1, 23, 15, 32,
+                                 tzinfo=dateutil.tz.tzutc())
+        expected = datetime.datetime(2001, 12, 1, 23, 15, 32,
+                                     tzinfo=dateutil.tz.tzutc())
+        utc = datetime_to_utc(date)
+        self.assertIsInstance(utc, datetime.datetime)
+        self.assertEqual(utc, expected)
+
+        date = datetime.datetime(2001, 12, 1, 23, 15, 32)
+        expected = datetime.datetime(2001, 12, 1, 23, 15, 32,
+                                     tzinfo=dateutil.tz.tzutc())
+        utc = datetime_to_utc(date)
+        self.assertIsInstance(utc, datetime.datetime)
+        self.assertEqual(utc, expected)
+
+    def test_invalid_datetime(self):
+        """Check if it raises an exception on invalid instances"""
+
+        self.assertRaises(InvalidDateError, datetime_to_utc, "2016-01-01 01:00:00 +0800")
+        self.assertRaises(InvalidDateError, datetime_to_utc, None)
+        self.assertRaises(InvalidDateError, datetime_to_utc, 1)
 
 
 class TestStrToDatetime(unittest.TestCase):
