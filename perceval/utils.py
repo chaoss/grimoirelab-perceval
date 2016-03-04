@@ -33,7 +33,8 @@ import dateutil.tz
 from .errors import InvalidDateError, ParseError
 
 
-DEFAULT_DATETIME = datetime.datetime(1970, 1, 1, 0, 0, 0)
+DEFAULT_DATETIME = datetime.datetime(1970, 1, 1, 0, 0, 0,
+                                     tzinfo=dateutil.tz.tzutc())
 
 
 def check_compressed_file_type(filepath):
