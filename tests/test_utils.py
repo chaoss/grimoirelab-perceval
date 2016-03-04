@@ -41,6 +41,7 @@ from perceval.utils import (check_compressed_file_type,
                             datetime_to_utc,
                             remove_invalid_xml_chars,
                             str_to_datetime,
+                            unixtime_to_datetime,
                             urljoin,
                             xml_to_dict)
 
@@ -181,6 +182,33 @@ class TestStrToDatetime(unittest.TestCase):
 
         self.assertRaises(InvalidDateError, str_to_datetime, '2001-12-01mm')
         self.assertRaises(InvalidDateError, str_to_datetime, '2001-12-01 02:00 +08888')
+        self.assertRaises(InvalidDateError, str_to_datetime, 'nodate')
+        self.assertRaises(InvalidDateError, str_to_datetime, None)
+        self.assertRaises(InvalidDateError, str_to_datetime, '')
+
+
+class TestUnixTimeToDatetime(unittest.TestCase):
+    """Unit tests for str_to_datetime function"""
+
+    def test_dates(self):
+        """Check if it converts some timestamps to datetime objects"""
+
+        date = unixtime_to_datetime(0)
+        expected = datetime.datetime(1970,  1, 1, 1, 0, 0,
+                                     tzinfo=dateutil.tz.tzutc())
+        self.assertIsInstance(date, datetime.datetime)
+        self.assertEqual(date, expected)
+
+        date = unixtime_to_datetime(1426868155.0)
+        expected = datetime.datetime(2015,  3, 20, 17, 15, 55,
+                                     tzinfo=dateutil.tz.tzutc())
+        self.assertIsInstance(date, datetime.datetime)
+        self.assertEqual(date, expected)
+
+    def test_invalid_format(self):
+        """Check whether it fails with invalid formats"""
+
+        self.assertRaises(InvalidDateError, str_to_datetime, '2001-12-01mm')
         self.assertRaises(InvalidDateError, str_to_datetime, 'nodate')
         self.assertRaises(InvalidDateError, str_to_datetime, None)
         self.assertRaises(InvalidDateError, str_to_datetime, '')

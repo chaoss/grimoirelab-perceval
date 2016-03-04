@@ -117,6 +117,27 @@ def str_to_datetime(ts):
         raise InvalidDateError(date=str(ts))
 
 
+def unixtime_to_datetime(ut):
+    """Convert a unixtime timestamp to a datetime object.
+
+    The function converts a timestamp in Unix format to a
+    datetime object. UTC timezone will also be set.
+
+    :param ut: Unix timestamp to convert
+
+    :returns: a datetime object
+
+    :raises InvalidDateError: when the given timestamp cannot be
+        converted into a valid date
+    """
+    try:
+        dt = datetime.datetime.fromtimestamp(ut)
+        dt = dt.replace(tzinfo=dateutil.tz.tzutc())
+        return dt
+    except Exception:
+        raise InvalidDateError(date=str(ut))
+
+
 def urljoin(*args):
     """Joins given arguments into a URL.
 
