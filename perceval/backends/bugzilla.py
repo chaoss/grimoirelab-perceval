@@ -29,6 +29,7 @@ import os.path
 import re
 
 import bs4
+import dateutil.tz
 import requests
 
 from ..backend import Backend, BackendCommand, metadata
@@ -43,8 +44,18 @@ logger = logging.getLogger(__name__)
 
 
 def get_update_time(item):
-    """Extracts the update time from a Bugzilla item"""
-    return item['delta_ts'][0]['__text__']
+    """Extracts and coverts the update time from a Bugzilla item.
+
+    The timestamp is extracted from 'delta_ts' field. This date is
+    converted to UNIX timestamp format. Due Bugzilla servers ignore
+    the timezone on HTTP requests, it will be ignored during the
+    conversion, too.
+    """
+    ts = item['delta_ts'][0]['__text__']
+    ts = str_to_datetime(ts)
+    ts = ts.replace(tzinfo=dateutil.tz.tzutc())
+
+    return ts.timestamp()
 
 
 class Bugzilla(Backend):

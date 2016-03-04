@@ -107,12 +107,12 @@ class TestBugzillaBackend(unittest.TestCase):
         self.assertEqual(bugs[0]['bug_id'][0]['__text__'], '15')
         self.assertEqual(len(bugs[0]['activity']), 0)
         self.assertEqual(bugs[0]['__metadata__']['origin'], BUGZILLA_SERVER_URL)
-        self.assertEqual(bugs[0]['__metadata__']['updated_on'], '2009-07-22 15:27:25 +0200')
+        self.assertEqual(bugs[0]['__metadata__']['updated_on'], 1248276445.0)
 
         self.assertEqual(bugs[6]['bug_id'][0]['__text__'], '888')
         self.assertEqual(len(bugs[6]['activity']), 14)
         self.assertEqual(bugs[6]['__metadata__']['origin'], BUGZILLA_SERVER_URL)
-        self.assertEqual(bugs[6]['__metadata__']['updated_on'], '2015-08-12 18:32:10 +0200')
+        self.assertEqual(bugs[6]['__metadata__']['updated_on'], 1439404330.0)
 
         # Check requests
         expected = [{
@@ -221,12 +221,12 @@ class TestBugzillaBackend(unittest.TestCase):
         self.assertEqual(bugs[0]['bug_id'][0]['__text__'], '30')
         self.assertEqual(len(bugs[0]['activity']), 14)
         self.assertEqual(bugs[0]['__metadata__']['origin'], BUGZILLA_SERVER_URL)
-        self.assertEqual(bugs[0]['__metadata__']['updated_on'], '2015-03-20 16:15:55 +0200')
+        self.assertEqual(bugs[0]['__metadata__']['updated_on'], 1426868155.0)
 
         self.assertEqual(bugs[1]['bug_id'][0]['__text__'], '888')
         self.assertEqual(len(bugs[1]['activity']), 0)
         self.assertEqual(bugs[1]['__metadata__']['origin'], BUGZILLA_SERVER_URL)
-        self.assertEqual(bugs[1]['__metadata__']['updated_on'], '2015-08-12 18:32:10 +0200')
+        self.assertEqual(bugs[1]['__metadata__']['updated_on'], 1439404330.0)
 
         # Check requests
         expected = [{
@@ -364,12 +364,12 @@ class TestBugzillaBackendCache(unittest.TestCase):
         self.assertEqual(cached_bugs[0]['bug_id'][0]['__text__'], '15')
         self.assertEqual(len(cached_bugs[0]['activity']), 0)
         self.assertEqual(cached_bugs[0]['__metadata__']['origin'], BUGZILLA_SERVER_URL)
-        self.assertEqual(cached_bugs[0]['__metadata__']['updated_on'], '2009-07-22 15:27:25 +0200')
+        self.assertEqual(cached_bugs[0]['__metadata__']['updated_on'], 1248276445.0)
 
         self.assertEqual(cached_bugs[6]['bug_id'][0]['__text__'], '888')
         self.assertEqual(len(cached_bugs[6]['activity']), 14)
         self.assertEqual(cached_bugs[6]['__metadata__']['origin'], BUGZILLA_SERVER_URL)
-        self.assertEqual(cached_bugs[6]['__metadata__']['updated_on'], '2015-08-12 18:32:10 +0200')
+        self.assertEqual(cached_bugs[6]['__metadata__']['updated_on'], 1439404330.0)
 
         self.assertEqual(len(requests), 13)
 
