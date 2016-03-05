@@ -189,7 +189,7 @@ class DiscourseClient:
         """
         topics_ids = []
         for category_id in category_ids:
-            req = requests.get(self.__build_base_url(type=None, 'latest'), params=self.__build_payload())
+            req = requests.get(self.__build_base_url(None, 'latest'), params=self.__build_payload())
             req.raise_for_status()
             data = req.json()
             for topic in data.topics_list.topics:
