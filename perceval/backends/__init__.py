@@ -27,10 +27,12 @@ from .github import GitHub, GitHubCommand
 from .jira import Jira, JiraCommand
 from .mbox import MBox, MBoxCommand
 from .stackexchange import StackExchange, StackExchangeCommand
+from .discourse import Discourse, DiscourseCommand
 
 
 PERCEVAL_BACKENDS = {
                      'bugzilla'      : Bugzilla,
+                     'discourse'     : Discourse,
                      'git'           : Git,
                      'gerrit'        : Gerrit,
                      'github'        : GitHub,
@@ -40,6 +42,7 @@ PERCEVAL_BACKENDS = {
                     }
 PERCEVAL_CMDS = {
                  'bugzilla'      : BugzillaCommand,
+                 'discourse'     : DiscourseCommand,
                  'git'           : GitCommand,
                  'gerrit'        : GerritCommand,
                  'github'        : GitHubCommand,
