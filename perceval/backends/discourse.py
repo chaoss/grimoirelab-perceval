@@ -113,19 +113,19 @@ class Discourse(Backend):
 
     @staticmethod
     def parse_posts(raw_page):
-        """Parse a Discourse API raw response.
+        """Parse a Discourse API topic raw response.
 
         The method parses the API response retrieving the
-        posts from the received items
+        posts from the received topic
 
-        :param items: items from where to parse the topics
+        :param raw_page: topic page from where to parse the posts
 
-        :returns: a generator of topics
+        :returns: a generator of posts
         """
         raw_posts = json.loads(raw_page)
-        posts = raw_posts['items']
-        for question in topics:
-            yield question
+        posts = raw_posts['posts_stream']['posts']
+        for post in posts:
+            yield post
 
 
 class DiscourseClient:
@@ -166,65 +166,41 @@ class DiscourseClient:
         else:
             logger.info("No topics were found.")
 
-    def get_topics(self, id_topic, from_date):
+    def get_topics(self, from_date):
         """Retrieve all the topics from a given date.
 
         :param from_date: obtain topics updated since this date
         """
 
-        req = requests.get(self.__build_base_url('t', id_topic),
-                           params=self.__build_payload())
-        req.raise_for_status()
-        topics = req.text
+        topics_id_list = get_topics_id_list(from_date)
+        topics = []
 
-        while topics:
-            yield topics
-
-    def get_categories_list(self):
-        """Retrieve all the categories.
-        """
-        req = requests.get(self.__build_base_url(None, 'categories'), params=self.__build_payload())
-        req.raise_for_status()
-        categories_list = []
-        data = req.json()
-        for category in data.categories:
-            categories_list.append(category.id)
-        return categories_list
-
-    def get_topics_from_category(self, category_id):
-        topics_ids = []
-        req = requests.get(self.__build_base_url('c', category_id),
-                           params=self.__build_payload())
-        req.raise_for_status()
-        data = req.json()
-        for topic in data.topics:
-            topics_ids.append(topic.id)
-
-        while data.more_topics_url:
-            req = requests.get(urljoin(self.url, data.more_topics_url))
+        for topic_id in topics_id_list:
+            req = requests.get(self.__build_base_url('t', id_topic), params=self.__build_payload())
             req.raise_for_status()
-            data = req.json()
-            for topic in data.topics:
-                topics_ids.append(topic.id)
-        return topics_ids
+            topics.append(req.text)
 
-    def get_topics_list(self):
-        """Retrieve all the topics ids.
+        return topics
+
+    def get_topics_id_list(self, from_date):
+        """Retrieve all the topics ids from a given date.
+
+        :param from_date: obtain topics updated since this date
         """
-        category_ids = self.get_categories_list()
         topics_ids = []
         for category_id in category_ids:
-            req = requests.get(self.__build_base_url('c', category_id), params=self.__build_payload())
+            req = requests.get(self.__build_base_url(type=None, 'latest'), params=self.__build_payload())
             req.raise_for_status()
             data = req.json()
-            for topic in data.topics:
+            for topic in data.topics_list.topics:
                 topics_ids.append(topic.id)
 
-            while data.more_topics_url:
+            while data.topics_list.more_topics_url:
                 req.requests.get(urljoin(self.url, data.more_topics_url))
                 req.raise_for_status()
                 data = req.json()
                 topics_ids.append(topic.id)
+
         return topics_ids
 
 
