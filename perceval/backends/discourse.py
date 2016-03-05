@@ -172,11 +172,12 @@ class DiscourseClient:
         :param from_date: obtain topics updated since this date
         """
 
-        topics_id_list = get_topics_id_list(from_date)
+        topics_id_list = self.get_topics_id_list(from_date)
         topics = []
 
         for topic_id in topics_id_list:
-            req = requests.get(self.__build_base_url('t', id_topic), params=self.__build_payload())
+            req = requests.get(self.__build_base_url('t', topic_id),
+                                params=self.__build_payload(None))
             req.raise_for_status()
             topics.append(req.text)
 
@@ -188,18 +189,18 @@ class DiscourseClient:
         :param from_date: obtain topics updated since this date
         """
         topics_ids = []
-        for category_id in category_ids:
-            req = requests.get(self.__build_base_url(None, 'latest'), params=self.__build_payload())
+        req = requests.get(self.__build_base_url(None, 'latest'),
+                            params=self.__build_payload(None))
+        req.raise_for_status()
+        data = req.json()
+        for topic in data.topics_list.topics:
+            topics_ids.append(topic.id)
+
+        while data.topics_list.more_topics_url:
+            req.requests.get(urljoin(self.url, data.more_topics_url))
             req.raise_for_status()
             data = req.json()
-            for topic in data.topics_list.topics:
-                topics_ids.append(topic.id)
-
-            while data.topics_list.more_topics_url:
-                req.requests.get(urljoin(self.url, data.more_topics_url))
-                req.raise_for_status()
-                data = req.json()
-                topics_ids.append(topic.id)
+            topics_ids.append(topic.id)
 
         return topics_ids
 
