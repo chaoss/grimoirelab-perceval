@@ -12,6 +12,7 @@ Repositories are reached using specific backends. The most common backends
 are:
 
     bugzilla         Fetch bugs from a Bugzilla server
+    discourse        Fetch posts from Discourse site
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from a Git log file
     github           Fetch issues from GitHub
@@ -97,6 +98,12 @@ $ perceval git /tmp/gitlog.log
 ```
 $ perceval github --owner elastic --repository filebeat --from-date '2016-01-01'
 ```
+
+### Discourse
+```
+$ perceval discourse 'https://foro.mozilla-hispano.org/' --from-date '2016-01-01'
+```
+
 
 ### Jenkins
 ```
