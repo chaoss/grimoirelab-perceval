@@ -193,16 +193,15 @@ class DiscourseClient:
                             params=self.__build_payload(None))
         req.raise_for_status()
         data = req.json()
-        for topic in data.topics_list.topics:
-            topics_ids.append(topic.id)
+        for topic in data['topic_list']['topics']:
+            topics_ids.append(topic['id'])
 
-        while data.topics_list.more_topics_url:
-            req.requests.get(urljoin(self.url, data.more_topics_url))
+        while data['topic_list']['more_topics_url']:
+            req.requests.get(urljoin(self.url, data['topic_list']['more_topics_url']))
             req.raise_for_status()
             data = req.json()
-            topics_ids.append(topic.id)
-
-        print (topics_ids)
+            for topic in data['topic_list']['topics']:
+                topics_ids.append(topic['id'])
 
         return topics_ids
 
