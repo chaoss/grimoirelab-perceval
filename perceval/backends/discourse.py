@@ -202,6 +202,8 @@ class DiscourseClient:
             data = req.json()
             topics_ids.append(topic.id)
 
+        print (topics_ids)
+
         return topics_ids
 
 
