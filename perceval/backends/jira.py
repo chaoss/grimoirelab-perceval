@@ -17,7 +17,8 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 # Authors:
-#   Alberto Martín <alberto.martin@bitergia.com>
+#     Alberto Martín <alberto.martin@bitergia.com>
+#     Santiago Dueñas <sduenas@bitergia.com>
 #
 
 import json
@@ -30,7 +31,10 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import CacheError
-from ..utils import str_to_datetime, DEFAULT_DATETIME, urljoin
+from ..utils import (DEFAULT_DATETIME,
+                     datetime_to_utc,
+                     str_to_datetime,
+                     urljoin)
 
 MAX_ISSUES = 100  # Maximum number of issues per query
 
@@ -89,6 +93,8 @@ class Jira(Backend):
                     self.url, self.project, str(from_date))
 
         self._purge_cache_queue()
+
+        from_date = datetime_to_utc(from_date)
 
         whole_pages = self.client.get_issues(from_date)
 
@@ -174,11 +180,15 @@ class JiraClient:
         AND_OP = ' AND '
         UPDATED_OP = ' updated > '
         PROJECT_OP = ' project = '
-        strdate = from_date.strftime("%Y-%m-%d %H:%M")
+
+        # Convert datetime to milliseconds since 1970-01-01.
+        # This allows us to use the timezone of the given date
+        strdate = str(int(from_date.timestamp() * 1000))
+
         if self.project:
-            jql_query = PROJECT_OP + self.project + AND_OP + UPDATED_OP + '"' + strdate + '"'
+            jql_query = PROJECT_OP + self.project + AND_OP + UPDATED_OP + strdate
         else:
-            jql_query = UPDATED_OP + '"' + strdate + '"'
+            jql_query = UPDATED_OP + strdate
         return jql_query
 
     def __build_payload(self, start_at, from_date):
