@@ -147,7 +147,7 @@ class DiscourseClient:
         self.max_topics = max_topics
 
     def __build_base_url(self, item_type, item_id):
-        id_json = item_id + '.json'
+        id_json = str(item_id) + '.json'
         base_api_url = urljoin(self.url, item_type, id_json)
         return base_api_url
 
