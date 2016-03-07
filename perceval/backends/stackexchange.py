@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 def get_update_time(item):
     """Extracts the update time from a StackExchange item"""
-    return item['last_activity_date']
+    return float(item['last_activity_date'])
 
 
 class StackExchange(Backend):
