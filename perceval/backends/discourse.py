@@ -184,7 +184,6 @@ class DiscourseClient:
         :param from_date: obtain topics updated since this date
         """
         logger.info('Getting topics ids')
-        print(str(from_date))
         topics_ids = []
         '''req = requests.get(self.__build_base_url(None, 'latest'),params=self.__build_payload(None))'''
         req = requests.get(self.url+'/latest.json', self.__build_payload(None))
