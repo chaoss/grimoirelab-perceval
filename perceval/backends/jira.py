@@ -42,8 +42,16 @@ logger = logging.getLogger(__name__)
 
 
 def get_update_time(item):
-    """Extracts the update time from a issue item"""
-    return item['fields']['updated']
+    """Extracts the update time from a issue item.
+
+    The timestamp used is extracted from 'updated' field.
+    This date is converted to UNIX timestamp format taking
+    into account the timezone of the date.
+    """
+    ts = item['fields']['updated']
+    ts = str_to_datetime(ts)
+
+    return ts.timestamp()
 
 
 class Jira(Backend):
