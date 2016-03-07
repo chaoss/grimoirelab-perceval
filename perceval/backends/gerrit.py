@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 def get_update_time(item):
     """Extracts the update time from a Gerrit item"""
-    return item['lastUpdated']
+    return float(item['lastUpdated'])
 
 
 class Gerrit(Backend):
