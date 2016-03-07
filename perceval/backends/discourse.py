@@ -38,14 +38,14 @@ logger = logging.getLogger(__name__)
 
 
 def get_update_time(item):
-    """Extracts the update time from a StackExchange item"""
-    return item['last_activity_date']
+    """Extracts the update time from a Discourse item"""
+    return item['updated_at']
 
 
 class Discourse(Backend):
     """Discourse backend for Perceval.
 
-    This class retrieves the topics stored in any of the
+    This class retrieves the posts stored in any of the
     Discourse urls. To initialize this class the
     url must be provided.
 
@@ -123,7 +123,7 @@ class Discourse(Backend):
         :returns: a generator of posts
         """
         raw_posts = json.loads(raw_page)
-        posts = raw_posts['posts_stream']['posts']
+        posts = raw_posts['post_stream']['posts']
         for post in posts:
             yield post
 
@@ -180,7 +180,9 @@ class DiscourseClient:
                                 params=self.__build_payload(None))
             req.raise_for_status()
             topics.append(req.text)
+            logger.info("%s of %s topics requested" % (len(topics), len(topics_id_list)))
 
+        logger.info("Topics requested: %s" % len(topics))
         return topics
 
     def get_topics_id_list(self, from_date):
@@ -188,6 +190,7 @@ class DiscourseClient:
 
         :param from_date: obtain topics updated since this date
         """
+        logger.info('Getting topics ids')
         topics_ids = []
         '''req = requests.get(self.__build_base_url(None, 'latest'),params=self.__build_payload(None))'''
         req = requests.get(self.url+'/latest.json', self.__build_payload(None))
@@ -195,18 +198,20 @@ class DiscourseClient:
         data = req.json()
         for topic in data['topic_list']['topics']:
             topics_ids.append(topic['id'])
+            logger.info("Requested id for topic '%s'" % topic['title'])
         page = 0
 
         while 'more_topics_url' in data['topic_list']:
             page = page + 1
             '''req = requests.get(self.__build_base_url(None, 'latest'),params=self.__build_payload(page))'''
-            print(page)
             req = requests.get(self.url+'/latest.json', self.__build_payload(page))
             req.raise_for_status()
             data = req.json()
             for topic in data['topic_list']['topics']:
                 topics_ids.append(topic['id'])
+                logger.info("Requested id for topic '%s'" % topic['title'])
 
+        logger.info("Topics to be requested: %s" % len(topics_ids))
         return topics_ids
 
 
