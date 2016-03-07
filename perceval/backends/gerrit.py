@@ -32,7 +32,7 @@ import time
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import BackendError, CacheError
-from ..utils import DEFAULT_DATETIME, str_to_datetime
+from ..utils import DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
 
 
 MAX_REVIEWS = 500 # Maximum number of reviews per query
@@ -81,11 +81,15 @@ class Gerrit(Backend):
         reviews = self._get_reviews(last_item)
         last_nreviews = len(reviews)
 
+        # Convert date to Unix time
+        from_ut = datetime_to_utc(from_date)
+        from_ut = from_ut.timestamp()
+
         while reviews:
             review = reviews.pop(0)
             last_item += 1
-            updated = datetime.datetime.fromtimestamp(review['lastUpdated'])
-            if updated <= from_date:
+            updated = review['lastUpdated']
+            if updated <= from_ut:
                 logger.debug("No more updates for %s" % (self.url))
                 break
 
