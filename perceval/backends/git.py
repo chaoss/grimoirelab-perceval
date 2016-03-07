@@ -28,7 +28,7 @@ import subprocess
 
 from ..backend import Backend, BackendCommand, metadata
 from ..errors import RepositoryError, ParseError
-from ..utils import DEFAULT_DATETIME, str_to_datetime
+from ..utils import DEFAULT_DATETIME, datetime_to_utc, str_to_datetime
 
 
 logger = logging.getLogger(__name__)
@@ -87,8 +87,11 @@ class Git(Backend):
                     self.uri, str(from_date))
 
         # Ignore default datetime to avoid problems with git
+        # or convert to UTC
         if from_date == DEFAULT_DATETIME:
             from_date = None
+        else:
+            from_date = datetime_to_utc(from_date)
 
         ncommits = 0
         commits = self.__fetch_and_parse_log(from_date)
@@ -599,7 +602,7 @@ class GitRepository:
                    '--parents', '-M', '-C', '-c', '--remotes=origin']
 
         if from_date:
-            dt = from_date.strftime("%Y-%m-%d %H:%M:%S")
+            dt = from_date.strftime("%Y-%m-%d %H:%M:%S %z")
             cmd_log.append('--since=' + dt)
 
         gitlog = self._exec(cmd_log, cwd=self.dirpath,

@@ -30,9 +30,10 @@ import sys
 import tempfile
 import unittest
 
+import dateutil.tz
+
 if not '..' in sys.path:
     sys.path.insert(0, '..')
-
 
 from perceval.errors import ParseError, RepositoryError
 from perceval.backends.git import (Git,
@@ -104,6 +105,20 @@ class TestGitBackend(unittest.TestCase):
         expected = [('ce8e0b86a1e9877f42fe9453ede418519115f367', 'Tue Feb 11 22:07:49 2014 -0800'),
                     ('51a3b654f252210572297f47597b31527c475fb8', 'Tue Feb 11 22:09:26 2014 -0800'),
                     ('456a68ee1407a77f3e804a30dff245bb6c6b872f', 'Tue Feb 11 22:10:39 2014 -0800')]
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            commit = commits[x]
+            self.assertEqual(commit['commit'], expected[x][0])
+            self.assertEqual(commit['__metadata__']['origin'], self.git_path)
+            self.assertEqual(commit['__metadata__']['updated_on'], expected[x][1])
+
+        # Test it using a datetime that includes the timezone
+        from_date = datetime.datetime(2012, 8, 14, 14, 30, 00,
+                                      tzinfo=dateutil.tz.tzoffset(None, -36000))
+        git = Git(self.git_path, new_path)
+        commits = [commit for commit in git.fetch(from_date=from_date)]
 
         self.assertEqual(len(commits), len(expected))
 
@@ -521,6 +536,15 @@ class TestGitRepository(unittest.TestCase):
 
         self.assertEqual(len(gitlog), 37)
         self.assertEqual(gitlog[0][:14], "commit ce8e0b8")
+
+        # Use a timezone, it will return an empty line
+        from_date = datetime.datetime(2014, 2, 11, 22, 7, 49,
+                                      tzinfo=dateutil.tz.tzoffset(None, -36000))
+        gitlog = repo.log(from_date=from_date)
+        gitlog = [line for line in gitlog]
+
+        self.assertEqual(len(gitlog), 1)
+        self.assertEqual(gitlog, [''])
 
         shutil.rmtree(new_path)
 
