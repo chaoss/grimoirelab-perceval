@@ -84,15 +84,15 @@ class Discourse(Backend):
         i = 0
         self._purge_cache_queue()
 
-        whole_pages = self.client.get_topics(from_date)
+        """whole_pages = self.client.get_topics(from_date)"""
+        whole_pages = self.client.get_posts(from_date)
 
         for whole_page in whole_pages:
             self._push_cache_queue(whole_page)
             self._flush_cache_queue()
-            posts = self.parse_posts(whole_page)
-            for post in posts:
-                i = i + 1
-                yield post
+            post = self.parse_post(whole_page)
+            yield post
+            i = i + 1
         logger.info("%i posts parsed in %.2fs from '%s'" % (i, time.time()-task_init, self.url))
 
     @metadata(get_update_time)
@@ -115,7 +115,7 @@ class Discourse(Backend):
                 yield post
 
     @staticmethod
-    def parse_posts(raw_page):
+    def parse_post(raw_page):
         """Parse a Discourse API topic raw response.
 
         The method parses the API response retrieving the
@@ -125,10 +125,9 @@ class Discourse(Backend):
 
         :returns: a generator of posts
         """
-        raw_posts = json.loads(raw_page)
-        posts = raw_posts['post_stream']['posts']
-        for post in posts:
-            yield post
+        post = json.loads(raw_page)
+
+        return post
 
 
 class DiscourseClient:
@@ -159,59 +158,63 @@ class DiscourseClient:
                    'api_key': self.token}
         return payload
 
-    def get_topics(self, from_date):
-        """Retrieve all the topics from a given date.
+    def get_posts(self, from_date):
+        """Retrieve all the posts updated since a given date.
 
         :param from_date: obtain topics updated since this date
         """
 
+        logger.info('Getting posts')
+        posts = []
         topics_id_list = self.get_topics_id_list(from_date)
-        topics = []
 
         for topic_id in topics_id_list:
             req = requests.get(self.__build_base_url('t', topic_id),
                                 params=self.__build_payload(None))
             req.raise_for_status()
-            topics.append(req.text)
-            logger.info("%s of %s topics requested" % (len(topics), len(topics_id_list)))
+            data = req.json()
+            i = 0
+            for post_id in reversed(data['post_stream']['stream']):
+                req_post = requests.get(self.__build_base_url('posts', post_id),
+                                    params=self.__build_payload(None))
+                req_post.raise_for_status()
+                data_post = req_post.json()
+                if str_to_datetime(data_post['updated_at']) >= from_date:
+                    posts.append(req_post.text)
+                    i = i + 1
+                else:
+                    break
+            logger.info('%i posts updated for topic %s' % (i, topic_id))
 
-        logger.info("Done! %s Topics requested from '%s'" % (len(topics), self.url))
-        return topics
+        logger.info('Done! %i posts updated', len(posts))
+        return posts
 
     def get_topics_id_list(self, from_date):
-        """Retrieve all the topics ids from a given date.
+        """Retrieve all the topics ids updated since a given date.
 
         :param from_date: obtain topics updated since this date
         """
         logger.info('Getting topics ids')
         topics_ids = []
-        '''req = requests.get(self.__build_base_url(None, 'latest'),params=self.__build_payload(None))'''
         req = requests.get(self.url+'/latest.json', self.__build_payload(None))
         req.raise_for_status()
         data = req.json()
         for topic in data['topic_list']['topics']:
-            if str_to_datetime(topic['last_posted_at']) > from_date:
+            if str_to_datetime(topic['last_posted_at']) >= from_date:
                 topics_ids.append(topic['id'])
-                logger.info("Requested id for topic '%s'" % topic['title'])
-            else:
-                break
+                logger.info("Id for topic '%s': %s" % (topic['title'],topic['id']))
 
         page = 0
-        updated_topics = True
 
-        while ('more_topics_url' in data['topic_list'] and updated_topics):
+        while 'more_topics_url' in data['topic_list']:
             page = page + 1
-            '''req = requests.get(self.__build_base_url(None, 'latest'),params=self.__build_payload(page))'''
             req = requests.get(self.url+'/latest.json', self.__build_payload(page))
             req.raise_for_status()
             data = req.json()
             for topic in data['topic_list']['topics']:
-                if str_to_datetime(topic['last_posted_at']) > from_date:
+                if str_to_datetime(topic['last_posted_at']) >= from_date:
                     topics_ids.append(topic['id'])
-                    logger.info("Requested id for topic '%s'" % topic['title'])
-                else:
-                    updated_topics = False
-                    break
+                    logger.info("Id for topic '%s': %s" % (topic['title'], topic['id']))
 
         logger.info("Topics to be requested: %s" % len(topics_ids))
         return topics_ids
@@ -251,19 +254,19 @@ class DiscourseCommand(BackendCommand):
     def run(self):
         """Fetch and print the Posts.
 
-        This method runs the backend to fetch the topics (plus all
-        its posts) of a given Discourse url.
-        Topics are converted to JSON objects and printed to the
+        This method runs the backend to fetch the posts
+        of a given Discourse url.
+        Posts are converted to JSON objects and printed to the
         defined output.
         """
         if self.parsed_args.fetch_cache:
-            topics = self.backend.fetch_from_cache()
+            posts = self.backend.fetch_from_cache()
         else:
-            topics = self.backend.fetch(from_date=self.from_date)
+            posts = self.backend.fetch(from_date=self.from_date)
 
         try:
-            for topic in topics:
-                obj = json.dumps(topic, indent=4, sort_keys=True)
+            for post in posts:
+                obj = json.dumps(post, indent=4, sort_keys=True)
                 self.outfile.write(obj)
                 self.outfile.write('\n')
         except requests.exceptions.HTTPError as e:
