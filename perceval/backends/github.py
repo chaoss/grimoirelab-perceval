@@ -29,7 +29,10 @@ import requests
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import CacheError
-from ..utils import DEFAULT_DATETIME, str_to_datetime, urljoin
+from ..utils import (DEFAULT_DATETIME,
+                     datetime_to_utc,
+                     str_to_datetime,
+                     urljoin)
 
 
 GITHUB_URL = "https://github.com/"
@@ -101,6 +104,8 @@ class GitHub(Backend):
         """
 
         self._purge_cache_queue()
+
+        from_date = datetime_to_utc(from_date)
 
         issues_groups = self.client.get_issues(from_date)
 
