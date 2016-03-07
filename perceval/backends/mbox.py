@@ -37,17 +37,23 @@ import requests.structures
 
 from ..backend import Backend, BackendCommand, metadata
 from ..errors import ParseError
-from ..utils import check_compressed_file_type
+from ..utils import check_compressed_file_type, str_to_datetime
 
 
 logger = logging.getLogger(__name__)
 
 
 def get_update_time(item):
-    """Extracts the update time from a message item"""
+    """Extracts the update time from a message item.
 
-    date = item['Date'] if 'Date' in item else item['date']
-    return date
+    The timestamp used is extracted from 'Date' field in its
+    several forms. This date is converted to UNIX timestamp
+    format.
+    """
+    ts = item['Date'] if 'Date' in item else item['date']
+    ts = str_to_datetime(ts)
+
+    return ts.timestamp()
 
 
 class MBox(Backend):

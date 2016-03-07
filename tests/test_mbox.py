@@ -150,7 +150,6 @@ class TestMailingList(TestBaseMBox):
         self.assertEqual(mboxes[5].filepath, self.files['unknown'])
 
 
-
 class TestMBoxBackend(TestBaseMBox):
     """Tests for MBox backend"""
 
@@ -167,14 +166,14 @@ class TestMBoxBackend(TestBaseMBox):
         backend = MBox('http://example.com/', self.tmp_path)
         messages = [m for m in backend.fetch()]
 
-        expected = [('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100'),
-                    ('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100'),
-                    ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'Wed, 22 Sep 2004 02:03:40 -0700'),
-                    ('<87iqzlofqu.fsf@avet.kvota.net>', 'Mon, 17 Mar 2008 10:35:05 +0100'),
-                    ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', 'Thu, 12 Nov 2009 03:29:24 +0100'),
-                    ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 'Wed, 29 Jan 2003 17:02:30 -0600'),
-                    ('<4CF64D10.9020206@domain.com>', 'Wed, 01 Dec 2010 14:26:40 +0100'),
-                    ('<20020823171132.541DB44147@example.com>', 'Sat, 24 Aug 2002 01:24:49 +0800')]
+        expected = [('<4CF64D10.9020206@domain.com>', 1291210000.0),
+                    ('<4CF64D10.9020206@domain.com>', 1291210000.0),
+                    ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 1095843820.0),
+                    ('<87iqzlofqu.fsf@avet.kvota.net>', 1205746505.0),
+                    ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', 1257992964.0),
+                    ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 1043881350.0),
+                    ('<4CF64D10.9020206@domain.com>', 1291210000.0),
+                    ('<20020823171132.541DB44147@example.com>', 1030123489.0)]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -359,8 +358,6 @@ class TestMBoxBackend(TestBaseMBox):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['From'],
             '"\udcc3\udc94\udcc2\udcac\udcc2\udcb4\udcc3\udc8f" <yuancong@example.com>')
-
-
 
 
 class TestMBoxCommand(unittest.TestCase):
