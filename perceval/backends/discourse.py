@@ -50,7 +50,6 @@ class Discourse(Backend):
     url must be provided.
 
     :param url: Discourse url
-    :param tagged: filter items by question Tag
     :param token: Discourse access_token for the API
     :param cache: cache object to store raw data
     """
@@ -81,6 +80,8 @@ class Discourse(Backend):
         logger.info("Looking for topics at url '%s', updated from '%s'",
                     self.url, str(from_date))
 
+        task_init = time.time()
+        i = 0
         self._purge_cache_queue()
 
         whole_pages = self.client.get_topics(from_date)
@@ -90,7 +91,9 @@ class Discourse(Backend):
             self._flush_cache_queue()
             posts = self.parse_posts(whole_page)
             for post in posts:
+                i = i + 1
                 yield post
+        logger.info("%i posts parsed in %.2fs from '%s'" % (i, time.time()-task_init, self.url))
 
     @metadata(get_update_time)
     def fetch_from_cache(self):
@@ -156,16 +159,6 @@ class DiscourseClient:
                    'api_key': self.token}
         return payload
 
-    def __log_status(self, quota_remaining, quota_max, page_size, total):
-
-        logger.debug("Rate limit: %s/%s" % (quota_remaining,
-                                            quota_max))
-        if (total != 0):
-            ntopics = min(page_size, total)
-            logger.info("Fetching topics: %s/%s" % (ntopics, total))
-        else:
-            logger.info("No topics were found.")
-
     def get_topics(self, from_date):
         """Retrieve all the topics from a given date.
 
@@ -182,7 +175,7 @@ class DiscourseClient:
             topics.append(req.text)
             logger.info("%s of %s topics requested" % (len(topics), len(topics_id_list)))
 
-        logger.info("Topics requested: %s" % len(topics))
+        logger.info("Done! %s Topics requested from '%s'" % (len(topics), self.url))
         return topics
 
     def get_topics_id_list(self, from_date):
@@ -191,25 +184,35 @@ class DiscourseClient:
         :param from_date: obtain topics updated since this date
         """
         logger.info('Getting topics ids')
+        print(str(from_date))
         topics_ids = []
         '''req = requests.get(self.__build_base_url(None, 'latest'),params=self.__build_payload(None))'''
         req = requests.get(self.url+'/latest.json', self.__build_payload(None))
         req.raise_for_status()
         data = req.json()
         for topic in data['topic_list']['topics']:
-            topics_ids.append(topic['id'])
-            logger.info("Requested id for topic '%s'" % topic['title'])
-        page = 0
+            if str_to_datetime(topic['last_posted_at']) > from_date:
+                topics_ids.append(topic['id'])
+                logger.info("Requested id for topic '%s'" % topic['title'])
+            else:
+                break
 
-        while 'more_topics_url' in data['topic_list']:
+        page = 0
+        updated_topics = True
+
+        while ('more_topics_url' in data['topic_list'] and updated_topics):
             page = page + 1
             '''req = requests.get(self.__build_base_url(None, 'latest'),params=self.__build_payload(page))'''
             req = requests.get(self.url+'/latest.json', self.__build_payload(page))
             req.raise_for_status()
             data = req.json()
             for topic in data['topic_list']['topics']:
-                topics_ids.append(topic['id'])
-                logger.info("Requested id for topic '%s'" % topic['title'])
+                if str_to_datetime(topic['last_posted_at']) > from_date:
+                    topics_ids.append(topic['id'])
+                    logger.info("Requested id for topic '%s'" % topic['title'])
+                else:
+                    updated_topics = False
+                    break
 
         logger.info("Topics to be requested: %s" % len(topics_ids))
         return topics_ids
