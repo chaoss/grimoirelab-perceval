@@ -35,8 +35,16 @@ logger = logging.getLogger(__name__)
 
 
 def get_update_time(item):
-    """Extracts the update time from a Git item"""
-    return item['CommitDate']
+    """Extracts the update time from a Git item.
+
+    The timestamp used is extracted from 'CommitDate' field.
+    This date is converted to UNIX timestamp format taking into
+    account the timezone of the date.
+    """
+    ts = item['CommitDate']
+    ts = str_to_datetime(ts)
+
+    return ts.timestamp()
 
 
 class Git(Backend):
