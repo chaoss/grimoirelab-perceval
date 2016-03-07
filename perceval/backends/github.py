@@ -38,12 +38,21 @@ from ..utils import (DEFAULT_DATETIME,
 GITHUB_URL = "https://github.com/"
 GITHUB_API_URL = "https://api.github.com"
 
+
 logger = logging.getLogger(__name__)
 
 
 def get_update_time(item):
-    """Extracts the update time from a GitHub item"""
-    return item['updated_at']
+    """Extracts the update time from a GitHub item.
+
+    The timestamp used is extracted from 'updated_at' field.
+    This date is converted to UNIX timestamp format. As GitHub
+    dates are in UTC the conversion is straightforward.
+    """
+    ts = item['updated_at']
+    ts = str_to_datetime(ts)
+
+    return ts.timestamp()
 
 
 class GitHub(Backend):
