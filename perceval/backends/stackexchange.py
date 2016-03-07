@@ -17,7 +17,8 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 # Authors:
-#   Alberto Martín <alberto.martin@bitergia.com>
+#     Alberto Martín <alberto.martin@bitergia.com>
+#     Santiago Dueñas <sduenas@bitergia.com>
 #
 
 import json
@@ -25,12 +26,14 @@ import logging
 import os.path
 
 import requests
-import time
 
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import CacheError
-from ..utils import str_to_datetime, DEFAULT_DATETIME, urljoin
+from ..utils import (DEFAULT_DATETIME,
+                     datetime_to_utc,
+                     str_to_datetime,
+                     urljoin)
 
 MAX_QUESTIONS = 100  # Maximum number of reviews per query
 
@@ -83,6 +86,8 @@ class StackExchange(Backend):
                     self.site, self.tagged, str(from_date))
 
         self._purge_cache_queue()
+
+        from_date = datetime_to_utc(from_date)
 
         whole_pages = self.client.get_questions(from_date)
 
@@ -173,7 +178,7 @@ class StackExchangeClient:
                    'key': self.token,
                    'filter': self.QUESTIONS_FILTER}
         if from_date:
-            timestamp = int(time.mktime(from_date.timetuple()))
+            timestamp = int(from_date.timestamp())
             payload['min'] = timestamp
         return payload
 
