@@ -146,9 +146,9 @@ class DiscourseClient:
         self.token = token
         self.max_topics = max_topics
 
-    def __build_base_url(self, type, id):
-        id_json = id + '.json'
-        base_api_url = urljoin(self.url, type, id_json)
+    def __build_base_url(self, item_type, item_id):
+        id_json = item_id + '.json'
+        base_api_url = urljoin(self.url, item_type, id_json)
         return base_api_url
 
     def __build_payload(self, page):
@@ -189,18 +189,19 @@ class DiscourseClient:
         :param from_date: obtain topics updated since this date
         """
         topics_ids = []
-        req = requests.get(self.__build_base_url(None, 'latest'),
-                            params=self.__build_payload(None))
+        '''req = requests.get(self.__build_base_url(None, 'latest'),params=self.__build_payload(None))'''
+        req = requests.get(self.url+'/latest.json', self.__build_payload(None))
         req.raise_for_status()
         data = req.json()
         for topic in data['topic_list']['topics']:
             topics_ids.append(topic['id'])
         page = 0
 
-        while data['topic_list']['more_topics_url']:
+        while 'more_topics_url' in data['topic_list']:
             page = page + 1
-            req = requests.get(self.__build_base_url(None, 'latest'),
-                                params=self.__build_payload(page))
+            '''req = requests.get(self.__build_base_url(None, 'latest'),params=self.__build_payload(page))'''
+            print(page)
+            req = requests.get(self.url+'/latest.json', self.__build_payload(page))
             req.raise_for_status()
             data = req.json()
             for topic in data['topic_list']['topics']:
