@@ -174,16 +174,25 @@ class DiscourseClient:
             req.raise_for_status()
             data = req.json()
             i = 0
-            for post_id in reversed(data['post_stream']['stream']):
-                req_post = requests.get(self.__build_base_url('posts', post_id),
-                                    params=self.__build_payload(None))
-                req_post.raise_for_status()
-                data_post = req_post.json()
-                if str_to_datetime(data_post['updated_at']) >= from_date:
-                    posts.append(req_post.text)
+
+            for post in data['post_stream']['posts']:
+                if str_to_datetime(post['updated_at']) >= from_date:
+                    posts.append(json.dumps(post))
                     i = i + 1
-                else:
-                    break
+
+            if data['chunk_size'] < len(data['post_stream']['stream']):
+                logger.info('Topic chunked')
+                posts_stream_ids = data['post_stream']['stream'][data['chunk_size']:]
+                for post_id in reversed(posts_stream_ids):
+                    req_post = requests.get(self.__build_base_url('posts', post_id),
+                                    params=self.__build_payload(None))
+                    req_post.raise_for_status()
+                    data_post = req_post.json()
+                    if str_to_datetime(data_post['updated_at']) >= from_date:
+                        posts.append(req_post.text)
+                        i = i + 1
+                    else:
+                        break
             logger.info('%i posts updated for topic %s' % (i, topic_id))
 
         logger.info('Done! %i posts updated', len(posts))
