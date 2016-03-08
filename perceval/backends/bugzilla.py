@@ -442,6 +442,7 @@ class BugzillaClient:
     def __init__(self, base_url):
         self.base_url = base_url
         self.version = None
+        self._session = requests.Session()
 
     def metadata(self):
         """Get metadata information in XML format."""
@@ -519,8 +520,8 @@ class BugzillaClient:
         logger.debug("Bugzilla client calls method: %s params: %s",
                      cgi, str(params))
 
-        req = requests.get(url, params=params,
-                           headers=self.HEADERS)
+        req = self._session.get(url, params=params,
+                                headers=self.HEADERS)
         req.raise_for_status()
 
         return req.text
