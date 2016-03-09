@@ -55,7 +55,7 @@ Documentation is generated automagically in the [ReadTheDocs Perceval site](http
 
 ### Bugzilla
 ```
-$ perceval bugzilla https://bugzilla.redhat.com --from-date '2016-01-01'
+$ perceval bugzilla https://bugzilla.redhat.com/ --backend-user user --backend-password pass --from-date '2016-01-01'
 ```
 
 ### Git

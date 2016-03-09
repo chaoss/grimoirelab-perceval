@@ -66,16 +66,19 @@ class Bugzilla(Backend):
     must be provided.
 
     :param url: Bugzilla server URL
+    :param user: Bugzilla user
+    :param password: Bugzilla user password
     :param max_bugs: maximum number of bugs requested on the same query
     :param cache: cache object to store raw data
     """
     version = '0.1.0'
 
-    def __init__(self, url, max_bugs=MAX_BUGS, cache=None):
+    def __init__(self, url, user=None, password=None,
+                 max_bugs=MAX_BUGS, cache=None):
         super().__init__(url, cache=cache)
         self.url = url
         self.max_bugs = max(1, max_bugs)
-        self.client = BugzillaClient(url)
+        self.client = BugzillaClient(url, user=user, password=password)
 
     @metadata(get_update_time)
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -330,6 +333,8 @@ class BugzillaCommand(BackendCommand):
         super().__init__(*args)
 
         self.url = self.parsed_args.url
+        self.backend_user = self.parsed_args.backend_user
+        self.backend_password = self.parsed_args.backend_password
         self.max_bugs = self.parsed_args.max_bugs
         self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.outfile = self.parsed_args.outfile
@@ -351,7 +356,10 @@ class BugzillaCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = Bugzilla(self.url, max_bugs=self.max_bugs,
+        self.backend = Bugzilla(self.url,
+                                user=self.backend_user,
+                                password=self.backend_password,
+                                max_bugs=self.max_bugs,
                                 cache=cache)
 
     def run(self):
@@ -408,6 +416,8 @@ class BugzillaClient:
     available and retrieves its version.
 
     :param base_url: URL of the Bugzilla server
+    :param user: Bugzilla user
+    :param password: user password
 
     :raises BackendError: when an error occurs initilizing the
         client
@@ -423,12 +433,17 @@ class BugzillaClient:
     OLD_STYLE_VERSIONS = ['3.2.3', '3.2.2']
 
     # CGI methods
+    CGI_LOGIN = 'index.cgi'
     CGI_BUGLIST = 'buglist.cgi'
     CGI_BUG = 'show_bug.cgi'
     CGI_BUG_ACTIVITY = 'show_activity.cgi'
 
     # CGI params
-    PBUG_ID= 'id'
+    PBUGZILLA_LOGIN = 'Bugzilla_login'
+    PBUGZILLA_PASSWORD = 'Bugzilla_password'
+    PLOGIN = 'GoAheadAndLogIn'
+    PLOGOUT = 'logout'
+    PBUG_ID = 'id'
     PCHFIELD_FROM = 'chfieldfrom'
     PCTYPE = 'ctype'
     PORDER = 'order'
@@ -439,10 +454,56 @@ class BugzillaClient:
     CTYPE_XML = 'xml'
 
 
-    def __init__(self, base_url):
+    def __init__(self, base_url, user=None, password=None):
         self.base_url = base_url
         self.version = None
-        self._session = requests.Session()
+        self._session = self.__create_http_session()
+
+        if user is not None and password is not None:
+            self.login(user, password)
+
+    def login(self, user, password):
+        """Authenticate a user in the server.
+
+        :param user: Bugzilla user
+        :param password: user password
+        """
+        url = self.URL % {'base' : self.base_url, 'cgi' : self.CGI_LOGIN}
+
+        payload = {
+            self.PBUGZILLA_LOGIN : user,
+            self.PBUGZILLA_PASSWORD : password,
+            self.PLOGIN : 'Log in'
+        }
+
+        headers = {'Referer' : self.base_url}
+
+        req = self._session.post(url, data=payload, headers=headers)
+        req.raise_for_status()
+
+        # Check if the authentication went OK. When this string
+        # is found means that the authentication was successful
+        if req.text.find("index.cgi?logout=1") < 0:
+            cause = ("Bugzilla client could not authenticate user %s. "
+                "Please check user and password parameters. "
+                "URLs may also need a trailing '/'.") % user
+            raise BackendError(cause=cause)
+
+        logger.debug("Bugzilla user %s authenticated in %s",
+                     user, self.base_url)
+
+    def logout(self):
+        """Logout from the server."""
+
+        params = {
+            self.PLOGOUT : '1'
+        }
+
+        self.call(self.CGI_LOGIN, params)
+        self._session = self.__create_http_session()
+
+        logger.debug("Bugzilla user logged out from %s",
+                     self.base_url)
 
     def metadata(self):
         """Get metadata information in XML format."""
@@ -511,20 +572,24 @@ class BugzillaClient:
     def call(self, cgi, params):
         """Run an API command.
 
-        :param cgi: cgi method to run on the server
+        :param cgi: cgi command to run on the server
         :param params: dict with the HTTP parameters needed to run
-            the given method
+            the given command
         """
         url = self.URL % {'base' : self.base_url, 'cgi' : cgi}
 
-        logger.debug("Bugzilla client calls method: %s params: %s",
+        logger.debug("Bugzilla client calls command: %s params: %s",
                      cgi, str(params))
 
-        req = self._session.get(url, params=params,
-                                headers=self.HEADERS)
+        req = self._session.get(url, params=params)
         req.raise_for_status()
 
         return req.text
+
+    def __create_http_session(self):
+        session = requests.Session()
+        session.headers.update(self.HEADERS)
+        return session
 
     def __fetch_version(self):
         response = self.metadata()
@@ -536,5 +601,5 @@ class BugzillaClient:
                          self.base_url, version)
             return version
         else:
-            cause = "Bugzilla client could not determine the server version."
+            cause = "Bugzilla client could not determine the server version"
             raise BackendError(cause=cause)

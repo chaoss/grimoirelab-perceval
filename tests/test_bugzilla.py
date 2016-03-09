@@ -29,6 +29,7 @@ import tempfile
 import unittest
 
 import httpretty
+import requests
 
 if not '..' in sys.path:
     sys.path.insert(0, '..')
@@ -39,6 +40,7 @@ from perceval.backends.bugzilla import Bugzilla, BugzillaCommand, BugzillaClient
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'
+BUGZILLA_LOGIN_URL = BUGZILLA_SERVER_URL + '/index.cgi'
 BUGZILLA_METADATA_URL = BUGZILLA_SERVER_URL + '/show_bug.cgi'
 BUGZILLA_BUGLIST_URL = BUGZILLA_SERVER_URL + '/buglist.cgi'
 BUGZILLA_BUG_URL = BUGZILLA_SERVER_URL + '/show_bug.cgi'
@@ -290,6 +292,114 @@ class TestBugzillaBackend(unittest.TestCase):
 
         self.assertDictEqual(req.querystring, expected)
 
+    @httpretty.activate
+    def test_fetch_auth(self):
+        """Test whether authentication works"""
+
+        requests = []
+        bodies_csv = [read_file('data/bugzilla_buglist_next.csv'),
+                      ""]
+        bodies_xml = [read_file('data/bugzilla_version.xml', mode='rb'),
+                      read_file('data/bugzilla_bugs_details_next.xml', mode='rb')]
+        bodies_html = [read_file('data/bugzilla_bug_activity.html', mode='rb'),
+                       read_file('data/bugzilla_bug_activity_empty.html', mode='rb')]
+
+        def request_callback(method, uri, headers):
+            if uri.startswith(BUGZILLA_LOGIN_URL):
+                body="index.cgi?logout=1"
+            elif uri.startswith(BUGZILLA_BUGLIST_URL):
+                body = bodies_csv.pop(0)
+            elif uri.startswith(BUGZILLA_BUG_URL):
+                body = bodies_xml.pop(0)
+            else:
+                body = bodies_html[(len(requests) + 1) % 2]
+
+            requests.append(httpretty.last_request())
+
+            return (200, headers, body)
+
+        httpretty.register_uri(httpretty.POST,
+                               BUGZILLA_LOGIN_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGLIST_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUG_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUG_ACTIVITY_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(2)
+                               ])
+
+        from_date = datetime.datetime(2015, 1, 1)
+
+        bg = Bugzilla(BUGZILLA_SERVER_URL,
+                      user='jsmith@example.com',
+                      password='1234')
+        bugs = [bug for bug in bg.fetch(from_date=from_date)]
+
+        self.assertEqual(len(bugs), 2)
+        self.assertEqual(bugs[0]['bug_id'][0]['__text__'], '30')
+        self.assertEqual(len(bugs[0]['activity']), 14)
+        self.assertEqual(bugs[0]['__metadata__']['origin'], BUGZILLA_SERVER_URL)
+        self.assertEqual(bugs[0]['__metadata__']['updated_on'], 1426868155.0)
+
+        self.assertEqual(bugs[1]['bug_id'][0]['__text__'], '888')
+        self.assertEqual(len(bugs[1]['activity']), 0)
+        self.assertEqual(bugs[1]['__metadata__']['origin'], BUGZILLA_SERVER_URL)
+        self.assertEqual(bugs[1]['__metadata__']['updated_on'], 1439404330.0)
+
+        # Check requests
+        auth_expected = {
+                         'Bugzilla_login' : ['jsmith@example.com'],
+                         'Bugzilla_password' : ['1234'],
+                         'GoAheadAndLogIn' : ['Log in']
+                        }
+        expected = [{
+                     'ctype' : ['xml']
+                    },
+                    {
+                     'ctype' : ['csv'],
+                     'order' : ['changeddate'],
+                     'chfieldfrom' : ['2015-01-01 00:00:00']
+                    },
+                    {
+                     'ctype' : ['csv'],
+                     'order' : ['changeddate'],
+                     'chfieldfrom' : ['2015-08-12 18:32:11']
+                    },
+                    {
+                     'ctype' : ['xml'],
+                     'id' : ['30', '888'],
+                     'excludefield' : ['attachmentdata']
+                    },
+                    {
+                     'id' : ['30']
+                    },
+                    {
+                     'id' : ['888']
+                    }]
+
+        # Check authentication request
+        auth_req = requests.pop(0)
+        self.assertDictEqual(auth_req.parsed_body, auth_expected)
+
+        # Check the rests of the headers
+        self.assertEqual(len(requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(requests[i].querystring, expected[i])
+
 
 class TestBugzillaBackendCache(unittest.TestCase):
     """Bugzilla backend tests using a cache"""
@@ -490,15 +600,24 @@ class TestBugzillaCommand(unittest.TestCase):
         """Test if the class is initialized"""
 
         # Set up a mock HTTP server
+        httpretty.register_uri(httpretty.POST,
+                               BUGZILLA_LOGIN_URL,
+                               body="index.cgi?logout=1",
+                               status=200)
+
         body = read_file('data/bugzilla_version.xml')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_METADATA_URL,
                                body=body, status=200)
 
-        args = ['--max-bugs', '10', BUGZILLA_SERVER_URL]
+        args = ['--backend-user', 'jsmith@example.com',
+                '--backend-password', '1234',
+                '--max-bugs', '10', BUGZILLA_SERVER_URL]
 
         cmd = BugzillaCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.backend_user, 'jsmith@example.com')
+        self.assertEqual(cmd.parsed_args.backend_password, '1234')
         self.assertEqual(cmd.parsed_args.max_bugs, 10)
         self.assertEqual(cmd.parsed_args.url, BUGZILLA_SERVER_URL)
         self.assertIsInstance(cmd.backend, Bugzilla)
@@ -522,14 +641,51 @@ class TestBugzillaClient(unittest.TestCase):
     def test_init(self):
         """Test initialization"""
 
-        # Set up a mock HTTP server
-        body = read_file('data/bugzilla_version.xml')
-        httpretty.register_uri(httpretty.GET,
-                               BUGZILLA_METADATA_URL,
-                               body=body, status=200)
-
         client = BugzillaClient(BUGZILLA_SERVER_URL)
         self.assertEqual(client.version, None)
+        self.assertIsInstance(client._session, requests.Session)
+
+    @httpretty.activate
+    def test_init_auth(self):
+        """Test initialization with authentication"""
+
+        # Set up a mock HTTP server
+        httpretty.register_uri(httpretty.POST,
+                               BUGZILLA_LOGIN_URL,
+                               body="index.cgi?logout=1",
+                               status=200)
+
+        _ = BugzillaClient(BUGZILLA_SERVER_URL,
+                           user='jsmith@example.com',
+                           password='1234')
+
+        # Check request params
+        expected = {
+                    'Bugzilla_login' : ['jsmith@example.com'],
+                    'Bugzilla_password' : ['1234'],
+                    'GoAheadAndLogIn' : ['Log in']
+                   }
+
+        req = httpretty.last_request()
+
+        self.assertEqual(req.method, 'POST')
+        self.assertRegex(req.path, '/index.cgi')
+        self.assertEqual(req.parsed_body, expected)
+
+    @httpretty.activate
+    def test_invalid_auth(self):
+        """Test whether it fails when the authentication goes wrong"""
+
+        # Set up a mock HTTP server
+        httpretty.register_uri(httpretty.POST,
+                               BUGZILLA_LOGIN_URL,
+                               body="",
+                               status=200)
+
+        with self.assertRaises(BackendError):
+            _ = BugzillaClient(BUGZILLA_SERVER_URL,
+                               user='jsmith@example.com',
+                               password='1234')
 
     @httpretty.activate
     def test_not_found_version(self):
