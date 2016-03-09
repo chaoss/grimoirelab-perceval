@@ -267,7 +267,7 @@ class Bugzilla(Backend):
             the given HTML stream
         """
         def is_activity_empty(bs):
-            EMPTY_ACTIVITY = "No changes have been made to this bug yet."
+            EMPTY_ACTIVITY = "No changes have been made to this (?:bug|issue) yet."
             tag = bs.find(text=re.compile(EMPTY_ACTIVITY))
             return tag is not None
 

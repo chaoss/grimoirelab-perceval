@@ -577,7 +577,17 @@ class TestBugzillaBackendParsers(unittest.TestCase):
     def test_parse_empty_activity(self):
         """Test the parser when the activity table is empty"""
 
+        # There are two possible cases for empty tables.
+        # The first case includes the term 'bug' while the second
+        # one replaces it by 'issue'.
+
         raw_html = read_file('data/bugzilla_bug_activity_empty.html')
+
+        activity = Bugzilla.parse_bug_activity(raw_html)
+        result = [event for event in activity]
+        self.assertEqual(len(result), 0)
+
+        raw_html = read_file('data/bugzilla_bug_activity_empty_alt.html')
 
         activity = Bugzilla.parse_bug_activity(raw_html)
         result = [event for event in activity]
