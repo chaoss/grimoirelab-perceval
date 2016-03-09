@@ -106,7 +106,7 @@ class Discourse(Backend):
         cache_items = self.cache.retrieve()
 
         for items in cache_items:
-            posts = self.parse_posts(items)
+            posts = self.loads(items)
             for post in posts:
                 yield post
 
@@ -157,8 +157,8 @@ class DiscourseClient:
                 if str_to_datetime(post['updated_at']) >= from_date:
                     yield json.dumps(post)
 
+            # For topics that post stream is bigger than chunk size
             if data['chunk_size'] < len(data['post_stream']['stream']):
-                """logger.info('Topic chunked')"""
                 posts_stream_ids = data['post_stream']['stream'][data['chunk_size']:]
                 for post_id in reversed(posts_stream_ids):
                     req_post = requests.get(self.__build_base_url('posts', post_id),
@@ -169,10 +169,6 @@ class DiscourseClient:
                         yield req_post.text
                     else:
                         break
-            """logger.info('%i posts updated for topic %s' % (i, topic_id))"""
-
-        """logger.info('Done! %i posts updated', len(posts))"""
-        """return posts"""
 
     def get_topics_id_list(self, from_date):
         """Retrieve all the topics ids updated since a given date.
