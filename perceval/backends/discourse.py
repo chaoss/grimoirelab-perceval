@@ -85,7 +85,10 @@ class Discourse(Backend):
         self._purge_cache_queue()
 
         raw_posts = self.client.get_posts(from_date)
+
         for raw_post in raw_posts:
+            self._push_cache_queue(raw_post)
+            self._flush_cache_queue()
             post = json.loads(raw_post)
             yield post
             i = i + 1
@@ -105,10 +108,11 @@ class Discourse(Backend):
 
         cache_items = self.cache.retrieve()
 
-        for items in cache_items:
-            posts = self.loads(items)
-            for post in posts:
-                yield post
+        for item in cache_items:
+            logger.info(item)
+            post = json.loads(item)
+            yield post
+
 
 class DiscourseClient:
     """Discourse API client.
@@ -158,8 +162,10 @@ class DiscourseClient:
                     yield json.dumps(post)
 
             # For topics that post stream is bigger than chunk size
-            if data['chunk_size'] < len(data['post_stream']['stream']):
-                posts_stream_ids = data['post_stream']['stream'][data['chunk_size']:]
+            chunk_size = data['chunk_size']
+            posts_stream = data['post_stream']['stream']
+            if chunk_size < len(posts_stream):
+                posts_stream_ids = posts_stream[chunk_size:]
                 for post_id in reversed(posts_stream_ids):
                     req_post = requests.get(self.__build_base_url('posts', post_id),
                                     params=self.__build_payload(None))
@@ -176,14 +182,13 @@ class DiscourseClient:
         :param from_date: obtain topics updated since this date
         """
         logger.info('Getting topics ids')
-        topics_ids = []
+        # topics_ids = []
         req = requests.get(self.url+'/latest.json', self.__build_payload(None))
         req.raise_for_status()
         data = req.json()
         for topic in data['topic_list']['topics']:
             if str_to_datetime(topic['last_posted_at']) >= from_date:
-                topics_ids.append(topic['id'])
-                logger.info("Id for topic '%s': %s" % (topic['title'],topic['id']))
+                yield topic['id']
 
         page = 0
 
@@ -194,11 +199,7 @@ class DiscourseClient:
             data = req.json()
             for topic in data['topic_list']['topics']:
                 if str_to_datetime(topic['last_posted_at']) >= from_date:
-                    topics_ids.append(topic['id'])
-                    logger.info("Id for topic '%s': %s" % (topic['title'], topic['id']))
-
-        logger.info("Topics to be requested: %s" % len(topics_ids))
-        return topics_ids
+                    yield topic['id']
 
 
 class DiscourseCommand(BackendCommand):
