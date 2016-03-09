@@ -84,13 +84,9 @@ class Discourse(Backend):
         i = 0
         self._purge_cache_queue()
 
-        """whole_pages = self.client.get_topics(from_date)"""
-        whole_pages = self.client.get_posts(from_date)
-
-        for whole_page in whole_pages:
-            self._push_cache_queue(whole_page)
-            self._flush_cache_queue()
-            post = self.parse_post(whole_page)
+        raw_posts = self.client.get_posts(from_date)
+        for raw_post in raw_posts:
+            post = json.loads(raw_post)
             yield post
             i = i + 1
         logger.info("%i posts parsed in %.2fs from '%s'" % (i, time.time()-task_init, self.url))
@@ -113,22 +109,6 @@ class Discourse(Backend):
             posts = self.parse_posts(items)
             for post in posts:
                 yield post
-
-    @staticmethod
-    def parse_post(raw_page):
-        """Parse a Discourse API topic raw response.
-
-        The method parses the API response retrieving the
-        posts from the received topic
-
-        :param raw_page: topic page from where to parse the posts
-
-        :returns: a generator of posts
-        """
-        post = json.loads(raw_page)
-
-        return post
-
 
 class DiscourseClient:
     """Discourse API client.
@@ -165,7 +145,6 @@ class DiscourseClient:
         """
 
         logger.info('Getting posts')
-        posts = []
         topics_id_list = self.get_topics_id_list(from_date)
 
         for topic_id in topics_id_list:
@@ -173,15 +152,13 @@ class DiscourseClient:
                                 params=self.__build_payload(None))
             req.raise_for_status()
             data = req.json()
-            i = 0
 
             for post in data['post_stream']['posts']:
                 if str_to_datetime(post['updated_at']) >= from_date:
-                    posts.append(json.dumps(post))
-                    i = i + 1
+                    yield json.dumps(post)
 
             if data['chunk_size'] < len(data['post_stream']['stream']):
-                logger.info('Topic chunked')
+                """logger.info('Topic chunked')"""
                 posts_stream_ids = data['post_stream']['stream'][data['chunk_size']:]
                 for post_id in reversed(posts_stream_ids):
                     req_post = requests.get(self.__build_base_url('posts', post_id),
@@ -189,14 +166,13 @@ class DiscourseClient:
                     req_post.raise_for_status()
                     data_post = req_post.json()
                     if str_to_datetime(data_post['updated_at']) >= from_date:
-                        posts.append(req_post.text)
-                        i = i + 1
+                        yield req_post.text
                     else:
                         break
-            logger.info('%i posts updated for topic %s' % (i, topic_id))
+            """logger.info('%i posts updated for topic %s' % (i, topic_id))"""
 
-        logger.info('Done! %i posts updated', len(posts))
-        return posts
+        """logger.info('Done! %i posts updated', len(posts))"""
+        """return posts"""
 
     def get_topics_id_list(self, from_date):
         """Retrieve all the topics ids updated since a given date.
