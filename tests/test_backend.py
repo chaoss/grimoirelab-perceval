@@ -21,14 +21,13 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
+import datetime
 import sys
+import unittest
 
 if not '..' in sys.path:
     sys.path.insert(0, '..')
-
-import argparse
-import datetime
-import unittest
 
 from perceval.backend import Backend, BackendCommand, metadata
 
@@ -81,10 +80,6 @@ class TestBackendCommand(unittest.TestCase):
         self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
-def mock_fnc_date(item):
-    return '2016-01-01'
-
-
 class MockDecoratorBackend(Backend):
     """Mock backend to test metadata decorators"""
 
@@ -93,11 +88,21 @@ class MockDecoratorBackend(Backend):
     def __init__(self, origin):
         super().__init__(origin)
 
-    @metadata(mock_fnc_date)
-    def fetch(self):
+    @metadata
+    def fetch(self, from_date=None):
         for x in range(5):
             item = {'item' : x}
             yield item
+
+    @metadata
+    def fetch_from_cache(self):
+        for x in range(5):
+            item = {'item' : x}
+            yield item
+
+    @staticmethod
+    def metadata_updated_on(item):
+        return '2016-01-01'
 
 
 class TestMetadata(unittest.TestCase):
@@ -111,17 +116,17 @@ class TestMetadata(unittest.TestCase):
 
         for x in range(5):
             item = items[x]
-            metadata = item['__metadata__']
+            meta = item['__metadata__']
 
             self.assertEqual(item['item'], x)
-            self.assertEqual(metadata['backend_name'], 'MockDecoratorBackend')
-            self.assertEqual(metadata['backend_version'], '0.1.0')
-            self.assertEqual(metadata['origin'], 'test')
-            self.assertEqual(metadata['updated_on'], '2016-01-01')
-            self.assertGreater(metadata['timestamp'], before)
-            self.assertLess(metadata['timestamp'], after)
+            self.assertEqual(meta['backend_name'], 'MockDecoratorBackend')
+            self.assertEqual(meta['backend_version'], '0.1.0')
+            self.assertEqual(meta['origin'], 'test')
+            self.assertEqual(meta['updated_on'], '2016-01-01')
+            self.assertGreater(meta['timestamp'], before)
+            self.assertLess(meta['timestamp'], after)
 
-            before = metadata['timestamp']
+            before = meta['timestamp']
 
 
 if __name__ == "__main__":

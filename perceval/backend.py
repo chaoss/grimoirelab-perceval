@@ -37,6 +37,8 @@ class Backend:
 
     Derivated classes have to implement `fetch` and `fetch_from_cache`
     methods. Otherwise, `NotImplementedError` exception will be raised.
+    Metadata decorator can be used together with fetch methods but
+    requires the implementation of `metadata_updated_on` static method.
 
     To track which version of the backend was used during the fetching
     process, this class provides a `version` attribute that each backend
@@ -68,6 +70,10 @@ class Backend:
         raise NotImplementedError
 
     def fetch_from_cache(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def metadata_updated_on(item):
         raise NotImplementedError
 
     def _purge_cache_queue(self):
@@ -138,34 +144,29 @@ class BackendCommand:
         return parser
 
 
-def metadata(fdate):
+def metadata(func):
     """Add metadata to an item.
 
     Decorator that adds metadata to a given item such as how and
     when it was fetched.
 
-    As input parameters, this function requieres as function which
-    extracts from an item when it was updated.
-
     Take into account that this decorator can only be called from a
     'Backend' class due it needs access to some of the attributes
-    of this class.
+    and methods of this class.
     """
     from datetime import datetime as dt
 
     META_KEY = '__metadata__'
 
-    def metadata_decorator(func):
-        @functools.wraps(func)
-        def decorator(self, *args, **kwargs):
-            for item in func(self, *args, **kwargs):
-                item[META_KEY] = {
-                                  'backend_name' : self.__class__.__name__,
-                                  'backend_version': self.version,
-                                  'timestamp' : dt.now().timestamp(),
-                                  'origin' : self.origin,
-                                  'updated_on' : fdate(item),
-                                 }
-                yield item
-        return decorator
-    return metadata_decorator
+    @functools.wraps(func)
+    def decorator(self, *args, **kwargs):
+        for item in func(self, *args, **kwargs):
+            item[META_KEY] = {
+                              'backend_name' : self.__class__.__name__,
+                              'backend_version': self.version,
+                              'timestamp' : dt.now().timestamp(),
+                              'origin' : self.origin,
+                              'updated_on' : self.metadata_updated_on(item),
+                             }
+            yield item
+    return decorator
