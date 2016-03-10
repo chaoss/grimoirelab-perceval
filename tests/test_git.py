@@ -130,6 +130,17 @@ class TestGitBackend(unittest.TestCase):
 
         shutil.rmtree(new_path)
 
+    def test_fetch_empty_log(self):
+        """Test whether it parsers an empty log"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        from_date = datetime.datetime(2020, 1, 1, 1, 1, 1)
+        git = Git(self.git_path, new_path)
+        commits = [commit for commit in git.fetch(from_date=from_date)]
+
+        self.assertListEqual(commits, [])
+
     def test_fetch_from_file(self):
         """Test whether commits are fetched from a Git log file"""
 
@@ -281,6 +292,15 @@ class TestGitParser(unittest.TestCase):
                               ]
                     }
         self.assertDictEqual(commits[5], expected)
+
+    def test_parser_empty_log(self):
+        """Test if it parsers an empty git log stream"""
+
+        with open("data/git_log_empty.txt", 'r') as f:
+            parser = GitParser(f)
+            commits = [commit for commit in parser.parse()]
+
+        self.assertListEqual(commits, [])
 
     def test_commit_pattern(self):
         """Test commit pattern"""
@@ -545,6 +565,19 @@ class TestGitRepository(unittest.TestCase):
 
         self.assertEqual(len(gitlog), 1)
         self.assertEqual(gitlog, [''])
+
+        shutil.rmtree(new_path)
+
+    def test_log_empty(self):
+        """Test if an empty line is returned when the log is empty"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        gitlog = repo.log(from_date=datetime.datetime(2020, 1, 1, 1, 1, 1))
+        gitlog = [line for line in gitlog]
+
+        self.assertListEqual(gitlog, [''])
 
         shutil.rmtree(new_path)
 
