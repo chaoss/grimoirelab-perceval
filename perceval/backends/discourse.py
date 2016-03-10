@@ -168,23 +168,14 @@ class DiscourseClient:
             Topic json contains 'chunk_size' posts data, no more
             The rest of the posts, if there are more, need to be
             requested through their ids.
-            All posts ids are in the topic['post_stream']['stream']
-            Posts in item['post_stream']['posts'] have different data
-            structure than post requested through their ids.
             """
             chunk_size = data['chunk_size']
             posts_stream = data['post_stream']['stream']
 
             for post in data['post_stream']['posts']:
                 if str_to_datetime(post['updated_at']) >= from_date:
-                    """
-                    remove 'read' key to have a common data structure in
-                    every post uploaded to perceval and add _category_id
-                    value to post data
-                    """
-                    post.pop('read', None)
+                    # Add _category_id
                     post['_category_id'] = category_id
-
                     yield json.dumps(post)
 
             # For topics that post stream is bigger than chunk size
@@ -196,14 +187,9 @@ class DiscourseClient:
                     req_post.raise_for_status()
                     data_post = req_post.json()
                     if str_to_datetime(data_post['updated_at']) >= from_date:
-                        """
-                        remove 'raw' key to have a common data structure in
-                        every post uploaded to perceval and add _category_id
-                        value to post data
-                        """
-                        post.pop('raw', None)
+                        # Add _category_id
                         data_post['_category_id'] = category_id
-                        yield req_post.text
+                        yield json.dumps(data_post)
                     else:
                         break
 
