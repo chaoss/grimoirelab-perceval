@@ -104,6 +104,10 @@ class MockDecoratorBackend(Backend):
             yield item
 
     @staticmethod
+    def metadata_id(item):
+        return str(item['item'])
+
+    @staticmethod
     def metadata_updated_on(item):
         return '2016-01-01'
 
@@ -121,10 +125,13 @@ class TestMetadata(unittest.TestCase):
             item = items[x]
             meta = item['__metadata__']
 
+            expected_uuid = uuid('test', str(x))
+
             self.assertEqual(item['item'], x)
             self.assertEqual(meta['backend_name'], 'MockDecoratorBackend')
             self.assertEqual(meta['backend_version'], '0.1.0')
             self.assertEqual(meta['origin'], 'test')
+            self.assertEqual(meta['uuid'], expected_uuid)
             self.assertEqual(meta['updated_on'], '2016-01-01')
             self.assertGreater(meta['timestamp'], before)
             self.assertLess(meta['timestamp'], after)
