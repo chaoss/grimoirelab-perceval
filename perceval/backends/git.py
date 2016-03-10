@@ -296,6 +296,10 @@ class GitParser:
 
     The commit ends with an empty line.
 
+    Take into account that one empty line is valid at the beginning
+    of the log. This allows to parse empty logs without raising
+    exceptions.
+
     This example was generated using the next command:
 
         git log --raw --numstat --pretty=fuller --decorate=full \
@@ -332,21 +336,23 @@ class GitParser:
     GIT_NEXT_STATE_REGEXP = re.compile(EMPTY_LINE_PATTERN, re.VERBOSE)
 
     # Git parser status
-    (COMMIT,
+    (INIT,
+     COMMIT,
      HEADER,
      MESSAGE,
-     FILE) = range(4)
+     FILE) = range(5)
 
     def __init__(self, stream):
         self.stream = stream
         self.nline = 0
-        self.state = self.COMMIT
+        self.state = self.INIT
 
         # Aux vars to store the commit that is being parsed
         self.commit = None
         self.commit_files = {}
 
         self.handlers = {
+            self.INIT : self._handle_init,
             self.COMMIT : self._handle_commit,
             self.HEADER : self._handle_header,
             self.MESSAGE : self._handle_message,
@@ -364,7 +370,7 @@ class GitParser:
             while not parsed:
                 parsed = self.handlers[self.state](line)
 
-                if self.state == self.COMMIT:
+                if self.state == self.COMMIT and self.commit:
                     commit = self._build_commit()
                     logger.debug("Commit %s parsed", commit['commit'])
                     yield commit
@@ -388,6 +394,17 @@ class GitParser:
         self.commit_files = {}
 
         return commit
+
+    def _handle_init(self, line):
+        m = self.GIT_NEXT_STATE_REGEXP.match(line)
+
+        # In both cases, the parser advances to the next state.
+        # It only has to check whether the line has to be parsed
+        # again or not
+        self.state = self.COMMIT
+        parsed = m is not None
+
+        return parsed
 
     def _handle_commit(self, line):
         m = self.GIT_COMMIT_REGEXP.match(line)
