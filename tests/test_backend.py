@@ -29,7 +29,10 @@ import unittest
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backend import Backend, BackendCommand, metadata
+from perceval.backend import (Backend,
+                              BackendCommand,
+                              metadata,
+                              uuid)
 
 
 class TestBackend(unittest.TestCase):
@@ -127,6 +130,40 @@ class TestMetadata(unittest.TestCase):
             self.assertLess(meta['timestamp'], after)
 
             before = meta['timestamp']
+
+
+class TestUUID(unittest.TestCase):
+    """Unit tests for uuid function"""
+
+    def test_uuid(self):
+        """Check whether the function returns the expected UUID"""
+
+        result = uuid('1', '2', '3', '4')
+        self.assertEqual(result, 'e7b71c81f5a0723e2237f157dba81777ce7c6c21')
+
+        result = uuid('http://example.com/', '1234567')
+        self.assertEqual(result, '47509b2f0d4ffc513ca9230838a69aa841d7f055')
+
+    def test_non_str_value(self):
+        """Check whether a UUID cannot be generated when a given value is not a str"""
+
+        self.assertRaises(ValueError, uuid, '1', '2', 3, '4')
+        self.assertRaises(ValueError, uuid, 0, '1', '2', '3')
+        self.assertRaises(ValueError, uuid, '1', '2', '3', 4.0)
+
+    def test_none_value(self):
+        """Check whether a UUID cannot be generated when a given value is None"""
+
+        self.assertRaises(ValueError, uuid, '1', '2', None, '3')
+        self.assertRaises(ValueError, uuid, None, '1', '2', '3')
+        self.assertRaises(ValueError, uuid, '1', '2', '3', None)
+
+    def test_empty_value(self):
+        """Check whether a UUID cannot be generated when a given value is empty"""
+
+        self.assertRaises(ValueError, uuid, '1', '', '2', '3')
+        self.assertRaises(ValueError, uuid, '', '1', '2', '3')
+        self.assertRaises(ValueError, uuid, '1', '2', '3', '')
 
 
 if __name__ == "__main__":
