@@ -120,6 +120,12 @@ class Jira(Backend):
                 yield issue
 
     @staticmethod
+    def metadata_id(item):
+        """Extracts the identifier from a Jira item."""
+
+        return str(item['id'])
+
+    @staticmethod
     def metadata_updated_on(item):
         """Extracts the update time from a issue item.
 

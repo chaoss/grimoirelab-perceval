@@ -155,6 +155,12 @@ class MBox(Backend):
         return msg
 
     @staticmethod
+    def metadata_id(item):
+        """Extracts the identifier from a Git item."""
+
+        return item[MBox.MESSAGE_ID_FIELD]
+
+    @staticmethod
     def metadata_updated_on(item):
         """Extracts the update time from a message item.
 

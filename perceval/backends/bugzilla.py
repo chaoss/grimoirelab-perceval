@@ -191,6 +191,12 @@ class Bugzilla(Backend):
         return [event for event in activity]
 
     @staticmethod
+    def metadata_id(item):
+        """Extracts the identifier from a Bugzilla item."""
+
+        return item['bug_id'][0]['__text__']
+
+    @staticmethod
     def metadata_updated_on(item):
         """Extracts and coverts the update time from a Bugzilla item.
 

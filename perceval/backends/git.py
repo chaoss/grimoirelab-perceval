@@ -116,6 +116,12 @@ class Git(Backend):
         return repo
 
     @staticmethod
+    def metadata_id(item):
+        """Extracts the identifier from a Git item."""
+
+        return item['commit']
+
+    @staticmethod
     def metadata_updated_on(item):
         """Extracts the update time from a Git item.
 

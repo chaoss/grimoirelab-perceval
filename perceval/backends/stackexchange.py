@@ -113,6 +113,12 @@ class StackExchange(Backend):
                 yield question
 
     @staticmethod
+    def metadata_id(item):
+        """Extracts the identifier from a Git item."""
+
+        return str(item['question_id'])
+
+    @staticmethod
     def metadata_updated_on(item):
         """Extracts the update time from a StackExchange item.
 

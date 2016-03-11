@@ -129,6 +129,12 @@ class Gerrit(Backend):
         return reviews
 
     @staticmethod
+    def metadata_id(item):
+        """Extracts the identifier from a Gerrit item."""
+
+        return item['id']
+
+    @staticmethod
     def metadata_updated_on(item):
         """Extracts and converts the update time from a Gerrit item.
 
