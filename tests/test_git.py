@@ -36,6 +36,7 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.errors import ParseError, RepositoryError
+from perceval.backend import uuid
 from perceval.backends.git import (Git,
                                    GitCommand,
                                    GitParser,
@@ -86,9 +87,11 @@ class TestGitBackend(unittest.TestCase):
         self.assertEqual(len(commits), len(expected))
 
         for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x][0])
             commit = commits[x]
             self.assertEqual(commit['commit'], expected[x][0])
             self.assertEqual(commit['__metadata__']['origin'], self.git_path)
+            self.assertEqual(commit['__metadata__']['uuid'], expected_uuid)
             self.assertEqual(commit['__metadata__']['updated_on'], expected[x][1])
 
         shutil.rmtree(new_path)
@@ -109,9 +112,11 @@ class TestGitBackend(unittest.TestCase):
         self.assertEqual(len(commits), len(expected))
 
         for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x][0])
             commit = commits[x]
             self.assertEqual(commit['commit'], expected[x][0])
             self.assertEqual(commit['__metadata__']['origin'], self.git_path)
+            self.assertEqual(commit['__metadata__']['uuid'], expected_uuid)
             self.assertEqual(commit['__metadata__']['updated_on'], expected[x][1])
 
         # Test it using a datetime that includes the timezone
@@ -123,9 +128,11 @@ class TestGitBackend(unittest.TestCase):
         self.assertEqual(len(commits), len(expected))
 
         for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x][0])
             commit = commits[x]
             self.assertEqual(commit['commit'], expected[x][0])
             self.assertEqual(commit['__metadata__']['origin'], self.git_path)
+            self.assertEqual(commit['__metadata__']['uuid'], expected_uuid)
             self.assertEqual(commit['__metadata__']['updated_on'], expected[x][1])
 
         shutil.rmtree(new_path)
@@ -160,9 +167,11 @@ class TestGitBackend(unittest.TestCase):
         self.assertEqual(len(commits), len(expected))
 
         for x in range(len(commits)):
+            expected_uuid = uuid('http://example.com.git', expected[x][0])
             commit = commits[x]
             self.assertEqual(commit['commit'], expected[x][0])
             self.assertEqual(commit['__metadata__']['origin'], 'http://example.com.git')
+            self.assertEqual(commit['__metadata__']['uuid'], expected_uuid)
             self.assertEqual(commit['__metadata__']['updated_on'], expected[x][1])
 
     def test_git_parser(self):

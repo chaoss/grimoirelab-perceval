@@ -166,14 +166,14 @@ class TestMBoxBackend(TestBaseMBox):
         backend = MBox('http://example.com/', self.tmp_path)
         messages = [m for m in backend.fetch()]
 
-        expected = [('<4CF64D10.9020206@domain.com>', 1291210000.0),
-                    ('<4CF64D10.9020206@domain.com>', 1291210000.0),
-                    ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 1095843820.0),
-                    ('<87iqzlofqu.fsf@avet.kvota.net>', 1205746505.0),
-                    ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', 1257992964.0),
-                    ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 1043881350.0),
-                    ('<4CF64D10.9020206@domain.com>', 1291210000.0),
-                    ('<20020823171132.541DB44147@example.com>', 1030123489.0)]
+        expected = [('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+                    ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+                    ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'bd0185317b013beb21ad3ea04635de3db72496ad', 1095843820.0),
+                    ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
+                    ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
+                    ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 'ddda42422c55d08d56c017a6f128fcd7447484ea', 1043881350.0),
+                    ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+                    ('<20020823171132.541DB44147@example.com>', '4e255acab6442424ecbf05cb0feb1eccb587f7de', 1030123489.0)]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -181,7 +181,8 @@ class TestMBoxBackend(TestBaseMBox):
             message = messages[x]
             self.assertEqual(message['Message-ID'], expected[x][0])
             self.assertEqual(message['__metadata__']['origin'], 'http://example.com/')
-            self.assertEqual(message['__metadata__']['updated_on'], expected[x][1])
+            self.assertEqual(message['__metadata__']['uuid'], expected[x][1])
+            self.assertEqual(message['__metadata__']['updated_on'], expected[x][2])
 
     def test_ignore_messages(self):
         """Test if it ignores some messages without mandatory fields"""
@@ -196,7 +197,7 @@ class TestMBoxBackend(TestBaseMBox):
                     'From' : 'goran at domain.com ( Göran Lastname )',
                     'Date' : 'Wed, 01 Dec 2010 14:26:40 +0100',
                     'Subject' : '[List-name] Protocol Buffers anyone?',
-                    'Message-id' : '<4CF64D10.9020206@domain.com>',
+                    'Message-ID' : '<4CF64D10.9020206@domain.com>',
                     'unixfrom' : 'goran at domain.com  Wed Dec  1 08:26:40 2010',
                     'body': {
                              'plain' : "Hi!\n\nA message in English, with a signature "
@@ -211,9 +212,6 @@ class TestMBoxBackend(TestBaseMBox):
 
         # On the second message, the only change is that 'Message-id'
         # is replaced by 'Message-ID'
-        msg_id = expected.pop('Message-id')
-        expected['Message-ID'] = msg_id
-
         message = messages[1]
         messages[1].pop('__metadata__')
         self.assertDictEqual(message, expected)

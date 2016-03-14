@@ -22,6 +22,7 @@
 
 import argparse
 import functools
+import hashlib
 import sys
 
 from .cache import Cache
@@ -37,6 +38,9 @@ class Backend:
 
     Derivated classes have to implement `fetch` and `fetch_from_cache`
     methods. Otherwise, `NotImplementedError` exception will be raised.
+    Metadata decorator can be used together with fetch methods but
+    requires the implementation of `metadata_id` and `metadata_updated_on`
+    static methods.
 
     To track which version of the backend was used during the fetching
     process, this class provides a `version` attribute that each backend
@@ -68,6 +72,14 @@ class Backend:
         raise NotImplementedError
 
     def fetch_from_cache(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def metadata_id(item):
+        raise NotImplementedError
+
+    @staticmethod
+    def metadata_updated_on(item):
         raise NotImplementedError
 
     def _purge_cache_queue(self):
@@ -138,34 +150,61 @@ class BackendCommand:
         return parser
 
 
-def metadata(fdate):
+def metadata(func):
     """Add metadata to an item.
 
     Decorator that adds metadata to a given item such as how and
     when it was fetched.
 
-    As input parameters, this function requieres as function which
-    extracts from an item when it was updated.
-
     Take into account that this decorator can only be called from a
     'Backend' class due it needs access to some of the attributes
-    of this class.
+    and methods of this class.
     """
     from datetime import datetime as dt
 
     META_KEY = '__metadata__'
 
-    def metadata_decorator(func):
-        @functools.wraps(func)
-        def decorator(self, *args, **kwargs):
-            for item in func(self, *args, **kwargs):
-                item[META_KEY] = {
-                                  'backend_name' : self.__class__.__name__,
-                                  'backend_version': self.version,
-                                  'timestamp' : dt.now().timestamp(),
-                                  'origin' : self.origin,
-                                  'updated_on' : fdate(item),
-                                 }
-                yield item
-        return decorator
-    return metadata_decorator
+    @functools.wraps(func)
+    def decorator(self, *args, **kwargs):
+        for item in func(self, *args, **kwargs):
+            item[META_KEY] = {
+                              'backend_name' : self.__class__.__name__,
+                              'backend_version': self.version,
+                              'timestamp' : dt.now().timestamp(),
+                              'origin' : self.origin,
+                              'uuid' : uuid(self.origin, self.metadata_id(item)),
+                              'updated_on' : self.metadata_updated_on(item),
+                             }
+            yield item
+    return decorator
+
+
+def uuid(*args):
+    """Generate a UUID based on the given parameters.
+
+    The UUID will be the SHA1 of the concatenation of the values
+    from the list. The separator bewteedn these values is ':'.
+    Each value must be a non-empty string, otherwise, the function
+    will raise an exception.
+
+    :param *args: list of arguments used to generate the UUID
+
+    :returns: a universal unique identifier
+
+    :raises ValueError: when anyone of the values is not a string,
+        is empty or `None`.
+    """
+    def check_value(v):
+        if not isinstance(v, str):
+            raise ValueError("%s value is not a string instance" % str(v))
+        elif not v:
+            raise ValueError("value cannot be None or empty")
+        else:
+            return v
+
+    s = ':'.join(map(check_value, args))
+
+    sha1 = hashlib.sha1(s.encode('utf-8'))
+    uuid_sha1 = sha1.hexdigest()
+
+    return uuid_sha1
