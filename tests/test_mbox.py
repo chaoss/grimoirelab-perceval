@@ -196,7 +196,7 @@ class TestMBoxBackend(TestBaseMBox):
                     'From' : 'goran at domain.com ( Göran Lastname )',
                     'Date' : 'Wed, 01 Dec 2010 14:26:40 +0100',
                     'Subject' : '[List-name] Protocol Buffers anyone?',
-                    'Message-id' : '<4CF64D10.9020206@domain.com>',
+                    'Message-ID' : '<4CF64D10.9020206@domain.com>',
                     'unixfrom' : 'goran at domain.com  Wed Dec  1 08:26:40 2010',
                     'body': {
                              'plain' : "Hi!\n\nA message in English, with a signature "
@@ -211,9 +211,6 @@ class TestMBoxBackend(TestBaseMBox):
 
         # On the second message, the only change is that 'Message-id'
         # is replaced by 'Message-ID'
-        msg_id = expected.pop('Message-id')
-        expected['Message-ID'] = msg_id
-
         message = messages[1]
         messages[1].pop('__metadata__')
         self.assertDictEqual(message, expected)

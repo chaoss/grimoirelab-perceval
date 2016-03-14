@@ -57,6 +57,9 @@ class MBox(Backend):
     """
     version = '0.1.0'
 
+    DATE_FIELD = 'Date'
+    MESSAGE_ID_FIELD = 'Message-ID'
+
     def __init__(self, origin, dirpath, cache=None):
         super().__init__(origin, cache=cache)
         self.dirpath = dirpath
@@ -92,7 +95,7 @@ class MBox(Backend):
                     logger.debug("Message from %s parsed", message['unixfrom'])
 
                     # Convert 'CaseInsensitiveDict' to dict
-                    message = {k : v for k, v in message.items()}
+                    message = self._casedict_to_dict(message)
 
                     yield message
             except OSError as e:
@@ -104,7 +107,6 @@ class MBox(Backend):
             finally:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
-
 
         logger.info("Fetch process completed: %s/%s messages fetched; %s ignored",
                     nmsgs, tmsgs, imsgs)
@@ -126,16 +128,31 @@ class MBox(Backend):
         # This check is "case insensitive" because we're
         # using 'CaseInsensitiveDict' from requests.structures
         # module to store the contents of a message.
-        if 'Message-ID' not in message:
+        if self.MESSAGE_ID_FIELD not in message:
             logger.warning("Field 'Message-ID' not found in message %s; ignoring",
                            message['unixfrom'])
             return False
-        elif 'Date' not in message:
+        elif self.DATE_FIELD not in message:
             logger.warning("Field 'Date' not found in message %s; ignoring",
                            message['unixfrom'])
             return False
         else:
             return True
+
+    def _casedict_to_dict(self, message):
+        """Convert a message in CaseInsensitiveDict to dict.
+
+        This method also converts well known problematic headers,
+        such as Message-ID and Date to a common name.
+        """
+        message_id = message.pop(self.MESSAGE_ID_FIELD)
+        date = message.pop(self.DATE_FIELD)
+
+        msg = {k : v for k, v in message.items()}
+        msg[self.MESSAGE_ID_FIELD] = message_id
+        msg[self.DATE_FIELD] = date
+
+        return msg
 
     @staticmethod
     def metadata_updated_on(item):
@@ -149,7 +166,7 @@ class MBox(Backend):
 
         :returns: a UNIX timestamp
         """
-        ts = item['Date'] if 'Date' in item else item['date']
+        ts = item[MBox.DATE_FIELD]
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
