@@ -109,6 +109,11 @@ $ perceval mbox "http://example.com" /tmp/mboxes/
 ```
 $ perceval stackexchange --site stackoverflow --tagged python --from-date 2016-01-01 --token abcdabcdabcdabcd
 ```
+
+## Example of analysis of a GitHub project
+
+[Detailed instructions to analyze a GitHub project](analyze-github.md), both the git repository and the corresponding GitHub issues.
+
 ## License
 
 Licensed under GNU General Public License (GPL), version 3 or later.
