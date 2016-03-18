@@ -154,7 +154,7 @@ class Git(Backend):
         :raises OSError: raised when an error occurs reading the
             given file
         """
-        with open(filepath, 'r', errors='surrogateescape') as f:
+        with open(filepath, 'r', errors='backslashreplace') as f:
             parser = GitParser(f)
 
             for commit in parser.parse():
@@ -648,7 +648,7 @@ class GitRepository:
                       self.uri, self.dirpath)
 
         for line in gitlog:
-            line = line.decode(encoding, errors='surrogateescape')
+            line = line.decode(encoding, errors='backslashreplace')
             yield line
 
     @staticmethod
@@ -675,10 +675,10 @@ class GitRepository:
             raise RepositoryError(cause=str(e))
 
         if proc.returncode != 0:
-            err = errs.decode('utf-8', errors='surrogateescape')
+            err = errs.decode('utf-8', errors='backslashreplace')
             cause = "git command - %s" % err
             raise RepositoryError(cause=cause)
         else:
-            logging.debug(errs.decode('utf-8', errors='surrogateescape'))
+            logging.debug(errs.decode('utf-8', errors='backslashreplace'))
 
         return outs

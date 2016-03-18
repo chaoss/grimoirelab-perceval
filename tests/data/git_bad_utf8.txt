@@ -1,0 +1,10 @@
+commit c4c8ea948aa21527d502e87227b2f1d951bc506d d69332b875efb52ea5276d5638ce572fcd7375f2
+Author:     Jason Gaston <jason.d.gaston@intel.com>
+AuthorDate: Sat Apr 16 15:24:43 2005 -0700
+Commit:     Linus Torvalds <torvalds@ppc970.osdl.org>
+CommitDate: Sat Apr 16 15:24:43 2005 -0700
+
+    [PATCH] intel8x0: AC'97 audio patch for Intel ESB2
+    
+    Signed-off-by:  Jason Gaston <Jason.d.gaston@intel.com>
+

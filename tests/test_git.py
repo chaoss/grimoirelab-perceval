@@ -202,7 +202,23 @@ class TestGitBackend(unittest.TestCase):
 
         commit = result[0]
         self.assertEqual(commit['commit'], 'cb24e4f2f7b2a7f3450bfb15d1cbaa97371e93fb')
-        self.assertEqual(commit['message'], 'Calling \udc93Open Type\udc94 (CTRL+SHIFT+T) after startup - performance improvement.')
+        self.assertEqual(commit['message'], 'Calling \\x93Open Type\\x94 (CTRL+SHIFT+T) after startup - performance improvement.')
+
+    def test_git_utf8_error(self):
+        """Characters that cannot decoded as utf8 can be later encoded as utf8.
+
+        This test raised the following exception before being fixed:
+        "UnicodeEncodeError: 'utf-8' codec can't encode character '\udca0'
+        in position 153: surrogates not allowed"
+
+        """
+
+        message_ok = b"[PATCH] intel8x0: AC'97 audio patch for Intel ESB2\n" \
+          + b"\nSigned-off-by: \\xa0Jason Gaston <Jason.d.gaston@intel.com>"
+
+        commits = Git.parse_git_log_from_file("data/git_bad_utf8.txt")
+        commit = [commit for commit in commits][0]
+        self.assertEqual(commit['message'].encode('utf8'), message_ok)
 
     def test_git_parser_from_iter(self):
         """Test if the static method parses a git log from a repository"""
