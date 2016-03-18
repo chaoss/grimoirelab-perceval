@@ -154,7 +154,8 @@ class Git(Backend):
         :raises OSError: raised when an error occurs reading the
             given file
         """
-        with open(filepath, 'r', errors='surrogateescape') as f:
+        with open(filepath, 'r', errors='surrogateescape',
+                  newline=os.linesep) as f:
             parser = GitParser(f)
 
             for commit in parser.parse():
