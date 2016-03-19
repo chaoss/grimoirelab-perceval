@@ -25,6 +25,7 @@ import logging
 import os
 import re
 import subprocess
+import threading
 
 from ..backend import Backend, BackendCommand, metadata
 from ..errors import RepositoryError, ParseError
@@ -633,24 +634,70 @@ class GitRepository:
 
         :raises RepositoryError: when an error occurs fetching the log
         """
+
         cmd_log = ['git', 'log', '--raw', '--numstat', '--pretty=fuller',
                    '--decorate=full', '--all', '--reverse', '--topo-order',
                    '--parents', '-M', '-C', '-c', '--remotes=origin']
-
         if from_date:
             dt = from_date.strftime("%Y-%m-%d %H:%M:%S %z")
             cmd_log.append('--since=' + dt)
+        env = {'LANG' : 'C', 'PAGER' : ''}
 
-        gitlog = self._exec(cmd_log, cwd=self.dirpath,
-                            env={'LANG' : 'C', 'PAGER' : ''})
-        gitlog = gitlog.split(b'\n')
+        self.failed_message = None
+        logging.debug("Running command %s (cwd: %s, env: %s)",
+                      ' '.join(cmd_log), self.dirpath, str(env))
+        try:
+            self.proc = subprocess.Popen(cmd_log,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        cwd=self.dirpath,
+                                        env=env)
+            err_thread = threading.Thread(target=self._read_stderr, daemon=True)
+            err_thread.start()
+            for line in self.proc.stdout:
+                yield line.decode('utf-8', errors='surrogateescape')
+            err_thread.join()
+            self.proc.communicate()
+            self.proc.stdout.close()
+            self.proc.stderr.close()
+        except OSError as e:
+            err_thread.join()
+            raise RepositoryError(cause=str(e))
 
+        if self.proc.returncode != 0:
+            # Subprocess failed, error in failed_message, from stdout
+            cause = "git command - %s (return code: %d)" % \
+                (self.failed_message, self.proc.returncode)
+            raise RepositoryError(cause=cause)
         logging.debug("Git log fetched from %s repository (%s)",
                       self.uri, self.dirpath)
 
-        for line in gitlog:
-            line = line.decode(encoding, errors='surrogateescape')
-            yield line
+    def _read_stderr(self):
+        """Reads self.proc.stderr.
+
+        Usually, this should be read in a thread, to prevent blocking
+        the read from stdout of the stderr buffer is filled, and this
+        function is not called becuase the program is busy in the
+        stderr reading loop.
+
+        Reads self.proc.stderr (self.proc is the subprocess running
+        the git command), and reads / writes self.failed_message
+        (the message sent to stderr when git fails, usually one line).
+
+        """
+
+        for line in self.proc.stderr:
+            err_line = line.decode('utf-8', errors='surrogateescape')
+            if (self.proc.returncode != 0):
+                # If the subprocess didn't finish successfully, we expect
+                # the last line in stderr to provide the cause
+                if self.failed_message is not None:
+                    # We had a message, there is a newer line, print it
+                    logging.debug("Git log stderr: " + self.failed_message)
+                self.failed_message = err_line
+            else:
+                # The subprocess is successfully up to now, print the line
+                logging.debug("Git log stderr: " + err_line)
 
     @staticmethod
     def _exec(cmd, cwd=None, env=None):

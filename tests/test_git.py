@@ -485,6 +485,20 @@ class TestGitRepository(unittest.TestCase):
 
         shutil.rmtree(new_path)
 
+    def test_not_git(self):
+        """Test if a supposed git repo is not a git repo"""
+
+        new_path = os.path.join(self.tmp_path, 'falsegit')
+        if not os.path.isdir(new_path):
+            os.makedirs(new_path)
+
+        expected = "git repository '%s' does not exist" % new_path
+
+        with self.assertRaisesRegex(RepositoryError, expected):
+            repo = GitRepository(uri="", dirpath=new_path)
+
+        shutil.rmtree(new_path)
+
     def test_clone_error(self):
         """Test if it raises an exception when an error occurs cloning a repository"""
 
@@ -563,8 +577,7 @@ class TestGitRepository(unittest.TestCase):
         repo = GitRepository.clone(self.git_path, new_path)
         gitlog = repo.log()
         gitlog = [line for line in gitlog]
-
-        self.assertEqual(len(gitlog), 109)
+        self.assertEqual(len(gitlog), 108)
         self.assertEqual(gitlog[0][:14], "commit bc57a92")
 
         shutil.rmtree(new_path)
@@ -578,7 +591,7 @@ class TestGitRepository(unittest.TestCase):
         gitlog = repo.log(from_date=datetime.datetime(2014, 2, 11, 22, 7, 49))
         gitlog = [line for line in gitlog]
 
-        self.assertEqual(len(gitlog), 37)
+        self.assertEqual(len(gitlog), 36)
         self.assertEqual(gitlog[0][:14], "commit ce8e0b8")
 
         # Use a timezone, it will return an empty line
@@ -587,13 +600,12 @@ class TestGitRepository(unittest.TestCase):
         gitlog = repo.log(from_date=from_date)
         gitlog = [line for line in gitlog]
 
-        self.assertEqual(len(gitlog), 1)
-        self.assertEqual(gitlog, [''])
+        self.assertEqual(gitlog, [])
 
         shutil.rmtree(new_path)
 
     def test_log_empty(self):
-        """Test if an empty line is returned when the log is empty"""
+        """Test if no line is returned when the log is empty"""
 
         new_path = os.path.join(self.tmp_path, 'newgit')
 
@@ -601,7 +613,7 @@ class TestGitRepository(unittest.TestCase):
         gitlog = repo.log(from_date=datetime.datetime(2020, 1, 1, 1, 1, 1))
         gitlog = [line for line in gitlog]
 
-        self.assertListEqual(gitlog, [''])
+        self.assertListEqual(gitlog, [])
 
         shutil.rmtree(new_path)
 
