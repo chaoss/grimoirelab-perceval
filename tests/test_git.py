@@ -204,6 +204,21 @@ class TestGitBackend(unittest.TestCase):
         self.assertEqual(commit['commit'], 'cb24e4f2f7b2a7f3450bfb15d1cbaa97371e93fb')
         self.assertEqual(commit['message'], 'Calling \udc93Open Type\udc94 (CTRL+SHIFT+T) after startup - performance improvement.')
 
+    def test_git_cr_error(self):
+        """Test if mislocated carriage return chars do not break lines
+
+        In some commit messages, carriage return characters (\r) are found
+        in weird places. They should not be misconsidered as end of line.
+
+        Before fixing, this test raises an exception:
+        "perceval.errors.ParseError: commit expected on line 10"
+
+        """
+
+        commits = Git.parse_git_log_from_file("data/git_bad_cr.txt")
+        result = [commit for commit in commits]
+        self.assertEqual(len(result), 1)
+
     def test_git_parser_from_iter(self):
         """Test if the static method parses a git log from a repository"""
 

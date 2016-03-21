@@ -1,0 +1,13 @@
+commit 2d137c24e9f433e37ffd10b3d5f418157589a8d2 baaa2c512dc1c47e3afeb9d558c5323c9240bd21
+Author:     akpm@osdl.org <akpm@osdl.org>
+AuthorDate: Sat Apr 16 15:23:55 2005 -0700
+Commit:     Linus Torvalds <torvalds@ppc970.osdl.org>
+CommitDate: Sat Apr 16 15:23:55 2005 -0700
+
+    [PATCH] arm: fix SIGBUS handling
+    
+    )
+    
+:100644 100644 29be1c0... e25b4fd... M	arch/arm/mm/fault.c
+36	44	arch/arm/mm/fault.c
+
