@@ -9,6 +9,7 @@ Contents:
    :maxdepth: 1
 
    perceval
+   contributing.rst
    howto_doc.rst
 
 Indices and tables
