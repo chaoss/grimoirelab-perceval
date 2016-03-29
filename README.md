@@ -60,7 +60,7 @@ $ perceval bugzilla https://bugzilla.redhat.com/ --backend-user user --backend-p
 
 ### Git
 ```
-$ perceval git 'https://github.com/grimoirelab/perceval.git --from-date '2016-01-01'
+$ perceval git 'https://github.com/grimoirelab/perceval.git' --from-date '2016-01-01'
 ```
 
 Git backend can also work with a Git log file as input. We recommend to use the next command to get the most complete log file.
