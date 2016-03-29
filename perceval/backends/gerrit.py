@@ -186,7 +186,7 @@ class GerritClient():
     CMD_VERSION = 'version'
     PORT = '29418'
 
-    def __init__(self, repository, user, max_reviews, blacklist_reviews=None):
+    def __init__(self, repository, user, max_reviews, blacklist_reviews=[]):
         self.gerrit_user = user
         self.max_reviews = max_reviews
         self.blacklist_reviews = blacklist_reviews
