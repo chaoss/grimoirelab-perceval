@@ -53,11 +53,14 @@ class Gerrit(Backend):
     """
     version = '0.1.0'
 
-    def __init__(self, url, user=None, max_reviews=None, cache=None):
+    def __init__(self, url, user=None, max_reviews=None, cache=None,
+                 blacklist_reviews=None):
         super().__init__(url, cache=cache)
         self.url = url
         self.max_reviews = max_reviews
-        self.client = GerritClient(self.url, user, max_reviews)
+        self.blacklist_reviews = blacklist_reviews
+        self.client = GerritClient(self.url, user, max_reviews,
+                                   blacklist_reviews)
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -183,9 +186,10 @@ class GerritClient():
     CMD_VERSION = 'version'
     PORT = '29418'
 
-    def __init__(self, repository, user, max_reviews):
+    def __init__(self, repository, user, max_reviews, blacklist_reviews=[]):
         self.gerrit_user = user
         self.max_reviews = max_reviews
+        self.blacklist_reviews = blacklist_reviews
         self.repository = repository
         self.project = None
         self._version = None
@@ -260,8 +264,11 @@ class GerritClient():
             cmd += "project:"+self.project+" "
         cmd += "limit:" + str(self.max_reviews)
 
-        # This does not work for Wikimedia 2.8.1 version
-        cmd += " '(status:open OR status:closed)' "
+        if self.blacklist_reviews:
+            blacklist_reviews = ' AND NOT (%s)' % (','.join(self.blacklist_reviews))
+            cmd += " '(status:open OR status:closed)%s' " % (blacklist_reviews)
+        else:
+            cmd += " '(status:open OR status:closed)' "
 
         cmd += " --all-approvals --comments --format=JSON"
 
@@ -285,6 +292,7 @@ class GerritCommand(BackendCommand):
         self.url = self.parsed_args.url
         self.user = self.parsed_args.user
         self.max_reviews = self.parsed_args.max_reviews
+        self.blacklist_reviews = self.parsed_args.blacklist_reviews
         self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.outfile = self.parsed_args.outfile
 
@@ -305,7 +313,8 @@ class GerritCommand(BackendCommand):
             cache = None
 
         self.backend = Gerrit(self.url, self.user,
-                              self.max_reviews, cache=cache)
+                              self.max_reviews, cache=cache,
+                              blacklist_reviews=self.blacklist_reviews)
 
     def run(self):
         """Fetch and print the reviews.
@@ -350,5 +359,7 @@ class GerritCommand(BackendCommand):
         group.add_argument("--max-reviews",  dest="max_reviews",
                            type=int, default=MAX_REVIEWS,
                            help="Max number of reviews per ssh query.")
+        group.add_argument("--blacklist-reviews",  dest="blacklist_reviews",
+                           nargs='*', help="Wrong reviews that must not be retrieved.")
 
         return parser
