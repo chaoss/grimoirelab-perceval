@@ -265,7 +265,7 @@ class GerritClient():
         cmd += "limit:" + str(self.max_reviews)
 
         if self.blacklist_reviews:
-            blacklist_reviews = ' AND NOT (%s)' % (self.blacklist_reviews)
+            blacklist_reviews = ' AND NOT (%s)' % (','.join(self.blacklist_reviews))
             cmd += " '(status:open OR status:closed)%s' " % (blacklist_reviews)
         else:
             cmd += " '(status:open OR status:closed)' "
@@ -360,7 +360,6 @@ class GerritCommand(BackendCommand):
                            type=int, default=MAX_REVIEWS,
                            help="Max number of reviews per ssh query.")
         group.add_argument("--blacklist-reviews",  dest="blacklist_reviews",
-                           type=str,
-                           help="Wrong reviews that must not be retrieved. Comma separated list.")
+                           nargs='*', help="Wrong reviews that must not be retrieved.")
 
         return parser
