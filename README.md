@@ -38,6 +38,7 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 ## Installation
 
 ```
+$ pip install -r requirements
 $ python3 setup.py install
 ```
 
