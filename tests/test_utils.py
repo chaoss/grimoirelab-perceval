@@ -194,13 +194,13 @@ class TestUnixTimeToDatetime(unittest.TestCase):
         """Check if it converts some timestamps to datetime objects"""
 
         date = unixtime_to_datetime(0)
-        expected = datetime.datetime(1970,  1, 1, 1, 0, 0,
+        expected = datetime.datetime(1970,  1, 1, 0, 0, 0,
                                      tzinfo=dateutil.tz.tzutc())
         self.assertIsInstance(date, datetime.datetime)
         self.assertEqual(date, expected)
 
         date = unixtime_to_datetime(1426868155.0)
-        expected = datetime.datetime(2015,  3, 20, 17, 15, 55,
+        expected = datetime.datetime(2015,  3, 20, 16, 15, 55,
                                      tzinfo=dateutil.tz.tzutc())
         self.assertIsInstance(date, datetime.datetime)
         self.assertEqual(date, expected)
