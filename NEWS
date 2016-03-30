@@ -1,0 +1,28 @@
+# Releases
+
+## Perceval 0.1 - (2016-03-30)
+
+**New features and improvements:**
+
+ * Supports Python 3.4 and newer versions.
+ * Fetches and caches information from several software repositories:
+    - Bugzilla
+    - Gerrit
+    - Git
+    - GitHub
+    - Jira
+    - MBox
+    - Stack Exchange
+ * Metadata fields are added to fetched items.
+ * Dates and times used to request data are always converted to UTC.
+ * Unit testing framework is available. Currently, these
+   unit tests cover the 62% of the source code.
+
+
+** Bugs fixed: **
+
+ * Some Git commit log entries may not contain information about files.
+   Before this was fixed, Perceval raised an exception with a "_Unexpected
+   end of log stream_" message. (#8)
+ * Empty Git commit logs raised erros when were parsed. (#17)
+ * Character ^M) produced some parsing errors in the Git backend. (#21)
