@@ -161,6 +161,7 @@ def metadata(func):
     and methods of this class.
     """
     from datetime import datetime as dt
+    from ._version import __version__
 
     META_KEY = '__metadata__'
 
@@ -169,7 +170,8 @@ def metadata(func):
         for item in func(self, *args, **kwargs):
             item[META_KEY] = {
                               'backend_name' : self.__class__.__name__,
-                              'backend_version': self.version,
+                              'backend_version' : self.version,
+                              'perceval_version' : __version__,
                               'timestamp' : dt.now().timestamp(),
                               'origin' : self.origin,
                               'uuid' : uuid(self.origin, self.metadata_id(item)),

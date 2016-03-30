@@ -29,6 +29,7 @@ import unittest
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
+from perceval import __version__
 from perceval.backend import (Backend,
                               BackendCommand,
                               metadata,
@@ -130,6 +131,7 @@ class TestMetadata(unittest.TestCase):
             self.assertEqual(item['item'], x)
             self.assertEqual(meta['backend_name'], 'MockDecoratorBackend')
             self.assertEqual(meta['backend_version'], '0.1.0')
+            self.assertEqual(meta['perceval_version'], __version__)
             self.assertEqual(meta['origin'], 'test')
             self.assertEqual(meta['uuid'], expected_uuid)
             self.assertEqual(meta['updated_on'], '2016-01-01')
