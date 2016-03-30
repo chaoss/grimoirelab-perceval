@@ -1,0 +1,21 @@
+language: python
+
+python:
+  - "3.4"
+
+sudo: false
+
+before_install:
+  - pip install -r "requirements.txt"
+  - pip install httpretty==0.8.6
+  - pip install coveralls
+
+install:
+  - ./setup.py install
+
+script:
+  - cd tests
+  - coverage run --source=perceval run_tests.py
+
+after_success:
+  - coveralls
