@@ -21,11 +21,17 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import re
+
 from distutils.core import setup
 
 
+with open('perceval/_version.py', 'r') as fd:
+    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+                        fd.read(), re.MULTILINE).group(1)
+
 setup(name="perceval",
-      version="0.0.1",
+      version=version,
       author="Bitergia",
       author_email="sduenas@bitergia.com",
       packages=['perceval', 'perceval.backends'],

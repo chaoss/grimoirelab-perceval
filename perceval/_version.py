@@ -19,8 +19,4 @@
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
 
-import logging
-
-from ._version import __version__
-
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+__version__ = "0.0.1"
