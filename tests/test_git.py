@@ -89,10 +89,10 @@ class TestGitBackend(unittest.TestCase):
         for x in range(len(commits)):
             expected_uuid = uuid(self.git_path, expected[x][0])
             commit = commits[x]
-            self.assertEqual(commit['commit'], expected[x][0])
-            self.assertEqual(commit['__metadata__']['origin'], self.git_path)
-            self.assertEqual(commit['__metadata__']['uuid'], expected_uuid)
-            self.assertEqual(commit['__metadata__']['updated_on'], expected[x][1])
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['updated_on'], expected[x][1])
 
         shutil.rmtree(new_path)
 
@@ -114,10 +114,10 @@ class TestGitBackend(unittest.TestCase):
         for x in range(len(commits)):
             expected_uuid = uuid(self.git_path, expected[x][0])
             commit = commits[x]
-            self.assertEqual(commit['commit'], expected[x][0])
-            self.assertEqual(commit['__metadata__']['origin'], self.git_path)
-            self.assertEqual(commit['__metadata__']['uuid'], expected_uuid)
-            self.assertEqual(commit['__metadata__']['updated_on'], expected[x][1])
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['updated_on'], expected[x][1])
 
         # Test it using a datetime that includes the timezone
         from_date = datetime.datetime(2012, 8, 14, 14, 30, 00,
@@ -130,10 +130,10 @@ class TestGitBackend(unittest.TestCase):
         for x in range(len(commits)):
             expected_uuid = uuid(self.git_path, expected[x][0])
             commit = commits[x]
-            self.assertEqual(commit['commit'], expected[x][0])
-            self.assertEqual(commit['__metadata__']['origin'], self.git_path)
-            self.assertEqual(commit['__metadata__']['uuid'], expected_uuid)
-            self.assertEqual(commit['__metadata__']['updated_on'], expected[x][1])
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['updated_on'], expected[x][1])
 
         shutil.rmtree(new_path)
 
@@ -169,10 +169,10 @@ class TestGitBackend(unittest.TestCase):
         for x in range(len(commits)):
             expected_uuid = uuid('http://example.com.git', expected[x][0])
             commit = commits[x]
-            self.assertEqual(commit['commit'], expected[x][0])
-            self.assertEqual(commit['__metadata__']['origin'], 'http://example.com.git')
-            self.assertEqual(commit['__metadata__']['uuid'], expected_uuid)
-            self.assertEqual(commit['__metadata__']['updated_on'], expected[x][1])
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+            self.assertEqual(commit['origin'], 'http://example.com.git')
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['updated_on'], expected[x][1])
 
     def test_git_parser(self):
         """Test if the static method parses a git log file"""

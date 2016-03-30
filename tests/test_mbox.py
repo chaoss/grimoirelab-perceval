@@ -179,10 +179,10 @@ class TestMBoxBackend(TestBaseMBox):
 
         for x in range(len(messages)):
             message = messages[x]
-            self.assertEqual(message['Message-ID'], expected[x][0])
-            self.assertEqual(message['__metadata__']['origin'], 'http://example.com/')
-            self.assertEqual(message['__metadata__']['uuid'], expected[x][1])
-            self.assertEqual(message['__metadata__']['updated_on'], expected[x][2])
+            self.assertEqual(message['data']['Message-ID'], expected[x][0])
+            self.assertEqual(message['origin'], 'http://example.com/')
+            self.assertEqual(message['uuid'], expected[x][1])
+            self.assertEqual(message['updated_on'], expected[x][2])
 
     def test_ignore_messages(self):
         """Test if it ignores some messages without mandatory fields"""
@@ -206,14 +206,12 @@ class TestMBoxBackend(TestBaseMBox):
                             }
                    }
 
-        message = messages[0]
-        messages[0].pop('__metadata__')
+        message = messages[0]['data']
         self.assertDictEqual(message, expected)
 
         # On the second message, the only change is that 'Message-id'
         # is replaced by 'Message-ID'
-        message = messages[1]
-        messages[1].pop('__metadata__')
+        message = messages[1]['data']
         self.assertDictEqual(message, expected)
 
     def test_ignore_file_errors(self):
@@ -232,8 +230,8 @@ class TestMBoxBackend(TestBaseMBox):
 
         # Only one message is read
         self.assertEqual(len(messages), 1)
-        self.assertEqual(messages[0]['Message-ID'], '<4CF64D10.9020206@domain.com>')
-        self.assertEqual(messages[0]['Date'], 'Wed, 01 Dec 2010 14:26:40 +0100')
+        self.assertEqual(messages[0]['data']['Message-ID'], '<4CF64D10.9020206@domain.com>')
+        self.assertEqual(messages[0]['data']['Date'], 'Wed, 01 Dec 2010 14:26:40 +0100')
 
         shutil.rmtree(tmp_path_ign)
 

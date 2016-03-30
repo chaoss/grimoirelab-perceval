@@ -25,6 +25,9 @@ import functools
 import hashlib
 import sys
 
+from datetime import datetime as dt
+
+from ._version import __version__
 from .cache import Cache
 from .utils import DEFAULT_DATETIME
 
@@ -154,29 +157,26 @@ def metadata(func):
     """Add metadata to an item.
 
     Decorator that adds metadata to a given item such as how and
-    when it was fetched.
+    when it was fetched. The contents from the original item will
+    be stored under the 'data' keyword.
 
     Take into account that this decorator can only be called from a
     'Backend' class due it needs access to some of the attributes
     and methods of this class.
     """
-    from datetime import datetime as dt
-    from ._version import __version__
-
-    META_KEY = '__metadata__'
-
     @functools.wraps(func)
     def decorator(self, *args, **kwargs):
-        for item in func(self, *args, **kwargs):
-            item[META_KEY] = {
-                              'backend_name' : self.__class__.__name__,
-                              'backend_version' : self.version,
-                              'perceval_version' : __version__,
-                              'timestamp' : dt.now().timestamp(),
-                              'origin' : self.origin,
-                              'uuid' : uuid(self.origin, self.metadata_id(item)),
-                              'updated_on' : self.metadata_updated_on(item),
-                             }
+        for data in func(self, *args, **kwargs):
+            item = {
+                    'backend_name' : self.__class__.__name__,
+                    'backend_version' : self.version,
+                    'perceval_version' : __version__,
+                    'timestamp' : dt.now().timestamp(),
+                    'origin' : self.origin,
+                    'uuid' : uuid(self.origin, self.metadata_id(data)),
+                    'updated_on' : self.metadata_updated_on(data),
+                    'data' : data,
+                   }
             yield item
     return decorator
 

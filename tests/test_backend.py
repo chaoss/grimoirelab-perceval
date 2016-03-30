@@ -124,21 +124,20 @@ class TestMetadata(unittest.TestCase):
 
         for x in range(5):
             item = items[x]
-            meta = item['__metadata__']
 
             expected_uuid = uuid('test', str(x))
 
-            self.assertEqual(item['item'], x)
-            self.assertEqual(meta['backend_name'], 'MockDecoratorBackend')
-            self.assertEqual(meta['backend_version'], '0.1.0')
-            self.assertEqual(meta['perceval_version'], __version__)
-            self.assertEqual(meta['origin'], 'test')
-            self.assertEqual(meta['uuid'], expected_uuid)
-            self.assertEqual(meta['updated_on'], '2016-01-01')
-            self.assertGreater(meta['timestamp'], before)
-            self.assertLess(meta['timestamp'], after)
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['backend_name'], 'MockDecoratorBackend')
+            self.assertEqual(item['backend_version'], '0.1.0')
+            self.assertEqual(item['perceval_version'], __version__)
+            self.assertEqual(item['origin'], 'test')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['updated_on'], '2016-01-01')
+            self.assertGreater(item['timestamp'], before)
+            self.assertLess(item['timestamp'], after)
 
-            before = meta['timestamp']
+            before = item['timestamp']
 
 
 class TestUUID(unittest.TestCase):
