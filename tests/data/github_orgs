@@ -1,0 +1,28 @@
+[
+  {
+    "login": "Orgs_1",
+    "id": 1,
+    "url": "https://api.github.com/orgs/Orgs_1",
+    "repos_url": "https://api.github.com/orgs/Orgs_1/repos",
+    "events_url": "https://api.github.com/orgs/Orgs_1/events",
+    "hooks_url": "https://api.github.com/orgs/Orgs_1/hooks",
+    "issues_url": "https://api.github.com/orgs/Orgs_1/issues",
+    "members_url": "https://api.github.com/orgs/Orgs_1/members{/member}",
+    "public_members_url": "https://api.github.com/orgs/Orgs_1/public_members{/member}",
+    "avatar_url": "",
+    "description": null
+  },
+  {
+    "login": "Orgs_2",
+    "id": 2,
+    "url": "https://api.github.com/orgs/Orgs_2",
+    "repos_url": "https://api.github.com/orgs/Orgs_2/repos",
+    "events_url": "https://api.github.com/orgs/Orgs_2/events",
+    "hooks_url": "https://api.github.com/orgs/Orgs_2/hooks",
+    "issues_url": "https://api.github.com/orgs/Orgs_2/issues",
+    "members_url": "https://api.github.com/orgs/Orgs_2/members{/member}",
+    "public_members_url": "https://api.github.com/orgs/Orgs_2/public_members{/member}",
+    "avatar_url": "",
+    "description": null
+  }
+]
