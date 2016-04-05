@@ -171,6 +171,18 @@ class TestStrToDatetime(unittest.TestCase):
         self.assertIsInstance(date, datetime.datetime)
         self.assertEqual(date, expected)
 
+        date = str_to_datetime('Wed, 26 Oct 2005 15:20:32 -0100 (GMT+1)')
+        expected = datetime.datetime(2005, 10, 26, 15, 20, 32,
+                                     tzinfo=dateutil.tz.tzoffset(None, -3600))
+        self.assertIsInstance(date, datetime.datetime)
+        self.assertEqual(date, expected)
+
+        date = str_to_datetime('Wed, 22 Jul 2009 11:15:50 +0300 (FLE Daylight Time)')
+        expected = datetime.datetime(2009, 7, 22, 11, 15, 50,
+                                     tzinfo=dateutil.tz.tzoffset(None, 10800))
+        self.assertIsInstance(date, datetime.datetime)
+        self.assertEqual(date, expected)
+
     def test_invalid_date(self):
         """Check whether it fails with an invalid date"""
 

@@ -108,6 +108,11 @@ def str_to_datetime(ts):
         raise InvalidDateError(date=str(ts))
 
     try:
+        # Try to remove parentheses section from dates
+        # because they cannot be parsed, like in
+        # 'Wed, 26 Oct 2005 15:20:32 -0100 (GMT+1)'.
+        ts = ts.split('(')[0]
+
         dt = dateutil.parser.parse(ts)
 
         if not dt.tzinfo:
