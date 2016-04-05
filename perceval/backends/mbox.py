@@ -132,8 +132,16 @@ class MBox(Backend):
             logger.warning("Field 'Message-ID' not found in message %s; ignoring",
                            message['unixfrom'])
             return False
+        elif not message[self.MESSAGE_ID_FIELD]:
+            logger.warning("Field 'Message-ID' is empty in message %s; ignoring",
+                           message['unixfrom'])
+            return False
         elif self.DATE_FIELD not in message:
             logger.warning("Field 'Date' not found in message %s; ignoring",
+                           message['unixfrom'])
+            return False
+        elif not message[self.DATE_FIELD]:
+            logger.warning("Field 'Date' is empty in message %s; ignoring",
                            message['unixfrom'])
             return False
         else:
