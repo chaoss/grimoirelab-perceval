@@ -26,7 +26,7 @@ import re
 from distutils.core import setup
 
 
-with open('perceval/_version.py', 'r') as fd:
+with open('perceval/_version.py', 'r', encoding='utf-8') as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                         fd.read(), re.MULTILINE).group(1)
 
