@@ -37,7 +37,10 @@ import requests.structures
 
 from ..backend import Backend, BackendCommand, metadata
 from ..errors import ParseError
-from ..utils import check_compressed_file_type, str_to_datetime
+from ..utils import (DEFAULT_DATETIME,
+                     check_compressed_file_type,
+                     datetime_to_utc,
+                     str_to_datetime)
 
 
 logger = logging.getLogger(__name__)
@@ -55,7 +58,7 @@ class MBox(Backend):
     :param dirpath: directory path where the mboxes are stored
     :param cache: cache object to store raw data
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
@@ -65,16 +68,20 @@ class MBox(Backend):
         self.dirpath = dirpath
 
     @metadata
-    def fetch(self):
-        """Fetch the commits from a set of mbox files.
+    def fetch(self, from_date=DEFAULT_DATETIME):
+        """Fetch the messages from a set of mbox files.
 
         The method retrieves, from mbox files, the messages stored in
         these containers.
 
+        :param from_date: obtain messages since this date
+
         :returns: a generator of messages
         """
-        logger.info("Looking for messages from '%s' on '%s'",
-                    self.origin, self.dirpath)
+        logger.info("Looking for messages from '%s' on '%s' since %s",
+                    self.origin, self.dirpath, str(from_date))
+
+        from_date = datetime_to_utc(from_date)
 
         mailing_list = MailingList(self.origin, self.dirpath)
 
@@ -91,11 +98,20 @@ class MBox(Backend):
                         imsgs += 1
                         continue
 
-                    nmsgs += 1
-                    logger.debug("Message from %s parsed", message['unixfrom'])
+                    # Ignore those messages sent before the given date
+                    dt = str_to_datetime(message[MBox.DATE_FIELD])
+
+                    if dt < from_date:
+                        logger.debug("Message %s sent before %s; skipped",
+                                     message['unixfrom'], str(from_date))
+                        tmsgs -= 1
+                        continue
 
                     # Convert 'CaseInsensitiveDict' to dict
                     message = self._casedict_to_dict(message)
+
+                    nmsgs += 1
+                    logger.debug("Message %s parsed", message['unixfrom'])
 
                     yield message
             except OSError as e:
@@ -271,6 +287,7 @@ class MBoxCommand(BackendCommand):
         self.origin = self.parsed_args.origin
         self.mboxes = self.parsed_args.mboxes
         self.outfile = self.parsed_args.outfile
+        self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         cache = None
 
@@ -284,7 +301,7 @@ class MBoxCommand(BackendCommand):
         the given directory. Messages are converted to JSON objects
         and printed to the defined output.
         """
-        messages = self.backend.fetch()
+        messages = self.backend.fetch(from_date=self.from_date)
 
         try:
             for message in messages:
