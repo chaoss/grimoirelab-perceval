@@ -53,18 +53,19 @@ class MBox(Backend):
     mbox files. Initialize this class passing the directory path where
     the mbox files are stored.
 
-    :param origin: origin of the mboxes; typically, the URL of their
+    :param uri: URI of the mboxes; typically, the URL of their
         mailing list
     :param dirpath: directory path where the mboxes are stored
     :param cache: cache object to store raw data
     """
-    version = '0.2.0'
+    version = '0.2.1'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
 
-    def __init__(self, origin, dirpath, cache=None):
-        super().__init__(origin, cache=cache)
+    def __init__(self, uri, dirpath, cache=None):
+        super().__init__(uri, cache=cache)
+        self.uri = uri
         self.dirpath = dirpath
 
     @metadata
@@ -79,11 +80,11 @@ class MBox(Backend):
         :returns: a generator of messages
         """
         logger.info("Looking for messages from '%s' on '%s' since %s",
-                    self.origin, self.dirpath, str(from_date))
+                    self.uri, self.dirpath, str(from_date))
 
         from_date = datetime_to_utc(from_date)
 
-        mailing_list = MailingList(self.origin, self.dirpath)
+        mailing_list = MailingList(self.uri, self.dirpath)
 
         nmsgs, imsgs, tmsgs = (0, 0, 0)
 
@@ -284,14 +285,14 @@ class MBoxCommand(BackendCommand):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.origin = self.parsed_args.origin
+        self.uri = self.parsed_args.uri
         self.mboxes = self.parsed_args.mboxes
         self.outfile = self.parsed_args.outfile
         self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         cache = None
 
-        self.backend = MBox(self.origin, self.mboxes,
+        self.backend = MBox(self.uri, self.mboxes,
                             cache=cache)
 
     def run(self):
@@ -320,8 +321,8 @@ class MBoxCommand(BackendCommand):
         parser = super().create_argument_parser()
 
         # Required arguments
-        parser.add_argument('origin',
-                            help='Origin of the mboxes, usually the URL to their mailing list')
+        parser.add_argument('uri',
+                            help='URI of the mboxes, usually the URL to their mailing list')
         parser.add_argument('mboxes',
                             help="Path to the mbox directory")
 
@@ -368,11 +369,11 @@ class MailingList(object):
     This class gives access to the local mboxes archives that a
     mailing list manages.
 
-    :param origin: origin of the mailing lists, usually its URL address
+    :param uri: URI of the mailing lists, usually its URL address
     :param dirpath: path to the mboxes archives
     """
-    def __init__(self, origin, dirpath):
-        self.origin = origin
+    def __init__(self, uri, dirpath):
+        self.uri = uri
         self.dirpath = dirpath
 
     @property

@@ -133,7 +133,7 @@ class TestMailingList(TestBaseMBox):
 
         mls = MailingList('test', self.tmp_path)
 
-        self.assertEqual(mls.origin, 'test')
+        self.assertEqual(mls.uri, 'test')
         self.assertEqual(mls.dirpath, self.tmp_path)
 
     def test_mboxes(self):
@@ -390,7 +390,7 @@ class TestMBoxCommand(unittest.TestCase):
 
         cmd = MBoxCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.origin, 'http://example.com/')
+        self.assertEqual(cmd.parsed_args.uri, 'http://example.com/')
         self.assertEqual(cmd.parsed_args.mboxes, '/tmp/perceval/')
         self.assertIsInstance(cmd.backend, MBox)
 
