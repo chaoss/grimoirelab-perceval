@@ -53,11 +53,11 @@ class Gerrit(Backend):
     """
     version = '0.1.0'
 
-    def __init__(self, url, user=None, max_reviews=None, cache=None,
+    def __init__(self, url, user=None, max_reviews=MAX_REVIEWS, cache=None,
                  blacklist_reviews=None):
         super().__init__(url, cache=cache)
         self.url = url
-        self.max_reviews = max_reviews
+        self.max_reviews = max(1, max_reviews)
         self.blacklist_reviews = blacklist_reviews
         self.client = GerritClient(self.url, user, max_reviews,
                                    blacklist_reviews)
