@@ -265,7 +265,7 @@ class GitHubClient:
             sleep(reset_seconds)
         r = requests.get(url, params=params, headers=headers)
         r.raise_for_status()
-        self.rate_limit = r.headers['X-RateLimit-Remaining']
+        self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
         self.rate_limit_reset = datetime.fromtimestamp(int(r.headers['X-RateLimit-Reset']))
         logger.debug("Rate limit: %s" % (self.rate_limit))
         return r
