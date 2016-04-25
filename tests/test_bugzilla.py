@@ -56,6 +56,27 @@ def read_file(filename, mode='r'):
 class TestBugzillaBackend(unittest.TestCase):
     """Bugzilla backend tests"""
 
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        bg = Bugzilla(BUGZILLA_SERVER_URL, origin='test',
+                      max_bugs=5)
+
+        self.assertEqual(bg.url, BUGZILLA_SERVER_URL)
+        self.assertEqual(bg.origin, 'test')
+        self.assertEqual(bg.max_bugs, 5)
+        self.assertIsInstance(bg.client, BugzillaClient)
+
+        # When origin is empty or None it will be set to
+        # the value in url
+        bg = Bugzilla(BUGZILLA_SERVER_URL)
+        self.assertEqual(bg.url, BUGZILLA_SERVER_URL)
+        self.assertEqual(bg.origin, BUGZILLA_SERVER_URL)
+
+        bg = Bugzilla(BUGZILLA_SERVER_URL, origin='')
+        self.assertEqual(bg.url, BUGZILLA_SERVER_URL)
+        self.assertEqual(bg.origin, BUGZILLA_SERVER_URL)
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether a list of bugs is returned"""
@@ -630,13 +651,15 @@ class TestBugzillaCommand(unittest.TestCase):
 
         args = ['--backend-user', 'jsmith@example.com',
                 '--backend-password', '1234',
-                '--max-bugs', '10', BUGZILLA_SERVER_URL]
+                '--max-bugs', '10', '--origin', 'test',
+                BUGZILLA_SERVER_URL]
 
         cmd = BugzillaCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.backend_user, 'jsmith@example.com')
         self.assertEqual(cmd.parsed_args.backend_password, '1234')
         self.assertEqual(cmd.parsed_args.max_bugs, 10)
+        self.assertEqual(cmd.parsed_args.origin, 'test')
         self.assertEqual(cmd.parsed_args.url, BUGZILLA_SERVER_URL)
         self.assertIsInstance(cmd.backend, Bugzilla)
 
