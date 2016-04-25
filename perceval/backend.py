@@ -132,6 +132,8 @@ class BackendCommand:
                            help="backend authentication token")
         group.add_argument('--from-date', dest='from_date', default='1970-01-01',
                            help="fetch items from this date")
+        group.add_argument('--origin', dest='origin',
+                           help="set the identifier of the repository")
 
         # Cache arguments
         group = parser.add_argument_group('cache arguments')

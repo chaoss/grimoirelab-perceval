@@ -67,7 +67,7 @@ class TestBackendCommand(unittest.TestCase):
         """Test if the arguments are parsed when the class is initialized"""
 
         args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
-                '--from-date', '2015-01-01']
+                '--from-date', '2015-01-01', '--origin', 'test']
 
         cmd = BackendCommand(*args)
 
@@ -76,6 +76,7 @@ class TestBackendCommand(unittest.TestCase):
         self.assertEqual(cmd.parsed_args.backend_password, '1234')
         self.assertEqual(cmd.parsed_args.backend_token, 'abcd')
         self.assertEqual(cmd.parsed_args.from_date, '2015-01-01')
+        self.assertEqual(cmd.parsed_args.origin, 'test')
 
     def test_argument_parser(self):
         """Test if it returns a argument parser object"""
