@@ -53,13 +53,18 @@ class Jira(Backend):
     :param verify: allows to disable SSL verification
     :param cert: SSL certificate path (PEM)
     :param cache: cache object to store raw data
+    :param origin: identifier of the repository; when `None` or an
+        empty string are given, it will be set to `url`
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, url, project=None, backend_user=None,
                  backend_password=None, verify=None,
-                 cert=None, max_issues=None, cache=None):
-        super().__init__(url, cache=cache)
+                 cert=None, max_issues=None,
+                 cache=None, origin=None):
+        origin = origin if origin else url
+
+        super().__init__(origin, cache=cache)
         self.url = url
         self.project = project
         self.backend_user = backend_user
@@ -283,6 +288,7 @@ class JiraCommand(BackendCommand):
         self.backend_user = self.parsed_args.backend_user
         self.backend_password = self.parsed_args.backend_password
         self.from_date = str_to_datetime(self.parsed_args.from_date)
+        self.origin = self.parsed_args.origin
         self.outfile = self.parsed_args.outfile
 
         if not self.parsed_args.no_cache:
@@ -302,9 +308,10 @@ class JiraCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = Jira(
-            self.url, self.project, self.backend_user, self.backend_password,
-            self.verify, self.cert, self.max_issues, cache=cache)
+        self.backend = Jira(self.url, self.project,
+                            self.backend_user, self.backend_password,
+                            self.verify, self.cert, self.max_issues,
+                            cache=cache, origin=self.origin)
 
     def run(self):
         """Fetch and print the issues.
