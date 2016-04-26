@@ -1,0 +1,138 @@
+{
+    "expand": "schema,names",
+    "issues": [
+        {
+            "expand": "operations,editmeta,changelog,transitions,renderedFields",
+            "fields": {
+                "assignee": {
+                    "active": true,
+                    "avatarUrls": {
+                        "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10117",
+                        "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10117",
+                        "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10117",
+                        "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10117"
+                    },
+                    "displayName": "User3",
+                    "key": "user3",
+                    "name": "user3",
+                    "self": "https://jira.fiware.org/rest/api/2/user?username=user3",
+                    "timeZone": "Europe/Madrid"
+                },
+                "components": [
+                    {
+                        "id": "10277",
+                        "name": "FIWARE-GENERAL-HELP",
+                        "self": "https://jira.fiware.org/rest/api/2/component/10277"
+                    }
+                ],
+                "created": "2016-03-03T11:57:01.000+0000",
+                "creator": {
+                    "active": true,
+                    "avatarUrls": {
+                        "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10122",
+                        "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10122",
+                        "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10122",
+                        "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10122"
+                    },
+                    "displayName": "User2",
+                    "key": "user2",
+                    "name": "user2",
+                    "self": "https://jira.fiware.org/rest/api/2/user?username=user2",
+                    "timeZone": "Europe/Madrid"
+                },
+                "customfield_10301": null,
+                "customfield_10400": null,
+                "customfield_10600": null,
+                "customfield_10603": null,
+                "description": "",
+                "duedate": null,
+                "fixVersions": [],
+                "issuelinks": [],
+                "issuetype": {
+                    "description": "Request from external stakeholder received in the help desk",
+                    "iconUrl": "https://jira.fiware.org/images/icons/issuetypes/defect.png",
+                    "id": "10104",
+                    "name": "extRequest",
+                    "self": "https://jira.fiware.org/rest/api/2/issuetype/10104",
+                    "subtask": false
+                },
+                "labels": [],
+                "lastViewed": null,
+                "priority": {
+                    "iconUrl": "https://jira.fiware.org/images/icons/priorities/major.png",
+                    "id": "3",
+                    "name": "Major",
+                    "self": "https://jira.fiware.org/rest/api/2/priority/3"
+                },
+                "project": {
+                    "avatarUrls": {
+                        "16x16": "https://jira.fiware.org/secure/projectavatar?size=xsmall&avatarId=10011",
+                        "24x24": "https://jira.fiware.org/secure/projectavatar?size=small&avatarId=10011",
+                        "32x32": "https://jira.fiware.org/secure/projectavatar?size=medium&avatarId=10011",
+                        "48x48": "https://jira.fiware.org/secure/projectavatar?avatarId=10011"
+                    },
+                    "id": "10841",
+                    "key": "HELP",
+                    "name": "Help-Desk",
+                    "projectCategory": {
+                        "description": "",
+                        "id": "10302",
+                        "name": "FIWARE - Phase II",
+                        "self": "https://jira.fiware.org/rest/api/2/projectCategory/10302"
+                    },
+                    "self": "https://jira.fiware.org/rest/api/2/project/10841"
+                },
+                "reporter": {
+                    "active": true,
+                    "avatarUrls": {
+                        "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10122",
+                        "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10122",
+                        "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10122",
+                        "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10122"
+                    },
+                    "displayName": "User2",
+                    "key": "user2",
+                    "name": "user2",
+                    "self": "https://jira.fiware.org/rest/api/2/user?username=user2",
+                    "timeZone": "Europe/Madrid"
+                },
+                "resolution": null,
+                "resolutiondate": null,
+                "status": {
+                    "description": "The issue is defined and ready for schedule",
+                    "iconUrl": "https://jira.fiware.org/images/icons/statuses/open.png",
+                    "id": "1",
+                    "name": "Open",
+                    "self": "https://jira.fiware.org/rest/api/2/status/1",
+                    "statusCategory": {
+                        "colorName": "blue-gray",
+                        "id": 2,
+                        "key": "new",
+                        "name": "To Do",
+                        "self": "https://jira.fiware.org/rest/api/2/statuscategory/2"
+                    }
+                },
+                "subtasks": [],
+                "summary": "[Fiware-general-help] Delete my mail from the post!",
+                "updated": "2016-03-03T11:57:25.000+0000",
+                "votes": {
+                    "hasVoted": false,
+                    "self": "https://jira.fiware.org/rest/api/2/issue/HELP-6041/votes",
+                    "votes": 0
+                },
+                "watches": {
+                    "isWatching": false,
+                    "self": "https://jira.fiware.org/rest/api/2/issue/HELP-6041/watchers",
+                    "watchCount": 1
+                },
+                "workratio": -1
+            },
+            "id": "35844",
+            "key": "HELP-6041",
+            "self": "https://jira.fiware.org/rest/api/2/issue/35844"
+        }
+    ],
+    "maxResults": 2,
+    "startAt": 2,
+    "total": 3
+}
