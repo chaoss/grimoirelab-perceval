@@ -55,13 +55,20 @@ class GitHub(Backend):
     :param backend_token: GitHub auth token to access the API
     :param base_url: GitHub URL in enterprise edition case
     :param cache: Use issues already retrieved in cache
+    :param origin: identifier of the repository; when `None` or an
+        empty string are given, it will be set to the URL built
+        with the values of `base_url`, `owner` and `repository`;
+        when `base_url` is empty or `None` it will be set to
+        `GITHUB_URL` value
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
-    def __init__(self, owner=None, repository=None, backend_token=None,
-                 base_url=None, cache=None):
-        origin = base_url if base_url else GITHUB_URL
-        origin = urljoin(origin, owner, repository)
+    def __init__(self, owner=None, repository=None,
+                 backend_token=None, base_url=None,
+                 cache=None, origin=None):
+        if not origin:
+            origin = base_url if base_url else GITHUB_URL
+            origin = urljoin(origin, owner, repository)
 
         super().__init__(origin, cache=cache)
         self.owner = owner
@@ -328,6 +335,7 @@ class GitHubCommand(BackendCommand):
         self.repository = self.parsed_args.repository
         self.backend_token = self.parsed_args.backend_token
         self.from_date = str_to_datetime(self.parsed_args.from_date)
+        self.origin = self.parsed_args.origin
         self.outfile = self.parsed_args.outfile
 
         if not self.parsed_args.no_cache:
@@ -349,7 +357,8 @@ class GitHubCommand(BackendCommand):
             cache = None
 
         self.backend = GitHub(self.owner, self.repository,
-                              self.backend_token, cache=cache)
+                              backend_token=self.backend_token,
+                              cache=cache, origin=self.origin)
 
     def run(self):
         """Fetch and print the issues.
