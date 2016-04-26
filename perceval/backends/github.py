@@ -280,11 +280,11 @@ class GitHubClient:
         """ GET HTTP caring of rate limit """
         if self.rate_limit is not None and self.rate_limit <= RATE_LIMIT_MIN:
             reset_seconds = (self.rate_limit_reset-datetime.utcnow()).seconds+1
+            cause = "GitHub rate limit exhausted."
             if self.sleep_for_rate:
-                logging.info("Rate limit consumed. Waiting %i secs for rate limit reset." % (reset_seconds))
+                logging.info("%s Waiting %i secs for rate limit reset." % (cause, reset_seconds))
                 sleep(reset_seconds)
             else:
-                cause = "GitHub rate limit exhausted."
                 ex = RateLimitError(cause=cause, reset_seconds=reset_seconds)
                 raise ex
 
