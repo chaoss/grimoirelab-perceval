@@ -1,0 +1,143 @@
+{
+    "updated_on": 1457015417,
+    "origin": "http://example.com",
+    "uuid": "830747ed8cc9af800fcd6284e9dccfdb11daf15b",
+    "data": {
+        "self": "https://jira.fiware.org/rest/api/2/issue/35850",
+        "expand": "operations,editmeta,changelog,transitions,renderedFields",
+        "id": "35850",
+        "key": "HELP-6042",
+        "fields": {
+            "components": [
+                {
+                    "self": "https://jira.fiware.org/rest/api/2/component/11404",
+                    "id": "11404",
+                    "name": "SPAM"
+                }
+            ],
+            "customfield_10600": null,
+            "votes": {
+                "self": "https://jira.fiware.org/rest/api/2/issue/HELP-6042/votes",
+                "votes": 0,
+                "hasVoted": false
+            },
+            "description": "",
+            "subtasks": [],
+            "issuetype": {
+                "id": "10104",
+                "description": "Request from external stakeholder received in the help desk",
+                "subtask": false,
+                "self": "https://jira.fiware.org/rest/api/2/issuetype/10104",
+                "iconUrl": "https://jira.fiware.org/images/icons/issuetypes/defect.png",
+                "name": "extRequest"
+            },
+            "updated": "2016-03-03T14:30:17.000+0000",
+            "lastViewed": null,
+            "labels": [],
+            "project": {
+                "projectCategory": {
+                    "self": "https://jira.fiware.org/rest/api/2/projectCategory/10302",
+                    "id": "10302",
+                    "name": "FIWARE - Phase II",
+                    "description": ""
+                },
+                "id": "10841",
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/projectavatar?avatarId=10011",
+                    "24x24": "https://jira.fiware.org/secure/projectavatar?size=small&avatarId=10011",
+                    "16x16": "https://jira.fiware.org/secure/projectavatar?size=xsmall&avatarId=10011",
+                    "32x32": "https://jira.fiware.org/secure/projectavatar?size=medium&avatarId=10011"
+                },
+                "self": "https://jira.fiware.org/rest/api/2/project/10841",
+                "key": "HELP",
+                "name": "Help-Desk"
+            },
+            "customfield_10400": null,
+            "assignee": {
+                "active": true,
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10108",
+                    "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10108",
+                    "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10108",
+                    "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10108"
+                },
+                "timeZone": "Europe/Madrid",
+                "self": "https://jira.fiware.org/rest/api/2/user?username=user1",
+                "key": "user1",
+                "name": "user1",
+                "displayName": "User1"
+            },
+            "reporter": {
+                "active": true,
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10122",
+                    "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10122",
+                    "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10122",
+                    "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10122"
+                },
+                "timeZone": "Europe/Madrid",
+                "self": "https://jira.fiware.org/rest/api/2/user?username=user2",
+                "key": "user2",
+                "name": "user2",
+                "displayName": "User2"
+            },
+            "summary": "",
+            "status": {
+                "id": "6",
+                "description": "",
+                "self": "https://jira.fiware.org/rest/api/2/status/6",
+                "iconUrl": "https://jira.fiware.org/images/icons/statuses/generic.png",
+                "statusCategory": {
+                    "self": "https://jira.fiware.org/rest/api/2/statuscategory/3",
+                    "id": 3,
+                    "colorName": "green",
+                    "name": "Done",
+                    "key": "done"
+                },
+                "name": "Closed"
+            },
+            "priority": {
+                "self": "https://jira.fiware.org/rest/api/2/priority/3",
+                "iconUrl": "https://jira.fiware.org/images/icons/priorities/major.png",
+                "id": "3",
+                "name": "Major"
+            },
+            "creator": {
+                "active": true,
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10122",
+                    "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10122",
+                    "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10122",
+                    "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10122"
+                },
+                "timeZone": "Europe/Madrid",
+                "self": "https://jira.fiware.org/rest/api/2/user?username=user2",
+                "key": "user2",
+                "name": "user2",
+                "displayName": "User2"
+            },
+            "issuelinks": [],
+            "workratio": -1,
+            "fixVersions": [],
+            "duedate": null,
+            "watches": {
+                "isWatching": false,
+                "self": "https://jira.fiware.org/rest/api/2/issue/HELP-6042/watchers",
+                "watchCount": 2
+            },
+            "resolution": {
+                "self": "https://jira.fiware.org/rest/api/2/resolution/10000",
+                "id": "10000",
+                "name": "Done",
+                "description": "extRequest, WorkItems, Stories, Features and Epics"
+            },
+            "customfield_10603": null,
+            "created": "2016-03-03T13:11:01.000+0000",
+            "resolutiondate": "2016-03-03T14:30:17.000+0000",
+            "customfield_10301": null
+        }
+    },
+    "backend_name": "Jira",
+    "perceval_version": "0.1.0",
+    "backend_version": "0.2.0"
+}
