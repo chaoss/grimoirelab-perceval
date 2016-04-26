@@ -161,6 +161,24 @@ class TestMBoxBackend(TestBaseMBox):
     def tearDown(self):
         shutil.rmtree(self.tmp_error_path)
 
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        backend = MBox('http://example.com/', self.tmp_path, origin='test')
+
+        self.assertEqual(backend.uri, 'http://example.com/')
+        self.assertEqual(backend.dirpath, self.tmp_path)
+        self.assertEqual(backend.origin, 'test')
+
+        # When origin is empty or None it will be set to
+        # the value in uri
+        backend = MBox('http://example.com/', self.tmp_path)
+        self.assertEqual(backend.origin, 'http://example.com/')
+
+        backend = MBox('http://example.com/', self.tmp_path, origin='')
+        self.assertEqual(backend.origin, 'http://example.com/')
+
+
     def test_fetch(self):
         """Test whether it parses a set of mbox files"""
 
@@ -386,12 +404,14 @@ class TestMBoxCommand(unittest.TestCase):
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
-        args = ['http://example.com/', '/tmp/perceval/']
+        args = ['http://example.com/', '/tmp/perceval/',
+                '--origin', 'test']
 
         cmd = MBoxCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.uri, 'http://example.com/')
         self.assertEqual(cmd.parsed_args.mboxes, '/tmp/perceval/')
+        self.assertEqual(cmd.parsed_args.origin, 'test')
         self.assertIsInstance(cmd.backend, MBox)
 
     def test_argument_parser(self):

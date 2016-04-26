@@ -57,14 +57,18 @@ class MBox(Backend):
         mailing list
     :param dirpath: directory path where the mboxes are stored
     :param cache: cache object to store raw data
+    :param origin: identifier of the repository; when `None` or an
+        empty string are given, it will be set to `uri`
     """
-    version = '0.2.1'
+    version = '0.3.0'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
 
-    def __init__(self, uri, dirpath, cache=None):
-        super().__init__(uri, cache=cache)
+    def __init__(self, uri, dirpath, cache=None, origin=None):
+        origin = origin if origin else uri
+
+        super().__init__(origin, cache=cache)
         self.uri = uri
         self.dirpath = dirpath
 
@@ -288,12 +292,13 @@ class MBoxCommand(BackendCommand):
         self.uri = self.parsed_args.uri
         self.mboxes = self.parsed_args.mboxes
         self.outfile = self.parsed_args.outfile
+        self.origin = self.parsed_args.origin
         self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         cache = None
 
         self.backend = MBox(self.uri, self.mboxes,
-                            cache=cache)
+                            cache=cache, origin=self.origin)
 
     def run(self):
         """Fetch and print the email messages.
