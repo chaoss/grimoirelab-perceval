@@ -27,6 +27,7 @@ import json
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 
 import httpretty
@@ -223,6 +224,7 @@ class TestStackExchangeClient(unittest.TestCase):
         client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
         raw_questions = [questions for questions in client.get_questions(from_date=None)]
 
+        self.assertEqual(len(raw_questions), 1)
         self.assertEqual(raw_questions[0], question)
         self.assertDictEqual(httpretty.last_request().querystring, payload)
 
@@ -251,6 +253,7 @@ class TestStackExchangeClient(unittest.TestCase):
         client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
         raw_questions = [questions for questions in client.get_questions(from_date=None)]
 
+        self.assertEqual(len(raw_questions), 1)
         self.assertEqual(raw_questions[0], question)
         self.assertDictEqual(httpretty.last_request().querystring, payload)
 
@@ -264,6 +267,9 @@ class TestStackExchangeClient(unittest.TestCase):
                                STACKEXCHANGE_QUESTIONS_URL,
                                body=question, status=200)
 
+        from_date_unixtime = 1456876800 + time.timezone
+        from_date = datetime.datetime(2016, 3, 2)
+
         payload = {
             'page': ['1'],
             'pagesize': ['1'],
@@ -273,14 +279,13 @@ class TestStackExchangeClient(unittest.TestCase):
             'site': ['stackoverflow'],
             'key': ['aaa'],
             'filter': [QUESTIONS_FILTER],
-            'min': ['1456876800']
+            'min': [str(from_date_unixtime)]
         }
-        # unixtime: 1456876800
-        from_date = datetime.datetime(2016, 3, 2)
 
         client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
         raw_questions = [questions for questions in client.get_questions(from_date=from_date)]
 
+        self.assertEqual(len(raw_questions), 1)
         self.assertEqual(raw_questions[0], question)
         self.assertDictEqual(httpretty.last_request().querystring, payload)
 
