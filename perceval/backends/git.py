@@ -49,14 +49,18 @@ class Git(Backend):
     :param uri: URI of the Git repository
     :param gitpath: path to the repository or to the log file
     :param cache: cache object to store raw data
+    :param origin: identifier of the repository; when `None` or an
+        empty string are given, it will be set to `uri` value
 
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
-    def __init__(self, uri, gitpath, cache=None):
-        super().__init__(uri, cache=cache)
+    def __init__(self, uri, gitpath, cache=None, origin=None):
+        origin = origin if origin else uri
+
+        super().__init__(origin, cache=cache)
         self.uri = uri
         self.gitpath = gitpath
 
@@ -190,6 +194,7 @@ class GitCommand(BackendCommand):
         self.uri = self.parsed_args.uri
         self.outfile = self.parsed_args.outfile
         self.from_date = str_to_datetime(self.parsed_args.from_date)
+        self.origin = self.parsed_args.origin
 
         if self.parsed_args.git_log:
             git_path = self.parsed_args.git_log
@@ -201,7 +206,8 @@ class GitCommand(BackendCommand):
 
         cache = None
 
-        self.backend = Git(self.uri, git_path, cache=cache)
+        self.backend = Git(self.uri, git_path,
+                           cache=cache, origin=self.origin)
 
     def run(self):
         """Fetch and print the commits.

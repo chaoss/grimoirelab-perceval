@@ -61,10 +61,19 @@ class TestGitBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        git = Git('http://example.com', self.git_path)
+        git = Git('http://example.com', self.git_path, origin='test')
 
         self.assertEqual(git.uri, 'http://example.com')
         self.assertEqual(git.gitpath, self.git_path)
+        self.assertEqual(git.origin, 'test')
+
+        # When origin is empty or None it will be set to
+        # the value in uri
+        git = Git('http://example.com', self.git_path)
+        self.assertEqual(git.origin, 'http://example.com')
+
+        git = Git('http://example.com', self.git_path, origin='')
+        self.assertEqual(git.origin, 'http://example.com')
 
     def test_fetch(self):
         """Test whether commits are fetched from a Git repository"""
@@ -244,12 +253,14 @@ class TestGitCommand(unittest.TestCase):
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
-        args = ['--git-log', 'data/git_log.txt', 'http://example.com/']
+        args = ['--git-log', 'data/git_log.txt', 'http://example.com/',
+                '--origin', 'test']
 
         cmd = GitCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.git_log, "data/git_log.txt")
         self.assertEqual(cmd.parsed_args.uri, 'http://example.com/')
+        self.assertEqual(cmd.parsed_args.origin, 'test')
         self.assertIsInstance(cmd.backend, Git)
 
     def test_argument_parser(self):
