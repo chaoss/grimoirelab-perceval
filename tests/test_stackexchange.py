@@ -273,9 +273,9 @@ class TestStackExchangeClient(unittest.TestCase):
             'site': ['stackoverflow'],
             'key': ['aaa'],
             'filter': [QUESTIONS_FILTER],
-            'min': ['1456873200']
+            'min': ['1456876800']
         }
-        # unixtime: 1456873200
+        # unixtime: 1456876800
         from_date = datetime.datetime(2016, 3, 2)
 
         client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
