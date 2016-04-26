@@ -22,11 +22,12 @@
 #     Alberto Martín <alberto.martin@bitergia.com>
 #
 
-from datetime import datetime
 import json
 import logging
 import os.path
 import requests
+
+from datetime import datetime
 from time import sleep
 
 from ..backend import Backend, BackendCommand, metadata
@@ -40,22 +41,22 @@ from ..utils import (DEFAULT_DATETIME,
 
 GITHUB_URL = "https://github.com/"
 GITHUB_API_URL = "https://api.github.com"
-RATE_LIMIT_MIN = 10  # Min rate limit before sleeping until rate limit reset
+MIN_RATE_LIMIT = 10  # Min rate limit before sleeping until rate limit reset
 
 logger = logging.getLogger(__name__)
 
 
 class RateLimitError(BaseError):
 
-    message = "%(cause)s %(reset_seconds)s seconds for rate reset"
+    message = "%(cause)s %(seconds_to_reset)s seconds for rate reset"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._reset_seconds = kwargs['reset_seconds']
+        self._seconds_to_reset = kwargs['seconds_to_reset']
 
     @property
-    def reset_seconds(self):
-        return self._reset_seconds
+    def seconds_to_reset(self):
+        return self._seconds_to_reset
 
 
 class GitHub(Backend):
@@ -76,7 +77,7 @@ class GitHub(Backend):
         when `base_url` is empty or `None` it will be set to
         `GITHUB_URL` value
     """
-    version = '0.2.0'
+    version = '0.2.1'
 
 
     def __init__(self, owner=None, repository=None,
@@ -244,7 +245,7 @@ class GitHubClient:
         self.token = token
         self.base_url = base_url
         self.rate_limit = None
-        self.rate_limit_reset = None
+        self.rate_limit_reset_ts = None
         self.sleep_for_rate = sleep_for_rate
 
 
@@ -276,22 +277,21 @@ class GitHubClient:
             headers = {'Authorization': 'token ' + self.token}
             return headers
 
-    def __get_github(self, url, params=None, headers=None):
+    def __send_request(self, url, params=None, headers=None):
         """ GET HTTP caring of rate limit """
-        if self.rate_limit is not None and self.rate_limit <= RATE_LIMIT_MIN:
-            reset_seconds = (self.rate_limit_reset-datetime.utcnow()).seconds+1
+        if self.rate_limit is not None and self.rate_limit <= MIN_RATE_LIMIT:
+            seconds_to_reset = (self.rate_limit_reset_ts - datetime.utcnow()).seconds+1
             cause = "GitHub rate limit exhausted."
             if self.sleep_for_rate:
-                logging.info("%s Waiting %i secs for rate limit reset." % (cause, reset_seconds))
-                sleep(reset_seconds)
+                logging.info("%s Waiting %i secs for rate limit reset." % (cause, seconds_to_reset))
+                sleep(seconds_to_reset)
             else:
-                ex = RateLimitError(cause=cause, reset_seconds=reset_seconds)
-                raise ex
+                raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
 
         r = requests.get(url, params=params, headers=headers)
         r.raise_for_status()
         self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
-        self.rate_limit_reset = datetime.fromtimestamp(int(r.headers['X-RateLimit-Reset']))
+        self.rate_limit_reset_ts = datetime.fromtimestamp(int(r.headers['X-RateLimit-Reset']))
         logger.debug("Rate limit: %s" % (self.rate_limit))
         return r
 
@@ -303,7 +303,7 @@ class GitHubClient:
         url_next = self.__get_issues_url(start)
 
         logger.debug("Get GitHub issues from " + url_next)
-        r = self.__get_github(url_next, self.__get_payload(start),
+        r = self.__send_request(url_next, self.__get_payload(start),
                               self.__get_headers())
         issues = r.text
         page += 1
@@ -321,7 +321,7 @@ class GitHubClient:
 
             if 'next' in r.links:
                 url_next = r.links['next']['url']  # Loving requests :)
-                r = self.__get_github(url_next, self.__get_payload(start), self.__get_headers())
+                r = self.__send_request(url_next, self.__get_payload(start), self.__get_headers())
                 page += 1
                 issues = r.text
                 logger.debug("Page: %i/%i" % (page, last_page))
@@ -335,7 +335,7 @@ class GitHubClient:
         url_user = GITHUB_API_URL + "/users/" + login
 
         logging.info("Getting info for %s" % (url_user))
-        r = self.__get_github(url_user, headers=self.__get_headers())
+        r = self.__send_request(url_user, headers=self.__get_headers())
         user = r.text
         self._users[login] = user
 
@@ -348,7 +348,7 @@ class GitHubClient:
             return self._users_orgs[login]
 
         url = GITHUB_API_URL + "/users/" + login + "/orgs"
-        r = self.__get_github(url, headers=self.__get_headers())
+        r = self.__send_request(url, headers=self.__get_headers())
         orgs = r.text
 
         self._users_orgs[login] = orgs
