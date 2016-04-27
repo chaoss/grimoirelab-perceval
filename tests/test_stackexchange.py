@@ -71,7 +71,7 @@ class TestStackExchangeBackend(unittest.TestCase):
             "origin": "stackoverflow",
             "perceval_version": "0.1.0",
             "backend_name": "StackExchange",
-            "backend_version": "0.1.0"
+            "backend_version": "0.2.0"
         }
 
         stack = StackExchange(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
@@ -112,7 +112,7 @@ class TestStackExchangeBackend(unittest.TestCase):
             "origin": "stackoverflow",
             "perceval_version": "0.1.0",
             "backend_name": "StackExchange",
-            "backend_version": "0.1.0"
+            "backend_version": "0.2.0"
         }
 
         #unixtime = 1459900800
