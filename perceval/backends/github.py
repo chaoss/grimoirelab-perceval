@@ -77,7 +77,7 @@ class GitHub(Backend):
         when `base_url` is empty or `None` it will be set to
         `GITHUB_URL` value
     """
-    version = '0.2.0'
+    version = '0.2.1'
 
 
     def __init__(self, owner=None, repository=None,
