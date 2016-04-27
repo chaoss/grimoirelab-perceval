@@ -327,6 +327,23 @@ class TestStackExchangeClient(unittest.TestCase):
         self.assertDictEqual(httpretty.last_request().querystring, payload)
 
 class TestStackExchangeCommand(unittest.TestCase):
+
+    @httpretty.activate
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['--site', 'stackoverflow',
+                '--tagged', 'python',
+                '--token', 'aaa',
+                '--max-questions', "1"]
+
+        cmd = StackExchangeCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.site, "stackoverflow")
+        self.assertEqual(cmd.parsed_args.tagged, "python")
+        self.assertEqual(cmd.parsed_args.token, "aaa")
+        self.assertEqual(cmd.parsed_args.max_questions, 1)
+
     def test_argument_parser(self):
         """Test if it returns a argument parser object"""
 
