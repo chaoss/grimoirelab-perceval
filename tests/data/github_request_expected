@@ -1,5 +1,5 @@
 {
-  "backend_version": "0.1.0",
+  "backend_version": "0.2.1",
   "perceval_version": "0.1.0",
   "origin": "https://github.com/zhquan_example/repo",
   "backend_name": "GitHub",
