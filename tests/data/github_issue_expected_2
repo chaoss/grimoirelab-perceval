@@ -112,7 +112,7 @@
     "url": "https://api.github.com/repos/zhquan_example/repo/issues/278",
     "labels_url": "https://api.github.com/repos/zhquan_example/repo/issues/278/labels{/name}"
   },
-  "backend_version": "0.2.1",
+  "backend_version": "0.2.2",
   "uuid": "4236619ac2073491640f1698b5c4e169895aaf69",
   "updated_on": 1458054569,
   "perceval_version": "0.1.0",
