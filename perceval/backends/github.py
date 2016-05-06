@@ -41,7 +41,11 @@ from ..utils import (DEFAULT_DATETIME,
 
 GITHUB_URL = "https://github.com/"
 GITHUB_API_URL = "https://api.github.com"
-MIN_RATE_LIMIT = 10  # Min rate limit before sleeping until rate limit reset
+
+# Range before sleeping until rate limit reset
+MIN_RATE_LIMIT = 10
+MAX_RATE_LIMIT = 500
+
 
 logger = logging.getLogger(__name__)
 
@@ -69,20 +73,23 @@ class GitHub(Backend):
     :param repository: GitHub repository from the owner
     :param backend_token: GitHub auth token to access the API
     :param base_url: GitHub URL in enterprise edition case
-    :param sleep_for_rate: Sleep until rate limit is reset
-    :param cache: Use issues already retrieved in cache
+    :param cache: use issues already retrieved in cache
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to the URL built
         with the values of `base_url`, `owner` and `repository`;
         when `base_url` is empty or `None` it will be set to
         `GITHUB_URL` value
+    :param sleep_for_rate: sleep until rate limit is reset
+    :param min_rate_to_sleep: minimun rate needed to sleep until
+         it will be reset
     """
-    version = '0.2.1'
+    version = '0.2.2'
 
 
     def __init__(self, owner=None, repository=None,
                  backend_token=None, base_url=None,
-                 cache=None, origin=None, sleep_for_rate=False):
+                 cache=None, origin=None,
+                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
         if not origin:
             origin = base_url if base_url else GITHUB_URL
             origin = urljoin(origin, owner, repository)
@@ -92,7 +99,7 @@ class GitHub(Backend):
         self.repository = repository
         self.backend_token = backend_token
         self.client = GitHubClient(owner, repository, backend_token, base_url,
-                                   sleep_for_rate)
+                                   sleep_for_rate, min_rate_to_sleep)
         self._users = {}  # internal users cache
 
     def __get_user(self, login):
@@ -239,7 +246,7 @@ class GitHubClient:
     _users_orgs = {}  # users orgs cache
 
     def __init__(self, owner, repository, token, base_url=None,
-                 sleep_for_rate=False):
+                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
         self.owner = owner
         self.repository = repository
         self.token = token
@@ -248,6 +255,13 @@ class GitHubClient:
         self.rate_limit_reset_ts = None
         self.sleep_for_rate = sleep_for_rate
 
+        if min_rate_to_sleep > MAX_RATE_LIMIT:
+            msg = "Minimum rate to sleep value exceeded (%d)."
+            msg += "High values might cause the client to sleep forever."
+            msg += "Reset to %d."
+            logger.warning(msg, min_rate_to_sleep, MAX_RATE_LIMIT)
+
+        self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
 
     def __get_url(self):
         github_api = GITHUB_API_URL
@@ -279,11 +293,12 @@ class GitHubClient:
 
     def __send_request(self, url, params=None, headers=None):
         """ GET HTTP caring of rate limit """
-        if self.rate_limit is not None and self.rate_limit <= MIN_RATE_LIMIT:
-            seconds_to_reset = (self.rate_limit_reset_ts - datetime.utcnow()).seconds+1
+
+        if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
+            seconds_to_reset = (self.rate_limit_reset_ts - datetime.utcnow()).seconds + 1
             cause = "GitHub rate limit exhausted."
             if self.sleep_for_rate:
-                logging.info("%s Waiting %i secs for rate limit reset." % (cause, seconds_to_reset))
+                logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
                 sleep(seconds_to_reset)
             else:
                 raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
@@ -369,6 +384,7 @@ class GitHubCommand(BackendCommand):
         self.origin = self.parsed_args.origin
         self.outfile = self.parsed_args.outfile
         self.sleep_for_rate = self.parsed_args.sleep_for_rate
+        self.min_rate_to_sleep = self.parsed_args.min_rate_to_sleep
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
@@ -391,7 +407,8 @@ class GitHubCommand(BackendCommand):
         self.backend = GitHub(self.owner, self.repository,
                               backend_token=self.backend_token,
                               cache=cache, origin=self.origin,
-                              sleep_for_rate=self.sleep_for_rate)
+                              sleep_for_rate=self.sleep_for_rate,
+                              min_rate_to_sleep=self.min_rate_to_sleep)
 
     def run(self):
         """Fetch and print the issues.
@@ -430,11 +447,14 @@ class GitHubCommand(BackendCommand):
         group = parser.add_argument_group('GitHub arguments')
 
         group.add_argument("--owner", required=True,
-                           help="github owner")
+                           help="GitHub owner")
         group.add_argument("--repository", required=True,
-                           help="github repository")
+                           help="GitHub repository")
         group.add_argument("--sleep-for-rate", dest='sleep_for_rate',
                            action='store_true',
-                           help="Sleep for getting more rate")
+                           help="sleep for getting more rate")
+        group.add_argument("--min-rate-to-sleep",
+                           dest='min_rate_to_sleep', type=int,
+                           help="sleep until reset when the rate limit reaches this value")
 
         return parser
