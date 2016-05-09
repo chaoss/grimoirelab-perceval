@@ -326,7 +326,8 @@ class GerritClient():
                 next_item = last_item
         elif gerrit_version[0] == 2 and gerrit_version == 9:
             # https://groups.google.com/forum/#!topic/repo-discuss/yQgRR5hlS3E
-            raise RuntimeExecption("Gerrit 2.9 does not support pagination")
+            cause = "Gerrit 2.9.0 does not support pagination"
+            raise BackendError(cause=cause)
         else:
             if entry is not None:
                 next_item = entry['sortKey']
@@ -336,7 +337,8 @@ class GerritClient():
     def _get_gerrit_cmd(self, last_item, filter_=None):
 
         if filter_ and filter_ not in ['status:open','status:closed']:
-            raise RuntimeError("Filter not supported in gerrit %s" % (filter_))
+            cause = "Filter not supported in gerrit %s" % (filter_)
+            raise BackendError(cause=cause)
 
         cmd = self.gerrit_cmd + " query "
         if self.project:
@@ -423,8 +425,6 @@ class GerritCommand(BackendCommand):
             total = 0
             for bug in bugs:
                 obj = json.dumps(bug, indent=4, sort_keys=True)
-                # bug_date = datetime.datetime.fromtimestamp(bug['lastUpdated']).isoformat()
-                # self.outfile.write(bug["url"]+" "+ bug["status"]+ " " + bug_date)
                 self.outfile.write(obj)
                 self.outfile.write('\n')
                 total += 1
