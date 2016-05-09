@@ -21,7 +21,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import datetime
 import json
 import logging
 import os.path
@@ -54,7 +53,7 @@ class Gerrit(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, url,
                  user=None, max_reviews=MAX_REVIEWS,
@@ -82,27 +81,13 @@ class Gerrit(Backend):
         """
         self._purge_cache_queue()
 
-        last_item = self.client.next_retrieve_group_item()
-        reviews = self._get_reviews(last_item)
-        last_nreviews = len(reviews)
+        if self.client.version[0] == 2 and self.client.version[1] == 8:
+            fetcher = self._fetch_gerrit28(from_date)
+        else:
+            fetcher = self._fetch_gerrit(from_date)
 
-        # Convert date to Unix time
-        from_ut = datetime_to_utc(from_date)
-        from_ut = from_ut.timestamp()
-
-        while reviews:
-            review = reviews.pop(0)
-            last_item += 1
-            updated = review['lastUpdated']
-            if updated <= from_ut:
-                logger.debug("No more updates for %s" % (self.url))
-                break
-
+        for review in fetcher:
             yield review
-
-            if not reviews and last_nreviews >= self.max_reviews:
-                last_item = self.client.next_retrieve_group_item(last_item, review)
-                reviews = self._get_reviews(last_item)
 
     @metadata
     def fetch_from_cache(self):
@@ -128,9 +113,90 @@ class Gerrit(Backend):
             for review in reviews:
                 yield review
 
-    def _get_reviews(self, last_item):
+
+    def _fetch_gerrit28(self, from_date=DEFAULT_DATETIME):
+        """ Specific fetch for gerrit 2.8 version.
+
+        Get open and closed reviews in different queries.
+        Take the newer review from both lists and iterate.
+        """
+
+        # Convert date to Unix time
+        from_ut = datetime_to_utc(from_date)
+        from_ut = from_ut.timestamp()
+
+        filter_open = "status:open"
+        filter_closed = "status:closed"
+
+        last_item_open = self.client.next_retrieve_group_item()
+        last_item_closed = self.client.next_retrieve_group_item()
+        reviews_open = self._get_reviews(last_item_open, filter_open)
+        reviews_closed = self._get_reviews(last_item_closed, filter_closed)
+        last_nreviews_open = len(reviews_open)
+        last_nreviews_closed = len(reviews_closed)
+
+        while reviews_open or reviews_closed:
+            if reviews_open and reviews_closed:
+                if reviews_open[0]['lastUpdated'] >= reviews_closed[0]['lastUpdated']:
+                    review_open = reviews_open.pop(0)
+                    review = review_open
+                else:
+                    review_closed = reviews_closed.pop(0)
+                    review = review_closed
+            elif reviews_closed:
+                review_closed = reviews_closed.pop(0)
+                review = review_closed
+            else:
+                review_open = reviews_open.pop(0)
+                review = review_open
+
+            updated = review['lastUpdated']
+            if updated <= from_ut:
+                logger.debug("No more updates for %s" % (self.url))
+                break
+            else:
+                yield review
+
+            if not reviews_open and last_nreviews_open >= self.max_reviews:
+                last_item_open = self.client.next_retrieve_group_item(last_item_open, review_open)
+                reviews_open = self._get_reviews(last_item_open, filter_open)
+                last_nreviews_open = len(reviews_open)
+            if not reviews_closed and last_nreviews_closed >= self.max_reviews:
+                last_item_closed = self.client.next_retrieve_group_item(last_item_closed, review_closed)
+                reviews_closed = self._get_reviews(last_item_closed, filter_closed)
+                last_nreviews_closed = len(reviews_closed)
+
+    def _fetch_gerrit(self, from_date=DEFAULT_DATETIME):
+        last_item = self.client.next_retrieve_group_item()
+        reviews = self._get_reviews(last_item)
+        last_nreviews = len(reviews)
+
+        # Convert date to Unix time
+        from_ut = datetime_to_utc(from_date)
+        from_ut = from_ut.timestamp()
+
+        while reviews:
+            review = reviews.pop(0)
+            try:
+                last_item += 1
+            except:
+                pass  # last_item is a string in old gerrits
+            updated = review['lastUpdated']
+            if updated <= from_ut:
+                logger.debug("No more updates for %s" % (self.url))
+                break
+            else:
+                yield review
+
+            if not reviews and last_nreviews >= self.max_reviews:
+                logger.debug("GETTING MORE REVIEWS %i >= %i " % (last_nreviews, self.max_reviews))
+                last_item = self.client.next_retrieve_group_item(last_item, review)
+                reviews = self._get_reviews(last_item)
+                last_nreviews = len(reviews)
+
+    def _get_reviews(self, last_item, filter_=None):
         task_init = time.time()
-        raw_data = self.client.reviews(last_item)
+        raw_data = self.client.reviews(last_item, filter_)
         self._push_cache_queue(raw_data)
         self._flush_cache_queue()
         reviews = self.parse_reviews(raw_data)
@@ -235,10 +301,10 @@ class GerritClient():
         self._version = [mayor, minor]
         return self._version
 
-    def reviews(self, last_item):
+    def reviews(self, last_item, filter_=None):
         """Get the reviews starting from last_item."""
 
-        cmd = self._get_gerrit_cmd(last_item)
+        cmd = self._get_gerrit_cmd(last_item, filter_)
 
         logger.debug(cmd)
         raw_data = subprocess.check_output(cmd, shell=True)
@@ -258,24 +324,40 @@ class GerritClient():
                 next_item = 0
             else:
                 next_item = last_item
+        elif gerrit_version[0] == 2 and gerrit_version == 9:
+            # https://groups.google.com/forum/#!topic/repo-discuss/yQgRR5hlS3E
+            cause = "Gerrit 2.9.0 does not support pagination"
+            raise BackendError(cause=cause)
         else:
             if entry is not None:
                 next_item = entry['sortKey']
 
         return next_item
 
-    def _get_gerrit_cmd(self, last_item):
+    def _get_gerrit_cmd(self, last_item, filter_=None):
+
+        if filter_ and filter_ not in ['status:open','status:closed']:
+            cause = "Filter not supported in gerrit %s" % (filter_)
+            raise BackendError(cause=cause)
 
         cmd = self.gerrit_cmd + " query "
         if self.project:
             cmd += "project:"+self.project+" "
         cmd += "limit:" + str(self.max_reviews)
 
-        if self.blacklist_reviews:
-            blacklist_reviews = ' AND NOT (%s)' % (','.join(self.blacklist_reviews))
-            cmd += " '(status:open OR status:closed)%s' " % (blacklist_reviews)
+        if not filter_:
+            cmd += " '(status:open OR status:closed)"
+            if self.blacklist_reviews:
+                blacklist_reviews = " AND NOT (%s)" % (','.join(self.blacklist_reviews))
+                cmd += blacklist_reviews
+            cmd += "'"
+
         else:
-            cmd += " '(status:open OR status:closed)' "
+            if self.blacklist_reviews:
+                blacklist_reviews = " '%s AND NOT (%s)'" % (filter_, ','.join(self.blacklist_reviews))
+                cmd += blacklist_reviews
+            else:
+                cmd += " %s " % (filter_)
 
         cmd += " --all-approvals --comments --format=JSON"
 
