@@ -21,7 +21,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import datetime
 import json
 import logging
 import os.path
@@ -68,6 +67,52 @@ class Gerrit(Backend):
         self.blacklist_reviews = blacklist_reviews
         self.client = GerritClient(self.url, user, max_reviews,
                                    blacklist_reviews)
+
+    @metadata
+    def fetch(self, from_date=DEFAULT_DATETIME):
+        """Fetch the reviews from the repository.
+
+        The method retrieves, from a Gerrit repository, the reviews
+        updated since the given date.
+
+        :param from_date: obtain reviews updated since this date
+
+        :returns: a generator of reviews
+        """
+        self._purge_cache_queue()
+
+        if self.client.version[0] == 2 and self.client.version[1] == 8:
+            fetcher = self._fetch_gerrit28(from_date)
+        else:
+            fetcher = self._fetch_gerrit(from_date)
+
+        for review in fetcher:
+            yield review
+
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch reviews from the cache.
+
+        It returns the reviews stored in the cache object provided during
+        the initialization of the object. If this method is called but
+        no cache object was provided, the method will raise a `CacheError`
+        exception.
+
+        :returns: a generator of items
+
+        :raises CacheError: raised when an error occurs accesing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        cache_items = self.cache.retrieve()
+
+        for raw_items in cache_items:
+            reviews = self.parse_reviews(raw_items)
+            for review in reviews:
+                yield review
+
 
     def _fetch_gerrit28(self, from_date=DEFAULT_DATETIME):
         """ Specific fetch for gerrit 2.8 version.
@@ -148,51 +193,6 @@ class Gerrit(Backend):
                 last_item = self.client.next_retrieve_group_item(last_item, review)
                 reviews = self._get_reviews(last_item)
                 last_nreviews = len(reviews)
-
-    @metadata
-    def fetch(self, from_date=DEFAULT_DATETIME):
-        """Fetch the reviews from the repository.
-
-        The method retrieves, from a Gerrit repository, the reviews
-        updated since the given date.
-
-        :param from_date: obtain reviews updated since this date
-
-        :returns: a generator of reviews
-        """
-        self._purge_cache_queue()
-
-        if self.client.version[0] == 2 and self.client.version[1] == 8:
-            fetcher = self._fetch_gerrit28(from_date)
-        else:
-            fetcher = self._fetch_gerrit(from_date)
-
-        for review in fetcher:
-            yield review
-
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch reviews from the cache.
-
-        It returns the reviews stored in the cache object provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
-
-        :returns: a generator of items
-
-        :raises CacheError: raised when an error occurs accesing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        cache_items = self.cache.retrieve()
-
-        for raw_items in cache_items:
-            reviews = self.parse_reviews(raw_items)
-            for review in reviews:
-                yield review
 
     def _get_reviews(self, last_item, filter_=None):
         task_init = time.time()
