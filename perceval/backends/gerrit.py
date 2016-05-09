@@ -101,7 +101,7 @@ class Gerrit(Backend):
             elif reviews_closed:
                 review_closed = reviews_closed.pop(0)
                 review = review_closed
-            elif reviews_open:
+            else:
                 review_open = reviews_open.pop(0)
                 review = review_open
 
