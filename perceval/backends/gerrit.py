@@ -54,7 +54,7 @@ class Gerrit(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, url,
                  user=None, max_reviews=MAX_REVIEWS,
