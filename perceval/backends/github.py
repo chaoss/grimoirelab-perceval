@@ -453,8 +453,8 @@ class GitHubCommand(BackendCommand):
         group.add_argument("--sleep-for-rate", dest='sleep_for_rate',
                            action='store_true',
                            help="sleep for getting more rate")
-        group.add_argument("--min-rate-to-sleep",
-                           dest='min_rate_to_sleep', type=int,
+        group.add_argument("--min-rate-to-sleep", dest='min_rate_to_sleep',
+                           default=MIN_RATE_LIMIT, type=int,
                            help="sleep until reset when the rate limit reaches this value")
 
         return parser
