@@ -18,6 +18,7 @@ are:
     jira             Fetch issues from JIRA issue tracker
     mbox             Fetch messages from MBox files
     stackexchange    Fetch questions from StackExchange sites
+    jenkins          Fetch builds from Jenkins sites
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -110,6 +111,12 @@ $ perceval mbox "http://example.com" /tmp/mboxes/
 ```
 $ perceval stackexchange --site stackoverflow --tagged python --from-date 2016-01-01 --token abcdabcdabcdabcd
 ```
+
+### Jenkins
+```
+$ perceval jenkins "http://jenkins.cyanogenmod.com/"
+```
+
 ## License
 
 Licensed under GNU General Public License (GPL), version 3 or later.
