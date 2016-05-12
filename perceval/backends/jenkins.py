@@ -51,11 +51,12 @@ class Jenkins(Backend):
     """
     version = '0.1.0'
 
-    def __init__(self, site, cache=None, origin=None):
+    def __init__(self, site, job_url = None, cache=None, origin=None):
         origin = origin if origin else site
 
         super().__init__(origin, cache=cache)
         self.site = site
+        self.job_url = job_url
         self.client = JenkinsClient(site)
 
     @metadata
@@ -78,18 +79,22 @@ class Jenkins(Backend):
 
         from_date = datetime_to_utc(from_date)
 
-        projects = json.loads(self.client.get_jobs())
-        jobs = projects['jobs']
         nbuilds = 0  # number of builds processed
         njobs = 0 # number of jobs processed
+        # jobs_urls = []
+
+        if not self.job_url:
+            projects = json.loads(self.client.get_jobs())
+            jobs = projects['jobs']
+        else:
+            jobs = [{'url':self.job_url}]
 
         for job in jobs:
             njobs += 1
             logger.debug("Adding builds from %s (%i/%i)" % (job['url'], njobs, len(jobs)))
             builds = json.loads(self.client.get_builds(job['url']))
             builds = builds['builds']
-            for build_url in builds:
-                build = json.loads(self.client.get_build(build_url['url']))
+            for build in builds:
                 yield build
                 nbuilds += 1
 
@@ -132,7 +137,7 @@ class Jenkins(Backend):
 
         :returns: a UNIX timestamp
         """
-        return float(item['timestamp'])
+        return float(item['timestamp']/1000)
 
 class JenkinsClient:
     """Jenkins API client.
@@ -161,14 +166,15 @@ class JenkinsClient:
     def get_builds(self, job_url):
         """ Retrieve all builds from a job
         """
-        url_jenkins = job_url + "/api/json"
+        # depth=2 to get builds details
+        url_jenkins = job_url + "/api/json?depth=2"
 
         req = requests.get(url_jenkins)
         req.raise_for_status()
         return req.text
 
     def get_build(self, build_url):
-        """ Retrieve a build date
+        """ Retrieve a build data
         """
         url_jenkins = build_url + "/api/json"
 
@@ -182,6 +188,7 @@ class JenkinsCommand(BackendCommand):
     def __init__(self, *args):
         super().__init__(*args)
         self.site = self.parsed_args.site
+        self.job_url = self.parsed_args.job_url
         self.origin = self.parsed_args.origin
         self.outfile = self.parsed_args.outfile
 
@@ -202,7 +209,8 @@ class JenkinsCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = Jenkins(self.site, cache=cache, origin=self.origin)
+        self.backend = Jenkins(self.site, job_url=self.job_url,
+                               cache=cache, origin=self.origin)
 
     def run(self):
         """Fetch and print the Builds.
@@ -241,5 +249,7 @@ class JenkinsCommand(BackendCommand):
 
         group.add_argument("--site", required=True,
                            help="Jenkins site (ej: https://build.opnfv.org/ci/)")
+        group.add_argument("--job-url", required=False,
+                           help="Get builds only for this job")
 
         return parser
