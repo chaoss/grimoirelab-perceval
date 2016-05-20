@@ -1,0 +1,84 @@
+{
+    "meta": {
+        "limit": 2,
+        "next": null,
+        "offset": 2,
+        "previous": "/api/v1/event/?limit=2&offset=0",
+        "total_count": 5086
+    },
+    "objects": [
+        {
+            "actual_attendance": null,
+            "budget_bug_id": null,
+            "campaign": null,
+            "categories": [],
+            "city": "Bangkalan, Madura",
+            "country": "Indonesia",
+            "description": "Blogilicious, is a seminar and workshop event in 7 cities in Indonesia with targeting of 200 bloggers per-city that aims to encourage young generation of Indonesia to be a \"positive blogger\" that that share positive contents/infos/news to Internet citizen. Blogilicious welcome Mozilla Indonesia as one if the community who support open source, user privacy, and internet safety. That's why Mozilla Indonesia were invited to Blogilicious in those 7 cities. ",
+            "end": "2012-07-08T05:00:00",
+            "estimated_attendance": 500,
+            "event_url": "https://reps.mozilla.org/e/blogilicious-2012-madura/",
+            "external_link": "http://blogiliciousid.com/",
+            "lat": -7.10975050957756,
+            "local_end": "2012-07-08T12:00:00",
+            "local_start": "2012-07-07T08:00:00",
+            "lon": 112.803153991699,
+            "metrics": [],
+            "mozilla_event": false,
+            "multiday": true,
+            "name": "Blogilicious 2012 Madura",
+            "owner_name": "Irayani Queencyputri",
+            "owner_profile_url": "https://reps.mozilla.org/u/Rara/",
+            "region": "East Java",
+            "resource_uri": "/api/v1/event/129/",
+            "sign_ups": 3,
+            "start": "2012-07-07T01:00:00",
+            "swag_bug_id": null,
+            "timezone": "Asia/Jakarta",
+            "venue": "Gedung New Purnama Bangkalan"
+        },
+        {
+            "actual_attendance": null,
+            "budget_bug_id": null,
+            "campaign": null,
+            "categories": [
+                {
+                    "name": "Hive Network"
+                },
+                {
+                    "name": "Mozilla Learning Network"
+                },
+                {
+                    "name": "Web Development"
+                },
+                {
+                    "name": "WoMoz"
+                }
+            ],
+            "city": "Pune",
+            "country": "India",
+            "description": "Summer Code Party for spreading web literacy.\r\n\r\nUse of Awesome webmaker tools like Thimble, Popcorn and X-Ray Goggles.\r\n\r\n1.Campus having 500 Computer systems,so we will create a Firefox install team to install Firefox on every machine in campus.\r\n\r\n2.AIMS campus having more than 450 Its students from computer science and application streams.\r\n3.Finding URDU language contributors for localization. 4.Finding Student Reps from the campus.",
+            "end": "2012-07-07T09:00:00",
+            "estimated_attendance": 500,
+            "event_url": "https://reps.mozilla.org/e/mozfestpune/",
+            "external_link": "",
+            "lat": 18.505086914,
+            "local_end": "2012-07-07T18:00:00",
+            "local_start": "2012-07-07T10:00:00",
+            "lon": 73.875246048,
+            "metrics": [],
+            "mozilla_event": true,
+            "multiday": false,
+            "name": "mozfestpune",
+            "owner_name": "Faisal Aziz",
+            "owner_profile_url": "https://reps.mozilla.org/u/FaisalAziz/",
+            "region": "Maharashtra",
+            "resource_uri": "/api/v1/event/403/",
+            "sign_ups": 12,
+            "start": "2012-07-07T01:00:00",
+            "swag_bug_id": null,
+            "timezone": "Asia/Dili",
+            "venue": "Allana Institute of Mgmt Sciences ,Azam Campus"
+        }
+    ]
+}

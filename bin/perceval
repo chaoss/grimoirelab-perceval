@@ -53,6 +53,7 @@ are:
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
     pipermail        Fetch messages from a Pipermail archiver
+    remo             Fetch events and people from a ReMo site
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server

@@ -33,6 +33,7 @@ from .jira import Jira, JiraCommand
 from .mbox import MBox, MBoxCommand
 from .mediawiki import MediaWiki, MediaWikiCommand
 from .pipermail import Pipermail, PipermailCommand
+from .remo import ReMo, ReMoCommand
 from .stackexchange import StackExchange, StackExchangeCommand
 from .supybot import Supybot, SupybotCommand
 from .telegram import Telegram, TelegramCommand
@@ -52,6 +53,7 @@ PERCEVAL_BACKENDS = {
                      'mbox'          : MBox,
                      'mediawiki'     : MediaWiki,
                      'pipermail'     : Pipermail,
+                     'remo'          : ReMo,
                      'stackexchange' : StackExchange,
                      'supybot'       : Supybot,
                      'telegram'      : Telegram
@@ -70,6 +72,7 @@ PERCEVAL_CMDS = {
                  'mbox'          : MBoxCommand,
                  'mediawiki'     : MediaWikiCommand,
                  'pipermail'     : PipermailCommand,
+                 'remo'          : ReMoCommand,
                  'stackexchange' : StackExchangeCommand,
                  'supybot'       : SupybotCommand,
                  'telegram'      : TelegramCommand

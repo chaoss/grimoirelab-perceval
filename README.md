@@ -24,6 +24,7 @@ are:
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
     pipermail        Fetch messages from a Pipermail archiver
+    remo             Fetch events and people from a ReMo site
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server
@@ -155,6 +156,11 @@ $ perceval mediawiki 'https://wiki.mozilla.org' --from-date '2016-06-30'
 ### Pipermail
 ```
 $ perceval pipermail 'https://mail.gnome.org/archives/libart-hackers/'
+```
+
+### ReMo
+```
+$ perceval remo
 ```
 
 ### StackExchange
