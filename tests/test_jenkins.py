@@ -41,8 +41,11 @@ from perceval.backends.jenkins import Jenkins, JenkinsCommand, JenkinsClient
 
 JENKINS_SERVER_URL = 'http://example.com/ci'
 JENKINS_JOBS_URL = JENKINS_SERVER_URL+'/view/All/api/json'
-JENKINS_JOB_BUILDS_URL_1 = JENKINS_SERVER_URL + '/job/apex-build-brahmaputra/api/json?depth=2'
-JENKINS_JOB_BUILDS_URL_2 = JENKINS_SERVER_URL + '/job/apex-build-master/api/json?depth=2'
+JENKINS_JOB_BUILDS_1 = 'apex-build-brahmaputra'
+JENKINS_JOB_BUILDS_2 = 'apex-build-master'
+JENKINS_JOB_BUILDS_URL_1 = JENKINS_SERVER_URL + '/job/'+JENKINS_JOB_BUILDS_1+'/api/json?depth=2'
+JENKINS_JOB_BUILDS_URL_2 = JENKINS_SERVER_URL + '/job/'+JENKINS_JOB_BUILDS_2+'/api/json?depth=2'
+
 
 
 def read_file(filename, mode='r'):
@@ -294,7 +297,7 @@ class TestJenkinsClient(unittest.TestCase):
                                body=body, status=200)
 
         client = JenkinsClient(JENKINS_SERVER_URL)
-        response = client.get_builds(JENKINS_JOB_BUILDS_URL_1)
+        response = client.get_builds(JENKINS_JOB_BUILDS_1)
 
         self.assertEqual(response, body)
 

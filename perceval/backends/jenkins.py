@@ -81,7 +81,7 @@ class Jenkins(Backend):
         for job in jobs:
             njobs += 1
             logger.debug("Adding builds from %s (%i/%i)" % (job['url'], njobs, len(jobs)))
-            raw_builds = self.client.get_builds(job['url'])
+            raw_builds = self.client.get_builds(job['name'])
             self._push_cache_queue(raw_builds)
             self._flush_cache_queue()
             builds = json.loads(raw_builds)
@@ -154,10 +154,11 @@ class JenkinsClient:
         req.raise_for_status()
         return req.text
 
-    def get_builds(self, job_url):
+    def get_builds(self, job_name):
         """ Retrieve all builds from a job
         """
         # depth=2 to get builds details
+        job_url = self.url + "/job/%s/" % (job_name)
         url_jenkins = job_url + "api/json?depth=2"
 
         req = requests.get(url_jenkins)
