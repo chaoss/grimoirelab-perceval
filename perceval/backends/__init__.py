@@ -24,6 +24,7 @@ from .bugzilla import Bugzilla, BugzillaCommand
 from .gerrit import Gerrit, GerritCommand
 from .git import Git, GitCommand
 from .github import GitHub, GitHubCommand
+from .jenkins import Jenkins, JenkinsCommand
 from .jira import Jira, JiraCommand
 from .mbox import MBox, MBoxCommand
 from .stackexchange import StackExchange, StackExchangeCommand
@@ -34,6 +35,7 @@ PERCEVAL_BACKENDS = {
                      'git'           : Git,
                      'gerrit'        : Gerrit,
                      'github'        : GitHub,
+                     'jenkins'       : Jenkins,
                      'jira'          : Jira,
                      'mbox'          : MBox,
                      'stackexchange' : StackExchange
@@ -43,6 +45,7 @@ PERCEVAL_CMDS = {
                  'git'           : GitCommand,
                  'gerrit'        : GerritCommand,
                  'github'        : GitHubCommand,
+                 'jenkins'       : JenkinsCommand,
                  'jira'          : JiraCommand,
                  'mbox'          : MBoxCommand,
                  'stackexchange' : StackExchangeCommand
