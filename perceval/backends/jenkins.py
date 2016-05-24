@@ -34,54 +34,49 @@ from ..utils import (DEFAULT_DATETIME,
                      str_to_datetime,
                      urljoin)
 
+
 logger = logging.getLogger(__name__)
+
 
 class Jenkins(Backend):
     """Jenkins backend for Perceval.
 
     This class retrieves the builds from a
     Jenkins site. To initialize this class the
-    site must be provided.
+    URL must be provided.
 
-    :param site: Jenkins site
-    :param job_url: Jenkins job from which to get the builds
+    :param url: Jenkins url
     :param cache: cache object to store raw data
     :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `site` value
+        empty string are given, it will be set to `url` value
     """
     version = '0.1.0'
 
-    def __init__(self, site, job_url=None, cache=None, origin=None):
-        origin = origin if origin else site
+    def __init__(self, url, cache=None, origin=None):
+        origin = origin if origin else url
 
         super().__init__(origin, cache=cache)
-        self.site = site
-        self.job_url = job_url
-        self.client = JenkinsClient(site)
+        self.url = url
+        self.client = JenkinsClient(url)
 
     @metadata
-    def fetch(self, from_date=DEFAULT_DATETIME):
-        """Fetch the builds from the site.
+    def fetch(self):
+        """Fetch the builds from the url.
 
-        The method retrieves, from a Jenkins site, the
+        The method retrieves, from a Jenkins url, the
         builds updated since the given date.
-
-        :param from_date: Not supported
 
         :returns: a generator of builds
         """
 
-        logger.info("Looking for projects at site '%s'", self.site)
+        logger.info("Looking for projects at url '%s'", self.url)
 
         self._purge_cache_queue()
         nbuilds = 0  # number of builds processed
         njobs = 0 # number of jobs processed
 
-        if not self.job_url:
-            projects = json.loads(self.client.get_jobs())
-            jobs = projects['jobs']
-        else:
-            jobs = [{'url':self.job_url}]
+        projects = json.loads(self.client.get_jobs())
+        jobs = projects['jobs']
 
         for job in jobs:
             njobs += 1
@@ -95,8 +90,8 @@ class Jenkins(Backend):
                 yield build
                 nbuilds += 1
 
-        logging.info("Total number of jobs: %i" % (njobs))
-        logging.info("Total number of builds: %i" % (nbuilds))
+        logger.info("Total number of jobs: %i" % (njobs))
+        logger.info("Total number of builds: %i" % (nbuilds))
 
     @metadata
     def fetch_from_cache(self):
@@ -142,19 +137,18 @@ class JenkinsClient:
     This class implements a simple client to retrieve builds from
     projects in a Jenkins node.
 
-    :param site: URL of jenkins node: https://build.opnfv.org/ci
+    :param url: URL of jenkins node: https://build.opnfv.org/ci
 
     :raises HTTPError: when an error occurs doing the request
     """
 
-    def __init__(self, site):
-        self.site = site
-
+    def __init__(self, url):
+        self.url = url
 
     def get_jobs(self):
         """ Retrieve all jobs
         """
-        url_jenkins = self.site + "/view/All/api/json"
+        url_jenkins = self.url + "/view/All/api/json"
 
         req = requests.get(url_jenkins)
         req.raise_for_status()
@@ -175,8 +169,7 @@ class JenkinsCommand(BackendCommand):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.site = self.parsed_args.site
-        self.job_url = self.parsed_args.job_url
+        self.url = self.parsed_args.url
         self.origin = self.parsed_args.origin
         self.outfile = self.parsed_args.outfile
 
@@ -186,7 +179,7 @@ class JenkinsCommand(BackendCommand):
             else:
                 base_path = self.parsed_args.cache_path
 
-            cache_path = os.path.join(base_path, self.site)
+            cache_path = os.path.join(base_path, self.url)
 
             cache = Cache(cache_path)
 
@@ -197,13 +190,12 @@ class JenkinsCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = Jenkins(self.site, job_url=self.job_url,
-                               cache=cache, origin=self.origin)
+        self.backend = Jenkins(self.url, cache=cache, origin=self.origin)
 
     def run(self):
         """Fetch and print the Builds.
 
-        This method runs the backend to fetch the Builds of a given site.
+        This method runs the backend to fetch the Builds of a given url.
         Builds are converted to JSON objects and printed to the
         defined output.
         """
@@ -235,9 +227,9 @@ class JenkinsCommand(BackendCommand):
         # Jenkins options
         group = parser.add_argument_group('Jenkins arguments')
 
-        group.add_argument("--site", required=True,
-                           help="Jenkins site (ej: https://build.opnfv.org/ci/)")
-        group.add_argument("--job-url", required=False,
-                           help="Get builds only for this job")
+        # Required arguments
+        parser.add_argument('url',
+                            help="URL of the Jenkins server")
+
 
         return parser
