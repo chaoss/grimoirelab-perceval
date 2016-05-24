@@ -1,0 +1,179 @@
+{
+    "backend_name": "Jenkins",
+    "backend_version": "0.1.0",
+    "data": {
+        "actions": [
+            {
+                "parameters": [
+                    {
+                        "name": "PROJECT",
+                        "value": "apex"
+                    },
+                    {
+                        "name": "GS_BASE",
+                        "value": "artifacts.opnfv.org/$PROJECT"
+                    },
+                    {
+                        "name": "GS_BASE_PROXY",
+                        "value": "build.opnfv.org/artifacts/$PROJECT"
+                    },
+                    {
+                        "name": "ARTIFACT_NAME",
+                        "value": "latest"
+                    },
+                    {
+                        "name": "ARTIFACT_VERSION",
+                        "value": "daily"
+                    },
+                    {
+                        "name": "BUILD_DIRECTORY",
+                        "value": "apex-verify-master/build_output"
+                    },
+                    {
+                        "name": "CACHE_DIRECTORY",
+                        "value": "$HOME/opnfv/cache"
+                    },
+                    {
+                        "name": "GIT_BASE",
+                        "value": "https://gerrit.opnfv.org/gerrit/$PROJECT"
+                    },
+                    {
+                        "name": "GS_URL",
+                        "value": "artifacts.opnfv.org/$PROJECT"
+                    },
+                    {
+                        "name": "DEPLOY_SCENARIO",
+                        "value": "os-onos-nofeature-ha"
+                    },
+                    {
+                        "name": "OPNFV_CLEAN",
+                        "value": "yes"
+                    }
+                ]
+            },
+            {},
+            {
+                "causes": [
+                    {
+                        "shortDescription": "Started by upstream project \"apex-verify-master\" build number 609",
+                        "upstreamBuild": 609,
+                        "upstreamProject": "apex-verify-master",
+                        "upstreamUrl": "job/apex-verify-master/"
+                    }
+                ]
+            },
+            {},
+            {
+                "buildsByBranchName": {
+                    "refs/remotes/origin/master": {
+                        "buildNumber": 107,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "9d3cab8d46e5823fee43a0b6c2f19d5dccfa4c3a",
+                            "branch": [
+                                {
+                                    "SHA1": "9d3cab8d46e5823fee43a0b6c2f19d5dccfa4c3a",
+                                    "name": "refs/remotes/origin/master"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "9d3cab8d46e5823fee43a0b6c2f19d5dccfa4c3a",
+                            "branch": [
+                                {
+                                    "SHA1": "9d3cab8d46e5823fee43a0b6c2f19d5dccfa4c3a",
+                                    "name": "refs/remotes/origin/master"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "9d3cab8d46e5823fee43a0b6c2f19d5dccfa4c3a",
+                    "branch": [
+                        {
+                            "SHA1": "9d3cab8d46e5823fee43a0b6c2f19d5dccfa4c3a",
+                            "name": "refs/remotes/origin/master"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "$GIT_BASE"
+                ],
+                "scmName": ""
+            },
+            {
+                "tags": []
+            },
+            {}
+        ],
+        "artifacts": [],
+        "building": false,
+        "builtOn": "intel-pod7",
+        "changeSet": {
+            "items": [
+                {
+                    "affectedPaths": [
+                        "ci/clean.sh"
+                    ],
+                    "author": {
+                        "absoluteUrl": "https://build.opnfv.org/ci/user/fpan",
+                        "fullName": "fpan"
+                    },
+                    "comment": "Fixes occasional VM stoage deleltion failure\n\nRemoves --remove-all-storage option in ci/clean.sh\n\nJIRA: APEX-121\n\nChange-Id: Ia8063112333d12d09cfb16dd1a02e14551dae7d7\nSigned-off-by: Feng Pan <fpan@redhat.com>\n",
+                    "commitId": "5f38edb9a96df7d5927d9b91039144bf4d5f0912",
+                    "date": "2016-03-24T19:45:56+0000 -0400",
+                    "id": "5f38edb9a96df7d5927d9b91039144bf4d5f0912",
+                    "msg": "Fixes occasional VM stoage deleltion failure",
+                    "paths": [
+                        {
+                            "editType": "edit",
+                            "file": "ci/clean.sh"
+                        }
+                    ],
+                    "timestamp": 1458848756000
+                }
+            ],
+            "kind": "git"
+        },
+        "culprits": [
+            {
+                "absoluteUrl": "https://build.opnfv.org/ci/user/fpan",
+                "description": null,
+                "fullName": "fpan",
+                "id": "fpan",
+                "property": [
+                    {},
+                    {},
+                    {},
+                    {},
+                    {
+                        "insensitiveSearch": false
+                    },
+                    {
+                        "address": "fpan@redhat.com"
+                    },
+                    {}
+                ]
+            }
+        ],
+        "description": null,
+        "displayName": "#107",
+        "duration": 3177872,
+        "estimatedDuration": 3286725,
+        "executor": null,
+        "fullDisplayName": "apex-deploy-virtual-os-onos-nofeature-ha-master #107",
+        "id": "107",
+        "keepLog": false,
+        "number": 107,
+        "queueId": 7729,
+        "result": "SUCCESS",
+        "timestamp": 1458874078582,
+        "url": "https://build.opnfv.org/ci/job/apex-deploy-virtual-os-onos-nofeature-ha-master/107/"
+    },
+    "origin": "https://build.opnfv.org/ci",
+    "perceval_version": "0.1.0",
+    "timestamp": 1464065673.364267,
+    "updated_on": 1458874078.582,
+    "uuid": "7e639ef9a9b205bc49553615d898bc1f4bc48d12"
+}

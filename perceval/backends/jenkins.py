@@ -23,7 +23,6 @@
 import json
 import logging
 import os.path
-import pprint
 
 import requests
 
@@ -45,13 +44,14 @@ class Jenkins(Backend):
     site must be provided.
 
     :param site: Jenkins site
+    :param job_url: Jenkins job from which to get the builds
     :param cache: cache object to store raw data
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `site` value
     """
     version = '0.1.0'
 
-    def __init__(self, site, job_url = None, cache=None, origin=None):
+    def __init__(self, site, job_url=None, cache=None, origin=None):
         origin = origin if origin else site
 
         super().__init__(origin, cache=cache)
@@ -66,22 +66,16 @@ class Jenkins(Backend):
         The method retrieves, from a Jenkins site, the
         builds updated since the given date.
 
-        :param from_date: obtain builds updated since this date
+        :param from_date: Not supported
 
         :returns: a generator of builds
         """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
 
         logger.info("Looking for projects at site '%s'", self.site)
 
         self._purge_cache_queue()
-
-        from_date = datetime_to_utc(from_date)
-
         nbuilds = 0  # number of builds processed
         njobs = 0 # number of jobs processed
-        # jobs_urls = []
 
         if not self.job_url:
             projects = json.loads(self.client.get_jobs())
@@ -92,7 +86,10 @@ class Jenkins(Backend):
         for job in jobs:
             njobs += 1
             logger.debug("Adding builds from %s (%i/%i)" % (job['url'], njobs, len(jobs)))
-            builds = json.loads(self.client.get_builds(job['url']))
+            raw_builds = self.client.get_builds(job['url'])
+            self._push_cache_queue(raw_builds)
+            self._flush_cache_queue()
+            builds = json.loads(raw_builds)
             builds = builds['builds']
             for build in builds:
                 yield build
@@ -116,7 +113,7 @@ class Jenkins(Backend):
         cache_items = self.cache.retrieve()
 
         for items in cache_items:
-            builds = self.parse_builds(items)
+            builds = json.loads(items)['builds']
             for build in builds:
                 yield build
 
@@ -145,7 +142,7 @@ class JenkinsClient:
     This class implements a simple client to retrieve builds from
     projects in a Jenkins node.
 
-    :param site: URL of jenkins node: https://build.opnfv.org/ci/computer/opnfv-jump-1/
+    :param site: URL of jenkins node: https://build.opnfv.org/ci
 
     :raises HTTPError: when an error occurs doing the request
     """
@@ -167,16 +164,7 @@ class JenkinsClient:
         """ Retrieve all builds from a job
         """
         # depth=2 to get builds details
-        url_jenkins = job_url + "/api/json?depth=2"
-
-        req = requests.get(url_jenkins)
-        req.raise_for_status()
-        return req.text
-
-    def get_build(self, build_url):
-        """ Retrieve a build data
-        """
-        url_jenkins = build_url + "/api/json"
+        url_jenkins = job_url + "api/json?depth=2"
 
         req = requests.get(url_jenkins)
         req.raise_for_status()
