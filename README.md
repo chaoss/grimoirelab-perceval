@@ -114,7 +114,7 @@ $ perceval stackexchange --site stackoverflow --tagged python --from-date 2016-0
 
 ### Jenkins
 ```
-$ perceval jenkins "http://example.com"
+$ perceval jenkins "http://jenkins.cyanogenmod.com/"
 ```
 
 ## License
