@@ -30,7 +30,7 @@ import time
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import CacheError
-from ..utils import str_to_datetime, DEFAULT_DATETIME, urljoin
+from ..utils import str_to_datetime, DEFAULT_DATETIME, datetime_to_utc, urljoin
 
 MAX_topics = 100  # Maximum number of posts per query
 
@@ -56,9 +56,10 @@ class Discourse(Backend):
     version = '0.1.0'
 
     def __init__(self, url, token=None,
-                 max_topics=None, cache=None):
+                 max_topics=None, cache=None, origin=None):
+        origin = origin if origin else url
 
-        super().__init__(url, cache=cache)
+        super().__init__(origin, cache=cache)
         self.url = url
         self.max_topics = max_topics
         self.client = DiscourseClient(url, token, max_topics)
@@ -76,6 +77,8 @@ class Discourse(Backend):
         """
         if not from_date:
             from_date = DEFAULT_DATETIME
+        else:
+            from_date = datetime_to_utc(from_date)
 
         logger.info("Looking for topics at url '%s', updated from '%s'",
                     self.url, str(from_date))
@@ -168,7 +171,7 @@ class DiscourseClient:
                    'api_key': self.token}
         return payload
 
-    def get_posts(self, from_date):
+    def get_posts(self, from_date=DEFAULT_DATETIME):
         """Retrieve all the posts updated since a given date.
 
         :param from_date: obtain topics updated since this date
@@ -215,7 +218,7 @@ class DiscourseClient:
                     else:
                         break
 
-    def get_topics_id_list(self, from_date):
+    def get_topics_id_list(self, from_date=DEFAULT_DATETIME):
         """Retrieve all the topics ids updated since a given date.
 
         :param from_date: obtain topics updated since this date
