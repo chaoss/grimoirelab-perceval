@@ -25,10 +25,9 @@
 import json
 import logging
 import os.path
-import requests
+import time
 
-from datetime import datetime
-from time import sleep
+import requests
 
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
@@ -295,18 +294,18 @@ class GitHubClient:
         """ GET HTTP caring of rate limit """
 
         if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
-            seconds_to_reset = (self.rate_limit_reset_ts - datetime.utcnow()).seconds + 1
+            seconds_to_reset = self.rate_limit_reset_ts - int(time.time()) + 1
             cause = "GitHub rate limit exhausted."
             if self.sleep_for_rate:
                 logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
-                sleep(seconds_to_reset)
+                time.sleep(seconds_to_reset)
             else:
                 raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
 
         r = requests.get(url, params=params, headers=headers)
         r.raise_for_status()
         self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
-        self.rate_limit_reset_ts = datetime.fromtimestamp(int(r.headers['X-RateLimit-Reset']))
+        self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
         logger.debug("Rate limit: %s" % (self.rate_limit))
         return r
 
