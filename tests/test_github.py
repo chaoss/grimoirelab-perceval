@@ -37,7 +37,7 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.cache import Cache
-from perceval.errors import BackendError, CacheError, ParseError
+from perceval.errors import BackendError, CacheError
 from perceval.backends.github import GitHub, GitHubCommand, GitHubClient
 
 
@@ -370,16 +370,13 @@ class TestGitHubClient(unittest.TestCase):
         issue_1 = read_file('data/github_issue_1')
         issue_2 = read_file('data/github_issue_2')
 
-        wait = 1
-        now = datetime.datetime.utcnow().timestamp() + wait
-        reset = str(now).split('.')[0]
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
                                body=issue_1,
                                status=200,
                                forcing_headers={
-                                    'X-RateLimit-Remaining': '0',
-                                    'X-RateLimit-Reset': reset,
+                                    'X-RateLimit-Remaining': '20',
+                                    'X-RateLimit-Reset': '15',
                                     'Link': '<'+GITHUB_ISSUES_URL+'/?&page=2>; rel="next", <'+GITHUB_ISSUES_URL+'/?&page=3>; rel="last"'
                                })
         httpretty.register_uri(httpretty.GET,
@@ -391,14 +388,10 @@ class TestGitHubClient(unittest.TestCase):
                                     'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=True)
+        client = GitHubClient("zhquan_example", "repo", "aaa")
 
-        before = datetime.datetime.utcnow()
         issues = [issues for issues in client.get_issues()]
-        after = datetime.datetime.utcnow()
-        dif = int(str(after-before).split('.')[0].split(':')[-1])
 
-        self.assertGreaterEqual(dif, wait)
         self.assertEqual(len(issues), 2)
         self.assertEqual(issues[0], issue_1)
         self.assertEqual(issues[1], issue_2)
@@ -432,7 +425,7 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
 
         raw_issues = [issues for issues in client.get_issues()]
-        self.assertEqual(raw_issues[0], '[]\n')
+        self.assertEqual(raw_issues[0], issue)
 
         # Check requests
         expected = {
@@ -513,19 +506,75 @@ class TestGitHubClient(unittest.TestCase):
         self.assertDictEqual(httpretty.last_request().querystring, expected)
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
 
+    @httpretty.activate
+    def test_sleep_for_rate(self):
+        """ Test get_page_issue API call """
+
+        issue_1 = read_file('data/github_empty_request')
+        issue_2 = read_file('data/github_empty_request')
+
+        wait = 1
+        now = datetime.datetime.utcnow().timestamp() + wait
+        reset = str(now).split('.')[0]
+        
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=issue_1,
+                               status=200,
+                               forcing_headers={
+                                    'X-RateLimit-Remaining': '0',
+                                    'X-RateLimit-Reset': reset,
+                                    'Link': '<'+GITHUB_ISSUES_URL+'/?&page=2>; rel="next", <'+GITHUB_ISSUES_URL+'/?&page=3>; rel="last"'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL+'/?&page=2',
+                               body=issue_2,
+                               status=200,
+                               forcing_headers={
+                                    'X-RateLimit-Remaining': '20',
+                                    'X-RateLimit-Reset': '15'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=True)
+
+        before = time.time()
+        issues = [issues for issues in client.get_issues()]
+        after = time.time()
+        dif = int(str(after-before).split('.')[0])
+
+        self.assertGreaterEqual(dif, wait)
+        self.assertEqual(len(issues), 2)
+        self.assertEqual(issues[0], issue_1)
+        self.assertEqual(issues[1], issue_2)
+
+        # Check requests
+        expected = {
+                     'per_page': ['30'],
+                     'page': ['2'],
+                     'state': ['all'],
+                     'direction': ['asc'],
+                     'sort': ['updated']
+                   }
+
+        self.assertDictEqual(httpretty.last_request().querystring, expected)
+        self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
+
 class TestGitHubCommand(unittest.TestCase):
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
         args = ['--owner', 'zhquan_example',
                 '--repository', 'repo',
-                '--sleep-for-rate']
+                '--sleep-for-rate',
+                '--min-rate-to-sleep', '1']
 
         cmd = GitHubCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.owner, "zhquan_example")
         self.assertEqual(cmd.parsed_args.repository, "repo")
         self.assertEqual(cmd.parsed_args.sleep_for_rate, True)
+        self.assertEqual(cmd.parsed_args.min_rate_to_sleep, 1)
+
 
     @httpretty.activate
     def test_argument_parser(self):
