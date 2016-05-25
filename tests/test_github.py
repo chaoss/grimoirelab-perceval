@@ -514,9 +514,8 @@ class TestGitHubClient(unittest.TestCase):
         issue_2 = read_file('data/github_empty_request')
 
         wait = 1
-        now = datetime.datetime.utcnow().timestamp() + wait
-        reset = str(now).split('.')[0]
-
+        reset = int(time.time() + wait)
+        
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
                                body=issue_1,
@@ -537,10 +536,10 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=True)
 
-        before = time.time()
+        before = int(time.time())
         issues = [issues for issues in client.get_issues()]
-        after = time.time()
-        dif = int(str(after-before).split('.')[0])
+        after = int(time.time())
+        dif = after-before
 
         self.assertGreaterEqual(dif, wait)
         self.assertEqual(len(issues), 2)
