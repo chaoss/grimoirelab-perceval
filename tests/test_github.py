@@ -38,7 +38,7 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import BackendError, CacheError
-from perceval.backends.github import GitHub, GitHubCommand, GitHubClient
+from perceval.backends.github import GitHub, GitHubCommand, GitHubClient, RateLimitError
 
 
 GITHUB_API_URL = "https://api.github.com"
@@ -516,7 +516,7 @@ class TestGitHubClient(unittest.TestCase):
         wait = 1
         now = datetime.datetime.utcnow().timestamp() + wait
         reset = str(now).split('.')[0]
-        
+
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
                                body=issue_1,
@@ -551,6 +551,38 @@ class TestGitHubClient(unittest.TestCase):
         expected = {
                      'per_page': ['30'],
                      'page': ['2'],
+                     'state': ['all'],
+                     'direction': ['asc'],
+                     'sort': ['updated']
+                   }
+
+        self.assertDictEqual(httpretty.last_request().querystring, expected)
+        self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
+
+    @httpretty.activate
+    def test_rate_limit_error(self):
+        """ Test get_page_issue API call """
+
+        issue = read_file('data/github_empty_request')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=issue,
+                               status=200,
+                               forcing_headers={
+                                    'X-RateLimit-Remaining': '0',
+                                    'X-RateLimit-Reset': '0',
+                                    'Link': '<'+GITHUB_ISSUES_URL+'/?&page=2>; rel="next", <'+GITHUB_ISSUES_URL+'/?&page=3>; rel="last"'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=False)
+
+        with self.assertRaises(RateLimitError):
+            _ = [issues for issues in client.get_issues()]
+
+        # Check requests
+        expected = {
+                     'per_page': ['30'],
                      'state': ['all'],
                      'direction': ['asc'],
                      'sort': ['updated']
