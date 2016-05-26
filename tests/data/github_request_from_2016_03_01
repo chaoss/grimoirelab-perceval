@@ -1,0 +1,48 @@
+[
+  {
+    "url": "https://api.github.com/repos/zhquan_example/repo/issues/2",
+    "repository_url": "https://api.github.com/repos/zhquan_example/repo",
+    "labels_url": "https://api.github.com/repos/zhquan_example/repo/issues/2/labels{/name}",
+    "comments_url": "https://api.github.com/repos/zhquan_example/repo/issues/2/comments",
+    "events_url": "https://api.github.com/repos/zhquan_example/repo/issues/2/events",
+    "html_url": "https://github.com/zhquan_example/repo/pull/2",
+    "id": 2,
+    "number": 2,
+    "title": "Title 2",
+    "user": {
+      "login": "zhquan_example",
+      "id": 2,
+      "avatar_url": "",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/zhquan_example",
+      "html_url": "https://github.com/zhquan_example",
+      "followers_url": "https://api.github.com/users/zhquan_example/followers",
+      "following_url": "https://api.github.com/users/zhquan_example/following{/other_user}",
+      "gists_url": "https://api.github.com/users/zhquan_example/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/zhquan_example/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/zhquan_example/subscriptions",
+      "organizations_url": "https://api.github.com/users/zhquan_example/orgs",
+      "repos_url": "https://api.github.com/users/zhquan_example/repos",
+      "events_url": "https://api.github.com/users/zhquan_example/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/zhquan_example/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "labels": [],
+    "state": "closed",
+    "locked": false,
+    "assignee": null,
+    "milestone": null,
+    "comments": 4,
+    "created_at": "2016-03-01T07:10:24Z",
+    "updated_at": "2016-03-01T12:13:21Z",
+    "closed_at": "2016-04-01T12:13:21Z",
+    "pull_request": {
+      "url": "https://api.github.com/repos/zhquan_example/repo/pulls/2",
+      "html_url": "https://github.com/zhquan_example/repo/pull/2",
+      "diff_url": "https://github.com/zhquan_example/repo/pull/2.diff",
+      "patch_url": "https://github.com/zhquan_example/repo/pull/2.patch"
+    },
+    "body": "Body"
+  }
+]
