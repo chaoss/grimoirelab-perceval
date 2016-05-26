@@ -1,0 +1,95 @@
+{
+    "batchcomplete": "",
+    "query": {
+        "general": {
+            "allcentralidlookupproviders": [
+                "CentralAuth",
+                "local"
+            ],
+            "articlepath": "/wiki/$1",
+            "base": "https://www.mediawiki.org/wiki/MediaWiki",
+            "case": "first-letter",
+            "centralidlookupprovider": "CentralAuth",
+            "dbtype": "mysql",
+            "dbversion": "10.0.22-MariaDB-log",
+            "extensiondistributor": {
+                "list": "https://gerrit.wikimedia.org/mediawiki-extensions.txt",
+                "snapshots": [
+                    "master",
+                    "REL1_27",
+                    "REL1_26",
+                    "REL1_25",
+                    "REL1_23"
+                ]
+            },
+            "fallback": [],
+            "fallback8bitEncoding": "windows-1252",
+            "favicon": "//www.mediawiki.org/static/favicon/mediawiki.ico",
+            "generator": "MediaWiki 1.28.0-wmf.7",
+            "git-branch": "wmf/1.28.0-wmf.7",
+            "git-hash": "e90c216404ffb3768e59ab6db4792897cfd395f2",
+            "hhvmversion": "3.12.1",
+            "imagelimits": [
+                {
+                    "height": 240,
+                    "width": 320
+                },
+                {
+                    "height": 480,
+                    "width": 640
+                },
+                {
+                    "height": 600,
+                    "width": 800
+                },
+                {
+                    "height": 768,
+                    "width": 1024
+                },
+                {
+                    "height": 1024,
+                    "width": 1280
+                }
+            ],
+            "imagewhitelistenabled": "",
+            "interwikimagic": "",
+            "invalidusernamechars": "@:",
+            "lang": "en",
+            "langconversion": "",
+            "legaltitlechars": " %!\"$&'()*,\\-.\\/0-9:;=?@A-Z\\\\^_`a-z~\\x80-\\xFF+",
+            "linkprefix": "",
+            "linkprefixcharset": "",
+            "linktrail": "/^([a-z]+)(.*)$/sD",
+            "logo": "//www.mediawiki.org/static/images/project-logos/mediawikiwiki.png",
+            "mainpage": "MediaWiki",
+            "maxuploadsize": 4294967296,
+            "minuploadchunksize": 1024,
+            "misermode": "",
+            "phpsapi": "srv",
+            "phpversion": "5.6.99-hhvm",
+            "script": "/w/index.php",
+            "scriptpath": "/w",
+            "server": "//www.mediawiki.org",
+            "servername": "www.mediawiki.org",
+            "sitename": "MediaWiki",
+            "thumblimits": [
+                120,
+                150,
+                180,
+                200,
+                220,
+                250,
+                300,
+                400
+            ],
+            "time": "2016-06-23T11:43:47Z",
+            "timeoffset": 0,
+            "timezone": "UTC",
+            "titleconversion": "",
+            "uploadsenabled": "",
+            "variantarticlepath": false,
+            "wikiid": "mediawikiwiki",
+            "writeapi": ""
+        }
+    }
+}

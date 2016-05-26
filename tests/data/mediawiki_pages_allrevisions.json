@@ -1,0 +1,40 @@
+{
+    "batchcomplete": "",
+    "continue": {
+        "arvcontinue": null,
+        "continue": "-||"
+    },
+    "limits": {
+        "allrevisions": 500
+    },
+    "query": {
+        "allrevisions": [
+            {
+                "ns": 0,
+                "pageid": 592384,
+                "revisions": [
+                    {
+                        "parentid": 2169561,
+                        "revid": 2169840
+                    }
+                ],
+                "title": "Technical Collaboration Guideline/Translation"
+            },
+            {
+                "ns": 0,
+                "pageid": 476583,
+                "revisions": [
+                    {
+                        "parentid": 2169554,
+                        "revid": 2169844
+                    },
+                    {
+                        "parentid": 2169844,
+                        "revid": 2170296
+                    }
+                ],
+                "title": "VisualEditor:Test"
+            }
+        ]
+    }
+}

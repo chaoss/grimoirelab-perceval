@@ -1,0 +1,31 @@
+{
+    "batchcomplete": "",
+    "limits": {
+        "revisions": 500
+    },
+    "query": {
+        "pages": {
+            "592384": {
+                "ns": 0,
+                "pageid": 592384,
+                "revisions": [
+                    {
+                        "comment": "link to phab",
+                        "parentid": 2169561,
+                        "revid": 2169840,
+                        "timestamp": "2016-06-22T01:05:37Z",
+                        "user": "Keegan (WMF)"
+                    },
+                    {
+                        "comment": "placeholder",
+                        "parentid": 0,
+                        "revid": 2169561,
+                        "timestamp": "2016-06-21T17:16:29Z",
+                        "user": "Keegan (WMF)"
+                    }
+                ],
+                "title": "Technical Collaboration Guideline/Translation"
+            }
+        }
+    }
+}

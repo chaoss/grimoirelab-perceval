@@ -50,6 +50,7 @@ are:
     jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
     mbox             Fetch messages from MBox files
+    mediawiki        Fetch pages and revisions from a MediaWiki site
     pipermail        Fetch messages from a Pipermail archiver
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files

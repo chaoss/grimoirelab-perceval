@@ -1,0 +1,14 @@
+{
+    "batchcomplete": "",
+    "continue": {
+        "arvcontinue": null,
+        "continue": "-||"
+    },
+    "limits": {
+        "allrevisions": 500
+    },
+    "query": {
+        "allrevisions": [
+        ]
+    }
+}

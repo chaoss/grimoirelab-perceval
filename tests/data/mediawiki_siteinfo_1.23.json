@@ -1,0 +1,70 @@
+{
+    "query": {
+        "general": {
+            "articlepath": "/$1",
+            "base": "https://wiki.mozilla.org/Main_Page",
+            "case": "first-letter",
+            "dbtype": "mysql",
+            "dbversion": "5.6.30-log",
+            "externalimages": [
+                ""
+            ],
+            "fallback": [],
+            "fallback8bitEncoding": "windows-1252",
+            "favicon": "https://wiki.mozilla.org/assets/favicon.ico",
+            "generator": "MediaWiki 1.23.14",
+            "imagelimits": [
+                {
+                    "height": 240,
+                    "width": 320
+                },
+                {
+                    "height": 480,
+                    "width": 640
+                },
+                {
+                    "height": 600,
+                    "width": 800
+                },
+                {
+                    "height": 768,
+                    "width": 1024
+                },
+                {
+                    "height": 1024,
+                    "width": 1280
+                }
+            ],
+            "lang": "en",
+            "langconversion": "",
+            "linkprefix": "",
+            "linkprefixcharset": "",
+            "linktrail": "/^([a-z]+)(.*)$/sD",
+            "logo": "https://wiki.mozilla.org/assets/logos/mozilla-wiki-logo-alt-135px.png",
+            "mainpage": "Main Page",
+            "maxuploadsize": 104857600,
+            "minuploadchunksize": 1024,
+            "phpsapi": "apache2handler",
+            "phpversion": "5.3.3",
+            "script": "/index.php",
+            "scriptpath": "",
+            "server": "https://wiki.mozilla.org",
+            "sitename": "MozillaWiki",
+            "thumblimits": [
+                120,
+                150,
+                180,
+                200,
+                250,
+                300
+            ],
+            "time": "2016-06-23T11:44:52Z",
+            "timeoffset": -420,
+            "timezone": "America/Los_Angeles",
+            "titleconversion": "",
+            "variantarticlepath": false,
+            "wikiid": "wiki_mozilla_org",
+            "writeapi": ""
+        }
+    }
+}

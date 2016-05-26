@@ -21,6 +21,7 @@ are:
     jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
     mbox             Fetch messages from MBox files
+    mediawiki        Fetch pages and revisions from a MediaWiki site
     pipermail        Fetch messages from a Pipermail archiver
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
@@ -137,6 +138,11 @@ $ perceval jira 'https://tickets.puppetlabs.com' --project PUP --from-date '2016
 ### MBox
 ```
 $ perceval mbox 'http://example.com' /tmp/mboxes/
+```
+
+### MediaWiki
+```
+$ perceval mediawiki 'https://wiki.mozilla.org' --from-date '2016-06-30'
 ```
 
 ### Pipermail
