@@ -12,6 +12,7 @@ Repositories are reached using specific backends. The most common backends
 are:
 
     bugzilla         Fetch bugs from a Bugzilla server
+    discourse        Fetch posts from Discourse site
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from a Git log file
     github           Fetch issues from GitHub
@@ -58,6 +59,11 @@ Documentation is generated automagically in the [ReadTheDocs Perceval site](http
 ### Bugzilla
 ```
 $ perceval bugzilla https://bugzilla.redhat.com/ --backend-user user --backend-password pass --from-date '2016-01-01'
+```
+
+### Discourse
+```
+$ perceval discourse http://foro.mozilla-hispano.org --from-date '2016-01-01'
 ```
 
 ### Git
