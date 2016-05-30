@@ -44,6 +44,8 @@ DISCOURSE_SERVER_URL = 'http://talk.manageiq.org'
 DISCOURSE_POSTS_URL = DISCOURSE_SERVER_URL+'/latest.json'
 DISCOURSE_POSTS_TOPIC_URL_1 = DISCOURSE_SERVER_URL+"/t/1448.json"
 DISCOURSE_POSTS_TOPIC_URL_2 = DISCOURSE_SERVER_URL+"/t/1449.json"
+DISCOURSE_POSTS_TOPIC_URL_3 = DISCOURSE_SERVER_URL+"/posts/21.json"
+DISCOURSE_POSTS_TOPIC_URL_4 = DISCOURSE_SERVER_URL+"/posts/22.json"
 
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
@@ -115,7 +117,7 @@ class TestDiscourseBackend(unittest.TestCase):
 
         # Test fetch posts from topics list
         discourse = Discourse(DISCOURSE_SERVER_URL)
-        posts = [build for build in discourse.fetch()]
+        posts = [post for post in discourse.fetch()]
         self.assertEqual(len(posts), 8)
 
         with open("data/discourse_post.json") as post_json:
@@ -179,7 +181,7 @@ class TestDiscourseBackend(unittest.TestCase):
 
         # Test fetch posts from topics list
         discourse = Discourse(DISCOURSE_SERVER_URL)
-        posts = [build for build in discourse.fetch(from_date=from_date)]
+        posts = [post for post in discourse.fetch(from_date=from_date)]
         self.assertEqual(len(posts), 6)
 
         # Test metadata
@@ -203,9 +205,75 @@ class TestDiscourseBackend(unittest.TestCase):
                                body=body, status=200)
 
         discourse = Discourse(DISCOURSE_SERVER_URL)
-        posts = [build for build in discourse.fetch()]
+        posts = [post for post in discourse.fetch()]
 
         self.assertEqual(len(posts), 0)
+
+    @httpretty.activate
+    def test_fetch_chunk(self):
+        """Test whether a list of posts chunked is returned"""
+
+        requests_http = []
+
+        bodies_topics = read_file('data/discourse_topics.json')
+        bodies_posts = read_file('data/discourse_posts_chunk.json')
+        bodies_post = read_file('data/discourse_post_raw.json')
+
+        def request_callback(method, uri, headers):
+            if uri.startswith(DISCOURSE_POSTS_URL):
+                body = bodies_topics
+            elif uri.startswith(DISCOURSE_POSTS_TOPIC_URL_1) or \
+                 uri.startswith(DISCOURSE_POSTS_TOPIC_URL_2):
+                body = bodies_posts
+            elif uri.startswith(DISCOURSE_POSTS_TOPIC_URL_3) or \
+                 uri.startswith(DISCOURSE_POSTS_TOPIC_URL_4):
+                body = bodies_post
+            else:
+                body = ''
+
+            requests_http.append(httpretty.last_request())
+
+            return (200, headers, body)
+
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POSTS_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(1)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POSTS_TOPIC_URL_1,
+                               responses=[
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(1)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POSTS_TOPIC_URL_2,
+                               responses=[
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(1)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POSTS_TOPIC_URL_3,
+                               responses=[
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(1)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POSTS_TOPIC_URL_4,
+                               responses=[
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(1)
+                               ])
+
+
+        # Test fetch posts from topics list
+        discourse = Discourse(DISCOURSE_SERVER_URL)
+        posts = [post for post in discourse.fetch()]
+        chunck_size = 20
+        chunck_extra_posts = 2
+        self.assertEqual(len(posts), (chunck_size+chunck_extra_posts)*2)
+
 
 class TestDiscourseBackendCache(unittest.TestCase):
     """Discourse backend tests using a cache"""
@@ -258,24 +326,24 @@ class TestDiscourseBackendCache(unittest.TestCase):
         cache = Cache(self.tmp_path)
         discourse = Discourse(DISCOURSE_SERVER_URL, cache=cache)
 
-        posts = [build for build in discourse.fetch()]
+        posts = [post for post in discourse.fetch()]
 
         # Now, we get the posts from the cache.
         # The contents should be the same and there won't be
         # any new request to the server
-        cached_posts = [build for build in discourse.fetch_from_cache()]
+        cached_posts = [post for post in discourse.fetch_from_cache()]
         self.assertEqual(len(cached_posts), len(posts))
 
         with open("data/discourse_post.json") as post_json:
-            first_build = json.load(post_json)
-            self.assertDictEqual(cached_posts[0]['data'], first_build['data'])
+            first_post = json.load(post_json)
+            self.assertDictEqual(cached_posts[0]['data'], first_post['data'])
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any posts returned when the cache is empty"""
 
         cache = Cache(self.tmp_path)
         discourse = Discourse(DISCOURSE_SERVER_URL, cache=cache)
-        cached_posts = [build for build in discourse.fetch_from_cache()]
+        cached_posts = [post for post in discourse.fetch_from_cache()]
         self.assertEqual(len(cached_posts), 0)
 
     def test_fetch_from_non_set_cache(self):
@@ -284,7 +352,7 @@ class TestDiscourseBackendCache(unittest.TestCase):
         discourse = Discourse(DISCOURSE_SERVER_URL)
 
         with self.assertRaises(CacheError):
-            _ = [build for build in discourse.fetch_from_cache()]
+            _ = [post for post in discourse.fetch_from_cache()]
 
 
 class TestDiscourseCommand(unittest.TestCase):
