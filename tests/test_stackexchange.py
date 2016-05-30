@@ -187,7 +187,7 @@ class TestStackExchangeBackendParsers(unittest.TestCase):
     def test_parse_questions(self):
         """Test question parsing"""
 
-        raw_parse = read_file('data/stackexchange_question')
+        raw_parse = read_file('data/stackexchange_question_page')
         parse = read_file('data/stackexchange_question_parse')
         parse = json.loads(parse)
 
@@ -195,7 +195,8 @@ class TestStackExchangeBackendParsers(unittest.TestCase):
 
         result = [question for question in questions]
 
-        self.assertDictEqual(result[0], parse)
+        self.assertDictEqual(result[0], parse[0])
+        self.assertDictEqual(result[1], parse[1])
 
 class TestStackExchangeClient(unittest.TestCase):
     """StackExchange API client tests"""
@@ -226,7 +227,10 @@ class TestStackExchangeClient(unittest.TestCase):
 
         self.assertEqual(len(raw_questions), 1)
         self.assertEqual(raw_questions[0], question)
-        self.assertDictEqual(httpretty.last_request().querystring, payload)
+
+        request = httpretty.last_request().querystring
+        self.assertTrue(len(request), 1)
+        self.assertDictEqual(request, payload)
 
     @httpretty.activate
     def test_get_question_empty(self):
