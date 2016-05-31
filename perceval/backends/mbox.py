@@ -60,7 +60,7 @@ class MBox(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `uri`
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
@@ -86,9 +86,19 @@ class MBox(Backend):
         logger.info("Looking for messages from '%s' on '%s' since %s",
                     self.uri, self.dirpath, str(from_date))
 
-        from_date = datetime_to_utc(from_date)
-
         mailing_list = MailingList(self.uri, self.dirpath)
+
+        messages = self._fetch_and_parse_messages(mailing_list, from_date)
+
+        for message in messages:
+            yield message
+
+        logger.info("Fetch process completed")
+
+    def _fetch_and_parse_messages(self, mailing_list, from_date):
+        """Fetch and parse the messages from a mailing list"""
+
+        from_date = datetime_to_utc(from_date)
 
         nmsgs, imsgs, tmsgs = (0, 0, 0)
 
@@ -129,7 +139,7 @@ class MBox(Backend):
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
 
-        logger.info("Fetch process completed: %s/%s messages fetched; %s ignored",
+        logger.info("Done. %s/%s messages fetched; %s ignored",
                     nmsgs, tmsgs, imsgs)
 
     def _copy_mbox(self, mbox):

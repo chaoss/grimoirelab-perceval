@@ -17,6 +17,7 @@ are:
     github           Fetch issues from GitHub
     jira             Fetch issues from JIRA issue tracker
     mbox             Fetch messages from MBox files
+    pipermail        Fetch messages from a Pipermail archiver
     stackexchange    Fetch questions from StackExchange sites
     jenkins          Fetch builds from Jenkins sites
 
@@ -105,6 +106,11 @@ $ perceval jira "https://tickets.puppetlabs.com" --project PUP --from-date '2016
 ### MBox
 ```
 $ perceval mbox "http://example.com" /tmp/mboxes/
+```
+
+### Pipermail
+```
+$ perceval pipermail "https://mail.gnome.org/archives/libart-hackers/"
 ```
 
 ### StackExchange

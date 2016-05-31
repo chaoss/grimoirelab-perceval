@@ -46,6 +46,7 @@ are:
     github           Fetch issues from GitHub
     jira             Fetch issues from JIRA issue tracker
     mbox             Fetch messages from MBox files
+    pipermail        Fetch messages from a Pipermail archiver
     stackexchange    Fetch questions from StackExchange sites
 
 optional arguments:
