@@ -27,6 +27,7 @@ from .github import GitHub, GitHubCommand
 from .jenkins import Jenkins, JenkinsCommand
 from .jira import Jira, JiraCommand
 from .mbox import MBox, MBoxCommand
+from .pipermail import Pipermail, PipermailCommand
 from .stackexchange import StackExchange, StackExchangeCommand
 
 
@@ -38,6 +39,7 @@ PERCEVAL_BACKENDS = {
                      'jenkins'       : Jenkins,
                      'jira'          : Jira,
                      'mbox'          : MBox,
+                     'pipermail'     : Pipermail,
                      'stackexchange' : StackExchange
                     }
 PERCEVAL_CMDS = {
@@ -48,5 +50,6 @@ PERCEVAL_CMDS = {
                  'jenkins'       : JenkinsCommand,
                  'jira'          : JiraCommand,
                  'mbox'          : MBoxCommand,
+                 'pipermail'     : PipermailCommand,
                  'stackexchange' : StackExchangeCommand
                 }
