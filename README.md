@@ -15,11 +15,11 @@ are:
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from a Git log file
     github           Fetch issues from GitHub
+    jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
     mbox             Fetch messages from MBox files
     pipermail        Fetch messages from a Pipermail archiver
     stackexchange    Fetch questions from StackExchange sites
-    jenkins          Fetch builds from Jenkins sites
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -40,7 +40,7 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 ## Installation
 
 ```
-$ pip install -r requirements
+$ pip install -r requirements.txt
 $ python3 setup.py install
 ```
 
@@ -58,7 +58,22 @@ Documentation is generated automagically in the [ReadTheDocs Perceval site](http
 
 ### Bugzilla
 ```
-$ perceval bugzilla https://bugzilla.redhat.com/ --backend-user user --backend-password pass --from-date '2016-01-01'
+$ perceval bugzilla 'https://bugzilla.redhat.com/' --backend-user user --backend-password pass --from-date '2016-01-01'
+```
+
+### Gerrit
+To run gerrit, you will need an authorized SSH private key:
+
+```
+$ eval `ssh-agent -s`
+$ ssh-add ~/.ssh/id_rsa
+Identity added: /home/user/.ssh/id_rsa (/home/user/.ssh/id_rsa)
+```
+
+To run the backend, execute the next command:
+
+```
+$ perceval gerrit --user user --url 'review.openstack.org' --from-date '2016-01-01'
 ```
 
 ### Git
@@ -78,49 +93,34 @@ Then, to run the backend, just execute the next command:
 $ perceval git /tmp/gitlog.log
 ```
 
-### Gerrit
-To run gerrit, you will need an authorized SSH private key:
-
-```
-$ eval `ssh-agent -s`
-$ ssh-add ~/.ssh/id_rsa
-Identity added: /home/user/.ssh/id_rsa (/home/user/.ssh/id_rsa)
-```
-
-To run the backend, execute the next command:
-
-```
-$ perceval gerrit --user user --url review.openstack.org --from-date '2016-01-01'
-```
-
 ### GitHub
 ```
 $ perceval github --owner elastic --repository filebeat --from-date '2016-01-01'
 ```
 
+### Jenkins
+```
+$ perceval jenkins 'http://jenkins.cyanogenmod.com/'
+```
+
 ### JIRA
 ```
-$ perceval jira "https://tickets.puppetlabs.com" --project PUP --from-date '2016-01-01'
+$ perceval jira 'https://tickets.puppetlabs.com' --project PUP --from-date '2016-01-01'
 ```
 
 ### MBox
 ```
-$ perceval mbox "http://example.com" /tmp/mboxes/
+$ perceval mbox 'http://example.com' /tmp/mboxes/
 ```
 
 ### Pipermail
 ```
-$ perceval pipermail "https://mail.gnome.org/archives/libart-hackers/"
+$ perceval pipermail 'https://mail.gnome.org/archives/libart-hackers/'
 ```
 
 ### StackExchange
 ```
 $ perceval stackexchange --site stackoverflow --tagged python --from-date 2016-01-01 --token abcdabcdabcdabcd
-```
-
-### Jenkins
-```
-$ perceval jenkins "http://jenkins.cyanogenmod.com/"
 ```
 
 ## License
