@@ -31,8 +31,10 @@ import bs4
 import dateutil
 import requests
 
-from .mbox import MailingList
+from .mbox import MBox, MailingList
+from ..backend import metadata
 from ..utils import (DEFAULT_DATETIME,
+                     datetime_to_utc,
                      urljoin)
 
 
@@ -44,6 +46,53 @@ PIPERMAIL_COMPRESSED_TYPES = ['.gz', '.bz2', '.zip',
                               '.tgz', '.tbz']
 PIPERMAIL_ACCEPTED_TYPES = ['.mbox', '.txt']
 PIPERMAIL_TYPES = PIPERMAIL_COMPRESSED_TYPES + PIPERMAIL_ACCEPTED_TYPES
+
+
+class Pipermail(MBox):
+    """Pipermail backend.
+
+    This class allows the fetch the email messages stored on a Pipermail
+    archiver. Initialize this class passing the URL where the archiver is
+    and the directory path where the mbox files will be fetched and
+    stored.
+
+    :param url: URL to the Pipermail archiver
+    :param dirpath: directory path where the mboxes are stored
+    :param cache: cache object to store raw data
+    :param origin: identifier of the repository; when `None` or an
+        empty string are given, it will be set to `url`
+    """
+    version = '0.1.0'
+
+    def __init__(self, url, dirpath, cache=None, origin=None):
+        origin = origin if origin else url
+
+        super().__init__(url, dirpath, cache=cache, origin=origin)
+        self.url = url
+
+    @metadata
+    def fetch(self, from_date=DEFAULT_DATETIME):
+        """Fetch the messages from the Pipermail archiver.
+
+        The method fetches the mbox files from a remote Pipermail
+        archiver and retrieves the messages stored on them.
+
+        :param from_date: obtain messages since this date
+
+        :returns: a generator of messages
+        """
+        logger.info("Looking for messages from '%s' since %s",
+                    self.url, str(from_date))
+
+        mailing_list = PipermailList(self.url, self.dirpath)
+        mailing_list.fetch(from_date=from_date)
+
+        messages = self._fetch_and_parse_messages(mailing_list, from_date)
+
+        for message in messages:
+            yield message
+
+        logger.info("Fetch process completed")
 
 
 class PipermailList(MailingList):
