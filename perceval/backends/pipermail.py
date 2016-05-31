@@ -24,6 +24,7 @@
 #
 
 import datetime
+import json
 import logging
 import os
 
@@ -32,9 +33,10 @@ import dateutil
 import requests
 
 from .mbox import MBox, MailingList
-from ..backend import metadata
+from ..backend import BackendCommand, metadata
 from ..utils import (DEFAULT_DATETIME,
                      datetime_to_utc,
+                     str_to_datetime,
                      urljoin)
 
 
@@ -93,6 +95,64 @@ class Pipermail(MBox):
             yield message
 
         logger.info("Fetch process completed")
+
+
+class PipermailCommand(BackendCommand):
+    """Class to run Pipermail backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.url = self.parsed_args.url
+        self.outfile = self.parsed_args.outfile
+        self.origin = self.parsed_args.origin
+        self.from_date = str_to_datetime(self.parsed_args.from_date)
+
+        if not self.parsed_args.mboxes_path:
+            base_path = os.path.expanduser('~/.perceval/mailinglists/')
+            self.mboxes_path = os.path.join(base_path, self.url)
+        else:
+            self.mboxes_path = self.parsed_args.mboxes_path
+
+        cache = None
+
+        self.backend = Pipermail(self.url, self.mboxes_path,
+                                 cache=cache, origin=self.origin)
+
+    def run(self):
+        """Fetch and print the email messages.
+
+        This method runs the backend to fetch the email messages from
+        the given archiver. Messages are converted to JSON objects
+        and printed to the defined output.
+        """
+        messages = self.backend.fetch(from_date=self.from_date)
+
+        try:
+            for message in messages:
+                obj = json.dumps(message, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the Pipermail argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # Optional arguments
+        parser.add_argument('--mboxes-path', dest='mboxes_path',
+                            help='Path where mbox files will be stored')
+
+        # Required arguments
+        parser.add_argument('url',
+                            help='URL of the archiver')
+
+        return parser
 
 
 class PipermailList(MailingList):

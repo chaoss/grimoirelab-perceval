@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
 import datetime
 import os
 import shutil
@@ -33,7 +34,9 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.backends.mbox import MailingList
-from perceval.backends.pipermail import PipermailList, Pipermail
+from perceval.backends.pipermail import (Pipermail,
+                                         PipermailCommand,
+                                         PipermailList)
 
 
 PIPERMAIL_URL = 'http://example.com/'
@@ -322,6 +325,30 @@ class TestPipermailBackend(unittest.TestCase):
         messages = [m for m in backend.fetch()]
 
         self.assertListEqual(messages, [])
+
+
+class TestPipermailCommand(unittest.TestCase):
+    """Tests for PipermailCommand class"""
+
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['http://example.com/',
+                '--mboxes-path', '/tmp/perceval/',
+                '--origin', 'test']
+
+        cmd = PipermailCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.url, 'http://example.com/')
+        self.assertEqual(cmd.parsed_args.mboxes_path, '/tmp/perceval/')
+        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertIsInstance(cmd.backend, Pipermail)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = PipermailCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 if __name__ == "__main__":
