@@ -17,7 +17,9 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 # Authors:
-#   J. Manrique López de la Fuente <jsmanrique@bitergia.com>
+#    J. Manrique López de la Fuente <jsmanrique@bitergia.com>
+#    Santiago Dueñas <sduenas@bitergia.com>
+#    Alvaro del Castillo San Felix <acs@bitergia.com>
 #
 
 import json
@@ -25,38 +27,38 @@ import logging
 import os.path
 
 import requests
-import time
 
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
 from ..errors import CacheError
-from ..utils import str_to_datetime, DEFAULT_DATETIME, datetime_to_utc, urljoin
+from ..utils import (DEFAULT_DATETIME,
+                     datetime_to_utc,
+                     str_to_datetime,
+                     urljoin)
+
 
 MAX_topics = 100  # Maximum number of posts per query
 
 logger = logging.getLogger(__name__)
 
 
-#def get_update_time(item):
-#    """Extracts the update time from a Discourse item"""
-#    return item['updated_at']
-
-
 class Discourse(Backend):
     """Discourse backend for Perceval.
 
-    This class retrieves the posts stored in any of the
-    Discourse urls. To initialize this class the
-    url must be provided.
+    This class retrieves the posts stored in a Discourse board.
+    To initialize this class the URL must be provided.
 
-    :param url: Discourse url
-    :param token: Discourse access_token for the API
+    :param url: Discourse URL
+    :param token: Discourse API access token
+    :param max_topics: maximum number of topics to fetch on a single request
     :param cache: cache object to store raw data
+    :param origin: identifier of the repository; when `None` or an
+        empty string are given, it will be set to `url` value
     """
     version = '0.1.0'
 
-    def __init__(self, url, token=None,
-                 max_topics=None, cache=None, origin=None):
+    def __init__(self, url, token=None, max_topics=None,
+                 cache=None, origin=None):
         origin = origin if origin else url
 
         super().__init__(origin, cache=cache)
@@ -66,9 +68,9 @@ class Discourse(Backend):
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
-        """Fetch the posts from the url.
+        """Fetch the posts from the Discurse board.
 
-        The method retrieves, from a Discourse url, the
+        The method retrieves, from a Discourse board the
         posts updated since the given date.
 
         :param from_date: obtain topics updated since this date
@@ -80,28 +82,29 @@ class Discourse(Backend):
         else:
             from_date = datetime_to_utc(from_date)
 
-        logger.info("Looking for topics at url '%s', updated from '%s'",
+        logger.info("Looking for topics at '%s', updated from '%s'",
                     self.url, str(from_date))
 
-        task_init = time.time()
-        i = 0
         self._purge_cache_queue()
 
+        nposts = 0
         raw_posts = self.client.get_posts(from_date)
 
         for raw_post in raw_posts:
             self._push_cache_queue(raw_post)
             self._flush_cache_queue()
             post = json.loads(raw_post)
+            nposts += 1
             yield post
-            i = i + 1
-        logger.info("%i posts parsed in %.2fs from '%s'" % (i, time.time()-task_init, self.url))
+
+        logger.info("Fetch process completed: %s posts fetched",
+                    nposts)
 
     @metadata
     def fetch_from_cache(self):
         """Fetch the posts from the cache.
 
-        :returns: a generator of topics
+        :returns: a generator of posts
 
         :raises CacheError: raised when an error occurs accessing the
             cache
@@ -109,16 +112,20 @@ class Discourse(Backend):
         if not self.cache:
             raise CacheError(cause="cache instance was not provided")
 
+        logger.info("Retrieving cached posts: '%s'", self.url)
+
         cache_items = self.cache.retrieve()
 
-        i = 0
+        nposts = 0
 
         for item in cache_items:
             logger.info(item)
             post = json.loads(item)
+            nposts += 1
             yield post
-            i = i + 1
-        logger.info("%i posts parsed from cache" % i)
+
+        logger.info("Retrieval process completed: %s postss retrieved from cache",
+                    nposts)
 
     @staticmethod
     def metadata_id(item):
@@ -130,7 +137,7 @@ class Discourse(Backend):
     def metadata_updated_on(item):
         """Extracts the update time from a Post item.
 
-        The timestamp used is extracted from 'CommitDate' field.
+        The timestamp used is extracted from 'updated_at' field.
         This date is converted to UNIX timestamp format taking into
         account the timezone of the date.
 
@@ -143,41 +150,34 @@ class Discourse(Backend):
 
         return ts.timestamp()
 
+
 class DiscourseClient:
     """Discourse API client.
 
     This class implements a simple client to retrieve topics from
-    any Discourse url.
+    any Discourse board.
 
     :param url: URL of the Discourse site
-    :param token: Discourse access_token for the API
-    :param max_topics: max number of topics per query
+    :param token: Discourse API access token
+    :param max_topics: maximun number of topics to fetch on a single query
 
     :raises HTTPError: when an error occurs doing the request
     """
+
+
 
     def __init__(self, url, token, max_topics):
         self.url = url
         self.token = token
         self.max_topics = max_topics
 
-    def __build_base_url(self, item_type, item_id):
-        id_json = str(item_id) + '.json'
-        base_api_url = urljoin(self.url, item_type, id_json)
-        return base_api_url
-
-    def __build_payload(self, page):
-        payload = {'page': page,
-                   'api_key': self.token}
-        return payload
-
     def get_posts(self, from_date=DEFAULT_DATETIME):
         """Retrieve all the posts updated since a given date.
 
         :param from_date: obtain topics updated since this date
         """
+        logger.debug("Fetching posts from %s", self.url)
 
-        logger.info('Getting posts')
         topics_id_list = self.get_topics_id_list(from_date)
 
         for topic_id in topics_id_list:
@@ -223,10 +223,14 @@ class DiscourseClient:
 
         :param from_date: obtain topics updated since this date
         """
-        logger.info('Getting topics ids')
-        # topics_ids = []
-        req = requests.get(self.url+'/latest.json', self.__build_payload(None))
+        logger.debug("Fetching topics ids from %s", self.url)
+
+        url = urljoin(self.url, 'latest.json')
+        payload = self.__build_payload()
+
+        req = requests.get(url, payload)
         req.raise_for_status()
+
         data = req.json()
         for topic in data['topic_list']['topics']:
             if str_to_datetime(topic['last_posted_at']) >= from_date:
@@ -243,6 +247,16 @@ class DiscourseClient:
                 if str_to_datetime(topic['last_posted_at']) >= from_date:
                     yield topic['id']
 
+    def __build_base_url(self, item_type, item_id):
+        id_json = str(item_id) + '.json'
+        base_api_url = urljoin(self.url, item_type, id_json)
+        return base_api_url
+
+    def __build_payload(self, page=None):
+        payload = {'page': page,
+                   'api_key': self.token}
+        return payload
+
 
 class DiscourseCommand(BackendCommand):
     """Class to run Discourse backend from the command line."""
@@ -250,10 +264,11 @@ class DiscourseCommand(BackendCommand):
     def __init__(self, *args):
         super().__init__(*args)
         self.url = self.parsed_args.url
-        self.token = self.parsed_args.token
+        self.backend_token = self.parsed_args.backend_token
         self.max_topics = self.parsed_args.max_topics
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.outfile = self.parsed_args.outfile
+        self.origin = self.parsed_args.origin
+        self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
@@ -272,21 +287,19 @@ class DiscourseCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = Discourse(
-            self.url, self.token, self.max_topics, cache=cache)
+        self.backend = Discourse(self.url, self.backend_token, self.max_topics,
+                                 cache=cache, origin=self.origin)
 
     def run(self):
-        """Fetch and print the Posts.
+        """Fetch and print the posts.
 
-        This method runs the backend to fetch the posts
-        of a given Discourse url.
-        Posts are converted to JSON objects and printed to the
-        defined output.
+        This method runs the backend to fetch the posts of a given
+        Discourse URL. Posts are converted to JSON objects and printed
+        to the defined output.
         """
         if self.parsed_args.fetch_cache:
             posts = self.backend.fetch_from_cache()
         else:
-            print(type(self.from_date))
             posts = self.backend.fetch(from_date=self.from_date)
 
         try:
@@ -309,15 +322,14 @@ class DiscourseCommand(BackendCommand):
 
         parser = super().create_argument_parser()
 
-        # StackExchange options
+        # Discourse options
         group = parser.add_argument_group('Discourse arguments')
-
-        group.add_argument("--token",
-                           help="Discourse API key")
         group.add_argument('--max-topics', dest='max_topics',
                            type=int, default=MAX_topics,
                            help="Max number of topics to be requested")
+
         # Required arguments
-        parser.add_argument("url", help="Discourse site's url")
+        parser.add_argument('url',
+                            help="URL of the Discourse server")
 
         return parser

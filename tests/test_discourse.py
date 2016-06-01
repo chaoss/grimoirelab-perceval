@@ -47,10 +47,12 @@ DISCOURSE_POSTS_TOPIC_URL_2 = DISCOURSE_SERVER_URL+"/t/1449.json"
 DISCOURSE_POSTS_TOPIC_URL_3 = DISCOURSE_SERVER_URL+"/posts/21.json"
 DISCOURSE_POSTS_TOPIC_URL_4 = DISCOURSE_SERVER_URL+"/posts/22.json"
 
+
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
         content = f.read()
     return content
+
 
 class TestDiscourseBackend(unittest.TestCase):
     """Discourse backend tests"""
@@ -356,6 +358,7 @@ class TestDiscourseBackendCache(unittest.TestCase):
 
 
 class TestDiscourseCommand(unittest.TestCase):
+    """Tests for DiscourseCommand class"""
 
     @httpretty.activate
     def test_parsing_on_init(self):
