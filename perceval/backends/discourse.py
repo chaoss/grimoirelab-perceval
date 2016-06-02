@@ -158,104 +158,94 @@ class DiscourseClient:
     any Discourse board.
 
     :param url: URL of the Discourse site
-    :param token: Discourse API access token
-    :param max_topics: maximun number of topics to fetch on a single query
+    :param api_key: Discourse API access token
 
     :raises HTTPError: when an error occurs doing the request
     """
+    # Static resources
+    ALL_TOPICS = None # Topics do not need a resource
+    TOPICS_SUMMARY = 'latest'
+    TOPIC = 't'
+    POSTS = 'posts'
 
+    # Params
+    PKEY = 'api_key'
+    PPAGE = 'page'
 
+    # Data type
+    TJSON = '.json'
 
-    def __init__(self, url, token, max_topics):
+    def __init__(self, url, api_key=None):
         self.url = url
-        self.token = token
-        self.max_topics = max_topics
+        self.api_key = api_key
 
-    def get_posts(self, from_date=DEFAULT_DATETIME):
-        """Retrieve all the posts updated since a given date.
+    def topics_page(self, page=None):
+        """Retrieve the #page summaries of the latest topics.
 
-        :param from_date: obtain topics updated since this date
+        :param page: number of page to retrieve
         """
-        logger.debug("Fetching posts from %s", self.url)
+        params = {
+            self.PKEY  : self.api_key,
+            self.PPAGE : page
+        }
 
-        topics_id_list = self.get_topics_id_list(from_date)
+        # http://example.com/latest.json
+        response = self._call(self.ALL_TOPICS, self.TOPICS_SUMMARY,
+                              params=params)
 
-        for topic_id in topics_id_list:
-            req = requests.get(self.__build_base_url('t', topic_id),
-                               params=self.__build_payload(None))
-            req.raise_for_status()
-            data = req.json()
+        return response
 
-            # topic category
-            category_id = data['category_id']
+    def topic(self, topic_id):
+        """Retrive the topic with `topic_id` identifier.
 
-            """
-            Topic json contains 'chunk_size' posts data, no more
-            The rest of the posts, if there are more, need to be
-            requested through their ids.
-            """
-            chunk_size = data['chunk_size']
-            posts_stream = data['post_stream']['stream']
-
-            for post in data['post_stream']['posts']:
-                if str_to_datetime(post['updated_at']) >= from_date:
-                    # Add _category_id
-                    post['_category_id'] = category_id
-                    yield json.dumps(post)
-
-            # For topics that post stream is bigger than chunk size
-            if chunk_size < len(posts_stream):
-                posts_stream_ids = posts_stream[chunk_size:]
-                for post_id in reversed(posts_stream_ids):
-                    req_post = requests.get(self.__build_base_url('posts', post_id),
-                                            params=self.__build_payload(None))
-                    req_post.raise_for_status()
-                    data_post = req_post.json()
-                    if str_to_datetime(data_post['updated_at']) >= from_date:
-                        # Add _category_id
-                        data_post['_category_id'] = category_id
-                        yield json.dumps(data_post)
-                    else:
-                        break
-
-    def get_topics_id_list(self, from_date=DEFAULT_DATETIME):
-        """Retrieve all the topics ids updated since a given date.
-
-        :param from_date: obtain topics updated since this date
+        :param topic_id: identifier of the topic to retrieve
         """
-        logger.debug("Fetching topics ids from %s", self.url)
+        params = {
+            self.PKEY  : self.api_key
+        }
 
-        url = urljoin(self.url, 'latest.json')
-        payload = self.__build_payload()
+        # http://example.com/t/8.json
+        response = self._call(self.TOPIC, topic_id,
+                              params=params)
 
-        req = requests.get(url, payload)
-        req.raise_for_status()
+        return response
 
-        data = req.json()
-        for topic in data['topic_list']['topics']:
-            if str_to_datetime(topic['last_posted_at']) >= from_date:
-                yield topic['id']
+    def post(self, post_id):
+        """Retrieve the post whit `post_id` identifier.
 
-        page = 0
+        :param post_id: identifier of the post to retrieve
+        """
+        params = {
+            self.PKEY  : self.api_key
+        }
 
-        while 'more_topics_url' in data['topic_list']:
-            page = page + 1
-            req = requests.get(self.url+'/latest.json', self.__build_payload(page))
-            req.raise_for_status()
-            data = req.json()
-            for topic in data['topic_list']['topics']:
-                if str_to_datetime(topic['last_posted_at']) >= from_date:
-                    yield topic['id']
+        # http://example.com/posts/10.json
+        response = self._call(self.POSTS, post_id,
+                              params=params)
 
-    def __build_base_url(self, item_type, item_id):
-        id_json = str(item_id) + '.json'
-        base_api_url = urljoin(self.url, item_type, id_json)
-        return base_api_url
+        return response
 
-    def __build_payload(self, page=None):
-        payload = {'page': page,
-                   'api_key': self.token}
-        return payload
+    def _call(self, res, res_id, params):
+        """Run an API command.
+
+        :param res: type of resource to fetch
+        :param res_id: identifier of the resource
+        :param params: dict with the HTTP parameters needed to run
+            the given command
+        """
+        if res:
+            url = urljoin(self.url, res, res_id)
+        else:
+            url = urljoin(self.url, res_id)
+        url += self.TJSON
+
+        logger.debug("Discourse client calls resource: %s %s params: %s",
+                     res, res_id, str(params))
+
+        r = requests.get(url, params=params)
+        r.raise_for_status()
+
+        return r.text
 
 
 class DiscourseCommand(BackendCommand):

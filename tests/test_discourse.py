@@ -40,8 +40,11 @@ from perceval.errors import CacheError
 from perceval.backends.discourse import Discourse, DiscourseCommand, DiscourseClient
 
 
-DISCOURSE_SERVER_URL = 'http://talk.manageiq.org'
-DISCOURSE_POSTS_URL = DISCOURSE_SERVER_URL+'/latest.json'
+DISCOURSE_SERVER_URL = 'http://example.com'
+DISCOURSE_TOPICS_URL = DISCOURSE_SERVER_URL + '/latest.json'
+DISCOURSE_TOPIC_URL = DISCOURSE_SERVER_URL + '/t/6746.json'
+DISCOURSE_POST_URL_1 = DISCOURSE_SERVER_URL + '/posts/21.json'
+DISCOURSE_POST_URL_2 = DISCOURSE_SERVER_URL + '/posts/22.json'
 DISCOURSE_POSTS_TOPIC_URL_1 = DISCOURSE_SERVER_URL+"/t/1448.json"
 DISCOURSE_POSTS_TOPIC_URL_2 = DISCOURSE_SERVER_URL+"/t/1449.json"
 DISCOURSE_POSTS_TOPIC_URL_3 = DISCOURSE_SERVER_URL+"/posts/21.json"
@@ -380,61 +383,118 @@ class TestDiscourseCommand(unittest.TestCase):
 
 
 class TestDiscourseClient(unittest.TestCase):
-    """Discourse API client tests
+    """Discourse API client tests.
 
-    These tests not check the body of the response, only if the call
+    These tests do not check the body of the response, only if the call
     was well formed and if a response was obtained. Due to this, take
     into account that the body returned on each request might not
     match with the parameters from the request.
     """
-    @httpretty.activate
+
     def test_init(self):
-        """Test initialization"""
-        client = DiscourseClient(DISCOURSE_SERVER_URL, token=None, max_topics=None)
+        """Test whether attributes are initializated"""
+
+        client = DiscourseClient(DISCOURSE_SERVER_URL,
+                                 api_key='aaaa')
+
+        self.assertEqual(client.url, DISCOURSE_SERVER_URL)
+        self.assertEqual(client.api_key, 'aaaa')
 
     @httpretty.activate
-    def test_get_topics(self):
-        """Test get_topics API call"""
+    def test_topics_page(self):
+        """Test topics_page API call"""
 
         # Set up a mock HTTP server
         body = read_file('data/discourse_topics.json')
         httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_URL,
+                               DISCOURSE_TOPICS_URL,
                                body=body, status=200)
 
-        client = DiscourseClient(DISCOURSE_SERVER_URL, token=None, max_topics=None)
-        response = client.get_topics_id_list()
+        # Call API without args
+        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa')
+        response = client.topics_page()
 
-        topic_ids = [topic_id for topic_id in response]
-        self.assertEqual(len(topic_ids), 2)
+        self.assertEqual(response, body)
 
-        expected = [1448, 1449]
+        # Check request params
+        expected = {
+                    'api_key' : ['aaaa']
+                   }
 
-        for x in range(len(expected)):
-            self.assertEqual(topic_ids[x], expected[x])
+        req = httpretty.last_request()
+
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/latest.json')
+        self.assertDictEqual(req.querystring, expected)
+
+        # Call API selecting a page
+        response = client.topics_page(page=1)
+
+        self.assertEqual(response, body)
+
+        # Check request params
+        expected = {
+                    'api_key' : ['aaaa'],
+                    'page' : ['1']
+                   }
+
+        req = httpretty.last_request()
+
+        self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
-    def test_get_posts(self, token=None, max_topics=None):
-        """Test get_posts API call"""
+    def test_topic(self):
+        """Test topic API call"""
 
         # Set up a mock HTTP server
-        body_topics = read_file('data/discourse_topics.json')
-        body_posts = read_file('data/discourse_posts.json')
+        body = read_file('data/discourse_topic.json')
         httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_URL,
-                               body=body_topics, status=200)
-        httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_1,
-                               body=body_posts, status=200)
-        httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_2,
-                               body=body_posts, status=200)
+                               DISCOURSE_TOPIC_URL,
+                               body=body, status=200)
 
+        # Call API
+        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa')
+        response = client.topic(6746)
 
-        client = DiscourseClient(DISCOURSE_SERVER_URL, token=None, max_topics=None)
-        response = client.get_posts()
-        posts = [post for post in response]
-        self.assertEqual(len(posts), 8)
+        self.assertEqual(response, body)
+
+        # Check request params
+        expected = {
+                    'api_key' : ['aaaa'],
+                   }
+
+        req = httpretty.last_request()
+
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/t/6746.json')
+        self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_post(self):
+        """Test post API call"""
+
+        # Set up a mock HTTP server
+        body = read_file('data/discourse_post_raw.json')
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_1,
+                               body=body, status=200)
+
+        # Call API
+        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa')
+        response = client.post(21)
+
+        self.assertEqual(response, body)
+
+        # Check request params
+        expected = {
+                    'api_key' : ['aaaa'],
+                   }
+
+        req = httpretty.last_request()
+
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/posts/21.json')
+        self.assertDictEqual(req.querystring, expected)
 
 
 if __name__ == "__main__":
