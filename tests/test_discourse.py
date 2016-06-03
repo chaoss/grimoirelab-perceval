@@ -392,28 +392,6 @@ class TestDiscourseBackendCache(unittest.TestCase):
             _ = [topic for topic in discourse.fetch_from_cache()]
 
 
-class TestDiscourseCommand(unittest.TestCase):
-    """Tests for DiscourseCommand class"""
-
-    @httpretty.activate
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
-
-        args = ['--origin', 'test', DISCOURSE_SERVER_URL]
-
-        cmd = DiscourseCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.url, DISCOURSE_SERVER_URL)
-        self.assertEqual(cmd.parsed_args.origin, 'test')
-        self.assertIsInstance(cmd.backend, Discourse)
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = DiscourseCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
-
-
 class TestDiscourseClient(unittest.TestCase):
     """Discourse API client tests.
 
@@ -527,6 +505,28 @@ class TestDiscourseClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/posts/21.json')
         self.assertDictEqual(req.querystring, expected)
+
+
+class TestDiscourseCommand(unittest.TestCase):
+    """Tests for DiscourseCommand class"""
+
+    @httpretty.activate
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['--origin', 'test', DISCOURSE_SERVER_URL]
+
+        cmd = DiscourseCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.url, DISCOURSE_SERVER_URL)
+        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertIsInstance(cmd.backend, Discourse)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = DiscourseCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 if __name__ == "__main__":

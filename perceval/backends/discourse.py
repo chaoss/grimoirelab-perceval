@@ -361,7 +361,6 @@ class DiscourseCommand(BackendCommand):
         super().__init__(*args)
         self.url = self.parsed_args.url
         self.backend_token = self.parsed_args.backend_token
-        self.max_topics = self.parsed_args.max_topics
         self.outfile = self.parsed_args.outfile
         self.origin = self.parsed_args.origin
         self.from_date = str_to_datetime(self.parsed_args.from_date)
@@ -383,24 +382,24 @@ class DiscourseCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = Discourse(self.url, self.backend_token, self.max_topics,
+        self.backend = Discourse(self.url, self.backend_token,
                                  cache=cache, origin=self.origin)
 
     def run(self):
         """Fetch and print the posts.
 
-        This method runs the backend to fetch the posts of a given
-        Discourse URL. Posts are converted to JSON objects and printed
+        This method runs the backend to fetch the topics of a given
+        Discourse URL. Topics are converted to JSON objects and printed
         to the defined output.
         """
         if self.parsed_args.fetch_cache:
-            posts = self.backend.fetch_from_cache()
+            topics = self.backend.fetch_from_cache()
         else:
-            posts = self.backend.fetch(from_date=self.from_date)
+            topics = self.backend.fetch(from_date=self.from_date)
 
         try:
-            for post in posts:
-                obj = json.dumps(post, indent=4, sort_keys=True)
+            for topic in topics:
+                obj = json.dumps(topic, indent=4, sort_keys=True)
                 self.outfile.write(obj)
                 self.outfile.write('\n')
         except requests.exceptions.HTTPError as e:
@@ -417,12 +416,6 @@ class DiscourseCommand(BackendCommand):
         """Returns the Discourse argument parser."""
 
         parser = super().create_argument_parser()
-
-        # Discourse options
-        group = parser.add_argument_group('Discourse arguments')
-        group.add_argument('--max-topics', dest='max_topics',
-                           type=int, default=MAX_topics,
-                           help="Max number of topics to be requested")
 
         # Required arguments
         parser.add_argument('url',
