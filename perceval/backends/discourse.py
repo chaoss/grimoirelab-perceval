@@ -150,7 +150,7 @@ class Discourse(Backend):
         logger.debug("Fetching and parsing topics ids from %s",
                      str(from_date))
 
-        topics_ids = []
+        candidates = []
         page = 0
         fetching = True
 
@@ -163,19 +163,24 @@ class Discourse(Backend):
 
             # Topics are sorted by updated date from the newest
             # to the oldest. When a date is older than 'from_date'
-            # we have reached to the end.
+            # we have reached to the end. Pinned topics are
+            # ignored but added to the list if the date is in range.
             for topic in topics:
-                if topic[1] < from_date:
+                # Pinned
+                if topic[2] and topic[1] < from_date:
+                    continue
+                elif topic[1] < from_date:
                     fetching = False
                     break
                 else:
-                    topics_ids.append(topic[0])
+                    candidates.append(topic)
 
             page += 1
 
-        # Sort topics in reverse order to fetch them from the
-        # oldest to the newest
-        topics_ids = sorted(topics_ids, reverse=True)
+        # Sort topics by date and in reverse order to fetch them from
+        # the oldest to the newest
+        candidates = sorted(candidates, key=lambda x: x[1])
+        topics_ids = [topic[0] for topic in candidates]
 
         return topics_ids
 
@@ -215,8 +220,8 @@ class Discourse(Backend):
         """Parse a topics page stream.
 
         The result of parsing process is a generator of tuples. Each
-        tuple contains de identifier of the topic and the last date
-        when it was updated.
+        tuple contains de identifier of the topic, the last date
+        when it was updated and whether is pinned or not.
 
         :param raw_json: JSON stream to parse
 
@@ -229,7 +234,8 @@ class Discourse(Backend):
         for topic in topics_page['topic_list']['topics']:
             topic_id = topic['id']
             updated_at = str_to_datetime(topic['last_posted_at'])
-            topics_ids.append((topic_id, updated_at))
+            pinned = topic['pinned']
+            topics_ids.append((topic_id, updated_at, pinned))
 
         return topics_ids
 

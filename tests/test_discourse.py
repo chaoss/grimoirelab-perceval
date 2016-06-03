@@ -44,6 +44,7 @@ DISCOURSE_SERVER_URL = 'http://example.com'
 DISCOURSE_TOPICS_URL = DISCOURSE_SERVER_URL + '/latest.json'
 DISCOURSE_TOPIC_URL_1148 = DISCOURSE_SERVER_URL + '/t/1148.json'
 DISCOURSE_TOPIC_URL_1149 = DISCOURSE_SERVER_URL + '/t/1149.json'
+DISCOURSE_TOPIC_URL_1150 = DISCOURSE_SERVER_URL + '/t/1150.json'
 DISCOURSE_POST_URL_1 = DISCOURSE_SERVER_URL + '/posts/21.json'
 DISCOURSE_POST_URL_2 = DISCOURSE_SERVER_URL + '/posts/22.json'
 
@@ -270,6 +271,86 @@ class TestDiscourseBackend(unittest.TestCase):
         topics = [topic for topic in discourse.fetch()]
 
         self.assertEqual(len(topics), 0)
+
+    @httpretty.activate
+    def test_fetch_pinned(self):
+        """Test whether the right list of topics is returned when some topics are pinned"""
+
+        bodies_topics = [read_file('data/discourse_topics_pinned.json'),
+                         read_file('data/discourse_topics_empty.json')]
+        body_topic_1148 = read_file('data/discourse_topic_1148.json')
+        body_topic_1149 = read_file('data/discourse_topic_1149.json')
+        body_topic_1150 = read_file('data/discourse_topic_1150.json')
+        body_post = read_file('data/discourse_post.json')
+
+        def request_callback(method, uri, headers):
+            if uri.startswith(DISCOURSE_TOPICS_URL):
+                body = bodies_topics.pop(0)
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1148):
+                body = body_topic_1148
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
+                body = body_topic_1149
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1150):
+                body = body_topic_1150
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                 uri.startswith(DISCOURSE_POST_URL_2):
+                body = body_post
+            else:
+                raise
+            return (200, headers, body)
+
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPICS_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback) \
+                                    for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1148,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1149,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1150,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_1,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_2,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+
+        # On this tests two topics will be retrieved.
+        # One of them was pinned but the date is in range.
+        from_date = datetime.datetime(2016, 5, 25, 2, 0, 0)
+
+        discourse = Discourse(DISCOURSE_SERVER_URL)
+        topics = [topic for topic in discourse.fetch(from_date=from_date)]
+
+        self.assertEqual(len(topics), 2)
+
+        self.assertEqual(topics[0]['data']['id'], 1148)
+        self.assertEqual(len(topics[0]['data']['post_stream']['posts']), 22)
+        self.assertEqual(topics[0]['origin'], DISCOURSE_SERVER_URL)
+        self.assertEqual(topics[0]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
+        self.assertEqual(topics[0]['updated_on'], 1464144769.526)
+
+        self.assertEqual(topics[1]['data']['id'], 1150)
+        self.assertEqual(len(topics[1]['data']['post_stream']['posts']), 2)
+        self.assertEqual(topics[1]['origin'], DISCOURSE_SERVER_URL)
+        self.assertEqual(topics[1]['uuid'], '373b597a2a389112875c3e544f197610373a7283')
+        self.assertEqual(topics[1]['updated_on'], 1464274870.809)
 
 
 class TestDiscourseBackendCache(unittest.TestCase):
