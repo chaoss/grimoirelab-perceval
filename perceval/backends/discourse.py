@@ -17,8 +17,8 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 # Authors:
-#    J. Manrique López de la Fuente <jsmanrique@bitergia.com>
 #    Santiago Dueñas <sduenas@bitergia.com>
+#    J. Manrique López de la Fuente <jsmanrique@bitergia.com>
 #    Alvaro del Castillo San Felix <acs@bitergia.com>
 #
 
@@ -98,9 +98,9 @@ class Discourse(Backend):
 
     @metadata
     def fetch_from_cache(self):
-        """Fetch the posts from the cache.
+        """Fetch topics from the cache.
 
-        :returns: a generator of posts
+        :returns: a generator of topics
 
         :raises CacheError: raised when an error occurs accessing the
             cache
@@ -108,20 +108,43 @@ class Discourse(Backend):
         if not self.cache:
             raise CacheError(cause="cache instance was not provided")
 
-        logger.info("Retrieving cached posts: '%s'", self.url)
+        logger.info("Retrieving cached topics: '%s'", self.url)
 
         cache_items = self.cache.retrieve()
 
         ntopics = 0
 
-        for item in cache_items:
+        while True:
+            try:
+                raw_topic = next(cache_items)
+            except StopIteration:
+                break
 
-            post = json.loads(item)
-            nposts += 1
-            yield post
+            topic = json.loads(raw_topic)
 
-        logger.info("Retrieval process completed: %s postss retrieved from cache",
-                    nposts)
+            # Retrieve remaining posts for this topic
+            posts_sz = topic['posts_count']
+            chunk_sz = topic['chunk_size']
+
+            if posts_sz > chunk_sz:
+                for _ in range(posts_sz - chunk_sz):
+                    try:
+                        raw_post = next(cache_items)
+                    except StopIteration:
+                        # Fatal error. The code should not reach here.
+                        # Cache should had stored posts_sz - chunk_sz posts
+                        # if the code is running this loop
+                        cause = "cache is exhausted but more items were expected"
+                        raise CacheError(cause=cause)
+
+                    post = json.loads(raw_post)
+                    topic['post_stream']['posts'].append(post)
+
+            ntopics += 1
+            yield topic
+
+        logger.info("Retrieval process completed: %s topics retrieved from cache",
+                    ntopics)
 
     def __fetch_and_parse_topics_ids(self, from_date):
         logger.debug("Fetching and parsing topics ids from %s",

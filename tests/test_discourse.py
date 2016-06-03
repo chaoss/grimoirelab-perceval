@@ -285,63 +285,103 @@ class TestDiscourseBackendCache(unittest.TestCase):
     def test_fetch_from_cache(self):
         """Test whether the cache works"""
 
-        bodies_topics = read_file('data/discourse_topics.json', mode='rb')
-        bodies_posts_job = read_file('data/discourse_posts.json')
+        requests_http = []
+
+        bodies_topics = [read_file('data/discourse_topics.json'),
+                         read_file('data/discourse_topics_empty.json')]
+        body_topic_1148 = read_file('data/discourse_topic_1148.json')
+        body_topic_1149 = read_file('data/discourse_topic_1149.json')
+        body_post = read_file('data/discourse_post.json')
 
         def request_callback(method, uri, headers):
-            if uri.startswith(DISCOURSE_POSTS_URL):
-                body = bodies_topics
-            elif uri.startswith(DISCOURSE_POSTS_TOPIC_URL_1) or \
-                 uri.startswith(DISCOURSE_POSTS_TOPIC_URL_2):
-                body = bodies_posts_job
+            if uri.startswith(DISCOURSE_TOPICS_URL):
+                body = bodies_topics.pop(0)
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1148):
+                body = body_topic_1148
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
+                body = body_topic_1149
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                 uri.startswith(DISCOURSE_POST_URL_2):
+                body = body_post
             else:
-                body = ''
+                raise
+
+            requests_http.append(httpretty.last_request())
 
             return (200, headers, body)
 
         httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_URL,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(3)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_1,
+                               DISCOURSE_TOPICS_URL,
                                responses=[
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_2,
+                               DISCOURSE_TOPIC_URL_1148,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1149,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_1,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_2,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
                                ])
 
-        # First, we fetch the posts from the server, storing them
+        # First, we fetch the topics from the server, storing them
         # in a cache
         cache = Cache(self.tmp_path)
         discourse = Discourse(DISCOURSE_SERVER_URL, cache=cache)
 
-        posts = [post for post in discourse.fetch()]
+        topics = [topic for topic in discourse.fetch()]
+        self.assertEqual(len(requests_http), 6)
 
-        # Now, we get the posts from the cache.
+        # Now, we get the topics from the cache.
         # The contents should be the same and there won't be
         # any new request to the server
-        cached_posts = [post for post in discourse.fetch_from_cache()]
-        self.assertEqual(len(cached_posts), len(posts))
+        cached_topics = [topic for topic in discourse.fetch_from_cache()]
+        self.assertEqual(len(cached_topics), len(topics))
 
-        with open("data/discourse_post.json") as post_json:
-            first_post = json.load(post_json)
-            self.assertDictEqual(cached_posts[0]['data'], first_post['data'])
+        self.assertEqual(len(cached_topics), 2)
+
+        # Topics are returned in reverse order
+        # from oldest to newest
+        self.assertEqual(cached_topics[0]['data']['id'], 1149)
+        self.assertEqual(len(cached_topics[0]['data']['post_stream']['posts']), 2)
+        self.assertEqual(cached_topics[0]['origin'], DISCOURSE_SERVER_URL)
+        self.assertEqual(cached_topics[0]['uuid'], '18068b95de1323a84c8e11dee8f46fd137f10c86')
+        self.assertEqual(cached_topics[0]['updated_on'], 1464134770.909)
+
+        self.assertEqual(cached_topics[1]['data']['id'], 1148)
+        self.assertEqual(cached_topics[1]['origin'], DISCOURSE_SERVER_URL)
+        self.assertEqual(cached_topics[1]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
+        self.assertEqual(cached_topics[1]['updated_on'], 1464144769.526)
+
+        # The next assertions check the cases whether the chunk_size is
+        # less than the number of posts of a topic
+        self.assertEqual(len(cached_topics[1]['data']['post_stream']['posts']), 22)
+        self.assertEqual(cached_topics[1]['data']['post_stream']['posts'][0]['id'], 18952)
+        self.assertEqual(cached_topics[1]['data']['post_stream']['posts'][20]['id'], 2500)
+
+        # No more requests were sent
+        self.assertEqual(len(requests_http), 6)
 
     def test_fetch_from_empty_cache(self):
-        """Test if there are not any posts returned when the cache is empty"""
+        """Test if there are not any topics returned when the cache is empty"""
 
         cache = Cache(self.tmp_path)
         discourse = Discourse(DISCOURSE_SERVER_URL, cache=cache)
-        cached_posts = [post for post in discourse.fetch_from_cache()]
-        self.assertEqual(len(cached_posts), 0)
+        cached_topics = [topic for topic in discourse.fetch_from_cache()]
+        self.assertEqual(len(cached_topics), 0)
 
     def test_fetch_from_non_set_cache(self):
         """Test if a error is raised when the cache was not set"""
@@ -349,7 +389,7 @@ class TestDiscourseBackendCache(unittest.TestCase):
         discourse = Discourse(DISCOURSE_SERVER_URL)
 
         with self.assertRaises(CacheError):
-            _ = [post for post in discourse.fetch_from_cache()]
+            _ = [topic for topic in discourse.fetch_from_cache()]
 
 
 class TestDiscourseCommand(unittest.TestCase):
