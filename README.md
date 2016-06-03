@@ -62,6 +62,11 @@ Documentation is generated automagically in the [ReadTheDocs Perceval site](http
 $ perceval bugzilla 'https://bugzilla.redhat.com/' --backend-user user --backend-password pass --from-date '2016-01-01'
 ```
 
+### Discourse
+```
+$ perceval discourse 'https://foro.mozilla-hispano.org/' --from-date '2016-01-01'
+```
+
 ### Gerrit
 To run gerrit, you will need an authorized SSH private key:
 
@@ -98,12 +103,6 @@ $ perceval git /tmp/gitlog.log
 ```
 $ perceval github --owner elastic --repository filebeat --from-date '2016-01-01'
 ```
-
-### Discourse
-```
-$ perceval discourse 'https://foro.mozilla-hispano.org/' --from-date '2016-01-01'
-```
-
 
 ### Jenkins
 ```
