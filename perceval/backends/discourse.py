@@ -37,45 +37,41 @@ from ..utils import (DEFAULT_DATETIME,
                      urljoin)
 
 
-MAX_topics = 100  # Maximum number of posts per query
-
 logger = logging.getLogger(__name__)
 
 
 class Discourse(Backend):
     """Discourse backend for Perceval.
 
-    This class retrieves the posts stored in a Discourse board.
+    This class retrieves the topics posted in a Discourse board.
     To initialize this class the URL must be provided.
 
     :param url: Discourse URL
     :param token: Discourse API access token
-    :param max_topics: maximum number of topics to fetch on a single request
     :param cache: cache object to store raw data
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
     version = '0.1.0'
 
-    def __init__(self, url, token=None, max_topics=None,
+    def __init__(self, url, token=None,
                  cache=None, origin=None):
         origin = origin if origin else url
 
         super().__init__(origin, cache=cache)
         self.url = url
-        self.max_topics = max_topics
-        self.client = DiscourseClient(url, token, max_topics)
+        self.client = DiscourseClient(url, api_key=token)
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
-        """Fetch the posts from the Discurse board.
+        """Fetch the topics from the Discurse board.
 
-        The method retrieves, from a Discourse board the
-        posts updated since the given date.
+        The method retrieves, from a Discourse board the topics
+        updated since the given date.
 
         :param from_date: obtain topics updated since this date
 
-        :returns: a generator of posts
+        :returns: a generator of topics
         """
         if not from_date:
             from_date = DEFAULT_DATETIME
@@ -87,18 +83,18 @@ class Discourse(Backend):
 
         self._purge_cache_queue()
 
-        nposts = 0
-        raw_posts = self.client.get_posts(from_date)
+        ntopics = 0
 
-        for raw_post in raw_posts:
-            self._push_cache_queue(raw_post)
+        topics_ids = self.__fetch_and_parse_topics_ids(from_date)
+
+        for topic_id in topics_ids:
+            topic = self.__fetch_and_parse_topic(topic_id)
+            ntopics += 1
+            yield topic
             self._flush_cache_queue()
-            post = json.loads(raw_post)
-            nposts += 1
-            yield post
 
-        logger.info("Fetch process completed: %s posts fetched",
-                    nposts)
+        logger.info("Fetch process completed: %s topics fetched",
+                    ntopics)
 
     @metadata
     def fetch_from_cache(self):
@@ -116,16 +112,103 @@ class Discourse(Backend):
 
         cache_items = self.cache.retrieve()
 
-        nposts = 0
+        ntopics = 0
 
         for item in cache_items:
-            logger.info(item)
+
             post = json.loads(item)
             nposts += 1
             yield post
 
         logger.info("Retrieval process completed: %s postss retrieved from cache",
                     nposts)
+
+    def __fetch_and_parse_topics_ids(self, from_date):
+        logger.debug("Fetching and parsing topics ids from %s",
+                     str(from_date))
+
+        topics_ids = []
+        page = 0
+        fetching = True
+
+        while fetching:
+            response = self.client.topics_page(page)
+            topics = self.__parse_topics_page(response)
+
+            if not topics:
+                fetching = False
+
+            # Topics are sorted by updated date from the newest
+            # to the oldest. When a date is older than 'from_date'
+            # we have reached to the end.
+            for topic in topics:
+                if topic[1] < from_date:
+                    fetching = False
+                    break
+                else:
+                    topics_ids.append(topic[0])
+
+            page += 1
+
+        # Sort topics in reverse order to fetch them from the
+        # oldest to the newest
+        topics_ids = sorted(topics_ids, reverse=True)
+
+        return topics_ids
+
+    def __fetch_and_parse_topic(self, topic_id):
+        logger.debug("Fetching and parsing topic %s", topic_id)
+
+        raw_topic = self.client.topic(topic_id)
+        self._push_cache_queue(raw_topic)
+
+        topic = json.loads(raw_topic)
+
+        # There are posts that could not included in the topic.
+        # When post_count is greater than chunk_size, we have
+        # to fetch the remaining posts
+        posts_sz = topic['posts_count']
+        chunk_sz = topic['chunk_size']
+
+        if posts_sz > chunk_sz:
+            posts_ids = topic['post_stream']['stream']
+            posts_ids = posts_ids[chunk_sz:]
+
+            for post_id in posts_ids:
+                logger.debug("Fetching and parsing post %s", post_id)
+                post = self.__fetch_and_parse_post(post_id)
+                topic['post_stream']['posts'].append(post)
+
+        return topic
+
+    def __fetch_and_parse_post(self, post_id):
+        logger.debug("Fetching and parsing post %s", post_id)
+        raw_post = self.client.post(post_id)
+        self._push_cache_queue(raw_post)
+        post = json.loads(raw_post)
+        return post
+
+    def __parse_topics_page(self, raw_json):
+        """Parse a topics page stream.
+
+        The result of parsing process is a generator of tuples. Each
+        tuple contains de identifier of the topic and the last date
+        when it was updated.
+
+        :param raw_json: JSON stream to parse
+
+        :returns: a generator of parsed bugs
+        """
+        topics_page = json.loads(raw_json)
+
+        topics_ids = []
+
+        for topic in topics_page['topic_list']['topics']:
+            topic_id = topic['id']
+            updated_at = str_to_datetime(topic['last_posted_at'])
+            topics_ids.append((topic_id, updated_at))
+
+        return topics_ids
 
     @staticmethod
     def metadata_id(item):
@@ -137,7 +220,7 @@ class Discourse(Backend):
     def metadata_updated_on(item):
         """Extracts the update time from a Post item.
 
-        The timestamp used is extracted from 'updated_at' field.
+        The timestamp used is extracted from 'last_posted_at' field.
         This date is converted to UNIX timestamp format taking into
         account the timezone of the date.
 
@@ -145,7 +228,7 @@ class Discourse(Backend):
 
         :returns: a UNIX timestamp
         """
-        ts = item['updated_at']
+        ts = item['last_posted_at']
         ts = str_to_datetime(ts)
 
         return ts.timestamp()

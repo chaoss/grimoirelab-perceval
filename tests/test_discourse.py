@@ -42,13 +42,10 @@ from perceval.backends.discourse import Discourse, DiscourseCommand, DiscourseCl
 
 DISCOURSE_SERVER_URL = 'http://example.com'
 DISCOURSE_TOPICS_URL = DISCOURSE_SERVER_URL + '/latest.json'
-DISCOURSE_TOPIC_URL = DISCOURSE_SERVER_URL + '/t/6746.json'
+DISCOURSE_TOPIC_URL_1148 = DISCOURSE_SERVER_URL + '/t/1148.json'
+DISCOURSE_TOPIC_URL_1149 = DISCOURSE_SERVER_URL + '/t/1149.json'
 DISCOURSE_POST_URL_1 = DISCOURSE_SERVER_URL + '/posts/21.json'
 DISCOURSE_POST_URL_2 = DISCOURSE_SERVER_URL + '/posts/22.json'
-DISCOURSE_POSTS_TOPIC_URL_1 = DISCOURSE_SERVER_URL+"/t/1448.json"
-DISCOURSE_POSTS_TOPIC_URL_2 = DISCOURSE_SERVER_URL+"/t/1449.json"
-DISCOURSE_POSTS_TOPIC_URL_3 = DISCOURSE_SERVER_URL+"/posts/21.json"
-DISCOURSE_POSTS_TOPIC_URL_4 = DISCOURSE_SERVER_URL+"/posts/22.json"
 
 
 def read_file(filename, mode='r'):
@@ -81,203 +78,198 @@ class TestDiscourseBackend(unittest.TestCase):
 
     @httpretty.activate
     def test_fetch(self):
-        """Test whether a list of posts is returned"""
+        """Test whether a list of topics is returned"""
 
         requests_http = []
 
-        bodies_topics = read_file('data/discourse_topics.json')
-        bodies_posts = read_file('data/discourse_posts.json')
+        bodies_topics = [read_file('data/discourse_topics.json'),
+                         read_file('data/discourse_topics_empty.json')]
+        body_topic_1148 = read_file('data/discourse_topic_1148.json')
+        body_topic_1149 = read_file('data/discourse_topic_1149.json')
+        body_post = read_file('data/discourse_post.json')
 
         def request_callback(method, uri, headers):
-            if uri.startswith(DISCOURSE_POSTS_URL):
-                body = bodies_topics
-            elif uri.startswith(DISCOURSE_POSTS_TOPIC_URL_1) or \
-                 uri.startswith(DISCOURSE_POSTS_TOPIC_URL_2):
-                body = bodies_posts
+            if uri.startswith(DISCOURSE_TOPICS_URL):
+                body = bodies_topics.pop(0)
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1148):
+                body = body_topic_1148
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
+                body = body_topic_1149
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                 uri.startswith(DISCOURSE_POST_URL_2):
+                body = body_post
             else:
-                body = ''
+                raise
 
             requests_http.append(httpretty.last_request())
 
             return (200, headers, body)
 
         httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_URL,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(3)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_1,
+                               DISCOURSE_TOPICS_URL,
                                responses=[
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_2,
+                               DISCOURSE_TOPIC_URL_1148,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1149,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_1,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_2,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
                                ])
 
-        # Test fetch posts from topics list
+        # Test fetch topics
         discourse = Discourse(DISCOURSE_SERVER_URL)
-        posts = [post for post in discourse.fetch()]
-        self.assertEqual(len(posts), 8)
+        topics = [topic for topic in discourse.fetch()]
 
-        with open("data/discourse_post.json") as post_json:
-            first_post = json.load(post_json)
-            self.assertDictEqual(posts[0]['data'], first_post['data'])
+        self.assertEqual(len(topics), 2)
 
-        # Test metadata
-        expected = [('0ec6a9ed2432fa98ed351cb984dbb84fb858ead1', 1464023039.465),
-                    ('d7745c7f40b99ee657494cf1ef6d5332c9eed00a', 1464085132.433),
-                    ('c32181d10f978985b2af5525e6e90fdc29de577e', 1464108572.57),
-                    ('44d050dffbec6d505897d748eef4beb8d5ba5d17', 1464144769.526)]
+        # Topics are returned in reverse order
+        # from oldest to newest
+        self.assertEqual(topics[0]['data']['id'], 1149)
+        self.assertEqual(len(topics[0]['data']['post_stream']['posts']), 2)
+        self.assertEqual(topics[0]['origin'], DISCOURSE_SERVER_URL)
+        self.assertEqual(topics[0]['uuid'], '18068b95de1323a84c8e11dee8f46fd137f10c86')
+        self.assertEqual(topics[0]['updated_on'], 1464134770.909)
 
-        for x in range(len(expected)):
-            post = posts[x]
-            self.assertEqual(post['origin'], 'http://talk.manageiq.org')
-            self.assertEqual(post['uuid'], expected[x][0])
-            self.assertEqual(post['updated_on'], expected[x][1])
+        self.assertEqual(topics[1]['data']['id'], 1148)
+        self.assertEqual(topics[1]['origin'], DISCOURSE_SERVER_URL)
+        self.assertEqual(topics[1]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
+        self.assertEqual(topics[1]['updated_on'], 1464144769.526)
+
+        # The next assertions check the cases whether the chunk_size is
+        # less than the number of posts of a topic
+        self.assertEqual(len(topics[1]['data']['post_stream']['posts']), 22)
+        self.assertEqual(topics[1]['data']['post_stream']['posts'][0]['id'], 18952)
+        self.assertEqual(topics[1]['data']['post_stream']['posts'][20]['id'], 2500)
+
+        # Check requests
+        expected = [{
+                     'page' : ['0']
+                    },
+                    {
+                     'page' : ['1']
+                    },
+                    {},
+                    {},
+                    {},
+                    {}]
+
+        self.assertEqual(len(requests_http), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(requests_http[i].querystring, expected[i])
 
     @httpretty.activate
     def test_fetch_from_date(self):
-        """Test whether a list of posts is returned from a given date"""
+        """Test whether a list of topics is returned from a given date"""
 
         requests_http = []
 
-        bodies_topics = read_file('data/discourse_topics.json')
-        bodies_posts = read_file('data/discourse_posts.json')
+        bodies_topics = [read_file('data/discourse_topics.json'),
+                         read_file('data/discourse_topics_empty.json')]
+        body_topic_1148 = read_file('data/discourse_topic_1148.json')
+        body_topic_1149 = read_file('data/discourse_topic_1149.json')
+        body_post = read_file('data/discourse_post.json')
 
         def request_callback(method, uri, headers):
-            if uri.startswith(DISCOURSE_POSTS_URL):
-                body = bodies_topics
-            elif uri.startswith(DISCOURSE_POSTS_TOPIC_URL_1) or \
-                 uri.startswith(DISCOURSE_POSTS_TOPIC_URL_2):
-                body = bodies_posts
+            if uri.startswith(DISCOURSE_TOPICS_URL):
+                body = bodies_topics.pop(0)
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1148):
+                body = body_topic_1148
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
+                body = body_topic_1149
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                 uri.startswith(DISCOURSE_POST_URL_2):
+                body = body_post
             else:
-                body = ''
+                raise
 
             requests_http.append(httpretty.last_request())
 
             return (200, headers, body)
 
         httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_URL,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(3)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_1,
+                               DISCOURSE_TOPICS_URL,
                                responses=[
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_2,
+                               DISCOURSE_TOPIC_URL_1148,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1149,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_1,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_2,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
                                ])
 
-        from_date = datetime.datetime(2016, 5, 24)
+        # On this tests only one topic will be retrieved
+        from_date = datetime.datetime(2016, 5, 25, 2, 0, 0)
 
-        # Test fetch posts from topics list
         discourse = Discourse(DISCOURSE_SERVER_URL)
-        posts = [post for post in discourse.fetch(from_date=from_date)]
-        self.assertEqual(len(posts), 6)
+        topics = [topic for topic in discourse.fetch(from_date=from_date)]
 
-        # Test metadata
-        expected = [('d7745c7f40b99ee657494cf1ef6d5332c9eed00a', 1464085132.433),
-                    ('c32181d10f978985b2af5525e6e90fdc29de577e', 1464108572.57),
-                    ('44d050dffbec6d505897d748eef4beb8d5ba5d17', 1464144769.526)]
+        self.assertEqual(len(topics), 1)
 
-        for x in range(len(expected)):
-            post = posts[x]
-            self.assertEqual(post['origin'], 'http://talk.manageiq.org')
-            self.assertEqual(post['uuid'], expected[x][0])
-            self.assertEqual(post['updated_on'], expected[x][1])
+        self.assertEqual(topics[0]['data']['id'], 1148)
+        self.assertEqual(len(topics[0]['data']['post_stream']['posts']), 22)
+        self.assertEqual(topics[0]['origin'], DISCOURSE_SERVER_URL)
+        self.assertEqual(topics[0]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
+        self.assertEqual(topics[0]['updated_on'], 1464144769.526)
+
+        # Check requests
+        expected = [{
+                     'page' : ['0']
+                    },
+                    {},
+                    {},
+                    {}]
+
+        self.assertEqual(len(requests_http), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(requests_http[i].querystring, expected[i])
 
     @httpretty.activate
     def test_fetch_empty(self):
         """Test whether it works when no topics are fetched"""
 
-        body = '{"topic_list": {"topics": []}}'
+        body = read_file('data/discourse_topics_empty.json')
         httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_URL,
+                               DISCOURSE_TOPICS_URL,
                                body=body, status=200)
 
         discourse = Discourse(DISCOURSE_SERVER_URL)
-        posts = [post for post in discourse.fetch()]
+        topics = [topic for topic in discourse.fetch()]
 
-        self.assertEqual(len(posts), 0)
-
-    @httpretty.activate
-    def test_fetch_chunk(self):
-        """Test whether a list of posts chunked is returned"""
-
-        requests_http = []
-
-        bodies_topics = read_file('data/discourse_topics.json')
-        bodies_posts = read_file('data/discourse_posts_chunk.json')
-        bodies_post = read_file('data/discourse_post_raw.json')
-
-        def request_callback(method, uri, headers):
-            if uri.startswith(DISCOURSE_POSTS_URL):
-                body = bodies_topics
-            elif uri.startswith(DISCOURSE_POSTS_TOPIC_URL_1) or \
-                 uri.startswith(DISCOURSE_POSTS_TOPIC_URL_2):
-                body = bodies_posts
-            elif uri.startswith(DISCOURSE_POSTS_TOPIC_URL_3) or \
-                 uri.startswith(DISCOURSE_POSTS_TOPIC_URL_4):
-                body = bodies_post
-            else:
-                body = ''
-
-            requests_http.append(httpretty.last_request())
-
-            return (200, headers, body)
-
-        httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_URL,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(1)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_1,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(1)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_2,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(1)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_3,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(1)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_POSTS_TOPIC_URL_4,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(1)
-                               ])
-
-
-        # Test fetch posts from topics list
-        discourse = Discourse(DISCOURSE_SERVER_URL)
-        posts = [post for post in discourse.fetch()]
-        chunck_size = 20
-        chunck_extra_posts = 2
-        self.assertEqual(len(posts), (chunck_size+chunck_extra_posts)*2)
+        self.assertEqual(len(topics), 0)
 
 
 class TestDiscourseBackendCache(unittest.TestCase):
@@ -447,14 +439,14 @@ class TestDiscourseClient(unittest.TestCase):
         """Test topic API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/discourse_topic.json')
+        body = read_file('data/discourse_topic_1148.json')
         httpretty.register_uri(httpretty.GET,
-                               DISCOURSE_TOPIC_URL,
+                               DISCOURSE_TOPIC_URL_1148,
                                body=body, status=200)
 
         # Call API
         client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa')
-        response = client.topic(6746)
+        response = client.topic(1148)
 
         self.assertEqual(response, body)
 
@@ -466,7 +458,7 @@ class TestDiscourseClient(unittest.TestCase):
         req = httpretty.last_request()
 
         self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, '/t/6746.json')
+        self.assertRegex(req.path, '/t/1148.json')
         self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
@@ -474,7 +466,7 @@ class TestDiscourseClient(unittest.TestCase):
         """Test post API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/discourse_post_raw.json')
+        body = read_file('data/discourse_post.json')
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_POST_URL_1,
                                body=body, status=200)

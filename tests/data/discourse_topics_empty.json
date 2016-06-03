@@ -1,0 +1,10 @@
+{
+    "topic_list": {
+        "can_create_topic": false,
+        "draft": null,
+        "draft_key": "new_topic",
+        "draft_sequence": null,
+        "per_page": 30,
+        "topics": []
+    }
+}
