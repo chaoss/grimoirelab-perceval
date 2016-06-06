@@ -49,6 +49,8 @@ PIPERMAIL_COMPRESSED_TYPES = ['.gz', '.bz2', '.zip',
 PIPERMAIL_ACCEPTED_TYPES = ['.mbox', '.txt']
 PIPERMAIL_TYPES = PIPERMAIL_COMPRESSED_TYPES + PIPERMAIL_ACCEPTED_TYPES
 
+MOD_MBOX_THREAD_STR = "/thread"
+
 
 class Pipermail(MBox):
     """Pipermail backend.
@@ -248,6 +250,12 @@ class PipermailList(MailingList):
         links = []
 
         for candidate in candidates:
+            # Links from Apache's 'mod_mbox' plugin contain
+            # trailing "/thread" substrings. Remove them to get
+            # the links where mbox files are stored.
+            if candidate.endswith(MOD_MBOX_THREAD_STR):
+                candidate = candidate[:-len(MOD_MBOX_THREAD_STR)]
+
             # Ignore links with not recognized extension
             ext1 = os.path.splitext(candidate)[-1]
             ext2 = os.path.splitext(candidate.rstrip(ext1))[-1]
