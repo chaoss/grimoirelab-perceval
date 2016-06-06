@@ -254,6 +254,57 @@ class TestPipermailBackend(unittest.TestCase):
             self.assertEqual(message['updated_on'], expected[x][2])
 
     @httpretty.activate
+    def test_fetch_apache(self):
+        """Test whether it fetches and parses apache's messages"""
+
+        pipermail_index = read_file('data/pipermail_apache_index.html')
+        mbox_nov = read_file('data/pipermail_2015_november.mbox')
+        mbox_march = read_file('data/pipermail_2016_march.mbox')
+        mbox_april = read_file('data/pipermail_2016_april.mbox')
+
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL,
+                               body=pipermail_index)
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL + '201511.mbox',
+                               body=mbox_nov)
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL + '201603.mbox',
+                               body=mbox_march)
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL + '201604.mbox',
+                               body=mbox_april)
+
+        backend = Pipermail('http://example.com/', self.tmp_path)
+        messages = [m for m in backend.fetch()]
+
+        expected = [('<CACRHdMaObu7Dc0FWTWEesvRCzUNDG=7oA7KFqAgtOs_UKjb3Og@mail.gmail.com>',
+                     '9221eb7884be6f6b91fccd5d64107ce6c7f15e4d', 1447532968.0),
+                    ('<1447627429.3593.319.camel@example.com>',
+                     'd1b79ef1562b7caf4e4a99e3b7c391e5f733c0ff', 1447627429.0),
+                    ('<CACRHdMZaZtkM9h_=p_HH1Yz9pTJwh6nwU0PmeqQX=kemD8LCjw@example.com>',
+                     '48d348ef11e8ad3f7688b645dc71d93ecde9ae57', 1448107551.0),
+                    ('<CACRHdMbPdoLoUCeKrA4Cm6Gya77JuEO0NUe_XJq5hUkznTzisA@example.com>',
+                     '8c057f129fe161452ed2192ef5dce9bcfa10928a', 1448742330.0),
+                    ('<1457025635.7479.7.camel@calcifer.org>',
+                     '61d76ca22803b22937aa98f0b7d551ba6bfc7fb1', 1457025635.0),
+                    ('<1460624816.5581.114.camel@example.com>',
+                     'b5320132f853e08d587fc24e46827b0084e0c752', 1460624816.0),
+                    ('<CACRHdMZgAgzyhewu_aAJ2f2DWHVZdNH6J7zd2S=YWQuf-2yZDw@example.com>',
+                     '7a30847c497645d773d7ceb73b414887153bdbd3', 1461428336.0),
+                    ('<1461621607.19185.342.camel@example.com>',
+                     '8aa40b01acbdd987208fab4d724b9ddddf5e60fe', 1461621607.0)]
+
+        self.assertEqual(len(messages), 8)
+
+        for x in range(len(messages)):
+            message = messages[x]
+            self.assertEqual(message['data']['Message-ID'], expected[x][0])
+            self.assertEqual(message['origin'], 'http://example.com/')
+            self.assertEqual(message['uuid'], expected[x][1])
+            self.assertEqual(message['updated_on'], expected[x][2])
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test whether it fetches and parses messages since the given date"""
 
