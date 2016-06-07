@@ -1,0 +1,96 @@
+{
+    "bugs": [
+        {
+            "alias": null,
+            "history": [
+                {
+                    "changes": [
+                        {
+                            "added": "evan@tseng.io",
+                            "field_name": "cc",
+                            "removed": ""
+                        },
+                        {
+                            "added": "needinfo?(evan@tseng.io)",
+                            "field_name": "flagtypes.name",
+                            "removed": ""
+                        }
+                    ],
+                    "when": "2016-05-18T08:15:37Z",
+                    "who": "whuang@mozilla.com"
+                },
+                {
+                    "changes": [
+                        {
+                            "added": "",
+                            "field_name": "groups",
+                            "removed": "mozilla-employee-confidential"
+                        },
+                        {
+                            "added": "",
+                            "field_name": "flagtypes.name",
+                            "removed": "needinfo?(evan@tseng.io)"
+                        }
+                    ],
+                    "when": "2016-05-27T06:46:28Z",
+                    "who": "evan@tseng.io"
+                },
+                {
+                    "changes": [
+                        {
+                            "added": "needinfo?(evan@tseng.io)",
+                            "field_name": "flagtypes.name",
+                            "removed": ""
+                        }
+                    ],
+                    "when": "2016-05-31T14:23:28Z",
+                    "who": "whuang@mozilla.com"
+                },
+                {
+                    "changes": [
+                        {
+                            "added": "doliver@mozilla.com",
+                            "field_name": "cc",
+                            "removed": ""
+                        },
+                        {
+                            "added": "needinfo?(doliver@mozilla.com)",
+                            "field_name": "flagtypes.name",
+                            "removed": ""
+                        }
+                    ],
+                    "when": "2016-06-02T10:03:35Z",
+                    "who": "whuang@mozilla.com"
+                },
+                {
+                    "changes": [
+                        {
+                            "added": "",
+                            "field_name": "flagtypes.name",
+                            "removed": "needinfo?(evan@tseng.io)"
+                        }
+                    ],
+                    "when": "2016-06-03T03:30:53Z",
+                    "who": "evan@tseng.io"
+                },
+                {
+                    "changes": [
+                        {
+                            "added": "bdong@mozilla.com",
+                            "field_name": "cc",
+                            "removed": ""
+                        },
+                        {
+                            "added": "",
+                            "field_name": "flagtypes.name",
+                            "removed": "needinfo?(doliver@mozilla.com)"
+                        }
+                    ],
+                    "when": "2016-06-07T00:01:29Z",
+                    "who": "doliver@mozilla.com"
+                }
+            ],
+            "id": 1273442
+        }
+    ]
+}

@@ -1,0 +1,166 @@
+{
+    "bugs": [
+        {
+            "alias": null,
+            "assigned_to": "nobody@mozilla.org",
+            "assigned_to_detail": {
+                "email": "nobody@mozilla.org",
+                "id": 1,
+                "name": "nobody@mozilla.org",
+                "real_name": "Nobody; OK to take it and work on it"
+            },
+            "blocks": [
+                1273436
+            ],
+            "cc": [
+                "bdong@mozilla.com",
+                "doliver@mozilla.com",
+                "evan@tseng.io"
+            ],
+            "cc_detail": [
+                {
+                    "email": "bdong@mozilla.com",
+                    "id": 557011,
+                    "name": "bdong@mozilla.com",
+                    "real_name": "Braden Dong"
+                },
+                {
+                    "email": "doliver@mozilla.com",
+                    "id": 452037,
+                    "name": "doliver@mozilla.com",
+                    "real_name": "Dylan Oliver [:doliver]"
+                },
+                {
+                    "email": "evan@tseng.io",
+                    "id": 459562,
+                    "name": "evan@tseng.io",
+                    "real_name": "Evan Tseng [:evanxd][:\u611b\u805e\u63d2\u4f4e]"
+                }
+            ],
+            "cf_fx_iteration": "---",
+            "cf_fx_points": "---",
+            "cf_last_resolved": null,
+            "cf_qa_whiteboard": "",
+            "cf_user_story": "",
+            "classification": "Client Software",
+            "component": "Project Sensor Web",
+            "creation_time": "2016-05-17T09:44:44Z",
+            "creator": "whuang@mozilla.com",
+            "creator_detail": {
+                "email": "whuang@mozilla.com",
+                "id": 487151,
+                "name": "whuang@mozilla.com",
+                "real_name": "Wesley Huang [:wesley_huang] (EPM) (NI me)"
+            },
+            "depends_on": [],
+            "dupe_of": null,
+            "flags": [],
+            "groups": [],
+            "id": 1273442,
+            "is_cc_accessible": true,
+            "is_confirmed": true,
+            "is_creator_accessible": true,
+            "is_open": true,
+            "keywords": [],
+            "last_change_time": "2016-06-07T00:01:29Z",
+            "mentors": [],
+            "mentors_detail": [],
+            "op_sys": "Mac OS X",
+            "platform": "x86",
+            "priority": "--",
+            "product": "Connected Devices",
+            "qa_contact": "",
+            "resolution": "",
+            "see_also": [],
+            "severity": "normal",
+            "status": "NEW",
+            "summary": "License check for SensorWeb back-end",
+            "target_milestone": "---",
+            "url": "",
+            "version": "unspecified",
+            "votes": 0,
+            "whiteboard": ""
+        },
+        {
+            "alias": null,
+            "assigned_to": "nobody@mozilla.org",
+            "assigned_to_detail": {
+                "email": "nobody@mozilla.org",
+                "id": 1,
+                "name": "nobody@mozilla.org",
+                "real_name": "Nobody; OK to take it and work on it"
+            },
+            "blocks": [
+                1273436
+            ],
+            "cc": [
+                "bdong@mozilla.com",
+                "doliver@mozilla.com",
+                "schung@mozilla.com"
+            ],
+            "cc_detail": [
+                {
+                    "email": "bdong@mozilla.com",
+                    "id": 557011,
+                    "name": "bdong@mozilla.com",
+                    "real_name": "Braden Dong"
+                },
+                {
+                    "email": "doliver@mozilla.com",
+                    "id": 452037,
+                    "name": "doliver@mozilla.com",
+                    "real_name": "Dylan Oliver [:doliver]"
+                },
+                {
+                    "email": "schung@mozilla.com",
+                    "id": 442359,
+                    "name": "schung@mozilla.com",
+                    "real_name": "Steve Chung [:steveck]"
+                }
+            ],
+            "cf_fx_iteration": "---",
+            "cf_fx_points": "---",
+            "cf_last_resolved": null,
+            "cf_qa_whiteboard": "",
+            "cf_user_story": "",
+            "classification": "Client Software",
+            "component": "Project Sensor Web",
+            "creation_time": "2016-05-17T09:42:04Z",
+            "creator": "whuang@mozilla.com",
+            "creator_detail": {
+                "email": "whuang@mozilla.com",
+                "id": 487151,
+                "name": "whuang@mozilla.com",
+                "real_name": "Wesley Huang [:wesley_huang] (EPM) (NI me)"
+            },
+            "depends_on": [],
+            "dupe_of": null,
+            "flags": [],
+            "groups": [],
+            "id": 1273439,
+            "is_cc_accessible": true,
+            "is_confirmed": true,
+            "is_creator_accessible": true,
+            "is_open": true,
+            "keywords": [],
+            "last_change_time": "2016-06-07T00:01:55Z",
+            "mentors": [],
+            "mentors_detail": [],
+            "op_sys": "Mac OS X",
+            "platform": "x86",
+            "priority": "--",
+            "product": "Connected Devices",
+            "qa_contact": "",
+            "resolution": "",
+            "see_also": [],
+            "severity": "normal",
+            "status": "NEW",
+            "summary": "License check for SensorWeb front-end",
+            "target_milestone": "---",
+            "url": "",
+            "version": "unspecified",
+            "votes": 0,
+            "whiteboard": ""
+        }
+    ]
+}

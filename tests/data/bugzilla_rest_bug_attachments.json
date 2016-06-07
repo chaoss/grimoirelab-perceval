@@ -1,0 +1,24 @@
+{
+    "attachments": {},
+    "bugs": {
+        "1273442": [
+            {
+                "attacher": "bugzilla@factorware.com",
+                "bug_id": 1273442,
+                "content_type": "application/x-zip-compressed",
+                "creation_time": "2014-05-01T06:16:04Z",
+                "creator": "bugzilla@factorware.com",
+                "description": "sample.zip",
+                "file_name": "sample.zip",
+                "flags": [],
+                "id": 8415766,
+                "is_obsolete": 0,
+                "is_patch": 0,
+                "is_private": 0,
+                "last_change_time": "2014-05-01T06:16:04Z",
+                "size": 938,
+                "summary": "sample.zip"
+            }
+        ]
+    }
+}
