@@ -21,6 +21,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
 import datetime
 import shutil
 import sys
@@ -35,7 +36,9 @@ if not '..' in sys.path:
 from perceval.cache import Cache
 from perceval.errors import CacheError
 from perceval.errors import BackendError
-from perceval.backends.bugzillarest import BugzillaREST, BugzillaRESTClient
+from perceval.backends.bugzillarest import (BugzillaREST,
+                                            BugzillaRESTCommand,
+                                            BugzillaRESTClient)
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'
@@ -543,6 +546,39 @@ class TestBugzillaRESTClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/rest/bug/1273442/attachment')
         self.assertDictEqual(req.querystring, expected)
+
+
+class TestBugzillaRESTCommand(unittest.TestCase):
+
+    @httpretty.activate
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        # Set up a mock HTTP server
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_LOGIN_URL,
+                               body='{"token": "786-OLaWfBisMY", "id": "786"}',
+                               status=200)
+
+        args = ['--backend-user', 'jsmith@example.com',
+                '--backend-password', '1234',
+                '--max-bugs', '10', '--origin', 'test',
+                BUGZILLA_SERVER_URL]
+
+        cmd = BugzillaRESTCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.backend_user, 'jsmith@example.com')
+        self.assertEqual(cmd.parsed_args.backend_password, '1234')
+        self.assertEqual(cmd.parsed_args.max_bugs, 10)
+        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.url, BUGZILLA_SERVER_URL)
+        self.assertIsInstance(cmd.backend, BugzillaREST)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = BugzillaRESTCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 if __name__ == "__main__":

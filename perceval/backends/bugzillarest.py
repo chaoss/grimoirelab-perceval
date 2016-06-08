@@ -23,10 +23,12 @@
 
 import json
 import logging
+import os.path
 
 import requests
 
-from ..backend import Backend, metadata
+from ..backend import Backend, BackendCommand, metadata
+from ..cache import Cache
 from ..errors import BackendError, CacheError
 from ..utils import (DEFAULT_DATETIME,
                      datetime_to_utc,
@@ -373,3 +375,86 @@ class BugzillaRESTClient:
         r.raise_for_status()
 
         return r.text
+
+
+class BugzillaRESTCommand(BackendCommand):
+    """Class to run BugzillaREST backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.url = self.parsed_args.url
+        self.backend_user = self.parsed_args.backend_user
+        self.backend_password = self.parsed_args.backend_password
+        self.backend_token = self.parsed_args.backend_token
+        self.max_bugs = self.parsed_args.max_bugs
+        self.from_date = str_to_datetime(self.parsed_args.from_date)
+        self.origin = self.parsed_args.origin
+        self.outfile = self.parsed_args.outfile
+
+        if not self.parsed_args.no_cache:
+            if not self.parsed_args.cache_path:
+                base_path = os.path.expanduser('~/.perceval/cache/')
+            else:
+                base_path = self.parsed_args.cache_path
+
+            cache_path = os.path.join(base_path, self.url)
+
+            cache = Cache(cache_path)
+
+            if self.parsed_args.clean_cache:
+                cache.clean()
+            else:
+                cache.backup()
+        else:
+            cache = None
+
+        self.backend = BugzillaREST(self.url,
+                                    user=self.backend_user,
+                                    password=self.backend_password,
+                                    api_token=self.backend_token,
+                                    max_bugs=self.max_bugs,
+                                    cache=cache,
+                                    origin=self.origin)
+
+    def run(self):
+        """Fetch and print the bugs.
+
+        This method runs the backend to fetch the bugs from the given
+        repository. Bugs are converted to JSON objects and printed to the
+        defined output.
+        """
+        if self.parsed_args.fetch_cache:
+            bugs = self.backend.fetch_from_cache()
+        else:
+            bugs = self.backend.fetch(from_date=self.from_date)
+
+        try:
+            for bug in bugs:
+                obj = json.dumps(bug, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            if self.backend.cache:
+                self.backend.cache.recover()
+            raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the BugzillaREST argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # BugzillaREST options
+        group = parser.add_argument_group('Bugzilla REST arguments')
+        group.add_argument('--max-bugs', dest='max_bugs',
+                           type=int, default=MAX_BUGS,
+                           help="Maximum number of bugs requested on the same query")
+
+        # Required arguments
+        parser.add_argument('url',
+                            help="URL of the Bugzilla server")
+
+        return parser
