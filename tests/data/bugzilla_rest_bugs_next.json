@@ -1,0 +1,156 @@
+{
+    "bugs": [
+        {
+            "alias": null,
+            "assigned_to": "nobody@mozilla.org",
+            "assigned_to_detail": {
+                "email": "nobody@mozilla.org",
+                "id": 1,
+                "name": "nobody@mozilla.org",
+                "real_name": "Nobody; OK to take it and work on it"
+            },
+            "blocks": [
+                1200724
+            ],
+            "cc": [
+                "hskupin@gmail.com",
+                "josh@agliodbs.com",
+                "mkmelin+mozilla@iki.fi",
+                "vseerror@lehigh.edu"
+            ],
+            "cc_detail": [
+                {
+                    "email": "hskupin@gmail.com",
+                    "id": 76551,
+                    "name": "hskupin@gmail.com",
+                    "real_name": "Henrik Skupin (:whimboo) [away 06/06 - 06/10]"
+                },
+                {
+                    "email": "josh@agliodbs.com",
+                    "id": 86607,
+                    "name": "josh@agliodbs.com",
+                    "real_name": "[:jberkus] Josh Berkus"
+                },
+                {
+                    "email": "mkmelin+mozilla@iki.fi",
+                    "id": 101158,
+                    "name": "mkmelin+mozilla@iki.fi",
+                    "real_name": "Magnus Melin"
+                },
+                {
+                    "email": "vseerror@lehigh.edu",
+                    "id": 29811,
+                    "name": "vseerror@lehigh.edu",
+                    "real_name": "Wayne Mery (:wsmwk, NI for questions)"
+                }
+            ],
+            "cf_blocking_fx": "---",
+            "cf_crash_signature": "[@ dosprintf]",
+            "cf_fx_iteration": "---",
+            "cf_fx_points": "---",
+            "cf_last_resolved": null,
+            "cf_qa_whiteboard": "",
+            "cf_status_b2g_2_0": "---",
+            "cf_status_b2g_2_0m": "---",
+            "cf_status_b2g_2_1": "---",
+            "cf_status_b2g_2_1_s": "---",
+            "cf_status_b2g_2_2": "---",
+            "cf_status_b2g_2_2r": "---",
+            "cf_status_b2g_2_5": "---",
+            "cf_status_b2g_2_6": "---",
+            "cf_status_b2g_master": "---",
+            "cf_status_firefox47": "---",
+            "cf_status_firefox48": "---",
+            "cf_status_firefox49": "---",
+            "cf_status_firefox50": "---",
+            "cf_status_firefox_esr38": "---",
+            "cf_status_firefox_esr45": "---",
+            "cf_status_seamonkey243": "---",
+            "cf_status_seamonkey244": "---",
+            "cf_status_seamonkey245": "---",
+            "cf_status_seamonkey246": "---",
+            "cf_status_seamonkey247": "---",
+            "cf_status_thunderbird_47": "---",
+            "cf_status_thunderbird_48": "---",
+            "cf_status_thunderbird_49": "---",
+            "cf_status_thunderbird_50": "---",
+            "cf_status_thunderbird_esr24": "---",
+            "cf_status_thunderbird_esr38": "---",
+            "cf_status_thunderbird_esr45": "---",
+            "cf_tracking_b2g": "---",
+            "cf_tracking_firefox47": "---",
+            "cf_tracking_firefox48": "---",
+            "cf_tracking_firefox49": "---",
+            "cf_tracking_firefox50": "---",
+            "cf_tracking_firefox_esr38": "---",
+            "cf_tracking_firefox_esr45": "---",
+            "cf_tracking_firefox_relnote": "---",
+            "cf_tracking_relnote_b2g": "---",
+            "cf_tracking_seamonkey243": "---",
+            "cf_tracking_seamonkey244": "---",
+            "cf_tracking_seamonkey245": "---",
+            "cf_tracking_seamonkey246": "---",
+            "cf_tracking_seamonkey247": "---",
+            "cf_tracking_thunderbird_47": "---",
+            "cf_tracking_thunderbird_48": "---",
+            "cf_tracking_thunderbird_49": "---",
+            "cf_tracking_thunderbird_50": "---",
+            "cf_tracking_thunderbird_esr24": "---",
+            "cf_tracking_thunderbird_esr38": "---",
+            "cf_tracking_thunderbird_esr45": "---",
+            "cf_user_story": "",
+            "classification": "Components",
+            "component": "Backend",
+            "creation_time": "2013-12-09T16:05:51Z",
+            "creator": "mmokrejs@fold.natur.cuni.cz",
+            "creator_detail": {
+                "email": "mmokrejs@fold.natur.cuni.cz",
+                "id": 66576,
+                "name": "mmokrejs@fold.natur.cuni.cz",
+                "real_name": "Martin Mokrejs"
+            },
+            "depends_on": [],
+            "dupe_of": null,
+            "flags": [
+                {
+                    "creation_date": "2015-04-02T10:46:48Z",
+                    "id": 1137748,
+                    "modification_date": "2015-04-02T10:46:48Z",
+                    "name": "needinfo",
+                    "requestee": "josh@agliodbs.com",
+                    "setter": "vseerror@lehigh.edu",
+                    "status": "?",
+                    "type_id": 800
+                }
+            ],
+            "groups": [],
+            "id": 947945,
+            "is_cc_accessible": true,
+            "is_confirmed": true,
+            "is_creator_accessible": true,
+            "is_open": true,
+            "keywords": [
+                "crash",
+                "regression"
+            ],
+            "last_change_time": "2016-06-07T00:02:23Z",
+            "mentors": [],
+            "mentors_detail": [],
+            "op_sys": "Linux",
+            "platform": "x86_64",
+            "priority": "--",
+            "product": "MailNews Core",
+            "qa_contact": "",
+            "resolution": "",
+            "see_also": [],
+            "severity": "critical",
+            "status": "NEW",
+            "summary": "linux crash in dosprintf(SprintfStateStr*, unsigned short const*, __va_list_tag*) () via nsMsgDBView::FetchSize",
+            "target_milestone": "---",
+            "url": "",
+            "version": "25",
+            "votes": 0,
+            "whiteboard": "[closeme 2016-08-01 WFM][regression:TB25?]"
+        }
+    ]
+}

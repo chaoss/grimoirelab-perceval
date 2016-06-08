@@ -1,0 +1,100 @@
+{
+    "bugs": {
+        "1273442": {
+            "comments": [
+                {
+                    "attachment_id": null,
+                    "author": "whuang@mozilla.com",
+                    "bug_id": 1273442,
+                    "creation_time": "2016-05-17T09:44:44Z",
+                    "creator": "whuang@mozilla.com",
+                    "id": 11413982,
+                    "is_private": false,
+                    "raw_text": "What code is being taken from previous sources?  How was it taken?  What license applies to it?  What did we do with that code?",
+                    "tags": [],
+                    "text": "What code is being taken from previous sources?  How was it taken?  What license applies to it?  What did we do with that code?",
+                    "time": "2016-05-17T09:44:44Z"
+                },
+                {
+                    "attachment_id": null,
+                    "author": "whuang@mozilla.com",
+                    "bug_id": 1273442,
+                    "creation_time": "2016-05-18T08:15:37Z",
+                    "creator": "whuang@mozilla.com",
+                    "id": 11417745,
+                    "is_private": false,
+                    "raw_text": "please list out\n1. what codes are previous sources\n2. what license applies with that",
+                    "tags": [],
+                    "text": "please list out\n1. what codes are previous sources\n2. what license applies with that",
+                    "time": "2016-05-18T08:15:37Z"
+                },
+                {
+                    "attachment_id": null,
+                    "author": "evan@tseng.io",
+                    "bug_id": 1273442,
+                    "creation_time": "2016-05-27T06:47:28Z",
+                    "creator": "evan@tseng.io",
+                    "id": 11443369,
+                    "is_private": false,
+                    "raw_text": "I don't see any confidential info here.",
+                    "tags": [],
+                    "text": "I don't see any confidential info here.",
+                    "time": "2016-05-27T06:47:28Z"
+                },
+                {
+                    "attachment_id": null,
+                    "author": "whuang@mozilla.com",
+                    "bug_id": 1273442,
+                    "creation_time": "2016-05-31T14:23:28Z",
+                    "creator": "whuang@mozilla.com",
+                    "id": 11451136,
+                    "is_private": false,
+                    "raw_text": "Alright.\nWould you list out per comment 1?",
+                    "tags": [],
+                    "text": "Alright.\nWould you list out per comment 1?",
+                    "time": "2016-05-31T14:23:28Z"
+                },
+                {
+                    "attachment_id": null,
+                    "author": "whuang@mozilla.com",
+                    "bug_id": 1273442,
+                    "creation_time": "2016-06-02T10:03:35Z",
+                    "creator": "whuang@mozilla.com",
+                    "id": 11457641,
+                    "is_private": false,
+                    "raw_text": "NI Dylan. \n\nThis one (back-end) together with the other two (front-end, and device) are for a general legal check.\nDylan, would you please assist Braden to deep dive or whatever works for him?",
+                    "tags": [],
+                    "text": "NI Dylan. \n\nThis one (back-end) together with the other two (front-end, and device) are for a general legal check.\nDylan, would you please assist Braden to deep dive or whatever works for him?",
+                    "time": "2016-06-02T10:03:35Z"
+                },
+                {
+                    "attachment_id": null,
+                    "author": "evan@tseng.io",
+                    "bug_id": 1273442,
+                    "creation_time": "2016-06-03T03:30:53Z",
+                    "creator": "evan@tseng.io",
+                    "id": 11460346,
+                    "is_private": false,
+                    "raw_text": "Hi Wesley,\n\nThe file[1] lists all of our dependency modules of our sensorweb-backend[2] module.\n\nThe dependency module names and its licenses:\n* body-parser: MIT[3]\n* express: MIT[4]\n* mongoose: MIT[5]\n* shortid: MIT[6]\n\n[1]: https://github.com/evanxd/sensorweb-backend/blob/master/package.json\n[2]: https://github.com/evanxd/sensorweb-backend\n[3]: https://www.npmjs.com/package/body-parser\n[4]: https://www.npmjs.com/package/express\n[5]: https://www.npmjs.com/package/mongoose\n[6]: https://www.npmjs.com/package/shortid",
+                    "tags": [],
+                    "text": "Hi Wesley,\n\nThe file[1] lists all of our dependency modules of our sensorweb-backend[2] module.\n\nThe dependency module names and its licenses:\n* body-parser: MIT[3]\n* express: MIT[4]\n* mongoose: MIT[5]\n* shortid: MIT[6]\n\n[1]: https://github.com/evanxd/sensorweb-backend/blob/master/package.json\n[2]: https://github.com/evanxd/sensorweb-backend\n[3]: https://www.npmjs.com/package/body-parser\n[4]: https://www.npmjs.com/package/express\n[5]: https://www.npmjs.com/package/mongoose\n[6]: https://www.npmjs.com/package/shortid",
+                    "time": "2016-06-03T03:30:53Z"
+                },
+                {
+                    "attachment_id": null,
+                    "author": "doliver@mozilla.com",
+                    "bug_id": 1273442,
+                    "creation_time": "2016-06-07T00:01:29Z",
+                    "creator": "doliver@mozilla.com",
+                    "id": 11467723,
+                    "is_private": false,
+                    "raw_text": "cc: braden",
+                    "tags": [],
+                    "text": "cc: braden",
+                    "time": "2016-06-07T00:01:29Z"
+                }
+            ]
+        }
+    },
+    "comments": {}
+}

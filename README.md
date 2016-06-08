@@ -12,6 +12,7 @@ Repositories are reached using specific backends. The most common backends
 are:
 
     bugzilla         Fetch bugs from a Bugzilla server
+    bugillzarest     Fetch bugs from a Bugzilla server (>=5.0) using its REST API
     discourse        Fetch posts from Discourse site
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from a Git log file
@@ -58,8 +59,20 @@ Documentation is generated automagically in the [ReadTheDocs Perceval site](http
 ## Examples
 
 ### Bugzilla
+To fetch bugs from Bugzilla, you have to options:
+
+a) Use the traditional backend
+
 ```
 $ perceval bugzilla 'https://bugzilla.redhat.com/' --backend-user user --backend-password pass --from-date '2016-01-01'
+```
+
+b) Use the REST API backend for Buzilla 5.0 (or higher) servers. We strongly recommend
+this backend when data is fetched from version servers >=5.0 because the retrieval
+process is much faster.
+
+```
+$ perceval bugzillarest 'https://bugzilla.mozilla.org/' --backend-user user --backend-password pass --from-date '2016-01-01'
 ```
 
 ### Discourse
