@@ -27,7 +27,7 @@ import logging
 import requests
 
 from ..backend import Backend, metadata
-from ..errors import BackendError
+from ..errors import BackendError, CacheError
 from ..utils import (DEFAULT_DATETIME,
                      datetime_to_utc,
                      str_to_datetime,
@@ -94,13 +94,52 @@ class BugzillaREST(Backend):
 
         logger.info("Fetch process completed: %s bugs fetched", nbugs)
 
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch bugs from the cache.
+
+        :returns: a generator of bugs
+
+        :raises CacheError: raised when an error occurs accessing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        logger.info("Retrieving cached bugs: '%s'", self.url)
+        cache_items = self.cache.retrieve()
+        nbugs = 0
+
+        while True:
+            try:
+                raw_bugs = next(cache_items)
+            except StopIteration:
+                break
+
+            bugs = json.loads(raw_bugs)
+
+            for bug in bugs['bugs']:
+                bug_id = bug['id']
+                cd = json.loads(next(cache_items))
+                hd = json.loads(next(cache_items))
+                ad = json.loads(next(cache_items))
+
+                bug['comments'] = cd['bugs'][str(bug_id)]['comments']
+                bug['history'] = hd['bugs'][0]['history']
+                bug['attachments'] = ad['bugs'][str(bug_id)]
+
+                nbugs += 1
+                yield bug
+
+        logger.info("Retrieval process completed: %s bugs retrieved from cache",
+                    nbugs)
+
     def __fetch_bugs(self, from_date):
         offset = 0
 
         while True:
             logger.debug("Fetching and parsing bugs from: %s, offset: %s, limit: %s ",
                          str(from_date), offset, self.max_bugs)
-
             raw_bugs = self.client.bugs(from_date=from_date, offset=offset,
                                         max_bugs=self.max_bugs)
             self._push_cache_queue(raw_bugs)
@@ -119,7 +158,6 @@ class BugzillaREST(Backend):
                 yield bug
 
             self._flush_cache_queue()
-
             offset += self.max_bugs
 
     def __fetch_and_parse_comments(self, bug_id):

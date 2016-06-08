@@ -22,7 +22,9 @@
 #
 
 import datetime
+import shutil
 import sys
+import tempfile
 import unittest
 
 import httpretty
@@ -30,6 +32,8 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
+from perceval.cache import Cache
+from perceval.errors import CacheError
 from perceval.errors import BackendError
 from perceval.backends.bugzillarest import BugzillaREST, BugzillaRESTClient
 
@@ -48,6 +52,69 @@ def read_file(filename, mode='r'):
     with open(filename, mode) as f:
         content = f.read()
     return content
+
+def setup_http_server():
+    http_requests = []
+
+    bodies_bugs = [read_file('data/bugzilla_rest_bugs.json', mode='rb'),
+                   read_file('data/bugzilla_rest_bugs_next.json', mode='rb'),
+                   read_file('data/bugzilla_rest_bugs_empty.json', mode='rb')]
+    body_comments = read_file('data/bugzilla_rest_bug_comments.json', mode='rb')
+    body_history = read_file('data/bugzilla_rest_bug_history.json', mode='rb')
+    body_attachments = read_file('data/bugzilla_rest_bug_attachments.json', mode='rb')
+
+    def request_callback(method, uri, headers):
+        if uri.startswith(BUGZILLA_BUGS_COMMENTS_1273442_URL):
+            body = body_comments
+        elif uri.startswith(BUGZILLA_BUGS_HISTORY_1273442_URL):
+            body = body_history
+        elif uri.startswith(BUGZILLA_BUGS_ATTACHMENTS_1273442_URL):
+            body = body_attachments
+        elif uri.startswith(BUGZILLA_BUG_1273439_URL):
+            if uri.endswith('comment'):
+                body = '{ "bugs" : {"1273439" : {"comments" : []} } }'
+            elif uri.endswith('history'):
+                body = '{ "bugs" : [{"history" : []}] }'
+            else:
+                body = '{ "bugs" : {"1273439" : []} }'
+        elif uri.startswith(BUGZILLA_BUG_947945_URL):
+            if uri.endswith('comment'):
+                body = '{ "bugs" : {"947945" : {"comments" : []} } }'
+            elif uri.endswith('history'):
+                body = '{ "bugs" : [{"history" : []}] }'
+            else:
+                body = '{ "bugs" : {"947945" : []} }'
+        else:
+            body = bodies_bugs.pop(0)
+
+        http_requests.append(httpretty.last_request())
+
+        return (200, headers, body)
+
+    httpretty.register_uri(httpretty.GET,
+                           BUGZILLA_BUGS_URL,
+                           responses=[
+                                httpretty.Response(body=request_callback) \
+                                for _ in range(3)
+                           ])
+
+    http_urls = [BUGZILLA_BUGS_COMMENTS_1273442_URL,
+                 BUGZILLA_BUGS_HISTORY_1273442_URL,
+                 BUGZILLA_BUGS_ATTACHMENTS_1273442_URL]
+    suffixes = ['comment', 'history', 'attachment']
+
+    for http_url in [BUGZILLA_BUG_1273439_URL, BUGZILLA_BUG_947945_URL]:
+        for suffix in suffixes:
+            http_urls.append(http_url + suffix)
+
+    for req_url in http_urls:
+        httpretty.register_uri(httpretty.GET,
+                               req_url,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+
+    return http_requests
 
 
 class TestBugzillaRESTBackend(unittest.TestCase):
@@ -74,72 +141,11 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         self.assertEqual(bg.url, BUGZILLA_SERVER_URL)
         self.assertEqual(bg.origin, BUGZILLA_SERVER_URL)
 
-    def __setup_http_server(self):
-        self.http_requests = []
-        bodies_bugs = [read_file('data/bugzilla_rest_bugs.json', mode='rb'),
-                       read_file('data/bugzilla_rest_bugs_next.json', mode='rb'),
-                       read_file('data/bugzilla_rest_bugs_empty.json', mode='rb')]
-        body_comments = read_file('data/bugzilla_rest_bug_comments.json', mode='rb')
-        body_history = read_file('data/bugzilla_rest_bug_history.json', mode='rb')
-        body_attachments = read_file('data/bugzilla_rest_bug_attachments.json', mode='rb')
-
-        def request_callback(method, uri, headers):
-            if uri.startswith(BUGZILLA_BUGS_COMMENTS_1273442_URL):
-                body = body_comments
-            elif uri.startswith(BUGZILLA_BUGS_HISTORY_1273442_URL):
-                body = body_history
-            elif uri.startswith(BUGZILLA_BUGS_ATTACHMENTS_1273442_URL):
-                body = body_attachments
-            elif uri.startswith(BUGZILLA_BUG_1273439_URL):
-                if uri.endswith('comment'):
-                    body = '{ "bugs" : {"1273439" : {"comments" : []} } }'
-                elif uri.endswith('history'):
-                    body = '{ "bugs" : [{"history" : []}] }'
-                else:
-                    body = '{ "bugs" : {"1273439" : []} }'
-            elif uri.startswith(BUGZILLA_BUG_947945_URL):
-                if uri.endswith('comment'):
-                    body = '{ "bugs" : {"947945" : {"comments" : []} } }'
-                elif uri.endswith('history'):
-                    body = '{ "bugs" : [{"history" : []}] }'
-                else:
-                    body = '{ "bugs" : {"947945" : []} }'
-            else:
-                body = bodies_bugs.pop(0)
-
-            self.http_requests.append(httpretty.last_request())
-
-            return (200, headers, body)
-
-        httpretty.register_uri(httpretty.GET,
-                               BUGZILLA_BUGS_URL,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(3)
-                               ])
-
-        http_urls = [BUGZILLA_BUGS_COMMENTS_1273442_URL,
-                     BUGZILLA_BUGS_HISTORY_1273442_URL,
-                     BUGZILLA_BUGS_ATTACHMENTS_1273442_URL]
-
-        suffixes = ['comment', 'history', 'attachment']
-
-        for http_url in [BUGZILLA_BUG_1273439_URL, BUGZILLA_BUG_947945_URL]:
-            for suffix in suffixes:
-                http_urls.append(http_url + suffix)
-
-        for req_url in http_urls:
-            httpretty.register_uri(httpretty.GET,
-                                   req_url,
-                                   responses=[
-                                        httpretty.Response(body=request_callback)
-                                   ])
-
     @httpretty.activate
     def test_fetch(self):
         """Test whether a list of bugs is returned"""
 
-        self.__setup_http_server()
+        http_requests = setup_http_server()
 
         bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2)
         bugs = [bug for bug in bg.fetch()]
@@ -196,10 +202,10 @@ class TestBugzillaRESTBackend(unittest.TestCase):
                     }
                     ]
 
-        self.assertEqual(len(self.http_requests), len(expected))
+        self.assertEqual(len(http_requests), len(expected))
 
         for i in range(len(expected)):
-            self.assertDictEqual(self.http_requests[i].querystring, expected[i])
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -214,6 +220,82 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         bugs = [bug for bug in bg.fetch()]
 
         self.assertEqual(len(bugs), 0)
+
+
+class TestBugzillaRESTBackendCache(unittest.TestCase):
+    """BugzillaREST backend tests using a cache"""
+
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    @httpretty.activate
+    def test_fetch_from_cache(self):
+        """Test whether the cache works"""
+
+        http_requests = setup_http_server()
+
+        # First, we fetch the topics from the server, storing them
+        # in a cache
+        cache = Cache(self.tmp_path)
+        bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2,
+                          cache=cache)
+
+        bugs = [bug for bug in bg.fetch()]
+        self.assertEqual(len(http_requests), 12)
+
+        # Now, we get the topics from the cache.
+        # The contents should be the same and there won't be
+        # any new request to the server
+        cached_bugs = [bug for bug in bg.fetch_from_cache()]
+        self.assertEqual(len(cached_bugs), len(bugs))
+
+        self.assertEqual(len(cached_bugs), 3)
+
+        self.assertEqual(bugs[0]['data']['id'], 1273442)
+        self.assertEqual(len(bugs[0]['data']['comments']), 7)
+        self.assertEqual(len(bugs[0]['data']['history']), 6)
+        self.assertEqual(len(bugs[0]['data']['attachments']), 1)
+        self.assertEqual(bugs[0]['origin'], BUGZILLA_SERVER_URL)
+        self.assertEqual(bugs[0]['uuid'], '68494ad0072ed9e09cecb8235649a38c443326db')
+        self.assertEqual(bugs[0]['updated_on'], 1465257689.0)
+
+        self.assertEqual(bugs[1]['data']['id'], 1273439)
+        self.assertEqual(len(bugs[1]['data']['comments']), 0)
+        self.assertEqual(len(bugs[1]['data']['history']), 0)
+        self.assertEqual(len(bugs[1]['data']['attachments']), 0)
+        self.assertEqual(bugs[1]['origin'], BUGZILLA_SERVER_URL)
+        self.assertEqual(bugs[1]['uuid'], 'd306162de06bc759f9bd9227fe3fd5f08aeb0dde')
+        self.assertEqual(bugs[1]['updated_on'], 1465257715.0)
+
+        self.assertEqual(bugs[2]['data']['id'], 947945)
+        self.assertEqual(len(bugs[2]['data']['comments']), 0)
+        self.assertEqual(len(bugs[2]['data']['history']), 0)
+        self.assertEqual(len(bugs[2]['data']['attachments']), 0)
+        self.assertEqual(bugs[2]['origin'], BUGZILLA_SERVER_URL)
+        self.assertEqual(bugs[2]['uuid'], '33edda925351c3310fc3e12d7f18a365c365f6bd')
+        self.assertEqual(bugs[2]['updated_on'], 1465257743.0)
+
+        # No more requests were sent
+        self.assertEqual(len(http_requests), 12)
+
+    def test_fetch_from_empty_cache(self):
+        """Test if there are not any bugs returned when the cache is empty"""
+
+        cache = Cache(self.tmp_path)
+        bg = BugzillaREST(BUGZILLA_SERVER_URL, cache=cache)
+        cached_bugs = [bug for bug in bg.fetch_from_cache()]
+        self.assertEqual(len(cached_bugs), 0)
+
+    def test_fetch_from_non_set_cache(self):
+        """Test if a error is raised when the cache was not set"""
+
+        bg = BugzillaREST(BUGZILLA_SERVER_URL)
+
+        with self.assertRaises(CacheError):
+            _ = [bug for bug in bg.fetch_from_cache()]
 
 
 class TestBugzillaRESTClient(unittest.TestCase):
