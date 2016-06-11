@@ -47,7 +47,6 @@ BUGZILLA_BUGS_URL = BUGZILLA_SERVER_URL + '/rest/bug'
 BUGZILLA_BUGS_COMMENTS_1273442_URL =  BUGZILLA_SERVER_URL + '/rest/bug/1273442/comment'
 BUGZILLA_BUGS_HISTORY_1273442_URL =  BUGZILLA_SERVER_URL + '/rest/bug/1273442/history'
 BUGZILLA_BUGS_ATTACHMENTS_1273442_URL =  BUGZILLA_SERVER_URL + '/rest/bug/1273442/attachment'
-BUGZILLA_BUG_1273439_URL =  BUGZILLA_SERVER_URL + '/rest/bug/1273439/'
 BUGZILLA_BUG_947945_URL =  BUGZILLA_SERVER_URL + '/rest/bug/947945/'
 
 
@@ -62,31 +61,27 @@ def setup_http_server():
     bodies_bugs = [read_file('data/bugzilla_rest_bugs.json', mode='rb'),
                    read_file('data/bugzilla_rest_bugs_next.json', mode='rb'),
                    read_file('data/bugzilla_rest_bugs_empty.json', mode='rb')]
-    body_comments = read_file('data/bugzilla_rest_bug_comments.json', mode='rb')
-    body_history = read_file('data/bugzilla_rest_bug_history.json', mode='rb')
-    body_attachments = read_file('data/bugzilla_rest_bug_attachments.json', mode='rb')
+    body_comments = [read_file('data/bugzilla_rest_bugs_comments.json', mode='rb'),
+                     read_file('data/bugzilla_rest_bugs_comments_empty.json', mode='rb')]
+    body_history = [read_file('data/bugzilla_rest_bugs_history.json', mode='rb'),
+                    read_file('data/bugzilla_rest_bugs_history_empty.json', mode='rb')]
+    body_attachments = [read_file('data/bugzilla_rest_bugs_attachments.json', mode='rb'),
+                        read_file('data/bugzilla_rest_bugs_attachments_empty.json', mode='rb')]
 
     def request_callback(method, uri, headers):
         if uri.startswith(BUGZILLA_BUGS_COMMENTS_1273442_URL):
-            body = body_comments
+            body = body_comments[0]
         elif uri.startswith(BUGZILLA_BUGS_HISTORY_1273442_URL):
-            body = body_history
+            body = body_history[0]
         elif uri.startswith(BUGZILLA_BUGS_ATTACHMENTS_1273442_URL):
-            body = body_attachments
-        elif uri.startswith(BUGZILLA_BUG_1273439_URL):
-            if uri.endswith('comment'):
-                body = '{ "bugs" : {"1273439" : {"comments" : []} } }'
-            elif uri.endswith('history'):
-                body = '{ "bugs" : [{"history" : []}] }'
-            else:
-                body = '{ "bugs" : {"1273439" : []} }'
+            body = body_attachments[0]
         elif uri.startswith(BUGZILLA_BUG_947945_URL):
-            if uri.endswith('comment'):
-                body = '{ "bugs" : {"947945" : {"comments" : []} } }'
-            elif uri.endswith('history'):
-                body = '{ "bugs" : [{"history" : []}] }'
+            if uri.find('comment') > 0:
+                body = body_comments[1]
+            elif uri.find('history') > 0:
+                body = body_history[1]
             else:
-                body = '{ "bugs" : {"947945" : []} }'
+                body = body_attachments[1]
         else:
             body = bodies_bugs.pop(0)
 
@@ -104,9 +99,10 @@ def setup_http_server():
     http_urls = [BUGZILLA_BUGS_COMMENTS_1273442_URL,
                  BUGZILLA_BUGS_HISTORY_1273442_URL,
                  BUGZILLA_BUGS_ATTACHMENTS_1273442_URL]
+
     suffixes = ['comment', 'history', 'attachment']
 
-    for http_url in [BUGZILLA_BUG_1273439_URL, BUGZILLA_BUG_947945_URL]:
+    for http_url in [BUGZILLA_BUG_947945_URL]:
         for suffix in suffixes:
             http_urls.append(http_url + suffix)
 
@@ -186,8 +182,16 @@ class TestBugzillaRESTBackend(unittest.TestCase):
                      'order' : ['changeddate'],
                      'include_fields' : ['_all']
                     },
-                    {}, {}, {'exclude_fields' : ['data']},
-                    {}, {}, {'exclude_fields' : ['data']},
+                    {
+                     'ids' : ['1273442', '1273439']
+                    },
+                    {
+                     'ids' : ['1273442', '1273439']
+                    },
+                    {
+                     'ids' : ['1273442', '1273439'],
+                     'exclude_fields' : ['data']
+                    },
                     {
                      'last_change_time' : ['1970-01-01T00:00:00Z'],
                      'offset' : ['2'],
@@ -195,15 +199,23 @@ class TestBugzillaRESTBackend(unittest.TestCase):
                      'order' : ['changeddate'],
                      'include_fields' : ['_all']
                     },
-                    {}, {}, {'exclude_fields' : ['data']},
+                    {
+                     'ids' : ['947945']
+                    },
+                    {
+                     'ids' : ['947945']
+                    },
+                    {
+                     'ids' : ['947945'],
+                     'exclude_fields' : ['data']
+                    },
                     {
                      'last_change_time' : ['1970-01-01T00:00:00Z'],
                      'offset' : ['4'],
                      'limit' : ['2'],
                      'order' : ['changeddate'],
                      'include_fields' : ['_all']
-                    }
-                    ]
+                    }]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -247,7 +259,7 @@ class TestBugzillaRESTBackendCache(unittest.TestCase):
                           cache=cache)
 
         bugs = [bug for bug in bg.fetch()]
-        self.assertEqual(len(http_requests), 12)
+        self.assertEqual(len(http_requests), 9)
 
         # Now, we get the topics from the cache.
         # The contents should be the same and there won't be
@@ -282,7 +294,7 @@ class TestBugzillaRESTBackendCache(unittest.TestCase):
         self.assertEqual(bugs[2]['updated_on'], 1465257743.0)
 
         # No more requests were sent
-        self.assertEqual(len(http_requests), 12)
+        self.assertEqual(len(http_requests), 9)
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any bugs returned when the cache is empty"""
@@ -473,20 +485,21 @@ class TestBugzillaRESTClient(unittest.TestCase):
         """Test comments API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_rest_bug_comments.json')
+        body = read_file('data/bugzilla_rest_bugs_comments.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_COMMENTS_1273442_URL,
                                body=body, status=200)
 
-
         # Call API
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
-        response = client.comments('1273442')
+        response = client.comments('1273442', '1273439')
 
         self.assertEqual(response, body)
 
         # Check request params
-        expected = {}
+        expected = {
+                    'ids' : ['1273442', '1273439']
+                   }
 
         req = httpretty.last_request()
 
@@ -499,7 +512,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
         """Test history API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_rest_bug_history.json')
+        body = read_file('data/bugzilla_rest_bugs_history.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_HISTORY_1273442_URL,
                                body=body, status=200)
@@ -507,12 +520,14 @@ class TestBugzillaRESTClient(unittest.TestCase):
 
         # Call API
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
-        response = client.history('1273442')
+        response = client.history('1273442', '1273439')
 
         self.assertEqual(response, body)
 
         # Check request params
-        expected = {}
+        expected = {
+                    'ids' : ['1273442', '1273439']
+                   }
 
         req = httpretty.last_request()
 
@@ -525,19 +540,20 @@ class TestBugzillaRESTClient(unittest.TestCase):
         """Test attachments API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_rest_bug_attachments.json')
+        body = read_file('data/bugzilla_rest_bugs_attachments.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_ATTACHMENTS_1273442_URL,
                                body=body, status=200)
 
         # Call API
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
-        response = client.attachments('1273442')
+        response = client.attachments('1273442', '1273439')
 
         self.assertEqual(response, body)
 
         # Check request params
         expected = {
+            'ids' : ['1273442', '1273439'],
             'exclude_fields' : ['data']
         }
 

@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 MAX_BUGS = 500 # Maximum number of bugs per query
+MAX_CONTENTS = 25 # Maximum number of bug contents (history, comments) per query
 
 
 class BugzillaREST(Backend):
@@ -58,7 +59,7 @@ class BugzillaREST(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, url, user=None, password=None, api_token=None,
                  max_bugs=MAX_BUGS, cache=None, origin=None):
@@ -90,7 +91,7 @@ class BugzillaREST(Backend):
         self._purge_cache_queue()
 
         nbugs = 0
-        for bug in self.__fetch_bugs(from_date):
+        for bug in self.__fetch_and_parse_bugs(from_date):
             nbugs += 1
             yield bug
 
@@ -109,34 +110,17 @@ class BugzillaREST(Backend):
             raise CacheError(cause="cache instance was not provided")
 
         logger.info("Retrieving cached bugs: '%s'", self.url)
-        cache_items = self.cache.retrieve()
         nbugs = 0
 
-        while True:
-            try:
-                raw_bugs = next(cache_items)
-            except StopIteration:
-                break
-
-            bugs = json.loads(raw_bugs)
-
-            for bug in bugs['bugs']:
-                bug_id = bug['id']
-                cd = json.loads(next(cache_items))
-                hd = json.loads(next(cache_items))
-                ad = json.loads(next(cache_items))
-
-                bug['comments'] = cd['bugs'][str(bug_id)]['comments']
-                bug['history'] = hd['bugs'][0]['history']
-                bug['attachments'] = ad['bugs'][str(bug_id)]
-
-                nbugs += 1
-                yield bug
+        for bug in self.__retrieve_bugs_from_cache():
+            nbugs += 1
+            yield bug
 
         logger.info("Retrieval process completed: %s bugs retrieved from cache",
                     nbugs)
 
-    def __fetch_bugs(self, from_date):
+    def __fetch_and_parse_bugs(self, from_date):
+        max_contents = min(MAX_CONTENTS, self.max_bugs)
         offset = 0
 
         while True:
@@ -147,52 +131,111 @@ class BugzillaREST(Backend):
             self._push_cache_queue(raw_bugs)
 
             data = json.loads(raw_bugs)
+            buglist = data['bugs']
 
-            if len(data['bugs']) == 0:
+            tbugs = len(buglist)
+
+            if tbugs == 0:
                 break
 
-            for bug in data['bugs']:
-                bug_id = bug['id']
+            for i in range(0, tbugs, max_contents):
+                chunk = buglist[i:i + max_contents]
+                bug_ids = [b['id'] for b in chunk]
 
-                bug['comments'] = self.__fetch_and_parse_comments(bug_id)
-                bug['history'] = self.__fetch_and_parse_history(bug_id)
-                bug['attachments'] = self.__fetch_and_parse_attachments(bug_id)
-                yield bug
+                comments = self.__fetch_and_parse_comments(*bug_ids)
+                histories = self.__fetch_and_parse_histories(*bug_ids)
+                attachments = self.__fetch_and_parse_attachments(*bug_ids)
+
+                for bug in chunk:
+                    bug_id = str(bug['id'])
+                    bug['comments'] = comments[bug_id]
+                    bug['history'] = histories[bug_id]
+                    bug['attachments'] = attachments[bug_id]
+                    yield bug
 
             self._flush_cache_queue()
             offset += self.max_bugs
 
-    def __fetch_and_parse_comments(self, bug_id):
-        logger.debug("Fetching and parsing comments from bug %s", bug_id)
-
-        raw_comments = self.client.comments(bug_id)
+    def __fetch_and_parse_comments(self, *bug_ids):
+        logger.debug("Fetching and parsing comments")
+        raw_comments = self.client.comments(*bug_ids)
         self._push_cache_queue(raw_comments)
+        return self.__parse_comments(raw_comments)
 
-        data = json.loads(raw_comments)
-        comments = data['bugs'][str(bug_id)]['comments']
+    def __fetch_and_parse_histories(self, *bug_ids):
+        logger.debug("Fetching and parsing histories")
+        raw_histories = self.client.history(*bug_ids)
+        self._push_cache_queue(raw_histories)
+        return self.__parse_histories(raw_histories)
 
+    def __fetch_and_parse_attachments(self, *bug_ids):
+        logger.debug("Fetching and parsing attachments")
+        raw_attachments = self.client.attachments(*bug_ids)
+        self._push_cache_queue(raw_attachments)
+        return self.__parse_attachments(raw_attachments)
+
+    def __retrieve_bugs_from_cache(self):
+        def recover_extra_data(cache_items):
+            try:
+                comments = self.__parse_comments(next(cache_items))
+                histories = self.__parse_histories(next(cache_items))
+                attachments = self.__parse_attachments(next(cache_items))
+            except StopIteration:
+                # Fatal error. The code should not reach here.
+                # Cache should had stored an activity item per parsed bug.
+                cause = "cache is exhausted but more items were expected"
+                raise CacheError(cause=cause)
+            return comments, histories, attachments
+
+        cache_items = self.cache.retrieve()
+
+        while True:
+            try:
+                raw_bugs = next(cache_items)
+            except StopIteration:
+                break
+
+            bugs = json.loads(raw_bugs)['bugs']
+
+            if len(bugs) == 0:
+                continue
+
+            comments, histories, attachments = recover_extra_data(cache_items)
+
+            while bugs:
+                bug = bugs.pop(0)
+                bug_id = str(bug['id'])
+
+                try:
+                    bug['comments'] = comments.pop(bug_id)
+                    bug['history'] = histories.pop(bug_id)
+                    bug['attachments'] = attachments.pop(bug_id)
+                except KeyError:
+                    # Fatal error. Keys must exist.
+                    cause = "invalid cached data, bug id %s not found" % bug_id
+                    raise CacheError(cause=cause)
+
+                yield bug
+
+                if bugs and (len(comments) + len(histories) + len(attachments) == 0):
+                    comments, histories, attachments = recover_extra_data(cache_items)
+
+    @staticmethod
+    def __parse_comments(raw_comments):
+        contents = json.loads(raw_comments)['bugs']
+        comments = {k : v['comments'] for k, v in contents.items()}
         return comments
 
-    def __fetch_and_parse_history(self, bug_id):
-        logger.debug("Fetching and parsing history from bug %s", bug_id)
-
-        raw_history = self.client.history(bug_id)
-        self._push_cache_queue(raw_history)
-
-        data = json.loads(raw_history)
-        history = data['bugs'][0]['history']
-
+    @staticmethod
+    def __parse_histories(raw_histories):
+        contents = json.loads(raw_histories)['bugs']
+        history = {str(c['id']) : c['history'] for c in contents}
         return history
 
-    def __fetch_and_parse_attachments(self, bug_id):
-        logger.debug("Fetching and parsing attachments from bug %s", bug_id)
-
-        raw_attachments = self.client.attachments(bug_id)
-        self._push_cache_queue(raw_attachments)
-
-        data = json.loads(raw_attachments)
-        attachments = data['bugs'][str(bug_id)]
-
+    @staticmethod
+    def __parse_attachments(raw_attachments):
+        contents = json.loads(raw_attachments)['bugs']
+        attachments = {k : v for k, v in contents.items()}
         return attachments
 
     @staticmethod
@@ -252,6 +295,7 @@ class BugzillaRESTClient:
     PBUGZILLA_LOGIN = 'login'
     PBUGZILLA_PASSWORD = 'password'
     PBUGZILLA_TOKEN = 'token'
+    PIDS = 'ids'
     PLAST_CHANGE_TIME = 'last_change_time'
     PLIMIT = 'limit'
     POFFSET = 'offset'
@@ -318,37 +362,46 @@ class BugzillaRESTClient:
 
         return response
 
-    def comments(self, bug_id):
-        """Get the comments of the given bug.
+    def comments(self, *bug_ids):
+        """Get the comments of the given bugs.
 
-        :param bug_id: bug identifier
+        :param bug_ids: list of bug identifiers
         """
-        resource = urljoin(self.RBUG, bug_id, self.RCOMMENT)
-        params = {}
+        # Hack. The first value must be a valid bug id
+        resource = urljoin(self.RBUG, bug_ids[0], self.RCOMMENT)
 
-        response = self.call(resource, params)
-
-        return response
-
-    def history(self, bug_id):
-        """Get the history of the given bug.
-
-        :param bug_id: bug identifier
-        """
-        resource = urljoin(self.RBUG, bug_id, self.RHISTORY)
-        params = {}
-
-        response = self.call(resource, params)
-
-        return response
-
-    def attachments(self, bug_id):
-        """Get the attachments of the given bug.
-
-        :param bug_id: bug identifier
-        """
-        resource = urljoin(self.RBUG, bug_id, self.RATTACHMENT)
         params = {
+            self.PIDS : bug_ids
+        }
+
+        response = self.call(resource, params)
+
+        return response
+
+    def history(self, *bug_ids):
+        """Get the history of the given bugs.
+
+        :param bug_ids: list of bug identifiers
+        """
+        resource = urljoin(self.RBUG, bug_ids[0], self.RHISTORY)
+
+        params = {
+            self.PIDS : bug_ids
+        }
+
+        response = self.call(resource, params)
+
+        return response
+
+    def attachments(self, *bug_ids):
+        """Get the attachments of the given bugs.
+
+        :param bug_id: list of bug identifiers
+        """
+        resource = urljoin(self.RBUG, bug_ids[0], self.RATTACHMENT)
+
+        params = {
+            self.PIDS : bug_ids,
             self.PEXCLUDE_FIELDS : self.VEXCLUDE_ATTCH_DATA
         }
 
