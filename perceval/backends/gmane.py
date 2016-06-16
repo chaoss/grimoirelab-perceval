@@ -23,15 +23,17 @@
 # Note: some ot this code was based on parts of the MailingListStats project
 #
 
+import functools
 import logging
 import os
 import posixpath
 
 import requests
 
-from .mbox import MailingList
+from .mbox import MailingList, MBox
+from ..backend import metadata
 from ..errors import RepositoryError
-from ..utils import urljoin
+from ..utils import (DEFAULT_DATETIME, urljoin)
 
 
 logger = logging.getLogger(__name__)
@@ -39,6 +41,121 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_OFFSET = 0
 MAX_MESSAGES = 2000 # Maximum number of messages per query
+
+
+def gmane_metadata(func):
+    """Gmane metadata decorator.
+
+    This decorator takes items overrides `metadata` decorator to add extra
+    information related to Gmane.
+    """
+    @functools.wraps(func)
+    def decorator(self, *args, **kwargs):
+        offset = kwargs.get('offset', DEFAULT_OFFSET)
+
+        for item in func(self, *args, **kwargs):
+            item['offset'] = offset
+            offset += 1
+            yield item
+    return decorator
+
+
+class Gmane(MBox):
+    """Gmane backend.
+
+    The Gmane backend allows to fetch the email messages from a mailing
+    list stored on Gmane. Initialize this class passing the mailing list
+    address (i.e: my-mailing-list@example.com) and the directory path
+    where the mbox files will be stored.
+
+    :param mailing_list_address: address of the mailing list
+    :param dirpath: directory path where the mboxes are stored
+    :param cache: cache object to store raw data
+    :param origin: identifier of the repository; when `None` or an
+        empty string are given, it will be set to the URL under
+        Gmane stores that list; usually is similar to
+        'http://dir.gmane.org/gmane.comp.example.mylist'
+
+    :raises  RepositoryError: when the given mailing list repository
+        is not stored by Gmane
+    """
+    version = '0.1.0'
+
+    def __init__(self, mailing_list_address, dirpath,
+                 cache=None, origin=None):
+        self.mailing_list = GmaneMailingList(mailing_list_address, dirpath)
+
+        url = self.mailing_list.url
+        origin = origin if origin else url
+
+        super().__init__(url, dirpath, cache=cache, origin=origin)
+        self.url = url
+
+    @gmane_metadata
+    @metadata
+    def fetch(self, offset=DEFAULT_OFFSET):
+        """Fetch the messages from Gmane.
+
+        The method fetches the messages stored in Gmane related
+        to the mailing list.
+
+        :param offset: obtain messages from this offset
+
+        :returns: a generator of messages
+        """
+        logger.info("Looking for messages from '%s' offset %s)",
+                    self.url, offset)
+
+        fetched = self.mailing_list.fetch(offset=offset)
+        valid_filepaths = [f[1] for f in fetched]
+
+        # Dates are converted to UTC in the next method
+        messages = self._fetch_and_parse_messages(self.mailing_list,
+                                                  valid_filepaths)
+
+        for message in messages:
+            yield message
+
+        logger.info("Fetch process completed")
+
+    def _fetch_and_parse_messages(self, mailing_list, valid_filepaths):
+        """Overrides _fetch_and_parse_messages of MBox"""
+
+        nmsgs, imsgs, tmsgs = (0, 0, 0)
+
+        for mbox in mailing_list.mboxes:
+            if not mbox.filepath in valid_filepaths:
+                continue
+
+            try:
+                tmp_path = self._copy_mbox(mbox)
+
+                for message in self.parse_mbox(tmp_path):
+                    tmsgs += 1
+
+                    if not self._validate_message(message):
+                        imsgs += 1
+                        continue
+
+                    # Convert 'CaseInsensitiveDict' to dict
+                    message = self._casedict_to_dict(message)
+
+                    nmsgs += 1
+                    logger.debug("Message %s parsed", message['unixfrom'])
+
+                    yield message
+            except OSError as e:
+                logger.warning("Ignoring %s mbox due to: %s", mbox.filepath, str(e))
+            except Exception as e:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+                raise e
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
+        logger.info("Done. %s/%s messages fetched; %s ignored",
+                    nmsgs, tmsgs, imsgs)
 
 
 class GmaneMailingList(MailingList):
@@ -62,25 +179,24 @@ class GmaneMailingList(MailingList):
         self._url = self.client.mailing_list_url(mailing_list_address)
         super().__init__(self._url, dirpath)
 
-    def fetch(self, from_offset=DEFAULT_OFFSET):
+    def fetch(self, offset=DEFAULT_OFFSET):
         """Fetch the messages from Gmane and store them in mbox files.
 
         Stores the messages in mboxes files in the path given during the
         initialization of this object. Messages are fetched from the given
         offset.
 
-        :param from_offset: start to fetch messages from the given index
+        :param offset: start to fetch messages from the given index
 
         :returns: a list of tuples, storing the links and paths of the
             fetched archives
         """
         logger.info("Downloading messages from '%s' and offset %s",
-                    self.url, str(from_offset))
+                    self.url, str(offset))
         logger.debug("Storing messages in '%s'", self.dirpath)
 
         fetched = []
         mailing_list = posixpath.basename(self.url)
-        offset = from_offset
 
         while True:
             messages = self.client.messages(mailing_list, offset,
