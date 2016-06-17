@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
 import os
 import shutil
 import sys
@@ -32,7 +33,10 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.errors import RepositoryError
-from perceval.backends.gmane import (Gmane, GmaneMailingList, GmaneClient)
+from perceval.backends.gmane import (Gmane,
+                                     GmaneClient,
+                                     GmaneCommand,
+                                     GmaneMailingList)
 from perceval.backends.mbox import MailingList
 
 
@@ -188,6 +192,35 @@ class TestGmaneBackend(unittest.TestCase):
         messages = [m for m in backend.fetch(offset=6000)]
 
         self.assertListEqual(messages, [])
+
+
+class TestGmaneCommand(unittest.TestCase):
+    """Tests for GmaneCommand class"""
+
+    @httpretty.activate
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        setup_http_server()
+
+        args = ['mylist@example.com',
+                '--mboxes-path', '/tmp/perceval/',
+                '--offset', '10',
+                '--origin', 'test']
+
+        cmd = GmaneCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.mailing_list, 'mylist@example.com')
+        self.assertEqual(cmd.parsed_args.mboxes_path, '/tmp/perceval/')
+        self.assertEqual(cmd.parsed_args.offset, 10)
+        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertIsInstance(cmd.backend, Gmane)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = GmaneCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 class TestGmaneMailingList(unittest.TestCase):

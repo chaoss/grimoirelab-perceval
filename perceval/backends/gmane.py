@@ -24,6 +24,7 @@
 #
 
 import functools
+import json
 import logging
 import os
 import posixpath
@@ -31,9 +32,9 @@ import posixpath
 import requests
 
 from .mbox import MailingList, MBox
-from ..backend import metadata
+from ..backend import BackendCommand, metadata
 from ..errors import RepositoryError
-from ..utils import (DEFAULT_DATETIME, urljoin)
+from ..utils import urljoin
 
 
 logger = logging.getLogger(__name__)
@@ -158,6 +159,72 @@ class Gmane(MBox):
                     nmsgs, tmsgs, imsgs)
 
 
+class GmaneCommand(BackendCommand):
+    """Class to run Gmane backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.mailing_list = self.parsed_args.mailing_list
+        self.outfile = self.parsed_args.outfile
+        self.origin = self.parsed_args.origin
+        self.offset = self.parsed_args.offset
+
+        if not self.parsed_args.mboxes_path:
+            base_path = os.path.expanduser('~/.perceval/mailinglists/')
+            self.mboxes_path = os.path.join(base_path, self.mailing_list)
+        else:
+            self.mboxes_path = self.parsed_args.mboxes_path
+
+        cache = None
+
+        self.backend = Gmane(self.mailing_list, self.mboxes_path,
+                             cache=cache, origin=self.origin)
+
+    def run(self):
+        """Fetch and print the email messages.
+
+        This method runs the backend to fetch the email messages from
+        the given mailing list. Messages are converted to JSON objects
+        and printed to the defined output.
+        """
+        messages = self.backend.fetch(offset=self.offset)
+
+        try:
+            for message in messages:
+                obj = json.dumps(message, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the Gmane argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # Remove --from-date argument from parent parser
+        # because it is not needed by this backend
+        action = parser._option_string_actions['--from-date']
+        parser._handle_conflict_resolve(None, [('--from-date', action)])
+
+        # Optional arguments
+        parser.add_argument('--offset', dest='offset',
+                            type=int, default=0,
+                            help='Offset to start fetching messages')
+        parser.add_argument('--mboxes-path', dest='mboxes_path',
+                            help='Path where mbox files will be stored')
+
+        # Required arguments
+        parser.add_argument('mailing_list',
+                            help='Mailing list address on Gmane')
+
+        return parser
+
+
 class GmaneMailingList(MailingList):
     """Manage mailing list archives stored by Gmane.
 
@@ -194,6 +261,9 @@ class GmaneMailingList(MailingList):
         logger.info("Downloading messages from '%s' and offset %s",
                     self.url, str(offset))
         logger.debug("Storing messages in '%s'", self.dirpath)
+
+        if not os.path.exists(self.dirpath):
+            os.makedirs(self.dirpath)
 
         fetched = []
         mailing_list = posixpath.basename(self.url)
