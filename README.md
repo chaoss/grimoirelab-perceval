@@ -15,8 +15,9 @@ are:
     bugillzarest     Fetch bugs from a Bugzilla server (>=5.0) using its REST API
     discourse        Fetch posts from Discourse site
     gerrit           Fetch reviews from a Gerrit server
-    git              Fetch commits from a Git log file
+    git              Fetch commits from Git
     github           Fetch issues from GitHub
+    gmane            Fetch messages from Gmane
     jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
     mbox             Fetch messages from MBox files
@@ -115,6 +116,11 @@ $ perceval git /tmp/gitlog.log
 ### GitHub
 ```
 $ perceval github --owner elastic --repository filebeat --from-date '2016-01-01'
+```
+
+### Gmane
+```
+$ perceval gmane --offset 2000 'evince-list@gnome.org'
 ```
 
 ### Jenkins
