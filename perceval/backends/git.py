@@ -55,7 +55,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, uri, gitpath, cache=None, origin=None):
         origin = origin if origin else uri
@@ -65,7 +65,7 @@ class Git(Backend):
         self.gitpath = gitpath
 
     @metadata
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, from_date=DEFAULT_DATETIME, branches=None):
         """Fetch commits.
 
         The method retrieves from a Git repository or a log file
@@ -75,16 +75,28 @@ class Git(Backend):
         Take into account that `from_date` is ignored when the commits
         are fetched from a Git log file.
 
+        The list of branches is a list of strings, with the names of the
+        branches to fetch. If the list of branches is empty, no commit
+        is fetched. If the list of branches is None, all commits
+        for all branches will be fetched.
+
         The class raises a `RepositoryError` exception when an error occurs
         accessing the repository.
 
         :param from_date: obtain commits newer than a specific date
             (inclusive)
+        :param branches: names of branches to fetch from (default: None)
 
         :returns: a generator of commits
         """
-        logger.info("Fetching commits: '%s' git repository from %s",
-                    self.uri, str(from_date))
+        if branches is None:
+            branches_text = "all"
+        elif len(branches) == 0:
+            branches_text = "no"
+        else:
+            branches_text = ", ".join(branches)
+        logger.info("Fetching commits: '%s' git repository from %s; %s branches",
+                    self.uri, str(from_date), branches_text)
 
         # Ignore default datetime to avoid problems with git
         # or convert to UTC
@@ -94,7 +106,7 @@ class Git(Backend):
             from_date = datetime_to_utc(from_date)
 
         ncommits = 0
-        commits = self.__fetch_and_parse_log(from_date)
+        commits = self.__fetch_and_parse_log(from_date, branches)
 
         for commit in commits:
             yield commit
@@ -103,12 +115,12 @@ class Git(Backend):
         logger.info("Fetch process completed: %s commits fetched",
                     ncommits)
 
-    def __fetch_and_parse_log(self, from_date):
+    def __fetch_and_parse_log(self, from_date, branches):
         if os.path.isfile(self.gitpath):
             return self.parse_git_log_from_file(self.gitpath)
         else:
             repo = self.__create_and_update_git_repository()
-            gitlog = repo.log(from_date)
+            gitlog = repo.log(from_date, branches)
             return self.parse_git_log_from_iter(gitlog)
 
     def __create_and_update_git_repository(self):
@@ -195,6 +207,7 @@ class GitCommand(BackendCommand):
         self.outfile = self.parsed_args.outfile
         self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.origin = self.parsed_args.origin
+        self.branches = self.parsed_args.branches
 
         if self.parsed_args.git_log:
             git_path = self.parsed_args.git_log
@@ -216,7 +229,8 @@ class GitCommand(BackendCommand):
         git log. Commits are converted to JSON objects and printed to the
         defined output.
         """
-        commits = self.backend.fetch(from_date=self.from_date)
+        commits = self.backend.fetch(from_date=self.from_date,
+                                    branches=self.branches)
 
         try:
             for commit in commits:
@@ -245,6 +259,10 @@ class GitCommand(BackendCommand):
         parser.add_argument('uri',
                             help="URI of the Git log repository")
 
+        # Optional arguments
+        parser.add_argument('--branches', dest='branches',
+                            nargs='+', type=str, default=None,
+                            help='Fetch commits only from these branches')
         return parser
 
 
@@ -619,7 +637,7 @@ class GitRepository:
         logging.debug("Git %s repository pulled into %s",
                       self.uri, self.dirpath)
 
-    def log(self, from_date=None, encoding='utf-8'):
+    def log(self, from_date=None, branches=None, encoding='utf-8'):
         """Read the commit log from the repository.
 
         The method returns the Git log of the repository using the
@@ -632,8 +650,14 @@ class GitRepository:
         When `from_date` is given, it gets the commits equal or older
         than that date. This date is given in a datetime object.
 
+        The list of branches is a list of strings, with the names of the
+        branches to fetch. If the list of branches is empty, no commit
+        is fetched. If the list of branches is None, all commits
+        for all branches will be fetched.
+
         :param from_date: fetch commits newer than a specific
             date (inclusive)
+        :param branches: names of branches to fetch from (default: None)
         :param encoding: encode the log using this format
 
         :returns: a generator where each item is a line from the log
@@ -642,11 +666,18 @@ class GitRepository:
         """
 
         cmd_log = ['git', 'log', '--raw', '--numstat', '--pretty=fuller',
-                   '--decorate=full', '--all', '--reverse', '--topo-order',
-                   '--parents', '-M', '-C', '-c', '--remotes=origin']
+                   '--decorate=full', '--reverse', '--topo-order',
+                   '--parents', '-M', '-C', '-c']
         if from_date:
             dt = from_date.strftime("%Y-%m-%d %H:%M:%S %z")
             cmd_log.append('--since=' + dt)
+        if (branches is None):
+            cmd_log.extend(['--all', '--remotes=origin'])
+        elif len(branches) == 0:
+            cmd_log.append('--max-count=0')
+        else:
+            branches = ['remotes/origin/' + branch for branch in branches]
+            cmd_log.extend(branches)
         env = {'LANG' : 'C', 'PAGER' : ''}
 
         self.failed_message = None

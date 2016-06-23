@@ -146,6 +146,108 @@ class TestGitBackend(unittest.TestCase):
 
         shutil.rmtree(new_path)
 
+    def test_fetch_branch(self):
+        """Test whether commits are fetched from a Git repository for a given branch"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        from_date = datetime.datetime(2014, 2, 11, 22, 7, 49)
+        git = Git(self.git_path, new_path)
+        # Let's fetch master
+        commits = [commit for commit in git.fetch(branches=['master'])]
+
+        expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
+                    '87783129c3f00d2c81a3a8e585eb86a47e39891a',
+                    '7debcf8a2f57f86663809c58b5c07a398be7674c',
+                    'c0d66f92a95e31c77be08dc9d0f11a16715d1885',
+                    'c6ba8f7a1058db3e6b4bc6f1090e932b107605fb',
+                    '589bb080f059834829a2a5955bebfd7c2baa110a',
+                    'ce8e0b86a1e9877f42fe9453ede418519115f367',
+                    '51a3b654f252210572297f47597b31527c475fb8',
+                    '456a68ee1407a77f3e804a30dff245bb6c6b872f']
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x])
+            commit = commits[x]
+            self.assertEqual(commit['data']['commit'], expected[x])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+
+        # Now let's fetch lzp
+        commits = [commit for commit in git.fetch(branches=['lzp'])]
+
+        expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
+                    '87783129c3f00d2c81a3a8e585eb86a47e39891a',
+                    '7debcf8a2f57f86663809c58b5c07a398be7674c',
+                    'c0d66f92a95e31c77be08dc9d0f11a16715d1885',
+                    'c6ba8f7a1058db3e6b4bc6f1090e932b107605fb',
+                    '589bb080f059834829a2a5955bebfd7c2baa110a',
+                    '51a3b654f252210572297f47597b31527c475fb8']
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x])
+            commit = commits[x]
+            self.assertEqual(commit['data']['commit'], expected[x])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+
+        # Now, let's fech master and lzp
+        commits = [commit for commit in git.fetch(branches=['master', 'lzp'])]
+
+        expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
+                    '87783129c3f00d2c81a3a8e585eb86a47e39891a',
+                    '7debcf8a2f57f86663809c58b5c07a398be7674c',
+                    'c0d66f92a95e31c77be08dc9d0f11a16715d1885',
+                    'c6ba8f7a1058db3e6b4bc6f1090e932b107605fb',
+                    '589bb080f059834829a2a5955bebfd7c2baa110a',
+                    'ce8e0b86a1e9877f42fe9453ede418519115f367',
+                    '51a3b654f252210572297f47597b31527c475fb8',
+                    '456a68ee1407a77f3e804a30dff245bb6c6b872f']
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x])
+            commit = commits[x]
+            self.assertEqual(commit['data']['commit'], expected[x])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+
+        # Now, let's fetch None, which means "all commits"
+        commits = [commit for commit in git.fetch(branches=None)]
+
+        expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
+                    '87783129c3f00d2c81a3a8e585eb86a47e39891a',
+                    '7debcf8a2f57f86663809c58b5c07a398be7674c',
+                    'c0d66f92a95e31c77be08dc9d0f11a16715d1885',
+                    'c6ba8f7a1058db3e6b4bc6f1090e932b107605fb',
+                    '589bb080f059834829a2a5955bebfd7c2baa110a',
+                    'ce8e0b86a1e9877f42fe9453ede418519115f367',
+                    '51a3b654f252210572297f47597b31527c475fb8',
+                    '456a68ee1407a77f3e804a30dff245bb6c6b872f']
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x])
+            commit = commits[x]
+            self.assertEqual(commit['data']['commit'], expected[x])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+
+        # Now, let's fetch [], which means "no commits"
+        commits = [commit for commit in git.fetch(branches=[])]
+
+        expected = []
+
+        self.assertEqual(len(commits), len(expected))
+
+        shutil.rmtree(new_path)
+
     def test_fetch_empty_log(self):
         """Test whether it parsers an empty log"""
 
@@ -249,6 +351,7 @@ class TestGitBackend(unittest.TestCase):
 
 
 class TestGitCommand(unittest.TestCase):
+    """GitCommand tests"""
 
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
@@ -261,6 +364,16 @@ class TestGitCommand(unittest.TestCase):
         self.assertEqual(cmd.parsed_args.git_log, "data/git_log.txt")
         self.assertEqual(cmd.parsed_args.uri, 'http://example.com/')
         self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertIsInstance(cmd.backend, Git)
+
+        args = ['--git-log', 'data/git_log.txt', 'http://example.com/',
+                '--branches', 'master', 'testing']
+
+        cmd = GitCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.git_log, "data/git_log.txt")
+        self.assertEqual(cmd.parsed_args.uri, 'http://example.com/')
+        self.assertEqual(cmd.parsed_args.branches, ['master', 'testing'])
         self.assertIsInstance(cmd.backend, Git)
 
     def test_argument_parser(self):
