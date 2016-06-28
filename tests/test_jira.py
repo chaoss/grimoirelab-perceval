@@ -87,36 +87,36 @@ class TestJiraBAckend(unittest.TestCase):
                             'startAt': ['2']
                         }]
 
-        self.assertEqual(requests[0].method, 'GET')
-        self.assertRegex(requests[0].path, '/rest/api/2/search')
-        self.assertDictEqual(requests[0].querystring, expected_req[0])
-
-        self.assertEqual(requests[1].method, 'GET')
-        self.assertRegex(requests[1].path, '/rest/api/2/search')
-        self.assertDictEqual(requests[1].querystring, expected_req[1])
+        for i in range(len(expected_req)):
+            self.assertEqual(requests[i].method, 'GET')
+            self.assertRegex(requests[i].path, '/rest/api/2/search')
+            self.assertDictEqual(requests[i].querystring, expected_req[i])
 
         self.assertEqual(len(issues), 3)
 
-        self.assertEqual(issues[0]['perceval_version'], '0.1.0')
-        self.assertEqual(issues[0]['backend_version'], '0.2.0')
         self.assertEqual(issues[0]['origin'], 'http://example.com')
-        self.assertEqual(issues[0]['backend_name'], 'Jira')
         self.assertEqual(issues[0]['uuid'], 'dfe008e19e2b720d1d377607680e90c250134164')
         self.assertEqual(issues[0]['updated_on'], 1457015567)
+        self.assertEqual(issues[0]['data']['key'], 'HELP-6043')
+        self.assertEqual(issues[0]['data']['fields']['issuetype']['name'],  'extRequest')
+        self.assertEqual(issues[0]['data']['fields']['creator']['name'], 'user2')
+        self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
 
-        self.assertEqual(issues[1]['perceval_version'], '0.1.0')
-        self.assertEqual(issues[1]['backend_version'], '0.2.0')
         self.assertEqual(issues[1]['origin'], 'http://example.com')
-        self.assertEqual(issues[1]['backend_name'], 'Jira')
         self.assertEqual(issues[1]['uuid'], '830747ed8cc9af800fcd6284e9dccfdb11daf15b')
         self.assertEqual(issues[1]['updated_on'], 1457015417)
+        self.assertEqual(issues[1]['data']['key'], 'HELP-6042')
+        self.assertEqual(issues[1]['data']['fields']['issuetype']['name'],  'extRequest')
+        self.assertEqual(issues[1]['data']['fields']['creator']['name'], 'user2')
+        self.assertEqual(issues[1]['data']['fields']['assignee']['name'], 'user1')
 
-        self.assertEqual(issues[2]['perceval_version'], '0.1.0')
-        self.assertEqual(issues[2]['backend_version'], '0.2.0')
         self.assertEqual(issues[2]['origin'], 'http://example.com')
-        self.assertEqual(issues[2]['backend_name'], 'Jira')
         self.assertEqual(issues[2]['uuid'], '2e988d555915991228d81144b018c8321d628265')
         self.assertEqual(issues[2]['updated_on'], 1457006245)
+        self.assertEqual(issues[2]['data']['key'], 'HELP-6041')
+        self.assertEqual(issues[2]['data']['fields']['issuetype']['name'],  'extRequest')
+        self.assertEqual(issues[2]['data']['fields']['creator']['name'], 'user2')
+        self.assertEqual(issues[2]['data']['fields']['assignee']['name'], 'user3')
 
     @httpretty.activate
     def test_fetch_from_date(self):
@@ -195,13 +195,20 @@ class TestJiraBAckendCache(unittest.TestCase):
     def test_fetch_from_cache(self):
         """Test whether a list of issues is returned from cache"""
 
-        bodies_json = read_file('data/jira/jira_issues_page_2.json')
-        expected_json = read_file('data/jira/jira_issues_fetch_expected_page_3.json')
+        requests = []
+
+        bodies_json = [read_file('data/jira/jira_issues_page_1.json'),
+                       read_file('data/jira/jira_issues_page_2.json')]
+
+        def request_callback(method, uri, headers):
+            body = bodies_json.pop(0)
+            requests.append(httpretty.last_request())
+            return (200, headers, body)
 
         httpretty.register_uri(httpretty.GET,
                                JIRA_SEARCH_URL,
-                               body=bodies_json, status=200)
-
+                               responses=[httpretty.Response(body=request_callback) \
+                                          for _ in range(2)])
         # First, we fetch the issues from the server, storing them
         # in a cache
         cache = Cache(self.tmp_path)
@@ -214,25 +221,33 @@ class TestJiraBAckendCache(unittest.TestCase):
         # The contents should be the same and there won't be
         # any new request to the server
         cache_issues = [cache_issue for cache_issue in jira.fetch_from_cache()]
-        del cache_issues[0]['timestamp']
 
-        expected_req = {
+        expected_req = [{
                             'expand': ['renderedFields,transitions,operations,changelog'],
                             'jql': [' updated > 0'],
                             'startAt': ['0']
-                        }
+                        },
+                        {
+                            'expand': ['renderedFields,transitions,operations,changelog'],
+                            'jql': [' updated > 0'],
+                            'startAt': ['2']
+                        }]
 
-        request = httpretty.last_request()
-        self.assertEqual(request.method, 'GET')
-        self.assertRegex(request.path, '/rest/api/2/search')
-        self.assertDictEqual(request.querystring, expected_req)
+        for i in range(len(expected_req)):
+            self.assertEqual(requests[i].method, 'GET')
+            self.assertRegex(requests[i].path, '/rest/api/2/search')
+            self.assertDictEqual(requests[i].querystring, expected_req[i])
 
-        self.assertEqual(len(issues), 1)
-        self.assertEqual(len(cache_issues), 1)
+        self.assertEqual(len(issues), len(cache_issues))
 
-        self.assertEqual(cache_issues, issues)
-
-        self.assertDictEqual(issues[0], json.loads(expected_json))
+        for i in range(len(cache_issues)):
+            self.assertEqual(issues[i]['origin'], cache_issues[i]['origin'])
+            self.assertEqual(issues[i]['uuid'], cache_issues[i]['uuid'])
+            self.assertEqual(issues[i]['updated_on'], cache_issues[i]['updated_on'])
+            self.assertEqual(issues[i]['data']['key'], cache_issues[i]['data']['key'])
+            self.assertEqual(issues[i]['data']['fields']['issuetype']['name'], cache_issues[i]['data']['fields']['issuetype']['name'])
+            self.assertEqual(issues[i]['data']['fields']['creator']['name'], cache_issues[i]['data']['fields']['creator']['name'])
+            self.assertEqual(issues[i]['data']['fields']['assignee']['name'], cache_issues[i]['data']['fields']['assignee']['name'])
 
     def test_fetch_from_cache_empty(self):
         """Test if there are not any issues returned when the cache is empty"""
@@ -399,7 +414,7 @@ class TestJiraCommand(unittest.TestCase):
 
         args = ['--project', 'Perceval Jira',
                 '--verify', False,
-                '--cert', 'None',
+                '--cert', 'aaaa',
                 '--max-issues', '1',
                 JIRA_SERVER_URL]
 
@@ -407,7 +422,7 @@ class TestJiraCommand(unittest.TestCase):
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.project, "Perceval Jira")
         self.assertEqual(cmd.parsed_args.verify, False)
-        self.assertEqual(cmd.parsed_args.cert, "None")
+        self.assertEqual(cmd.parsed_args.cert, "aaaa")
         self.assertEqual(cmd.parsed_args.max_issues, 1)
         self.assertEqual(cmd.parsed_args.url, JIRA_SERVER_URL)
 
