@@ -20,14 +20,127 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import datetime
+import os
+import shutil
 import sys
+import tempfile
 import unittest
 
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.supybot import (SupybotParser)
+from perceval.backends.supybot import (Supybot, SupybotParser)
 from perceval.errors import ParseError
+
+
+class TestSupybotBackend(unittest.TestCase):
+    """Supybot backend unit tests"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+        shutil.copy('data/supybot_2012_10_17.log',
+                    os.path.join(cls.tmp_path, '#supybot_2012-10-17.log'))
+        shutil.copy('data/supybot_2012_10_18.log',
+                    os.path.join(cls.tmp_path, '#supybot_2012-10-18.log'))
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp_path)
+
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        backend = Supybot('http://example.com/', self.tmp_path, origin='test')
+
+        self.assertEqual(backend.uri, 'http://example.com/')
+        self.assertEqual(backend.dirpath, self.tmp_path)
+        self.assertEqual(backend.origin, 'test')
+
+        # When origin is empty or None it will be set to
+        # the value in uri
+        backend = Supybot('http://example.com/', self.tmp_path)
+        self.assertEqual(backend.origin, 'http://example.com/')
+
+        backend = Supybot('http://example.com/', self.tmp_path, origin='')
+        self.assertEqual(backend.origin, 'http://example.com/')
+
+    def test_fetch(self):
+        """Test if it parses a set of log files"""
+
+        backend = Supybot('http://example.com/', self.tmp_path)
+        messages = [m for m in backend.fetch()]
+
+        expected = [('benpol', 'comment', '89b0d9fdbc3972aed183876f7f5ee2617542665c', 1350465381.0),
+                    ('benpol', 'comment', '81b1fbe651b58d6a4ef6fff026658f87b7c393fc', 1350465389.0),
+                    ('MikeMcClurg', 'server', '6f873e788e289acca517a1c04eaa3e8557191f99', 1350465410.0),
+                    ('Tv_', 'server', 'fe19251eb5068bb7a14892960574b565b100fb29', 1350465411.0),
+                    ('benpol', 'comment', 'ec3206582c534cb725bc5153b5037089441735d3', 1350465447.0),
+                    ('Tv_', 'comment', '06b6fe28cdb55247d03430e72986068fdb168723',  1350465528.0),
+                    ('jamespage', 'comment', '42a71797a6bd75c01b4de9476006e73ed14c0340', 1350552630.0),
+                    ('LarsFronius_', 'server', '839f98f69f4d5c22973abaf67bc2931682e9a79b', 1350552630.0),
+                    ('bchrisman', 'server', '2e2ea19565203033622e005d8b5a004b4763d770', 1350552658.0),
+                    ('scuttlemonkey', 'comment', 'b756d43392386c6ed0d329a45d2afcbc11a9afe0', 1350552785.0),
+                    ('loicd', 'server', '5a4fc4c6bd5903ababaaa391b2a53ba1178ee75a', 1350584011.0),
+                    ('sagelap1', 'server', 'c68e87799f13dc346d580cc56daec0189f232276', 1350584041.0)]
+
+        self.assertEqual(len(messages), len(expected))
+
+        for x in range(len(messages)):
+            message = messages[x]
+            self.assertEqual(message['data']['nick'], expected[x][0])
+            self.assertEqual(message['data']['type'], expected[x][1])
+            self.assertEqual(message['origin'], 'http://example.com/')
+            self.assertEqual(message['uuid'], expected[x][2])
+            self.assertEqual(message['updated_on'], expected[x][3])
+
+    def test_fetch_from_date(self):
+        """Test whether a list of messages is returned since a given date"""
+
+        from_date = datetime.datetime(2012, 10, 18, 9, 33, 5)
+
+        backend = Supybot('http://example.com/', self.tmp_path)
+        messages = [m for m in backend.fetch(from_date=from_date)]
+
+        expected = [('scuttlemonkey', 'comment', 'b756d43392386c6ed0d329a45d2afcbc11a9afe0', 1350552785.0),
+                    ('loicd', 'server', '5a4fc4c6bd5903ababaaa391b2a53ba1178ee75a', 1350584011.0),
+                    ('sagelap1', 'server', 'c68e87799f13dc346d580cc56daec0189f232276', 1350584041.0)]
+
+        for x in range(len(messages)):
+            message = messages[x]
+            self.assertEqual(message['data']['nick'], expected[x][0])
+            self.assertEqual(message['data']['type'], expected[x][1])
+            self.assertEqual(message['origin'], 'http://example.com/')
+            self.assertEqual(message['uuid'], expected[x][2])
+            self.assertEqual(message['updated_on'], expected[x][3])
+
+    def test_parse_supybot_log(self):
+        """Test whether it parses a log"""
+
+        messages = Supybot.parse_supybot_log('data/supybot_valid.log')
+        messages = [m for m in messages]
+
+        self.assertEqual(len(messages), 95)
+
+        msg = messages[1]
+        self.assertEqual(msg['timestamp'], '2012-10-17T09:16:29+0000')
+        self.assertEqual(msg['type'], SupybotParser.TCOMMENT)
+        self.assertEqual(msg['nick'], 'benpol')
+        self.assertEqual(msg['body'], "they're related to fragmentation?")
+
+        msg = messages[-1]
+        self.assertEqual(msg['timestamp'], '2012-10-17T23:42:26+0000')
+        self.assertEqual(msg['type'], SupybotParser.TCOMMENT)
+        self.assertEqual(msg['nick'], 'gregaf')
+        self.assertEqual(msg['body'], "but I may be wrong or debugging at the wrong level...")
+
+    def test_parse_supybot_invalid_log(self):
+        """Test whether it raises an exception when the log is invalid"""
+
+        with self.assertRaises(ParseError):
+            messages = Supybot.parse_supybot_log('data/supybot_invalid_msg.log')
+            _ = [message for message in messages]
 
 
 class TestSupybotParser(unittest.TestCase):
