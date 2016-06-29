@@ -1,0 +1,6 @@
+2012-10-18T09:30:30+0000  <jamespage> scuttlemonkey, yeah - the new ones do things quite differently
+2012-10-18T09:30:30+0000  *** LarsFronius_ has joined #ceph
+2012-10-18T09:30:58+0000  *** bchrisman has joined #ceph
+2012-10-18T09:33:05+0000  <scuttlemonkey> jamespage: yeah, being able to spin the osds out individually was key?now I just need the gui stuff to come out so I can show people how fun it is :)
+2012-10-18T18:13:31+0000  *** loicd has joined #ceph
+2012-10-18T18:14:01+0000  *** sagelap1 has joined #ceph

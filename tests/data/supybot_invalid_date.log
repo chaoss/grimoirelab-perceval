@@ -1,0 +1,9 @@
+2012-10-17T09:16:21+0000  <benpol> So the performance degradations people are seeing over time with btrfs, people feel that theyr
+2012-10-17T09:16:29+0000  <benpol> they're related to fragmentation?
+2012-10-17T09:16:50+0000  *** MikeMcClurg has quit IRC
+2012-10-17T09:16:51 0000  *** Tv_ has joined #ceph
+2012-10-17T09:17:27+0000  <benpol> if so, have there been any improvements in performance over time with the auto-defrag option enabled for the btrfs mount points?
+2012-10-17T09:18:48+0000  <Tv_> joao: vger is a *huge* mailing list host, and it's quite unlikely to have issues, apart from a bad attitude toward non-old school users
+2012-10-17T09:19:35+0000  *** match has quit IRC
+2012-10-17T09:19:38+0000  *** NaioN has joined #ceph
+2012-10-17T09:19:43+0000  <Tv_> http://vger.kernel.org/majordomo-info.html#taboo

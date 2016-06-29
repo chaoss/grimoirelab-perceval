@@ -23,6 +23,7 @@ are:
     mbox             Fetch messages from MBox files
     pipermail        Fetch messages from a Pipermail archiver
     stackexchange    Fetch questions from StackExchange sites
+    supybot          Fetch messages from Supybot log files
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -146,6 +147,11 @@ $ perceval pipermail 'https://mail.gnome.org/archives/libart-hackers/'
 ### StackExchange
 ```
 $ perceval stackexchange --site stackoverflow --tagged python --from-date 2016-01-01 --token abcdabcdabcdabcd
+```
+
+### Supybot
+```
+$ perceval supybot 'http://channel.example.com' /tmp/supybot/
 ```
 
 ## License

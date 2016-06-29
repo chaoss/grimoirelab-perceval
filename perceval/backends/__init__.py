@@ -22,6 +22,7 @@
 
 from .bugzilla import Bugzilla, BugzillaCommand
 from .bugzillarest import BugzillaREST, BugzillaRESTCommand
+from .discourse import Discourse, DiscourseCommand
 from .gerrit import Gerrit, GerritCommand
 from .git import Git, GitCommand
 from .github import GitHub, GitHubCommand
@@ -31,7 +32,7 @@ from .jira import Jira, JiraCommand
 from .mbox import MBox, MBoxCommand
 from .pipermail import Pipermail, PipermailCommand
 from .stackexchange import StackExchange, StackExchangeCommand
-from .discourse import Discourse, DiscourseCommand
+from .supybot import Supybot, SupybotCommand
 
 
 PERCEVAL_BACKENDS = {
@@ -46,7 +47,8 @@ PERCEVAL_BACKENDS = {
                      'jira'          : Jira,
                      'mbox'          : MBox,
                      'pipermail'     : Pipermail,
-                     'stackexchange' : StackExchange
+                     'stackexchange' : StackExchange,
+                     'supybot'       : Supybot
                     }
 PERCEVAL_CMDS = {
                  'bugzilla'      : BugzillaCommand,
@@ -60,5 +62,6 @@ PERCEVAL_CMDS = {
                  'jira'          : JiraCommand,
                  'mbox'          : MBoxCommand,
                  'pipermail'     : PipermailCommand,
-                 'stackexchange' : StackExchangeCommand
+                 'stackexchange' : StackExchangeCommand,
+                 'supybot'       : SupybotCommand
                 }

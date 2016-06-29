@@ -1,0 +1,96 @@
+2012-10-17T09:16:21+0000  <benpol> So the performance degradations people are seeing over time with btrfs, people feel that theyr
+2012-10-17T09:16:29+0000  <benpol> they're related to fragmentation?
+2012-10-17T09:16:50+0000  *** MikeMcClurg has quit IRC
+2012-10-17T09:16:51+0000  *** Tv_ has joined #ceph
+2012-10-17T09:17:27+0000  <benpol> if so, have there been any improvements in performance over time with the auto-defrag option enabled for the btrfs mount points?
+2012-10-17T09:18:48+0000  <Tv_> joao: vger is a *huge* mailing list host, and it's quite unlikely to have issues, apart from a bad attitude toward non-old school users
+2012-10-17T09:19:35+0000  *** match has quit IRC
+2012-10-17T09:19:38+0000  *** NaioN has joined #ceph
+2012-10-17T09:19:43+0000  <Tv_> http://vger.kernel.org/majordomo-info.html#taboo
+2012-10-17T09:24:43+0000  <nhm> benpol: fragmentation might be part of it.  We notice writes get more seeky over time.  It may be due to where on the disk file/directory metadata resides vs where data ends up as new data is written.
+2012-10-17T09:24:55+0000  <joao> Tv_, I know, but assuming that has any other service it might incur in occasional issues is not that far fetched :p
+2012-10-17T09:25:34+0000  <Tv_> joao: yeah it's just not the Occam's razor approved branch of reality ;)
+2012-10-17T09:25:52+0000  <joao> heh
+2012-10-17T09:25:55+0000  <jamespage> scuttlemonkey: glad you liked it - ping me if you find any issues....
+2012-10-17T09:26:02+0000  <Tv_> srsly i think vger handles more mail than usenet as a whole had posts when i got introduced to it
+2012-10-17T09:26:25+0000  <Tv_> and it's not like some social media vomit, this is long emails & patches etc
+2012-10-17T09:26:39+0000  <joao> I'm sure it does
+2012-10-17T09:26:46+0000  <Tv_> it's like staring at the fury of creation
+2012-10-17T09:26:54+0000  <Tv_> linux-kernel at least feels that way
+2012-10-17T09:27:25+0000  *** loicd1 has quit IRC
+2012-10-17T09:27:31+0000  <joao&gt; just by the volume of traffic that linux-kernel imposes on my mail account, &gt; -> I'm assuming that's certainly a possibility
+2012-10-17T09:27:38+0000  *** miroslavk has quit IRC
+2012-10-17T09:27:43+0000  <benpol> nhm: interesting, still one of the dark corners, huh?  otherwise the initial performance numbers are so tantalizing!
+2012-10-17T09:29:41+0000  <joao> sagewk, pushed mon-coverity-fixes
+2012-10-17T09:29:56+0000  <scuttlemonkey> jamespage: will do, went a lot better after I talked to Mark Ramm et al and got the latest one from you and not the older one in /precise/
+2012-10-17T09:30:26+0000  <joao> tackled down some medium-priority ones, but will check for more
+2012-10-17T09:30:30+0000  <jamespage> scuttlemonkey, yeah - the new ones do things quite differently
+2012-10-17T09:30:30+0000  *** LarsFronius_ has joined #ceph
+2012-10-17T09:30:58+0000  *** bchrisman has joined #ceph
+2012-10-17T09:33:05+0000  <scuttlemonkey> jamespage: yeah, being able to spin the osds out individually was key?now I just need the gui stuff to come out so I can show people how fun it is :)
+2012-10-17T09:33:31+0000  *** loicd has joined #ceph
+2012-10-17T09:34:01+0000  *** sagelap1 has joined #ceph
+2012-10-17T09:35:22+0000  *** deepsa has quit IRC
+2012-10-17T09:36:06+0000  *** deepsa has joined #ceph
+2012-10-17T09:36:24+0000  *** LarsFronius has quit IRC
+2012-10-17T09:36:29+0000  *** sagelap has quit IRC
+2012-10-17T09:41:01+0000  *** loicd1 has joined #ceph
+2012-10-17T09:41:35+0000  *** loicd has quit IRC
+2012-10-17T09:42:44+0000  <sagewk> joao: mon fixups look good
+2012-10-17T09:43:00+0000  <joao> cool thanks
+2012-10-17T09:43:03+0000  <sagewk> joao: the authmonitor one could probalby just call get_auth and use the return value as the condition for the preceding if block
+2012-10-17T09:43:25+0000  <sagewk> instead of calling contains and then asserting the subsequent get succeeds
+2012-10-17T09:44:27+0000  <joao> yeah, that sounds more adequate; fixing it
+2012-10-17T09:47:12+0000  *** Cube1 has joined #ceph
+2012-10-17T09:48:28+0000  *** jlogan1 has quit IRC
+2012-10-17T09:48:57+0000  <joao> sagewk, fixed and pushed (w/ rebase)
+2012-10-17T09:52:13+0000  *** maelfius has quit IRC
+2012-10-17T09:56:16+0000  *** davidz has joined #ceph
+2012-10-17T09:58:45+0000  *** loicd has joined #ceph
+2012-10-17T09:58:53+0000  *** loicd1 has quit IRC
+2012-10-17T10:00:24+0000  *** dty has quit IRC
+2012-10-17T10:01:29+0000  <sagewk> jamespage: i was about to merge in those libceph-java packaging changes.. any final comments/concerns?
+2012-10-17T10:03:15+0000  *** joshd has quit IRC
+2012-10-17T10:05:03+0000  <jamespage> sagewk, I've not had time to build test the last set of updates but they looked OK
+2012-10-17T10:05:16+0000  <jamespage> aside from the sparse package descriptions ;-)
+2012-10-17T10:06:16+0000  *** joshd has joined #ceph
+2012-10-17T10:07:51+0000  *** dty has joined #ceph
+2012-10-17T10:08:35+0000  *** dty_ has joined #ceph
+2012-10-17T10:08:35+0000  *** dty has quit IRC
+2012-10-17T10:08:36+0000  *** dty_ is now known as dty
+2012-10-17T11:26:46+0000  *** pentabular is now known as Guest2100
+2012-10-17T11:26:50+0000  <joao> renzhi, what version are you running?
+2012-10-17T11:27:09+0000  *** Guest2100 is now known as pentabular
+2012-10-17T11:27:13+0000  <renzhi> joao: argonaut
+2012-10-17T11:27:23+0000  <joao> on all three monitors?
+2012-10-17T11:27:34+0000  <renzhi> yes
+2012-10-17T17:36:05+0000  *** Ryan_Lane has joined #ceph
+2012-10-17T17:37:59+0000  *** loicd has joined #ceph
+2012-10-17T17:39:35+0000  *** loicd has quit IRC
+2012-10-17T17:44:22+0000  *** oxhead has quit IRC
+
+2012-10-17T17:55:36+0000  <sjust> renzhi: I am going home, I'll be back online in around 1 hour
+2012-10-17T17:59:28+0000  <renzhi> sjust: thanks a lot
+2012-10-17T17:59:35+0000  <renzhi> still struggling...
+2012-10-17T18:03:51+0000  *** Cube1 has quit IRC
+2012-10-17T22:15:40+0000  <sjustlaptop> yeah, rbd has its own protocol
+2012-10-17T22:33:58+0000  *** tnt has quit IRC
+2012-10-17T22:35:09+0000  *** Cube1 has joined #ceph
+2012-10-17T22:44:14+0000  *** tziOm has joined #ceph
+2012-10-17T22:53:14+0000  *** scuttlemonkey has joined #ceph
+2012-10-17T22:53:35+0000  *** loicd has joined #ceph
+2012-10-17T22:56:34+0000  *** grant has quit IRC
+2012-10-17T22:57:15+0000  *** Ryan_Lane has joined #ceph
+2012-10-17T22:57:15+0000  *** Ryan_Lane1 has quit IRC
+2012-10-17T23:31:47+0000  <Q310> hrmm
+2012-10-17T23:32:04+0000  <Q310> openstack folsom is supposed to boot from rbd out of the box yeah?
+2012-10-17T23:32:06+0000  *** Ryan_Lane has quit IRC
+2012-10-17T23:32:17+0000  *** Ryan_Lane has joined #ceph
+2012-10-17T23:32:37+0000  <sjustlaptop> Q310: that is my fuzzy recollection
+2012-10-17T23:32:49+0000  <Q310> some here
+2012-10-17T23:32:51+0000  <Q310> *same
+2012-10-17T23:32:57+0000  <Q310> silly keyboard
+2012-10-17T23:34:21+0000  <Q310> its so anoying i can create rbd's with cinder etc, i can even image a rbd from glance with cinder but yet when i create a new vm with the dashboard it seems to know nothing about rbd
+2012-10-17T23:34:48+0000  <Q310> i can even create the rbd's in the dashboard as additional volumes no worries but not provision/boot from one
+2012-10-17T23:42:07+0000  <gregaf> Q310: I'm about to sleep, but are you actually telling them to boot from volume? I think that's still a checkbox you need to set in Folsom
+2012-10-17T23:42:26+0000  <gregaf> but I may be wrong or debugging at the wrong level...
