@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
 import datetime
 import os
 import shutil
@@ -30,7 +31,7 @@ import unittest
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.supybot import (Supybot, SupybotParser)
+from perceval.backends.supybot import Supybot, SupybotCommand, SupybotParser
 from perceval.errors import ParseError
 
 
@@ -141,6 +142,29 @@ class TestSupybotBackend(unittest.TestCase):
         with self.assertRaises(ParseError):
             messages = Supybot.parse_supybot_log('data/supybot_invalid_msg.log')
             _ = [message for message in messages]
+
+
+class TestSupybotCommand(unittest.TestCase):
+    """Supybot unit tests"""
+
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['--origin', 'test',
+                'http://example.com', '/tmp/supybot']
+
+        cmd = SupybotCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.uri, 'http://example.com')
+        self.assertEqual(cmd.parsed_args.ircdir, '/tmp/supybot')
+        self.assertIsInstance(cmd.backend, Supybot)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = SupybotCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 class TestSupybotParser(unittest.TestCase):
