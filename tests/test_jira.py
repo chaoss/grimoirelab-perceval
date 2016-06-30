@@ -142,10 +142,7 @@ class TestJiraBackend(unittest.TestCase):
 
         self.assertEqual(len(issues), 1)
 
-        self.assertEqual(issues[0]['perceval_version'], '0.1.0')
-        self.assertEqual(issues[0]['backend_version'], '0.2.0')
         self.assertEqual(issues[0]['origin'], 'http://example.com')
-        self.assertEqual(issues[0]['backend_name'], 'Jira')
         self.assertEqual(issues[0]['uuid'], '2e988d555915991228d81144b018c8321d628265')
         self.assertEqual(issues[0]['updated_on'], 1457006245)
 
