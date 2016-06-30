@@ -1,0 +1,28 @@
+{
+    "limits": {
+        "recentchanges": 500
+    },
+    "query": {
+        "recentchanges": [
+            {
+                "ns": 0,
+                "pageid": 592384,
+                "timestamp": "2016-06-23T15:42:38Z",
+                "title": "Technical Collaboration Guideline/Translation",
+                "type": "edit"
+            },
+            {
+                "ns": 0,
+                "pageid": 476583,
+                "timestamp": "2016-06-23T15:27:23Z",
+                "title": "VisualEditor:Test",
+                "type": "edit"
+            }
+        ]
+    },
+    "query-continue": {
+        "recentchanges": {
+            "rccontinue": "20160614151314|2402770"
+        }
+    }
+}

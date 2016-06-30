@@ -1,0 +1,302 @@
+{
+    "batchcomplete": "",
+    "query": {
+        "namespaces": {
+            "-1": {
+                "*": "Special",
+                "canonical": "Special",
+                "case": "first-letter",
+                "id": -1
+            },
+            "-2": {
+                "*": "Media",
+                "canonical": "Media",
+                "case": "first-letter",
+                "id": -2
+            },
+            "0": {
+                "*": "",
+                "case": "first-letter",
+                "content": "",
+                "id": 0,
+                "subpages": ""
+            },
+            "1": {
+                "*": "Talk",
+                "canonical": "Talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 1,
+                "subpages": ""
+            },
+            "10": {
+                "*": "Template",
+                "canonical": "Template",
+                "case": "first-letter",
+                "id": 10,
+                "subpages": ""
+            },
+            "100": {
+                "*": "Manual",
+                "canonical": "Manual",
+                "case": "first-letter",
+                "content": "",
+                "id": 100,
+                "subpages": ""
+            },
+            "101": {
+                "*": "Manual talk",
+                "canonical": "Manual talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 101,
+                "subpages": ""
+            },
+            "102": {
+                "*": "Extension",
+                "canonical": "Extension",
+                "case": "first-letter",
+                "content": "",
+                "id": 102,
+                "subpages": ""
+            },
+            "103": {
+                "*": "Extension talk",
+                "canonical": "Extension talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 103,
+                "subpages": ""
+            },
+            "104": {
+                "*": "API",
+                "canonical": "API",
+                "case": "first-letter",
+                "content": "",
+                "id": 104,
+                "subpages": ""
+            },
+            "105": {
+                "*": "API talk",
+                "canonical": "API talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 105,
+                "subpages": ""
+            },
+            "106": {
+                "*": "Skin",
+                "canonical": "Skin",
+                "case": "first-letter",
+                "content": "",
+                "id": 106,
+                "subpages": ""
+            },
+            "107": {
+                "*": "Skin talk",
+                "canonical": "Skin talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 107,
+                "subpages": ""
+            },
+            "11": {
+                "*": "Template talk",
+                "canonical": "Template talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 11,
+                "subpages": ""
+            },
+            "1198": {
+                "*": "Translations",
+                "canonical": "Translations",
+                "case": "first-letter",
+                "id": 1198,
+                "subpages": ""
+            },
+            "1199": {
+                "*": "Translations talk",
+                "canonical": "Translations talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 1199,
+                "subpages": ""
+            },
+            "12": {
+                "*": "Help",
+                "canonical": "Help",
+                "case": "first-letter",
+                "id": 12,
+                "subpages": ""
+            },
+            "13": {
+                "*": "Help talk",
+                "canonical": "Help talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 13,
+                "subpages": ""
+            },
+            "14": {
+                "*": "Category",
+                "canonical": "Category",
+                "case": "first-letter",
+                "id": 14,
+                "subpages": ""
+            },
+            "15": {
+                "*": "Category talk",
+                "canonical": "Category talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 15,
+                "subpages": ""
+            },
+            "2": {
+                "*": "User",
+                "canonical": "User",
+                "case": "first-letter",
+                "id": 2,
+                "subpages": ""
+            },
+            "2300": {
+                "*": "Gadget",
+                "canonical": "Gadget",
+                "case": "first-letter",
+                "id": 2300
+            },
+            "2301": {
+                "*": "Gadget talk",
+                "canonical": "Gadget talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 2301
+            },
+            "2302": {
+                "*": "Gadget definition",
+                "canonical": "Gadget definition",
+                "case": "case-sensitive",
+                "defaultcontentmodel": "GadgetDefinition",
+                "id": 2302
+            },
+            "2303": {
+                "*": "Gadget definition talk",
+                "canonical": "Gadget definition talk",
+                "case": "case-sensitive",
+                "defaultcontentmodel": "flow-board",
+                "id": 2303
+            },
+            "2600": {
+                "*": "Topic",
+                "canonical": "Topic",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 2600
+            },
+            "3": {
+                "*": "User talk",
+                "canonical": "User talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 3,
+                "subpages": ""
+            },
+            "4": {
+                "*": "Project",
+                "canonical": "Project",
+                "case": "first-letter",
+                "id": 4,
+                "subpages": ""
+            },
+            "486": {
+                "*": "Data",
+                "canonical": "Data",
+                "case": "first-letter",
+                "id": 486
+            },
+            "487": {
+                "*": "Data talk",
+                "canonical": "Data talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 487
+            },
+            "5": {
+                "*": "Project talk",
+                "canonical": "Project talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 5,
+                "subpages": ""
+            },
+            "6": {
+                "*": "File",
+                "canonical": "File",
+                "case": "first-letter",
+                "id": 6
+            },
+            "7": {
+                "*": "File talk",
+                "canonical": "File talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 7,
+                "subpages": ""
+            },
+            "8": {
+                "*": "MediaWiki",
+                "canonical": "MediaWiki",
+                "case": "first-letter",
+                "id": 8
+            },
+            "828": {
+                "*": "Module",
+                "canonical": "Module",
+                "case": "first-letter",
+                "id": 828,
+                "subpages": ""
+            },
+            "829": {
+                "*": "Module talk",
+                "canonical": "Module talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 829,
+                "subpages": ""
+            },
+            "9": {
+                "*": "MediaWiki talk",
+                "canonical": "MediaWiki talk",
+                "case": "first-letter",
+                "defaultcontentmodel": "flow-board",
+                "id": 9,
+                "subpages": ""
+            },
+            "90": {
+                "*": "Thread",
+                "canonical": "Thread",
+                "case": "first-letter",
+                "id": 90
+            },
+            "91": {
+                "*": "Thread talk",
+                "canonical": "Thread talk",
+                "case": "first-letter",
+                "id": 91
+            },
+            "92": {
+                "*": "Summary",
+                "canonical": "Summary",
+                "case": "first-letter",
+                "id": 92
+            },
+            "93": {
+                "*": "Summary talk",
+                "canonical": "Summary talk",
+                "case": "first-letter",
+                "id": 93
+            }
+        }
+    }
+}

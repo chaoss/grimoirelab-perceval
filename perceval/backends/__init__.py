@@ -30,6 +30,7 @@ from .gmane import Gmane, GmaneCommand
 from .jenkins import Jenkins, JenkinsCommand
 from .jira import Jira, JiraCommand
 from .mbox import MBox, MBoxCommand
+from .mediawiki import MediaWiki, MediaWikiCommand
 from .pipermail import Pipermail, PipermailCommand
 from .stackexchange import StackExchange, StackExchangeCommand
 from .supybot import Supybot, SupybotCommand
@@ -46,6 +47,7 @@ PERCEVAL_BACKENDS = {
                      'jenkins'       : Jenkins,
                      'jira'          : Jira,
                      'mbox'          : MBox,
+                     'mediawiki'     : MediaWiki,
                      'pipermail'     : Pipermail,
                      'stackexchange' : StackExchange,
                      'supybot'       : Supybot
@@ -61,6 +63,7 @@ PERCEVAL_CMDS = {
                  'jenkins'       : JenkinsCommand,
                  'jira'          : JiraCommand,
                  'mbox'          : MBoxCommand,
+                 'mediawiki'     : MediaWikiCommand,
                  'pipermail'     : PipermailCommand,
                  'stackexchange' : StackExchangeCommand,
                  'supybot'       : SupybotCommand
