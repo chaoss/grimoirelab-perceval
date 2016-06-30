@@ -50,7 +50,7 @@ def read_file(filename, mode='r'):
     return content
 
 
-class TestJiraBAckend(unittest.TestCase):
+class TestJiraBackend(unittest.TestCase):
     """Jira backend tests"""
 
     @httpretty.activate
@@ -182,7 +182,7 @@ class TestJiraBAckend(unittest.TestCase):
         self.assertDictEqual(request.querystring, expected_req)
 
 
-class TestJiraBAckendCache(unittest.TestCase):
+class TestJiraBackendCache(unittest.TestCase):
     """Jira backend tests using a cache"""
 
     def setUp(self):
