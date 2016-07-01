@@ -1,0 +1,24 @@
+{
+    "ok": true,
+    "result": [
+        {
+            "message": {
+                "chat": {
+                    "first_name": "Santi",
+                    "id": 8,
+                    "type": "private",
+                    "username": "sdd"
+                },
+                "date": 1467370372,
+                "from": {
+                    "first_name": "Santi",
+                    "id": 8,
+                    "username": "sdd"
+                },
+                "message_id": 34,
+                "text": "Hi Bot!!!"
+            },
+            "update_id": 319280321
+        }
+    ]
+}
