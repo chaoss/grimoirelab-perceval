@@ -53,6 +53,27 @@ def read_file(filename, mode='r'):
 class TestJiraBackend(unittest.TestCase):
     """Jira backend tests"""
 
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        jira = Jira(JIRA_SERVER_URL, origin='test',
+                      max_issues=5)
+
+        self.assertEqual(jira.url, JIRA_SERVER_URL)
+        self.assertEqual(jira.origin, 'test')
+        self.assertEqual(jira.max_issues, 5)
+        self.assertIsInstance(jira.client, JiraClient)
+
+        # When origin is empty or None it will be set to
+        # the value in url
+        jira = Jira(JIRA_SERVER_URL)
+        self.assertEqual(jira.url, JIRA_SERVER_URL)
+        self.assertEqual(jira.origin, JIRA_SERVER_URL)
+
+        jira = Jira(JIRA_SERVER_URL, origin='')
+        self.assertEqual(jira.url, JIRA_SERVER_URL)
+        self.assertEqual(jira.origin, JIRA_SERVER_URL)
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether a list of issues is returned"""
@@ -298,7 +319,7 @@ class TestJiraBackendParsers(unittest.TestCase):
 
 
 class TestJiraClient(unittest.TestCase):
-    """Bugzilla API client tests"""
+    """JIRA API client tests"""
 
     def test_init(self):
         """Test initialization"""
