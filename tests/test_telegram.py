@@ -166,6 +166,36 @@ class TestTelegramBackend(unittest.TestCase):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_fetch_by_chats(self):
+        """Test if it returns only those messages that belong to the given chats"""
+
+        _ = setup_http_server()
+
+        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
+
+        chats = [8, -1]
+        messages = [msg for msg in tlg.fetch(chats=chats)]
+
+        self.assertEqual(len(messages), 3)
+
+        expected = [(31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0),
+                    (33, '9d03eeea7e3186ca8e5c150b4cbf18c8283cca9d', 1467289371.0),
+                    (34, '2e61e72b64c9084f3c5a36671c3119641c3ae42f', 1467370372.0)]
+
+        for x in range(len(messages)):
+            message = messages[x]
+            self.assertEqual(message['data']['message']['message_id'], expected[x][0])
+            self.assertEqual(message['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
+            self.assertEqual(message['uuid'], expected[x][1])
+            self.assertEqual(message['updated_on'], expected[x][2])
+
+        # Empty list of chats will return no messages
+        chats = []
+        messages = [msg for msg in tlg.fetch(chats=chats)]
+
+        self.assertEqual(len(messages), 0)
+
+    @httpretty.activate
     def test_fetch_empty(self):
         """Test whether it works when there are no messages to fetch"""
 

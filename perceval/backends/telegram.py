@@ -69,18 +69,33 @@ class Telegram(Backend):
         self.client = TelegramBotClient(bot_token)
 
     @metadata
-    def fetch(self, offset=DEFAULT_OFFSET):
+    def fetch(self, offset=DEFAULT_OFFSET, chats=None):
         """Fetch the messages the bot can read from the server.
 
         The method retrieves, from the Telegram server, the messages
         sent with an offset equal or greater than the given.
 
+        A list of chats, groups and channels identifiers can be set
+        using the parameter `chats`. When it is set, only those
+        messages sent to any of these will be returned. An empty list
+        will return no messages.
+
         :param offset: obtain messages from this offset
+        :param chats: list of chat names used to filter messages
 
         :returns: a generator of messages
+
+        :raises ValueError: when `chats` is an empty list
         """
         logger.info("Looking for messages of '%s' bot from offset '%s'",
                     self.bot, offset)
+
+        if chats is not None:
+            if len(chats) == 0:
+                logger.warning("Chat list filter is empty. No messages will be returned")
+            else:
+                logger.info("Messages which belong to chats %s will be fetched",
+                            '[' + ','.join(str(ch_id) for ch_id in chats) + ']')
 
         self._purge_cache_queue()
 
@@ -101,9 +116,15 @@ class Telegram(Backend):
                 break
 
             for msg in messages:
+                offset = max(msg['update_id'], offset)
+
+                if not self._filter_message_by_chats(msg, chats):
+                    logger.debug("Message %s does not belong to any chat; filtered",
+                                 msg['message']['message_id'])
+                    continue
+
                 yield msg
                 nmsgs += 1
-                offset = max(msg['update_id'], offset)
 
             offset += 1
 
@@ -142,6 +163,25 @@ class Telegram(Backend):
 
         logger.info("Retrieval process completed: %s messages retrieved from cache",
                     nmsgs)
+
+    def _filter_message_by_chats(self, message, chats):
+        """Check if a message can be filtered based in a list of chats.
+
+        This method returns `True` when the message was sent to a chat
+        of the given list. It also returns `True` when chats is `None`.
+
+        :param message: Telegram message
+        :param chats: list of chat, groups and channels identifiers
+
+        :returns: `True` when the message can be filtered; otherwise,
+            it returns `False`
+        """
+        if chats is None:
+            return True
+
+        chat_id = message['message']['chat']['id']
+
+        return chat_id in chats
 
     @staticmethod
     def metadata_id(item):
