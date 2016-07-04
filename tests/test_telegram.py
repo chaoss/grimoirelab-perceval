@@ -20,7 +20,9 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import shutil
 import sys
+import tempfile
 import unittest
 import urllib
 
@@ -29,6 +31,8 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
+from perceval.cache import Cache
+from perceval.errors import CacheError
 from perceval.backends.telegram import Telegram, TelegramBotClient
 
 
@@ -196,6 +200,69 @@ class TestTelegramBackend(unittest.TestCase):
         result = [msg for msg in messages]
 
         self.assertEqual(len(result), 0)
+
+
+class TestTelegramBackendCache(unittest.TestCase):
+    """Telegram backend tests using a cache"""
+
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    @httpretty.activate
+    def test_fetch_from_cache(self):
+        """Test whether the cache works"""
+
+        http_requests = setup_http_server()
+
+        # First, we fetch the messages from the server,
+        # storing them in a cache
+        cache = Cache(self.tmp_path)
+        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, cache=cache)
+
+        messages = [msg for msg in tlg.fetch()]
+        self.assertEqual(len(http_requests), 3)
+
+        # Now, we get the messages from the cache.
+        # The contents should be the same and there won't be
+        # any new request to the server
+        cached_messages = [msg for msg in tlg.fetch_from_cache()]
+        self.assertEqual(len(cached_messages), len(messages))
+
+        expected = [(31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0),
+                    (32, '16a59e93e919174fcd4e70e5b3289201c1016c72', 1467289329.0),
+                    (33, '9d03eeea7e3186ca8e5c150b4cbf18c8283cca9d', 1467289371.0),
+                    (34, '2e61e72b64c9084f3c5a36671c3119641c3ae42f', 1467370372.0)]
+
+        self.assertEqual(len(cached_messages), len(expected))
+
+        for x in range(len(messages)):
+            message = messages[x]
+            self.assertEqual(message['data']['message']['message_id'], expected[x][0])
+            self.assertEqual(message['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
+            self.assertEqual(message['uuid'], expected[x][1])
+            self.assertEqual(message['updated_on'], expected[x][2])
+
+        # No more requests were sent
+        self.assertEqual(len(http_requests), 3)
+
+    def test_fetch_from_empty_cache(self):
+        """Test if there are not any message returned when the cache is empty"""
+
+        cache = Cache(self.tmp_path)
+        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, cache=cache)
+        cached_messages = [msg for msg in tlg.fetch_from_cache()]
+        self.assertEqual(len(cached_messages), 0)
+
+    def test_fetch_from_non_set_cache(self):
+        """Test if a error is raised when the cache was not set"""
+
+        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
+
+        with self.assertRaises(CacheError):
+            _ = [msg for msg in tlg.fetch_from_cache()]
 
 
 class TestTelegramBotClient(unittest.TestCase):

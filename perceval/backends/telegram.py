@@ -26,7 +26,9 @@ import logging
 import requests
 
 from ..backend import Backend, metadata
+from ..errors import CacheError
 from ..utils import urljoin
+
 
 logger = logging.getLogger(__name__)
 
@@ -80,10 +82,18 @@ class Telegram(Backend):
         logger.info("Looking for messages of '%s' bot from offset '%s'",
                     self.bot, offset)
 
+        self._purge_cache_queue()
+
         nmsgs = 0
 
         while True:
             raw_json = self.client.updates(offset=offset)
+
+            # Due to Telegram deletes the messages from the server
+            # when they are fetched, the backend stores these messages
+            # in the cache before doing anything.
+            self._push_cache_queue(raw_json)
+            self._flush_cache_queue()
 
             messages = [msg for msg in self.parse_messages(raw_json)]
 
@@ -98,6 +108,39 @@ class Telegram(Backend):
             offset += 1
 
         logger.info("Fetch process completed: %s messages fetched",
+                    nmsgs)
+
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch the messages from the cache.
+
+        It returns the messages stored in the cache object provided during
+        the initialization of the object. If this method is called but
+        no cache object was provided, the method will raise a `CacheError`
+        exception.
+
+        :returns: a generator of messages
+
+        :raises CacheError: raised when an error occurs accesing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        logger.info("Retrieving cached messages: '%s'", self.bot)
+
+        cache_items = self.cache.retrieve()
+
+        nmsgs = 0
+
+        for raw_json in cache_items:
+            messages = [msg for msg in self.parse_messages(raw_json)]
+
+            for msg in messages:
+                yield msg
+                nmsgs += 1
+
+        logger.info("Retrieval process completed: %s messages retrieved from cache",
                     nmsgs)
 
     @staticmethod
