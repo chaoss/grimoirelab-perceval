@@ -1,0 +1,267 @@
+[
+    {
+        "fields": {
+            "resolutiondate": null,
+            "description": "",
+            "duedate": null,
+            "priority": {
+                "name": "Major",
+                "self": "https://jira.fiware.org/rest/api/2/priority/3",
+                "id": "3",
+                "iconUrl": "https://jira.fiware.org/images/icons/priorities/major.png"
+            },
+            "updated": "2016-03-03T14:32:47.000+0000",
+            "subtasks": [],
+            "fixVersions": [],
+            "assignee": {
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10108",
+                    "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10108",
+                    "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10108",
+                    "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10108"
+                },
+                "timeZone": "Europe/Madrid",
+                "displayName": "User1",
+                "active": true,
+                "name": "user1",
+                "key": "user1",
+                "self": "https://jira.fiware.org/rest/api/2/user?username=user1"
+            },
+            "components": [
+                {
+                    "name": "FIWARE-LAB-HELP",
+                    "id": "10279",
+                    "self": "https://jira.fiware.org/rest/api/2/component/10279"
+                }
+            ],
+            "customfield_10301": null,
+            "customfield_10400": null,
+            "created": "2016-03-03T13:40:01.000+0000",
+            "issuelinks": [],
+            "status": {
+                "iconUrl": "https://jira.fiware.org/images/icons/statuses/open.png",
+                "description": "The issue is defined and ready for schedule",
+                "self": "https://jira.fiware.org/rest/api/2/status/1",
+                "name": "Open",
+                "statusCategory": {
+                    "name": "To Do",
+                    "colorName": "blue-gray",
+                    "self": "https://jira.fiware.org/rest/api/2/statuscategory/2",
+                    "id": 2,
+                    "key": "new"
+                },
+                "id": "1"
+            },
+            "votes": {
+                "hasVoted": false,
+                "votes": 0,
+                "self": "https://jira.fiware.org/rest/api/2/issue/HELP-6043/votes"
+            },
+            "issuetype": {
+                "iconUrl": "https://jira.fiware.org/images/icons/issuetypes/defect.png",
+                "subtask": false,
+                "description": "Request from external stakeholder received in the help desk",
+                "self": "https://jira.fiware.org/rest/api/2/issuetype/10104",
+                "name": "extRequest",
+                "id": "10104"
+            },
+            "workratio": -1,
+            "watches": {
+                "isWatching": false,
+                "self": "https://jira.fiware.org/rest/api/2/issue/HELP-6043/watchers",
+                "watchCount": 1
+            },
+            "summary": "[Fiware-lab-help] FIWARE Lab Assistance",
+            "reporter": {
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10122",
+                    "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10122",
+                    "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10122",
+                    "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10122"
+                },
+                "timeZone": "Europe/Madrid",
+                "displayName": "User2",
+                "active": true,
+                "name": "user2",
+                "key": "user2",
+                "self": "https://jira.fiware.org/rest/api/2/user?username=user2"
+            },
+            "project": {
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/projectavatar?avatarId=10011",
+                    "24x24": "https://jira.fiware.org/secure/projectavatar?size=small&avatarId=10011",
+                    "16x16": "https://jira.fiware.org/secure/projectavatar?size=xsmall&avatarId=10011",
+                    "32x32": "https://jira.fiware.org/secure/projectavatar?size=medium&avatarId=10011"
+                },
+                "projectCategory": {
+                    "name": "FIWARE - Phase II",
+                    "description": "",
+                    "id": "10302",
+                    "self": "https://jira.fiware.org/rest/api/2/projectCategory/10302"
+                },
+                "id": "10841",
+                "name": "Help-Desk",
+                "key": "HELP",
+                "self": "https://jira.fiware.org/rest/api/2/project/10841"
+            },
+            "customfield_10603": null,
+            "lastViewed": null,
+            "customfield_10600": null,
+            "creator": {
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10122",
+                    "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10122",
+                    "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10122",
+                    "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10122"
+                },
+                "timeZone": "Europe/Madrid",
+                "displayName": "User2",
+                "active": true,
+                "name": "user2",
+                "key": "user2",
+                "self": "https://jira.fiware.org/rest/api/2/user?username=user2"
+            },
+            "resolution": null,
+            "labels": []
+        },
+        "expand": "operations,editmeta,changelog,transitions,renderedFields",
+        "self": "https://jira.fiware.org/rest/api/2/issue/35851",
+        "id": "35851",
+        "key": "HELP-6043"
+    },
+    {
+        "fields": {
+            "resolutiondate": "2016-03-03T14:30:17.000+0000",
+            "description": "",
+            "duedate": null,
+            "priority": {
+                "name": "Major",
+                "self": "https://jira.fiware.org/rest/api/2/priority/3",
+                "id": "3",
+                "iconUrl": "https://jira.fiware.org/images/icons/priorities/major.png"
+            },
+            "updated": "2016-03-03T14:30:17.000+0000",
+            "subtasks": [],
+            "fixVersions": [],
+            "assignee": {
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10108",
+                    "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10108",
+                    "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10108",
+                    "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10108"
+                },
+                "timeZone": "Europe/Madrid",
+                "displayName": "User1",
+                "active": true,
+                "name": "user1",
+                "key": "user1",
+                "self": "https://jira.fiware.org/rest/api/2/user?username=user1"
+            },
+            "components": [
+                {
+                    "name": "SPAM",
+                    "id": "11404",
+                    "self": "https://jira.fiware.org/rest/api/2/component/11404"
+                }
+            ],
+            "customfield_10301": null,
+            "customfield_10400": null,
+            "created": "2016-03-03T13:11:01.000+0000",
+            "issuelinks": [],
+            "status": {
+                "iconUrl": "https://jira.fiware.org/images/icons/statuses/generic.png",
+                "description": "",
+                "self": "https://jira.fiware.org/rest/api/2/status/6",
+                "name": "Closed",
+                "statusCategory": {
+                    "name": "Done",
+                    "colorName": "green",
+                    "self": "https://jira.fiware.org/rest/api/2/statuscategory/3",
+                    "id": 3,
+                    "key": "done"
+                },
+                "id": "6"
+            },
+            "votes": {
+                "hasVoted": false,
+                "votes": 0,
+                "self": "https://jira.fiware.org/rest/api/2/issue/HELP-6042/votes"
+            },
+            "issuetype": {
+                "iconUrl": "https://jira.fiware.org/images/icons/issuetypes/defect.png",
+                "subtask": false,
+                "description": "Request from external stakeholder received in the help desk",
+                "self": "https://jira.fiware.org/rest/api/2/issuetype/10104",
+                "name": "extRequest",
+                "id": "10104"
+            },
+            "workratio": -1,
+            "watches": {
+                "isWatching": false,
+                "self": "https://jira.fiware.org/rest/api/2/issue/HELP-6042/watchers",
+                "watchCount": 2
+            },
+            "summary": "",
+            "reporter": {
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10122",
+                    "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10122",
+                    "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10122",
+                    "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10122"
+                },
+                "timeZone": "Europe/Madrid",
+                "displayName": "User2",
+                "active": true,
+                "name": "user2",
+                "key": "user2",
+                "self": "https://jira.fiware.org/rest/api/2/user?username=user2"
+            },
+            "project": {
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/projectavatar?avatarId=10011",
+                    "24x24": "https://jira.fiware.org/secure/projectavatar?size=small&avatarId=10011",
+                    "16x16": "https://jira.fiware.org/secure/projectavatar?size=xsmall&avatarId=10011",
+                    "32x32": "https://jira.fiware.org/secure/projectavatar?size=medium&avatarId=10011"
+                },
+                "projectCategory": {
+                    "name": "FIWARE - Phase II",
+                    "description": "",
+                    "id": "10302",
+                    "self": "https://jira.fiware.org/rest/api/2/projectCategory/10302"
+                },
+                "id": "10841",
+                "name": "Help-Desk",
+                "key": "HELP",
+                "self": "https://jira.fiware.org/rest/api/2/project/10841"
+            },
+            "customfield_10603": null,
+            "lastViewed": null,
+            "customfield_10600": null,
+            "creator": {
+                "avatarUrls": {
+                    "48x48": "https://jira.fiware.org/secure/useravatar?avatarId=10122",
+                    "24x24": "https://jira.fiware.org/secure/useravatar?size=small&avatarId=10122",
+                    "16x16": "https://jira.fiware.org/secure/useravatar?size=xsmall&avatarId=10122",
+                    "32x32": "https://jira.fiware.org/secure/useravatar?size=medium&avatarId=10122"
+                },
+                "timeZone": "Europe/Madrid",
+                "displayName": "User2",
+                "active": true,
+                "name": "user2",
+                "key": "user2",
+                "self": "https://jira.fiware.org/rest/api/2/user?username=user2"
+            },
+            "resolution": {
+                "name": "Done",
+                "description": "extRequest, WorkItems, Stories, Features and Epics",
+                "id": "10000",
+                "self": "https://jira.fiware.org/rest/api/2/resolution/10000"
+            },
+            "labels": []
+        },
+        "expand": "operations,editmeta,changelog,transitions,renderedFields",
+        "self": "https://jira.fiware.org/rest/api/2/issue/35850",
+        "id": "35850",
+        "key": "HELP-6042"
+    }
+]
