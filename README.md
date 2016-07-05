@@ -25,6 +25,7 @@ are:
     pipermail        Fetch messages from a Pipermail archiver
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
+    telegram         Fetch messages from the Telegram server
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -158,6 +159,17 @@ $ perceval stackexchange --site stackoverflow --tagged python --from-date 2016-0
 ### Supybot
 ```
 $ perceval supybot 'http://channel.example.com' /tmp/supybot/
+```
+
+### Telegram
+
+Telegram backend needs an API token to authenticate the bot. In addition and
+in order to fetch messages from a group or channel, privacy settings must be
+disabled. To know how to create a bot, to obtain its token and to configure it
+please read the [Telegram Bots docs pages](https://core.telegram.org/bots).
+
+```
+$ perceval telegram mybot -t 12345678abcdefgh --chats 1 2 -10
 ```
 
 ## License

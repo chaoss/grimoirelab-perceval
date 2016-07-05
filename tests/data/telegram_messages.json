@@ -1,0 +1,59 @@
+{
+    "ok": true,
+    "result": [
+        {
+            "message": {
+                "chat": {
+                    "id": -1,
+                    "title": "Testing Telegram Bots",
+                    "type": "group"
+                },
+                "date": 1467289325,
+                "from": {
+                    "first_name": "Santi",
+                    "id": 8,
+                    "username": "sdd"
+                },
+                "message_id": 31,
+                "text": "Testing, testing"
+            },
+            "update_id": 319280318
+        },
+        {
+            "message": {
+                "chat": {
+                    "id": -2,
+                    "title": "A new group",
+                    "type": "group"
+                },
+                "date": 1467289329,
+                "from": {
+                    "first_name": "Santi",
+                    "id": 8,
+                    "username": "sdd"
+                },
+                "message_id": 32,
+                "text": "Hi!"
+            },
+            "update_id": 319280319
+        },
+        {
+            "message": {
+                "chat": {
+                    "id": -1,
+                    "title": "Testing Telegram Bots",
+                    "type": "group"
+                },
+                "date": 1467289371,
+                "from": {
+                    "first_name": "Alvaro",
+                    "id": 2,
+                    "username": "alvaro"
+                },
+                "message_id": 33,
+                "text": "Hi, this is Alvaro!"
+            },
+            "update_id": 319280320
+        }
+    ]
+}
