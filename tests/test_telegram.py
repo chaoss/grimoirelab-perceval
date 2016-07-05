@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
 import shutil
 import sys
 import tempfile
@@ -33,7 +34,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.telegram import Telegram, TelegramBotClient
+from perceval.backends.telegram import (Telegram,
+                                        TelegramCommand,
+                                        TelegramBotClient)
 
 
 TELEGRAM_BOT = 'mybot'
@@ -293,6 +296,34 @@ class TestTelegramBackendCache(unittest.TestCase):
 
         with self.assertRaises(CacheError):
             _ = [msg for msg in tlg.fetch_from_cache()]
+
+
+class TestTelegramCommand(unittest.TestCase):
+    """Tests for TelegramCommand class"""
+
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['mybot',
+                '--backend-token', '12345678',
+                '--offset', '10',
+                '--chats', '-10000',
+                '--origin', 'test']
+
+        cmd = TelegramCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.bot, 'mybot')
+        self.assertEqual(cmd.parsed_args.backend_token, '12345678')
+        self.assertEqual(cmd.parsed_args.offset, 10)
+        self.assertEqual(cmd.parsed_args.chats, [-10000])
+        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertIsInstance(cmd.backend, Telegram)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = TelegramCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 class TestTelegramBotClient(unittest.TestCase):

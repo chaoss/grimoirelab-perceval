@@ -22,10 +22,12 @@
 
 import json
 import logging
+import os
 
 import requests
 
-from ..backend import Backend, metadata
+from ..backend import Backend, BackendCommand, metadata
+from ..cache import Cache
 from ..errors import CacheError
 from ..utils import urljoin
 
@@ -224,6 +226,95 @@ class Telegram(Backend):
             yield msg
 
 
+class TelegramCommand(BackendCommand):
+    """Class to run Telegram backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.bot = self.parsed_args.bot
+        self.backend_token = self.parsed_args.backend_token
+        self.outfile = self.parsed_args.outfile
+        self.origin = self.parsed_args.origin
+        self.offset = self.parsed_args.offset
+        self.chats = self.parsed_args.chats
+
+        if not self.parsed_args.no_cache:
+            if not self.parsed_args.cache_path:
+                base_path = os.path.expanduser('~/.perceval/cache/')
+            else:
+                base_path = self.parsed_args.cache_path
+
+            cache_path = os.path.join(base_path, TELEGRAM_URL, self.bot)
+
+            cache = Cache(cache_path)
+
+            if self.parsed_args.clean_cache:
+                cache.clean()
+            else:
+                cache.backup()
+        else:
+            cache = None
+
+        self.backend = Telegram(self.bot,
+                                self.backend_token,
+                                cache=cache,
+                                origin=self.origin)
+
+    def run(self):
+        """Fetch and print the messages.
+
+        This method runs the backend to fetch the messages from the
+        Telegram server. Bugs are converted to JSON objects and printed
+        to the defined output.
+        """
+        if self.parsed_args.fetch_cache:
+            messages = self.backend.fetch_from_cache()
+        else:
+            messages = self.backend.fetch(offset=self.offset, chats=self.chats)
+
+        try:
+            for msg in messages:
+                obj = json.dumps(msg, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            if self.backend.cache:
+                self.backend.cache.recover()
+            raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the Telegram argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # Remove --from-date argument from parent parser
+        # because it is not needed by this backend
+        action = parser._option_string_actions['--from-date']
+        parser._handle_conflict_resolve(None, [('--from-date', action)])
+
+        # Backend token is required
+        action = parser._option_string_actions['--backend-token']
+        action.required = True
+
+        # Optional arguments
+        parser.add_argument('--offset', dest='offset',
+                            type=int, default=0,
+                            help='Offset to start fetching messages')
+        parser.add_argument('--chats', dest='chats',
+                            nargs='+', type=int, default=None,
+                            help='Fetch only the messages of these chat identifiers')
+
+        # Required arguments
+        parser.add_argument('bot',
+                            help='Name of the bot')
+
+        return parser
+
+
 class TelegramBotClient:
     """Telegram Bot API 2.0 client.
 
@@ -237,7 +328,6 @@ class TelegramBotClient:
 
     UPDATES_METHOD = 'getUpdates'
     OFFSET = 'offset'
-
 
     def __init__(self, bot_token):
         self.bot_token = bot_token
