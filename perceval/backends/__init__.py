@@ -34,6 +34,7 @@ from .mediawiki import MediaWiki, MediaWikiCommand
 from .pipermail import Pipermail, PipermailCommand
 from .stackexchange import StackExchange, StackExchangeCommand
 from .supybot import Supybot, SupybotCommand
+from .telegram import Telegram, TelegramCommand
 
 
 PERCEVAL_BACKENDS = {
@@ -50,7 +51,8 @@ PERCEVAL_BACKENDS = {
                      'mediawiki'     : MediaWiki,
                      'pipermail'     : Pipermail,
                      'stackexchange' : StackExchange,
-                     'supybot'       : Supybot
+                     'supybot'       : Supybot,
+                     'telegram'      : Telegram
                     }
 PERCEVAL_CMDS = {
                  'bugzilla'      : BugzillaCommand,
@@ -66,5 +68,6 @@ PERCEVAL_CMDS = {
                  'mediawiki'     : MediaWikiCommand,
                  'pipermail'     : PipermailCommand,
                  'stackexchange' : StackExchangeCommand,
-                 'supybot'       : SupybotCommand
+                 'supybot'       : SupybotCommand,
+                 'telegram'      : TelegramCommand
                 }
