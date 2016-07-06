@@ -1,0 +1,195 @@
+{
+    "count": 372470,
+    "next": null,
+    "previous": "https://support.mozilla.org/api/2/question/",
+    "results": [
+        {
+            "answers": [
+                100030,
+                100029,
+                100028,
+                100027,
+                100026
+            ],
+            "content": "<p>I keep getting a pop-up to update my Firefox. I fell for it the first time but no more. Here's a screenshow of what I get. Anyway to stop this pop-up?\n</p>",
+            "created": "2016-07-06T03:39:48Z",
+            "creator": {
+                "avatar": "https://secure.gravatar.com/avatar/ac4de55b1519f2cb4836ccb5a6cb5908?s=48&d=https%3A//support.cdn.mozilla.net/static/sumo/img/avatar.png",
+                "display_name": null,
+                "username": "BarbaraInMemphis"
+            },
+            "id": 1129949,
+            "involved": [
+                {
+                    "avatar": "https://secure.gravatar.com/avatar/ac4de55b1519f2cb4836ccb5a6cb5908?s=48&d=https%3A//support.cdn.mozilla.net/static/sumo/img/avatar.png",
+                    "display_name": null,
+                    "username": "BarbaraInMemphis"
+                },
+                {
+                    "avatar": "https://secure.gravatar.com/avatar/3c05361b9b9de4c18a56c6b1a8fdf12f?s=48&d=https%3A//support.cdn.mozilla.net/media/uploads/avatars/avatar-243.png",
+                    "display_name": "",
+                    "username": "the-edmeister"
+                },
+                {
+                    "avatar": "https://secure.gravatar.com/avatar/14248561db75a8cd07d5eaf03b55cd84?s=48&d=https%3A//support.cdn.mozilla.net/media/uploads/avatars/avatar-410.png",
+                    "display_name": "",
+                    "username": "James"
+                },
+                {
+                    "avatar": "https://secure.gravatar.com/avatar/5dee6eda3f85ed2b724c1fa54517f285?s=48&d=https%3A//support.cdn.mozilla.net/media/uploads/avatars/avatar-287.png",
+                    "display_name": "",
+                    "username": "cor-el"
+                }
+            ],
+            "is_archived": false,
+            "is_locked": false,
+            "is_solved": false,
+            "is_spam": false,
+            "is_taken": false,
+            "last_answer": 100026,
+            "locale": "en-US",
+            "metadata": [
+                {
+                    "name": "category",
+                    "value": "other"
+                },
+                {
+                    "name": "ff_version",
+                    "value": "47.0"
+                },
+                {
+                    "name": "os",
+                    "value": "Windows 7"
+                },
+                {
+                    "name": "plugins",
+                    "value": "* Adobe PDF Plug-In For Firefox and Netscape 15.16.20045\r\n* Foxit Reader Plug-In For Firefox and Netscape\r\n* NPRuntime Script Plug-in Library for Java(TM) Deploy\r\n* Next Generation Java Plug-in 10.65.2 for Mozilla browsers\r\n* MetaStream 3 Plugin r4\r\n* Shockwave Flash 22.0 r0\r\n* Shockwave Flash 11.9 r900\r\n* Adobe Shockwave for Director Netscape plug-in, version 11.5\r\n* 5.1.50428.0\r\n* nptrademanager\r\n* NPWLPG"
+                },
+                {
+                    "name": "product",
+                    "value": "desktop"
+                },
+                {
+                    "name": "useragent",
+                    "value": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0"
+                }
+            ],
+            "num_answers": 5,
+            "num_votes": 1,
+            "num_votes_past_week": 1,
+            "product": "firefox",
+            "solution": null,
+            "solved_by": null,
+            "tags": [
+                {
+                    "name": "other",
+                    "slug": "other"
+                },
+                {
+                    "name": "Firefox 47.0",
+                    "slug": "firefox-470"
+                },
+                {
+                    "name": "desktop",
+                    "slug": "desktop"
+                },
+                {
+                    "name": "Windows 7",
+                    "slug": "windows-7"
+                }
+            ],
+            "taken_by": null,
+            "taken_until": null,
+            "title": "forward spam to firefox",
+            "topic": "other",
+            "updated": "2016-07-06T06:01:01Z",
+            "updated_by": null
+        },
+        {
+            "answers": [],
+            "content": "<p>I downloaded \nfirefox 43 on an old PC yesterday which is very slow. Anything I tried to connect to re: firefox support changing my password, confirming my username, would not go through or took several tries. The reset password still doesn't work and I need to get support to get connected with my tax filing site.\n</p>",
+            "created": "2016-07-06T03:40:14Z",
+            "creator": {
+                "avatar": "https://secure.gravatar.com/avatar/9caa6c168c79ef8689f6da29c62a761c?s=48&d=https%3A//support.cdn.mozilla.net/static/sumo/img/avatar.png",
+                "display_name": null,
+                "username": "kovelynn"
+            },
+            "id": 1129948,
+            "involved": [
+                {
+                    "avatar": "https://secure.gravatar.com/avatar/9caa6c168c79ef8689f6da29c62a761c?s=48&d=https%3A//support.cdn.mozilla.net/static/sumo/img/avatar.png",
+                    "display_name": null,
+                    "username": "kovelynn"
+                },
+                {
+                    "avatar": "https://secure.gravatar.com/avatar/3c05361b9b9de4c18a56c6b1a8fdf12f?s=48&d=https%3A//support.cdn.mozilla.net/media/uploads/avatars/avatar-243.png",
+                    "display_name": "",
+                    "username": "the-edmeister"
+                }
+            ],
+            "is_archived": false,
+            "is_locked": false,
+            "is_solved": false,
+            "is_spam": false,
+            "is_taken": false,
+            "last_answer": null,
+            "locale": "en-US",
+            "metadata": [
+                {
+                    "name": "category",
+                    "value": "privacy-and-security"
+                },
+                {
+                    "name": "ff_version",
+                    "value": "43.0"
+                },
+                {
+                    "name": "os",
+                    "value": "Windows XP"
+                },
+                {
+                    "name": "plugins",
+                    "value": "* Adobe Acrobat Plug-In Version 7.00 for Netscape\r\n* Google Update\r\n* MetaStream 3 Plugin r4\r\n* The QuickTime Plugin allows you to view a wide variety of multimedia content in Web pages. For more information, visit the QuickTime Web site."
+                },
+                {
+                    "name": "product",
+                    "value": "desktop"
+                },
+                {
+                    "name": "useragent",
+                    "value": "Mozilla/5.0 (Windows NT 5.1; rv:43.0) Gecko/20100101 Firefox/43.0"
+                }
+            ],
+            "num_answers": 0,
+            "num_votes": 1,
+            "num_votes_past_week": 1,
+            "product": "firefox",
+            "solution": null,
+            "solved_by": null,
+            "tags": [
+                {
+                    "name": "privacy-and-security",
+                    "slug": "privacy-and-security_1"
+                },
+                {
+                    "name": "Firefox 43.0",
+                    "slug": "firefox-430"
+                },
+                {
+                    "name": "desktop",
+                    "slug": "desktop"
+                },
+                {
+                    "name": "Windows XP",
+                    "slug": "windows-xp"
+                }
+            ],
+            "taken_by": null,
+            "taken_until": null,
+            "title": "My password would not work. I reset it, confirmed on e-mail. It still doesn't work, tried to sign in for support.",
+            "topic": "privacy-and-security",
+            "updated": "2016-07-06T05:56:19Z",
+            "updated_by": null
+        }
+    ]
+}

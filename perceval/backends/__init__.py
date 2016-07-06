@@ -30,6 +30,7 @@ from .github import GitHub, GitHubCommand
 from .gmane import Gmane, GmaneCommand
 from .jenkins import Jenkins, JenkinsCommand
 from .jira import Jira, JiraCommand
+from .kitsune import Kitsune, KitsuneCommand
 from .mbox import MBox, MBoxCommand
 from .mediawiki import MediaWiki, MediaWikiCommand
 from .pipermail import Pipermail, PipermailCommand
@@ -50,6 +51,7 @@ PERCEVAL_BACKENDS = {
                      'gmane'         : Gmane,
                      'jenkins'       : Jenkins,
                      'jira'          : Jira,
+                     'kitsune'       : Kitsune,
                      'mbox'          : MBox,
                      'mediawiki'     : MediaWiki,
                      'pipermail'     : Pipermail,
@@ -69,6 +71,7 @@ PERCEVAL_CMDS = {
                  'gmane'         : GmaneCommand,
                  'jenkins'       : JenkinsCommand,
                  'jira'          : JiraCommand,
+                 'kitsune'       : KitsuneCommand,
                  'mbox'          : MBoxCommand,
                  'mediawiki'     : MediaWikiCommand,
                  'pipermail'     : PipermailCommand,
