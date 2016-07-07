@@ -1,0 +1,12 @@
+{
+    "_links": {
+        "base": "http://example.com",
+        "context": "",
+        "prev": "/rest/api/content/search?limit=2&start=98&cql=lastModified%3E='2016-07-07'%20order%20by%20lastModified",
+        "self": "http://example.com/rest/api/content/search?cql=lastModified%3E='2016-07-07'%20order%20by%20lastModified"
+    },
+    "limit": 2,
+    "results": [],
+    "size": 0,
+    "start": 100
+}
