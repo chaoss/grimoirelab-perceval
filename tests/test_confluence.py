@@ -21,7 +21,9 @@
 #
 
 import datetime
+import shutil
 import sys
+import tempfile
 import unittest
 import urllib
 
@@ -30,6 +32,8 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
+from perceval.cache import Cache
+from perceval.errors import CacheError
 from perceval.backends.confluence import Confluence, ConfluenceClient
 
 
@@ -312,6 +316,69 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(hc['history']['latest'], False)
         self.assertEqual(hc['version']['number'], 1)
         self.assertEqual(hc['version']['when'], '2016-06-10T20:05:21.000Z')
+
+
+class TestConfluenceBackendCache(unittest.TestCase):
+    """Confluence backend tests using a cache"""
+
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    @httpretty.activate
+    def test_fetch_from_cache(self):
+        """Test whether the cache works"""
+
+        http_requests = setup_http_server()
+
+        # First, we fetch the contents from the server,
+        # storing them in a cache
+        cache = Cache(self.tmp_path)
+        confluence = Confluence(CONFLUENCE_URL, cache=cache)
+
+        hcs = [hc for hc in confluence.fetch()]
+        self.assertEqual(len(http_requests), 6)
+
+        # Now, we get the contents from the cache.
+        # The contents should be the same and there won't be
+        # any new request to the server
+        cached_hcs = [hc for hc in confluence.fetch_from_cache()]
+        self.assertEqual(len(cached_hcs), len(hcs))
+
+        expected = [('1', 1, '5b8bf26bfd906214ec82f5a682649e8f6fe87984', 1465589121.0),
+                    ('1', 2, '94b8015bcb52fca1155ecee14153c8634856f1bc', 1466107110.0),
+                    ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976', 1467402626.0),
+                    ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd', 1467831550.0)]
+
+        self.assertEqual(len(cached_hcs), len(expected))
+
+        for x in range(len(cached_hcs)):
+            hc = cached_hcs[x]
+            self.assertEqual(hc['data']['id'], expected[x][0])
+            self.assertEqual(hc['data']['version']['number'], expected[x][1])
+            self.assertEqual(hc['uuid'], expected[x][2])
+            self.assertEqual(hc['updated_on'], expected[x][3])
+
+        # No more requests were sent
+        self.assertEqual(len(http_requests), 6)
+
+    def test_fetch_from_empty_cache(self):
+        """Test if there are not any content returned when the cache is empty"""
+
+        cache = Cache(self.tmp_path)
+        confluence = Confluence(CONFLUENCE_URL, cache=cache)
+        cached_hcs = [hc for hc in confluence.fetch_from_cache()]
+        self.assertEqual(len(cached_hcs), 0)
+
+    def test_fetch_from_non_set_cache(self):
+        """Test if a error is raised when the cache was not set"""
+
+        confluence = Confluence(CONFLUENCE_URL)
+
+        with self.assertRaises(CacheError):
+            _ = [hc for hc in confluence.fetch_from_cache()]
 
 
 class TestConfluenceClient(unittest.TestCase):

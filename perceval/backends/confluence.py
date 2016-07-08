@@ -26,6 +26,7 @@ import json
 import requests
 
 from ..backend import Backend, metadata
+from ..errors import CacheError
 from ..utils import (DEFAULT_DATETIME,
                      datetime_to_utc,
                      str_to_datetime,
@@ -80,6 +81,8 @@ class Confluence(Backend):
         logger.info("Fetching historical contents of '%s' from %s",
                     self.url, str(from_date))
 
+        self._purge_cache_queue()
+
         from_date = datetime_to_utc(from_date)
 
         nhcs = 0
@@ -88,17 +91,41 @@ class Confluence(Backend):
         cids = [content['id'] for content in contents]
 
         for cid in cids:
-            hcs = self.__fetch_historical_contents(cid)
+            hcs = self.__fetch_historical_contents(cid, from_date)
 
             for hc in hcs:
-                # Return those versions that were created after 'from_date'
-                when = str_to_datetime(hc['version']['when'])
+                yield hc
+                nhcs += 1
 
-                if when >= from_date:
-                    yield hc
-                    nhcs += 1
+            self._flush_cache_queue()
 
         logger.info("Fetch process completed: %s historical contents fetched",
+                    nhcs)
+
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch historical contents from the cache.
+
+        :returns: a generator of contents
+
+        :raises CacheError: raised when an error occurs accessing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        logger.info("Retrieving cached historical contents: '%s'", self.url)
+
+        cache_items = self.cache.retrieve()
+
+        nhcs = 0
+
+        for raw_json in cache_items:
+            hc = self.parse_historical_content(raw_json)
+            nhcs += 1
+            yield hc
+
+        logger.info("Retrieval process completed: %s historical contents retrieved from cache",
                     nhcs)
 
     def __fetch_contents_summary(self, from_date):
@@ -107,26 +134,31 @@ class Confluence(Backend):
             for cs in self.parse_contents_summary(page):
                 yield cs
 
-    def __fetch_historical_contents(self, cid):
+    def __fetch_historical_contents(self, cid, from_date):
         logger.debug("Fetching historical contents of %s content", cid)
 
         fetching = True
         version = 1
 
         while fetching:
-            hc = self.__fetch_and_parse_hc(cid, version)
-            yield hc
+            logger.debug("Fetching and parsing historical content #%s for %s ",
+                         str(version), cid)
+            raw_hc = self.client.historical_content(cid, version)
+            hc = self.parse_historical_content(raw_hc)
+
+            # Return those versions that were created after 'from_date'
+            when = str_to_datetime(hc['version']['when'])
+
+            if when >= from_date:
+                self._push_cache_queue(raw_hc)
+                yield hc
+            else:
+                logger.debug("Content %s v%s updated before %s; skipped",
+                             hc['id'], str(hc['version']['number']), str(from_date))
 
             # Check whether it retrieved the latest version
             fetching = not hc['history']['latest']
             version += 1
-
-    def __fetch_and_parse_hc(self, cid, version):
-        logger.debug("Fetching and parsing historical content #%s for %s ",
-                     str(version), cid)
-        raw_hc = self.client.historical_content(cid, version)
-        hc = self.parse_historical_content(raw_hc)
-        return hc
 
     @staticmethod
     def metadata_id(item):
