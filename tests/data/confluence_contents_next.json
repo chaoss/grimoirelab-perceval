@@ -15,17 +15,17 @@
                 "container": "",
                 "descendants": "",
                 "extensions": "",
-                "history": "/rest/api/content/att131085/history",
+                "history": "/rest/api/content/att1/history",
                 "metadata": "",
                 "operations": "",
                 "space": "/rest/api/space/ds",
                 "version": ""
             },
             "_links": {
-                "self": "http://example.com/rest/api/content/att131085",
+                "self": "http://example.com/rest/api/content/att1",
                 "webui": "/pages/viewpage.action?pageId=131079&preview=%2F131079%2F131085%2Fstep05-04.png"
             },
-            "id": "att131085",
+            "id": "att1",
             "title": "step05-04.png",
             "type": "attachment"
         }

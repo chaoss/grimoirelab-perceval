@@ -45,7 +45,7 @@
             "self": "http://example.com/rest/api/content/1/history"
         },
         "createdBy": {
-            "displayName": "Santiago Dueñas",
+            "displayName": "John Doe",
             "profilePicture": {
                 "height": 48,
                 "isDefault": false,
@@ -54,7 +54,7 @@
             },
             "type": "known",
             "userKey": "2c9e48d5521d22bb01521d2fd9110002",
-            "username": "sduenas"
+            "username": "jdoe"
         },
         "createdDate": "2016-06-10T20:05:21.000Z",
         "latest": false
@@ -65,7 +65,7 @@
     "type": "page",
     "version": {
         "by": {
-            "displayName": "Santiago Dueñas",
+            "displayName": "John Doe",
             "profilePicture": {
                 "height": 48,
                 "isDefault": false,
@@ -74,7 +74,7 @@
             },
             "type": "known",
             "userKey": "2c9e48d5521d22bb01521d2fd9110002",
-            "username": "sduenas"
+            "username": "jdoe"
         },
         "message": "",
         "minorEdit": false,

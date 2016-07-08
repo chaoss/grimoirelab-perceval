@@ -1,0 +1,70 @@
+{
+    "_expandable": {
+        "ancestors": "",
+        "body": "",
+        "children": "/rest/api/content/att1/child",
+        "container": "/rest/api/content/131079",
+        "descendants": "/rest/api/content/att1/descendant",
+        "operations": "",
+        "space": "/rest/api/space/ds"
+    },
+    "_links": {
+        "base": "http://example.com",
+        "collection": "/rest/api/content",
+        "context": "",
+        "download": "/download/attachments/131079/step05-04.png?version=1&modificationDate=1452106750000&api=v2",
+        "self": "http://example.com/rest/api/content/att1",
+        "webui": "/pages/viewpage.action?pageId=131079&preview=%2F131079%2F131085%2Fstep05-04.png"
+    },
+    "extensions": {
+        "comment": "",
+        "fileSize": 2302,
+        "mediaType": "image/png"
+    },
+    "history": {
+        "_expandable": {
+            "lastUpdated": "",
+            "nextVersion": "",
+            "previousVersion": ""
+        },
+        "_links": {
+            "self": "http://example.com/rest/api/content/att1/history"
+        },
+        "createdBy": {
+            "displayName": "Anonymous",
+            "profilePicture": {
+                "height": 48,
+                "isDefault": true,
+                "path": "/s/en_GB/6210/96b66f73363ad6a4132228b496713b1df46ada86.9/_/images/icons/profilepics/anonymous.png",
+                "width": 48
+            },
+            "type": "anonymous"
+        },
+        "createdDate": "2015-10-20T11:05:06.000Z",
+        "latest": true
+    },
+    "id": "att1",
+    "metadata": {
+        "comment": "",
+        "mediaType": "image/png"
+    },
+    "status": "current",
+    "title": "step05-04.png",
+    "type": "attachment",
+    "version": {
+        "by": {
+            "displayName": "Anonymous",
+            "profilePicture": {
+                "height": 48,
+                "isDefault": true,
+                "path": "/s/en_GB/6210/96b66f73363ad6a4132228b496713b1df46ada86.9/_/images/icons/profilepics/anonymous.png",
+                "width": 48
+            },
+            "type": "anonymous"
+        },
+        "message": "",
+        "minorEdit": false,
+        "number": 1,
+        "when": "2016-07-06T18:59:10.000Z"
+    }
+}

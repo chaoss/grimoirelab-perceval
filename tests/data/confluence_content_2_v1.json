@@ -1,0 +1,84 @@
+{
+    "_expandable": {
+        "ancestors": "",
+        "children": "/rest/api/content/2/child",
+        "container": "",
+        "descendants": "/rest/api/content/2/descendant",
+        "metadata": "",
+        "operations": "",
+        "space": "/rest/api/space/sfc"
+    },
+    "_links": {
+        "base": "http://example.com",
+        "collection": "/rest/api/content",
+        "context": "",
+        "self": "http://example.com/rest/api/content/2?status=historical&version=1",
+        "tinyui": "/x/IgFN",
+        "webui": "/pages/viewpage.action?pageId=2"
+    },
+    "body": {
+        "_expandable": {
+            "anonymous_export_view": "",
+            "editor": "",
+            "export_view": "",
+            "styled_view": "",
+            "view": ""
+        },
+        "storage": {
+            "_expandable": {
+                "content": "/rest/api/content/2"
+            },
+            "representation": "storage",
+            "value": "\n<h1>Project: Service Function Chaining </h1>\n\n<ul>\n\t<li><ac:link><ri:page ri:content-title=\"Project Proposals Service Function Chaining\" ri:space-key=\"PROJ\" /><ac:link-body>Project proposal</ac:link-body></ac:link></li>\n\t<li><strong>Etherpad:</strong> <a href=\"https://etherpad.opnfv.org/p/sfc\">https://etherpad.opnfv.org/p/sfc</a></li>\n\t<li><strong>TSC project proposal approval:</strong> <a href=\"http://meetbot.opnfv.org/meetings/opnfv-meeting/2015/opnfv-meeting.2015-05-05-14.02.html\">http://meetbot.opnfv.org/meetings/opnfv-meeting/2015/opnfv-meeting.2015-05-05-14.02.html</a></li>\n\t<li><strong>OpenDaylight Upstream SFC project:</strong> <a href=\"https://wiki.opendaylight.org/view/Service_Function_Chaining:Main ODL SFC\">https://wiki.opendaylight.org/view/Service_Function_Chaining:Main ODL SFC</a></li>\n</ul>\n\n\n\n<h2>Description </h2>\n\n<p>Service Function Chaining provides the ability to define an ordered list of a network services (e.g. firewalls, NAT, QoS). These service are then &quot;stitched&quot; together in the network to create a service chain. This project provides the infrastructure to install the upstream ODL SFC implementation project in an NFV environment.</p>\n\n\n<h2>Key Project Facts </h2>\n\n<p><strong>Project:</strong> Service Function Chaining (sfc)<br />\n<strong>Project Creation Date:</strong> May 5, 2015<br />\n<strong>Project Category:</strong> Collaborative Development <br />\n<strong>Lifecycle State:</strong> Incubation <br />\n<strong>Primary Contact:</strong> Brady Johnson (brady.allen.johnson@ericsson.com) <br />\n<strong>Project Lead:</strong> Brady Johnson (brady.allen.johnson@ericsson.com) <br />\n<strong>Mailing list tag:</strong> [SFC] <br />\n<strong>IRC:</strong> <code>#opnfv-sfc</code> <br />\n<strong>git repo:</strong> <code>sfc</code> <br />\n<strong>Gerrit:</strong> <a href=\"https://gerrit.opnfv.org/gerrit/\">SFC Gerrit</a> <br />\n<strong>Jira:</strong> <a href=\"https://jira.opnfv.org/browse/SFC/?selectedTab=com.atlassian.jira.jira-projects-plugin:summary-panel\">SFC JIRA</a> </p>\n\n<p><strong>Committers</strong>: </p>\n<ul>\n\t<li>Brady Johnson (brady.allen.johnson@ericsson.com)</li>\n\t<li>Reinaldo Penno (rapenno@gmail.com)</li>\n\t<li>Paul Quinn (paulq@cisco.com)</li>\n\t<li>Jim Guichard (jguichar@cisco.com)</li>\n\t<li>Sam Hague (shague@redhat.com)</li>\n\t<li>Tom Nadeau (tnadeau@Brocade.com)</li>\n\t<li>Vishal Murgai (vmurgai@cisco.com)</li>\n\t<li>Kiran Sreenivasa(kkoushik@brocade.com)</li>\n</ul>\n\n\n<p><strong>Link(s) to approval of additional committers:</strong> </p>\n\n<p><strong>Contributors</strong>: </p>\n<ul>\n\t<li>Christopher Price (christopher.price@ericsson.com)</li>\n\t<li>Danny Zhou (danny.zhou@intel.com)</li>\n\t<li>Johnson Li (johnson.li@intel.com)</li>\n\t<li>Eric Multanen (eric.w.multanen@intel.com)</li>\n</ul>\n\n\n<p><strong>Cloning the code:</strong></p>\n\n<ac:structured-macro ac:macro-id=\"53b89dcc-7f12-4d76-9740-acade26da2a7\" ac:name=\"code\" ac:schema-version=\"1\"><ac:plain-text-body><![CDATA[\n  git clone ssh://<username>@gerrit.opnfv.org:29418/sfc\n]]></ac:plain-text-body></ac:structured-macro>\n<p>{group3}</p>\n\n<h2>Reference Materials / Presentations / Other Helpful stuff </h2>\n\n<p><a href=\"http://wiki.opnfv.org/sfc_reference_materials\">Go to the Reference Material Wiki Page</a></p>\n\n\n<h2>Testing </h2>\n\n<p><a href=\"http://wiki.opnfv.org/sfc_brahmaputra_testing\">OPNFV SFC Brahmaputra testing</a></p>\n\n\n<h2>Meetings </h2>\n\n<p>Weekly On Wednesday <br />\n<a href=\"http://www.timeanddate.com/worldclock/fixedtime.html?hour=15&amp;min=0&amp;sec=0\">15:00</a> UTC</p>\n\n<p><a href=\"https://global.gotomeeting.com/join/611478989\">Goto Meeting Link</a></p>\n\n<p>You can also dial in using your phone</p>\n\n<ul>\n\t<li>Sweden: +46 (0) 852 500 186</li>\n\t<li>Australia: +61 2 8355 1020</li>\n\t<li>France: +33 (0) 170 950 594</li>\n\t<li>Germany: +49 (0) 692 5736 7317</li>\n\t<li>Italy: +39 0 247 92 13 01</li>\n\t<li>Spain: +34 911 82 9906</li>\n\t<li>United Kingdom: +44 (0) 330 221 0088</li>\n\t<li>United States: +1 (646) 749-3129</li>\n</ul>\n\n\n<p>Access Code: 611-478-989 <br />\nMeeting ID: 611-478-989 <br />\nIRC channel: <code>#opnfv-sfc</code> </p>\n\n\n<h3>Agenda for next meetings </h3>\n\n<ul>\n\t<li>Meeting date: 2016-01-20</li>\n\t<li><a href=\"http://lists.opnfv.org/pipermail/opnfv-tech-discuss/2016-January/007708.html\">Agenda email</a></li>\n</ul>\n\n\n\n<h3>Pending Action Items from previous meetings </h3>\n<ul>\n\t<li>Add tests to the Use Case Epic (Brady Johnson, 2015-09-23) <strong>[ONGOING]</strong></li>\n\t<li>Look into NSH aware SFs (Paul Quinn, 2015-08-12) <strong>[Ongoing]</strong>\n\t<ul>\n\t\t<li>Mentioned Aug 2 that he is discussing internally to provide an image of a demo SF</li>\n\t</ul>\n\t</li>\n\t<li>Help with Documentation Epic by creating sub-stories (Brian Sullivan, 2015-09-16) <strong>[DONE]</strong></li>\n</ul>\n\n\n\n<h3>Minutes of Meeting </h3>\n\n<p><strong>2015-09-23:</strong> Presentation: IP-less SFs by Danny Zhou<br />\n<a href=\"http://ircbot.wl.linuxfoundation.org/meetings/opnfv-sfc/2015/opnfv-sfc.2015-09-30-14.00.html\">IRC minutes</a> <br />\n<strong>2015-09-23:</strong> Review Milestone C artifacts<br />\n<a href=\"http://ircbot.wl.linuxfoundation.org/meetings/opnfv-sfc/2015/opnfv-sfc.2015-09-23-14.04.html\">IRC minutes</a> <br />\n<strong>2015-09-16:</strong> VnfMgrSim demo, Genesis, JIRA Stories<br />\n<a href=\"http://ircbot.wl.linuxfoundation.org/meetings/opnfv-sfc/2015/opnfv-sfc.2015-09-16-14.06.html\">IRC minutes</a> <br />\n<strong>2015-09-09:</strong><br />\n<a href=\"http://ircbot.wl.linuxfoundation.org/meetings/opnfv-sfc/2015/opnfv-sfc.2015-09-09-14.03.html\">IRC minutes</a> <br />\n<strong>2015-09-02:</strong> VM vxlan port and installer discussions<br />\n<a href=\"http://ircbot.wl.linuxfoundation.org/meetings/opnfv-sfc/2015/opnfv-sfc.2015-09-02-14.02.html\">IRC minutes</a> <br />\n<strong>2015-08-12:</strong> VNFMgr and First use case discussions<br />\n<a href=\"http://ircbot.wl.linuxfoundation.org/meetings/opnfv-sfc/2015/opnfv-sfc.2015-08-12-14.00.html\">IRC minutes</a> <br />\n<strong>2015-08-05:</strong> Tacker discussions<br />\n<a href=\"http://ircbot.wl.linuxfoundation.org/meetings/opnfv-sfc/2015/opnfv-sfc.2015-08-05-14.01.html\">IRC minutes</a> <br />\n<strong>2015-07-22:</strong> Coordinator decision<br />\n<a href=\"http://ircbot.wl.linuxfoundation.org/meetings/opnfv-sfc/2015/opnfv-sfc.2015-07-22-13.59.html\">IRC minutes</a> <br />\n<strong>2015-07-15:</strong> More Coordinator discussions <br />\n<a href=\"http://ircbot.wl.linuxfoundation.org/meetings/opnfv-sfc/2015/opnfv-sfc.2015-07-15-14.02.html\">IRC minutes</a> <br />\n<strong>2015-07-08:</strong> Detailed ODL-OpenStack Coordinator discussions<br />\n<a href=\"http://ircbot.wl.linuxfoundation.org/meetings/opnfv-sfc/2015/opnfv-sfc.2015-07-08-14.06.html\">IRC minutes</a> <br />\n<strong>2015-07-01:</strong> Project initialization discussions<br />\n<a href=\"http://lists.opnfv.org/pipermail/opnfv-tech-discuss/2015-July/003596.html\">Minutes of meeting email</a> <br />\n<strong>2015-06-24:</strong> OPNFV SFC Kick-off meeting<br />\n<a href=\"http://lists.opnfv.org/pipermail/opnfv-tech-discuss/2015-June/003407.html\">Minutes of meeting email</a> </p>\n\n<h2>Brahmaputra Release documents and discussions </h2>\n\n<p>Preliminary OPNFV SFC Brahmaputra Release Planning</p>\n\n<ul>\n\t<li><a href=\"https://docs.google.com/presentation/d/1GEt8Vi6hQL9kOk-nowxr3o9aE_VYoe5zljz8MyQtdgw/edit?usp=sharing\">Google-doc link</a></li>\n\t<li><ac:link><ri:attachment ri:filename=\"opnfv_sfc_brahmaputra_releaseplanning.v2.pdf\" /><ac:link-body>opnfv_sfc_brahmaputra_releaseplanning, Downloadable PDF, v2</ac:link-body></ac:link></li>\n</ul>\n\n\n<p>This document serves as the information baseline for the current ongoing discussion regarding OpenStack and ODL SFC coordination</p>\n\n<ul>\n\t<li><a href=\"https://docs.google.com/presentation/d/1gbhAnrTYbLCrNMhMXin0lxjyg-7IHNPjrlBTIjwAzys/edit?usp=sharing\">Google-doc link</a></li>\n\t<li><ac:link><ri:attachment ri:filename=\"opnfv_sfc_initialsetup.v2.pdf\" /><ac:link-body>opnfv_sfc_initialsetup, Downloadable PDF, v2</ac:link-body></ac:link></li>\n</ul>\n\n\n<p>This document describes the OPNFV SFC Architecture:</p>\n<ul>\n\t<li><a href=\"https://docs.google.com/document/d/1aoKYiExPtzyt3whETszeGh9neSKk2FpqxhgbGa0dkG0/edit\">OPNFV SFC Architecture</a></li>\n</ul>\n\n"
+        }
+    },
+    "extensions": {
+        "position": "none"
+    },
+    "history": {
+        "_expandable": {
+            "lastUpdated": "",
+            "nextVersion": "",
+            "previousVersion": ""
+        },
+        "_links": {
+            "self": "http://example.com/rest/api/content/2/history"
+        },
+        "createdBy": {
+            "displayName": "John Smith",
+            "profilePicture": {
+                "height": 48,
+                "isDefault": false,
+                "path": "/s/en_GB/6210/1/_/download/attachments/1343490/user-avatar?version=1&modificationDate=1452188900000&api=v2",
+                "width": 48
+            },
+            "type": "known",
+            "userKey": "2c9e48d5521d22bb01521d2fd9110002",
+            "username": "jsmith"
+        },
+        "createdDate": "2016-07-01T19:50:26.000Z",
+        "latest": true
+    },
+    "id": "2",
+    "status": "historical",
+    "title": "Service Function Chaining",
+    "type": "page",
+    "version": {
+        "by": {
+            "displayName": "Anonymous",
+            "profilePicture": {
+                "height": 48,
+                "isDefault": false,
+                "path": "/s/en_GB/6210/2/_/download/attachments/2/user-avatar?version=1&modificationDate=1452188900000&api=v2",
+                "width": 48
+            },
+            "type": "known",
+            "userKey": "2c9e48d5521d22bb01521d2fd9110002",
+            "username": "anonymous"
+        },
+        "message": "",
+        "minorEdit": false,
+        "number": 1,
+        "when": "2016-07-01T19:50:26.000Z"
+    }
+}

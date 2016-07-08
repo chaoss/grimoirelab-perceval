@@ -30,13 +30,15 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.confluence import ConfluenceClient
+from perceval.backends.confluence import Confluence, ConfluenceClient
 
 
 CONFLUENCE_URL = 'http://example.com'
 CONFLUENCE_API_URL = CONFLUENCE_URL + '/rest/api'
 CONFLUENCE_CONTENTS_URL = CONFLUENCE_API_URL + '/content/search'
-CONFLUENCE_HISTORICAL_CONTENT_1_V1 = CONFLUENCE_API_URL + '/content/1'
+CONFLUENCE_HISTORICAL_CONTENT_1 = CONFLUENCE_API_URL + '/content/1'
+CONFLUENCE_HISTORICAL_CONTENT_2 = CONFLUENCE_API_URL + '/content/2'
+CONFLUENCE_HISTORICAL_CONTENT_ATT = CONFLUENCE_API_URL + '/content/att1'
 
 
 def read_file(filename, mode='r'):
@@ -54,6 +56,9 @@ def setup_http_server():
     body_contents_next = read_file('data/confluence_contents_next.json', 'rb')
     body_contents_empty = read_file('data/confluence_contents_empty.json', 'rb')
     body_content_1_v1 = read_file('data/confluence_content_1_v1.json', 'rb')
+    body_content_1_v2 = read_file('data/confluence_content_1_v2.json', 'rb')
+    body_content_2 = read_file('data/confluence_content_2_v1.json', 'rb')
+    body_content_att = read_file('data/confluence_content_att_v1.json', 'rb')
 
     def request_callback(method, uri, headers):
         if uri.startswith(CONFLUENCE_CONTENTS_URL):
@@ -61,12 +66,23 @@ def setup_http_server():
 
             if 'start' in params and params['start'] == ['2']:
                 body = body_contents_next
-            elif params['cql'][0].startswith("lastModified>='2016-07-07 00:00'"):
+            elif params['cql'][0].startswith("lastModified>='2016-07-08 00:00'"):
                 body = body_contents_empty
             else:
                 body = body_contents
+        elif uri.startswith(CONFLUENCE_HISTORICAL_CONTENT_1):
+            params = urllib.parse.parse_qs(urllib.parse.urlparse(uri).query)
+
+            if params['version'] == ['1']:
+                body = body_content_1_v1
+            else:
+                body = body_content_1_v2
+        elif uri.startswith(CONFLUENCE_HISTORICAL_CONTENT_2):
+            body = body_content_2
+        elif uri.startswith(CONFLUENCE_HISTORICAL_CONTENT_ATT):
+            body = body_content_att
         else:
-            body = body_content_1_v1
+            raise
 
         http_requests.append(httpretty.last_request())
 
@@ -78,12 +94,224 @@ def setup_http_server():
                                 httpretty.Response(body=request_callback)
                            ])
     httpretty.register_uri(httpretty.GET,
-                           CONFLUENCE_HISTORICAL_CONTENT_1_V1,
+                           CONFLUENCE_HISTORICAL_CONTENT_1,
+                           responses=[
+                                httpretty.Response(body=request_callback)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           CONFLUENCE_HISTORICAL_CONTENT_2,
+                           responses=[
+                                httpretty.Response(body=request_callback)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           CONFLUENCE_HISTORICAL_CONTENT_ATT,
                            responses=[
                                 httpretty.Response(body=request_callback)
                            ])
 
     return http_requests
+
+
+class TestConfluenceBackend(unittest.TestCase):
+    """Confluence backend tests"""
+
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        confluence = Confluence(CONFLUENCE_URL, origin='test')
+
+        self.assertEqual(confluence.url, CONFLUENCE_URL)
+        self.assertEqual(confluence.origin, 'test')
+        self.assertIsInstance(confluence.client, ConfluenceClient)
+
+        # When origin is empty or None it will be set to
+        # the value in url
+        confluence = Confluence(CONFLUENCE_URL)
+        self.assertEqual(confluence.url, CONFLUENCE_URL)
+        self.assertEqual(confluence.url, CONFLUENCE_URL)
+
+        confluence = Confluence(CONFLUENCE_URL, origin='')
+        self.assertEqual(confluence.url, CONFLUENCE_URL)
+        self.assertEqual(confluence.url, CONFLUENCE_URL)
+
+    @httpretty.activate
+    def test_fetch(self):
+        """Test it it fetches and parses a list of contents"""
+
+        http_requests = setup_http_server()
+
+        confluence = Confluence(CONFLUENCE_URL)
+        hcs = [hc for hc in confluence.fetch()]
+
+        expected = [('1', 1, '5b8bf26bfd906214ec82f5a682649e8f6fe87984', 1465589121.0),
+                    ('1', 2, '94b8015bcb52fca1155ecee14153c8634856f1bc', 1466107110.0),
+                    ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976', 1467402626.0),
+                    ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd', 1467831550.0)]
+
+        self.assertEqual(len(hcs), len(expected))
+
+        for x in range(len(hcs)):
+            hc = hcs[x]
+            self.assertEqual(hc['data']['id'], expected[x][0])
+            self.assertEqual(hc['data']['version']['number'], expected[x][1])
+            self.assertEqual(hc['uuid'], expected[x][2])
+            self.assertEqual(hc['updated_on'], expected[x][3])
+
+        # Check requests
+        expected = [
+                    {
+                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'limit' : ['200']
+                    },
+                    {
+                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'start' : ['2'],
+                     'limit' : ['2'] # Hardcoded in JSON dataset
+                    },
+                    {
+                     'expand' : ['body.storage,history,version'],
+                     'status' : ['historical'],
+                     'version' : ['1']
+                    },
+                    {
+                     'expand' : ['body.storage,history,version'],
+                     'status' : ['historical'],
+                     'version' : ['2']
+                    },
+                    {
+                     'expand' : ['body.storage,history,version'],
+                     'status' : ['historical'],
+                     'version' : ['1']
+                    },
+                    {
+                     'expand' : ['body.storage,history,version'],
+                     'status' : ['historical'],
+                     'version' : ['1']
+                    }
+                   ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_from_date(self):
+        """Test if a list of contents is returned from a given date"""
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2016, 6, 16, 0, 0, 0)
+
+        confluence = Confluence(CONFLUENCE_URL)
+        hcs = [hc for hc in confluence.fetch(from_date=from_date)]
+
+        # On this test case the first version of content #1
+        # will not be returned becasue this version was
+        # created before the given date
+        expected = [('1', 2, '94b8015bcb52fca1155ecee14153c8634856f1bc', 1466107110.0),
+                    ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976', 1467402626.0),
+                    ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd', 1467831550.0)]
+
+        self.assertEqual(len(hcs), len(expected))
+
+        for x in range(len(hcs)):
+            hc = hcs[x]
+            self.assertEqual(hc['data']['id'], expected[x][0])
+            self.assertEqual(hc['data']['version']['number'], expected[x][1])
+            self.assertEqual(hc['uuid'], expected[x][2])
+            self.assertEqual(hc['updated_on'], expected[x][3])
+
+        # Check requests
+        expected = [
+                    {
+                     'cql' : ["lastModified>='2016-06-16 00:00' order by lastModified"],
+                     'limit' : ['200']
+                    },
+                    { # Hardcoded in JSON dataset
+                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'start' : ['2'],
+                     'limit' : ['2']
+                    },
+                    {
+                     'expand' : ['body.storage,history,version'],
+                     'status' : ['historical'],
+                     'version' : ['1']
+                    },
+                    {
+                     'expand' : ['body.storage,history,version'],
+                     'status' : ['historical'],
+                     'version' : ['2']
+                    },
+                    {
+                     'expand' : ['body.storage,history,version'],
+                     'status' : ['historical'],
+                     'version' : ['1']
+                    },
+                    {
+                     'expand' : ['body.storage,history,version'],
+                     'status' : ['historical'],
+                     'version' : ['1']
+                    }
+                   ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_empty(self):
+        """Test if nothing is returnerd when there are no contents"""
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2016, 7, 8, 0, 0, 0)
+
+        confluence = Confluence(CONFLUENCE_URL)
+        hcs = [hc for hc in confluence.fetch(from_date=from_date)]
+
+        self.assertEqual(len(hcs), 0)
+
+        # Check requests
+        expected = {
+                    'cql' : ["lastModified>='2016-07-08 00:00' order by lastModified"],
+                    'limit' : ['200']
+                   }
+
+        self.assertEqual(len(http_requests), 1)
+        self.assertDictEqual(http_requests[0].querystring, expected)
+
+    def test_parse_contents_summary(self):
+        """Test if it parses a contents summary stream"""
+
+        raw_contents = read_file('data/confluence_contents.json')
+
+        contents = Confluence.parse_contents_summary(raw_contents)
+        results = [content for content in contents]
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]['id'], '1')
+        self.assertEqual(results[1]['id'], '2')
+
+        # Parse a file without results
+        raw_contents = read_file('data/confluence_contents_empty.json')
+
+        contents = Confluence.parse_contents_summary(raw_contents)
+        results = [content for content in contents]
+
+        self.assertEqual(len(results), 0)
+
+    def test_parse_historical_content(self):
+        """Test if it parses a historical content stream"""
+
+        raw_hc = read_file('data/confluence_content_1_v1.json')
+        hc = Confluence.parse_historical_content(raw_hc)
+
+        self.assertEqual(hc['id'], '1')
+        self.assertEqual(hc['history']['latest'], False)
+        self.assertEqual(hc['version']['number'], 1)
+        self.assertEqual(hc['version']['when'], '2016-06-10T20:05:21.000Z')
 
 
 class TestConfluenceClient(unittest.TestCase):
@@ -105,7 +333,7 @@ class TestConfluenceClient(unittest.TestCase):
         http_requests = setup_http_server()
 
         client = ConfluenceClient(CONFLUENCE_URL)
-        dt = datetime.datetime(2016, 7, 7, 0, 0, 0)
+        dt = datetime.datetime(2016, 7, 8, 0, 0, 0)
 
         pages = client.contents(from_date=dt, offset=10, max_contents=2)
         pages = [p for p in pages]
@@ -113,7 +341,7 @@ class TestConfluenceClient(unittest.TestCase):
         self.assertEqual(len(pages), 1)
 
         expected = {
-                     'cql' : ["lastModified>='2016-07-07 00:00' order by lastModified"],
+                     'cql' : ["lastModified>='2016-07-08 00:00' order by lastModified"],
                      'start' : ['10'],
                      'limit' : ['2']
                    }

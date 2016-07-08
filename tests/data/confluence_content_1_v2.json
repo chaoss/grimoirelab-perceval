@@ -1,0 +1,84 @@
+{
+    "_expandable": {
+        "ancestors": "",
+        "children": "/rest/api/content/1/child",
+        "container": "/rest/api/space/DEV",
+        "descendants": "/rest/api/content/1/descendant",
+        "metadata": "",
+        "operations": "",
+        "space": "/rest/api/space/DEV"
+    },
+    "_links": {
+        "base": "http://example.com",
+        "collection": "/rest/api/content",
+        "context": "",
+        "self": "http://example.com/rest/api/content/1",
+        "tinyui": "/x/zB5o",
+        "webui": "/display/DEV/Steady+State+Project+-+2016-06-17+Goals"
+    },
+    "body": {
+        "_expandable": {
+            "anonymous_export_view": "",
+            "editor": "",
+            "export_view": "",
+            "styled_view": "",
+            "view": ""
+        },
+        "storage": {
+            "_expandable": {
+                "content": "/rest/api/content/1"
+            },
+            "representation": "storage",
+            "value": "<p>CENGN currently follows a 2 week iteration cycle with a demo to wrap up. &nbsp;This page captures the proposed goals for the iteration ahead as well as helps with the planning of what can be demonstrated.</p><h1>Goals for this Iteration</h1><ac:task-list>\n<ac:task>\n<ac:task-id>10</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Get Linux Foundation ID</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>11</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Set up Ubuntu Virtualbox VM for development</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>12</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Create SSH key pair for authentication with OPNFV Gerrit<br /><br /></ac:task-body>\n</ac:task>\n</ac:task-list>\n<p><em>Execute StorPerf unit test suite :</em></p><ac:task-list>\n<ac:task>\n<ac:task-id>13</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Clone StorPerf source code from Git<ac:task-list>\n<ac:task>\n<ac:task-id>15</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Requires : SSH key, SSH Client, config SSH</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>16</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Git-Review</ac:task-body>\n</ac:task>\n</ac:task-list>\n</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>14</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Python virtual environment for StorPerf</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>17</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Libraries installed for Python (make sure they are installed privately)</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>18</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>CLI run of unit tests (ci/verify.sh script)</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>19</ac:task-id>\n<ac:task-status>incomplete</ac:task-status>\n<ac:task-body><s>PyCharm : import project</s></ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>20</ac:task-id>\n<ac:task-status>incomplete</ac:task-status>\n<ac:task-body><s>PyCharm unit tests</s></ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>21</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Download and install LiClipse (<a href=\"http://www.liclipse.com/download.html\">http://www.liclipse.com/download.html</a>).&nbsp; Installation is just a tar zxvf of the download and run the liclipse/LiClipse script</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>22</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>LiClipse: import StorPerf project from git (was already checked out, so should be able to File -&gt; Import, Git: Projects from Git, and use Existing local repository)</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>24</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>LiClipse: make sure unit tests can be executed cleanly</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>23</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Code coverage</ac:task-body>\n</ac:task>\n</ac:task-list>\n<p><ac:structured-macro ac:macro-id=\"59653cce-cadb-477a-aa9d-07d34acea5ea\" ac:name=\"gliffy\" ac:schema-version=\"1\"><ac:parameter ac:name=\"size\">800</ac:parameter><ac:parameter ac:name=\"name\">StorPerf</ac:parameter><ac:parameter ac:name=\"\" /></ac:structured-macro></p><ac:structured-macro ac:macro-id=\"36bbd828-364b-49ab-8800-fbe59565fe8b\" ac:name=\"details\" ac:schema-version=\"1\"><ac:rich-text-body><table><tbody><tr><td>Demo Plan</td><td><ul><li>Give overview documentation (URLs, or simple references) of development environment setup.</li><li>List high level accomplishments (git clone, ability to execute unit tests)</li></ul></td></tr><tr><td colspan=\"1\">Demo Link</td><td colspan=\"1\"><ac:link><ri:page ri:content-title=\"Demo 2016-06-17\" /></ac:link></td></tr></tbody></table></ac:rich-text-body></ac:structured-macro>"
+        }
+    },
+    "extensions": {
+        "position": "none"
+    },
+    "history": {
+        "_expandable": {
+            "lastUpdated": "",
+            "nextVersion": "",
+            "previousVersion": ""
+        },
+        "_links": {
+            "self": "http://example.com/rest/api/content/6823628/history"
+        },
+        "createdBy": {
+            "displayName": "John Doe",
+            "profilePicture": {
+                "height": 48,
+                "isDefault": false,
+                "path": "/s/en_GB/6210/1/_/download/attachments/1/user-avatar?version=1&modificationDate=1452188900000&api=v2",
+                "width": 48
+            },
+            "type": "known",
+            "userKey": "2c9e48d5521d22bb01521d2fd9110002",
+            "username": "jdoe"
+        },
+        "createdDate": "2016-06-10T20:05:21.000Z",
+        "latest": true
+    },
+    "id": "1",
+    "status": "current",
+    "title": "Steady State Project - 2016-06-17 Goals",
+    "type": "page",
+    "version": {
+        "by": {
+            "displayName": "John Smith",
+            "profilePicture": {
+                "height": 48,
+                "isDefault": false,
+                "path": "/s/en_GB/6210/1/_/download/attachments/1/user-avatar?version=1&modificationDate=1464975020000&api=v2",
+                "width": 48
+            },
+            "type": "known",
+            "userKey": "2c9e48d553c3b7db015516fa640b00bd",
+            "username": "jsmith"
+        },
+        "message": "Task marked complete",
+        "minorEdit": false,
+        "number": 2,
+        "when": "2016-06-16T19:58:30.000Z"
+    }
+}
