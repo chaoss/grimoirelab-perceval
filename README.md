@@ -13,6 +13,7 @@ are:
 
     bugzilla         Fetch bugs from a Bugzilla server
     bugillzarest     Fetch bugs from a Bugzilla server (>=5.0) using its REST API
+    confluence       Fetch contents from a Confluence server
     discourse        Fetch posts from Discourse site
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from Git
@@ -77,6 +78,11 @@ process is much faster.
 
 ```
 $ perceval bugzillarest 'https://bugzilla.mozilla.org/' --backend-user user --backend-password pass --from-date '2016-01-01'
+```
+
+### Confluence
+```
+$ perceval confluence 'https://wiki.opnfv.org/' --from-date '2016-01-01'
 ```
 
 ### Discourse

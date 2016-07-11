@@ -22,6 +22,7 @@
 
 from .bugzilla import Bugzilla, BugzillaCommand
 from .bugzillarest import BugzillaREST, BugzillaRESTCommand
+from .confluence import Confluence, ConfluenceCommand
 from .discourse import Discourse, DiscourseCommand
 from .gerrit import Gerrit, GerritCommand
 from .git import Git, GitCommand
@@ -40,6 +41,7 @@ from .telegram import Telegram, TelegramCommand
 PERCEVAL_BACKENDS = {
                      'bugzilla'      : Bugzilla,
                      'bugzillarest'  : BugzillaREST,
+                     'confluence'    : Confluence,
                      'discourse'     : Discourse,
                      'gerrit'        : Gerrit,
                      'git'           : Git,
@@ -57,6 +59,7 @@ PERCEVAL_BACKENDS = {
 PERCEVAL_CMDS = {
                  'bugzilla'      : BugzillaCommand,
                  'bugzillarest'  : BugzillaRESTCommand,
+                 'confluence'    : ConfluenceCommand,
                  'discourse'     : DiscourseCommand,
                  'gerrit'        : GerritCommand,
                  'git'           : GitCommand,
