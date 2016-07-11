@@ -75,6 +75,7 @@ class TestSupybotBackend(unittest.TestCase):
 
         expected = [('benpol', 'comment', '89b0d9fdbc3972aed183876f7f5ee2617542665c', 1350465381.0),
                     ('benpol', 'comment', '81b1fbe651b58d6a4ef6fff026658f87b7c393fc', 1350465389.0),
+                    ('benpol', 'comment', 'bb72ef7fca57e89a7b46826cc0029713fbeba8d7', 1350465395.0),
                     ('MikeMcClurg', 'server', '6f873e788e289acca517a1c04eaa3e8557191f99', 1350465410.0),
                     ('Tv_', 'server', 'fe19251eb5068bb7a14892960574b565b100fb29', 1350465411.0),
                     ('benpol', 'comment', 'ec3206582c534cb725bc5153b5037089441735d3', 1350465447.0),
@@ -122,7 +123,7 @@ class TestSupybotBackend(unittest.TestCase):
         messages = Supybot.parse_supybot_log('data/supybot_valid.log')
         messages = [m for m in messages]
 
-        self.assertEqual(len(messages), 95)
+        self.assertEqual(len(messages), 96)
 
         msg = messages[1]
         self.assertEqual(msg['timestamp'], '2012-10-17T09:16:29+0000')
@@ -177,7 +178,7 @@ class TestSupybotParser(unittest.TestCase):
             parser = SupybotParser(f)
             items = [item for item in parser.parse()]
 
-        self.assertEqual(len(items), 95)
+        self.assertEqual(len(items), 96)
 
         item = items[1]
         self.assertEqual(item['timestamp'], '2012-10-17T09:16:29+0000')
@@ -186,6 +187,12 @@ class TestSupybotParser(unittest.TestCase):
         self.assertEqual(item['body'], "they're related to fragmentation?")
 
         item = items[2]
+        self.assertEqual(item['timestamp'], '2012-10-17T09:16:35+0000')
+        self.assertEqual(item['type'], SupybotParser.TCOMMENT)
+        self.assertEqual(item['nick'], 'benpol')
+        self.assertEqual(item['body'], "benpol is wondering...")
+
+        item = items[3]
         self.assertEqual(item['timestamp'], '2012-10-17T09:16:50+0000')
         self.assertEqual(item['type'], SupybotParser.TSERVER)
         self.assertEqual(item['nick'], 'MikeMcClurg')
@@ -207,7 +214,7 @@ class TestSupybotParser(unittest.TestCase):
             else:
                 nserver += 1
 
-        self.assertEqual(ncomments, 49)
+        self.assertEqual(ncomments, 50)
         self.assertEqual(nserver, 46)
 
     def test_parse_invalid_date(self):
@@ -308,6 +315,29 @@ class TestSupybotParser(unittest.TestCase):
         self.assertIsNone(m)
 
         s = "<mynick hello!"
+        m = pattern.match(s)
+        self.assertIsNone(m)
+
+    def test_comment_action_pattern(self):
+        """Test the validation of comment action lines"""
+
+        pattern = SupybotParser.SUPYBOT_COMMENT_ACTION_REGEX
+
+        # These should have valid nicks and messages
+        s = "* mynick is waving hello"
+        m = pattern.match(s)
+        self.assertEqual(m.group('nick'), 'mynick')
+        self.assertEqual(m.group('body'), "mynick is waving hello")
+
+        # These messages are not valid
+
+        # There are spaces at the beginning of the message
+        s = " * mynick hello!"
+        m = pattern.match(s)
+        self.assertIsNone(m)
+
+        # No message
+        s = "* mynick "
         m = pattern.match(s)
         self.assertIsNone(m)
 

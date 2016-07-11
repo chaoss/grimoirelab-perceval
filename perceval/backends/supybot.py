@@ -53,7 +53,7 @@ class Supybot(Backend):
     The format of the messages must also follow a pattern. This
     patterns can be found in `SupybotParser` class documentation.
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     def __init__(self, uri, dirpath, cache=None, origin=None):
         origin = origin if origin else uri
@@ -262,9 +262,11 @@ class SupybotParser:
     timezone and it is followed by two spaces and by a message.
 
     There are two types of valid messages in a Supybot log: comment
-    messages and server messages. First one follows the next pattern:
+    messages and server messages. First one follows any of these two
+    patterns:
 
         2016-06-27T12:00:00+0000  <nick> body of the message
+        2016-06-27T12:00:00+0000  * nick waves hello
 
     While a valid server message has the next pattern:
 
@@ -279,12 +281,14 @@ class SupybotParser:
                         (?P<msg>.+)$
                         """
     COMMENT_PATTERN = r"^<(?P<nick>(.*?)(!.*)?)>\s(?P<body>.+)$"
+    COMMENT_ACTION_PATTERN = r"^\*\s(?P<body>(?P<nick>(.*?)(!.*)?)\s.+)$"
     SERVER_PATTERN = r"^\*\*\*\s(?P<body>(?P<nick>(.*?)(!.*)?)\s.+)$"
     EMPTY_PATTERN = r"^\s*$"
 
     # Compiled patterns
     SUPYBOT_TIMESTAMP_REGEX = re.compile(TIMESTAMP_PATTERN, re.VERBOSE)
     SUPYBOT_COMMENT_REGEX = re.compile(COMMENT_PATTERN, re.VERBOSE)
+    SUPYBOT_COMMENT_ACTION_REGEX = re.compile(COMMENT_ACTION_PATTERN, re.VERBOSE)
     SUPYBOT_SERVER_REGEX = re.compile(SERVER_PATTERN, re.VERBOSE)
     SUPYBOT_EMPTY_REGEX = re.compile(EMPTY_PATTERN, re.VERBOSE)
 
@@ -338,23 +342,18 @@ class SupybotParser:
     def _parse_supybot_msg(self, line):
         """Parse message section"""
 
-        m = self.SUPYBOT_COMMENT_REGEX.match(line)
+        patterns = [(self.SUPYBOT_COMMENT_REGEX, self.TCOMMENT),
+                    (self.SUPYBOT_COMMENT_ACTION_REGEX, self.TCOMMENT),
+                    (self.SUPYBOT_SERVER_REGEX, self.TSERVER)]
 
-        if not m:
-            m = self.SUPYBOT_SERVER_REGEX.match(line)
-
+        for p in patterns:
+            m = p[0].match(line)
             if not m:
-                msg = "invalid message on line %s" % (str(self.nline))
-                raise ParseError(cause=msg)
-            else:
-                itype = self.TSERVER
-        else:
-            itype = self.TCOMMENT
+                continue
+            return p[1], m.group('nick'), m.group('body').strip()
 
-        nick = m.group('nick')
-        msg = m.group('body').strip()
-
-        return itype, nick, msg
+        msg = "invalid message on line %s" % (str(self.nline))
+        raise ParseError(cause=msg)
 
     def _build_item(self, ts, itype, nick, body):
         return {
