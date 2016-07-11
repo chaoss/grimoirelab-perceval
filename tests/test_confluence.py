@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
 import datetime
 import shutil
 import sys
@@ -34,7 +35,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.confluence import Confluence, ConfluenceClient
+from perceval.backends.confluence import (Confluence,
+                                          ConfluenceClient,
+                                          ConfluenceCommand)
 
 
 CONFLUENCE_URL = 'http://example.com'
@@ -433,6 +436,28 @@ class TestConfluenceBackendCache(unittest.TestCase):
 
         with self.assertRaises(CacheError):
             _ = [hc for hc in confluence.fetch_from_cache()]
+
+
+class TestConfluenceCommand(unittest.TestCase):
+    """Tests for ConfluenceCommand class"""
+
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['http://example.com',
+                '--origin', 'test']
+
+        cmd = ConfluenceCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.url, 'http://example.com')
+        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertIsInstance(cmd.backend, Confluence)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = ConfluenceCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 class TestConfluenceClient(unittest.TestCase):
