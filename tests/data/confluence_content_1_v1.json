@@ -1,0 +1,84 @@
+{
+    "_expandable": {
+        "ancestors": "",
+        "children": "/rest/api/content/1/child",
+        "container": "",
+        "descendants": "/rest/api/content/1/descendant",
+        "metadata": "",
+        "operations": "",
+        "space": "/rest/api/space/DEV"
+    },
+    "_links": {
+        "base": "http://example.com",
+        "collection": "/rest/api/content",
+        "context": "",
+        "self": "http://example.com/rest/api/content/1?status=historical&version=1",
+        "tinyui": "/x/zx5o",
+        "webui": "/pages/viewpage.action?pageId=1"
+    },
+    "body": {
+        "_expandable": {
+            "anonymous_export_view": "",
+            "editor": "",
+            "export_view": "",
+            "styled_view": "",
+            "view": ""
+        },
+        "storage": {
+            "_expandable": {
+                "content": "/rest/api/content/1"
+            },
+            "representation": "storage",
+            "value": "<p>CENGN currently follows a 2 week iteration cycle with a demo to wrap up. &nbsp;This page captures the proposed goals for the iteration ahead as well as helps with the planning of what can be demonstrated.</p><h1>Goals for this Iteration</h1><ac:task-list>\n<ac:task>\n<ac:task-id>10</ac:task-id>\n<ac:task-status>complete</ac:task-status>\n<ac:task-body>Get Linux Foundation ID</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>11</ac:task-id>\n<ac:task-status>incomplete</ac:task-status>\n<ac:task-body>Set up Ubuntu Virtualbox VM for development</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>12</ac:task-id>\n<ac:task-status>incomplete</ac:task-status>\n<ac:task-body>Create SSH key pair for authentication with OPNFV Gerrit</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>13</ac:task-id>\n<ac:task-status>incomplete</ac:task-status>\n<ac:task-body>Clone StorPerf source code</ac:task-body>\n</ac:task>\n<ac:task>\n<ac:task-id>14</ac:task-id>\n<ac:task-status>incomplete</ac:task-status>\n<ac:task-body>...</ac:task-body>\n</ac:task>\n</ac:task-list>\n<p><ac:link><ri:user ri:userkey=\"2c9e48d553c3b7db015516fa640b00bd\" /></ac:link> can you fill in some of the details and notes from today's meeting here and delete this line when you're done?</p>"
+        }
+    },
+    "extensions": {
+        "position": "none"
+    },
+    "history": {
+        "_expandable": {
+            "lastUpdated": "",
+            "nextVersion": "",
+            "previousVersion": ""
+        },
+        "_links": {
+            "self": "http://example.com/rest/api/content/1/history"
+        },
+        "createdBy": {
+            "displayName": "John Doe",
+            "profilePicture": {
+                "height": 48,
+                "isDefault": false,
+                "path": "/s/en_GB/6210/1/_/download/attachments/1/user-avatar?version=1&modificationDate=1452188900000&api=v2",
+                "width": 48
+            },
+            "type": "known",
+            "userKey": "2c9e48d5521d22bb01521d2fd9110002",
+            "username": "jdoe"
+        },
+        "createdDate": "2016-06-10T20:05:21.000Z",
+        "latest": false
+    },
+    "id": "1",
+    "status": "historical",
+    "title": "Steady State Project - 2016-06-17 Goals",
+    "type": "page",
+    "version": {
+        "by": {
+            "displayName": "John Doe",
+            "profilePicture": {
+                "height": 48,
+                "isDefault": false,
+                "path": "/s/en_GB/6210/1/_/download/attachments/1/user-avatar?version=1&modificationDate=1452188900000&api=v2",
+                "width": 48
+            },
+            "type": "known",
+            "userKey": "2c9e48d5521d22bb01521d2fd9110002",
+            "username": "jdoe"
+        },
+        "message": "",
+        "minorEdit": false,
+        "number": 1,
+        "when": "2016-06-10T20:05:21.000Z"
+    }
+}
