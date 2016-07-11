@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import functools
 import json
 import logging
 import os
@@ -37,6 +38,22 @@ logger = logging.getLogger(__name__)
 
 TELEGRAM_URL = 'https://telegram.org'
 DEFAULT_OFFSET = 1
+
+
+def telegram_metadata(func):
+    """Telegram metadata decorator.
+
+    This decorator takes an item and overrides `metadata` decorator
+    to add extra information related to Telegram.
+
+    Currently, it adds the 'offset' keyword.
+    """
+    @functools.wraps(func)
+    def decorator(self, *args, **kwargs):
+        for item in func(self, *args, **kwargs):
+            item['offset'] = item['data']['update_id']
+            yield item
+    return decorator
 
 
 class Telegram(Backend):
@@ -61,7 +78,7 @@ class Telegram(Backend):
         empty string are given, it will be set to the `TELEGRAM_URL`
         plus the name of the bot; i.e 'http://telegram.org/mybot'.
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, bot, bot_token, cache=None, origin=None):
         origin = origin if origin else urljoin(TELEGRAM_URL, bot)
@@ -70,6 +87,7 @@ class Telegram(Backend):
         self.bot = bot
         self.client = TelegramBotClient(bot_token)
 
+    @telegram_metadata
     @metadata
     def fetch(self, offset=DEFAULT_OFFSET, chats=None):
         """Fetch the messages the bot can read from the server.
@@ -133,6 +151,7 @@ class Telegram(Backend):
         logger.info("Fetch process completed: %s messages fetched",
                     nmsgs)
 
+    @telegram_metadata
     @metadata
     def fetch_from_cache(self):
         """Fetch the messages from the cache.

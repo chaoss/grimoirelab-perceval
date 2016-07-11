@@ -114,10 +114,10 @@ class TestTelegramBackend(unittest.TestCase):
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
         messages = [msg for msg in tlg.fetch()]
 
-        expected = [(31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0),
-                    (32, '16a59e93e919174fcd4e70e5b3289201c1016c72', 1467289329.0),
-                    (33, '9d03eeea7e3186ca8e5c150b4cbf18c8283cca9d', 1467289371.0),
-                    (34, '2e61e72b64c9084f3c5a36671c3119641c3ae42f', 1467370372.0)]
+        expected = [(31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0, 319280318),
+                    (32, '16a59e93e919174fcd4e70e5b3289201c1016c72', 1467289329.0, 319280319),
+                    (33, '9d03eeea7e3186ca8e5c150b4cbf18c8283cca9d', 1467289371.0, 319280320),
+                    (34, '2e61e72b64c9084f3c5a36671c3119641c3ae42f', 1467370372.0, 319280321)]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -127,6 +127,7 @@ class TestTelegramBackend(unittest.TestCase):
             self.assertEqual(message['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['offset'], expected[x][3])
 
         # Check requests
         expected = [
@@ -156,6 +157,7 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(msg['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
         self.assertEqual(msg['uuid'], '2e61e72b64c9084f3c5a36671c3119641c3ae42f')
         self.assertEqual(msg['updated_on'], 1467370372.0)
+        self.assertEqual(msg['offset'], 319280321)
 
         # Check requests
         expected = [
@@ -181,9 +183,9 @@ class TestTelegramBackend(unittest.TestCase):
 
         self.assertEqual(len(messages), 3)
 
-        expected = [(31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0),
-                    (33, '9d03eeea7e3186ca8e5c150b4cbf18c8283cca9d', 1467289371.0),
-                    (34, '2e61e72b64c9084f3c5a36671c3119641c3ae42f', 1467370372.0)]
+        expected = [(31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0, 319280318),
+                    (33, '9d03eeea7e3186ca8e5c150b4cbf18c8283cca9d', 1467289371.0, 319280320),
+                    (34, '2e61e72b64c9084f3c5a36671c3119641c3ae42f', 1467370372.0, 319280321)]
 
         for x in range(len(messages)):
             message = messages[x]
@@ -191,6 +193,7 @@ class TestTelegramBackend(unittest.TestCase):
             self.assertEqual(message['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['offset'], expected[x][3])
 
         # Empty list of chats will return no messages
         chats = []
@@ -264,10 +267,10 @@ class TestTelegramBackendCache(unittest.TestCase):
         cached_messages = [msg for msg in tlg.fetch_from_cache()]
         self.assertEqual(len(cached_messages), len(messages))
 
-        expected = [(31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0),
-                    (32, '16a59e93e919174fcd4e70e5b3289201c1016c72', 1467289329.0),
-                    (33, '9d03eeea7e3186ca8e5c150b4cbf18c8283cca9d', 1467289371.0),
-                    (34, '2e61e72b64c9084f3c5a36671c3119641c3ae42f', 1467370372.0)]
+        expected = [(31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0, 319280318),
+                    (32, '16a59e93e919174fcd4e70e5b3289201c1016c72', 1467289329.0, 319280319),
+                    (33, '9d03eeea7e3186ca8e5c150b4cbf18c8283cca9d', 1467289371.0, 319280320),
+                    (34, '2e61e72b64c9084f3c5a36671c3119641c3ae42f', 1467370372.0, 319280321)]
 
         self.assertEqual(len(cached_messages), len(expected))
 
@@ -277,6 +280,7 @@ class TestTelegramBackendCache(unittest.TestCase):
             self.assertEqual(message['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['offset'], expected[x][3])
 
         # No more requests were sent
         self.assertEqual(len(http_requests), 3)
