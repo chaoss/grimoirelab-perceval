@@ -271,8 +271,8 @@ class TestTelegramBackendCache(unittest.TestCase):
 
         self.assertEqual(len(cached_messages), len(expected))
 
-        for x in range(len(messages)):
-            message = messages[x]
+        for x in range(len(cached_messages)):
+            message = cached_messages[x]
             self.assertEqual(message['data']['message']['message_id'], expected[x][0])
             self.assertEqual(message['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
             self.assertEqual(message['uuid'], expected[x][1])
