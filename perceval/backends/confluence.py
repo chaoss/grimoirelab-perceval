@@ -143,7 +143,21 @@ class Confluence(Backend):
         while fetching:
             logger.debug("Fetching and parsing historical content #%s for %s ",
                          str(version), cid)
-            raw_hc = self.client.historical_content(cid, version)
+
+            try:
+                raw_hc = self.client.historical_content(cid, version)
+            except requests.exceptions.HTTPError as e:
+                code = e.response.status_code
+
+                # Common problems found: removed and privated contents
+                if code not in (404, 500):
+                    raise e
+
+                logger.warning("Error retrieving content %s v#%s; skipping",
+                               cid, version)
+                logger.warning("Exception: %s", str(e))
+                break
+
             hc = self.parse_historical_content(raw_hc)
 
             # Return those versions that were created after 'from_date'

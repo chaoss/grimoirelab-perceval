@@ -265,6 +265,60 @@ class TestConfluenceBackend(unittest.TestCase):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_fetch_removed_content(self):
+        """Test if the method works when a content is not found"""
+
+        http_requests = setup_http_server()
+
+        # Set server to return a 404 error
+        httpretty.register_uri(httpretty.GET,
+                               CONFLUENCE_HISTORICAL_CONTENT_1,
+                               status=404, body="Mock 404 error")
+
+        confluence = Confluence(CONFLUENCE_URL)
+        hcs = [hc for hc in confluence.fetch()]
+
+        expected = [('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976', 1467402626.0),
+                    ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd', 1467831550.0)]
+
+        self.assertEqual(len(hcs), len(expected))
+
+        for x in range(len(hcs)):
+            hc = hcs[x]
+            self.assertEqual(hc['data']['id'], expected[x][0])
+            self.assertEqual(hc['data']['version']['number'], expected[x][1])
+            self.assertEqual(hc['uuid'], expected[x][2])
+            self.assertEqual(hc['updated_on'], expected[x][3])
+
+        # Check requests
+        expected = [
+                    {
+                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'limit' : ['200']
+                    },
+                    {
+                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'start' : ['2'],
+                     'limit' : ['2'] # Hardcoded in JSON dataset
+                    },
+                    {
+                     'expand' : ['body.storage,history,version'],
+                     'status' : ['historical'],
+                     'version' : ['1']
+                    },
+                    {
+                     'expand' : ['body.storage,history,version'],
+                     'status' : ['historical'],
+                     'version' : ['1']
+                    }
+                   ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
     def test_fetch_empty(self):
         """Test if nothing is returnerd when there are no contents"""
 
