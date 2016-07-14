@@ -1,0 +1,87 @@
+{
+    "meta": {
+        "limit": 2,
+        "next": "/api/v1/event/?limit=2&offset=2",
+        "offset": 0,
+        "previous": null,
+        "total_count": 5086
+    },
+    "objects": [
+        {
+            "actual_attendance": null,
+            "budget_bug_id": null,
+            "campaign": null,
+            "categories": [],
+            "city": "Makassar",
+            "country": "Indonesia",
+            "description": "National event that will be held at Jakarta, Bandung, Semarang, Yogyakarta, Surabaya, and Makassar. It is all about computer exhibition, talkshow from many communities, booth activities, etc. This event will be held on June 6th - 10th, 2012.\r\n\r\nThe committee of the event will provide a booth and a talkshow session in the event. The booth and talkshow will be held on June 10th, 2012. ",
+            "end": "2012-06-10T11:00:00",
+            "estimated_attendance": 1000,
+            "event_url": "https://reps.mozilla.org/e/festival-komputer-indonesia-2012-makassar/",
+            "external_link": "http://www.festivalkomputer.com/2012/index.php#makassar",
+            "lat": -5.15343584800353,
+            "local_end": "2012-06-10T19:00:00",
+            "local_start": "2012-06-06T10:00:00",
+            "lon": 119.404349327087,
+            "metrics": [],
+            "mozilla_event": false,
+            "multiday": true,
+            "name": "Festival Komputer Indonesia 2012 - Makassar",
+            "owner_name": "Irayani Queencyputri",
+            "owner_profile_url": "https://reps.mozilla.org/u/Rara/",
+            "region": "South Sulawesi",
+            "resource_uri": "/api/v1/event/132/",
+            "sign_ups": 1,
+            "start": "2012-06-06T02:00:00",
+            "swag_bug_id": null,
+            "timezone": "Asia/Makassar",
+            "venue": "Celebes Convention Centre"
+        },
+        {
+            "actual_attendance": null,
+            "budget_bug_id": null,
+            "campaign": null,
+            "categories": [
+                {
+                    "name": "Localization"
+                },
+                {
+                    "name": "People"
+                },
+                {
+                    "name": "Recruiting"
+                },
+                {
+                    "name": "Support"
+                },
+                {
+                    "name": "User Engagement"
+                }
+            ],
+            "city": "Paris",
+            "country": "France",
+            "description": "Meetup of the french-speaking mozilla contributors.",
+            "end": "2012-06-10T16:00:00",
+            "estimated_attendance": 50,
+            "event_url": "https://reps.mozilla.org/e/mozfr-2012/",
+            "external_link": "https://wiki.mozilla.org/MozFR-2012",
+            "lat": 48.86773543,
+            "local_end": "2012-06-10T18:00:00",
+            "local_start": "2012-06-09T09:00:00",
+            "lon": 2.34706163406,
+            "metrics": [],
+            "mozilla_event": true,
+            "multiday": true,
+            "name": "MozFR 2012",
+            "owner_name": "Fabien Cazenave",
+            "owner_profile_url": "https://reps.mozilla.org/u/kaze/",
+            "region": "Ploucardie Septentrionale",
+            "resource_uri": "/api/v1/event/327/",
+            "sign_ups": 3,
+            "start": "2012-06-09T07:00:00",
+            "swag_bug_id": null,
+            "timezone": "Europe/Paris",
+            "venue": "43 rue d\u00e2<80><99>Aboukir"
+        }
+    ]
+}
