@@ -35,13 +35,14 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.cache import Cache
-from perceval.errors import BackendError, CacheError, ParseError
+from perceval.errors import CacheError
 from perceval.backends.jira import Jira, JiraClient, JiraCommand
 from perceval.utils import str_to_datetime
 
 
 JIRA_SERVER_URL = 'http://example.com'
 JIRA_SEARCH_URL = JIRA_SERVER_URL + '/rest/api/2/search'
+JIRA_FIELDS_URL = JIRA_SERVER_URL + '/rest/api/2/field'
 
 
 def read_file(filename, mode='r'):
@@ -57,7 +58,7 @@ class TestJiraBackend(unittest.TestCase):
         """Test whether attributes are initializated"""
 
         jira = Jira(JIRA_SERVER_URL, origin='test',
-                      max_issues=5)
+                    max_issues=5)
 
         self.assertEqual(jira.url, JIRA_SERVER_URL)
         self.assertEqual(jira.origin, 'test')
@@ -83,6 +84,8 @@ class TestJiraBackend(unittest.TestCase):
         bodies_json = [read_file('data/jira/jira_issues_page_1.json'),
                        read_file('data/jira/jira_issues_page_2.json')]
 
+        body = read_file('data/jira/jira_fields.json')
+
         def request_callback(method, uri, headers):
             body = bodies_json.pop(0)
             requests.append(httpretty.last_request())
@@ -93,9 +96,17 @@ class TestJiraBackend(unittest.TestCase):
                                responses=[httpretty.Response(body=request_callback) \
                                           for _ in range(2)])
 
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_FIELDS_URL,
+                               body=body, status=200)
+
         jira = Jira(JIRA_SERVER_URL)
 
         issues = [issue for issue in jira.fetch()]
+
+        body_json = json.loads(body)
+
+        custom_fields = jira.filter_custom_fields(body_json)
 
         expected_req = [{
                             'expand': ['renderedFields,transitions,operations,changelog'],
@@ -122,6 +133,25 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issues[0]['data']['fields']['issuetype']['name'],  'extRequest')
         self.assertEqual(issues[0]['data']['fields']['creator']['name'], 'user2')
         self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
+        self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
+        self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
+        self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
+        self.assertEqual(issues[0]['data']['fields']['customfield_10301']['id'],
+                         custom_fields['customfield_10301']['id'])
+        self.assertEqual(issues[0]['data']['fields']['customfield_10301']['name'],
+                         custom_fields['customfield_10301']['name'])
+        self.assertEqual(issues[0]['data']['fields']['customfield_10400']['id'],
+                         custom_fields['customfield_10400']['id'])
+        self.assertEqual(issues[0]['data']['fields']['customfield_10400']['name'],
+                         custom_fields['customfield_10400']['name'])
+        self.assertEqual(issues[0]['data']['fields']['customfield_10600']['id'],
+                         custom_fields['customfield_10600']['id'])
+        self.assertEqual(issues[0]['data']['fields']['customfield_10600']['name'],
+                         custom_fields['customfield_10600']['name'])
+        self.assertEqual(issues[0]['data']['fields']['customfield_10603']['id'],
+                         custom_fields['customfield_10603']['id'])
+        self.assertEqual(issues[0]['data']['fields']['customfield_10603']['name'],
+                         custom_fields['customfield_10603']['name'])
 
         self.assertEqual(issues[1]['origin'], 'http://example.com')
         self.assertEqual(issues[1]['uuid'], '830747ed8cc9af800fcd6284e9dccfdb11daf15b')
@@ -130,6 +160,22 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issues[1]['data']['fields']['issuetype']['name'],  'extRequest')
         self.assertEqual(issues[1]['data']['fields']['creator']['name'], 'user2')
         self.assertEqual(issues[1]['data']['fields']['assignee']['name'], 'user1')
+        self.assertEqual(issues[1]['data']['fields']['customfield_10301']['id'],
+                         custom_fields['customfield_10301']['id'])
+        self.assertEqual(issues[1]['data']['fields']['customfield_10301']['name'],
+                         custom_fields['customfield_10301']['name'])
+        self.assertEqual(issues[1]['data']['fields']['customfield_10400']['id'],
+                         custom_fields['customfield_10400']['id'])
+        self.assertEqual(issues[1]['data']['fields']['customfield_10400']['name'],
+                         custom_fields['customfield_10400']['name'])
+        self.assertEqual(issues[1]['data']['fields']['customfield_10600']['id'],
+                         custom_fields['customfield_10600']['id'])
+        self.assertEqual(issues[1]['data']['fields']['customfield_10600']['name'],
+                         custom_fields['customfield_10600']['name'])
+        self.assertEqual(issues[1]['data']['fields']['customfield_10603']['id'],
+                         custom_fields['customfield_10603']['id'])
+        self.assertEqual(issues[1]['data']['fields']['customfield_10603']['name'],
+                         custom_fields['customfield_10603']['name'])
 
         self.assertEqual(issues[2]['origin'], 'http://example.com')
         self.assertEqual(issues[2]['uuid'], '2e988d555915991228d81144b018c8321d628265')
@@ -138,6 +184,22 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issues[2]['data']['fields']['issuetype']['name'],  'extRequest')
         self.assertEqual(issues[2]['data']['fields']['creator']['name'], 'user2')
         self.assertEqual(issues[2]['data']['fields']['assignee']['name'], 'user3')
+        self.assertEqual(issues[2]['data']['fields']['customfield_10301']['id'],
+                         custom_fields['customfield_10301']['id'])
+        self.assertEqual(issues[2]['data']['fields']['customfield_10301']['name'],
+                         custom_fields['customfield_10301']['name'])
+        self.assertEqual(issues[2]['data']['fields']['customfield_10400']['id'],
+                         custom_fields['customfield_10400']['id'])
+        self.assertEqual(issues[2]['data']['fields']['customfield_10400']['name'],
+                         custom_fields['customfield_10400']['name'])
+        self.assertEqual(issues[2]['data']['fields']['customfield_10600']['id'],
+                         custom_fields['customfield_10600']['id'])
+        self.assertEqual(issues[2]['data']['fields']['customfield_10600']['name'],
+                         custom_fields['customfield_10600']['name'])
+        self.assertEqual(issues[2]['data']['fields']['customfield_10603']['id'],
+                         custom_fields['customfield_10603']['id'])
+        self.assertEqual(issues[2]['data']['fields']['customfield_10603']['name'],
+                         custom_fields['customfield_10603']['name'])
 
     @httpretty.activate
     def test_fetch_from_date(self):
@@ -147,9 +209,15 @@ class TestJiraBackend(unittest.TestCase):
 
         bodies_json = read_file('data/jira/jira_issues_page_2.json')
 
+        body = read_file('data/jira/jira_fields.json')
+
         httpretty.register_uri(httpretty.GET,
                                JIRA_SEARCH_URL,
                                body=bodies_json, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_FIELDS_URL,
+                               body=body, status=200)
 
         jira = Jira(JIRA_SERVER_URL)
 
@@ -174,13 +242,19 @@ class TestJiraBackend(unittest.TestCase):
 
     @httpretty.activate
     def test_fetch_empty(self):
-        """Test whethet it works when no issues are fetched"""
+        """Test whether it works when no issues are fetched"""
 
         bodies_json = read_file('data/jira/jira_issues_page_empty.json')
+
+        body = read_file('data/jira/jira_fields.json')
 
         httpretty.register_uri(httpretty.GET,
                                JIRA_SEARCH_URL,
                                body=bodies_json, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_FIELDS_URL,
+                               body=body, status=200)
 
         jira = Jira(JIRA_SERVER_URL)
 
@@ -198,6 +272,24 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(request.method, 'GET')
         self.assertRegex(request.path, '/rest/api/2/search')
         self.assertDictEqual(request.querystring, expected_req)
+
+    @httpretty.activate
+    def test_filter_custom_fields(self):
+        """Test that all the fields returned are just custom"""
+        body = read_file('data/jira/jira_fields.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_FIELDS_URL,
+                               body=body, status=200)
+
+        jira = Jira(JIRA_SERVER_URL)
+
+        body_json = json.loads(body)
+
+        custom_fields = jira.filter_custom_fields(body_json)
+
+        for key in custom_fields.keys():
+            self.assertEqual(custom_fields[key]['custom'], True)
 
 
 class TestJiraBackendCache(unittest.TestCase):
@@ -218,6 +310,8 @@ class TestJiraBackendCache(unittest.TestCase):
         bodies_json = [read_file('data/jira/jira_issues_page_1.json'),
                        read_file('data/jira/jira_issues_page_2.json')]
 
+        body = read_file('data/jira/jira_fields.json')
+
         def request_callback(method, uri, headers):
             body = bodies_json.pop(0)
             requests.append(httpretty.last_request())
@@ -227,6 +321,10 @@ class TestJiraBackendCache(unittest.TestCase):
                                JIRA_SEARCH_URL,
                                responses=[httpretty.Response(body=request_callback) \
                                           for _ in range(2)])
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_FIELDS_URL,
+                               body=body, status=200)
+
         # First, we fetch the issues from the server, storing them
         # in a cache
         cache = Cache(self.tmp_path)
@@ -263,9 +361,12 @@ class TestJiraBackendCache(unittest.TestCase):
             self.assertEqual(issues[i]['uuid'], cache_issues[i]['uuid'])
             self.assertEqual(issues[i]['updated_on'], cache_issues[i]['updated_on'])
             self.assertEqual(issues[i]['data']['key'], cache_issues[i]['data']['key'])
-            self.assertEqual(issues[i]['data']['fields']['issuetype']['name'], cache_issues[i]['data']['fields']['issuetype']['name'])
-            self.assertEqual(issues[i]['data']['fields']['creator']['name'], cache_issues[i]['data']['fields']['creator']['name'])
-            self.assertEqual(issues[i]['data']['fields']['assignee']['name'], cache_issues[i]['data']['fields']['assignee']['name'])
+            self.assertEqual(issues[i]['data']['fields']['issuetype']['name'],
+                             cache_issues[i]['data']['fields']['issuetype']['name'])
+            self.assertEqual(issues[i]['data']['fields']['creator']['name'],
+                             cache_issues[i]['data']['fields']['creator']['name'])
+            self.assertEqual(issues[i]['data']['fields']['assignee']['name'],
+                             cache_issues[i]['data']['fields']['assignee']['name'])
 
     def test_fetch_from_cache_empty(self):
         """Test if there are not any issues returned when the cache is empty"""
@@ -306,14 +407,16 @@ class TestJiraBackendParsers(unittest.TestCase):
         self.assertEqual(result[0]["id"], "35851")
         self.assertEqual(result[0]["key"], "HELP-6043")
         self.assertEqual(result[0]["self"], "https://jira.fiware.org/rest/api/2/issue/35851")
-        self.assertEqual(result[0]["expand"], "operations,editmeta,changelog,transitions,renderedFields")
+        self.assertEqual(result[0]["expand"],
+                         "operations,editmeta,changelog,transitions,renderedFields")
         self.assertEqual(len(result[0]["fields"]), 27)
         self.assertDictEqual(result[0]["fields"], parse[0]["fields"])
 
         self.assertEqual(result[1]["id"], "35850")
         self.assertEqual(result[1]["key"], "HELP-6042")
         self.assertEqual(result[1]["self"], "https://jira.fiware.org/rest/api/2/issue/35850")
-        self.assertEqual(result[1]["expand"], "operations,editmeta,changelog,transitions,renderedFields")
+        self.assertEqual(result[1]["expand"],
+                         "operations,editmeta,changelog,transitions,renderedFields")
         self.assertEqual(len(result[1]["fields"]), 27)
         self.assertDictEqual(result[1]["fields"], parse[1]["fields"])
 
@@ -366,17 +469,17 @@ class TestJiraClient(unittest.TestCase):
 
         pages = [page for page in client.get_issues(from_date)]
 
-        expected_req= [{
-                        'expand': ['renderedFields,transitions,operations,changelog'],
-                        'jql': [' project = perceval AND  updated > 1420070400000'],
-                        'maxResults': ['2'],
-                        'startAt': ['0']
-                       },
-                       {
-                        'expand': ['renderedFields,transitions,operations,changelog'],
-                        'jql': [' project = perceval AND  updated > 1420070400000'],
-                        'maxResults': ['2'],
-                        'startAt': ['2']
+        expected_req = [{
+                            'expand': ['renderedFields,transitions,operations,changelog'],
+                            'jql': [' project = perceval AND  updated > 1420070400000'],
+                            'maxResults': ['2'],
+                            'startAt': ['0']
+                        },
+                        {
+                            'expand': ['renderedFields,transitions,operations,changelog'],
+                            'jql': [' project = perceval AND  updated > 1420070400000'],
+                            'maxResults': ['2'],
+                            'startAt': ['2']
                        }]
 
         self.assertEqual(len(pages), 2)
@@ -391,6 +494,27 @@ class TestJiraClient(unittest.TestCase):
 
         self.assertEqual(pages[0], bodies_json[0])
         self.assertEqual(pages[1], bodies_json[1])
+
+    @httpretty.activate
+    def test_get_fields(self):
+        """Test get fields API call"""
+
+        body = read_file('data/jira/jira_fields.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_FIELDS_URL,
+                               body=body, status=200)
+
+        client = JiraClient(url='http://example.com', project=None,
+                            user='user', password='password',
+                            verify=False, cert=None, max_issues=None)
+
+        page = client.get_fields()
+
+        self.assertEqual(httpretty.last_request().method, 'GET')
+        self.assertRegex(httpretty.last_request().path, '/rest/api/2/field')
+
+        self.assertEqual(page, body)
 
     @httpretty.activate
     def test_get_issues_empty(self):
