@@ -348,7 +348,7 @@ class GerritClient():
         if not filter_:
             cmd += " '(status:open OR status:closed)"
             if self.blacklist_reviews:
-                blacklist_reviews = " AND NOT (%s)" % (','.join(self.blacklist_reviews))
+                blacklist_reviews = " AND NOT (%s)" % (' OR '.join(self.blacklist_reviews))
                 cmd += blacklist_reviews
             cmd += "'"
 
