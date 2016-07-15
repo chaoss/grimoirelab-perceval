@@ -98,12 +98,16 @@ class Jira(Backend):
 
         whole_pages = self.client.get_issues(from_date)
 
+        fields = json.loads(self.client.get_fields())
+        custom_fields = self.filter_custom_fields(fields)
+
         for whole_page in whole_pages:
             self._push_cache_queue(whole_page)
             self._flush_cache_queue()
             issues = self.parse_issues(whole_page)
             for issue in issues:
-                yield issue
+                new_issue = self.__map_custom_fields(custom_fields, issue)
+                yield new_issue
 
     @metadata
     def fetch_from_cache(self):
@@ -162,6 +166,34 @@ class Jira(Backend):
         issues = raw_issues['issues']
         for issue in issues:
             yield issue
+
+    @staticmethod
+    def __map_custom_fields(custom_fields, issue):
+        for key in custom_fields.keys():
+            for element in issue['fields']:
+                if key == element:
+                    value = issue['fields'][key]
+                    issue['fields'][key] = {}
+                    issue['fields'][key]['value'] = value
+                    issue['fields'][key]['name'] = custom_fields[key]['name']
+                    issue['fields'][key]['id'] = custom_fields[key]['id']
+
+        return issue
+
+    @staticmethod
+    def filter_custom_fields(fields):
+        """Filter custom fields from a given set of fields.
+
+        :param fields: set of fields
+
+        :returns: an object with the filtered custom fields
+        """
+        _custom_fields = {}
+
+        for field in fields:
+            if field['custom'] is True:
+                _custom_fields[field['id']] = field
+        return _custom_fields
 
 
 class JiraClient:
@@ -231,11 +263,7 @@ class JiraClient:
         else:
             logger.info("No issues were found.")
 
-    def get_issues(self, from_date):
-        """Retrieve all the issues from a given date.
-
-        :param from_date: obtain issues updated since this date
-        """
+    def __init_session(self):
         s = requests.Session()
 
         if (self.user and self.password) is not None:
@@ -247,6 +275,15 @@ class JiraClient:
         if self.verify is not True:
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
             s.verify = False
+
+        return s
+
+    def get_issues(self, from_date):
+        """Retrieve all the issues from a given date.
+
+        :param from_date: obtain issues updated since this date
+        """
+        s = self.__init_session()
 
         start_at = 0
         req = s.get(self.__build_base_url(),
@@ -273,6 +310,14 @@ class JiraClient:
                 start_at += nissues
                 issues = req.text
                 self.__log_status(start_at, tissues)
+
+    def get_fields(self):
+        """Retrieve all the fields available.  """
+        s = self.__init_session()
+
+        req = s.get(self.__build_base_url('field'))
+        req.raise_for_status()
+        return req.text
 
 
 class JiraCommand(BackendCommand):
