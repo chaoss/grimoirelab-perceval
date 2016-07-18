@@ -304,35 +304,58 @@ class TestStackExchangeClient(unittest.TestCase):
         page_1 = read_file('data/stackexchange_question_page')
         page_2 = read_file('data/stackexchange_question_page_2')
 
+        http_requests = []
+
+        def request_callback(method, uri, headers):
+            params = urllib.parse.parse_qs(urllib.parse.urlparse(uri).query)
+            page = params.get('page')[0]
+            body = page_1 if page == '1' else page_2
+
+            http_requests.append(httpretty.last_request())
+
+            return (200, headers, body)
+
         httpretty.register_uri(httpretty.GET,
                                STACKEXCHANGE_QUESTIONS_URL,
-                               body=page_2,
-                               status=200,
-                               forcing_headers={
-                                    'Link': '<'+STACKEXCHANGE_QUESTIONS_URL+'?&page=2>; rel="next", <'+STACKEXCHANGE_QUESTIONS_URL+'?&page=2>; rel="last"'
-                               })
-        httpretty.register_uri(httpretty.GET,
-                               STACKEXCHANGE_QUESTIONS_URL+'?&page=2',
-                               body=page_1,
-                               status=200)
-        payload = {
-            'page': ['2'],
-            'pagesize': ['1'],
-            'order': ['desc'],
-            'sort': ['activity'],
-            'tagged': ['python'],
-            'site': ['stackoverflow'],
-            'key': ['aaa'],
-            'filter': [QUESTIONS_FILTER]
-        }
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
 
-        client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
+        expected = [
+                    {
+                     'page': ['1'],
+                     'pagesize': ['1'],
+                     'order': ['desc'],
+                     'sort': ['activity'],
+                     'tagged': ['python'],
+                     'site': ['stackoverflow'],
+                     'key': ['aaa'],
+                     'filter': [QUESTIONS_FILTER]
+                    },
+                    {
+                     'page': ['2'],
+                     'pagesize': ['1'],
+                     'order': ['desc'],
+                     'sort': ['activity'],
+                     'tagged': ['python'],
+                     'site': ['stackoverflow'],
+                     'key': ['aaa'],
+                     'filter': [QUESTIONS_FILTER]
+                    }]
+
+        client = StackExchangeClient(site="stackoverflow",
+                                     tagged="python",
+                                     token="aaa", max_questions=1)
         raw_questions = [questions for questions in client.get_questions(from_date=None)]
 
         self.assertEqual(len(raw_questions), 2)
         self.assertEqual(raw_questions[0], page_1)
         self.assertEqual(raw_questions[1], page_2)
-        self.assertDictEqual(httpretty.last_request().querystring, payload)
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
     def test_backoff_waiting(self):
