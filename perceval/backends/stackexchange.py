@@ -24,6 +24,7 @@
 import json
 import logging
 import os.path
+import time
 
 import requests
 
@@ -238,6 +239,13 @@ class StackExchangeClient:
 
             if data['has_more']:
                 page += 1
+
+                backoff = data.get('backoff', None)
+                if backoff:
+                    logger.debug("Expensive query. Wait %s secs to send a new request",
+                                 backoff)
+                    time.sleep(float(backoff))
+
                 req = requests.get(self.__build_base_url(),
                                    params=self.__build_payload(page, from_date))
                 req.raise_for_status()

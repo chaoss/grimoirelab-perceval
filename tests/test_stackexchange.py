@@ -29,6 +29,7 @@ import sys
 import tempfile
 import time
 import unittest
+import urllib
 
 import httpretty
 import requests
@@ -128,6 +129,7 @@ class TestStackExchangeBackend(unittest.TestCase):
         data = json.loads(question)
         self.assertDictEqual(questions[0]['data'], data['items'][0])
 
+
 class TestStackExchangeBackendCache(unittest.TestCase):
     """StackExchange backend tests using a cache"""
 
@@ -181,6 +183,7 @@ class TestStackExchangeBackendCache(unittest.TestCase):
         with self.assertRaises(CacheError):
             _ = [cache_question for cache_question in stack.fetch_from_cache()]
 
+
 class TestStackExchangeBackendParsers(unittest.TestCase):
     """StackExchange backend parsers tests"""
 
@@ -197,6 +200,7 @@ class TestStackExchangeBackendParsers(unittest.TestCase):
 
         self.assertDictEqual(result[0], parse[0])
         self.assertDictEqual(result[1], parse[1])
+
 
 class TestStackExchangeClient(unittest.TestCase):
     """StackExchange API client tests"""
@@ -329,6 +333,40 @@ class TestStackExchangeClient(unittest.TestCase):
         self.assertEqual(raw_questions[0], page_1)
         self.assertEqual(raw_questions[1], page_2)
         self.assertDictEqual(httpretty.last_request().querystring, payload)
+
+    @httpretty.activate
+    def test_backoff_waiting(self):
+        """Test if the clients waits some seconds when backoff field is received"""
+
+        backoff_page = read_file('data/stackexchange_question_backoff_page')
+        question_page = read_file('data/stackexchange_question_page_2')
+
+        def request_callback(method, uri, headers):
+            params = urllib.parse.parse_qs(urllib.parse.urlparse(uri).query)
+            page = params.get('page')[0]
+            body = backoff_page if page == '1' else question_page
+            return (200, headers, body)
+
+        httpretty.register_uri(httpretty.GET,
+                               STACKEXCHANGE_QUESTIONS_URL,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+
+        client = StackExchangeClient(site="stackoverflow",
+                                     tagged="python",
+                                     token="aaa", max_questions=1)
+
+        before = time.time()
+        raw_pages = [question for question in client.get_questions(from_date=None)]
+        after = time.time()
+
+        self.assertEqual(len(raw_pages), 2)
+
+        # backoff value harcoded in the JSON
+        diff = after - before
+        self.assertGreaterEqual(diff, 0.2)
+
 
 class TestStackExchangeCommand(unittest.TestCase):
 
