@@ -32,14 +32,15 @@ import unittest
 import urllib
 
 import httpretty
-import requests
 
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.cache import Cache
-from perceval.errors import BackendError, CacheError, ParseError
-from perceval.backends.stackexchange import StackExchange, StackExchangeCommand, StackExchangeClient
+from perceval.errors import CacheError
+from perceval.backends.stackexchange import (StackExchange,
+                                             StackExchangeCommand,
+                                             StackExchangeClient)
 
 
 VERSION_API = '/2.2'
@@ -298,7 +299,7 @@ class TestStackExchangeClient(unittest.TestCase):
         self.assertDictEqual(httpretty.last_request().querystring, payload)
 
     @httpretty.activate
-    def test_get_questions_more(self):
+    def test_get_questions_pagination(self):
         """Test question API call"""
 
         page_1 = read_file('data/stackexchange_question_page')
@@ -414,6 +415,7 @@ class TestStackExchangeCommand(unittest.TestCase):
 
         parser = StackExchangeCommand.create_argument_parser()
         self.assertIsInstance(parser, argparse.ArgumentParser)
+
 
 if __name__ == "__main__":
     unittest.main(warnings='ignore')
