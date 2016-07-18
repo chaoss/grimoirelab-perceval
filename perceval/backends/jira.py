@@ -264,30 +264,30 @@ class JiraClient:
             logger.info("No issues were found.")
 
     def __init_session(self):
-        s = requests.Session()
+        session = requests.Session()
 
         if (self.user and self.password) is not None:
-            s.auth = (self.user, self.password)
+            session.auth = (self.user, self.password)
 
         if self.cert:
-            s.cert = self.cert
+            session.cert = self.cert
 
         if self.verify is not True:
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-            s.verify = False
+            session.verify = False
 
-        return s
+        return session
 
     def get_issues(self, from_date):
         """Retrieve all the issues from a given date.
 
         :param from_date: obtain issues updated since this date
         """
-        s = self.__init_session()
+        session = self.__init_session()
 
         start_at = 0
-        req = s.get(self.__build_base_url(),
-                    params=self.__build_payload(start_at, from_date))
+        req = session.get(self.__build_base_url(),
+                          params=self.__build_payload(start_at, from_date))
         req.raise_for_status()
         issues = req.text
 
@@ -303,8 +303,8 @@ class JiraClient:
             issues = None
 
             if data['startAt'] + nissues < tissues:
-                req = s.get(self.__build_base_url(),
-                            params=self.__build_payload(start_at, from_date))
+                req = session.get(self.__build_base_url(),
+                                  params=self.__build_payload(start_at, from_date))
                 req.raise_for_status()
                 data = req.json()
                 start_at += nissues
@@ -313,9 +313,9 @@ class JiraClient:
 
     def get_fields(self):
         """Retrieve all the fields available.  """
-        s = self.__init_session()
+        session = self.__init_session()
 
-        req = s.get(self.__build_base_url('field'))
+        req = session.get(self.__build_base_url('field'))
         req.raise_for_status()
         return req.text
 
