@@ -282,11 +282,9 @@ class TestJiraBackend(unittest.TestCase):
                                JIRA_FIELDS_URL,
                                body=body, status=200)
 
-        jira = Jira(JIRA_SERVER_URL)
-
         body_json = json.loads(body)
 
-        custom_fields = jira.filter_custom_fields(body_json)
+        custom_fields = Jira.filter_custom_fields(body_json)
 
         for key in custom_fields.keys():
             self.assertEqual(custom_fields[key]['custom'], True)
