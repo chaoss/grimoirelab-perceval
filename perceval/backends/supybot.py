@@ -284,6 +284,7 @@ class SupybotParser:
     COMMENT_ACTION_PATTERN = r"^\*\s(?P<body>(?P<nick>(.*?)(!.*)?)\s.+)$"
     SERVER_PATTERN = r"^\*\*\*\s(?P<body>(?P<nick>(.*?)(!.*)?)\s.+)$"
     EMPTY_PATTERN = r"^\s*$"
+    EMPTY_COMMENT_PATTERN = r"^<(.*?)(!.*)?>\s*$"
 
     # Compiled patterns
     SUPYBOT_TIMESTAMP_REGEX = re.compile(TIMESTAMP_PATTERN, re.VERBOSE)
@@ -291,6 +292,7 @@ class SupybotParser:
     SUPYBOT_COMMENT_ACTION_REGEX = re.compile(COMMENT_ACTION_PATTERN, re.VERBOSE)
     SUPYBOT_SERVER_REGEX = re.compile(SERVER_PATTERN, re.VERBOSE)
     SUPYBOT_EMPTY_REGEX = re.compile(EMPTY_PATTERN, re.VERBOSE)
+    SUPYBOT_EMPTY_COMMENT_REGEX = re.compile(EMPTY_COMMENT_PATTERN, re.VERBOSE)
 
     # Item types
     TCOMMENT = 'comment'
@@ -319,8 +321,11 @@ class SupybotParser:
                 continue
 
             ts, msg = self._parse_supybot_timestamp(line)
-            itype, nick, body = self._parse_supybot_msg(msg)
 
+            if self.SUPYBOT_EMPTY_COMMENT_REGEX.match(msg):
+                continue
+
+            itype, nick, body = self._parse_supybot_msg(msg)
             item = self._build_item(ts, itype, nick, body)
 
             yield item

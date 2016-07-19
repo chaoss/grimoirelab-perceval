@@ -120,6 +120,7 @@ class TestSupybotBackend(unittest.TestCase):
     def test_parse_supybot_log(self):
         """Test whether it parses a log"""
 
+        # Empty lines and empty comment lines are ignored
         messages = Supybot.parse_supybot_log('data/supybot_valid.log')
         messages = [m for m in messages]
 
@@ -395,6 +396,25 @@ class TestSupybotParser(unittest.TestCase):
         s = " \t    \t \r"
         m = pattern.match(s)
         self.assertIsNotNone(m)
+
+    def test_empty_comment_pattern(self):
+        """Test the validation of empty comment lines"""
+
+        pattern = SupybotParser.SUPYBOT_EMPTY_COMMENT_REGEX
+
+        # These should be valid empty lines
+        s = "<nick>"
+        m = pattern.match(s)
+        self.assertIsNotNone(m)
+
+        s = "<nick>      \t \r "
+        m = pattern.match(s)
+        self.assertIsNotNone(m)
+
+        # This is not a valid empty line
+        s = "<nick>           \tmessage"
+        m = pattern.match(s)
+        self.assertIsNone(m)
 
 
 if __name__ == "__main__":

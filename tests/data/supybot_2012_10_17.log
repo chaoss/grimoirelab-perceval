@@ -4,4 +4,5 @@
 2012-10-17T09:16:50+0000  *** MikeMcClurg has quit IRC
 2012-10-17T09:16:51+0000  *** Tv_ has joined #ceph
 2012-10-17T09:17:27+0000  <benpol> if so, have there been any improvements in performance over time with the auto-defrag option enabled for the btrfs mount points?
+2012-10-17T09:17:28+0000  <benpol>
 2012-10-17T09:18:48+0000  <Tv_> joao: vger is a *huge* mailing list host, and it's quite unlikely to have issues, apart from a bad attitude toward non-old school users

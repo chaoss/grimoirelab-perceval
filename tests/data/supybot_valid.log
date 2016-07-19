@@ -1,5 +1,6 @@
 2012-10-17T09:16:21+0000  <benpol> So the performance degradations people are seeing over time with btrfs, people feel that theyr
 2012-10-17T09:16:29+0000  <benpol> they're related to fragmentation?
+2012-10-17T09:16:29+0000  <benpol>
 2012-10-17T09:16:35+0000  * benpol is wondering...
 2012-10-17T09:16:50+0000  *** MikeMcClurg has quit IRC
 2012-10-17T09:16:51+0000  *** Tv_ has joined #ceph
