@@ -37,7 +37,7 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.cache import Cache
-from perceval.errors import BackendError, CacheError
+from perceval.errors import CacheError
 from perceval.backends.github import GitHub, GitHubCommand, GitHubClient, RateLimitError
 
 
@@ -91,9 +91,13 @@ class TestGitHubBackend(unittest.TestCase):
         github = GitHub("zhquan_example", "repo", "aaa")
         issues = [issues for issues in github.fetch()]
 
+        self.assertEqual(len(issues), 1)
+
         expected = json.loads(read_file('data/github_request_expected'))
-        del issues[0]['timestamp']
-        self.assertDictEqual(issues[0], expected)
+        self.assertEqual(issues[0]['origin'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(issues[0]['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
+        self.assertEqual(issues[0]['updated_on'], 1454328801.0)
+        self.assertDictEqual(issues[0]['data'], expected)
 
     @httpretty.activate
     def test_fetch_more_issues(self):
@@ -141,11 +145,16 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(len(issues), 2)
 
         expected_1 = json.loads(read_file('data/github_issue_expected_1'))
+        self.assertEqual(issues[0]['origin'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(issues[0]['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
+        self.assertEqual(issues[0]['updated_on'], 1458035782.0)
+        self.assertDictEqual(issues[0]['data'], expected_1)
+
         expected_2 = json.loads(read_file('data/github_issue_expected_2'))
-        del issues[0]['timestamp']
-        del issues[1]['timestamp']
-        self.assertDictEqual(issues[0], expected_1)
-        self.assertDictEqual(issues[1], expected_2)
+        self.assertEqual(issues[1]['origin'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(issues[1]['uuid'], '4236619ac2073491640f1698b5c4e169895aaf69')
+        self.assertEqual(issues[1]['updated_on'], 1458054569.0)
+        self.assertDictEqual(issues[1]['data'], expected_2)
 
     @httpretty.activate
     def test_fetch_from_date(self):
@@ -181,10 +190,13 @@ class TestGitHubBackend(unittest.TestCase):
         github = GitHub("zhquan_example", "repo", "aaa")
 
         issues = [issues for issues in github.fetch(from_date=from_date)]
+        self.assertEqual(len(issues), 1)
 
         expected = json.loads(read_file('data/github_issue_expected_2'))
-        del issues[0]['timestamp']
-        self.assertDictEqual(issues[0], expected)
+        self.assertEqual(issues[0]['origin'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(issues[0]['uuid'], '4236619ac2073491640f1698b5c4e169895aaf69')
+        self.assertEqual(issues[0]['updated_on'], 1458054569.0)
+        self.assertDictEqual(issues[0]['data'], expected)
 
     @httpretty.activate
     def test_feth_empty(self):
@@ -515,7 +527,7 @@ class TestGitHubClient(unittest.TestCase):
 
         wait = 1
         reset = int(time.time() + wait)
-        
+
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
                                body=issue_1,

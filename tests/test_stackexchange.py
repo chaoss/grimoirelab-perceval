@@ -69,18 +69,13 @@ class TestStackExchangeBackend(unittest.TestCase):
                                STACKEXCHANGE_QUESTIONS_URL,
                                body=question, status=200)
 
-        expected = {
-            "origin": "stackoverflow",
-            "perceval_version": "0.1.0",
-            "backend_name": "StackExchange",
-            "backend_version": "0.2.0"
-        }
-
-        stack = StackExchange(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
+        stack = StackExchange(site="stackoverflow", tagged="python",
+                              token="aaa", max_questions=1)
         questions = [question for question in stack.fetch(from_date=None)]
 
-        for key in expected:
-            self.assertEqual(questions[0][key], expected[key])
+        self.assertEqual(questions[0]['origin'], 'stackoverflow')
+        self.assertEqual(questions[0]['uuid'], '43953bd75d1d4dbedb457059acb4b79fcf6712a8')
+        self.assertEqual(questions[0]['updated_on'], 1459975066.0)
 
         data = json.loads(question)
         self.assertDictEqual(questions[0]['data'], data['items'][0])
@@ -110,22 +105,17 @@ class TestStackExchangeBackend(unittest.TestCase):
                                STACKEXCHANGE_QUESTIONS_URL,
                                body=question, status=200)
 
-        expected = {
-            "origin": "stackoverflow",
-            "perceval_version": "0.1.0",
-            "backend_name": "StackExchange",
-            "backend_version": "0.2.0"
-        }
-
-        #unixtime = 1459900800
         from_date = datetime.datetime(2016, 4, 5)
-        stack = StackExchange(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
+        stack = StackExchange(site="stackoverflow", tagged="python",
+                              token="aaa", max_questions=1)
         questions = [question for question in stack.fetch(from_date=from_date)]
+
+        self.assertEqual(questions[0]['origin'], 'stackoverflow')
+        self.assertEqual(questions[0]['uuid'], '43953bd75d1d4dbedb457059acb4b79fcf6712a8')
+        self.assertEqual(questions[0]['updated_on'], 1459975066.0)
 
         #The date on the questions must be greater than from_date
         self.assertGreater(questions[0]['updated_on'], 1459900800)
-        for key in expected:
-            self.assertEqual(questions[0][key], expected[key])
 
         data = json.loads(question)
         self.assertDictEqual(questions[0]['data'], data['items'][0])
