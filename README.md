@@ -21,6 +21,7 @@ are:
     gmane            Fetch messages from Gmane
     jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
+    kitsune          Fetch questions and answers from Kitsune site
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
     pipermail        Fetch messages from a Pipermail archiver
@@ -141,6 +142,11 @@ $ perceval jenkins 'http://jenkins.cyanogenmod.com/'
 ### JIRA
 ```
 $ perceval jira 'https://tickets.puppetlabs.com' --project PUP --from-date '2016-01-01'
+```
+
+### Kitsune
+```
+$ perceval kitsune --offset 373990
 ```
 
 ### MBox
