@@ -36,7 +36,11 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.jira import Jira, JiraClient, JiraCommand
+from perceval.backends.jira import (Jira,
+                                    JiraClient,
+                                    JiraCommand,
+                                    filter_custom_fields,
+                                    map_custom_field)
 from perceval.utils import str_to_datetime
 
 
@@ -49,6 +53,80 @@ def read_file(filename, mode='r'):
     with open(filename, mode) as f:
         content = f.read()
     return content
+
+
+class TestJiraCustomFields(unittest.TestCase):
+
+    def test_map_custom_field(self):
+
+        """Test that all the fields are correctly mapped"""
+
+        page = read_file('data/jira/jira_issues_page_1.json')
+
+        page_json = json.loads(page)
+
+        issues = page_json['issues']
+
+        fields = read_file('data/jira/jira_fields.json')
+
+        fields_json = json.loads(fields)
+
+        custom_fields = filter_custom_fields(fields_json)
+
+        for issue in issues:
+            mapping = map_custom_field(custom_fields, issue['fields'])
+            for k, v in mapping.items():
+                issue['fields'][k] = v
+
+        self.assertEqual(issues[0]['fields']['customfield_10301']['id'],
+                         custom_fields['customfield_10301']['id'])
+        self.assertEqual(issues[0]['fields']['customfield_10301']['name'],
+                         custom_fields['customfield_10301']['name'])
+        self.assertEqual(issues[0]['fields']['customfield_10400']['id'],
+                         custom_fields['customfield_10400']['id'])
+        self.assertEqual(issues[0]['fields']['customfield_10400']['name'],
+                         custom_fields['customfield_10400']['name'])
+        self.assertEqual(issues[0]['fields']['customfield_10600']['id'],
+                         custom_fields['customfield_10600']['id'])
+        self.assertEqual(issues[0]['fields']['customfield_10600']['name'],
+                         custom_fields['customfield_10600']['name'])
+        self.assertEqual(issues[0]['fields']['customfield_10603']['id'],
+                         custom_fields['customfield_10603']['id'])
+        self.assertEqual(issues[0]['fields']['customfield_10603']['name'],
+                         custom_fields['customfield_10603']['name'])
+
+        self.assertEqual(issues[1]['fields']['customfield_10301']['id'],
+                         custom_fields['customfield_10301']['id'])
+        self.assertEqual(issues[1]['fields']['customfield_10301']['name'],
+                         custom_fields['customfield_10301']['name'])
+        self.assertEqual(issues[1]['fields']['customfield_10400']['id'],
+                         custom_fields['customfield_10400']['id'])
+        self.assertEqual(issues[1]['fields']['customfield_10400']['name'],
+                         custom_fields['customfield_10400']['name'])
+        self.assertEqual(issues[1]['fields']['customfield_10600']['id'],
+                         custom_fields['customfield_10600']['id'])
+        self.assertEqual(issues[1]['fields']['customfield_10600']['name'],
+                         custom_fields['customfield_10600']['name'])
+        self.assertEqual(issues[1]['fields']['customfield_10603']['id'],
+                         custom_fields['customfield_10603']['id'])
+        self.assertEqual(issues[1]['fields']['customfield_10603']['name'],
+                         custom_fields['customfield_10603']['name'])
+
+    @httpretty.activate
+    def test_filter_custom_fields(self):
+        """Test that all the fields returned are just custom"""
+        body = read_file('data/jira/jira_fields.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_FIELDS_URL,
+                               body=body, status=200)
+
+        body_json = json.loads(body)
+
+        custom_fields = filter_custom_fields(body_json)
+
+        for key in custom_fields.keys():
+            self.assertEqual(custom_fields[key]['custom'], True)
 
 
 class TestJiraBackend(unittest.TestCase):
@@ -106,7 +184,7 @@ class TestJiraBackend(unittest.TestCase):
 
         body_json = json.loads(body)
 
-        custom_fields = jira.filter_custom_fields(body_json)
+        custom_fields = filter_custom_fields(body_json)
 
         expected_req = [{
                             'expand': ['renderedFields,transitions,operations,changelog'],
@@ -272,22 +350,6 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(request.method, 'GET')
         self.assertRegex(request.path, '/rest/api/2/search')
         self.assertDictEqual(request.querystring, expected_req)
-
-    @httpretty.activate
-    def test_filter_custom_fields(self):
-        """Test that all the fields returned are just custom"""
-        body = read_file('data/jira/jira_fields.json')
-
-        httpretty.register_uri(httpretty.GET,
-                               JIRA_FIELDS_URL,
-                               body=body, status=200)
-
-        body_json = json.loads(body)
-
-        custom_fields = Jira.filter_custom_fields(body_json)
-
-        for key in custom_fields.keys():
-            self.assertEqual(custom_fields[key]['custom'], True)
 
 
 class TestJiraBackendCache(unittest.TestCase):

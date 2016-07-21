@@ -41,6 +41,36 @@ MAX_ISSUES = 100  # Maximum number of issues per query
 logger = logging.getLogger(__name__)
 
 
+def map_custom_field(custom_fields, fields):
+    """Add extra information for custom fields.
+
+    :param custom_fields: set of custom fields with the extra information
+    :param fields: fields of the issue where to add the extra information
+
+    :returns: an set of items with the extra information mapped
+    """
+    build_cf = lambda cf, v: {'id': cf['id'], 'name': cf['name'], 'value': v}
+
+    return {k: build_cf(custom_fields[k], v) for k, v in fields.items() if k in custom_fields}
+
+def filter_custom_fields(fields):
+    """Filter custom fields from a given set of fields.
+
+    :param fields: set of fields
+
+    :returns: an object with the filtered custom fields
+    """
+
+    custom_fields = {}
+
+    sorted_fields = [field for field in fields if field['custom'] is True]
+
+    for custom_field in sorted_fields:
+        custom_fields[custom_field['id']] = custom_field
+
+    return custom_fields
+
+
 class Jira(Backend):
     """JIRA backend for Perceval.
 
@@ -99,15 +129,17 @@ class Jira(Backend):
         whole_pages = self.client.get_issues(from_date)
 
         fields = json.loads(self.client.get_fields())
-        custom_fields = self.filter_custom_fields(fields)
+        custom_fields = filter_custom_fields(fields)
 
         for whole_page in whole_pages:
             self._push_cache_queue(whole_page)
             self._flush_cache_queue()
             issues = self.parse_issues(whole_page)
             for issue in issues:
-                new_issue = self.__map_custom_fields(custom_fields, issue)
-                yield new_issue
+                mapping = map_custom_field(custom_fields, issue['fields'])
+                for k, v in mapping.items():
+                    issue['fields'][k] = v
+                yield issue
 
     @metadata
     def fetch_from_cache(self):
@@ -166,34 +198,6 @@ class Jira(Backend):
         issues = raw_issues['issues']
         for issue in issues:
             yield issue
-
-    @staticmethod
-    def __map_custom_fields(custom_fields, issue):
-        for key in custom_fields.keys():
-            for element in issue['fields']:
-                if key == element:
-                    value = issue['fields'][key]
-                    issue['fields'][key] = {}
-                    issue['fields'][key]['value'] = value
-                    issue['fields'][key]['name'] = custom_fields[key]['name']
-                    issue['fields'][key]['id'] = custom_fields[key]['id']
-
-        return issue
-
-    @staticmethod
-    def filter_custom_fields(fields):
-        """Filter custom fields from a given set of fields.
-
-        :param fields: set of fields
-
-        :returns: an object with the filtered custom fields
-        """
-        _custom_fields = {}
-
-        for field in fields:
-            if field['custom'] is True:
-                _custom_fields[field['id']] = field
-        return _custom_fields
 
 
 class JiraClient:
