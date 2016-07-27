@@ -30,7 +30,8 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.phabricator import (ConduitClient,
+from perceval.backends.phabricator import (Phabricator,
+                                           ConduitClient,
                                            ConduitError)
 
 PHABRICATOR_URL = 'http://example.com'
@@ -54,6 +55,7 @@ def setup_http_server():
     error_body = read_file('data/phabricator/phabricator_error.json', 'rb')
     tasks_body = read_file('data/phabricator/phabricator_tasks.json', 'rb')
     tasks_next_body = read_file('data/phabricator/phabricator_tasks_next.json', 'rb')
+    tasks_empty_body = read_file('data/phabricator/phabricator_tasks_empty.json')
     tasks_trans_body = read_file('data/phabricator/phabricator_transactions.json', 'rb')
     tasks_trans_next_body = read_file('data/phabricator/phabricator_transactions_next.json', 'rb')
 
@@ -62,7 +64,11 @@ def setup_http_server():
         params = json.loads(last_request.parsed_body['params'][0])
 
         if uri == PHABRICATOR_TASKS_URL:
-            if 'after' not in params:
+            if params['constraints']['modifiedStart'] == 1467158400:
+                body = tasks_next_body
+            elif params['constraints']['modifiedStart'] == 1483228800:
+                body = tasks_empty_body
+            elif 'after' not in params:
                 body = tasks_body
             else:
                 body = tasks_next_body
@@ -97,6 +103,204 @@ def setup_http_server():
                            ])
 
     return http_requests
+
+
+class TestPhabricatorBackend(unittest.TestCase):
+    """Phabricator backend unit tests"""
+
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', origin='test')
+
+        self.assertEqual(phab.url, PHABRICATOR_URL)
+        self.assertEqual(phab.origin, 'test')
+        self.assertIsInstance(phab.client, ConduitClient)
+
+        # When origin is empty or None it will be set to
+        # the value in url
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA')
+        self.assertEqual(phab.url, PHABRICATOR_URL)
+        self.assertEqual(phab.origin, PHABRICATOR_URL)
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', origin='')
+        self.assertEqual(phab.url, PHABRICATOR_URL)
+        self.assertEqual(phab.origin, PHABRICATOR_URL)
+
+    @httpretty.activate
+    def test_fetch(self):
+        """Test whether it fetches a set of tasks"""
+
+        http_requests = setup_http_server()
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA')
+        tasks = [task for task in phab.fetch()]
+
+        expected = [(69, 16, '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
+                    (73, 20, '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
+                    (78, 17, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
+                    (296, 17, 'e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
+
+        self.assertEqual(len(tasks), len(expected))
+
+        for x in range(len(tasks)):
+            task = tasks[x]
+            self.assertEqual(task['data']['id'], expected[x][0])
+            self.assertEqual(len(task['data']['transactions']), expected[x][1])
+            self.assertEqual(task['uuid'], expected[x][2])
+            self.assertEqual(task['updated_on'], expected[x][3])
+
+        # Check requests
+        expected = [{
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                  '__conduit__' : {'token': 'AAAA'},
+                                  'constraints' : {'modifiedStart' : 0},
+                                  'order' : 'outdated'
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'ids' : [69, 73, 78]
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                  '__conduit__' : {'token': 'AAAA'},
+                                  'after' : '335',
+                                  'constraints' : {'modifiedStart' : 0},
+                                  'order' : 'outdated'
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'ids' : [296]
+                                }
+                    }]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            rparams = http_requests[i].parsed_body
+            rparams['params'] = json.loads(rparams['params'][0])
+            self.assertDictEqual(rparams, expected[i])
+
+    @httpretty.activate
+    def test_fetch_from_date(self):
+        """Test wether if fetches a set of tasks from the given date"""
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2016, 6, 29, 0, 0, 0)
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA')
+        tasks = [task for task in phab.fetch(from_date=from_date)]
+
+        self.assertEqual(len(tasks), 1)
+
+        task = tasks[0]
+        self.assertEqual(task['data']['id'], 296)
+        self.assertEqual(len(task['data']['transactions']), 17)
+        self.assertEqual(task['uuid'], 'e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6')
+        self.assertEqual(task['updated_on'], 1467196707.0)
+
+        # Check requests
+        expected = [{
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                  '__conduit__' : {'token': 'AAAA'},
+                                  'constraints' : {'modifiedStart' : 1467158400},
+                                  'order' : 'outdated'
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'ids' : [296]
+                                }
+                    }]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            rparams = http_requests[i].parsed_body
+            rparams['params'] = json.loads(rparams['params'][0])
+            self.assertDictEqual(rparams, expected[i])
+
+    @httpretty.activate
+    def test_fetch_empty(self):
+        """Test if nothing is returnerd when there are no tasks"""
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2017, 1, 1, 0, 0, 0)
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA')
+        tasks = [task for task in phab.fetch(from_date=from_date)]
+
+        self.assertEqual(len(tasks), 0)
+
+        # Check requests
+        expected = {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                  '__conduit__' : {'token': 'AAAA'},
+                                  'constraints' : {'modifiedStart' : 1483228800},
+                                  'order' : 'outdated'
+                                }
+                   }
+
+        self.assertEqual(len(http_requests), 1)
+
+        rparams = http_requests[0].parsed_body
+        rparams['params'] = json.loads(rparams['params'][0])
+        self.assertDictEqual(rparams, expected)
+
+    def test_parse_tasks(self):
+        """Test if it parses a tasks stream"""
+
+        raw_json = read_file('data/phabricator/phabricator_tasks.json')
+
+        tasks = Phabricator.parse_tasks(raw_json)
+        results = [task for task in tasks]
+
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results[0]['id'], 69)
+        self.assertEqual(results[1]['id'], 73)
+        self.assertEqual(results[2]['id'], 78)
+
+        # Parse a file without results
+        raw_json = read_file('data/phabricator/phabricator_tasks_empty.json')
+
+        tasks = Phabricator.parse_tasks(raw_json)
+        results = [task for task in tasks]
+
+        self.assertEqual(len(results), 0)
+
+    def test_parse_tasks_transactions(self):
+        """Test if it parses a tasks transactions stream"""
+
+        raw_json = read_file('data/phabricator/phabricator_transactions.json')
+
+        results = Phabricator.parse_tasks_transactions(raw_json)
+
+        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results['69']), 16)
+        self.assertEqual(len(results['73']), 20)
+        self.assertEqual(len(results['78']), 17)
 
 
 class TestConduitClient(unittest.TestCase):
