@@ -164,6 +164,8 @@ class TestMediaWikiBackend(unittest.TestCase):
         mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
 
         if from_date:
+            # Set flag to ignore MAX_RECENT_DAYS exception
+            mediawiki._test_mode = True
             pages = [page for page in mediawiki.fetch(from_date=from_date)]
         else:
             pages = [page for page in mediawiki.fetch()]

@@ -79,6 +79,7 @@ class MediaWiki(Backend):
         super().__init__(origin, cache=cache)
         self.url = url
         self.client = MediaWikiClient(url)
+        self._test_mode = False
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -278,7 +279,9 @@ class MediaWiki(Backend):
 
         # from_date can not be older than MAX_RECENT_DAYS days ago
         if from_date:
-            if (datetime.datetime.now(dateutil.tz.tzlocal())-from_date).days >= MAX_RECENT_DAYS:
+            if self._test_mode:
+                logger.warning("Test mode active; MAX_RECENT_DAYS limit ignored")
+            elif (datetime.datetime.now(dateutil.tz.tzlocal()) - from_date).days >= MAX_RECENT_DAYS:
                 cause = "Can't get incremental pages older than %i days." % MAX_RECENT_DAYS
                 cause += " Do a complete analysis without from_date for older changes."
                 raise BackendError(cause=cause)
