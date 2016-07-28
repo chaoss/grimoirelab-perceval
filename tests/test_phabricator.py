@@ -22,7 +22,9 @@
 
 import datetime
 import json
+import shutil
 import sys
+import tempfile
 import unittest
 
 import httpretty
@@ -30,6 +32,8 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
+from perceval.cache import Cache
+from perceval.errors import CacheError
 from perceval.backends.phabricator import (Phabricator,
                                            ConduitClient,
                                            ConduitError)
@@ -410,6 +414,72 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(results[1]['userName'], 'jsmith')
         self.assertEqual(results[2]['userName'], 'jdoe')
         self.assertEqual(results[3]['userName'], 'jane')
+
+
+class TestPhabricatorBackendCache(unittest.TestCase):
+    """Phabricator backend tests using a cache"""
+
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    @httpretty.activate
+    def test_fetch_from_cache(self):
+        """Test whether the cache works"""
+
+        http_requests = setup_http_server()
+
+        # First, we fetch the tasks from the server,
+        # storing them in a cache
+        cache = Cache(self.tmp_path)
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', cache=cache)
+
+        tasks = [task for task in phab.fetch()]
+        self.assertEqual(len(http_requests), 9)
+
+        # Now, we get the tasks from the cache.
+        # The tasks should be the same and there won't be
+        # any new request to the server
+        cached_tasks = [task for task in phab.fetch_from_cache()]
+        self.assertEqual(len(cached_tasks), len(tasks))
+
+        expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
+                    (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
+                    (78, 17, 'jdoe', 'jdoe', 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
+                    (296, 17, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
+
+        self.assertEqual(len(tasks), len(expected))
+
+        for x in range(len(tasks)):
+            task = tasks[x]
+            expc = expected[x]
+            self.assertEqual(task['data']['id'], expc[0])
+            self.assertEqual(len(task['data']['transactions']), expc[1])
+            self.assertEqual(task['data']['fields']['authorData']['userName'], expc[2])
+            self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[3])
+            self.assertEqual(task['uuid'], expc[4])
+            self.assertEqual(task['updated_on'], expc[5])
+
+        # No more requests were sent
+        self.assertEqual(len(http_requests), 9)
+
+    def test_fetch_from_empty_cache(self):
+        """Test if there are not any task returned when the cache is empty"""
+
+        cache = Cache(self.tmp_path)
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', cache=cache)
+        cached_tasks = [task for task in phab.fetch_from_cache()]
+        self.assertEqual(len(cached_tasks), 0)
+
+    def test_fetch_from_non_set_cache(self):
+        """Test if a error is raised when the cache was not set"""
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA')
+
+        with self.assertRaises(CacheError):
+            _ = [task for task in phab.fetch_from_cache()]
 
 
 class TestConduitClient(unittest.TestCase):

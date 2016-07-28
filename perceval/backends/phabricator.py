@@ -26,7 +26,7 @@ import logging
 import requests
 
 from ..backend import Backend, metadata
-from ..errors import BaseError
+from ..errors import BaseError, CacheError
 from ..utils import DEFAULT_DATETIME, datetime_to_utc
 
 
@@ -82,6 +82,40 @@ class Phabricator(Backend):
 
         logger.info("Fetch process completed: %s tasks fetched", ntasks)
 
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch the tasks from the cache.
+
+        It returns the tasks stored in the cache object, provided during
+        the initialization of the object. If this method is called but
+        no cache object was provided, the method will raise a `CacheError`
+        exception.
+
+        :returns: a generator of tasks
+
+        :raises CacheError: raised when an error occurs accesing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        logger.info("Retrieving cached tasks: '%s'", self.url)
+
+        ntasks = 0
+
+        try:
+            for task in self.__fetch_tasks_from_cache():
+                yield task
+                ntasks += 1
+        except StopIteration:
+            # Fatal error. The code should not reach here.
+            # Cache should had stored an activity item per parsed bug.
+            cause = "cache is exhausted but more items were expected"
+            raise CacheError(cause=cause)
+
+        logger.info("Retrieval process completed: %s tasks retrieved from cache",
+                    ntasks)
+
     def __fetch_tasks(self, from_date):
         for raw_tasks in self.client.tasks(from_date=from_date):
             self._push_cache_queue(raw_tasks)
@@ -105,7 +139,37 @@ class Phabricator(Backend):
 
                 yield task
 
+            self._push_cache_queue('{}') # Checkpoint
             self._flush_cache_queue()
+
+    def __fetch_tasks_from_cache(self):
+        cache_items = self.cache.retrieve()
+        cached_users = {}
+
+        while True:
+            try:
+                raw_tasks = next(cache_items)
+            except StopIteration:
+                break
+
+            tasks = [t for t in self.parse_tasks(raw_tasks)]
+
+            if not tasks:
+                break
+
+            raw_trans = next(cache_items)
+            tasks_trans = self.parse_tasks_transactions(raw_trans)
+
+            users = self.__retrive_cached_users(cache_items)
+            for user in users:
+                user_id = user['phid']
+                cached_users[user_id] = user
+
+            task_builder = self.__build_cached_tasks(tasks, tasks_trans,
+                                                     cached_users)
+
+            for task in task_builder:
+                yield task
 
     def __get_or_fetch_user(self, user_id):
         if user_id in self._users:
@@ -115,6 +179,18 @@ class Phabricator(Backend):
         user = self.__fetch_and_parse_users(user_id)[0]
         self._users[user_id] = user
         return user
+
+    def __retrive_cached_users(self, cache_items):
+        checkpoint = False
+
+        while not checkpoint:
+            raw_user = next(cache_items)
+
+            checkpoint = raw_user == '{}'
+
+            if not checkpoint:
+                users = [user for user in self.parse_users(raw_user)]
+                yield users[0]
 
     def __fetch_and_parse_tasks_transactions(self, *tasks_ids):
         logger.debug("Fetching and parsing tasks transactions")
@@ -137,6 +213,26 @@ class Phabricator(Backend):
         self._push_cache_queue(raw_json)
         users = self.parse_users(raw_json)
         return [user for user in users]
+
+    def __build_cached_tasks(self, tasks, transactions, cached_users):
+        for task in tasks:
+            tid = str(task['id'])
+            author_id = task['fields']['authorPHID']
+            owner_id = task['fields']['ownerPHID']
+
+            task['fields']['authorData'] = cached_users[author_id]
+            task['fields']['ownerData'] = cached_users[owner_id]
+
+            task_trans = transactions[tid]
+
+            # Build tasks transactions
+            for tt in task_trans:
+                user_id = tt['authorPHID']
+                tt['authorData'] = cached_users[user_id]
+
+            task['transactions'] = task_trans
+
+            yield task
 
     @staticmethod
     def metadata_id(item):
