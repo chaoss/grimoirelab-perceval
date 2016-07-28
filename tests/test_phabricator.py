@@ -39,6 +39,7 @@ PHABRICATOR_API_URL = PHABRICATOR_URL + '/api'
 PHABRICATOR_API_ERROR_URL = PHABRICATOR_API_URL + '/error'
 PHABRICATOR_TASKS_URL = PHABRICATOR_API_URL + '/maniphest.search'
 PHABRICATOR_TRANSACTIONS_URL = PHABRICATOR_API_URL + '/maniphest.gettasktransactions'
+PHABRICATOR_USERS_URL = PHABRICATOR_API_URL + '/user.query'
 
 
 def read_file(filename, mode='r'):
@@ -58,6 +59,7 @@ def setup_http_server():
     tasks_empty_body = read_file('data/phabricator/phabricator_tasks_empty.json')
     tasks_trans_body = read_file('data/phabricator/phabricator_transactions.json', 'rb')
     tasks_trans_next_body = read_file('data/phabricator/phabricator_transactions_next.json', 'rb')
+    users_body = read_file('data/phabricator/phabricator_users.json', 'rb')
 
     def request_callback(method, uri, headers):
         last_request = httpretty.last_request()
@@ -77,6 +79,8 @@ def setup_http_server():
                 body = tasks_trans_body
             else:
                 body = tasks_trans_next_body
+        elif uri == PHABRICATOR_USERS_URL:
+            body = users_body
         elif uri == PHABRICATOR_API_ERROR_URL:
             body = error_body
         else:
@@ -93,6 +97,11 @@ def setup_http_server():
                            ])
     httpretty.register_uri(httpretty.POST,
                            PHABRICATOR_TRANSACTIONS_URL,
+                           responses=[
+                                httpretty.Response(body=request_callback)
+                           ])
+    httpretty.register_uri(httpretty.POST,
+                           PHABRICATOR_USERS_URL,
                            responses=[
                                 httpretty.Response(body=request_callback)
                            ])
@@ -372,6 +381,36 @@ class TestConduitClient(unittest.TestCase):
                      'params' : {
                                  '__conduit__' : {'token': 'aaaa'},
                                  'ids' : [69, 73, 78]
+                                }
+                   }]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            rparams = http_requests[i].parsed_body
+            rparams['params'] = json.loads(rparams['params'][0])
+            self.assertDictEqual(rparams, expected[i])
+
+    @httpretty.activate
+    def test_users(self):
+        """Test if a set of users is returned"""
+
+        http_requests = setup_http_server()
+
+        client = ConduitClient(PHABRICATOR_URL, 'aaaa')
+        _ = client.users("PHID-USER-2uk52xorcqb6sjvp467y",
+                         "PHID-USER-bjxhrstz5fb5gkrojmev",
+                         "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
+                         "PHID-USER-ojtcpympsmwenszuef7p")
+        expected = [{
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'aaaa'},
+                                 'phids' : ["PHID-USER-2uk52xorcqb6sjvp467y",
+                                            "PHID-USER-bjxhrstz5fb5gkrojmev",
+                                            "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
+                                            "PHID-USER-ojtcpympsmwenszuef7p"]
                                 }
                    }]
 

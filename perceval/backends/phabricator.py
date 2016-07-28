@@ -180,9 +180,11 @@ class ConduitClient:
     # Methods
     MANIPHEST_TASKS = 'maniphest.search'
     MANIPHEST_TRANSACTIONS = 'maniphest.gettasktransactions'
+    PHAB_USERS = 'user.query'
 
     PAFTER = 'after'
     PCONSTRAINTS = 'constraints'
+    PHIDS = 'phids'
     PIDS = 'ids'
     PORDER = 'order'
     PMODIFIED_START = 'modifiedStart'
@@ -228,6 +230,19 @@ class ConduitClient:
         }
 
         response = self._call(self.MANIPHEST_TRANSACTIONS, params)
+
+        return response
+
+    def users(self, *phids):
+        """Retrieve users.
+
+        :params phids: list of users identifiers
+        """
+        params = {
+            self.PHIDS : phids
+        }
+
+        response = self._call(self.PHAB_USERS, params)
 
         return response
 
