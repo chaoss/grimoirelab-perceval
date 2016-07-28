@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
 import datetime
 import json
 import shutil
@@ -35,6 +36,7 @@ if not '..' in sys.path:
 from perceval.cache import Cache
 from perceval.errors import CacheError
 from perceval.backends.phabricator import (Phabricator,
+                                           PhabricatorCommand,
                                            ConduitClient,
                                            ConduitError)
 
@@ -480,6 +482,30 @@ class TestPhabricatorBackendCache(unittest.TestCase):
 
         with self.assertRaises(CacheError):
             _ = [task for task in phab.fetch_from_cache()]
+
+
+class TestPhabricatorCommand(unittest.TestCase):
+    """Tests for PhabricatorCommand class"""
+
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['http://example.com',
+                '--backend-token', '12345678',
+                '--origin', 'test']
+
+        cmd = PhabricatorCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.url, 'http://example.com')
+        self.assertEqual(cmd.parsed_args.backend_token, '12345678')
+        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertIsInstance(cmd.backend, Phabricator)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = PhabricatorCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 class TestConduitClient(unittest.TestCase):

@@ -22,12 +22,14 @@
 
 import json
 import logging
+import os.path
 
 import requests
 
-from ..backend import Backend, metadata
+from ..backend import Backend, BackendCommand, metadata
+from ..cache import Cache
 from ..errors import BaseError, CacheError
-from ..utils import DEFAULT_DATETIME, datetime_to_utc
+from ..utils import DEFAULT_DATETIME, datetime_to_utc, str_to_datetime
 
 
 logger = logging.getLogger(__name__)
@@ -301,6 +303,81 @@ class Phabricator(Backend):
         users = results['result']
         for u in users:
             yield u
+
+
+class PhabricatorCommand(BackendCommand):
+    """Class to run Phabricator backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.url = self.parsed_args.url
+        self.backend_token = self.parsed_args.backend_token
+        self.from_date = str_to_datetime(self.parsed_args.from_date)
+        self.outfile = self.parsed_args.outfile
+        self.origin = self.parsed_args.origin
+
+        if not self.parsed_args.no_cache:
+            if not self.parsed_args.cache_path:
+                base_path = os.path.expanduser('~/.perceval/cache/')
+            else:
+                base_path = self.parsed_args.cache_path
+
+            cache_path = os.path.join(base_path, self.url)
+
+            cache = Cache(cache_path)
+
+            if self.parsed_args.clean_cache:
+                cache.clean()
+            else:
+                cache.backup()
+        else:
+            cache = None
+
+        self.backend = Phabricator(self.url,
+                                   self.backend_token,
+                                   cache=cache,
+                                   origin=self.origin)
+
+    def run(self):
+        """Fetch and print the tasks.
+
+        This method runs the backend to fetch the tasks from the
+        Phabricator server. Tasks are converted to JSON objects and
+        printed to the defined output.
+        """
+        if self.parsed_args.fetch_cache:
+            tasks = self.backend.fetch_from_cache()
+        else:
+            tasks = self.backend.fetch(from_date=self.from_date)
+
+        try:
+            for task in tasks:
+                obj = json.dumps(task, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            if self.backend.cache:
+                self.backend.cache.recover()
+            raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the Phabricator argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # Backend token is required
+        action = parser._option_string_actions['--backend-token']
+        action.required = True
+
+        # Required arguments
+        parser.add_argument('url',
+                            help="URL of the Phabricator server")
+
+        return parser
 
 
 class ConduitError(BaseError):
