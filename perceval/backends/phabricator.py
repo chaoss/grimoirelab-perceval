@@ -136,7 +136,10 @@ class Phabricator(Backend):
                 owner_id = task['fields']['ownerPHID']
 
                 task['fields']['authorData'] = self.__get_or_fetch_user(author_id)
-                task['fields']['ownerData'] = self.__get_or_fetch_user(owner_id)
+
+                if owner_id:
+                    task['fields']['ownerData'] = self.__get_or_fetch_user(owner_id)
+
                 task['transactions'] = tasks_trans[tid]
 
                 yield task
@@ -223,7 +226,9 @@ class Phabricator(Backend):
             owner_id = task['fields']['ownerPHID']
 
             task['fields']['authorData'] = cached_users[author_id]
-            task['fields']['ownerData'] = cached_users[owner_id]
+
+            if owner_id:
+                task['fields']['ownerData'] = cached_users[owner_id]
 
             task_trans = transactions[tid]
 

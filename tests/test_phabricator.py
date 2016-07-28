@@ -169,7 +169,7 @@ class TestPhabricatorBackend(unittest.TestCase):
 
         expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
                     (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
-                    (78, 17, 'jdoe', 'jdoe', 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
+                    (78, 17, 'jdoe', None, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
                     (296, 17, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
 
         self.assertEqual(len(tasks), len(expected))
@@ -180,7 +180,13 @@ class TestPhabricatorBackend(unittest.TestCase):
             self.assertEqual(task['data']['id'], expc[0])
             self.assertEqual(len(task['data']['transactions']), expc[1])
             self.assertEqual(task['data']['fields']['authorData']['userName'], expc[2])
-            self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[3])
+
+            # Check owner data; when it is null owner is not included
+            if not expc[3]:
+                self.assertNotIn('ownerData', task['data']['fields'])
+            else:
+                self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[3])
+
             self.assertEqual(task['uuid'], expc[4])
             self.assertEqual(task['updated_on'], expc[5])
 
@@ -449,7 +455,7 @@ class TestPhabricatorBackendCache(unittest.TestCase):
 
         expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
                     (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
-                    (78, 17, 'jdoe', 'jdoe', 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
+                    (78, 17, 'jdoe', None, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
                     (296, 17, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
 
         self.assertEqual(len(tasks), len(expected))
@@ -460,7 +466,13 @@ class TestPhabricatorBackendCache(unittest.TestCase):
             self.assertEqual(task['data']['id'], expc[0])
             self.assertEqual(len(task['data']['transactions']), expc[1])
             self.assertEqual(task['data']['fields']['authorData']['userName'], expc[2])
-            self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[3])
+
+            # Check owner data; when it is null owner is not included
+            if not expc[3]:
+                self.assertNotIn('ownerData', task['data']['fields'])
+            else:
+                self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[3])
+
             self.assertEqual(task['uuid'], expc[4])
             self.assertEqual(task['updated_on'], expc[5])
 

@@ -76,7 +76,7 @@
                     "dateCreated": 1462645103,
                     "dateModified": 1462792338,
                     "name": "Task #78",
-                    "ownerPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
+                    "ownerPHID": null,
                     "points": null,
                     "policy": {
                         "edit": "users",
