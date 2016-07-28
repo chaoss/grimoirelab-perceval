@@ -424,9 +424,9 @@ class ConduitClient:
             dates are converted epoch time.
         """
         ts = int(datetime_to_utc(from_date).timestamp())
-        consts = {
+        consts = [{
             self.PMODIFIED_START : ts,
-        }
+        }]
 
         params = {
             self.PCONSTRAINTS : consts,

@@ -85,9 +85,9 @@ def setup_http_server():
         params = json.loads(last_request.parsed_body['params'][0])
 
         if uri == PHABRICATOR_TASKS_URL:
-            if params['constraints']['modifiedStart'] == 1467158400:
+            if params['constraints'][0]['modifiedStart'] == 1467158400:
                 body = tasks_next_body
-            elif params['constraints']['modifiedStart'] == 1483228800:
+            elif params['constraints'][0]['modifiedStart'] == 1483228800:
                 body = tasks_empty_body
             elif 'after' not in params:
                 body = tasks_body
@@ -199,7 +199,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
-                                  'constraints' : {'modifiedStart' : 0},
+                                  'constraints' : [{'modifiedStart' : 0}],
                                   'order' : 'outdated'
                                 }
                     },
@@ -241,7 +241,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
                                   'after' : '335',
-                                  'constraints' : {'modifiedStart' : 0},
+                                  'constraints' : [{'modifiedStart' : 0}],
                                   'order' : 'outdated'
                                 }
                     },
@@ -304,7 +304,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
-                                  'constraints' : {'modifiedStart' : 1467158400},
+                                  'constraints' : [{'modifiedStart' : 1467158400}],
                                   'order' : 'outdated'
                                 }
                     },
@@ -359,7 +359,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
-                                  'constraints' : {'modifiedStart' : 1483228800},
+                                  'constraints' : [{'modifiedStart' : 1483228800}],
                                   'order' : 'outdated'
                                 }
                    }
@@ -540,7 +540,7 @@ class TestConduitClient(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'aaaa'},
-                                  'constraints' : {'modifiedStart' : 1462233600},
+                                  'constraints' : [{'modifiedStart' : 1462233600}],
                                   'order' : 'outdated'
                                 }
                     },
@@ -550,7 +550,7 @@ class TestConduitClient(unittest.TestCase):
                      'params' : {
                                   '__conduit__' : {'token': 'aaaa'},
                                   'after' : '335',
-                                  'constraints' : {'modifiedStart' : 1462233600},
+                                  'constraints' : [{'modifiedStart' : 1462233600}],
                                   'order' : 'outdated'
                                 }
                     }]
