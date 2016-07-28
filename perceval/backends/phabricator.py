@@ -54,6 +54,7 @@ class Phabricator(Backend):
         super().__init__(origin, cache=cache)
         self.url = url
         self.client = ConduitClient(url, api_token)
+        self._users = {}
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -95,16 +96,47 @@ class Phabricator(Backend):
 
             for task in tasks:
                 tid = str(task['id'])
+                author_id = task['fields']['authorPHID']
+                owner_id = task['fields']['ownerPHID']
+
+                task['fields']['authorData'] = self.__get_or_fetch_user(author_id)
+                task['fields']['ownerData'] = self.__get_or_fetch_user(owner_id)
                 task['transactions'] = tasks_trans[tid]
+
                 yield task
 
             self._flush_cache_queue()
 
+    def __get_or_fetch_user(self, user_id):
+        if user_id in self._users:
+            return self._users[user_id]
+
+        logger.debug("User %s not found on client cache; fetching it", user_id)
+        user = self.__fetch_and_parse_users(user_id)[0]
+        self._users[user_id] = user
+        return user
+
     def __fetch_and_parse_tasks_transactions(self, *tasks_ids):
+        logger.debug("Fetching and parsing tasks transactions")
+
         raw_json = self.client.transactions(*tasks_ids)
         self._push_cache_queue(raw_json)
         tasks_trans = self.parse_tasks_transactions(raw_json)
+
+        for trans in tasks_trans.values():
+            for tt in trans:
+                author_id = tt['authorPHID']
+                author = self.__get_or_fetch_user(author_id)
+                tt['authorData'] = author
+
         return tasks_trans
+
+    def __fetch_and_parse_users(self, *users_ids):
+        logger.debug("Fetching and parsing users data")
+        raw_json = self.client.users(*users_ids)
+        self._push_cache_queue(raw_json)
+        users = self.parse_users(raw_json)
+        return [user for user in users]
 
     @staticmethod
     def metadata_id(item):
@@ -156,6 +188,23 @@ class Phabricator(Backend):
         """
         results = json.loads(raw_json)
         return results['result']
+
+    @staticmethod
+    def parse_users(raw_json):
+        """Parse a Phabricator users JSON stream.
+
+        The method parses a JSON stream and returns a list iterator.
+        Each item is a dictionary that contais the user parsed data.
+
+        :param raw_json: JSON string to parse
+
+        :returns: a generator of parsed users
+        """
+        results = json.loads(raw_json)
+
+        users = results['result']
+        for u in users:
+            yield u
 
 
 class ConduitError(BaseError):

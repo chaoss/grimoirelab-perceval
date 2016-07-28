@@ -60,6 +60,19 @@ def setup_http_server():
     tasks_trans_body = read_file('data/phabricator/phabricator_transactions.json', 'rb')
     tasks_trans_next_body = read_file('data/phabricator/phabricator_transactions_next.json', 'rb')
     users_body = read_file('data/phabricator/phabricator_users.json', 'rb')
+    jane_body = read_file('data/phabricator/phabricator_user_jane.json', 'rb')
+    janes_body = read_file('data/phabricator/phabricator_user_janesmith.json', 'rb')
+    jdoe_body = read_file('data/phabricator/phabricator_user_jdoe.json', 'rb')
+    jrae_body = read_file('data/phabricator/phabricator_user_jrae.json', 'rb')
+    jsmith_body = read_file('data/phabricator/phabricator_user_jsmith.json', 'rb')
+
+    phids_users = {
+        'PHID-USER-ojtcpympsmwenszuef7p' : jane_body,
+        'PHID-USER-mjr7pnwpg6slsnjcqki7' : janes_body,
+        'PHID-USER-2uk52xorcqb6sjvp467y' : jdoe_body,
+        'PHID-USER-pr5fcxy4xk5ofqsfqcfc' : jrae_body,
+        'PHID-USER-bjxhrstz5fb5gkrojmev' : jsmith_body
+    }
 
     def request_callback(method, uri, headers):
         last_request = httpretty.last_request()
@@ -80,7 +93,10 @@ def setup_http_server():
             else:
                 body = tasks_trans_next_body
         elif uri == PHABRICATOR_USERS_URL:
-            body = users_body
+            if len(params['phids']) == 4:
+                body = users_body
+            else:
+                body = phids_users[params['phids'][0]]
         elif uri == PHABRICATOR_API_ERROR_URL:
             body = error_body
         else:
@@ -145,19 +161,31 @@ class TestPhabricatorBackend(unittest.TestCase):
         phab = Phabricator(PHABRICATOR_URL, 'AAAA')
         tasks = [task for task in phab.fetch()]
 
-        expected = [(69, 16, '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
-                    (73, 20, '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
-                    (78, 17, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
-                    (296, 17, 'e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
+        expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
+                    (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
+                    (78, 17, 'jdoe', 'jdoe', 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
+                    (296, 17, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
 
         self.assertEqual(len(tasks), len(expected))
 
         for x in range(len(tasks)):
             task = tasks[x]
-            self.assertEqual(task['data']['id'], expected[x][0])
-            self.assertEqual(len(task['data']['transactions']), expected[x][1])
-            self.assertEqual(task['uuid'], expected[x][2])
-            self.assertEqual(task['updated_on'], expected[x][3])
+            expc = expected[x]
+            self.assertEqual(task['data']['id'], expc[0])
+            self.assertEqual(len(task['data']['transactions']), expc[1])
+            self.assertEqual(task['data']['fields']['authorData']['userName'], expc[2])
+            self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[3])
+            self.assertEqual(task['uuid'], expc[4])
+            self.assertEqual(task['updated_on'], expc[5])
+
+        # Check some authors info on transactions
+        trans = tasks[0]['data']['transactions']
+        self.assertEqual(trans[0]['authorData']['userName'], 'jdoe')
+        self.assertEqual(trans[15]['authorData']['userName'], 'jdoe')
+
+        trans = tasks[3]['data']['transactions']
+        self.assertEqual(trans[0]['authorData']['userName'], 'jrae')
+        self.assertEqual(trans[15]['authorData']['userName'], 'jane')
 
         # Check requests
         expected = [{
@@ -181,6 +209,30 @@ class TestPhabricatorBackend(unittest.TestCase):
                      '__conduit__' : ['True'],
                      'output' : ['json'],
                      'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-USER-2uk52xorcqb6sjvp467y']
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-USER-bjxhrstz5fb5gkrojmev']
+                                }
+                    },
+                                        {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-USER-mjr7pnwpg6slsnjcqki7']
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
                                   'after' : '335',
                                   'constraints' : {'modifiedStart' : 0},
@@ -193,6 +245,22 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'params' : {
                                  '__conduit__' : {'token': 'AAAA'},
                                  'ids' : [296]
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-USER-pr5fcxy4xk5ofqsfqcfc']
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-USER-ojtcpympsmwenszuef7p']
                                 }
                     }]
 
@@ -218,6 +286,8 @@ class TestPhabricatorBackend(unittest.TestCase):
 
         task = tasks[0]
         self.assertEqual(task['data']['id'], 296)
+        self.assertEqual(task['data']['fields']['authorData']['userName'], 'jane')
+        self.assertEqual(task['data']['fields']['ownerData']['userName'], 'jrae')
         self.assertEqual(len(task['data']['transactions']), 17)
         self.assertEqual(task['uuid'], 'e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6')
         self.assertEqual(task['updated_on'], 1467196707.0)
@@ -238,6 +308,22 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'params' : {
                                  '__conduit__' : {'token': 'AAAA'},
                                  'ids' : [296]
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-USER-pr5fcxy4xk5ofqsfqcfc']
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-USER-ojtcpympsmwenszuef7p']
                                 }
                     }]
 
@@ -310,6 +396,20 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(len(results['69']), 16)
         self.assertEqual(len(results['73']), 20)
         self.assertEqual(len(results['78']), 17)
+
+    def test_parse_users(self):
+        """Test if it parses a users stream"""
+
+        raw_json = read_file('data/phabricator/phabricator_users.json')
+
+        users = Phabricator.parse_users(raw_json)
+        results = [user for user in users]
+
+        self.assertEqual(len(results), 4)
+        self.assertEqual(results[0]['userName'], 'jrae')
+        self.assertEqual(results[1]['userName'], 'jsmith')
+        self.assertEqual(results[2]['userName'], 'jdoe')
+        self.assertEqual(results[3]['userName'], 'jane')
 
 
 class TestConduitClient(unittest.TestCase):

@@ -1,0 +1,19 @@
+{
+    "error_code": null,
+    "error_info": null,
+    "result": [
+        {
+            "image": "http://example.com/file/data/o",
+            "phid": "PHID-USER-2uk52xorcqb6sjvp467y",
+            "realName": "John Doe",
+            "roles": [
+                "admin",
+                "verified",
+                "approved",
+                "activated"
+            ],
+            "uri": "http://example.com/p/jdoe/",
+            "userName": "jdoe"
+        }
+    ]
+}
