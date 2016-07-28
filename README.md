@@ -24,6 +24,7 @@ are:
     kitsune          Fetch questions and answers from Kitsune site
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
+    phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
     remo             Fetch events and people from a ReMo site
     stackexchange    Fetch questions from StackExchange sites
@@ -157,6 +158,11 @@ $ perceval mbox 'http://example.com' /tmp/mboxes/
 ### MediaWiki
 ```
 $ perceval mediawiki 'https://wiki.mozilla.org' --from-date '2016-06-30'
+```
+
+### Phabricator
+```
+$ perceval phabricator -t 123456789abcefe 'https://secure.phabricator.com/'
 ```
 
 ### Pipermail
