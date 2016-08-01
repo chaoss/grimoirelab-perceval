@@ -29,11 +29,14 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.redmine import RedmineClient
+from perceval.backends.redmine import Redmine, RedmineClient
 
 
 REDMINE_URL = 'http://example.com'
 REDMINE_ISSUES_URL = REDMINE_URL + '/issues.json'
+REDMINE_ISSUE_2_URL = REDMINE_URL + '/issues/2.json'
+REDMINE_ISSUE_5_URL = REDMINE_URL + '/issues/5.json'
+REDMINE_ISSUE_9_URL = REDMINE_URL + '/issues/9.json'
 REDMINE_ISSUE_7311_URL = REDMINE_URL + '/issues/7311.json'
 
 
@@ -51,20 +54,35 @@ def setup_http_server():
     issues_body = read_file('data/redmine/redmine_issues.json', 'rb')
     issues_next_body = read_file('data/redmine/redmine_issues_next.json', 'rb')
     issues_empty_body = read_file('data/redmine/redmine_issues_empty.json', 'rb')
+    issue_2_body = read_file('data/redmine/redmine_issue_2.json', 'rb')
+    issue_5_body = read_file('data/redmine/redmine_issue_5.json', 'rb')
+    issue_9_body = read_file('data/redmine/redmine_issue_9.json', 'rb')
+    issue_7311_body = read_file('data/redmine/redmine_issue_7311.json', 'rb')
 
     def request_callback(method, uri, headers):
         last_request = httpretty.last_request()
         params = last_request.querystring
 
-        if uri == REDMINE_ISSUES_URL:
-            if params['from_date'] == '1970-01-01T00:00:00Z' and \
-                'offset' not in params:
+        if uri.startswith(REDMINE_ISSUES_URL):
+            if params['updated_on'][0] == '>=1970-01-01T00:00:00Z' and \
+                params['offset'][0] == '0':
                 body = issues_body
-            elif params['from_date'] == '2016-07-27T00:00:00Z' or \
-                params['offset'] == 3:
+            elif params['updated_on'][0] == '>=1970-01-01T00:00:00Z' and \
+                params['offset'][0] == '3':
+                body = issues_next_body
+            elif params['updated_on'][0] == '>=2016-07-27T00:00:00Z' and \
+                params['offset'][0] == '0':
                 body = issues_next_body
             else:
                 body = issues_empty_body
+        elif uri.startswith(REDMINE_ISSUE_2_URL):
+            body = issue_2_body
+        elif uri.startswith(REDMINE_ISSUE_5_URL):
+            body = issue_5_body
+        elif uri.startswith(REDMINE_ISSUE_9_URL):
+            body = issue_9_body
+        elif uri.startswith(REDMINE_ISSUE_7311_URL):
+            body = issue_7311_body
         else:
             raise
 
@@ -77,8 +95,228 @@ def setup_http_server():
                            responses=[
                                 httpretty.Response(body=request_callback)
                            ])
+    httpretty.register_uri(httpretty.GET,
+                           REDMINE_ISSUE_2_URL,
+                           responses=[
+                                httpretty.Response(body=request_callback)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           REDMINE_ISSUE_5_URL,
+                           responses=[
+                                httpretty.Response(body=request_callback)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           REDMINE_ISSUE_9_URL,
+                           responses=[
+                                httpretty.Response(body=request_callback)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           REDMINE_ISSUE_7311_URL,
+                           responses=[
+                                httpretty.Response(body=request_callback)
+                           ])
 
     return http_requests
+
+
+class TestRedmineBackend(unittest.TestCase):
+    """Redmine backend unit tests"""
+
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        redmine = Redmine(REDMINE_URL, api_token='AAAA', max_issues=5,
+                          origin='test')
+
+        self.assertEqual(redmine.url, REDMINE_URL)
+        self.assertEqual(redmine.max_issues, 5)
+        self.assertEqual(redmine.origin, 'test')
+        self.assertIsInstance(redmine.client, RedmineClient)
+        self.assertEqual(redmine.client.api_token, 'AAAA')
+
+        # When origin is empty or None it will be set to
+        # the value in url
+        redmine = Redmine(REDMINE_URL)
+        self.assertEqual(redmine.url, REDMINE_URL)
+        self.assertEqual(redmine.origin, REDMINE_URL)
+
+        redmine = Redmine(REDMINE_URL, origin='')
+        self.assertEqual(redmine.url, REDMINE_URL)
+        self.assertEqual(redmine.origin, REDMINE_URL)
+
+    @httpretty.activate
+    def test_fetch(self):
+        """Test whether it fetches a set of issues"""
+
+        http_requests = setup_http_server()
+
+        redmine = Redmine(REDMINE_URL, api_token='AAAA',
+                          max_issues=3)
+        issues = [issue for issue in redmine.fetch()]
+
+        expected = [(9, '91a8349c2f6ebffcccc49409529c61cfd3825563', 1323367020.0),
+                    (5, 'c4aeb9e77fec8e4679caa23d4012e7cc36ae8b98', 1323367075.0),
+                    (2, '3c3d67925b108a37f88cc6663f7f7dd493fa818c', 1323367117.0),
+                    (7311, '4ab289ab60aee93a66e5490529799cf4a2b4d94c', 1469607427.0)]
+
+        self.assertEqual(len(issues), len(expected))
+
+        for x in range(len(issues)):
+            issue = issues[x]
+            expc = expected[x]
+            self.assertEqual(issue['data']['id'], expc[0])
+            self.assertEqual(issue['uuid'], expc[1])
+            self.assertEqual(issue['updated_on'], expc[2])
+
+        # Check requests
+        expected = [{
+                     'key' : ['AAAA'],
+                     'status_id' : ['*'],
+                     'sort' : ['updated_on'],
+                     'updated_on' : ['>=1970-01-01T00:00:00Z'],
+                     'offset' : ['0'],
+                     'limit' : ['3']
+                    },
+                    {
+                     'key' : ['AAAA'],
+                     'include' : ['attachments,changesets,children,journals,relations,watchers']
+                    },
+                    {
+                     'key' : ['AAAA'],
+                     'include' : ['attachments,changesets,children,journals,relations,watchers']
+                    },
+                    {
+                     'key' : ['AAAA'],
+                     'include' : ['attachments,changesets,children,journals,relations,watchers']
+                    },
+                    {
+                     'key' : ['AAAA'],
+                     'status_id' : ['*'],
+                     'sort' : ['updated_on'],
+                     'updated_on' : ['>=1970-01-01T00:00:00Z'],
+                     'offset' : ['3'],
+                     'limit' : ['3']
+                    },
+                    {
+                     'key' : ['AAAA'],
+                     'include' : ['attachments,changesets,children,journals,relations,watchers']
+                    },
+                    {
+                     'key' : ['AAAA'],
+                     'status_id' : ['*'],
+                     'sort' : ['updated_on'],
+                     'updated_on' : ['>=1970-01-01T00:00:00Z'],
+                     'offset' : ['6'],
+                     'limit' : ['3']
+                    }]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_from_date(self):
+        """Test wether if fetches a set of issues from the given date"""
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2016, 7, 27)
+
+        redmine = Redmine(REDMINE_URL, api_token='AAAA',
+                          max_issues=3)
+        issues = [issue for issue in redmine.fetch(from_date=from_date)]
+
+        self.assertEqual(len(issues), 1)
+
+        issue = issues[0]
+        self.assertEqual(issue['data']['id'], 7311)
+        self.assertEqual(issue['uuid'], '4ab289ab60aee93a66e5490529799cf4a2b4d94c')
+        self.assertEqual(issue['updated_on'], 1469607427.0)
+
+        expected = [{
+                     'key' : ['AAAA'],
+                     'status_id' : ['*'],
+                     'sort' : ['updated_on'],
+                     'updated_on' : ['>=2016-07-27T00:00:00Z'],
+                     'offset' : ['0'],
+                     'limit' : ['3']
+                    },
+                    {
+                     'key' : ['AAAA'],
+                     'include' : ['attachments,changesets,children,journals,relations,watchers']
+                    },
+                    {
+                     'key' : ['AAAA'],
+                     'status_id' : ['*'],
+                     'sort' : ['updated_on'],
+                     'updated_on' : ['>=2016-07-27T00:00:00Z'],
+                     'offset' : ['3'],
+                     'limit' : ['3']
+                    }]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_empty(self):
+        """Test if nothing is returnerd when there are no issues"""
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2017, 1, 1)
+
+        redmine = Redmine(REDMINE_URL, api_token='AAAA',
+                          max_issues=3)
+        issues = [issue for issue in redmine.fetch(from_date=from_date)]
+
+        self.assertEqual(len(issues), 0)
+
+        expected = {
+                    'key' : ['AAAA'],
+                    'status_id' : ['*'],
+                    'sort' : ['updated_on'],
+                    'updated_on' : ['>=2017-01-01T00:00:00Z'],
+                    'offset' : ['0'],
+                    'limit' : ['3']
+                   }
+
+        self.assertEqual(len(http_requests), 1)
+        self.assertDictEqual(http_requests[0].querystring, expected)
+
+    def test_parse_issues(self):
+        """Test if it parses a issues stream"""
+
+        raw_json = read_file('data/redmine/redmine_issues.json')
+
+        issues = Redmine.parse_issues(raw_json)
+        results = [issue for issue in issues]
+
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results[0]['id'], 9)
+        self.assertEqual(results[1]['id'], 5)
+        self.assertEqual(results[2]['id'], 2)
+
+        # Parse a file without results
+        raw_json = read_file('data/redmine/redmine_issues_empty.json')
+
+        issues = Redmine.parse_issues(raw_json)
+        results = [issue for issue in issues]
+
+        self.assertEqual(len(results), 0)
+
+    def test_parse_issue_data(self):
+        """Test if it parses a issue stream"""
+
+        raw_json = read_file('data/redmine/redmine_issue_7311.json')
+
+        issue = Redmine.parse_issue_data(raw_json)
+
+        self.assertEqual(issue['id'], 7311)
+        self.assertEqual(len(issue['journals']), 22)
+        self.assertEqual(len(issue['changesets']), 0)
 
 
 class TestRedmineClient(unittest.TestCase):

@@ -1,0 +1,57 @@
+{
+    "issue": {
+        "attachments": [],
+        "author": {
+            "id": 3,
+            "name": "Alvaro del Castillo"
+        },
+        "changesets": [],
+        "closed_on": "2011-12-08T09:46:31.000Z",
+        "created_on": "2011-12-08T09:46:31.000Z",
+        "description": "Description",
+        "done_ratio": 100,
+        "id": 5,
+        "journals": [
+            {
+                "created_on": "2011-12-08T17:57:55.000Z",
+                "details": [
+                    {
+                        "name": "parent_id",
+                        "new_value": "31",
+                        "property": "attr"
+                    }
+                ],
+                "id": 32,
+                "notes": "",
+                "user": {
+                    "id": 3,
+                    "name": "Alvaro del Castillo"
+                }
+            }
+        ],
+        "parent": {
+            "id": 31
+        },
+        "priority": {
+            "id": 4,
+            "name": "Normal"
+        },
+        "project": {
+            "id": 1,
+            "name": "Global"
+        },
+        "spent_hours": 1.0,
+        "start_date": "2011-12-08",
+        "status": {
+            "id": 5,
+            "name": "Cerrada"
+        },
+        "subject": "Second Issue",
+        "tracker": {
+            "id": 2,
+            "name": "Tareas"
+        },
+        "updated_on": "2011-12-08T17:57:55.000Z",
+        "watchers": []
+    }
+}
