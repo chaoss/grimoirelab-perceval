@@ -22,10 +22,12 @@
 
 import json
 import logging
+import os.path
 
 import requests
 
-from ..backend import Backend, metadata
+from ..backend import Backend, BackendCommand, metadata
+from ..cache import Cache
 from ..errors import CacheError
 from ..utils import (DEFAULT_DATETIME,
                      datetime_to_utc,
@@ -207,6 +209,85 @@ class Redmine(Backend):
         """
         result = json.loads(raw_json)
         return result['issue']
+
+
+class RedmineCommand(BackendCommand):
+    """Class to run Redmine backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.url = self.parsed_args.url
+        self.backend_token = self.parsed_args.backend_token
+        self.max_issues = self.parsed_args.max_issues
+        self.from_date = str_to_datetime(self.parsed_args.from_date)
+        self.origin = self.parsed_args.origin
+        self.outfile = self.parsed_args.outfile
+
+        if not self.parsed_args.no_cache:
+            if not self.parsed_args.cache_path:
+                base_path = os.path.expanduser('~/.perceval/cache/')
+            else:
+                base_path = self.parsed_args.cache_path
+
+            cache_path = os.path.join(base_path, self.url)
+
+            cache = Cache(cache_path)
+
+            if self.parsed_args.clean_cache:
+                cache.clean()
+            else:
+                cache.backup()
+        else:
+            cache = None
+
+        self.backend = Redmine(self.url,
+                               api_token=self.backend_token,
+                               max_issues=self.max_issues,
+                               cache=cache,
+                               origin=self.origin)
+
+    def run(self):
+        """Fetch and print the issues.
+
+        This method runs the backend to fetch the issues from the given
+        repository. Issues are converted to JSON objects and printed to the
+        defined output.
+        """
+        if self.parsed_args.fetch_cache:
+            issues = self.backend.fetch_from_cache()
+        else:
+            issues = self.backend.fetch(from_date=self.from_date)
+
+        try:
+            for issue in issues:
+                obj = json.dumps(issue, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            if self.backend.cache:
+                self.backend.cache.recover()
+            raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the Redmine argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # Redmine options
+        group = parser.add_argument_group('Redmine arguments')
+        group.add_argument('--max-issues', dest='max_issues',
+                           type=int, default=MAX_ISSUES,
+                           help="Maximum number of issues requested on the same query")
+
+        # Required arguments
+        parser.add_argument('url',
+                            help="URL of the Redmine server")
+
+        return parser
 
 
 class RedmineClient:

@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
 import datetime
 import shutil
 import sys
@@ -33,7 +34,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.redmine import Redmine, RedmineClient
+from perceval.backends.redmine import (Redmine,
+                                       RedmineCommand,
+                                       RedmineClient)
 
 
 REDMINE_URL = 'http://example.com'
@@ -386,6 +389,32 @@ class TestRedmineBackendCache(unittest.TestCase):
 
         with self.assertRaises(CacheError):
             _ = [issue for issue in redmine.fetch_from_cache()]
+
+
+class TestRedmineCommand(unittest.TestCase):
+    """Tests for RedmineCommand class"""
+
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['http://example.com',
+                '--backend-token', '12345678',
+                '--max-issues', '5',
+                '--origin', 'test']
+
+        cmd = RedmineCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.url, 'http://example.com')
+        self.assertEqual(cmd.parsed_args.backend_token, '12345678')
+        self.assertEqual(cmd.parsed_args.max_issues, 5)
+        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertIsInstance(cmd.backend, Redmine)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = RedmineCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 class TestRedmineClient(unittest.TestCase):
