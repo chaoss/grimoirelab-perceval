@@ -26,6 +26,7 @@ are:
     mediawiki        Fetch pages and revisions from a MediaWiki site
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
+    redmine          Fetch issues from a Redmine server
     remo             Fetch events and people from a ReMo site
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
@@ -168,6 +169,12 @@ $ perceval phabricator -t 123456789abcefe 'https://secure.phabricator.com/'
 ### Pipermail
 ```
 $ perceval pipermail 'https://mail.gnome.org/archives/libart-hackers/'
+```
+
+### Redmine
+
+```
+$ perceval redmine 'https://www.redmine.org/' --from-date 2016-01-01 --token abcdefghijk
 ```
 
 ### ReMo

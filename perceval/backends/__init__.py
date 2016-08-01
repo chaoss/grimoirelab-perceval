@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015 Bitergia
+# Copyright (C) 2015-2016 Bitergia
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ from .mbox import MBox, MBoxCommand
 from .mediawiki import MediaWiki, MediaWikiCommand
 from .phabricator import Phabricator, PhabricatorCommand
 from .pipermail import Pipermail, PipermailCommand
+from .redmine import Redmine, RedmineCommand
 from .remo import ReMo, ReMoCommand
 from .stackexchange import StackExchange, StackExchangeCommand
 from .supybot import Supybot, SupybotCommand
@@ -57,6 +58,7 @@ PERCEVAL_BACKENDS = {
                      'mediawiki'     : MediaWiki,
                      'phabricator'   : Phabricator,
                      'pipermail'     : Pipermail,
+                     'redmine'       : Redmine,
                      'remo'          : ReMo,
                      'stackexchange' : StackExchange,
                      'supybot'       : Supybot,
@@ -78,6 +80,7 @@ PERCEVAL_CMDS = {
                  'mediawiki'     : MediaWikiCommand,
                  'phabricator'   : PhabricatorCommand,
                  'pipermail'     : PipermailCommand,
+                 'redmine'       : RedmineCommand,
                  'remo'          : ReMoCommand,
                  'stackexchange' : StackExchangeCommand,
                  'supybot'       : SupybotCommand,
