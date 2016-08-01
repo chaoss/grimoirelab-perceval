@@ -1,0 +1,41 @@
+{
+    "issues": [
+        {
+            "assigned_to": {
+                "id": 25,
+                "name": "Jes\u00fas Alonso"
+            },
+            "author": {
+                "id": 24,
+                "name": "Quan Zhou"
+            },
+            "closed_on": "2016-05-19T17:04:19.000Z",
+            "created_on": "2016-01-26T12:39:26.000Z",
+            "description": "Desc",
+            "done_ratio": 0,
+            "id": 7311,
+            "priority": {
+                "id": 7,
+                "name": "Inmediata"
+            },
+            "project": {
+                "id": 91,
+                "name": "MAD"
+            },
+            "start_date": "2016-01-26",
+            "status": {
+                "id": 3,
+                "name": "Resuelta"
+            },
+            "subject": "Data sources are not being updated",
+            "tracker": {
+                "id": 1,
+                "name": "Errores"
+            },
+            "updated_on": "2016-07-27T08:17:07.000Z"
+        }
+    ],
+    "limit": 3,
+    "offset": 3,
+    "total_count": 4
+}

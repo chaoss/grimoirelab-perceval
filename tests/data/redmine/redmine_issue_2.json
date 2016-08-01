@@ -1,0 +1,57 @@
+{
+    "issue": {
+        "attachments": [],
+        "author": {
+            "id": 3,
+            "name": "Alvaro del Castillo"
+        },
+        "changesets": [],
+        "closed_on": "2011-12-08T09:42:44.000Z",
+        "created_on": "2011-12-08T09:42:44.000Z",
+        "description": "",
+        "done_ratio": 100,
+        "id": 2,
+        "journals": [
+            {
+                "created_on": "2011-12-08T17:58:37.000Z",
+                "details": [
+                    {
+                        "name": "parent_id",
+                        "new_value": "31",
+                        "property": "attr"
+                    }
+                ],
+                "id": 35,
+                "notes": "",
+                "user": {
+                    "id": 3,
+                    "name": "Alvaro del Castillo"
+                }
+            }
+        ],
+        "parent": {
+            "id": 31
+        },
+        "priority": {
+            "id": 4,
+            "name": "Normal"
+        },
+        "project": {
+            "id": 1,
+            "name": "Global"
+        },
+        "spent_hours": 1.0,
+        "start_date": "2011-12-08",
+        "status": {
+            "id": 5,
+            "name": "Cerrada"
+        },
+        "subject": "Third Issue",
+        "tracker": {
+            "id": 2,
+            "name": "Tareas"
+        },
+        "updated_on": "2011-12-08T17:58:37.000Z",
+        "watchers": []
+    }
+}
