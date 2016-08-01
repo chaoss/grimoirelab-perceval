@@ -1,0 +1,421 @@
+{
+    "issue": {
+        "assigned_to": {
+            "id": 25,
+            "name": "Jes\u00fas Alonso"
+        },
+        "attachments": [],
+        "author": {
+            "id": 24,
+            "name": "Quan Zhou"
+        },
+        "changesets": [],
+        "closed_on": "2016-05-19T17:04:19.000Z",
+        "created_on": "2016-01-26T12:39:26.000Z",
+        "description": "Description",
+        "done_ratio": 0,
+        "id": 7311,
+        "journals": [
+            {
+                "created_on": "2016-01-26T14:09:05.000Z",
+                "details": [
+                    {
+                        "name": "priority_id",
+                        "new_value": "7",
+                        "old_value": "5",
+                        "property": "attr"
+                    }
+                ],
+                "id": 43286,
+                "user": {
+                    "id": 4,
+                    "name": "Luis Ca\u00f1as D\u00edaz"
+                }
+            },
+            {
+                "created_on": "2016-01-27T11:40:54.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "3",
+                        "old_value": "1",
+                        "property": "attr"
+                    }
+                ],
+                "id": 43319,
+                "notes": "Desc",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            },
+            {
+                "created_on": "2016-02-02T13:45:50.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "5",
+                        "old_value": "3",
+                        "property": "attr"
+                    }
+                ],
+                "id": 43505,
+                "notes": "",
+                "user": {
+                    "id": 4,
+                    "name": "Luis Ca\u00f1as D\u00edaz"
+                }
+            },
+            {
+                "created_on": "2016-03-21T12:02:13.000Z",
+                "details": [
+                    {
+                        "name": "subject",
+                        "new_value": "Data sources are not being updated",
+                        "old_value": "Data sources is not being updated",
+                        "property": "attr"
+                    },
+                    {
+                        "name": "description",
+                        "new_value": "New desc",
+                        "old_value": "Old desc",
+                        "property": "attr"
+                    },
+                    {
+                        "name": "status_id",
+                        "new_value": "1",
+                        "old_value": "5",
+                        "property": "attr"
+                    }
+                ],
+                "id": 45368,
+                "notes": "",
+                "user": {
+                    "id": 24,
+                    "name": "Quan Zhou"
+                }
+            },
+            {
+                "created_on": "2016-03-21T12:13:59.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "5",
+                        "old_value": "1",
+                        "property": "attr"
+                    }
+                ],
+                "id": 45371,
+                "notes": "",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            },
+            {
+                "created_on": "2016-04-04T09:33:20.000Z",
+                "details": [
+                    {
+                        "name": "description",
+                        "new_value": "New",
+                        "old_value": "Old",
+                        "property": "attr"
+                    },
+                    {
+                        "name": "status_id",
+                        "new_value": "1",
+                        "old_value": "5",
+                        "property": "attr"
+                    }
+                ],
+                "id": 45616,
+                "notes": "Notes",
+                "user": {
+                    "id": 24,
+                    "name": "Quan Zhou"
+                }
+            },
+            {
+                "created_on": "2016-04-04T10:58:48.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "3",
+                        "old_value": "1",
+                        "property": "attr"
+                    }
+                ],
+                "id": 45630,
+                "notes": "More notes",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            },
+            {
+                "created_on": "2016-04-08T07:47:51.000Z",
+                "details": [],
+                "id": 45774,
+                "notes": "Even more notes",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            },
+            {
+                "created_on": "2016-04-14T08:02:45.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "5",
+                        "old_value": "3",
+                        "property": "attr"
+                    }
+                ],
+                "id": 45928,
+                "user": {
+                    "id": 4,
+                    "name": "Luis Ca\u00f1as D\u00edaz"
+                }
+            },
+            {
+                "created_on": "2016-05-03T10:42:46.000Z",
+                "details": [
+                    {
+                        "name": "description",
+                        "new_value": "New change",
+                        "old_value": "Change",
+                        "property": "attr"
+                    },
+                    {
+                        "name": "status_id",
+                        "new_value": "1",
+                        "old_value": "5",
+                        "property": "attr"
+                    }
+                ],
+                "id": 46391,
+                "notes": "More and more notes",
+                "user": {
+                    "id": 24,
+                    "name": "Quan Zhou"
+                }
+            },
+            {
+                "created_on": "2016-05-03T13:19:36.000Z",
+                "details": [],
+                "id": 46397,
+                "notes": "Yep",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            },
+            {
+                "created_on": "2016-05-03T13:19:49.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "3",
+                        "old_value": "1",
+                        "property": "attr"
+                    }
+                ],
+                "id": 46398,
+                "notes": "",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            },
+            {
+                "created_on": "2016-05-19T17:04:19.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "5",
+                        "old_value": "3",
+                        "property": "attr"
+                    }
+                ],
+                "id": 46743,
+                "user": {
+                    "id": 4,
+                    "name": "Luis Ca\u00f1as D\u00edaz"
+                }
+            },
+            {
+                "created_on": "2016-06-07T10:54:57.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "1",
+                        "old_value": "5",
+                        "property": "attr"
+                    }
+                ],
+                "id": 46975,
+                "notes": "",
+                "user": {
+                    "id": 24,
+                    "name": "Quan Zhou"
+                }
+            },
+            {
+                "created_on": "2016-06-08T08:07:36.000Z",
+                "details": [],
+                "id": 46976,
+                "notes": "Yes, its ok",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            },
+            {
+                "created_on": "2016-06-10T08:32:37.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "3",
+                        "old_value": "1",
+                        "property": "attr"
+                    }
+                ],
+                "id": 46983,
+                "notes": "",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            },
+            {
+                "created_on": "2016-07-04T09:08:28.000Z",
+                "details": [
+                    {
+                        "name": "description",
+                        "new_value": "A new change",
+                        "old_value": "An old change",
+                        "property": "attr"
+                    },
+                    {
+                        "name": "status_id",
+                        "new_value": "1",
+                        "old_value": "3",
+                        "property": "attr"
+                    }
+                ],
+                "id": 47053,
+                "notes": "My notes",
+                "user": {
+                    "id": 24,
+                    "name": "Quan Zhou"
+                }
+            },
+            {
+                "created_on": "2016-07-04T09:14:53.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "3",
+                        "old_value": "1",
+                        "property": "attr"
+                    }
+                ],
+                "id": 47054,
+                "notes": "Yes its ok",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            },
+            {
+                "created_on": "2016-07-26T09:11:49.000Z",
+                "details": [
+                    {
+                        "name": "description",
+                        "new_value": "Why",
+                        "old_value": "When",
+                        "property": "attr"
+                    },
+                    {
+                        "name": "status_id",
+                        "new_value": "1",
+                        "old_value": "3",
+                        "property": "attr"
+                    }
+                ],
+                "id": 47061,
+                "notes": "A lot of changes here",
+                "user": {
+                    "id": 24,
+                    "name": "Quan Zhou"
+                }
+            },
+            {
+                "created_on": "2016-07-26T09:25:03.000Z",
+                "details": [
+                    {
+                        "name": "description",
+                        "new_value": "Value",
+                        "old_value": "Former value",
+                        "property": "attr"
+                    }
+                ],
+                "id": 47062,
+                "notes": "",
+                "user": {
+                    "id": 24,
+                    "name": "Quan Zhou"
+                }
+            },
+            {
+                "created_on": "2016-07-27T08:12:37.000Z",
+                "details": [],
+                "id": 47063,
+                "notes": "Yes its ok",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            },
+            {
+                "created_on": "2016-07-27T08:17:07.000Z",
+                "details": [
+                    {
+                        "name": "status_id",
+                        "new_value": "3",
+                        "old_value": "1",
+                        "property": "attr"
+                    }
+                ],
+                "id": 47064,
+                "notes": "",
+                "user": {
+                    "id": 25,
+                    "name": "Jes\u00fas Alonso"
+                }
+            }
+        ],
+        "priority": {
+            "id": 7,
+            "name": "Inmediata"
+        },
+        "project": {
+            "id": 91,
+            "name": "MAD"
+        },
+        "spent_hours": 0.5000000074505806,
+        "start_date": "2016-01-26",
+        "status": {
+            "id": 3,
+            "name": "Resuelta"
+        },
+        "subject": "Data sources are not being updated",
+        "tracker": {
+            "id": 1,
+            "name": "Errores"
+        },
+        "updated_on": "2016-07-27T08:17:07.000Z",
+        "watchers": []
+    }
+}

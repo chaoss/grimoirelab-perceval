@@ -1,0 +1,106 @@
+{
+    "issues": [
+        {
+            "author": {
+                "id": 3,
+                "name": "Alvaro del Castillo"
+            },
+            "closed_on": "2011-12-08T09:51:07.000Z",
+            "created_on": "2011-12-08T09:51:07.000Z",
+            "description": "Description",
+            "done_ratio": 100,
+            "id": 9,
+            "parent": {
+                "id": 31
+            },
+            "priority": {
+                "id": 4,
+                "name": "Normal"
+            },
+            "project": {
+                "id": 1,
+                "name": "Global"
+            },
+            "start_date": "2011-12-08",
+            "status": {
+                "id": 5,
+                "name": "Cerrada"
+            },
+            "subject": "First Issue",
+            "tracker": {
+                "id": 2,
+                "name": "Tareas"
+            },
+            "updated_on": "2011-12-08T17:57:00.000Z"
+        },
+        {
+            "author": {
+                "id": 3,
+                "name": "Alvaro del Castillo"
+            },
+            "closed_on": "2011-12-08T09:46:31.000Z",
+            "created_on": "2011-12-08T09:46:31.000Z",
+            "description": "Description",
+            "done_ratio": 100,
+            "id": 5,
+            "parent": {
+                "id": 31
+            },
+            "priority": {
+                "id": 4,
+                "name": "Normal"
+            },
+            "project": {
+                "id": 1,
+                "name": "Global"
+            },
+            "start_date": "2011-12-08",
+            "status": {
+                "id": 5,
+                "name": "Cerrada"
+            },
+            "subject": "Second Issue",
+            "tracker": {
+                "id": 2,
+                "name": "Tareas"
+            },
+            "updated_on": "2011-12-08T17:57:55.000Z"
+        },
+        {
+            "author": {
+                "id": 3,
+                "name": "Alvaro del Castillo"
+            },
+            "closed_on": "2011-12-08T09:42:44.000Z",
+            "created_on": "2011-12-08T09:42:44.000Z",
+            "description": "",
+            "done_ratio": 100,
+            "id": 2,
+            "parent": {
+                "id": 31
+            },
+            "priority": {
+                "id": 4,
+                "name": "Normal"
+            },
+            "project": {
+                "id": 1,
+                "name": "Global"
+            },
+            "start_date": "2011-12-08",
+            "status": {
+                "id": 5,
+                "name": "Cerrada"
+            },
+            "subject": "Third Issue",
+            "tracker": {
+                "id": 2,
+                "name": "Tareas"
+            },
+            "updated_on": "2011-12-08T17:58:37.000Z"
+        }
+    ],
+    "limit": 3,
+    "offset": 0,
+    "total_count": 4
+}
