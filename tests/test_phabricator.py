@@ -458,10 +458,10 @@ class TestPhabricatorBackendCache(unittest.TestCase):
                     (78, 17, 'jdoe', None, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
                     (296, 17, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
 
-        self.assertEqual(len(tasks), len(expected))
+        self.assertEqual(len(cached_tasks), len(expected))
 
-        for x in range(len(tasks)):
-            task = tasks[x]
+        for x in range(len(cached_tasks)):
+            task = cached_tasks[x]
             expc = expected[x]
             self.assertEqual(task['data']['id'], expc[0])
             self.assertEqual(len(task['data']['transactions']), expc[1])
@@ -475,6 +475,8 @@ class TestPhabricatorBackendCache(unittest.TestCase):
 
             self.assertEqual(task['uuid'], expc[4])
             self.assertEqual(task['updated_on'], expc[5])
+
+            self.assertDictEqual(task['data'], tasks[x]['data'])
 
         # No more requests were sent
         self.assertEqual(len(http_requests), 9)
