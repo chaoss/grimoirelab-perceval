@@ -21,7 +21,9 @@
 #
 
 import datetime
+import shutil
 import sys
+import tempfile
 import unittest
 
 import httpretty
@@ -29,6 +31,8 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
+from perceval.cache import Cache
+from perceval.errors import CacheError
 from perceval.backends.redmine import Redmine, RedmineClient
 
 
@@ -317,6 +321,71 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(issue['id'], 7311)
         self.assertEqual(len(issue['journals']), 22)
         self.assertEqual(len(issue['changesets']), 0)
+
+
+class TestRedmineBackendCache(unittest.TestCase):
+    """Redmine backend tests using a cache"""
+
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    @httpretty.activate
+    def test_fetch_from_cache(self):
+        """Test whether the cache works"""
+
+        http_requests = setup_http_server()
+
+        # First, we fetch the issues from the server,
+        # storing them in a cache
+        cache = Cache(self.tmp_path)
+        redmine = Redmine(REDMINE_URL, api_token='AAAA',
+                          max_issues=3, cache=cache)
+
+        issues = [issue for issue in redmine.fetch()]
+        self.assertEqual(len(http_requests), 7)
+
+        # Now, we get the issues from the cache.
+        # The issues should be the same and there won't be
+        # any new request to the server
+        cached_issues = [issue for issue in redmine.fetch_from_cache()]
+        self.assertEqual(len(cached_issues), len(issues))
+
+        expected = [(9, '91a8349c2f6ebffcccc49409529c61cfd3825563', 1323367020.0),
+                    (5, 'c4aeb9e77fec8e4679caa23d4012e7cc36ae8b98', 1323367075.0),
+                    (2, '3c3d67925b108a37f88cc6663f7f7dd493fa818c', 1323367117.0),
+                    (7311, '4ab289ab60aee93a66e5490529799cf4a2b4d94c', 1469607427.0)]
+
+        self.assertEqual(len(cached_issues), len(expected))
+
+        for x in range(len(cached_issues)):
+            issue = cached_issues[x]
+            expc = expected[x]
+            self.assertEqual(issue['data']['id'], expc[0])
+            self.assertEqual(issue['uuid'], expc[1])
+            self.assertEqual(issue['updated_on'], expc[2])
+            self.assertDictEqual(issue['data'], issues[x]['data'])
+
+        # No more requests were sent
+        self.assertEqual(len(http_requests), 7)
+
+    def test_fetch_from_empty_cache(self):
+        """Test if there are not any issue returned when the cache is empty"""
+
+        cache = Cache(self.tmp_path)
+        redmine = Redmine(REDMINE_URL, api_token='AAAA', cache=cache)
+        cached_issues = [issue for issue in redmine.fetch_from_cache()]
+        self.assertEqual(len(cached_issues), 0)
+
+    def test_fetch_from_non_set_cache(self):
+        """Test if a error is raised when the cache was not set"""
+
+        redmine = Redmine(REDMINE_URL, api_token='AAAA')
+
+        with self.assertRaises(CacheError):
+            _ = [issue for issue in redmine.fetch_from_cache()]
 
 
 class TestRedmineClient(unittest.TestCase):

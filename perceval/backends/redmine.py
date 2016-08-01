@@ -26,6 +26,7 @@ import logging
 import requests
 
 from ..backend import Backend, metadata
+from ..errors import CacheError
 from ..utils import (DEFAULT_DATETIME,
                      datetime_to_utc,
                      str_to_datetime,
@@ -80,6 +81,8 @@ class Redmine(Backend):
         logger.info("Fetching issues of '%s' from %s",
                     self.url, str(from_date))
 
+        self._purge_cache_queue()
+
         from_date = datetime_to_utc(from_date)
 
         nissues = 0
@@ -88,8 +91,40 @@ class Redmine(Backend):
             issue = self.__fetch_and_parse_issue(issue_id)
             yield issue
             nissues += 1
+            self._flush_cache_queue()
 
         logger.info("Fetch process completed: %s issues fetched", nissues)
+
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch the issues from the cache.
+
+        It returns the issues stored in the cache object, provided during
+        the initialization of the object. If this method is called but
+        no cache object was provided, the method will raise a `CacheError`
+        exception.
+
+        :returns: a generator of issues
+
+        :raises CacheError: raised when an error occurs accesing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        logger.info("Retrieving cached tasks: '%s'", self.url)
+
+        nissues = 0
+
+        cache_items = self.cache.retrieve()
+
+        for raw_issue in cache_items:
+            issue = self.parse_issue_data(raw_issue)
+            yield issue
+            nissues += 1
+
+        logger.info("Retrieval process completed: %s bugs retrieved from cache",
+                    nissues)
 
     def __fetch_issues_ids(self, from_date):
         offset = 0
@@ -117,8 +152,8 @@ class Redmine(Backend):
     def __fetch_and_parse_issue(self, issue_id):
         logger.debug("Fetching and parsing issue #%s", issue_id)
         raw_issue = self.client.issue(issue_id)
-        issue = self.parse_issue_data(raw_issue)
-        return issue
+        self._push_cache_queue(raw_issue)
+        return self.parse_issue_data(raw_issue)
 
     @staticmethod
     def metadata_id(item):
