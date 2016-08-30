@@ -41,6 +41,36 @@ MAX_ISSUES = 100  # Maximum number of issues per query
 logger = logging.getLogger(__name__)
 
 
+def map_custom_field(custom_fields, fields):
+    """Add extra information for custom fields.
+
+    :param custom_fields: set of custom fields with the extra information
+    :param fields: fields of the issue where to add the extra information
+
+    :returns: an set of items with the extra information mapped
+    """
+    build_cf = lambda cf, v: {'id': cf['id'], 'name': cf['name'], 'value': v}
+
+    return {k: build_cf(custom_fields[k], v) for k, v in fields.items() if k in custom_fields}
+
+def filter_custom_fields(fields):
+    """Filter custom fields from a given set of fields.
+
+    :param fields: set of fields
+
+    :returns: an object with the filtered custom fields
+    """
+
+    custom_fields = {}
+
+    sorted_fields = [field for field in fields if field['custom'] is True]
+
+    for custom_field in sorted_fields:
+        custom_fields[custom_field['id']] = custom_field
+
+    return custom_fields
+
+
 class Jira(Backend):
     """JIRA backend for Perceval.
 
@@ -56,7 +86,7 @@ class Jira(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url`
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, url, project=None, backend_user=None,
                  backend_password=None, verify=None,
@@ -98,11 +128,17 @@ class Jira(Backend):
 
         whole_pages = self.client.get_issues(from_date)
 
+        fields = json.loads(self.client.get_fields())
+        custom_fields = filter_custom_fields(fields)
+
         for whole_page in whole_pages:
             self._push_cache_queue(whole_page)
             self._flush_cache_queue()
             issues = self.parse_issues(whole_page)
             for issue in issues:
+                mapping = map_custom_field(custom_fields, issue['fields'])
+                for k, v in mapping.items():
+                    issue['fields'][k] = v
                 yield issue
 
     @metadata
@@ -231,26 +267,31 @@ class JiraClient:
         else:
             logger.info("No issues were found.")
 
+    def __init_session(self):
+        session = requests.Session()
+
+        if (self.user and self.password) is not None:
+            session.auth = (self.user, self.password)
+
+        if self.cert:
+            session.cert = self.cert
+
+        if self.verify is not True:
+            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+            session.verify = False
+
+        return session
+
     def get_issues(self, from_date):
         """Retrieve all the issues from a given date.
 
         :param from_date: obtain issues updated since this date
         """
-        s = requests.Session()
-
-        if (self.user and self.password) is not None:
-            s.auth = (self.user, self.password)
-
-        if self.cert:
-            s.cert = self.cert
-
-        if self.verify is not True:
-            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-            s.verify = False
+        session = self.__init_session()
 
         start_at = 0
-        req = s.get(self.__build_base_url(),
-                    params=self.__build_payload(start_at, from_date))
+        req = session.get(self.__build_base_url(),
+                          params=self.__build_payload(start_at, from_date))
         req.raise_for_status()
         issues = req.text
 
@@ -266,13 +307,21 @@ class JiraClient:
             issues = None
 
             if data['startAt'] + nissues < tissues:
-                req = s.get(self.__build_base_url(),
-                            params=self.__build_payload(start_at, from_date))
+                req = session.get(self.__build_base_url(),
+                                  params=self.__build_payload(start_at, from_date))
                 req.raise_for_status()
                 data = req.json()
                 start_at += nissues
                 issues = req.text
                 self.__log_status(start_at, tissues)
+
+    def get_fields(self):
+        """Retrieve all the fields available.  """
+        session = self.__init_session()
+
+        req = session.get(self.__build_base_url('field'))
+        req.raise_for_status()
+        return req.text
 
 
 class JiraCommand(BackendCommand):
