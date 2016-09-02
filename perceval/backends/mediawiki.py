@@ -428,7 +428,10 @@ class MediaWikiClient:
     def get_pages_from_allrevisions(self, namespaces, from_date=None, arvcontinue=None):
 
         if from_date:
-            from_date_str = from_date.isoformat()
+            if from_date.tzinfo != dateutil.tz.tzutc():
+                raise ValueError("Datetime is not in UTC timezone")
+
+            from_date_str = from_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         params = {
             "action":"query",
