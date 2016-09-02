@@ -428,7 +428,7 @@ class MediaWikiClient:
     def get_pages_from_allrevisions(self, namespaces, from_date=None, arvcontinue=None):
 
         if from_date:
-            from_date_str = from_date.isoformat()
+            from_date_str = from_date.strftime("%Y-%m-%d %H:%M:%S")
 
         params = {
             "action":"query",
