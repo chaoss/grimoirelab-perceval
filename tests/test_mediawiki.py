@@ -41,6 +41,7 @@ from dateutil import parser
 from perceval.cache import Cache
 from perceval.errors import CacheError
 from perceval.backends.mediawiki import MediaWiki, MediaWikiCommand, MediaWikiClient
+from perceval.utils import str_to_datetime, datetime_to_utc
 
 MEDIAWIKI_SERVER_URL = 'http://example.com'
 MEDIAWIKI_API = MEDIAWIKI_SERVER_URL + '/api.php'
@@ -446,6 +447,38 @@ class TestMediaWikiClient(unittest.TestCase):
                     'arvprop': ['ids']
                     }
         self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_get_pages_from_allrevisions_from_date(self):
+        HTTPServer.routes()
+        body = read_file('data/mediawiki_pages_allrevisions.json')
+        client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
+        namespaces = ['0']
+        str_date = '2016-01-01 00:00'
+        dt = str_to_datetime(str_date)
+        from_date = datetime_to_utc(dt)
+        response = client.get_pages_from_allrevisions(namespaces, from_date)
+        req = HTTPServer.requests_http[-1]
+        self.assertEqual(response, body)
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/api.php')
+        # Check request params
+        expected = {
+                    'action' : ['query'],
+                    'list' : ['allrevisions'],
+                    'arvnamespace':['0'],
+                    'arvdir':['newer'],
+                    'arvlimit':['max'],
+                    'format':['json'],
+                    'arvprop': ['ids'],
+                    'arvstart': ['2016-01-01T00:00:00Z']
+                    }
+        self.assertDictEqual(req.querystring, expected)
+
+        from_date = datetime.datetime(2016, 1, 1, 0, 0, 0)
+
+        with self.assertRaises(ValueError):
+            _ = client.get_pages_from_allrevisions(namespaces, from_date)
 
 
 class TestMediaWikiCommand(unittest.TestCase):
