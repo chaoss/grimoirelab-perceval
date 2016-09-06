@@ -186,6 +186,10 @@ class MediaWiki(Backend):
 
         logger.info("Looking for pages at url '%s'", self.url)
 
+        # MediaWiki >= 1.27 does not support timezone in dates
+        if from_date:
+            from_date = from_date.replace(tzinfo=None)
+
         self._purge_cache_queue()
         npages = 0  # number of pages processed
 
