@@ -108,10 +108,13 @@ def str_to_datetime(ts):
         raise InvalidDateError(date=str(ts))
 
     try:
-        # Try to remove parentheses section from dates
-        # because they cannot be parsed, like in
-        # 'Wed, 26 Oct 2005 15:20:32 -0100 (GMT+1)'.
-        ts = ts.split('(')[0]
+        # Try to remove additional information after
+        # timezone section because it cannot be parsed,
+        # like in 'Wed, 26 Oct 2005 15:20:32 -0100 (GMT+1)'
+        # or in 'Thu, 14 Aug 2008 02:07:59 +0200 CEST'.
+        m = re.search(r"^.+?[\+\-]\d{4}(\s+.+)$", ts)
+        if m:
+            ts = ts[:m.start(1)]
 
         dt = dateutil.parser.parse(ts)
 
