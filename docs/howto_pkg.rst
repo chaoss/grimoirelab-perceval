@@ -41,7 +41,7 @@ environment.
 ::
 
   python3 setup.py bdist_wheel
-  python setup.py sdist
+  python3 setup.py sdist
 
 That's it. Your packages (source code and wheel) are now in the dist directory.
 
@@ -53,7 +53,7 @@ is in working condition:
 
 ::
 
-  python setup.py register -r pypitestpython setup.py register -r pypitest
+  python setup.py register -r pypitest
   python setup.py sdist upload -r pypitest
   python setup.py bdist_wheel upload -r pypitest
 
@@ -73,11 +73,11 @@ repository.
 More details about the test Pypi repository in the `Python wiki
 <https://wiki.python.org/moin/TestPyPI>`_.
 
-* Then, upload to the live Pypi repository, and you're done:
+* Then, upload to the live Pypi repository, and you're done (there is
+no need to register in this case):
 
 ::
 
-  python setup.py register -r pypitestpython setup.py register -r pypi
   python setup.py sdist upload -r pypi
   python setup.py bdist_wheel upload -r pypi
 
