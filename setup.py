@@ -68,5 +68,6 @@ setup(name="perceval",
       keywords="development repositories analytics git github bugzilla jira jenkins",
       packages=['perceval', 'perceval.backends'],
       install_requires=['python-dateutil>=2.0.0', 'requests>=2.7.0', 'beautifulsoup4>=4.3.2'],
-      scripts=["bin/perceval"]
+      scripts=["bin/perceval"],
+      zip_safe=False
       )
