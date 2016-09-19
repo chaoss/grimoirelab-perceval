@@ -1,5 +1,35 @@
 # Releases
 
+## Perceval 0.3 - (2016-09-19)
+
+** New features and improvements: **
+
+ * New set of backends added:
+    - Phabricator
+    - Redmine
+ * Add support for creating PyPi packages
+
+
+** Backend improvements: **
+
+ * **jira**
+   - fetch additional information about custom fields
+ * **mediawiki **
+   - add a flag which ignores the MAX_RECENT_DAYS constraint when the
+     backend is tested
+
+
+** Bugs fixed: **
+
+* Cache tests for Redmine backend checked the values retrieved from the
+  repository but not from the cache.
+* Timestamps generated to fetch data from a given date included invalid
+  timezone information for Mediawiki API (>=1.27). It only works with Zulu
+  dates. (#54)
+* Date strings that included information after the timezone were not parsed:
+  `Thu, 14 Aug 2008 02:07:59 +0200 CEST`. (#57)
+
+
 ## Perceval 0.2 - (2016-07-20)
 
 ** New features and improvements: **
