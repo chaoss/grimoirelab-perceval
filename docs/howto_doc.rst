@@ -31,6 +31,7 @@ If there are changes in the list of modules
 ::
 
    cd docs
+   mkdir ../percevalsphinx-apidoc
    sphinx-apidoc --force -d 4 -o . ../percevalsphinx-apidoc --force -d 4 -o . ../perceval
    make html
 

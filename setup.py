@@ -21,18 +21,52 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+# To use a consistent encoding
+import codecs
+from os import path
 import re
 
-from distutils.core import setup
+# Always prefer setuptools over distutils
+from setuptools import setup
 
+here = path.abspath(path.dirname(__file__))
+readme_md = path.join(here, 'README.md')
+version_py = path.join(here, 'perceval', '_version.py')
 
-with open('perceval/_version.py', 'r', encoding='utf-8') as fd:
+# Pypi wants the description to be in reStrcuturedText, but
+# we have it in Markdown. So, let's convert formats.
+# Set up thinkgs so that if pypandoc is not installed, it
+# just issues a warning.
+try:
+    import pypandoc
+    long_description = pypandoc.convert(readme_md, 'rst')
+except (IOError, ImportError):
+    print("Warning: pypandoc module not found, or pandoc not installed. " \
+            + "Using md instead of rst")
+    with codecs.open(readme_md, encoding='utf-8') as f:
+        long_description = f.read()
+
+with codecs.open(version_py, 'r', encoding='utf-8') as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                         fd.read(), re.MULTILINE).group(1)
 
 setup(name="perceval",
+      description="Fetch data from software repositories",
+      long_description=long_description,
+      url="https://github.com/grimoirelab/perceval",
       version=version,
       author="Bitergia",
       author_email="sduenas@bitergia.com",
+      license="GPLv3",
+      classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'Topic :: Software Development',
+        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+        'Programming Language :: Python :: 3'
+      ],
+      keywords="development repositories analytics git github bugzilla jira jenkins",
       packages=['perceval', 'perceval.backends'],
-      scripts=["bin/perceval"])
+      install_requires=['python-dateutil>=2.0.0', 'requests>=2.7.0', 'beautifulsoup4>=4.3.2'],
+      scripts=["bin/perceval"]
+      )

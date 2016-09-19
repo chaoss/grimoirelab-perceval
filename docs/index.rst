@@ -11,6 +11,7 @@ Contents:
    perceval
    contributing.rst
    howto_doc.rst
+   howto_pkg.rst
 
 Indices and tables
 ==================
