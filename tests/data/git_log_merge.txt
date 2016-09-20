@@ -1,0 +1,27 @@
+commit 8cbdd85bda499d028b8f128191f392d701e8e41d 72b5ac54d620b29cae23d25f0405f2765b466f72 302f0493f0bfaabd6f77ce7bfaa12620abf74948
+Merge: 72b5ac5 302f049
+Author:     Linus Torvalds <torvalds@linux-foundation.org>
+AuthorDate: Tue Aug 2 19:47:06 2016 -0400
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Tue Aug 2 19:47:06 2016 -0400
+
+    Merge tag 'for-linus-v4.8' of git://github.com/martinbrandenburg/linux
+
+46  4   Documentation/filesystems/orangefs.txt
+4   0   fs/orangefs/dcache.c
+3   3   fs/orangefs/inode.c
+
+commit 456a68ee1407a77f3e804a30dff245bb6c6b872f ce8e0b86a1e9877f42fe9453ede418519115f367 51a3b654f252210572297f47597b31527c475fb8 (HEAD -> refs/heads/master)
+Merge: ce8e0b8 51a3b65
+Author:     Zhongpeng Lin (林中鹏) <lin.zhp@example.com>
+AuthorDate: Tue Feb 11 22:10:39 2014 -0800
+Commit:     Zhongpeng Lin (林中鹏) <lin.zhp@example.com>
+CommitDate: Tue Feb 11 22:10:39 2014 -0800
+
+    Merge branch 'lzp'
+    
+    Conflicts:
+    	aaa/otherthing
+
+1	0	aaa/otherthing.renamed
+::100644 100644 100644 e69de29... 58a6c75... 58a6c75... MR	aaa/otherthing.renamed
