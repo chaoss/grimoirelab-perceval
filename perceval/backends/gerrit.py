@@ -447,12 +447,14 @@ class GerritCommand(BackendCommand):
 
         group.add_argument("--user",
                            help="Gerrit ssh user")
-        group.add_argument("--url", required=True,
-                           help="Gerrit url")
         group.add_argument("--max-reviews",  dest="max_reviews",
                            type=int, default=MAX_REVIEWS,
                            help="Max number of reviews per ssh query.")
         group.add_argument("--blacklist-reviews",  dest="blacklist_reviews",
                            nargs='*', help="Wrong reviews that must not be retrieved.")
+
+        # Positional arguments
+        group.add_argument("url",
+                           help="URL of the Gerrit server")
 
         return parser

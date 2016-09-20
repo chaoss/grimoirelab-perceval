@@ -106,7 +106,7 @@ Identity added: /home/user/.ssh/id_rsa (/home/user/.ssh/id_rsa)
 To run the backend, execute the next command:
 
 ```
-$ perceval gerrit --user user --url 'review.openstack.org' --from-date '2016-01-01'
+$ perceval gerrit --user user 'review.openstack.org' --from-date '2016-01-01'
 ```
 
 ### Git
