@@ -55,7 +55,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.3.0'
+    version = '0.3.1'
 
     def __init__(self, uri, gitpath, cache=None, origin=None):
         origin = origin if origin else uri
@@ -542,7 +542,7 @@ class GitParser:
         filename = self.__get_old_filepath(data['file'])
 
         if filename not in self.commit_files:
-            self.commit_files[filename] = {}
+            self.commit_files[filename] = {'file' : filename}
 
         self.commit_files[filename]['added'] = data['added']
         self.commit_files[filename]['removed'] = data['removed']

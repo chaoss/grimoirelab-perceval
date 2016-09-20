@@ -441,6 +441,64 @@ class TestGitParser(unittest.TestCase):
                     }
         self.assertDictEqual(commits[5], expected)
 
+    def test_parser_merge_commit(self):
+        """Test if it parses all the available data on a merge commit"""
+
+        with open("data/git_log_merge.txt", 'r') as f:
+            parser = GitParser(f)
+            commits = [commit for commit in parser.parse()]
+
+        self.assertEqual(len(commits), 2)
+
+        expected = {
+                    'commit' : '8cbdd85bda499d028b8f128191f392d701e8e41d',
+                    'parents' : ['72b5ac54d620b29cae23d25f0405f2765b466f72',
+                                 '302f0493f0bfaabd6f77ce7bfaa12620abf74948'],
+                    'refs' : [],
+                    'Merge' : '72b5ac5 302f049',
+                    'Author' : 'Linus Torvalds <torvalds@linux-foundation.org>',
+                    'AuthorDate' : 'Tue Aug 2 19:47:06 2016 -0400',
+                    'Commit' : 'Linus Torvalds <torvalds@linux-foundation.org>',
+                    'CommitDate' : 'Tue Aug 2 19:47:06 2016 -0400',
+                    'message' : "Merge tag 'for-linus-v4.8' of git://github.com/martinbrandenburg/linux",
+                    'files' : [{
+                                'file' : "Documentation/filesystems/orangefs.txt",
+                                'added' : '46',
+                                'removed' : '4'
+                               },
+                               {
+                                'file' : "fs/orangefs/dcache.c",
+                                'added' : '4',
+                                'removed' : '0'
+                               },
+                               {
+                                'file' : "fs/orangefs/inode.c",
+                                'added' : '3',
+                                'removed' : '3'
+                               }]
+                    }
+        self.assertDictEqual(commits[0], expected)
+
+        expected = {
+                    'commit' : '456a68ee1407a77f3e804a30dff245bb6c6b872f',
+                    'parents' : ['ce8e0b86a1e9877f42fe9453ede418519115f367',
+                                 '51a3b654f252210572297f47597b31527c475fb8'],
+                    'refs' : ['HEAD -> refs/heads/master'],
+                    'Merge' : 'ce8e0b8 51a3b65',
+                    'Author' : 'Zhongpeng Lin (林中鹏) <lin.zhp@example.com>',
+                    'AuthorDate' : 'Tue Feb 11 22:10:39 2014 -0800',
+                    'Commit' : 'Zhongpeng Lin (林中鹏) <lin.zhp@example.com>',
+                    'CommitDate' : 'Tue Feb 11 22:10:39 2014 -0800',
+                    'message' : "Merge branch 'lzp'\n\nConflicts:\n\taaa/otherthing",
+                    'files' : [{'file' : "aaa/otherthing.renamed",
+                                'added' : '1',
+                                'removed' : '0',
+                                'modes' : ['100644', '100644', '100644'],
+                                'indexes' : ['e69de29...', '58a6c75...', '58a6c75...'],
+                                'action' : 'MR'}]
+                    }
+        self.assertDictEqual(commits[1], expected)
+
     def test_parser_empty_log(self):
         """Test if it parsers an empty git log stream"""
 
