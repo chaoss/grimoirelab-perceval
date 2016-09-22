@@ -134,6 +134,7 @@ class MediaWiki(Backend):
         cache_items = self.cache.retrieve()
 
         pages_dicts = ['allrevisions','allpages','recentchanges']
+        pages_done = []  # pages already retrieved in reviews API
 
         # pages -> revisions
         for items in cache_items:
@@ -142,6 +143,11 @@ class MediaWiki(Backend):
                 if pages_dict in data_json['query']:
                     pages_json = data_json['query'][pages_dict]
                     for page in pages_json:
+                        if self.reviews_api:
+                            if page['pageid'] in pages_done:
+                                # The page was already returned for previous revisions
+                                continue
+                            pages_done.append(page['pageid'])
                         page_reviews = self.__build_page_reviews(page, json.loads(next(cache_items)))
                         if not page_reviews:
                             continue
