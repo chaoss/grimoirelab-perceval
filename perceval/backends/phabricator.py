@@ -309,6 +309,21 @@ class Phabricator(Backend):
         for u in users:
             yield u
 
+    @staticmethod
+    def parse_phids(raw_json):
+        """Parse a Phabicator PHIDs JSON stream.
+
+        This method parses a JSON stream and returns a list iterator.
+        Each item is a dictionary that contains the PHID parsed data.
+
+        :param raw_json: JSON string to parse
+
+        :returns: a generator of parsed PHIDs
+        """
+        results = json.loads(raw_json)
+        for phid in results['result'].values():
+            yield phid
+
 
 class PhabricatorCommand(BackendCommand):
     """Class to run Phabricator backend from the command line."""

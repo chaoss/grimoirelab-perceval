@@ -432,6 +432,19 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(results[2]['userName'], 'jdoe')
         self.assertEqual(results[3]['userName'], 'jane')
 
+    def test_parse_phids(self):
+        """Test if it parses a phids stream"""
+
+        raw_json = read_file('data/phabricator/phabricator_phids.json')
+
+        phids = Phabricator.parse_phids(raw_json)
+        results = [phid for phid in phids]
+        results.sort(key=lambda x: x['fullName'])
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]['fullName'], 'Herald')
+        self.assertEqual(results[1]['fullName'], 'Mock')
+
 
 class TestPhabricatorBackendCache(unittest.TestCase):
     """Phabricator backend tests using a cache"""
