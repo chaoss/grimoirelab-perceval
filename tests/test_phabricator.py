@@ -66,13 +66,14 @@ def setup_http_server():
     tasks_empty_body = read_file('data/phabricator/phabricator_tasks_empty.json')
     tasks_trans_body = read_file('data/phabricator/phabricator_transactions.json', 'rb')
     tasks_trans_next_body = read_file('data/phabricator/phabricator_transactions_next.json', 'rb')
-    phids_body = read_file('data/phabricator/phabricator_phids.json', 'rb')
     users_body = read_file('data/phabricator/phabricator_users.json', 'rb')
     jane_body = read_file('data/phabricator/phabricator_user_jane.json', 'rb')
     janes_body = read_file('data/phabricator/phabricator_user_janesmith.json', 'rb')
     jdoe_body = read_file('data/phabricator/phabricator_user_jdoe.json', 'rb')
     jrae_body = read_file('data/phabricator/phabricator_user_jrae.json', 'rb')
     jsmith_body = read_file('data/phabricator/phabricator_user_jsmith.json', 'rb')
+    phids_body = read_file('data/phabricator/phabricator_phids.json', 'rb')
+    herald_body = read_file('data/phabricator/phabricator_phid_herald.json', 'rb')
 
     phids_users = {
         'PHID-USER-ojtcpympsmwenszuef7p' : jane_body,
@@ -80,6 +81,10 @@ def setup_http_server():
         'PHID-USER-2uk52xorcqb6sjvp467y' : jdoe_body,
         'PHID-USER-pr5fcxy4xk5ofqsfqcfc' : jrae_body,
         'PHID-USER-bjxhrstz5fb5gkrojmev' : jsmith_body
+    }
+
+    phids = {
+        'PHID-APPS-PhabricatorHeraldApplication' : herald_body
     }
 
     def request_callback(method, uri, headers):
@@ -100,13 +105,16 @@ def setup_http_server():
                 body = tasks_trans_body
             else:
                 body = tasks_trans_next_body
-        elif uri == PHABRICATOR_PHIDS_URL:
-            body = phids_body
         elif uri == PHABRICATOR_USERS_URL:
             if len(params['phids']) == 4:
                 body = users_body
             else:
                 body = phids_users[params['phids'][0]]
+        elif uri == PHABRICATOR_PHIDS_URL:
+            if len(params['phids']) == 2:
+                body = phids_body
+            else:
+                body = phids[params['phids'][0]]
         elif uri == PHABRICATOR_API_ERROR_URL:
             body = error_body
         else:
@@ -179,7 +187,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
                     (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
                     (78, 17, 'jdoe', None, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
-                    (296, 17, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
+                    (296, 18, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
 
         self.assertEqual(len(tasks), len(expected))
 
@@ -207,6 +215,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         trans = tasks[3]['data']['transactions']
         self.assertEqual(trans[0]['authorData']['userName'], 'jrae')
         self.assertEqual(trans[15]['authorData']['userName'], 'jane')
+        self.assertEqual(trans[16]['authorData']['name'], 'Herald')
 
         # Check requests
         expected = [{
@@ -283,6 +292,14 @@ class TestPhabricatorBackend(unittest.TestCase):
                                  '__conduit__' : {'token': 'AAAA'},
                                  'phids' : ['PHID-USER-ojtcpympsmwenszuef7p']
                                 }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ["PHID-APPS-PhabricatorHeraldApplication"]
+                                }
                     }]
 
         self.assertEqual(len(http_requests), len(expected))
@@ -309,7 +326,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(task['data']['id'], 296)
         self.assertEqual(task['data']['fields']['authorData']['userName'], 'jane')
         self.assertEqual(task['data']['fields']['ownerData']['userName'], 'jrae')
-        self.assertEqual(len(task['data']['transactions']), 17)
+        self.assertEqual(len(task['data']['transactions']), 18)
         self.assertEqual(task['uuid'], 'e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6')
         self.assertEqual(task['updated_on'], 1467196707.0)
 
@@ -345,6 +362,14 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'params' : {
                                  '__conduit__' : {'token': 'AAAA'},
                                  'phids' : ['PHID-USER-ojtcpympsmwenszuef7p']
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ["PHID-APPS-PhabricatorHeraldApplication"]
                                 }
                     }]
 
@@ -467,7 +492,7 @@ class TestPhabricatorBackendCache(unittest.TestCase):
         phab = Phabricator(PHABRICATOR_URL, 'AAAA', cache=cache)
 
         tasks = [task for task in phab.fetch()]
-        self.assertEqual(len(http_requests), 9)
+        self.assertEqual(len(http_requests), 10)
 
         # Now, we get the tasks from the cache.
         # The tasks should be the same and there won't be
@@ -478,7 +503,7 @@ class TestPhabricatorBackendCache(unittest.TestCase):
         expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
                     (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
                     (78, 17, 'jdoe', None, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
-                    (296, 17, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
+                    (296, 18, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
 
         self.assertEqual(len(cached_tasks), len(expected))
 
@@ -498,10 +523,11 @@ class TestPhabricatorBackendCache(unittest.TestCase):
             self.assertEqual(task['uuid'], expc[4])
             self.assertEqual(task['updated_on'], expc[5])
 
+            # Compare chached and fetched task
             self.assertDictEqual(task['data'], tasks[x]['data'])
 
         # No more requests were sent
-        self.assertEqual(len(http_requests), 9)
+        self.assertEqual(len(http_requests), 10)
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any task returned when the cache is empty"""

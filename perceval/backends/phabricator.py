@@ -48,7 +48,7 @@ class Phabricator(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url`
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     def __init__(self, url, api_token, cache=None, origin=None):
         origin = origin if origin else url
@@ -144,7 +144,8 @@ class Phabricator(Backend):
 
                 yield task
 
-            self._push_cache_queue('{}') # Checkpoint
+            # Checkpoint. A task finish here.
+            self._push_cache_queue('{}')
             self._flush_cache_queue()
 
     def __fetch_tasks_from_cache(self):
@@ -165,7 +166,7 @@ class Phabricator(Backend):
             raw_trans = next(cache_items)
             tasks_trans = self.parse_tasks_transactions(raw_trans)
 
-            users = self.__retrive_cached_users(cache_items)
+            users = self.__retrive_cached_users_and_phids(cache_items)
             for user in users:
                 user_id = user['phid']
                 cached_users[user_id] = user
@@ -181,20 +182,29 @@ class Phabricator(Backend):
             return self._users[user_id]
 
         logger.debug("User %s not found on client cache; fetching it", user_id)
-        user = self.__fetch_and_parse_users(user_id)[0]
+
+        if user_id.startswith('PHID-USER-'):
+            user = self.__fetch_and_parse_users(user_id)[0]
+        else:
+            logger.debug("User %s is not a real user. Using PHID API to fetch it", user_id)
+            user = self.__fetch_and_parse_phids(user_id)[0]
         self._users[user_id] = user
         return user
 
-    def __retrive_cached_users(self, cache_items):
+    def __retrive_cached_users_and_phids(self, cache_items):
         checkpoint = False
 
         while not checkpoint:
-            raw_user = next(cache_items)
+            raw_item = next(cache_items)
 
-            checkpoint = raw_user == '{}'
-
-            if not checkpoint:
-                users = [user for user in self.parse_users(raw_user)]
+            if raw_item == '{}':
+                checkpoint = True
+            elif raw_item == '{PHID}':
+                raw_item = next(cache_items)
+                phids = [phid for phid in self.parse_phids(raw_item)]
+                yield phids[0]
+            else:
+                users = [user for user in self.parse_users(raw_item)]
                 yield users[0]
 
     def __fetch_and_parse_tasks_transactions(self, *tasks_ids):
@@ -218,6 +228,15 @@ class Phabricator(Backend):
         self._push_cache_queue(raw_json)
         users = self.parse_users(raw_json)
         return [user for user in users]
+
+    def __fetch_and_parse_phids(self, *phids):
+        logger.debug("Fetching and parsing phids data")
+        raw_json = self.client.phids(*phids)
+        # PHID checkpoint
+        self._push_cache_queue('{PHID}')
+        self._push_cache_queue(raw_json)
+        result = self.parse_phids(raw_json)
+        return [phid for phid in result]
 
     def __build_cached_tasks(self, tasks, transactions, cached_users):
         for task in tasks:
