@@ -444,11 +444,12 @@ class ConduitClient:
     PHAB_PHIDS = 'phid.query'
     PHAB_USERS = 'user.query'
 
-
     PAFTER = 'after'
+    PATTACHMENTS = 'attachments'
     PCONSTRAINTS = 'constraints'
     PHIDS = 'phids'
     PIDS = 'ids'
+    PPROJECTS = 'projects'
     PORDER = 'order'
     PMODIFIED_START = 'modifiedStart'
 
@@ -469,8 +470,13 @@ class ConduitClient:
             self.PMODIFIED_START : ts,
         }]
 
+        attachments = {
+            self. PPROJECTS : True
+        }
+
         params = {
             self.PCONSTRAINTS : consts,
+            self.PATTACHMENTS : attachments,
             self.PORDER : self.VOUTDATED,
         }
 

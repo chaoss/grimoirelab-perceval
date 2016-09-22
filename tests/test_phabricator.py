@@ -223,6 +223,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 0}],
                                   'order' : 'outdated'
                                 }
@@ -265,6 +266,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
                                   'after' : '335',
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 0}],
                                   'order' : 'outdated'
                                 }
@@ -336,6 +338,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 1467158400}],
                                   'order' : 'outdated'
                                 }
@@ -399,6 +402,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 1483228800}],
                                   'order' : 'outdated'
                                 }
@@ -602,6 +606,7 @@ class TestConduitClient(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'aaaa'},
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 1462233600}],
                                   'order' : 'outdated'
                                 }
@@ -612,6 +617,7 @@ class TestConduitClient(unittest.TestCase):
                      'params' : {
                                   '__conduit__' : {'token': 'aaaa'},
                                   'after' : '335',
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 1462233600}],
                                   'order' : 'outdated'
                                 }

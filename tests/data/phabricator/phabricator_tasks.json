@@ -10,7 +10,11 @@
         },
         "data": [
             {
-                "attachments": {},
+                "attachments": {
+                    "projects": {
+                        "projectPHIDs": []
+                    }
+                },
                 "fields": {
                     "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
                     "dateCreated": 1462297064,
@@ -40,7 +44,11 @@
                 "type": "TASK"
             },
             {
-                "attachments": {},
+                "attachments": {
+                    "projects": {
+                        "projectPHIDs": []
+                    }
+                },
                 "fields": {
                     "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
                     "dateCreated": 1462379566,
@@ -70,7 +78,11 @@
                 "type": "TASK"
             },
             {
-                "attachments": {},
+                "attachments": {
+                    "projects": {
+                        "projectPHIDs": []
+                    }
+                },
                 "fields": {
                     "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
                     "dateCreated": 1462645103,

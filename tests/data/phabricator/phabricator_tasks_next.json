@@ -10,7 +10,14 @@
         },
         "data": [
             {
-                "attachments": {},
+                "attachments": {
+                    "projects": {
+                        "projectPHIDs": [
+                            "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo",
+                            "PHID-PROJ-2qnt6thbrd7qnx5bitzy"
+                        ]
+                    }
+                },
                 "fields": {
                     "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
                     "dateCreated": 1465815168,
