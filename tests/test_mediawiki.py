@@ -24,7 +24,6 @@
 
 import argparse
 import datetime
-import json
 import shutil
 import sys
 import tempfile
@@ -156,13 +155,13 @@ class TestMediaWikiBackend(unittest.TestCase):
         self.assertEqual(mediawiki.origin, MEDIAWIKI_SERVER_URL)
 
     @httpretty.activate
-    def _test_fetch_version(self, version, from_date=None):
+    def _test_fetch_version(self, version, from_date=None, reviews_api=False):
         """Test whether the pages with their reviews are returned"""
 
         HTTPServer.routes(version)
 
         # Test fetch pages with their reviews
-        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
+        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, reviews_api=reviews_api)
 
         if from_date:
             # Set flag to ignore MAX_RECENT_DAYS exception
@@ -171,10 +170,10 @@ class TestMediaWikiBackend(unittest.TestCase):
         else:
             pages = [page for page in mediawiki.fetch()]
 
-        if version == "1.28":
+        if version == "1.28" and reviews_api:
             # 2 pages in all name spaces
             self.assertEqual(len(pages), 2)
-        elif version == "1.23":
+        elif version == "1.23" or not reviews_api:
             if not from_date:
                 # 2 pages per each of the 5 name spaces
                 self.assertEqual(len(pages), 10)
@@ -190,6 +189,8 @@ class TestMediaWikiBackend_1_23(TestMediaWikiBackend):
 
     def test_fetch(self):
         self._test_fetch_version("1.23")
+        self._test_fetch_version("1.23", reviews_api=True)
+
 
     @httpretty.activate
     def test_fetch_from_date(self):
@@ -213,11 +214,13 @@ class TestMediaWikiBackend_1_28(TestMediaWikiBackend):
 
     def test_fetch(self):
         self._test_fetch_version("1.28")
+        self._test_fetch_version("1.28", reviews_api=True)
 
     @httpretty.activate
     def test_fetch_from_date(self):
         from_date = parser.parse("2016-06-23 15:35")
         self._test_fetch_version("1.28", from_date)
+        self._test_fetch_version("1.28", from_date, reviews_api=True)
 
     @httpretty.activate
     def test_fetch_empty_1_28(self):
@@ -241,15 +244,16 @@ class TestMediaWikiBackendCache(unittest.TestCase):
         shutil.rmtree(self.tmp_path)
 
     @httpretty.activate
-    def _test_fetch_from_cache(self, version):
+    def _test_fetch_from_cache(self, version, reviews_api=False):
         """Test whether the cache works"""
 
         HTTPServer.routes(version)
 
         # First, we fetch the pages from the server, storing them
         # in a cache
+        shutil.rmtree(self.tmp_path)
         cache = Cache(self.tmp_path)
-        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, cache=cache)
+        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, cache=cache, reviews_api=reviews_api)
 
         pages = [page for page in mediawiki.fetch()]
         requests_done = len(HTTPServer.requests_http)
@@ -258,13 +262,13 @@ class TestMediaWikiBackendCache(unittest.TestCase):
         cached_pages = [page for page in mediawiki.fetch_from_cache()]
         # No new requests to the server
         self.assertEqual(len(HTTPServer.requests_http), requests_done)
-        # The contents should be the same
         self.assertEqual(len(cached_pages), len(pages))
 
-        if version == "1.28":
+
+        if version == "1.28" and reviews_api:
             # 2 pages in all name spaces
             self.assertEqual(len(pages), 2)
-        elif version == "1.23":
+        elif version == "1.23" or not reviews_api:
             # 2 pages per each of the 5 name spaces
             self.assertEqual(len(pages), 10)
 
@@ -303,6 +307,7 @@ class TestMediaWikiBackendCache1_28(TestMediaWikiBackendCache):
     def test_fetch_from_cache(self):
         """Test whether the cache works"""
         self._test_fetch_from_cache("1.28")
+        self._test_fetch_from_cache("1.28", reviews_api=True)
 
 
 class TestMediaWikiClient(unittest.TestCase):
