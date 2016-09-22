@@ -407,7 +407,9 @@ class ConduitClient:
     # Methods
     MANIPHEST_TASKS = 'maniphest.search'
     MANIPHEST_TRANSACTIONS = 'maniphest.gettasktransactions'
+    PHAB_PHIDS = 'phid.query'
     PHAB_USERS = 'user.query'
+
 
     PAFTER = 'after'
     PCONSTRAINTS = 'constraints'
@@ -470,6 +472,19 @@ class ConduitClient:
         }
 
         response = self._call(self.PHAB_USERS, params)
+
+        return response
+
+    def phids(self, *phids):
+        """Retrieve data about PHIDs.
+
+        :params phids: list of PHIDs
+        """
+        params = {
+            self.PHIDS : phids
+        }
+
+        response = self._call(self.PHAB_PHIDS, params)
 
         return response
 

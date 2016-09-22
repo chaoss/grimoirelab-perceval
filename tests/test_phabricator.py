@@ -45,6 +45,7 @@ PHABRICATOR_API_URL = PHABRICATOR_URL + '/api'
 PHABRICATOR_API_ERROR_URL = PHABRICATOR_API_URL + '/error'
 PHABRICATOR_TASKS_URL = PHABRICATOR_API_URL + '/maniphest.search'
 PHABRICATOR_TRANSACTIONS_URL = PHABRICATOR_API_URL + '/maniphest.gettasktransactions'
+PHABRICATOR_PHIDS_URL = PHABRICATOR_API_URL + '/phid.query'
 PHABRICATOR_USERS_URL = PHABRICATOR_API_URL + '/user.query'
 
 
@@ -65,6 +66,7 @@ def setup_http_server():
     tasks_empty_body = read_file('data/phabricator/phabricator_tasks_empty.json')
     tasks_trans_body = read_file('data/phabricator/phabricator_transactions.json', 'rb')
     tasks_trans_next_body = read_file('data/phabricator/phabricator_transactions_next.json', 'rb')
+    phids_body = read_file('data/phabricator/phabricator_phids.json', 'rb')
     users_body = read_file('data/phabricator/phabricator_users.json', 'rb')
     jane_body = read_file('data/phabricator/phabricator_user_jane.json', 'rb')
     janes_body = read_file('data/phabricator/phabricator_user_janesmith.json', 'rb')
@@ -98,6 +100,8 @@ def setup_http_server():
                 body = tasks_trans_body
             else:
                 body = tasks_trans_next_body
+        elif uri == PHABRICATOR_PHIDS_URL:
+            body = phids_body
         elif uri == PHABRICATOR_USERS_URL:
             if len(params['phids']) == 4:
                 body = users_body
@@ -124,6 +128,11 @@ def setup_http_server():
                            ])
     httpretty.register_uri(httpretty.POST,
                            PHABRICATOR_USERS_URL,
+                           responses=[
+                                httpretty.Response(body=request_callback)
+                           ])
+    httpretty.register_uri(httpretty.POST,
+                           PHABRICATOR_PHIDS_URL,
                            responses=[
                                 httpretty.Response(body=request_callback)
                            ])
@@ -621,6 +630,32 @@ class TestConduitClient(unittest.TestCase):
                                             "PHID-USER-bjxhrstz5fb5gkrojmev",
                                             "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
                                             "PHID-USER-ojtcpympsmwenszuef7p"]
+                                }
+                   }]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            rparams = http_requests[i].parsed_body
+            rparams['params'] = json.loads(rparams['params'][0])
+            self.assertDictEqual(rparams, expected[i])
+
+    @httpretty.activate
+    def test_phids(self):
+        """Test if a set of PHIDs is returned"""
+
+        http_requests = setup_http_server()
+
+        client = ConduitClient(PHABRICATOR_URL, 'aaaa')
+        _ = client.phids("PHID-APPS-PhabricatorHeraldApplication",
+                         "PHID-APPS-PhabricatorMockApplication")
+        expected = [{
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'aaaa'},
+                                 'phids' : ["PHID-APPS-PhabricatorHeraldApplication",
+                                            "PHID-APPS-PhabricatorMockApplication"]
                                 }
                    }]
 
