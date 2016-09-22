@@ -220,13 +220,24 @@
                 "transactionType": "column"
             },
             {
-                "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
+                "authorPHID": "PHID-APPS-PhabricatorHeraldApplication",
                 "comments": null,
                 "dateCreated": "1465815168",
                 "newValue": null,
                 "oldValue": null,
                 "taskID": "296",
                 "transactionID": "5438",
+                "transactionPHID": "PHID-XACT-TASK-tlrieajmjbvyvq3",
+                "transactionType": "core:create"
+            },
+            {
+                "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
+                "comments": null,
+                "dateCreated": "1465815168",
+                "newValue": null,
+                "oldValue": null,
+                "taskID": "296",
+                "transactionID": "5437",
                 "transactionPHID": "PHID-XACT-TASK-tlrieajmjbvyvq3",
                 "transactionType": "core:create"
             }

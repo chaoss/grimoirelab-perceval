@@ -1,0 +1,24 @@
+{
+    "error_code": null,
+    "error_info": null,
+    "result": {
+        "PHID-APPS-PhabricatorHeraldApplication": {
+            "fullName": "Herald",
+            "name": "Herald",
+            "phid": "PHID-APPS-PhabricatorHeraldApplication",
+            "status": "open",
+            "type": "APPS",
+            "typeName": "Application",
+            "uri": "https://phabricator.example.com/herald/"
+        },
+        "PHID-APPS-PhabricatorMockApplication": {
+            "fullName": "Mock",
+            "name": "Mock",
+            "phid": "PHID-APPS-PhabricatorMockApplication",
+            "status": "open",
+            "type": "APPS",
+            "typeName": "Application",
+            "uri": "https://phabricator.example.com/herald/"
+        }
+    }
+}
