@@ -48,7 +48,7 @@ class Phabricator(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url`
     """
-    version = '0.1.1'
+    version = '0.2.0'
 
     def __init__(self, url, api_token, cache=None, origin=None):
         origin = origin if origin else url
@@ -57,6 +57,7 @@ class Phabricator(Backend):
         self.url = url
         self.client = ConduitClient(url, api_token)
         self._users = {}
+        self._projects = {}
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -131,6 +132,9 @@ class Phabricator(Backend):
             tasks_trans = self.__fetch_and_parse_tasks_transactions(*tasks_ids)
 
             for task in tasks:
+                # Task check point
+                self._push_cache_queue('{TASK}')
+
                 tid = str(task['id'])
                 author_id = task['fields']['authorPHID']
                 owner_id = task['fields']['ownerPHID']
@@ -140,17 +144,29 @@ class Phabricator(Backend):
                 if owner_id:
                     task['fields']['ownerData'] = self.__get_or_fetch_user(owner_id)
 
+                # Users checkpoint
+                self._push_cache_queue('{ENDUSERS}')
+
+                project_ids = task['attachments']['projects']['projectPHIDs']
+                task_projects = [self.__get_or_fetch_project(project_id) \
+                                 for project_id in project_ids]
+
+                # Projects checkpoint
+                self._push_cache_queue('{ENDPROJECTS}')
+
                 task['transactions'] = tasks_trans[tid]
+                task['projects'] = task_projects
 
                 yield task
 
-            # Checkpoint. A task finish here.
+            # Checkpoint. A tasks set finish here.
             self._push_cache_queue('{}')
             self._flush_cache_queue()
 
     def __fetch_tasks_from_cache(self):
         cache_items = self.cache.retrieve()
         cached_users = {}
+        cached_projects = {}
 
         while True:
             try:
@@ -166,13 +182,32 @@ class Phabricator(Backend):
             raw_trans = next(cache_items)
             tasks_trans = self.parse_tasks_transactions(raw_trans)
 
-            users = self.__retrive_cached_users_and_phids(cache_items)
+            # Retrieve cached users from the transactions
+            users = self.__retrive_cached_users(cache_items)
             for user in users:
                 user_id = user['phid']
                 cached_users[user_id] = user
 
+            # Retrieve cached tasks users and projects
+            raw_checkpoint = next(cache_items)
+            checkpoint = raw_checkpoint == '{}'
+
+            while not checkpoint:
+                users = self.__retrive_cached_users(cache_items)
+                for user in users:
+                    user_id = user['phid']
+                    cached_users[user_id] = user
+
+                projects = self.__retrieve_cached_projects(cache_items)
+                for project in projects:
+                    project_id = project['phid']
+                    cached_projects[project_id] = project
+
+                raw_checkpoint = next(cache_items)
+                checkpoint = raw_checkpoint == '{}'
+
             task_builder = self.__build_cached_tasks(tasks, tasks_trans,
-                                                     cached_users)
+                                                     cached_users, cached_projects)
 
             for task in task_builder:
                 yield task
@@ -191,13 +226,22 @@ class Phabricator(Backend):
         self._users[user_id] = user
         return user
 
-    def __retrive_cached_users_and_phids(self, cache_items):
+    def __get_or_fetch_project(self, project_id):
+        if project_id in self._projects:
+            return self._projects[project_id]
+
+        logger.debug("Project %s not found on client cache; fetching it", project_id)
+        project = self.__fetch_and_parse_phids(project_id)[0]
+        self._projects[project_id] = project
+        return project
+
+    def __retrive_cached_users(self, cache_items):
         checkpoint = False
 
         while not checkpoint:
             raw_item = next(cache_items)
 
-            if raw_item == '{}':
+            if raw_item in ('{ENDUSERS}', '{ENDTRANS}'):
                 checkpoint = True
             elif raw_item == '{PHID}':
                 raw_item = next(cache_items)
@@ -206,6 +250,19 @@ class Phabricator(Backend):
             else:
                 users = [user for user in self.parse_users(raw_item)]
                 yield users[0]
+
+    def __retrieve_cached_projects(self, cache_items):
+        checkpoint = False
+
+        while not checkpoint:
+            raw_item = next(cache_items)
+
+            if raw_item == '{ENDPROJECTS}':
+                checkpoint = True
+            else:
+                raw_item = next(cache_items)
+                phids = [phid for phid in self.parse_phids(raw_item)]
+                yield phids[0]
 
     def __fetch_and_parse_tasks_transactions(self, *tasks_ids):
         logger.debug("Fetching and parsing tasks transactions")
@@ -219,6 +276,9 @@ class Phabricator(Backend):
                 author_id = tt['authorPHID']
                 author = self.__get_or_fetch_user(author_id)
                 tt['authorData'] = author
+
+        # Transactions checkpoint
+        self._push_cache_queue('{ENDTRANS}')
 
         return tasks_trans
 
@@ -238,7 +298,8 @@ class Phabricator(Backend):
         result = self.parse_phids(raw_json)
         return [phid for phid in result]
 
-    def __build_cached_tasks(self, tasks, transactions, cached_users):
+    def __build_cached_tasks(self, tasks, transactions,
+                             cached_users, cached_projects):
         for task in tasks:
             tid = str(task['id'])
             author_id = task['fields']['authorPHID']
@@ -249,14 +310,20 @@ class Phabricator(Backend):
             if owner_id:
                 task['fields']['ownerData'] = cached_users[owner_id]
 
+            # Build tasks transactions
             task_trans = transactions[tid]
 
-            # Build tasks transactions
             for tt in task_trans:
                 user_id = tt['authorPHID']
                 tt['authorData'] = cached_users[user_id]
 
+            # Build tasks projects
+            projects_ids = task['attachments']['projects']['projectPHIDs']
+            task_projects = [cached_projects[project_id] \
+                             for project_id in projects_ids]
+
             task['transactions'] = task_trans
+            task['projects'] = task_projects
 
             yield task
 
@@ -444,11 +511,12 @@ class ConduitClient:
     PHAB_PHIDS = 'phid.query'
     PHAB_USERS = 'user.query'
 
-
     PAFTER = 'after'
+    PATTACHMENTS = 'attachments'
     PCONSTRAINTS = 'constraints'
     PHIDS = 'phids'
     PIDS = 'ids'
+    PPROJECTS = 'projects'
     PORDER = 'order'
     PMODIFIED_START = 'modifiedStart'
 
@@ -469,8 +537,13 @@ class ConduitClient:
             self.PMODIFIED_START : ts,
         }]
 
+        attachments = {
+            self. PPROJECTS : True
+        }
+
         params = {
             self.PCONSTRAINTS : consts,
+            self.PATTACHMENTS : attachments,
             self.PORDER : self.VOUTDATED,
         }
 

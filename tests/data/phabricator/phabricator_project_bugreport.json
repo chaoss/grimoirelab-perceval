@@ -1,0 +1,15 @@
+{
+    "error_code": null,
+    "error_info": null,
+    "result": {
+        "PHID-PROJ-2qnt6thbrd7qnx5bitzy": {
+            "fullName": "Bug report",
+            "name": "Bug report",
+            "phid": "PHID-PROJ-2qnt6thbrd7qnx5bitzy",
+            "status": "open",
+            "type": "PROJ",
+            "typeName": "Project",
+            "uri": "https://phabricator.bitergia.net/tag/bug_report/"
+        }
+    }
+}

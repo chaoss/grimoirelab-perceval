@@ -74,6 +74,8 @@ def setup_http_server():
     jsmith_body = read_file('data/phabricator/phabricator_user_jsmith.json', 'rb')
     phids_body = read_file('data/phabricator/phabricator_phids.json', 'rb')
     herald_body = read_file('data/phabricator/phabricator_phid_herald.json', 'rb')
+    bugreport_body = read_file('data/phabricator/phabricator_project_bugreport.json', 'rb')
+    teamdevel_body = read_file('data/phabricator/phabricator_project_devel.json', 'rb')
 
     phids_users = {
         'PHID-USER-ojtcpympsmwenszuef7p' : jane_body,
@@ -84,7 +86,9 @@ def setup_http_server():
     }
 
     phids = {
-        'PHID-APPS-PhabricatorHeraldApplication' : herald_body
+        'PHID-APPS-PhabricatorHeraldApplication' : herald_body,
+        'PHID-PROJ-2qnt6thbrd7qnx5bitzy' : bugreport_body,
+        'PHID-PROJ-zi2ndtoy3fh5pnbqzfdo' : teamdevel_body
     }
 
     def request_callback(method, uri, headers):
@@ -217,12 +221,24 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(trans[15]['authorData']['userName'], 'jane')
         self.assertEqual(trans[16]['authorData']['name'], 'Herald')
 
+        # Check some info about projects
+        prjs = tasks[0]['data']['projects']
+        self.assertEqual(len(prjs), 0)
+
+        prjs = tasks[3]['data']['projects']
+        self.assertEqual(len(prjs), 2)
+        self.assertEqual(prjs[0]['phid'], 'PHID-PROJ-zi2ndtoy3fh5pnbqzfdo')
+        self.assertEqual(prjs[0]['name'], 'Team: Devel')
+        self.assertEqual(prjs[1]['phid'], 'PHID-PROJ-2qnt6thbrd7qnx5bitzy')
+        self.assertEqual(prjs[1]['name'], 'Bug report')
+
         # Check requests
         expected = [{
                      '__conduit__' : ['True'],
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 0}],
                                   'order' : 'outdated'
                                 }
@@ -265,6 +281,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
                                   'after' : '335',
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 0}],
                                   'order' : 'outdated'
                                 }
@@ -298,9 +315,26 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                  '__conduit__' : {'token': 'AAAA'},
-                                 'phids' : ["PHID-APPS-PhabricatorHeraldApplication"]
+                                 'phids' : ['PHID-APPS-PhabricatorHeraldApplication']
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-PROJ-2qnt6thbrd7qnx5bitzy']
                                 }
                     }]
+
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -336,6 +370,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 1467158400}],
                                   'order' : 'outdated'
                                 }
@@ -369,7 +404,23 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                  '__conduit__' : {'token': 'AAAA'},
-                                 'phids' : ["PHID-APPS-PhabricatorHeraldApplication"]
+                                 'phids' : ['PHID-APPS-PhabricatorHeraldApplication']
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
+                                }
+                    },
+                    {
+                     '__conduit__' : ['True'],
+                     'output' : ['json'],
+                     'params' : {
+                                 '__conduit__' : {'token': 'AAAA'},
+                                 'phids' : ['PHID-PROJ-2qnt6thbrd7qnx5bitzy']
                                 }
                     }]
 
@@ -399,6 +450,7 @@ class TestPhabricatorBackend(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'AAAA'},
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 1483228800}],
                                   'order' : 'outdated'
                                 }
@@ -492,7 +544,7 @@ class TestPhabricatorBackendCache(unittest.TestCase):
         phab = Phabricator(PHABRICATOR_URL, 'AAAA', cache=cache)
 
         tasks = [task for task in phab.fetch()]
-        self.assertEqual(len(http_requests), 10)
+        self.assertEqual(len(http_requests), 12)
 
         # Now, we get the tasks from the cache.
         # The tasks should be the same and there won't be
@@ -500,10 +552,10 @@ class TestPhabricatorBackendCache(unittest.TestCase):
         cached_tasks = [task for task in phab.fetch_from_cache()]
         self.assertEqual(len(cached_tasks), len(tasks))
 
-        expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
-                    (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
-                    (78, 17, 'jdoe', None, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
-                    (296, 18, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
+        expected = [(69, 16, 0, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
+                    (73, 20, 0, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
+                    (78, 17, 0, 'jdoe', None, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
+                    (296, 18, 2, 'jane', 'jrae','e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
 
         self.assertEqual(len(cached_tasks), len(expected))
 
@@ -512,22 +564,23 @@ class TestPhabricatorBackendCache(unittest.TestCase):
             expc = expected[x]
             self.assertEqual(task['data']['id'], expc[0])
             self.assertEqual(len(task['data']['transactions']), expc[1])
-            self.assertEqual(task['data']['fields']['authorData']['userName'], expc[2])
+            self.assertEqual(len(task['data']['projects']), expc[2])
+            self.assertEqual(task['data']['fields']['authorData']['userName'], expc[3])
 
             # Check owner data; when it is null owner is not included
-            if not expc[3]:
+            if not expc[4]:
                 self.assertNotIn('ownerData', task['data']['fields'])
             else:
-                self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[3])
+                self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[4])
 
-            self.assertEqual(task['uuid'], expc[4])
-            self.assertEqual(task['updated_on'], expc[5])
+            self.assertEqual(task['uuid'], expc[5])
+            self.assertEqual(task['updated_on'], expc[6])
 
             # Compare chached and fetched task
             self.assertDictEqual(task['data'], tasks[x]['data'])
 
         # No more requests were sent
-        self.assertEqual(len(http_requests), 10)
+        self.assertEqual(len(http_requests), 12)
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any task returned when the cache is empty"""
@@ -602,6 +655,7 @@ class TestConduitClient(unittest.TestCase):
                      'output' : ['json'],
                      'params' : {
                                   '__conduit__' : {'token': 'aaaa'},
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 1462233600}],
                                   'order' : 'outdated'
                                 }
@@ -612,6 +666,7 @@ class TestConduitClient(unittest.TestCase):
                      'params' : {
                                   '__conduit__' : {'token': 'aaaa'},
                                   'after' : '335',
+                                  'attachments' : {'projects' : True},
                                   'constraints' : [{'modifiedStart' : 1462233600}],
                                   'order' : 'outdated'
                                 }
