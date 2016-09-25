@@ -1,0 +1,15 @@
+{
+    "error_code": null,
+    "error_info": null,
+    "result": {
+        "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo": {
+            "fullName": "Team: Devel",
+            "name": "Team: Devel",
+            "phid": "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo",
+            "status": "open",
+            "type": "PROJ",
+            "typeName": "Project",
+            "uri": "https://phabricator.bitergia.net/tag/team_devel/"
+        }
+    }
+}
