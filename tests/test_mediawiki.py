@@ -161,14 +161,14 @@ class TestMediaWikiBackend(unittest.TestCase):
         HTTPServer.routes(version)
 
         # Test fetch pages with their reviews
-        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, reviews_api=reviews_api)
+        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
 
         if from_date:
             # Set flag to ignore MAX_RECENT_DAYS exception
             mediawiki._test_mode = True
-            pages = [page for page in mediawiki.fetch(from_date=from_date)]
+            pages = [page for page in mediawiki.fetch(from_date=from_date, reviews_api=reviews_api)]
         else:
-            pages = [page for page in mediawiki.fetch()]
+            pages = [page for page in mediawiki.fetch(reviews_api=reviews_api)]
 
         if version == "1.28" and reviews_api:
             # 2 pages in all name spaces
@@ -253,9 +253,9 @@ class TestMediaWikiBackendCache(unittest.TestCase):
         # in a cache
         shutil.rmtree(self.tmp_path)
         cache = Cache(self.tmp_path)
-        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, cache=cache, reviews_api=reviews_api)
+        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, cache=cache)
 
-        pages = [page for page in mediawiki.fetch()]
+        pages = [page for page in mediawiki.fetch(reviews_api=reviews_api)]
         requests_done = len(HTTPServer.requests_http)
 
         # Now, we get the pages from the cache.
@@ -273,6 +273,20 @@ class TestMediaWikiBackendCache(unittest.TestCase):
             self.assertEqual(len(pages), 10)
 
         HTTPServer.check_pages_contents(self, pages)
+
+        # Now let's tests more than one execution in the same cache
+        shutil.rmtree(self.tmp_path)
+        cache = Cache(self.tmp_path)
+        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, cache=cache)
+        pages = [page for page in mediawiki.fetch(reviews_api=reviews_api)]
+        pages_1 = [page for page in mediawiki.fetch(reviews_api=reviews_api)]
+        cached_pages = [page for page in mediawiki.fetch_from_cache()]
+        if version == "1.28" and reviews_api:
+            # Only unique pages are returned in this version
+            self.assertEqual(len(cached_pages), 2)
+        elif version == "1.23" or not reviews_api:
+            # 2 pages per each of the 5 name spaces, x2 caches
+            self.assertEqual(len(cached_pages), 10*2)
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any pages returned when the cache is empty"""

@@ -70,25 +70,26 @@ class MediaWiki(Backend):
     :param cache: cache object to store raw data
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
-    :param reviews_api: use the reviews API available in MediaWiki >= 1.27
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
-    def __init__(self, url, cache=None, origin=None, reviews_api=False):
+    def __init__(self, url, cache=None, origin=None):
         origin = origin if origin else url
 
         super().__init__(origin, cache=cache)
         self.url = url
         self.client = MediaWikiClient(url)
         self._test_mode = False
-        self.reviews_api = reviews_api
 
     @metadata
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, from_date=DEFAULT_DATETIME, reviews_api=False):
         """Fetch the pages from the backend url.
 
         The method retrieves, from a MediaWiki url, the
         wiki pages.
+
+        :param reviews_api: use the reviews API available in MediaWiki >= 1.27
+
 
         :returns: a generator of pages
         """
@@ -102,8 +103,10 @@ class MediaWiki(Backend):
 
         mediawiki_version = self.client.get_version()
         logger.info("MediaWiki version: %s", mediawiki_version)
+        self._push_cache_queue(json.dumps({"reviews_api":reviews_api}))
+        self._flush_cache_queue()
 
-        if self.reviews_api:
+        if reviews_api:
             if (mediawiki_version[0] == 1 and mediawiki_version[1] >= 27) or \
                 mediawiki_version[0] > 1:
                 fetcher = self.__fetch_1_27(from_date)
@@ -115,8 +118,6 @@ class MediaWiki(Backend):
             fetcher = self.__fetch_pre1_27(from_date)
 
         for page_reviews in fetcher:
-            if not page_reviews:
-                continue
             yield page_reviews
 
     @metadata
@@ -133,17 +134,26 @@ class MediaWiki(Backend):
 
         cache_items = self.cache.retrieve()
 
-        pages_dicts = ['allrevisions','allpages','recentchanges']
+        pages_dicts = ['allrevisions', 'allpages', 'recentchanges']
         pages_done = []  # pages already retrieved in reviews API
+        reviews_api_json = json.loads(next(cache_items))
+        if 'reviews_api' not in reviews_api_json:
+            raise CacheError(cause="reviews_api not found at cache file start.")
+        reviews_api = reviews_api_json['reviews_api']
 
         # pages -> revisions
         for items in cache_items:
             data_json = json.loads(items)
+            if 'reviews_api' in data_json:
+                # New perceval execution
+                reviews_api = data_json['reviews_api']
+                pages_done = []
+                continue
             for pages_dict in pages_dicts:
                 if pages_dict in data_json['query']:
                     pages_json = data_json['query'][pages_dict]
                     for page in pages_json:
-                        if self.reviews_api:
+                        if reviews_api:
                             if page['pageid'] in pages_done:
                                 # The page was already returned for previous revisions
                                 continue
@@ -273,7 +283,11 @@ class MediaWiki(Backend):
                         rccontinue = None
                         hole_created = False
                         break
-                    yield self.__get_page_reviews(page)
+                    page_reviews = self.__get_page_reviews(page)
+                    if not page_reviews:
+                        # Page without reviews are not managed
+                        continue
+                    yield page_reviews
                     npages += 1
             if hole_created:
                 logger.error("Incremental update NOT completed. Hole in history created.")
@@ -511,8 +525,7 @@ class MediaWikiCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = MediaWiki(self.url, cache=cache, origin=self.origin,
-                                 reviews_api=self.reviews_api)
+        self.backend = MediaWiki(self.url, cache=cache, origin=self.origin)
 
     def run(self):
         """Fetch and print the pages and their revisions.
@@ -524,7 +537,8 @@ class MediaWikiCommand(BackendCommand):
         if self.parsed_args.fetch_cache:
             pages = self.backend.fetch_from_cache()
         else:
-            pages = self.backend.fetch(from_date=self.from_date)
+            pages = self.backend.fetch(from_date=self.from_date,
+                                       reviews_api=self.reviews_api)
 
         try:
             for build in pages:
