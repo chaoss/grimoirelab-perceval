@@ -282,8 +282,8 @@ class TestMediaWikiBackendCache(unittest.TestCase):
         pages_1 = [page for page in mediawiki.fetch(reviews_api=reviews_api)]
         cached_pages = [page for page in mediawiki.fetch_from_cache()]
         if version == "1.28" and reviews_api:
-            # Only unique pages are returned in this version
-            self.assertEqual(len(cached_pages), 2)
+            # 2 unique pages x2 caches
+            self.assertEqual(len(cached_pages), 4)
         elif version == "1.23" or not reviews_api:
             # 2 pages per each of the 5 name spaces, x2 caches
             self.assertEqual(len(cached_pages), 10*2)
