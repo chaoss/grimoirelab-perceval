@@ -12,7 +12,7 @@ Repositories are reached using specific backends. The most common backends
 are:
 
     bugzilla         Fetch bugs from a Bugzilla server
-    bugillzarest     Fetch bugs from a Bugzilla server (>=5.0) using its REST API
+    bugzillarest     Fetch bugs from a Bugzilla server (>=5.0) using its REST API
     confluence       Fetch contents from a Confluence server
     discourse        Fetch posts from Discourse site
     gerrit           Fetch reviews from a Gerrit server
