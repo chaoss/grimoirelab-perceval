@@ -184,9 +184,7 @@ class JenkinsCommand(BackendCommand):
                 base_path = self.parsed_args.cache_path
 
             cache_path = os.path.join(base_path, self.url.split("://")[1])
-            #cache_path = cache_path.replace("/", "\\").split("'")[0]
 
-            print("Valor 2 de cache_path: ", cache_path)
             cache = Cache(cache_path)
 
             if self.parsed_args.clean_cache:
