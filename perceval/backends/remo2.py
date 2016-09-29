@@ -109,42 +109,35 @@ class ReMo(Backend):
 
     @metadata
     def fetch_from_cache(self):
-        """Fetch the events from the cache.
+        """Fetch the items from the cache.
 
-        :returns: a generator of events
+        :returns: a generator of items
 
         :raises CacheError: raised when an error occurs accessing the
             cache
         """
 
-        logger.info("Retrieving cached events: '%s'", self.url)
+        logger.info("Retrieving cached ReMo items: '%s'", self.url)
 
         if not self.cache:
             raise CacheError(cause="cache instance was not provided")
 
         cache_items = self.cache.retrieve()
 
-        nevents = 0
-        nunknown_users = 0
+        nitems = 0
 
-        users_json = json.loads(next(cache_items))
+        while True:
+            data = json.loads(next(cache_items))
+            # The raw_data is always a list of items or an item
+            if 'count' in data:
+                # It is a list
+                continue
+            else:
+                yield data
+                nitems += 1
 
-        for user in users_json['objects']:
-            self.__users[user['fullname']] = user
-
-        for items in cache_items:
-            events = json.loads(items)['objects']
-            for event in events:
-                if event["owner_name"] in self.__users:
-                    event["owner_data"] = self.__users[event['owner_name']]
-                else:
-                    nunknown_users += 1
-                yield event
-                nevents += 1
-
-        logger.info("Retrieval process completed: %s events retrieved from cache",
-                    nevents)
-        logger.info("Unknown users: %i", nunknown_users)
+        logger.info("Retrieval process completed: %s items retrieved from cache",
+                    nitems)
 
     @staticmethod
     def metadata_id(item):
