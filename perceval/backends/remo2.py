@@ -1,0 +1,325 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2016 Bitergia
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# Authors:
+#     Alvaro del Castillo <acs@bitergia.com>
+#
+
+import json
+import logging
+import os.path
+
+import requests
+
+from dateutil import parser
+
+from ..backend import Backend, BackendCommand, metadata
+from ..cache import Cache
+from ..errors import BackendError, CacheError, ParseError
+
+from ..utils import (DEFAULT_DATETIME,
+                     datetime_to_utc,
+                     str_to_datetime,
+                     urljoin)
+
+
+logger = logging.getLogger(__name__)
+
+MOZILLA_REPS_URL = "https://reps.mozilla.org"
+
+class ReMo(Backend):
+    """ReMo backend for Perceval.
+
+    This class retrieves the events from a
+    ReMo url. To initialize this class a
+    url could be provided. If not, https://reps.mozilla.org will be used.
+
+    It uses v2 API to get events, people and activities data.
+
+    :param url: ReMo url
+    :param cache: cache object to store raw data
+    :param origin: identifier of the repository; when `None` or an
+        empty string are given, it will be set to `url` value
+    """
+    version = '0.2.0'
+
+    def __init__(self, url=None, cache=None, origin=None):
+        if not url:
+            url = MOZILLA_REPS_URL
+        origin = origin if origin else url
+
+        super().__init__(origin, cache=cache)
+        self.url = url
+        self.client = ReMoClient(url)
+        self.__users = {}  # internal users cache
+
+    @metadata
+    def fetch(self, kind='events'):
+        """Fetch events from the ReMo url.
+
+        The method retrieves, from a ReMo url, the
+        events.
+
+        :returns: a generator of events
+        """
+
+        supported_kinds = ['activities', 'events', 'users']
+
+        if kind not in supported_kinds:
+            raise RuntimeError('ReMo perceval backend does not support %s', kind)
+
+        logger.info("Looking for events at url '%s'", self.url)
+
+        nitems = 0  # number of items processed
+        titems = 0  # number of items from API data
+
+        self._purge_cache_queue()
+
+        for raw_items in self.client.get_items(kind):
+            self._push_cache_queue(raw_items)
+            items_data = json.loads(raw_items)
+            titems = items_data['count']
+
+            items = items_data['results']
+            for item in items:
+                raw_item_details = self.client.call(item['_url'])
+                self._push_cache_queue(raw_item_details)
+                item_details = json.loads(raw_item_details)
+                yield item_details
+                nitems += 1
+
+                self._flush_cache_queue()
+
+        logger.info("Total number of events: %i (%i expected)", nitems, titems)
+
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch the events from the cache.
+
+        :returns: a generator of events
+
+        :raises CacheError: raised when an error occurs accessing the
+            cache
+        """
+
+        logger.info("Retrieving cached events: '%s'", self.url)
+
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        cache_items = self.cache.retrieve()
+
+        nevents = 0
+        nunknown_users = 0
+
+        users_json = json.loads(next(cache_items))
+
+        for user in users_json['objects']:
+            self.__users[user['fullname']] = user
+
+        for items in cache_items:
+            events = json.loads(items)['objects']
+            for event in events:
+                if event["owner_name"] in self.__users:
+                    event["owner_data"] = self.__users[event['owner_name']]
+                else:
+                    nunknown_users += 1
+                yield event
+                nevents += 1
+
+        logger.info("Retrieval process completed: %s events retrieved from cache",
+                    nevents)
+        logger.info("Unknown users: %i", nunknown_users)
+
+    @staticmethod
+    def metadata_id(item):
+        """Extracts the identifier from an event item."""
+        return str(item['remo_url'])
+
+    @staticmethod
+    def metadata_updated_on(item):
+        """Extracts the update time from a ReMo item.
+
+        The timestamp is extracted from 'end' field.
+        This date is converted to a perceval format using a float value.
+
+        :param item: item generated by the backend
+
+        :returns: a UNIX timestamp
+        """
+
+        if 'end' in item:
+            # events updated field
+            updated = item['end']
+        elif 'date_joined_program' in item:
+            # users updated field that always appear
+            updated = item['date_joined_program']
+        elif 'report_date' in item:
+            # activities updated field
+            updated = item['report_date']
+        else:
+            raise RuntimeError("Can't find updated field for item %s", item)
+
+        return float(str_to_datetime(updated).timestamp())
+
+
+class ReMoClient:
+    """ReMo API client.
+
+    This class implements a simple client to retrieve events from
+    projects in a ReMo site.
+
+    :param url: URL of ReMo (sample https://reps.mozilla.org)
+
+    :raises HTTPError: when an error occurs doing the request
+    """
+
+    def __init__(self, url, limit=40):
+        # 40 it the max limit for events.
+        self.url = url
+        self.limit = limit
+        self.api_activities_url = urljoin(self.url, '/api/beta/activities/')
+        self.api_activities_url += '/'  # API needs a final /
+        self.api_events_url = urljoin(self.url, '/api/beta/events/')
+        self.api_events_url += '/'  # API needs a final /
+        self.api_users_url = urljoin(self.url, '/api/beta/users/')
+        self.api_users_url += '/'  # API needs a final /
+
+    def call(self, uri, params=None):
+        """Run an API command.
+        :param params: dict with the HTTP parameters needed to run
+            the given command
+        """
+        logger.debug("ReMo client calls APIv2: %s params: %s",
+                     self.api_events_url, str(params))
+
+        req = requests.get(uri, params=params)
+        req.raise_for_status()
+
+        return req.text
+
+    def get_items(self, kind='events'):
+        """Retrieve all items for kind using pagination """
+
+        more = True # There are more items to be processed
+        next_uri = None # URI for the next items page query
+        page = "1"
+
+        if kind == 'events':
+            api = self.api_events_url
+        elif kind == 'activities':
+            api = self.api_activities_url
+        elif kind == 'users':
+            api = self.api_users_url
+        else:
+            raise RuntimeError('%s not supported in ReMo', kind)
+
+        while more:
+            params = {
+                "page":page
+            }
+
+            raw_items = self.call(api, params)
+            yield raw_items
+
+            items_data = json.loads(raw_items)
+            next_uri = items_data['next']
+
+            if not next_uri:
+                more = False
+            else:
+                # https://reps.mozilla.org/api/beta/events/?page=269
+                page = next_uri.split("page=")[1]
+
+
+class ReMoCommand(BackendCommand):
+    """Class to run ReMo backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.url = self.parsed_args.url
+        self.kind = self.parsed_args.kind
+        self.origin = self.parsed_args.origin
+        self.outfile = self.parsed_args.outfile
+
+        if not self.parsed_args.no_cache:
+            if not self.parsed_args.cache_path:
+                base_path = os.path.expanduser('~/.perceval/cache/')
+            else:
+                base_path = self.parsed_args.cache_path
+
+            cache_path = os.path.join(base_path, self.url)
+
+            cache = Cache(cache_path)
+
+            if self.parsed_args.clean_cache:
+                cache.clean()
+            else:
+                cache.backup()
+        else:
+            cache = None
+
+        self.backend = ReMo(self.url, cache=cache, origin=self.origin)
+
+    def run(self):
+        """Fetch and print the Events.
+
+        This method runs the backend to fetch the events of a given url.
+        Events are converted to JSON objects and printed to the
+        defined output.
+        """
+        if self.parsed_args.fetch_cache:
+            events = self.backend.fetch_from_cache()
+        else:
+            events = self.backend.fetch(kind=self.kind)
+
+        try:
+            for event in events:
+                obj = json.dumps(event, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except requests.exceptions.HTTPError as e:
+            raise requests.exceptions.HTTPError(str(e.response.json()))
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            if self.backend.cache:
+                self.backend.cache.recover()
+            raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the ReMo argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # Remove --from-date argument from parent parser
+        # because it is not needed by this backend
+        action = parser._option_string_actions['--from-date']
+        parser._handle_conflict_resolve(None, [('--from-date', action)])
+
+        # ReMo options
+        group = parser.add_argument_group('ReMo arguments')
+        group.add_argument("--kind", default='events',
+                           help="kind could be events, activities or users")
+
+
+        group.add_argument("url", default="https://reps.mozilla.org", nargs='?',
+                           help="ReMo URL (default: https://reps.mozilla.org)")
+
+        return parser
