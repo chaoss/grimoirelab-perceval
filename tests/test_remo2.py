@@ -36,7 +36,8 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.remo2 import ReMo, ReMoCommand, ReMoClient, MOZILLA_REPS_URL
+from perceval.backends.remo2 import (
+    ReMo, ReMoCommand, ReMoClient, MOZILLA_REPS_URL, REMO_DEFAULT_OFFSET)
 
 
 MOZILLA_REPS_SERVER_URL = 'http://example.com'
@@ -151,7 +152,7 @@ class TestReMoBackend(unittest.TestCase):
     def __test_fetch(self, kind='events'):
         """Test whether the events are returned"""
 
-        items_page = 20 # number of items per page
+        items_page = ReMoClient.ITEMS_PER_PAGE
         pages = 2  # two pages of testing data
 
         HTTPServer.routes()
@@ -193,6 +194,31 @@ class TestReMoBackend(unittest.TestCase):
     def test_fetch_users(self):
         self.__test_fetch(kind='users')
 
+    @httpretty.activate
+    def test_fetch_offset(self):
+        items_page = ReMoClient.ITEMS_PER_PAGE
+        pages = 2  # two pages of testing data
+        offset = 15
+
+        HTTPServer.routes()
+        prev_requests_http = len(HTTPServer.requests_http)
+
+        # Test fetch events with their reviews
+        remo = ReMo(MOZILLA_REPS_SERVER_URL)
+
+        # Test we get the correct number of items from an offset
+        items = [page for page in remo.fetch(offset=15)]
+        self.assertEqual(len(items), (items_page * pages) - offset)
+
+        # Test that the same offset (17) is the same item
+        items = [page for page in remo.fetch(offset=5)]
+        uuid_17_1 = items[12]['uuid']
+        self.assertEqual(items[12]['offset'], 17)
+        items = [page for page in remo.fetch(offset=12)]
+        uuid_17_2 = items[5]['uuid']
+        self.assertEqual(items[5]['offset'], 17)
+        self.assertEqual(uuid_17_1, uuid_17_2)
+
     def test_fetch_wrong_kind(self):
         with self.assertRaises(RuntimeError):
             self.__test_fetch(kind='wrong')
@@ -229,7 +255,7 @@ class TestReMoBackendCache(unittest.TestCase):
         cache = Cache(self.tmp_path)
         remo = ReMo(MOZILLA_REPS_SERVER_URL, cache=cache)
 
-        items = [item for item in remo.fetch(kind)]
+        items = [item for item in remo.fetch(kind=kind)]
 
         requests_done = len(HTTPServer.requests_http)
 
@@ -283,6 +309,7 @@ class TestReMoCommand(unittest.TestCase):
         self.assertEqual(cmd.parsed_args.url, MOZILLA_REPS_SERVER_URL)
         self.assertEqual(cmd.parsed_args.origin, 'test')
         self.assertEqual(cmd.parsed_args.kind, 'users')
+        self.assertEqual(cmd.parsed_args.offset, REMO_DEFAULT_OFFSET)
         self.assertIsInstance(cmd.backend, ReMo)
 
         args = ['--origin', 'test', MOZILLA_REPS_SERVER_URL]
