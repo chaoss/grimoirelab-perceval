@@ -139,8 +139,7 @@ class ReMo(Backend):
 
                 self._flush_cache_queue()
 
-        logger.info("Total number of events: %i (%i expected, %i last offset)",
-                    nitems, titems, current_offset)
+        logger.info("Total number of events: %i (%i total, %i offset)", nitems, titems, offset)
 
     @metadata
     def fetch_from_cache(self):
