@@ -199,7 +199,7 @@ class ReMoClient:
             the given command
         """
         logger.debug("ReMo client calls APIv2: %s params: %s",
-                     self.api_events_url, str(params))
+                     uri, str(params))
 
         req = requests.get(uri, params=params)
         req.raise_for_status()
