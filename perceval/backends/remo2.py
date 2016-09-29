@@ -20,17 +20,17 @@
 #     Alvaro del Castillo <acs@bitergia.com>
 #
 
+import functools
 import json
 import logging
 import os.path
 
 import requests
 
-from dateutil import parser
 
 from ..backend import Backend, BackendCommand, metadata
 from ..cache import Cache
-from ..errors import BackendError, CacheError, ParseError
+from ..errors import CacheError
 
 from ..utils import (DEFAULT_DATETIME,
                      datetime_to_utc,
@@ -41,6 +41,21 @@ from ..utils import (DEFAULT_DATETIME,
 logger = logging.getLogger(__name__)
 
 MOZILLA_REPS_URL = "https://reps.mozilla.org"
+REMO_DEFAULT_OFFSET = 0
+
+def remo_metadata(func):
+    """ReMo metadata decorator.
+
+    This decorator takes items overrides `metadata` decorator to add extra
+    information related to Kitsune (offset of the item).
+    """
+    @functools.wraps(func)
+    def decorator(self, *args, **kwargs):
+        for item in func(self, *args, **kwargs):
+            item['offset'] = item['data'].pop('offset')
+            yield item
+    return decorator
+
 
 class ReMo(Backend):
     """ReMo backend for Perceval.
@@ -68,13 +83,17 @@ class ReMo(Backend):
         self.client = ReMoClient(url)
         self.__users = {}  # internal users cache
 
+    @remo_metadata
     @metadata
-    def fetch(self, kind='events'):
+    def fetch(self, offset=REMO_DEFAULT_OFFSET, kind='events'):
         """Fetch events from the ReMo url.
 
         The method retrieves, from a ReMo url, the
         events.
 
+
+        :offset: obtain items after offset
+        :kind: kind of items to retrieve
         :returns: a generator of events
         """
 
@@ -83,29 +102,46 @@ class ReMo(Backend):
         if kind not in supported_kinds:
             raise RuntimeError('ReMo perceval backend does not support %s', kind)
 
-        logger.info("Looking for events at url '%s'", self.url)
+        logger.info("Looking for events at url '%s' of %s kind and %i offset",
+                    self.url, kind, offset)
 
         nitems = 0  # number of items processed
         titems = 0  # number of items from API data
 
+        # Always get complete pages so the first item is always
+        # the first one in the page
+        page = int(offset / ReMoClient.ITEMS_PER_PAGE)
+        page_offset = page * ReMoClient.ITEMS_PER_PAGE
+        # drop items from page before the offset
+        drop_items = offset - page_offset
+        logger.debug("%i items dropped to get %i offset starting in page %i (%i page offset)",
+                      drop_items, offset, page, page_offset)
+        current_offset = offset
+
         self._purge_cache_queue()
 
-        for raw_items in self.client.get_items(kind):
+        for raw_items in self.client.get_items(kind, offset):
             self._push_cache_queue(raw_items)
             items_data = json.loads(raw_items)
             titems = items_data['count']
-
             items = items_data['results']
             for item in items:
+                if drop_items > 0:
+                    # Remove extra items due to page base retrieval
+                    drop_items -= 1
+                    continue
                 raw_item_details = self.client.call(item['_url'])
                 self._push_cache_queue(raw_item_details)
                 item_details = json.loads(raw_item_details)
+                item_details['offset'] = current_offset
+                current_offset += 1
                 yield item_details
                 nitems += 1
 
                 self._flush_cache_queue()
 
-        logger.info("Total number of events: %i (%i expected)", nitems, titems)
+        logger.info("Total number of events: %i (%i expected, %i last offset)",
+                    nitems, titems, current_offset)
 
     @metadata
     def fetch_from_cache(self):
@@ -182,10 +218,11 @@ class ReMoClient:
     :raises HTTPError: when an error occurs doing the request
     """
 
-    def __init__(self, url, limit=40):
-        # 40 it the max limit for events.
+    FIRST_PAGE = 1  # Initial page in ReMo API
+    ITEMS_PER_PAGE = 20 # Items per page in ReMo API
+
+    def __init__(self, url):
         self.url = url
-        self.limit = limit
         self.api_activities_url = urljoin(self.url, '/api/beta/activities/')
         self.api_activities_url += '/'  # API needs a final /
         self.api_events_url = urljoin(self.url, '/api/beta/events/')
@@ -206,12 +243,13 @@ class ReMoClient:
 
         return req.text
 
-    def get_items(self, kind='events'):
+    def get_items(self, kind='events', offset=REMO_DEFAULT_OFFSET):
         """Retrieve all items for kind using pagination """
 
         more = True # There are more items to be processed
         next_uri = None # URI for the next items page query
-        page = "1"
+        page = ReMoClient.FIRST_PAGE
+        page += int(offset / ReMoClient.ITEMS_PER_PAGE)
 
         if kind == 'events':
             api = self.api_events_url
@@ -224,7 +262,7 @@ class ReMoClient:
 
         while more:
             params = {
-                "page":page
+                "page": page
             }
 
             raw_items = self.call(api, params)
@@ -245,10 +283,12 @@ class ReMoCommand(BackendCommand):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.url = self.parsed_args.url
         self.kind = self.parsed_args.kind
+        self.offset = self.parsed_args.offset
         self.origin = self.parsed_args.origin
         self.outfile = self.parsed_args.outfile
+        self.url = self.parsed_args.url
+
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
@@ -279,7 +319,7 @@ class ReMoCommand(BackendCommand):
         if self.parsed_args.fetch_cache:
             events = self.backend.fetch_from_cache()
         else:
-            events = self.backend.fetch(kind=self.kind)
+            events = self.backend.fetch(offset=self.offset, kind=self.kind)
 
         try:
             for event in events:
@@ -310,7 +350,9 @@ class ReMoCommand(BackendCommand):
         group = parser.add_argument_group('ReMo arguments')
         group.add_argument("--kind", default='events',
                            help="kind could be events, activities or users")
-
+        group.add_argument('--offset', dest='offset',
+                            type=int, default=REMO_DEFAULT_OFFSET,
+                            help='Offset from which to start fetching items')
 
         group.add_argument("url", default="https://reps.mozilla.org", nargs='?',
                            help="ReMo URL (default: https://reps.mozilla.org)")
