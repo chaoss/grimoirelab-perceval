@@ -1,0 +1,87 @@
+{
+    "count": 38481,
+    "next": null,
+    "previous": "http://example.com/api/beta/activities/?format=json",
+    "results": [
+        {
+            "_url": "http://example.com/api/beta/activities/40835/",
+            "activity": "Attended an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40820/",
+            "activity": "Organized an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40821/",
+            "activity": "Attended an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40581/",
+            "activity": "Organized an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40582/",
+            "activity": "Attended an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/37813/",
+            "activity": "Organized an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/37814/",
+            "activity": "Attended an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40292/",
+            "activity": "Organized an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40293/",
+            "activity": "Attended an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40272/",
+            "activity": "Organized an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40273/",
+            "activity": "Attended an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/37068/",
+            "activity": "Attended an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/37067/",
+            "activity": "Organized an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40760/",
+            "activity": "Organized an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40761/",
+            "activity": "Attended an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40602/",
+            "activity": "Organized an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40603/",
+            "activity": "Attended an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40348/",
+            "activity": "Organized an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40349/",
+            "activity": "Attended an Event"
+        },
+        {
+            "_url": "http://example.com/api/beta/activities/40021/",
+            "activity": "Organized an Event"
+        }
+    ]
+}
