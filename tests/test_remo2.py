@@ -220,7 +220,7 @@ class TestReMoBackend(unittest.TestCase):
         self.assertEqual(uuid_17_1, uuid_17_2)
 
     def test_fetch_wrong_kind(self):
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             self.__test_fetch(kind='wrong')
 
     @httpretty.activate

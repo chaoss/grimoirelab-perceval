@@ -94,13 +94,12 @@ class ReMo(Backend):
 
         :offset: obtain items after offset
         :kind: kind of items to retrieve
-        :returns: a generator of events
+        :returns: a generator of items
         """
-
         supported_kinds = ['activities', 'events', 'users']
 
         if kind not in supported_kinds:
-            raise RuntimeError('ReMo perceval backend does not support %s', kind)
+            raise ValueError('ReMo perceval backend does not support ' + kind)
 
         logger.info("Looking for events at url '%s' of %s kind and %i offset",
                     self.url, kind, offset)
@@ -152,7 +151,6 @@ class ReMo(Backend):
         :raises CacheError: raised when an error occurs accessing the
             cache
         """
-
         logger.info("Retrieving cached ReMo items: '%s'", self.url)
 
         if not self.cache:
@@ -162,8 +160,8 @@ class ReMo(Backend):
 
         nitems = 0
 
-        while True:
-            data = json.loads(next(cache_items))
+        for item in cache_items:
+            data = json.loads(item)
             # The raw_data is always a list of items or an item
             if 'count' in data:
                 # It is a list
@@ -191,7 +189,6 @@ class ReMo(Backend):
 
         :returns: a UNIX timestamp
         """
-
         if 'end' in item:
             # events updated field
             updated = item['end']
@@ -202,7 +199,7 @@ class ReMo(Backend):
             # activities updated field
             updated = item['report_date']
         else:
-            raise RuntimeError("Can't find updated field for item %s", item)
+            raise ValueError("Can't find updated field for item " + item)
 
         return float(str_to_datetime(updated).timestamp())
 
@@ -220,14 +217,15 @@ class ReMoClient:
 
     FIRST_PAGE = 1  # Initial page in ReMo API
     ITEMS_PER_PAGE = 20 # Items per page in ReMo API
+    API_PATH = '/api/beta'
 
     def __init__(self, url):
         self.url = url
-        self.api_activities_url = urljoin(self.url, '/api/beta/activities/')
+        self.api_activities_url = urljoin(self.url, ReMoClient.API_PATH+'/activities/')
         self.api_activities_url += '/'  # API needs a final /
-        self.api_events_url = urljoin(self.url, '/api/beta/events/')
+        self.api_events_url = urljoin(self.url, ReMoClient.API_PATH+'/events/')
         self.api_events_url += '/'  # API needs a final /
-        self.api_users_url = urljoin(self.url, '/api/beta/users/')
+        self.api_users_url = urljoin(self.url, ReMoClient.API_PATH+'/users/')
         self.api_users_url += '/'  # API needs a final /
 
     def call(self, uri, params=None):
@@ -258,7 +256,7 @@ class ReMoClient:
         elif kind == 'users':
             api = self.api_users_url
         else:
-            raise RuntimeError('%s not supported in ReMo', kind)
+            raise ValueError(kind + ' not supported in ReMo')
 
         while more:
             params = {
