@@ -123,6 +123,7 @@ class ReMo(Backend):
             self._push_cache_queue(raw_items)
             items_data = json.loads(raw_items)
             titems = items_data['count']
+            logger.info("Pending items to retrieve: %i", titems-current_offset)
             items = items_data['results']
             for item in items:
                 if drop_items > 0:
