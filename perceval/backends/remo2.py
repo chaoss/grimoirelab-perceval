@@ -85,7 +85,7 @@ class ReMo(Backend):
 
     @remo_metadata
     @metadata
-    def fetch(self, offset=REMO_DEFAULT_OFFSET, kind='events'):
+    def fetch(self, offset=REMO_DEFAULT_OFFSET, category='events'):
         """Fetch events from the ReMo url.
 
         The method retrieves, from a ReMo url, the
@@ -93,16 +93,16 @@ class ReMo(Backend):
 
 
         :offset: obtain items after offset
-        :kind: kind of items to retrieve
+        :category: category of items to retrieve
         :returns: a generator of items
         """
-        supported_kinds = ['activities', 'events', 'users']
+        supported_categories = ['activities', 'events', 'users']
 
-        if kind not in supported_kinds:
-            raise ValueError('ReMo perceval backend does not support ' + kind)
+        if category not in supported_categories:
+            raise ValueError('ReMo perceval backend does not support ' + category)
 
-        logger.info("Looking for events at url '%s' of %s kind and %i offset",
-                    self.url, kind, offset)
+        logger.info("Looking for events at url '%s' of %s category and %i offset",
+                    self.url, category, offset)
 
         nitems = 0  # number of items processed
         titems = 0  # number of items from API data
@@ -119,7 +119,7 @@ class ReMo(Backend):
 
         self._purge_cache_queue()
 
-        for raw_items in self.client.get_items(kind, offset):
+        for raw_items in self.client.get_items(category, offset):
             self._push_cache_queue(raw_items)
             items_data = json.loads(raw_items)
             titems = items_data['count']
@@ -241,22 +241,22 @@ class ReMoClient:
 
         return req.text
 
-    def get_items(self, kind='events', offset=REMO_DEFAULT_OFFSET):
-        """Retrieve all items for kind using pagination """
+    def get_items(self, category='events', offset=REMO_DEFAULT_OFFSET):
+        """Retrieve all items for category using pagination """
 
         more = True # There are more items to be processed
         next_uri = None # URI for the next items page query
         page = ReMoClient.FIRST_PAGE
         page += int(offset / ReMoClient.ITEMS_PER_PAGE)
 
-        if kind == 'events':
+        if category == 'events':
             api = self.api_events_url
-        elif kind == 'activities':
+        elif category == 'activities':
             api = self.api_activities_url
-        elif kind == 'users':
+        elif category == 'users':
             api = self.api_users_url
         else:
-            raise ValueError(kind + ' not supported in ReMo')
+            raise ValueError(category + ' not supported in ReMo')
 
         while more:
             params = {
@@ -281,7 +281,7 @@ class ReMoCommand(BackendCommand):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.kind = self.parsed_args.kind
+        self.category = self.parsed_args.category
         self.offset = self.parsed_args.offset
         self.origin = self.parsed_args.origin
         self.outfile = self.parsed_args.outfile
@@ -308,20 +308,20 @@ class ReMoCommand(BackendCommand):
         self.backend = ReMo(self.url, cache=cache, origin=self.origin)
 
     def run(self):
-        """Fetch and print the Events.
+        """Fetch and print the items.
 
-        This method runs the backend to fetch the events of a given url.
-        Events are converted to JSON objects and printed to the
+        This method runs the backend to fetch the items of a given url.
+        Items are converted to JSON objects and printed to the
         defined output.
         """
         if self.parsed_args.fetch_cache:
-            events = self.backend.fetch_from_cache()
+            items = self.backend.fetch_from_cache()
         else:
-            events = self.backend.fetch(offset=self.offset, kind=self.kind)
+            items = self.backend.fetch(offset=self.offset, category=self.category)
 
         try:
-            for event in events:
-                obj = json.dumps(event, indent=4, sort_keys=True)
+            for item in items:
+                obj = json.dumps(item, indent=4, sort_keys=True)
                 self.outfile.write(obj)
                 self.outfile.write('\n')
         except requests.exceptions.HTTPError as e:
@@ -346,8 +346,8 @@ class ReMoCommand(BackendCommand):
 
         # ReMo options
         group = parser.add_argument_group('ReMo arguments')
-        group.add_argument("--kind", default='events',
-                           help="kind could be events, activities or users")
+        group.add_argument("--category", default='events',
+                           help="category could be events, activities or users")
         group.add_argument('--offset', dest='offset',
                             type=int, default=REMO_DEFAULT_OFFSET,
                             help='Offset from which to start fetching items')

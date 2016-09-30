@@ -43,7 +43,7 @@ from perceval.backends.remo2 import (
 MOZILLA_REPS_SERVER_URL = 'http://example.com'
 MOZILLA_REPS_API = MOZILLA_REPS_SERVER_URL + '/api/beta'
 
-MOZILLA_REPS_KINDS = ['events', 'activities', 'users']
+MOZILLA_REPS_CATEGORIES = ['events', 'activities', 'users']
 
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
@@ -59,33 +59,33 @@ class HTTPServer():
     def routes(cls, empty=False):
         """Configure in http the routes to be served"""
 
-        mozilla_bodies = {}  # dict with all the bodies to be returned by kind
-        for kind in MOZILLA_REPS_KINDS:
-            mozilla_bodies[kind] = {}
-            # First two pages for each kind to test pagination
-            mozilla_bodies[kind]['1'] = read_file('data/remo_'+kind+'_page_1_2.json')
-            mozilla_bodies[kind]['2'] = read_file('data/remo_'+kind+'_page_2_2.json')
-            # A sample item per each kind
-            mozilla_bodies[kind]['item'] = read_file('data/remo_'+kind+'.json')
+        mozilla_bodies = {}  # dict with all the bodies to be returned by category
+        for category in MOZILLA_REPS_CATEGORIES:
+            mozilla_bodies[category] = {}
+            # First two pages for each category to test pagination
+            mozilla_bodies[category]['1'] = read_file('data/remo_'+category+'_page_1_2.json')
+            mozilla_bodies[category]['2'] = read_file('data/remo_'+category+'_page_2_2.json')
+            # A sample item per each category
+            mozilla_bodies[category]['item'] = read_file('data/remo_'+category+'.json')
 
         if empty:
-            for kind in MOZILLA_REPS_KINDS:
-                mozilla_bodies[kind]['1'] = read_file('data/remo_'+kind+'_page_empty.json')
+            for category in MOZILLA_REPS_CATEGORIES:
+                mozilla_bodies[category]['1'] = read_file('data/remo_'+category+'_page_empty.json')
 
         def request_callback(method, uri, headers):
             body = ''
             if 'page' in uri:
                 # Page with item list query
                 page = uri.split("page=")[1].split("&")[0]
-                for kind in MOZILLA_REPS_KINDS:
-                    if kind in uri:
-                        body = mozilla_bodies[kind][page]
+                for category in MOZILLA_REPS_CATEGORIES:
+                    if category in uri:
+                        body = mozilla_bodies[category][page]
                         break
             else:
-                # Specific item. Always return the same for each kind.
-                for kind in MOZILLA_REPS_KINDS:
-                    if kind in uri:
-                        body = mozilla_bodies[kind]['item']
+                # Specific item. Always return the same for each category.
+                for category in MOZILLA_REPS_CATEGORIES:
+                    if category in uri:
+                        body = mozilla_bodies[category]['item']
                         break
 
             HTTPServer.requests_http.append(httpretty.last_request())
@@ -149,7 +149,7 @@ class TestReMoBackend(unittest.TestCase):
 
 
     @httpretty.activate
-    def __test_fetch(self, kind='events'):
+    def __test_fetch(self, category='events'):
         """Test whether the events are returned"""
 
         items_page = ReMoClient.ITEMS_PER_PAGE
@@ -161,15 +161,15 @@ class TestReMoBackend(unittest.TestCase):
         # Test fetch events with their reviews
         remo = ReMo(MOZILLA_REPS_SERVER_URL)
 
-        items = [page for page in remo.fetch(kind=kind)]
+        items = [page for page in remo.fetch(category=category)]
 
         self.assertEqual(len(items), items_page * pages)
 
-        if kind == 'events':
+        if category == 'events':
             self.__check_events_contents(items)
-        elif kind == 'users':
+        elif category == 'users':
             self.__check_users_contents(items)
-        elif kind == 'activities':
+        elif category == 'activities':
             self.__check_activities_contents(items)
 
         # Check requests: page list, items, page list, items
@@ -186,13 +186,13 @@ class TestReMoBackend(unittest.TestCase):
             self.assertDictEqual(HTTPServer.requests_http[i].querystring, expected[i])
 
     def test_fetch_events(self):
-        self.__test_fetch(kind='events')
+        self.__test_fetch(category='events')
 
     def test_fetch_activities(self):
-        self.__test_fetch(kind='activities')
+        self.__test_fetch(category='activities')
 
     def test_fetch_users(self):
-        self.__test_fetch(kind='users')
+        self.__test_fetch(category='users')
 
     @httpretty.activate
     def test_fetch_offset(self):
@@ -219,9 +219,9 @@ class TestReMoBackend(unittest.TestCase):
         self.assertEqual(items[5]['offset'], 17)
         self.assertEqual(uuid_17_1, uuid_17_2)
 
-    def test_fetch_wrong_kind(self):
+    def test_fetch_wrong_category(self):
         with self.assertRaises(ValueError):
-            self.__test_fetch(kind='wrong')
+            self.__test_fetch(category='wrong')
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -245,7 +245,7 @@ class TestReMoBackendCache(unittest.TestCase):
         shutil.rmtree(self.tmp_path)
 
     @httpretty.activate
-    def __test_fetch_from_cache(self, kind):
+    def __test_fetch_from_cache(self, category):
         """Test whether the cache works"""
 
         HTTPServer.routes()
@@ -255,7 +255,7 @@ class TestReMoBackendCache(unittest.TestCase):
         cache = Cache(self.tmp_path)
         remo = ReMo(MOZILLA_REPS_SERVER_URL, cache=cache)
 
-        items = [item for item in remo.fetch(kind=kind)]
+        items = [item for item in remo.fetch(category=category)]
 
         requests_done = len(HTTPServer.requests_http)
 
@@ -302,21 +302,21 @@ class TestReMoCommand(unittest.TestCase):
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
-        args = ['--origin', 'test', '--kind', 'users', MOZILLA_REPS_SERVER_URL]
+        args = ['--origin', 'test', '--category', 'users', MOZILLA_REPS_SERVER_URL]
 
         cmd = ReMoCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.url, MOZILLA_REPS_SERVER_URL)
         self.assertEqual(cmd.parsed_args.origin, 'test')
-        self.assertEqual(cmd.parsed_args.kind, 'users')
+        self.assertEqual(cmd.parsed_args.category, 'users')
         self.assertEqual(cmd.parsed_args.offset, REMO_DEFAULT_OFFSET)
         self.assertIsInstance(cmd.backend, ReMo)
 
         args = ['--origin', 'test', MOZILLA_REPS_SERVER_URL]
 
         cmd = ReMoCommand(*args)
-        # Default kind is events
-        self.assertEqual(cmd.parsed_args.kind, 'events')
+        # Default category is events
+        self.assertEqual(cmd.parsed_args.category, 'events')
 
     def test_argument_parser(self):
         """Test if it returns a argument parser object"""
