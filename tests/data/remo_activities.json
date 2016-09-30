@@ -1,0 +1,34 @@
+{  
+   "user":{  
+      "first_name":"Vaibhav",
+      "last_name":"Bajaj",
+      "display_name":"vabajaj",
+      "_url":"https://reps.mozilla.org/api/beta/users/1976/"
+   },
+   "activity":"Organized an Event",
+   "initiative":"MozActivate",
+   "functional_areas":[  
+      {  
+         "name":"MozVR"
+      }
+   ],
+   "activity_description":"In this event you will learn WebVR development using A-Frame framework (one of emerging future technologies by Mozilla). This event is for participants who already know HTML",
+   "report_date":"2016-11-05",
+   "mentor":{  
+      "first_name":"Ankit",
+      "last_name":"Gadgil",
+      "display_name":"ankitgadgil",
+      "_url":"https://reps.mozilla.org/api/beta/users/325/"
+   },
+   "location":"Bhopal, Madhya Pradesh, India",
+   "longitude":77.4043393126,
+   "latitude":23.2632262252,
+   "link":"https://reps.mozilla.org/e/vr-camp-bhopal/",
+   "link_description":"",
+   "passive_report":true,
+   "event":{  
+      "name":"MozVR Camp Bhopal",
+      "_url":"https://reps.mozilla.org/api/beta/events/5936/"
+   },
+   "remo_url":"https://reps.mozilla.org/u/vabajaj/r/2016/November/5/40846/"
+}
