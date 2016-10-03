@@ -53,7 +53,7 @@ class Gerrit(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, url,
                  user=None, max_reviews=MAX_REVIEWS,
@@ -112,7 +112,6 @@ class Gerrit(Backend):
             reviews = self.parse_reviews(raw_items)
             for review in reviews:
                 yield review
-
 
     def _fetch_gerrit28(self, from_date=DEFAULT_DATETIME):
         """ Specific fetch for gerrit 2.8 version.
@@ -222,6 +221,15 @@ class Gerrit(Backend):
         :returns: a UNIX timestamp
         """
         return float(item['lastUpdated'])
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Gerrit item.
+
+        This backend only generates one type of item which is
+        'review'.
+        """
+        return 'review'
 
     @staticmethod
     def parse_reviews(raw_data):
