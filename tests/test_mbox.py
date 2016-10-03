@@ -202,6 +202,7 @@ class TestMBoxBackend(TestBaseMBox):
             self.assertEqual(message['origin'], 'http://example.com/')
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['category'], 'message')
 
     def test_fetch_from_date(self):
         """Test whether a list of messages is returned since a given date"""
@@ -225,6 +226,7 @@ class TestMBoxBackend(TestBaseMBox):
             self.assertEqual(message['origin'], 'http://example.com/')
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['category'], 'message')
 
     def test_ignore_messages(self):
         """Test if it ignores some messages without mandatory fields"""
