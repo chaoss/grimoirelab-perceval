@@ -123,6 +123,7 @@ class TestReMoBackend(unittest.TestCase):
         self.assertEqual(events[0]['origin'], MOZILLA_REPS_SERVER_URL)
         self.assertEqual(events[0]['uuid'], 'e701d4ed3b954361383d678d2168a44307d7ff60')
         self.assertEqual(events[0]['updated_on'], 1339326000.0)
+        self.assertEqual(events[0]['category'], 'event')
 
         if len(events) > 1:
             self.assertEqual(events[1]['data']['estimated_attendance'], 50)
@@ -131,6 +132,7 @@ class TestReMoBackend(unittest.TestCase):
             self.assertEqual(events[1]['origin'], MOZILLA_REPS_SERVER_URL)
             self.assertEqual(events[1]['uuid'], 'e83e53b1f1039f62c66d2a977e23df3adf5bdc87')
             self.assertEqual(events[1]['updated_on'], 1339344000.0)
+            self.assertEqual(events[1]['category'], 'event')
 
     @httpretty.activate
     def test_fetch(self):
