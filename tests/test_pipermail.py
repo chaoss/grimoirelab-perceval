@@ -252,6 +252,7 @@ class TestPipermailBackend(unittest.TestCase):
             self.assertEqual(message['origin'], 'http://example.com/')
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['category'], 'message')
 
     @httpretty.activate
     def test_fetch_apache(self):
@@ -303,6 +304,7 @@ class TestPipermailBackend(unittest.TestCase):
             self.assertEqual(message['origin'], 'http://example.com/')
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['category'], 'message')
 
     @httpretty.activate
     def test_fetch_from_date(self):
@@ -361,6 +363,7 @@ class TestPipermailBackend(unittest.TestCase):
             self.assertEqual(message['origin'], 'http://example.com/')
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['category'], 'message')
 
     @httpretty.activate
     def test_fetch_empty(self):
