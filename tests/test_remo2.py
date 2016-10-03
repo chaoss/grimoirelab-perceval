@@ -41,7 +41,7 @@ from perceval.backends.remo2 import (
 
 
 MOZILLA_REPS_SERVER_URL = 'http://example.com'
-MOZILLA_REPS_API = MOZILLA_REPS_SERVER_URL + '/api/beta'
+MOZILLA_REPS_API = MOZILLA_REPS_SERVER_URL + '/api/remo/v1'
 
 MOZILLA_REPS_CATEGORIES = ['events', 'activities', 'users']
 
@@ -351,7 +351,7 @@ class TestReMoClient(unittest.TestCase):
         req = HTTPServer.requests_http[-1]
         self.assertEqual(response, body)
         self.assertEqual(req.method, 'GET')
-        self.assertEqual(req.path, '/api/beta/events/?page=1')
+        self.assertEqual(req.path, '/api/remo/v1/events/?page=1')
         # Check request params
         expected = {
                     'page' : ['1']
@@ -371,7 +371,7 @@ class TestReMoClient(unittest.TestCase):
         req = HTTPServer.requests_http[-1]
         self.assertEqual(response, body)
         self.assertEqual(req.method, 'GET')
-        self.assertEqual(req.path, '/api/beta/events/?page=1')
+        self.assertEqual(req.path, '/api/remo/v1/events/?page=1')
         # Check request params
         expected = {
                     'page' : ['1']

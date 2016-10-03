@@ -1,86 +1,86 @@
 {
     "count": 5375,
-    "next": "http://example.com/api/beta/events/?format=json&page=2",
+    "next": "http://example.com/api/remo/v1/events/?format=json&page=2",
     "previous": null,
     "results": [
         {
-            "_url": "http://example.com/api/beta/events/132/",
+            "_url": "http://example.com/api/remo/v1/events/132/",
             "name": "Festival Komputer Indonesia 2012 - Makassar"
         },
         {
-            "_url": "http://example.com/api/beta/events/327/",
+            "_url": "http://example.com/api/remo/v1/events/327/",
             "name": "MozFR 2012"
         },
         {
-            "_url": "http://example.com/api/beta/events/129/",
+            "_url": "http://example.com/api/remo/v1/events/129/",
             "name": "Blogilicious 2012 Madura"
         },
         {
-            "_url": "http://example.com/api/beta/events/403/",
+            "_url": "http://example.com/api/remo/v1/events/403/",
             "name": "mozfestpune"
         },
         {
-            "_url": "http://example.com/api/beta/events/208/",
+            "_url": "http://example.com/api/remo/v1/events/208/",
             "name": "Mozparty @ Anthiyur"
         },
         {
-            "_url": "http://example.com/api/beta/events/130/",
+            "_url": "http://example.com/api/remo/v1/events/130/",
             "name": "Blogilicious 2012 Solo"
         },
         {
-            "_url": "http://example.com/api/beta/events/22/",
+            "_url": "http://example.com/api/remo/v1/events/22/",
             "name": "1st Mozcoffee Sprint l10n in Zamboanga "
         },
         {
-            "_url": "http://example.com/api/beta/events/26/",
+            "_url": "http://example.com/api/remo/v1/events/26/",
             "name": "Summer Code Party: \u00e5\u00a4\u008f\u00e6\u2014\u00a5\u00e7\u0161\u201e Web \u00e6\u00a8\u201a\u00e5\u0153\u2019 (Pop Up)"
         },
         {
-            "_url": "http://example.com/api/beta/events/10/",
+            "_url": "http://example.com/api/remo/v1/events/10/",
             "name": "Webmakers make Popcorn"
         },
         {
-            "_url": "http://example.com/api/beta/events/9/",
+            "_url": "http://example.com/api/remo/v1/events/9/",
             "name": "August Penguin 2012"
         },
         {
-            "_url": "http://example.com/api/beta/events/27/",
+            "_url": "http://example.com/api/remo/v1/events/27/",
             "name": "Code Rush Subtitle Translation"
         },
         {
-            "_url": "http://example.com/api/beta/events/18/",
+            "_url": "http://example.com/api/remo/v1/events/18/",
             "name": "Presentation of Firefox in Fulah "
         },
         {
-            "_url": "http://example.com/api/beta/events/1/",
+            "_url": "http://example.com/api/remo/v1/events/1/",
             "name": "Mozgr Sumo Localization Sprint"
         },
         {
-            "_url": "http://example.com/api/beta/events/13/",
+            "_url": "http://example.com/api/remo/v1/events/13/",
             "name": "Nuevas Tecnolog\u00c3\u00adas Aplicadas"
         },
         {
-            "_url": "http://example.com/api/beta/events/37/",
+            "_url": "http://example.com/api/remo/v1/events/37/",
             "name": "MozCamp at DMIT, Bhartiya Vidya Bhavan, New Delhi"
         },
         {
-            "_url": "http://example.com/api/beta/events/43/",
+            "_url": "http://example.com/api/remo/v1/events/43/",
             "name": "MozClub at SICSR"
         },
         {
-            "_url": "http://example.com/api/beta/events/12/",
+            "_url": "http://example.com/api/remo/v1/events/12/",
             "name": "Mozilla Iftar"
         },
         {
-            "_url": "http://example.com/api/beta/events/2/",
+            "_url": "http://example.com/api/remo/v1/events/2/",
             "name": "Mozilla Iftar"
         },
         {
-            "_url": "http://example.com/api/beta/events/14/",
+            "_url": "http://example.com/api/remo/v1/events/14/",
             "name": "Mura Menti Napok"
         },
         {
-            "_url": "http://example.com/api/beta/events/5/",
+            "_url": "http://example.com/api/remo/v1/events/5/",
             "name": "COSCUP 2012"
         }
     ]

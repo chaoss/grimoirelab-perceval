@@ -1,86 +1,86 @@
 {
     "count": 38481,
     "next": null,
-    "previous": "http://example.com/api/beta/activities/?format=json",
+    "previous": "http://example.com/api/remo/v1/activities/?format=json",
     "results": [
         {
-            "_url": "http://example.com/api/beta/activities/40835/",
+            "_url": "http://example.com/api/remo/v1/activities/40835/",
             "activity": "Attended an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40820/",
+            "_url": "http://example.com/api/remo/v1/activities/40820/",
             "activity": "Organized an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40821/",
+            "_url": "http://example.com/api/remo/v1/activities/40821/",
             "activity": "Attended an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40581/",
+            "_url": "http://example.com/api/remo/v1/activities/40581/",
             "activity": "Organized an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40582/",
+            "_url": "http://example.com/api/remo/v1/activities/40582/",
             "activity": "Attended an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/37813/",
+            "_url": "http://example.com/api/remo/v1/activities/37813/",
             "activity": "Organized an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/37814/",
+            "_url": "http://example.com/api/remo/v1/activities/37814/",
             "activity": "Attended an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40292/",
+            "_url": "http://example.com/api/remo/v1/activities/40292/",
             "activity": "Organized an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40293/",
+            "_url": "http://example.com/api/remo/v1/activities/40293/",
             "activity": "Attended an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40272/",
+            "_url": "http://example.com/api/remo/v1/activities/40272/",
             "activity": "Organized an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40273/",
+            "_url": "http://example.com/api/remo/v1/activities/40273/",
             "activity": "Attended an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/37068/",
+            "_url": "http://example.com/api/remo/v1/activities/37068/",
             "activity": "Attended an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/37067/",
+            "_url": "http://example.com/api/remo/v1/activities/37067/",
             "activity": "Organized an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40760/",
+            "_url": "http://example.com/api/remo/v1/activities/40760/",
             "activity": "Organized an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40761/",
+            "_url": "http://example.com/api/remo/v1/activities/40761/",
             "activity": "Attended an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40602/",
+            "_url": "http://example.com/api/remo/v1/activities/40602/",
             "activity": "Organized an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40603/",
+            "_url": "http://example.com/api/remo/v1/activities/40603/",
             "activity": "Attended an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40348/",
+            "_url": "http://example.com/api/remo/v1/activities/40348/",
             "activity": "Organized an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40349/",
+            "_url": "http://example.com/api/remo/v1/activities/40349/",
             "activity": "Attended an Event"
         },
         {
-            "_url": "http://example.com/api/beta/activities/40021/",
+            "_url": "http://example.com/api/remo/v1/activities/40021/",
             "activity": "Organized an Event"
         }
     ]
