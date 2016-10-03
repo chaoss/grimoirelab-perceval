@@ -78,7 +78,7 @@ class Telegram(Backend):
         empty string are given, it will be set to the `TELEGRAM_URL`
         plus the name of the bot; i.e 'http://telegram.org/mybot'.
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, bot, bot_token, cache=None, origin=None):
         origin = origin if origin else urljoin(TELEGRAM_URL, bot)
@@ -226,6 +226,15 @@ class Telegram(Backend):
         ts = float(ts)
 
         return ts
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Telegram item.
+
+        This backend only generates one type of item which is
+        'message'.
+        """
+        return 'message'
 
     @staticmethod
     def parse_messages(raw_json):

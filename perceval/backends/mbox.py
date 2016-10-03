@@ -60,7 +60,7 @@ class MBox(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `uri`
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
@@ -195,13 +195,13 @@ class MBox(Backend):
 
     @staticmethod
     def metadata_id(item):
-        """Extracts the identifier from a Git item."""
+        """Extracts the identifier from a MBox item."""
 
         return item[MBox.MESSAGE_ID_FIELD]
 
     @staticmethod
     def metadata_updated_on(item):
-        """Extracts the update time from a message item.
+        """Extracts the update time from a MBox item.
 
         The timestamp used is extracted from 'Date' field in its
         several forms. This date is converted to UNIX timestamp
@@ -215,6 +215,15 @@ class MBox(Backend):
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a MBox item.
+
+        This backend only generates one type of item which is
+        'message'.
+        """
+        return 'message'
 
     @staticmethod
     def parse_mbox(filepath):

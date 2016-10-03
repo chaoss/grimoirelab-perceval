@@ -50,7 +50,7 @@ class Jenkins(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, url, cache=None, origin=None):
         origin = origin if origin else url
@@ -130,6 +130,16 @@ class Jenkins(Backend):
         :returns: a UNIX timestamp
         """
         return float(item['timestamp']/1000)
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Jenkins item.
+
+        This backend only generates one type of item which is
+        'build'.
+        """
+        return 'build'
+
 
 class JenkinsClient:
     """Jenkins API client.

@@ -102,6 +102,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
+            self.assertEqual(commit['category'], 'commit')
 
         shutil.rmtree(new_path)
 
@@ -127,6 +128,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
+            self.assertEqual(commit['category'], 'commit')
 
         # Test it using a datetime that includes the timezone
         from_date = datetime.datetime(2012, 8, 14, 14, 30, 00,
@@ -143,6 +145,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
+            self.assertEqual(commit['category'], 'commit')
 
         shutil.rmtree(new_path)
 
@@ -174,6 +177,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['data']['commit'], expected[x])
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['category'], 'commit')
 
         # Now let's fetch lzp
         commits = [commit for commit in git.fetch(branches=['lzp'])]
@@ -194,6 +198,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['data']['commit'], expected[x])
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['category'], 'commit')
 
         # Now, let's fech master and lzp
         commits = [commit for commit in git.fetch(branches=['master', 'lzp'])]
@@ -216,6 +221,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['data']['commit'], expected[x])
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['category'], 'commit')
 
         # Now, let's fetch None, which means "all commits"
         commits = [commit for commit in git.fetch(branches=None)]
@@ -238,6 +244,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['data']['commit'], expected[x])
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['category'], 'commit')
 
         # Now, let's fetch [], which means "no commits"
         commits = [commit for commit in git.fetch(branches=[])]
@@ -284,6 +291,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['origin'], 'http://example.com.git')
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
+            self.assertEqual(commit['category'], 'commit')
 
     def test_git_parser(self):
         """Test if the static method parses a git log file"""

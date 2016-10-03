@@ -136,6 +136,7 @@ class TestKitsuneBackend(unittest.TestCase):
         self.assertEqual(questions[0]['uuid'], '8fa01e2aadf37c6f2fa300ce529fd1a23feac333')
         self.assertEqual(questions[0]['updated_on'], 1467798846.0)
         self.assertEqual(questions[0]['offset'], 0)
+        self.assertEqual(questions[0]['category'], 'question')
 
         if len(questions) > 1:
             self.assertEqual(questions[1]['data']['num_votes'], 1)
@@ -145,6 +146,7 @@ class TestKitsuneBackend(unittest.TestCase):
             self.assertEqual(questions[1]['uuid'], '7a3fbfb33cfaaa32b2f121994faf019a054a9a06')
             self.assertEqual(questions[1]['updated_on'], 1467798439.0)
             self.assertEqual(questions[1]['offset'], 1)
+            self.assertEqual(questions[1]['category'], 'question')
 
     @httpretty.activate
     def test_fetch(self):

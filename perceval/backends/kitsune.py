@@ -70,7 +70,7 @@ class Kitsune(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, url=None, cache=None, origin=None):
         if not url:
@@ -211,7 +211,7 @@ class Kitsune(Backend):
 
     @staticmethod
     def metadata_id(item):
-        """Extracts the identifier from an question item."""
+        """Extracts the identifier from a Kitsune item."""
 
         return str(item['id'])
 
@@ -228,6 +228,15 @@ class Kitsune(Backend):
         :returns: a UNIX timestamp
         """
         return float(str_to_datetime(item['updated']).timestamp())
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Kitsune item.
+
+        This backend only generates one type of item which is
+        'question'.
+        """
+        return 'question'
 
 
 class KitsuneClient:

@@ -128,6 +128,7 @@ class TestTelegramBackend(unittest.TestCase):
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
+            self.assertEqual(message['category'], 'message')
 
         # Check requests
         expected = [
@@ -158,6 +159,7 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(msg['uuid'], '2e61e72b64c9084f3c5a36671c3119641c3ae42f')
         self.assertEqual(msg['updated_on'], 1467370372.0)
         self.assertEqual(msg['offset'], 319280321)
+        self.assertEqual(msg['category'], 'message')
 
         # Check requests
         expected = [
@@ -194,6 +196,7 @@ class TestTelegramBackend(unittest.TestCase):
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
+            self.assertEqual(message['category'], 'message')
 
         # Empty list of chats will return no messages
         chats = []
@@ -281,6 +284,7 @@ class TestTelegramBackendCache(unittest.TestCase):
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
+            self.assertEqual(message['category'], 'message')
 
         # No more requests were sent
         self.assertEqual(len(http_requests), 3)

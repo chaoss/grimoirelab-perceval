@@ -55,7 +55,7 @@ class StackExchange(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `site` value
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, site, tagged=None, token=None,
                  max_questions=None, cache=None, origin=None):
@@ -118,7 +118,7 @@ class StackExchange(Backend):
 
     @staticmethod
     def metadata_id(item):
-        """Extracts the identifier from a Git item."""
+        """Extracts the identifier from a StackExchange item."""
 
         return str(item['question_id'])
 
@@ -135,6 +135,15 @@ class StackExchange(Backend):
         :returns: a UNIX timestamp
         """
         return float(item['last_activity_date'])
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a StackExchange item.
+
+        This backend only generates one type of item which is
+        'question'.
+        """
+        return 'question'
 
     @staticmethod
     def parse_questions(raw_page):

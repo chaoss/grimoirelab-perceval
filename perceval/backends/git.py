@@ -55,7 +55,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.3.1'
+    version = '0.4.0'
 
     def __init__(self, uri, gitpath, cache=None, origin=None):
         origin = origin if origin else uri
@@ -154,6 +154,15 @@ class Git(Backend):
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Git item.
+
+        This backend only generates one type of item which is
+        'commit'.
+        """
+        return 'commit'
 
     @staticmethod
     def parse_git_log_from_file(filepath):

@@ -42,8 +42,8 @@ class Backend:
     Derivated classes have to implement `fetch` and `fetch_from_cache`
     methods. Otherwise, `NotImplementedError` exception will be raised.
     Metadata decorator can be used together with fetch methods but
-    requires the implementation of `metadata_id` and `metadata_updated_on`
-    static methods.
+    requires the implementation of `metadata_id`, `metadata_updated_on`
+    and `metadata_category` static methods.
 
     To track which version of the backend was used during the fetching
     process, this class provides a `version` attribute that each backend
@@ -55,7 +55,7 @@ class Backend:
     :raises ValueError: raised when `cache` is not an instance of
         `Cache` class
     """
-    version = '0.1'
+    version = '0.2'
 
     def __init__(self, origin, cache=None):
         if cache and not isinstance(cache, Cache):
@@ -83,6 +83,10 @@ class Backend:
 
     @staticmethod
     def metadata_updated_on(item):
+        raise NotImplementedError
+
+    @staticmethod
+    def metadata_category(item):
         raise NotImplementedError
 
     def _purge_cache_queue(self):
@@ -177,6 +181,7 @@ def metadata(func):
                     'origin' : self.origin,
                     'uuid' : uuid(self.origin, self.metadata_id(data)),
                     'updated_on' : self.metadata_updated_on(data),
+                    'category' : self.metadata_category(data),
                     'data' : data,
                    }
             yield item

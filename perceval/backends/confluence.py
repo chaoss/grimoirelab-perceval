@@ -53,7 +53,7 @@ class Confluence(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url`
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, url, cache=None, origin=None):
         origin = origin if origin else url
@@ -207,6 +207,15 @@ class Confluence(Backend):
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Confluence item.
+
+        This backend only generates one type of item which is
+        'historical content'.
+        """
+        return 'historical content'
 
     @staticmethod
     def parse_contents_summary(raw_json):

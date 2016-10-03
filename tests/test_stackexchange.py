@@ -76,6 +76,7 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(questions[0]['origin'], 'stackoverflow')
         self.assertEqual(questions[0]['uuid'], '43953bd75d1d4dbedb457059acb4b79fcf6712a8')
         self.assertEqual(questions[0]['updated_on'], 1459975066.0)
+        self.assertEqual(questions[0]['category'], 'question')
 
         data = json.loads(question)
         self.assertDictEqual(questions[0]['data'], data['items'][0])
@@ -113,6 +114,7 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(questions[0]['origin'], 'stackoverflow')
         self.assertEqual(questions[0]['uuid'], '43953bd75d1d4dbedb457059acb4b79fcf6712a8')
         self.assertEqual(questions[0]['updated_on'], 1459975066.0)
+        self.assertEqual(questions[0]['category'], 'question')
 
         #The date on the questions must be greater than from_date
         self.assertGreater(questions[0]['updated_on'], 1459900800)

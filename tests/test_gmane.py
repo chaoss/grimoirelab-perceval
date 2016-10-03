@@ -143,6 +143,7 @@ class TestGmaneBackend(unittest.TestCase):
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
+            self.assertEqual(message['category'], 'message')
 
     @httpretty.activate
     def test_fetch_from_offset(self):
@@ -181,6 +182,7 @@ class TestGmaneBackend(unittest.TestCase):
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
+            self.assertEqual(message['category'], 'message')
 
     @httpretty.activate
     def test_fetch_empty(self):

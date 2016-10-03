@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 MOZILLA_REPS_URL = "https://reps.mozilla.org"
 REMO_DEFAULT_OFFSET = 0
 
+
 def remo_metadata(func):
     """ReMo metadata decorator.
 
@@ -71,7 +72,7 @@ class ReMo(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, url=None, cache=None, origin=None):
         if not url:
@@ -86,11 +87,10 @@ class ReMo(Backend):
     @remo_metadata
     @metadata
     def fetch(self, offset=REMO_DEFAULT_OFFSET, category='events'):
-        """Fetch events from the ReMo url.
+        """Fetch items from the ReMo url.
 
-        The method retrieves, from a ReMo url, the
-        events.
-
+        The method retrieves, from a ReMo URL, the set of items
+        of the given `category`.
 
         :offset: obtain items after offset
         :category: category of items to retrieve
@@ -175,7 +175,7 @@ class ReMo(Backend):
 
     @staticmethod
     def metadata_id(item):
-        """Extracts the identifier from an event item."""
+        """Extracts the identifier from a ReMo item."""
         return str(item['remo_url'])
 
     @staticmethod
@@ -202,6 +202,25 @@ class ReMo(Backend):
             raise ValueError("Can't find updated field for item " + item)
 
         return float(str_to_datetime(updated).timestamp())
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a ReMo item.
+
+        This backend generates items types 'event', 'activity'
+        or 'user'. To guess the type of item, the code will look
+        for unique fields.
+        """
+        if 'estimated_attendance' in item:
+            category = 'event'
+        elif 'activity' in item:
+            category = 'activity'
+        elif 'first_name' in item:
+            category = 'user'
+        else:
+            raise TypeError("Could not define the category of item " + item)
+
+        return category
 
 
 class ReMoClient:

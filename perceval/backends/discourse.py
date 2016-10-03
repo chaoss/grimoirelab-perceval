@@ -52,7 +52,7 @@ class Discourse(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, url, token=None,
                  cache=None, origin=None):
@@ -241,13 +241,13 @@ class Discourse(Backend):
 
     @staticmethod
     def metadata_id(item):
-        """Extracts the identifier from a Post item."""
+        """Extracts the identifier from a Discourse item."""
 
         return str(item['id'])
 
     @staticmethod
     def metadata_updated_on(item):
-        """Extracts the update time from a Post item.
+        """Extracts the update time from a Discourse item.
 
         The timestamp used is extracted from 'last_posted_at' field.
         This date is converted to UNIX timestamp format taking into
@@ -261,6 +261,15 @@ class Discourse(Backend):
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Discourse item.
+
+        This backend only generates one type of item which is
+        'topic'.
+        """
+        return 'topic'
 
 
 class DiscourseClient:

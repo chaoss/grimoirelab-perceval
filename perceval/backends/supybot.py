@@ -53,7 +53,7 @@ class Supybot(Backend):
     The format of the messages must also follow a pattern. This
     patterns can be found in `SupybotParser` class documentation.
     """
-    version = '0.1.1'
+    version = '0.2.0'
 
     def __init__(self, uri, dirpath, cache=None, origin=None):
         origin = origin if origin else uri
@@ -148,7 +148,7 @@ class Supybot(Backend):
 
     @staticmethod
     def metadata_id(item):
-        """Extracts the identifier from a message item.
+        """Extracts the identifier from a Supybot item.
 
         This identifier will be the mix of two fields because IRC
         messages does not have any unique identifier. In this case,
@@ -160,7 +160,7 @@ class Supybot(Backend):
 
     @staticmethod
     def metadata_updated_on(item):
-        """Extracts the update time from a message item.
+        """Extracts the update time from a Supybot item.
 
         The timestamp used is extracted from 'timestamp' field.
         This date is converted to UNIX timestamp format taking into
@@ -174,6 +174,15 @@ class Supybot(Backend):
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Supybot item.
+
+        This backend only generates one type of item which is
+        'message'.
+        """
+        return 'message'
 
     @staticmethod
     def parse_supybot_log(filepath):

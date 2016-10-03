@@ -54,7 +54,7 @@ class ReMo(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, url=None, cache=None, origin=None):
         if not url:
@@ -146,7 +146,7 @@ class ReMo(Backend):
 
     @staticmethod
     def metadata_id(item):
-        """Extracts the identifier from an event item."""
+        """Extracts the identifier from a ReMo item."""
         return str(item['event_url'])
 
     @staticmethod
@@ -162,6 +162,15 @@ class ReMo(Backend):
         :returns: a UNIX timestamp
         """
         return float(str_to_datetime(item['end']).timestamp())
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a ReMo item.
+
+        This backend only generates one type of item which is
+        'event'.
+        """
+        return 'event'
 
     def __get_all_users(self):
         """Retrieve all users data"""

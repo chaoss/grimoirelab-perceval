@@ -97,6 +97,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[0]['origin'], 'https://github.com/zhquan_example/repo')
         self.assertEqual(issues[0]['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
         self.assertEqual(issues[0]['updated_on'], 1454328801.0)
+        self.assertEqual(issues[0]['category'], 'issue')
         self.assertDictEqual(issues[0]['data'], expected)
 
     @httpretty.activate
@@ -148,12 +149,14 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[0]['origin'], 'https://github.com/zhquan_example/repo')
         self.assertEqual(issues[0]['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
         self.assertEqual(issues[0]['updated_on'], 1458035782.0)
+        self.assertEqual(issues[0]['category'], 'issue')
         self.assertDictEqual(issues[0]['data'], expected_1)
 
         expected_2 = json.loads(read_file('data/github_issue_expected_2'))
         self.assertEqual(issues[1]['origin'], 'https://github.com/zhquan_example/repo')
         self.assertEqual(issues[1]['uuid'], '4236619ac2073491640f1698b5c4e169895aaf69')
         self.assertEqual(issues[1]['updated_on'], 1458054569.0)
+        self.assertEqual(issues[1]['category'], 'issue')
         self.assertDictEqual(issues[1]['data'], expected_2)
 
     @httpretty.activate
@@ -196,6 +199,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[0]['origin'], 'https://github.com/zhquan_example/repo')
         self.assertEqual(issues[0]['uuid'], '4236619ac2073491640f1698b5c4e169895aaf69')
         self.assertEqual(issues[0]['updated_on'], 1458054569.0)
+        self.assertEqual(issues[0]['category'], 'issue')
         self.assertDictEqual(issues[0]['data'], expected)
 
     @httpretty.activate

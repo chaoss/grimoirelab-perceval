@@ -42,10 +42,10 @@ class TestBackend(unittest.TestCase):
     def test_version(self):
         """Test whether the backend version is initialized"""
 
-        self.assertEqual(Backend.version, '0.1')
+        self.assertEqual(Backend.version, '0.2')
 
         b = Backend('test')
-        self.assertEqual(b.version, '0.1')
+        self.assertEqual(b.version, '0.2')
 
     def test_origin(self):
         """Test whether origin value is initialized"""
@@ -88,7 +88,7 @@ class TestBackendCommand(unittest.TestCase):
 class MockDecoratorBackend(Backend):
     """Mock backend to test metadata decorators"""
 
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, origin):
         super().__init__(origin)
@@ -113,6 +113,10 @@ class MockDecoratorBackend(Backend):
     def metadata_updated_on(item):
         return '2016-01-01'
 
+    @staticmethod
+    def metadata_category(item):
+        return 'mock_item'
+
 
 class TestMetadata(unittest.TestCase):
     """Test metadata decorator"""
@@ -130,11 +134,12 @@ class TestMetadata(unittest.TestCase):
 
             self.assertEqual(item['data']['item'], x)
             self.assertEqual(item['backend_name'], 'MockDecoratorBackend')
-            self.assertEqual(item['backend_version'], '0.1.0')
+            self.assertEqual(item['backend_version'], '0.2.0')
             self.assertEqual(item['perceval_version'], __version__)
             self.assertEqual(item['origin'], 'test')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['updated_on'], '2016-01-01')
+            self.assertEqual(item['category'], 'mock_item')
             self.assertGreater(item['timestamp'], before)
             self.assertLess(item['timestamp'], after)
 

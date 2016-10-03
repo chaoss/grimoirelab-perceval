@@ -174,6 +174,7 @@ class TestRedmineBackend(unittest.TestCase):
             self.assertEqual(issue['data']['id'], expc[0])
             self.assertEqual(issue['uuid'], expc[1])
             self.assertEqual(issue['updated_on'], expc[2])
+            self.assertEqual(issue['category'], 'issue')
 
         # Check requests
         expected = [{
@@ -240,6 +241,7 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(issue['data']['id'], 7311)
         self.assertEqual(issue['uuid'], '4ab289ab60aee93a66e5490529799cf4a2b4d94c')
         self.assertEqual(issue['updated_on'], 1469607427.0)
+        self.assertEqual(issue['category'], 'issue')
 
         expected = [{
                      'key' : ['AAAA'],
@@ -369,6 +371,7 @@ class TestRedmineBackendCache(unittest.TestCase):
             self.assertEqual(issue['data']['id'], expc[0])
             self.assertEqual(issue['uuid'], expc[1])
             self.assertEqual(issue['updated_on'], expc[2])
+            self.assertEqual(issue['category'], 'issue')
             self.assertDictEqual(issue['data'], issues[x]['data'])
 
         # No more requests were sent

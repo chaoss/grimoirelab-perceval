@@ -82,8 +82,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.2.2'
-
+    version = '0.3.0'
 
     def __init__(self, owner=None, repository=None,
                  backend_token=None, base_url=None,
@@ -236,6 +235,15 @@ class GitHub(Backend):
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a GitHub item.
+
+        This backend only generates one type of item which is
+        'issue'.
+        """
+        return 'issue'
 
 
 class GitHubClient:

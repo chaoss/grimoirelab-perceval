@@ -96,6 +96,7 @@ class TestSupybotBackend(unittest.TestCase):
             self.assertEqual(message['origin'], 'http://example.com/')
             self.assertEqual(message['uuid'], expected[x][2])
             self.assertEqual(message['updated_on'], expected[x][3])
+            self.assertEqual(message['category'], 'message')
 
     def test_fetch_from_date(self):
         """Test whether a list of messages is returned since a given date"""
@@ -116,6 +117,7 @@ class TestSupybotBackend(unittest.TestCase):
             self.assertEqual(message['origin'], 'http://example.com/')
             self.assertEqual(message['uuid'], expected[x][2])
             self.assertEqual(message['updated_on'], expected[x][3])
+            self.assertEqual(message['category'], 'message')
 
     def test_parse_supybot_log(self):
         """Test whether it parses a log"""

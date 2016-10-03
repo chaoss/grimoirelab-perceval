@@ -158,6 +158,7 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         self.assertEqual(bugs[0]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(bugs[0]['uuid'], '68494ad0072ed9e09cecb8235649a38c443326db')
         self.assertEqual(bugs[0]['updated_on'], 1465257689.0)
+        self.assertEqual(bugs[0]['category'], 'bug')
 
         self.assertEqual(bugs[1]['data']['id'], 1273439)
         self.assertEqual(len(bugs[1]['data']['comments']), 0)
@@ -166,6 +167,7 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         self.assertEqual(bugs[1]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(bugs[1]['uuid'], 'd306162de06bc759f9bd9227fe3fd5f08aeb0dde')
         self.assertEqual(bugs[1]['updated_on'], 1465257715.0)
+        self.assertEqual(bugs[1]['category'], 'bug')
 
         self.assertEqual(bugs[2]['data']['id'], 947945)
         self.assertEqual(len(bugs[2]['data']['comments']), 0)
@@ -174,6 +176,7 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         self.assertEqual(bugs[2]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(bugs[2]['uuid'], '33edda925351c3310fc3e12d7f18a365c365f6bd')
         self.assertEqual(bugs[2]['updated_on'], 1465257743.0)
+        self.assertEqual(bugs[2]['category'], 'bug')
 
         # Check requests
         expected = [{
@@ -276,6 +279,7 @@ class TestBugzillaRESTBackendCache(unittest.TestCase):
         self.assertEqual(bugs[0]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(bugs[0]['uuid'], '68494ad0072ed9e09cecb8235649a38c443326db')
         self.assertEqual(bugs[0]['updated_on'], 1465257689.0)
+        self.assertEqual(bugs[0]['category'], 'bug')
 
         self.assertEqual(bugs[1]['data']['id'], 1273439)
         self.assertEqual(len(bugs[1]['data']['comments']), 0)
@@ -284,6 +288,7 @@ class TestBugzillaRESTBackendCache(unittest.TestCase):
         self.assertEqual(bugs[1]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(bugs[1]['uuid'], 'd306162de06bc759f9bd9227fe3fd5f08aeb0dde')
         self.assertEqual(bugs[1]['updated_on'], 1465257715.0)
+        self.assertEqual(bugs[1]['category'], 'bug')
 
         self.assertEqual(bugs[2]['data']['id'], 947945)
         self.assertEqual(len(bugs[2]['data']['comments']), 0)
@@ -292,6 +297,7 @@ class TestBugzillaRESTBackendCache(unittest.TestCase):
         self.assertEqual(bugs[2]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(bugs[2]['uuid'], '33edda925351c3310fc3e12d7f18a365c365f6bd')
         self.assertEqual(bugs[2]['updated_on'], 1465257743.0)
+        self.assertEqual(bugs[2]['category'], 'bug')
 
         # No more requests were sent
         self.assertEqual(len(http_requests), 9)

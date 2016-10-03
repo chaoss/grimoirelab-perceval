@@ -86,7 +86,7 @@ class Jira(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url`
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, url, project=None, backend_user=None,
                  backend_password=None, verify=None,
@@ -168,7 +168,7 @@ class Jira(Backend):
 
     @staticmethod
     def metadata_updated_on(item):
-        """Extracts the update time from a issue item.
+        """Extracts the update time from a Jira item.
 
         The timestamp used is extracted from 'updated' field.
         This date is converted to UNIX timestamp format taking
@@ -182,6 +182,15 @@ class Jira(Backend):
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Jira item.
+
+        This backend only generates one type of item which is
+        'issue'.
+        """
+        return 'issue'
 
     @staticmethod
     def parse_issues(raw_page):
