@@ -1,124 +1,124 @@
 {
     "count": 336,
-    "next": "http://example.com/api/beta/users/?format=json&page=2",
+    "next": "http://example.com/api/remo/v1/users/?format=json&page=2",
     "previous": null,
     "results": [
         {
-            "_url": "http://example.com/api/beta/users/8/",
+            "_url": "http://example.com/api/remo/v1/users/8/",
             "display_name": "aaroncajes",
             "first_name": "Aaron",
             "last_name": "Cajes"
         },
         {
-            "_url": "http://example.com/api/beta/users/15/",
+            "_url": "http://example.com/api/remo/v1/users/15/",
             "display_name": "ahsan_net",
             "first_name": "Mashkawat",
             "last_name": "Ahsan"
         },
         {
-            "_url": "http://example.com/api/beta/users/18/",
+            "_url": "http://example.com/api/remo/v1/users/18/",
             "display_name": "alex_lakatos",
             "first_name": "Alex",
             "last_name": "Lakatos"
         },
         {
-            "_url": "http://example.com/api/beta/users/26/",
+            "_url": "http://example.com/api/remo/v1/users/26/",
             "display_name": "anupkumarmishra29",
             "first_name": "Anup Kumar",
             "last_name": "Mishra"
         },
         {
-            "_url": "http://example.com/api/beta/users/27/",
+            "_url": "http://example.com/api/remo/v1/users/27/",
             "display_name": "ardian",
             "first_name": "Ardian",
             "last_name": "Haxha"
         },
         {
-            "_url": "http://example.com/api/beta/users/31/",
+            "_url": "http://example.com/api/remo/v1/users/31/",
             "display_name": "ashickur_noor",
             "first_name": "Ashickur",
             "last_name": "Rahman"
         },
         {
-            "_url": "http://example.com/api/beta/users/33/",
+            "_url": "http://example.com/api/remo/v1/users/33/",
             "display_name": "belutz",
             "first_name": "Andi",
             "last_name": "Darmawan"
         },
         {
-            "_url": "http://example.com/api/beta/users/35/",
+            "_url": "http://example.com/api/remo/v1/users/35/",
             "display_name": "benoit_leseul",
             "first_name": "Benoit",
             "last_name": "Leseul"
         },
         {
-            "_url": "http://example.com/api/beta/users/37/",
+            "_url": "http://example.com/api/remo/v1/users/37/",
             "display_name": "bobreyes",
             "first_name": "Robert",
             "last_name": "Reyes"
         },
         {
-            "_url": "http://example.com/api/beta/users/44/",
+            "_url": "http://example.com/api/remo/v1/users/44/",
             "display_name": "benalichahreddine",
             "first_name": "Ben Ali",
             "last_name": "Chahreddine"
         },
         {
-            "_url": "http://example.com/api/beta/users/50/",
+            "_url": "http://example.com/api/remo/v1/users/50/",
             "display_name": "cstipkovic",
             "first_name": "Clauber",
             "last_name": "Stipkovic"
         },
         {
-            "_url": "http://example.com/api/beta/users/54/",
+            "_url": "http://example.com/api/remo/v1/users/54/",
             "display_name": "danyjavierb",
             "first_name": "Dany Javier",
             "last_name": "Bautista"
         },
         {
-            "_url": "http://example.com/api/beta/users/55/",
+            "_url": "http://example.com/api/remo/v1/users/55/",
             "display_name": "daviddagb2",
             "first_name": "David",
             "last_name": "Gonzalez Blanchard"
         },
         {
-            "_url": "http://example.com/api/beta/users/57/",
+            "_url": "http://example.com/api/remo/v1/users/57/",
             "display_name": "deimidis",
             "first_name": "Guillermo",
             "last_name": "Movia"
         },
         {
-            "_url": "http://example.com/api/beta/users/62/",
+            "_url": "http://example.com/api/remo/v1/users/62/",
             "display_name": "ebolinaga",
             "first_name": "Erick",
             "last_name": "Leon Bolinaga"
         },
         {
-            "_url": "http://example.com/api/beta/users/66/",
+            "_url": "http://example.com/api/remo/v1/users/66/",
             "display_name": "nino_vranesic",
             "first_name": "Nino",
             "last_name": "Vranesic"
         },
         {
-            "_url": "http://example.com/api/beta/users/73/",
+            "_url": "http://example.com/api/remo/v1/users/73/",
             "display_name": "Faten",
             "first_name": "Faten",
             "last_name": "Ben Thabet"
         },
         {
-            "_url": "http://example.com/api/beta/users/74/",
+            "_url": "http://example.com/api/remo/v1/users/74/",
             "display_name": "fauzanalfi",
             "first_name": "Fauzan Alfi",
             "last_name": "Agirachman"
         },
         {
-            "_url": "http://example.com/api/beta/users/75/",
+            "_url": "http://example.com/api/remo/v1/users/75/",
             "display_name": "fayetandog",
             "first_name": "Faye",
             "last_name": "Tandog"
         },
         {
-            "_url": "http://example.com/api/beta/users/81/",
+            "_url": "http://example.com/api/remo/v1/users/81/",
             "display_name": "fredy",
             "first_name": "Alfredos Panagiotis",
             "last_name": "Damkalis"

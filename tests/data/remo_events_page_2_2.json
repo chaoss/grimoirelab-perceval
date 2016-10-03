@@ -1,86 +1,86 @@
 {
     "count": 5375,
     "next": null,
-    "previous": "http://example.com/api/beta/events/?format=json",
+    "previous": "http://example.com/api/remo/v1/events/?format=json",
     "results": [
         {
-            "_url": "http://example.com/api/beta/events/7/",
+            "_url": "http://example.com/api/remo/v1/events/7/",
             "name": "Kite show - Kalima extremo"
         },
         {
-            "_url": "http://example.com/api/beta/events/66/",
+            "_url": "http://example.com/api/remo/v1/events/66/",
             "name": "PHL Summer Code Party 2"
         },
         {
-            "_url": "http://example.com/api/beta/events/11/",
+            "_url": "http://example.com/api/remo/v1/events/11/",
             "name": "Mozilla Philippines Community HTML5 & Firefox OS (B2G) Roadshow"
         },
         {
-            "_url": "http://example.com/api/beta/events/207/",
+            "_url": "http://example.com/api/remo/v1/events/207/",
             "name": "Mozparty with a demo on using \"Firefox for Android\" @ Univercell , Perundurai"
         },
         {
-            "_url": "http://example.com/api/beta/events/78/",
+            "_url": "http://example.com/api/remo/v1/events/78/",
             "name": "SUNY Albany - Welcome to Campus!"
         },
         {
-            "_url": "http://example.com/api/beta/events/40/",
+            "_url": "http://example.com/api/remo/v1/events/40/",
             "name": "FUDCon LATAM 2012"
         },
         {
-            "_url": "http://example.com/api/beta/events/82/",
+            "_url": "http://example.com/api/remo/v1/events/82/",
             "name": "JCI birthday 27 old"
         },
         {
-            "_url": "http://example.com/api/beta/events/91/",
+            "_url": "http://example.com/api/remo/v1/events/91/",
             "name": "Open Data Mx"
         },
         {
-            "_url": "http://example.com/api/beta/events/46/",
+            "_url": "http://example.com/api/remo/v1/events/46/",
             "name": "The Developer Conference"
         },
         {
-            "_url": "http://example.com/api/beta/events/77/",
+            "_url": "http://example.com/api/remo/v1/events/77/",
             "name": "MozCaf\u00c3\u00a9 Algiers"
         },
         {
-            "_url": "http://example.com/api/beta/events/89/",
+            "_url": "http://example.com/api/remo/v1/events/89/",
             "name": "MozCoffee Delhi/NCR"
         },
         {
-            "_url": "http://example.com/api/beta/events/88/",
+            "_url": "http://example.com/api/remo/v1/events/88/",
             "name": "Mozilla Summer Code Party, BVPMOSC, Delhi"
         },
         {
-            "_url": "http://example.com/api/beta/events/34/",
+            "_url": "http://example.com/api/remo/v1/events/34/",
             "name": "Moz Interaction"
         },
         {
-            "_url": "http://example.com/api/beta/events/85/",
+            "_url": "http://example.com/api/remo/v1/events/85/",
             "name": "Facebook Developers World HACK"
         },
         {
-            "_url": "http://example.com/api/beta/events/50/",
+            "_url": "http://example.com/api/remo/v1/events/50/",
             "name": "MDN Docs Sprint"
         },
         {
-            "_url": "http://example.com/api/beta/events/67/",
+            "_url": "http://example.com/api/remo/v1/events/67/",
             "name": "MozKopdarSUB - August 2012"
         },
         {
-            "_url": "http://example.com/api/beta/events/69/",
+            "_url": "http://example.com/api/remo/v1/events/69/",
             "name": "Mozilla Firefox the best option"
         },
         {
-            "_url": "http://example.com/api/beta/events/123/",
+            "_url": "http://example.com/api/remo/v1/events/123/",
             "name": "Blogilicious 2012 Maros"
         },
         {
-            "_url": "http://example.com/api/beta/events/68/",
+            "_url": "http://example.com/api/remo/v1/events/68/",
             "name": "Braderie de Lille 2012"
         },
         {
-            "_url": "http://example.com/api/beta/events/31/",
+            "_url": "http://example.com/api/remo/v1/events/31/",
             "name": "Mozilla Urdu Localization Sprint"
         }
     ]
