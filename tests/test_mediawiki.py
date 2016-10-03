@@ -123,6 +123,7 @@ class HTTPServer():
         testObj.assertEqual(pages[0]['origin'], MEDIAWIKI_SERVER_URL)
         testObj.assertEqual(pages[0]['uuid'], '528aa927f40d8e46a1e9f456fa318bf9f8a38105')
         testObj.assertEqual(pages[0]['updated_on'], 1466557537.0)
+        testObj.assertEqual(pages[0]['category'], 'page')
 
         if len(pages) > 1:
             testObj.assertEqual(pages[1]['data']['pageid'], 476583)
@@ -130,6 +131,7 @@ class HTTPServer():
             testObj.assertEqual(pages[1]['origin'], MEDIAWIKI_SERVER_URL)
             testObj.assertEqual(pages[1]['uuid'], 'c627c598b1eb2a0fe8d6aef9af9968ad54038c7b')
             testObj.assertEqual(pages[1]['updated_on'], 1466616473.0)
+            testObj.assertEqual(pages[1]['category'], 'page')
 
 
 class TestMediaWikiBackend(unittest.TestCase):
@@ -263,7 +265,6 @@ class TestMediaWikiBackendCache(unittest.TestCase):
         # No new requests to the server
         self.assertEqual(len(HTTPServer.requests_http), requests_done)
         self.assertEqual(len(cached_pages), len(pages))
-
 
         if version == "1.28" and reviews_api:
             # 2 pages in all name spaces

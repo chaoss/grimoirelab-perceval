@@ -71,7 +71,7 @@ class MediaWiki(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, url, cache=None, origin=None):
         origin = origin if origin else url
@@ -165,7 +165,7 @@ class MediaWiki(Backend):
 
     @staticmethod
     def metadata_id(item):
-        """Extracts the identifier from a wiki page."""
+        """Extracts the identifier from a MediaWiki page."""
         return str(item['pageid'])
 
     @staticmethod
@@ -181,6 +181,15 @@ class MediaWiki(Backend):
         :returns: a UNIX timestamp
         """
         return float(item['update'])
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a MediaWiki item.
+
+        This backend only generates one type of item which is
+        'page'.
+        """
+        return 'page'
 
     def __get_max_date(self, reviews):
         """"Get the max date in unixtime format from reviews."""
