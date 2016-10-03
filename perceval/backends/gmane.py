@@ -80,7 +80,7 @@ class Gmane(MBox):
     :raises  RepositoryError: when the given mailing list repository
         is not stored by Gmane
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, mailing_list_address, dirpath,
                  cache=None, origin=None):
