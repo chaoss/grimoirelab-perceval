@@ -59,7 +59,7 @@ class BugzillaREST(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, url, user=None, password=None, api_token=None,
                  max_bugs=MAX_BUGS, cache=None, origin=None):
@@ -240,13 +240,13 @@ class BugzillaREST(Backend):
 
     @staticmethod
     def metadata_id(item):
-        """Extracts the identifier from a bug item."""
+        """Extracts the identifier from a Bugzilla item."""
 
         return str(item['id'])
 
     @staticmethod
     def metadata_updated_on(item):
-        """Extracts the update time from a bug item.
+        """Extracts the update time from a Bugzilla item.
 
         The timestamp used is extracted from 'last_change_time' field.
         This date is converted to UNIX timestamp format taking into
@@ -260,6 +260,15 @@ class BugzillaREST(Backend):
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Bugzilla item.
+
+        This backend only generates one type of item which is
+        'bug'.
+        """
+        return 'bug'
 
 
 class BugzillaRESTClient:
