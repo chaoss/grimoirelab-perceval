@@ -48,7 +48,7 @@ class Phabricator(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url`
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, url, api_token, cache=None, origin=None):
         origin = origin if origin else url
@@ -346,6 +346,15 @@ class Phabricator(Backend):
         :returns: a UNIX timestamp
         """
         return float(item['fields']['dateModified'])
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Phabricator item.
+
+        This backend only generates one type of item which is
+        'task'.
+        """
+        return 'task'
 
     @staticmethod
     def parse_tasks(raw_json):

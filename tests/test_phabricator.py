@@ -210,6 +210,7 @@ class TestPhabricatorBackend(unittest.TestCase):
 
             self.assertEqual(task['uuid'], expc[4])
             self.assertEqual(task['updated_on'], expc[5])
+            self.assertEqual(task['category'], 'task')
 
         # Check some authors info on transactions
         trans = tasks[0]['data']['transactions']
@@ -363,6 +364,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(len(task['data']['transactions']), 18)
         self.assertEqual(task['uuid'], 'e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6')
         self.assertEqual(task['updated_on'], 1467196707.0)
+        self.assertEqual(task['category'], 'task')
 
         # Check requests
         expected = [{
@@ -575,6 +577,7 @@ class TestPhabricatorBackendCache(unittest.TestCase):
 
             self.assertEqual(task['uuid'], expc[5])
             self.assertEqual(task['updated_on'], expc[6])
+            self.assertEqual(task['category'], 'task')
 
             # Compare chached and fetched task
             self.assertDictEqual(task['data'], tasks[x]['data'])
