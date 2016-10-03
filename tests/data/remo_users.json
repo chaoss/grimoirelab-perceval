@@ -91,7 +91,7 @@
       "first_name":"Robert",
       "last_name":"Reyes",
       "display_name":"bobreyes",
-      "_url":"https://reps.mozilla.org/api/beta/users/37/"
+      "_url":"https://reps.mozilla.org/api/remo/v1/users/37/"
    },
    "mozillians_profile_url":"https://mozillians.org/en-US/u/aaroncajes/",
    "timezone":"",

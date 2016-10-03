@@ -217,7 +217,7 @@ class ReMoClient:
 
     FIRST_PAGE = 1  # Initial page in ReMo API
     ITEMS_PER_PAGE = 20 # Items per page in ReMo API
-    API_PATH = '/api/beta'
+    API_PATH = '/api/remo/v1'
 
     def __init__(self, url):
         self.url = url
@@ -272,7 +272,7 @@ class ReMoClient:
             if not next_uri:
                 more = False
             else:
-                # https://reps.mozilla.org/api/beta/events/?page=269
+                # https://reps.mozilla.org/remo/api/remo/v1/events/?page=269
                 page = next_uri.split("page=")[1]
 
 
