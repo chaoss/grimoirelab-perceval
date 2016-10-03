@@ -141,6 +141,7 @@ class TestJenkinsBackend(unittest.TestCase):
             self.assertEqual(build['origin'], 'http://example.com/ci')
             self.assertEqual(build['uuid'], expected[x][0])
             self.assertEqual(build['updated_on'], expected[x][1])
+            self.assertEqual(build['category'], 'build')
 
     @httpretty.activate
     def test_fetch_empty(self):
