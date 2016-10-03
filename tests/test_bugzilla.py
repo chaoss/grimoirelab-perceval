@@ -132,12 +132,14 @@ class TestBugzillaBackend(unittest.TestCase):
         self.assertEqual(bugs[0]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(bugs[0]['uuid'], '5a8a1e25dfda86b961b4146050883cbfc928f8ec')
         self.assertEqual(bugs[0]['updated_on'], 1248276445.0)
+        self.assertEqual(bugs[0]['category'], 'bug')
 
         self.assertEqual(bugs[6]['data']['bug_id'][0]['__text__'], '888')
         self.assertEqual(len(bugs[6]['data']['activity']), 14)
         self.assertEqual(bugs[6]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(bugs[6]['uuid'], 'b4009442d38f4241a4e22e3e61b7cd8ef5ced35c')
         self.assertEqual(bugs[6]['updated_on'], 1439404330.0)
+        self.assertEqual(bugs[0]['category'], 'bug')
 
         # Check requests
         expected = [{
@@ -248,12 +250,14 @@ class TestBugzillaBackend(unittest.TestCase):
         self.assertEqual(bugs[0]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(bugs[0]['uuid'], '4b166308f205121bc57704032acdc81b6c9bb8b1')
         self.assertEqual(bugs[0]['updated_on'], 1426868155.0)
+        self.assertEqual(bugs[0]['category'], 'bug')
 
         self.assertEqual(bugs[1]['data']['bug_id'][0]['__text__'], '888')
         self.assertEqual(len(bugs[1]['data']['activity']), 0)
         self.assertEqual(bugs[1]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(bugs[1]['uuid'], 'b4009442d38f4241a4e22e3e61b7cd8ef5ced35c')
         self.assertEqual(bugs[1]['updated_on'], 1439404330.0)
+        self.assertEqual(bugs[1]['category'], 'bug')
 
         # Check requests
         expected = [{
@@ -503,12 +507,14 @@ class TestBugzillaBackendCache(unittest.TestCase):
         self.assertEqual(cached_bugs[0]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(cached_bugs[0]['uuid'], '5a8a1e25dfda86b961b4146050883cbfc928f8ec')
         self.assertEqual(cached_bugs[0]['updated_on'], 1248276445.0)
+        self.assertEqual(cached_bugs[0]['category'], 'bug')
 
         self.assertEqual(cached_bugs[6]['data']['bug_id'][0]['__text__'], '888')
         self.assertEqual(len(cached_bugs[6]['data']['activity']), 14)
         self.assertEqual(cached_bugs[6]['origin'], BUGZILLA_SERVER_URL)
         self.assertEqual(cached_bugs[6]['uuid'], 'b4009442d38f4241a4e22e3e61b7cd8ef5ced35c')
         self.assertEqual(cached_bugs[6]['updated_on'], 1439404330.0)
+        self.assertEqual(cached_bugs[6]['category'], 'bug')
 
         self.assertEqual(len(requests), 13)
 

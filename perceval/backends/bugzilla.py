@@ -58,7 +58,7 @@ class Bugzilla(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url` value
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, url, user=None, password=None,
                  max_bugs=MAX_BUGS, cache=None, origin=None):
@@ -218,6 +218,15 @@ class Bugzilla(Backend):
         ts = ts.replace(tzinfo=dateutil.tz.tzutc())
 
         return ts.timestamp()
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Bugzilla item.
+
+        This backend only generates one type of item which is
+        'bug'.
+        """
+        return 'bug'
 
     @staticmethod
     def parse_buglist(raw_csv):
