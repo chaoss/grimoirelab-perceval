@@ -57,7 +57,7 @@ class Redmine(Backend):
     :param origin: identifier of the repository; when `None` or an
         empty string are given, it will be set to `url`
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
                  cache=None, origin=None):
@@ -178,6 +178,15 @@ class Redmine(Backend):
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Redmine item.
+
+        This backend only generates one type of item which is
+        'issue'.
+        """
+        return 'issue'
 
     @staticmethod
     def parse_issues(raw_json):
