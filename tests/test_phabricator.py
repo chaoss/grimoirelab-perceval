@@ -163,21 +163,24 @@ class TestPhabricatorBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        phab = Phabricator(PHABRICATOR_URL, 'AAAA', origin='test')
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', tag='test')
 
         self.assertEqual(phab.url, PHABRICATOR_URL)
-        self.assertEqual(phab.origin, 'test')
+        self.assertEqual(phab.origin, PHABRICATOR_URL)
+        self.assertEqual(phab.tag, 'test')
         self.assertIsInstance(phab.client, ConduitClient)
 
-        # When origin is empty or None it will be set to
+        # When tag is empty or None it will be set to
         # the value in url
         phab = Phabricator(PHABRICATOR_URL, 'AAAA')
         self.assertEqual(phab.url, PHABRICATOR_URL)
         self.assertEqual(phab.origin, PHABRICATOR_URL)
+        self.assertEqual(phab.tag, PHABRICATOR_URL)
 
-        phab = Phabricator(PHABRICATOR_URL, 'AAAA', origin='')
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', tag='')
         self.assertEqual(phab.url, PHABRICATOR_URL)
         self.assertEqual(phab.origin, PHABRICATOR_URL)
+        self.assertEqual(phab.tag, PHABRICATOR_URL)
 
     @httpretty.activate
     def test_fetch(self):
@@ -209,8 +212,10 @@ class TestPhabricatorBackend(unittest.TestCase):
                 self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[3])
 
             self.assertEqual(task['uuid'], expc[4])
+            self.assertEqual(task['origin'], PHABRICATOR_URL)
             self.assertEqual(task['updated_on'], expc[5])
             self.assertEqual(task['category'], 'task')
+            self.assertEqual(task['tag'], PHABRICATOR_URL)
 
         # Check some authors info on transactions
         trans = tasks[0]['data']['transactions']
@@ -363,8 +368,10 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(task['data']['fields']['ownerData']['userName'], 'jrae')
         self.assertEqual(len(task['data']['transactions']), 18)
         self.assertEqual(task['uuid'], 'e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6')
+        self.assertEqual(task['origin'], PHABRICATOR_URL)
         self.assertEqual(task['updated_on'], 1467196707.0)
         self.assertEqual(task['category'], 'task')
+        self.assertEqual(task['tag'], PHABRICATOR_URL)
 
         # Check requests
         expected = [{
@@ -576,8 +583,10 @@ class TestPhabricatorBackendCache(unittest.TestCase):
                 self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[4])
 
             self.assertEqual(task['uuid'], expc[5])
+            self.assertEqual(task['origin'], PHABRICATOR_URL)
             self.assertEqual(task['updated_on'], expc[6])
             self.assertEqual(task['category'], 'task')
+            self.assertEqual(task['tag'], PHABRICATOR_URL)
 
             # Compare chached and fetched task
             self.assertDictEqual(task['data'], tasks[x]['data'])
@@ -610,13 +619,13 @@ class TestPhabricatorCommand(unittest.TestCase):
 
         args = ['http://example.com',
                 '--backend-token', '12345678',
-                '--origin', 'test']
+                '--tag', 'test']
 
         cmd = PhabricatorCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.url, 'http://example.com')
         self.assertEqual(cmd.parsed_args.backend_token, '12345678')
-        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertIsInstance(cmd.backend, Phabricator)
 
     def test_argument_parser(self):
