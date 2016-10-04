@@ -133,23 +133,26 @@ class TestRedmineBackend(unittest.TestCase):
         """Test whether attributes are initializated"""
 
         redmine = Redmine(REDMINE_URL, api_token='AAAA', max_issues=5,
-                          origin='test')
+                          tag='test')
 
         self.assertEqual(redmine.url, REDMINE_URL)
         self.assertEqual(redmine.max_issues, 5)
-        self.assertEqual(redmine.origin, 'test')
+        self.assertEqual(redmine.origin, REDMINE_URL)
+        self.assertEqual(redmine.tag, 'test')
         self.assertIsInstance(redmine.client, RedmineClient)
         self.assertEqual(redmine.client.api_token, 'AAAA')
 
-        # When origin is empty or None it will be set to
+        # When tag is empty or None it will be set to
         # the value in url
         redmine = Redmine(REDMINE_URL)
         self.assertEqual(redmine.url, REDMINE_URL)
         self.assertEqual(redmine.origin, REDMINE_URL)
+        self.assertEqual(redmine.tag, REDMINE_URL)
 
-        redmine = Redmine(REDMINE_URL, origin='')
+        redmine = Redmine(REDMINE_URL, tag='')
         self.assertEqual(redmine.url, REDMINE_URL)
         self.assertEqual(redmine.origin, REDMINE_URL)
+        self.assertEqual(redmine.tag, REDMINE_URL)
 
     @httpretty.activate
     def test_fetch(self):
@@ -173,8 +176,10 @@ class TestRedmineBackend(unittest.TestCase):
             expc = expected[x]
             self.assertEqual(issue['data']['id'], expc[0])
             self.assertEqual(issue['uuid'], expc[1])
+            self.assertEqual(issue['origin'], REDMINE_URL)
             self.assertEqual(issue['updated_on'], expc[2])
             self.assertEqual(issue['category'], 'issue')
+            self.assertEqual(issue['tag'], REDMINE_URL)
 
         # Check requests
         expected = [{
@@ -240,8 +245,10 @@ class TestRedmineBackend(unittest.TestCase):
         issue = issues[0]
         self.assertEqual(issue['data']['id'], 7311)
         self.assertEqual(issue['uuid'], '4ab289ab60aee93a66e5490529799cf4a2b4d94c')
+        self.assertEqual(issue['origin'], REDMINE_URL)
         self.assertEqual(issue['updated_on'], 1469607427.0)
         self.assertEqual(issue['category'], 'issue')
+        self.assertEqual(issue['tag'], REDMINE_URL)
 
         expected = [{
                      'key' : ['AAAA'],
@@ -370,8 +377,10 @@ class TestRedmineBackendCache(unittest.TestCase):
             expc = expected[x]
             self.assertEqual(issue['data']['id'], expc[0])
             self.assertEqual(issue['uuid'], expc[1])
+            self.assertEqual(issue['origin'], REDMINE_URL)
             self.assertEqual(issue['updated_on'], expc[2])
             self.assertEqual(issue['category'], 'issue')
+            self.assertEqual(issue['tag'], REDMINE_URL)
             self.assertDictEqual(issue['data'], issues[x]['data'])
 
         # No more requests were sent
@@ -403,14 +412,14 @@ class TestRedmineCommand(unittest.TestCase):
         args = ['http://example.com',
                 '--backend-token', '12345678',
                 '--max-issues', '5',
-                '--origin', 'test']
+                '--tag', 'test']
 
         cmd = RedmineCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.url, 'http://example.com')
         self.assertEqual(cmd.parsed_args.backend_token, '12345678')
         self.assertEqual(cmd.parsed_args.max_issues, 5)
-        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertIsInstance(cmd.backend, Redmine)
 
     def test_argument_parser(self):

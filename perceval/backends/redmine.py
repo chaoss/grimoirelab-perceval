@@ -53,17 +53,16 @@ class Redmine(Backend):
     :param url: URL of the server
     :param api_token: token needed to use the API
     :param max_issues:  maximum number of issues requested on the same query
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url`
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
-                 cache=None, origin=None):
-        origin = origin if origin else url
+                 tag=None, cache=None):
+        origin = url
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.max_issues = max_issues
         self.client = RedmineClient(url, api_token=api_token)
@@ -230,7 +229,7 @@ class RedmineCommand(BackendCommand):
         self.backend_token = self.parsed_args.backend_token
         self.max_issues = self.parsed_args.max_issues
         self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
 
         if not self.parsed_args.no_cache:
@@ -253,8 +252,8 @@ class RedmineCommand(BackendCommand):
         self.backend = Redmine(self.url,
                                api_token=self.backend_token,
                                max_issues=self.max_issues,
-                               cache=cache,
-                               origin=self.origin)
+                               tag=self.tag,
+                               cache=cache)
 
     def run(self):
         """Fetch and print the issues.
