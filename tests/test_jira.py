@@ -135,23 +135,26 @@ class TestJiraBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        jira = Jira(JIRA_SERVER_URL, origin='test',
+        jira = Jira(JIRA_SERVER_URL, tag='test',
                     max_issues=5)
 
         self.assertEqual(jira.url, JIRA_SERVER_URL)
-        self.assertEqual(jira.origin, 'test')
+        self.assertEqual(jira.origin, JIRA_SERVER_URL)
+        self.assertEqual(jira.tag, 'test')
         self.assertEqual(jira.max_issues, 5)
         self.assertIsInstance(jira.client, JiraClient)
 
-        # When origin is empty or None it will be set to
+        # When tag is empty or None it will be set to
         # the value in url
         jira = Jira(JIRA_SERVER_URL)
         self.assertEqual(jira.url, JIRA_SERVER_URL)
         self.assertEqual(jira.origin, JIRA_SERVER_URL)
+        self.assertEqual(jira.tag, JIRA_SERVER_URL)
 
-        jira = Jira(JIRA_SERVER_URL, origin='')
+        jira = Jira(JIRA_SERVER_URL, tag='')
         self.assertEqual(jira.url, JIRA_SERVER_URL)
         self.assertEqual(jira.origin, JIRA_SERVER_URL)
+        self.assertEqual(jira.tag, JIRA_SERVER_URL)
 
     @httpretty.activate
     def test_fetch(self):
@@ -208,6 +211,7 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issues[0]['uuid'], 'dfe008e19e2b720d1d377607680e90c250134164')
         self.assertEqual(issues[0]['updated_on'], 1457015567)
         self.assertEqual(issues[0]['category'], 'issue')
+        self.assertEqual(issues[0]['tag'], 'http://example.com')
         self.assertEqual(issues[0]['data']['key'], 'HELP-6043')
         self.assertEqual(issues[0]['data']['fields']['issuetype']['name'],  'extRequest')
         self.assertEqual(issues[0]['data']['fields']['creator']['name'], 'user2')
@@ -236,6 +240,7 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issues[1]['uuid'], '830747ed8cc9af800fcd6284e9dccfdb11daf15b')
         self.assertEqual(issues[1]['updated_on'], 1457015417)
         self.assertEqual(issues[1]['category'], 'issue')
+        self.assertEqual(issues[1]['tag'], 'http://example.com')
         self.assertEqual(issues[1]['data']['key'], 'HELP-6042')
         self.assertEqual(issues[1]['data']['fields']['issuetype']['name'],  'extRequest')
         self.assertEqual(issues[1]['data']['fields']['creator']['name'], 'user2')
@@ -261,6 +266,7 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issues[2]['uuid'], '2e988d555915991228d81144b018c8321d628265')
         self.assertEqual(issues[2]['updated_on'], 1457006245)
         self.assertEqual(issues[2]['category'], 'issue')
+        self.assertEqual(issues[2]['tag'], 'http://example.com')
         self.assertEqual(issues[2]['data']['key'], 'HELP-6041')
         self.assertEqual(issues[2]['data']['fields']['issuetype']['name'],  'extRequest')
         self.assertEqual(issues[2]['data']['fields']['creator']['name'], 'user2')
@@ -316,6 +322,7 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issues[0]['uuid'], '2e988d555915991228d81144b018c8321d628265')
         self.assertEqual(issues[0]['updated_on'], 1457006245)
         self.assertEqual(issues[0]['category'], 'issue')
+        self.assertEqual(issues[0]['tag'], 'http://example.com')
 
         request = httpretty.last_request()
         self.assertEqual(request.method, 'GET')
@@ -425,6 +432,7 @@ class TestJiraBackendCache(unittest.TestCase):
             self.assertEqual(issues[i]['uuid'], cache_issues[i]['uuid'])
             self.assertEqual(issues[i]['updated_on'], cache_issues[i]['updated_on'])
             self.assertEqual(issues[i]['category'], cache_issues[i]['category'])
+            self.assertEqual(issues[1]['tag'], cache_issues[i]['tag'])
             self.assertEqual(issues[i]['data']['key'], cache_issues[i]['data']['key'])
             self.assertEqual(issues[i]['data']['fields']['issuetype']['name'],
                              cache_issues[i]['data']['fields']['issuetype']['name'])
@@ -623,14 +631,16 @@ class TestJiraCommand(unittest.TestCase):
                 '--verify', False,
                 '--cert', 'aaaa',
                 '--max-issues', '1',
+                '--tag', 'test',
                 JIRA_SERVER_URL]
 
         cmd = JiraCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.project, "Perceval Jira")
+        self.assertEqual(cmd.parsed_args.project, 'Perceval Jira')
         self.assertEqual(cmd.parsed_args.verify, False)
-        self.assertEqual(cmd.parsed_args.cert, "aaaa")
+        self.assertEqual(cmd.parsed_args.cert, 'aaaa')
         self.assertEqual(cmd.parsed_args.max_issues, 1)
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertEqual(cmd.parsed_args.url, JIRA_SERVER_URL)
 
     def test_argument_parser(self):
