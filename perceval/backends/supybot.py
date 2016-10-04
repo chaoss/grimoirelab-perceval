@@ -52,13 +52,19 @@ class Supybot(Backend):
 
     The format of the messages must also follow a pattern. This
     patterns can be found in `SupybotParser` class documentation.
+
+    :param uri: URI of the IRC archives; typically, the URL of their
+        IRC channel
+    :param dirpath: directory path where the archives are stored
+    :param tag: label used to mark the data
+    :param cache: cache object to store raw data
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
-    def __init__(self, uri, dirpath, cache=None, origin=None):
-        origin = origin if origin else uri
+    def __init__(self, uri, dirpath, tag=None, cache=None):
+        origin = uri
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.uri = uri
         self.dirpath = dirpath
 
@@ -217,13 +223,13 @@ class SupybotCommand(BackendCommand):
         self.uri = self.parsed_args.uri
         self.ircdir = self.parsed_args.ircdir
         self.outfile = self.parsed_args.outfile
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         cache = None
 
         self.backend = Supybot(self.uri, self.ircdir,
-                               cache=cache, origin=self.origin)
+                               tag=self.tag, cache=cache)
 
     def run(self):
         """Fetch and print the IRC messages.
