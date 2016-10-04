@@ -61,10 +61,11 @@ class TestDiscourseBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        discourse = Discourse(DISCOURSE_SERVER_URL, origin='test')
+        discourse = Discourse(DISCOURSE_SERVER_URL, tag='test')
 
         self.assertEqual(discourse.url, DISCOURSE_SERVER_URL)
-        self.assertEqual(discourse.origin, 'test')
+        self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
+        self.assertEqual(discourse.tag, 'test')
         self.assertIsInstance(discourse.client, DiscourseClient)
 
         # When origin is empty or None it will be set to
@@ -72,10 +73,12 @@ class TestDiscourseBackend(unittest.TestCase):
         discourse = Discourse(DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.url, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
+        self.assertEqual(discourse.tag, DISCOURSE_SERVER_URL)
 
-        discourse = Discourse(DISCOURSE_SERVER_URL, origin='')
+        discourse = Discourse(DISCOURSE_SERVER_URL, tag='')
         self.assertEqual(discourse.url, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
+        self.assertEqual(discourse.tag, DISCOURSE_SERVER_URL)
 
     @httpretty.activate
     def test_fetch(self):
@@ -147,12 +150,14 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(topics[0]['uuid'], '18068b95de1323a84c8e11dee8f46fd137f10c86')
         self.assertEqual(topics[0]['updated_on'], 1464134770.909)
         self.assertEqual(topics[0]['category'], 'topic')
+        self.assertEqual(topics[0]['tag'], DISCOURSE_SERVER_URL)
 
         self.assertEqual(topics[1]['data']['id'], 1148)
         self.assertEqual(topics[1]['origin'], DISCOURSE_SERVER_URL)
         self.assertEqual(topics[1]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
         self.assertEqual(topics[1]['updated_on'], 1464144769.526)
         self.assertEqual(topics[1]['category'], 'topic')
+        self.assertEqual(topics[1]['tag'], DISCOURSE_SERVER_URL)
 
         # The next assertions check the cases whether the chunk_size is
         # less than the number of posts of a topic
@@ -247,6 +252,7 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(topics[0]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
         self.assertEqual(topics[0]['updated_on'], 1464144769.526)
         self.assertEqual(topics[0]['category'], 'topic')
+        self.assertEqual(topics[0]['tag'], DISCOURSE_SERVER_URL)
 
         # Check requests
         expected = [{
@@ -349,6 +355,7 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(topics[0]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
         self.assertEqual(topics[0]['updated_on'], 1464144769.526)
         self.assertEqual(topics[0]['category'], 'topic')
+        self.assertEqual(topics[0]['tag'], DISCOURSE_SERVER_URL)
 
         self.assertEqual(topics[1]['data']['id'], 1150)
         self.assertEqual(len(topics[1]['data']['post_stream']['posts']), 2)
@@ -356,6 +363,7 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(topics[1]['uuid'], '373b597a2a389112875c3e544f197610373a7283')
         self.assertEqual(topics[1]['updated_on'], 1464274870.809)
         self.assertEqual(topics[1]['category'], 'topic')
+        self.assertEqual(topics[0]['tag'], DISCOURSE_SERVER_URL)
 
 
 class TestDiscourseBackendCache(unittest.TestCase):
@@ -447,12 +455,14 @@ class TestDiscourseBackendCache(unittest.TestCase):
         self.assertEqual(cached_topics[0]['uuid'], '18068b95de1323a84c8e11dee8f46fd137f10c86')
         self.assertEqual(cached_topics[0]['updated_on'], 1464134770.909)
         self.assertEqual(cached_topics[0]['category'], 'topic')
+        self.assertEqual(cached_topics[0]['origin'], DISCOURSE_SERVER_URL)
 
         self.assertEqual(cached_topics[1]['data']['id'], 1148)
         self.assertEqual(cached_topics[1]['origin'], DISCOURSE_SERVER_URL)
         self.assertEqual(cached_topics[1]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
         self.assertEqual(cached_topics[1]['updated_on'], 1464144769.526)
         self.assertEqual(cached_topics[1]['category'], 'topic')
+        self.assertEqual(cached_topics[1]['origin'], DISCOURSE_SERVER_URL)
 
         # The next assertions check the cases whether the chunk_size is
         # less than the number of posts of a topic
@@ -602,12 +612,12 @@ class TestDiscourseCommand(unittest.TestCase):
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
-        args = ['--origin', 'test', DISCOURSE_SERVER_URL]
+        args = ['--tag', 'test', DISCOURSE_SERVER_URL]
 
         cmd = DiscourseCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.url, DISCOURSE_SERVER_URL)
-        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertIsInstance(cmd.backend, Discourse)
 
     def test_argument_parser(self):

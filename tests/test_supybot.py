@@ -53,19 +53,22 @@ class TestSupybotBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        backend = Supybot('http://example.com/', self.tmp_path, origin='test')
+        backend = Supybot('http://example.com/', self.tmp_path, tag='test')
 
         self.assertEqual(backend.uri, 'http://example.com/')
         self.assertEqual(backend.dirpath, self.tmp_path)
-        self.assertEqual(backend.origin, 'test')
+        self.assertEqual(backend.origin, 'http://example.com/')
+        self.assertEqual(backend.tag, 'test')
 
-        # When origin is empty or None it will be set to
+        # When tag is empty or None it will be set to
         # the value in uri
         backend = Supybot('http://example.com/', self.tmp_path)
         self.assertEqual(backend.origin, 'http://example.com/')
+        self.assertEqual(backend.tag, 'http://example.com/')
 
-        backend = Supybot('http://example.com/', self.tmp_path, origin='')
+        backend = Supybot('http://example.com/', self.tmp_path, tag='')
         self.assertEqual(backend.origin, 'http://example.com/')
+        self.assertEqual(backend.tag, 'http://example.com/')
 
     def test_fetch(self):
         """Test if it parses a set of log files"""
@@ -97,6 +100,7 @@ class TestSupybotBackend(unittest.TestCase):
             self.assertEqual(message['uuid'], expected[x][2])
             self.assertEqual(message['updated_on'], expected[x][3])
             self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'http://example.com/')
 
     def test_fetch_from_date(self):
         """Test whether a list of messages is returned since a given date"""
@@ -118,6 +122,7 @@ class TestSupybotBackend(unittest.TestCase):
             self.assertEqual(message['uuid'], expected[x][2])
             self.assertEqual(message['updated_on'], expected[x][3])
             self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'http://example.com/')
 
     def test_parse_supybot_log(self):
         """Test whether it parses a log"""
@@ -154,12 +159,12 @@ class TestSupybotCommand(unittest.TestCase):
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
-        args = ['--origin', 'test',
+        args = ['--tag', 'test',
                 'http://example.com', '/tmp/supybot']
 
         cmd = SupybotCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertEqual(cmd.parsed_args.uri, 'http://example.com')
         self.assertEqual(cmd.parsed_args.ircdir, '/tmp/supybot')
         self.assertIsInstance(cmd.backend, Supybot)

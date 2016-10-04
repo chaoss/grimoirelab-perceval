@@ -74,27 +74,26 @@ def filter_custom_fields(fields):
 class Jira(Backend):
     """JIRA backend for Perceval.
 
-    This class retrieves the issues stored in JIRA issue
-    tracking system. To initialize this class the url
-    must be provided.
+    This class retrieves the issues stored in JIRA issue tracking
+    system. To initialize this class the URL must be provided.
+    The `url` will be set as the origin of the data.
 
     :param url: JIRA's endpoint
     :param project: filter issues by project
     :param verify: allows to disable SSL verification
     :param cert: SSL certificate path (PEM)
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url`
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, url, project=None, backend_user=None,
                  backend_password=None, verify=None,
                  cert=None, max_issues=None,
-                 cache=None, origin=None):
-        origin = origin if origin else url
+                 tag=None, cache=None):
+        origin = url
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.project = project
         self.backend_user = backend_user
@@ -346,7 +345,7 @@ class JiraCommand(BackendCommand):
         self.backend_user = self.parsed_args.backend_user
         self.backend_password = self.parsed_args.backend_password
         self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
 
         if not self.parsed_args.no_cache:
@@ -369,7 +368,7 @@ class JiraCommand(BackendCommand):
         self.backend = Jira(self.url, self.project,
                             self.backend_user, self.backend_password,
                             self.verify, self.cert, self.max_issues,
-                            cache=cache, origin=self.origin)
+                            tag=self.tag, cache=cache)
 
     def run(self):
         """Fetch and print the issues.

@@ -93,20 +93,23 @@ class TestGmaneBackend(unittest.TestCase):
 
         setup_http_server()
 
-        backend = Gmane('mylist@example.com', self.tmp_path, origin='test')
+        backend = Gmane('mylist@example.com', self.tmp_path, tag='test')
 
         self.assertEqual(backend.url, GMANE_MYLIST_URL)
         self.assertEqual(backend.uri, GMANE_MYLIST_URL)
         self.assertEqual(backend.dirpath, self.tmp_path)
-        self.assertEqual(backend.origin, 'test')
+        self.assertEqual(backend.origin,  GMANE_MYLIST_URL)
+        self.assertEqual(backend.tag,  'test')
 
         # When origin is empty or None it will be set to
         # the value of the Gmane mailing list
         backend = Gmane('mylist@example.com', self.tmp_path)
         self.assertEqual(backend.origin, GMANE_MYLIST_URL)
+        self.assertEqual(backend.tag, GMANE_MYLIST_URL)
 
-        backend = Gmane('mylist@example.com', self.tmp_path, origin='')
+        backend = Gmane('mylist@example.com', self.tmp_path, tag='')
         self.assertEqual(backend.origin, GMANE_MYLIST_URL)
+        self.assertEqual(backend.tag, GMANE_MYLIST_URL)
 
     @httpretty.activate
     def test_fetch(self):
@@ -144,6 +147,7 @@ class TestGmaneBackend(unittest.TestCase):
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], GMANE_MYLIST_URL)
 
     @httpretty.activate
     def test_fetch_from_offset(self):
@@ -183,6 +187,7 @@ class TestGmaneBackend(unittest.TestCase):
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], GMANE_MYLIST_URL)
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -208,14 +213,14 @@ class TestGmaneCommand(unittest.TestCase):
         args = ['mylist@example.com',
                 '--mboxes-path', '/tmp/perceval/',
                 '--offset', '10',
-                '--origin', 'test']
+                '--tag', 'test']
 
         cmd = GmaneCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.mailing_list, 'mylist@example.com')
         self.assertEqual(cmd.parsed_args.mboxes_path, '/tmp/perceval/')
         self.assertEqual(cmd.parsed_args.offset, 10)
-        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertIsInstance(cmd.backend, Gmane)
 
     def test_argument_parser(self):

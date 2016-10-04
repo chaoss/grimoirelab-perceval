@@ -58,20 +58,19 @@ class Pipermail(MBox):
     This class allows the fetch the email messages stored on a Pipermail
     archiver. Initialize this class passing the URL where the archiver is
     and the directory path where the mbox files will be fetched and
-    stored.
+    stored. The origin of the data will be set to the value of `url`.
 
     :param url: URL to the Pipermail archiver
     :param dirpath: directory path where the mboxes are stored
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url`
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
-    def __init__(self, url, dirpath, cache=None, origin=None):
-        origin = origin if origin else url
+    def __init__(self, url, dirpath, tag=None, cache=None):
+        origin = url
 
-        super().__init__(url, dirpath, cache=cache, origin=origin)
+        super().__init__(url, dirpath, tag=tag, cache=cache)
         self.url = url
 
     @metadata
@@ -107,7 +106,7 @@ class PipermailCommand(BackendCommand):
 
         self.url = self.parsed_args.url
         self.outfile = self.parsed_args.outfile
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         if not self.parsed_args.mboxes_path:
@@ -119,7 +118,7 @@ class PipermailCommand(BackendCommand):
         cache = None
 
         self.backend = Pipermail(self.url, self.mboxes_path,
-                                 cache=cache, origin=self.origin)
+                                 tag=self.tag, cache=cache)
 
     def run(self):
         """Fetch and print the email messages.

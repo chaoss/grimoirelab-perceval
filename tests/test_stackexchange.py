@@ -59,6 +59,30 @@ def read_file(filename, mode='r'):
 class TestStackExchangeBackend(unittest.TestCase):
     """StackExchange backend tests"""
 
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        stack = StackExchange(site='stackoverflow', tagged='python',
+                              max_questions=1, tag='test')
+
+        self.assertEqual(stack.site, 'stackoverflow')
+        self.assertEqual(stack.tagged, 'python')
+        self.assertEqual(stack.max_questions, 1)
+        self.assertEqual(stack.origin, 'stackoverflow')
+        self.assertEqual(stack.tag, 'test')
+
+        # When tag is empty or None it will be set to
+        # the value in site
+        stack = StackExchange(site='stackoverflow')
+        self.assertEqual(stack.site, 'stackoverflow')
+        self.assertEqual(stack.origin, 'stackoverflow')
+        self.assertEqual(stack.tag, 'stackoverflow')
+
+        stack = StackExchange(site='stackoverflow', tag='')
+        self.assertEqual(stack.site, 'stackoverflow')
+        self.assertEqual(stack.origin, 'stackoverflow')
+        self.assertEqual(stack.tag, 'stackoverflow')
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether a list of questions is returned"""
@@ -77,6 +101,7 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(questions[0]['uuid'], '43953bd75d1d4dbedb457059acb4b79fcf6712a8')
         self.assertEqual(questions[0]['updated_on'], 1459975066.0)
         self.assertEqual(questions[0]['category'], 'question')
+        self.assertEqual(questions[0]['tag'], 'stackoverflow')
 
         data = json.loads(question)
         self.assertDictEqual(questions[0]['data'], data['items'][0])
@@ -115,6 +140,7 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(questions[0]['uuid'], '43953bd75d1d4dbedb457059acb4b79fcf6712a8')
         self.assertEqual(questions[0]['updated_on'], 1459975066.0)
         self.assertEqual(questions[0]['category'], 'question')
+        self.assertEqual(questions[0]['tag'], 'stackoverflow')
 
         #The date on the questions must be greater than from_date
         self.assertGreater(questions[0]['updated_on'], 1459900800)
@@ -393,14 +419,16 @@ class TestStackExchangeCommand(unittest.TestCase):
         args = ['--site', 'stackoverflow',
                 '--tagged', 'python',
                 '--token', 'aaa',
-                '--max-questions', "1"]
+                '--max-questions', '1',
+                '--tag', 'test']
 
         cmd = StackExchangeCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.site, "stackoverflow")
-        self.assertEqual(cmd.parsed_args.tagged, "python")
-        self.assertEqual(cmd.parsed_args.token, "aaa")
+        self.assertEqual(cmd.parsed_args.site, 'stackoverflow')
+        self.assertEqual(cmd.parsed_args.tagged, 'python')
+        self.assertEqual(cmd.parsed_args.token, 'aaa')
         self.assertEqual(cmd.parsed_args.max_questions, 1)
+        self.assertEqual(cmd.parsed_args.tag, 'test')
 
     def test_argument_parser(self):
         """Test if it returns a argument parser object"""

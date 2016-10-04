@@ -41,21 +41,20 @@ logger = logging.getLogger(__name__)
 class Jenkins(Backend):
     """Jenkins backend for Perceval.
 
-    This class retrieves the builds from a
-    Jenkins site. To initialize this class the
-    URL must be provided.
+    This class retrieves the builds from a Jenkins site.
+    To initialize this class the URL must be provided.
+    The `url` will be set as the origin of the data.
 
     :param url: Jenkins url
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url` value
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
-    def __init__(self, url, cache=None, origin=None):
-        origin = origin if origin else url
+    def __init__(self, url, tag=None, cache=None):
+        origin = url
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.client = JenkinsClient(url)
 
@@ -181,7 +180,7 @@ class JenkinsCommand(BackendCommand):
     def __init__(self, *args):
         super().__init__(*args)
         self.url = self.parsed_args.url
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
 
         if not self.parsed_args.no_cache:
@@ -201,7 +200,7 @@ class JenkinsCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = Jenkins(self.url, cache=cache, origin=self.origin)
+        self.backend = Jenkins(self.url, tag=self.tag, cache=cache)
 
     def run(self):
         """Fetch and print the Builds.

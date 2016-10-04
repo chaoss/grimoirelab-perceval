@@ -44,21 +44,21 @@ class Discourse(Backend):
     """Discourse backend for Perceval.
 
     This class retrieves the topics posted in a Discourse board.
-    To initialize this class the URL must be provided.
+    To initialize this class the URL must be provided. The `url`
+    will be set as the origin of the data.
 
     :param url: Discourse URL
     :param token: Discourse API access token
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url` value
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, url, token=None,
-                 cache=None, origin=None):
-        origin = origin if origin else url
+                 tag=None, cache=None):
+        origin = url
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.client = DiscourseClient(url, api_key=token)
 
@@ -377,7 +377,7 @@ class DiscourseCommand(BackendCommand):
         self.url = self.parsed_args.url
         self.backend_token = self.parsed_args.backend_token
         self.outfile = self.parsed_args.outfile
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         if not self.parsed_args.no_cache:
@@ -398,7 +398,7 @@ class DiscourseCommand(BackendCommand):
             cache = None
 
         self.backend = Discourse(self.url, self.backend_token,
-                                 cache=cache, origin=self.origin)
+                                 tag=self.tag, cache=cache)
 
     def run(self):
         """Fetch and print the posts.

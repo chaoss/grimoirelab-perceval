@@ -69,27 +69,27 @@ class Gmane(MBox):
     address (i.e: my-mailing-list@example.com) and the directory path
     where the mbox files will be stored.
 
+    The origin of the data will be set to to the URL under Gmane stores
+    that list; usually it is similar to the next address:
+    'http://dir.gmane.org/gmane.comp.example.mylist'
+
     :param mailing_list_address: address of the mailing list
     :param dirpath: directory path where the mboxes are stored
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to the URL under
-        Gmane stores that list; usually is similar to
-        'http://dir.gmane.org/gmane.comp.example.mylist'
 
     :raises  RepositoryError: when the given mailing list repository
         is not stored by Gmane
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, mailing_list_address, dirpath,
-                 cache=None, origin=None):
+                 tag=None, cache=None):
         self.mailing_list = GmaneMailingList(mailing_list_address, dirpath)
 
         url = self.mailing_list.url
-        origin = origin if origin else url
 
-        super().__init__(url, dirpath, cache=cache, origin=origin)
+        super().__init__(url, dirpath, tag=tag, cache=cache)
         self.url = url
 
     @gmane_metadata
@@ -167,7 +167,7 @@ class GmaneCommand(BackendCommand):
 
         self.mailing_list = self.parsed_args.mailing_list
         self.outfile = self.parsed_args.outfile
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.offset = self.parsed_args.offset
 
         if not self.parsed_args.mboxes_path:
@@ -179,7 +179,7 @@ class GmaneCommand(BackendCommand):
         cache = None
 
         self.backend = Gmane(self.mailing_list, self.mboxes_path,
-                             cache=cache, origin=self.origin)
+                             tag=self.tag, cache=cache)
 
     def run(self):
         """Fetch and print the email messages.

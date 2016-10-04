@@ -88,22 +88,27 @@ class TestTelegramBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
+        origin = 'https://telegram.org/' + TELEGRAM_BOT
+
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN,
-                       origin='test')
+                       tag='test')
 
         self.assertEqual(tlg.bot, 'mybot')
-        self.assertEqual(tlg.origin, 'test')
+        self.assertEqual(tlg.origin, origin)
+        self.assertEqual(tlg.tag, 'test')
         self.assertIsInstance(tlg.client, TelegramBotClient)
 
-        # When origin is empty or None it will be set to
+        # When tag is empty or None it will be set to
         # the value in url
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
         self.assertEqual(tlg.bot, TELEGRAM_BOT)
-        self.assertEqual(tlg.origin, 'https://telegram.org/' + TELEGRAM_BOT)
+        self.assertEqual(tlg.origin, origin)
+        self.assertEqual(tlg.tag, origin)
 
-        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, origin='')
+        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, tag='')
         self.assertEqual(tlg.bot, TELEGRAM_BOT)
-        self.assertEqual(tlg.origin, 'https://telegram.org/' + TELEGRAM_BOT)
+        self.assertEqual(tlg.origin, origin)
+        self.assertEqual(tlg.tag, origin)
 
     @httpretty.activate
     def test_fetch(self):
@@ -129,6 +134,7 @@ class TestTelegramBackend(unittest.TestCase):
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'https://telegram.org/' +  TELEGRAM_BOT)
 
         # Check requests
         expected = [
@@ -160,6 +166,7 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(msg['updated_on'], 1467370372.0)
         self.assertEqual(msg['offset'], 319280321)
         self.assertEqual(msg['category'], 'message')
+        self.assertEqual(msg['tag'], 'https://telegram.org/' +  TELEGRAM_BOT)
 
         # Check requests
         expected = [
@@ -197,6 +204,7 @@ class TestTelegramBackend(unittest.TestCase):
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'https://telegram.org/' +  TELEGRAM_BOT)
 
         # Empty list of chats will return no messages
         chats = []
@@ -285,6 +293,7 @@ class TestTelegramBackendCache(unittest.TestCase):
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'https://telegram.org/' +  TELEGRAM_BOT)
 
         # No more requests were sent
         self.assertEqual(len(http_requests), 3)
@@ -316,7 +325,7 @@ class TestTelegramCommand(unittest.TestCase):
                 '--backend-token', '12345678',
                 '--offset', '10',
                 '--chats', '-10000',
-                '--origin', 'test']
+                '--tag', 'test']
 
         cmd = TelegramCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
@@ -324,7 +333,7 @@ class TestTelegramCommand(unittest.TestCase):
         self.assertEqual(cmd.parsed_args.backend_token, '12345678')
         self.assertEqual(cmd.parsed_args.offset, 10)
         self.assertEqual(cmd.parsed_args.chats, [-10000])
-        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertIsInstance(cmd.backend, Telegram)
 
     def test_argument_parser(self):

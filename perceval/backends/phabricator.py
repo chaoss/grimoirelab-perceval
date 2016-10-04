@@ -40,20 +40,20 @@ class Phabricator(Backend):
 
     This class allows to fetch the tasks stored on a Phabricator
     server. Initialize this class passing the URL of this server
-    and the API token.
+    and the API token. The origin of the data will be set to this
+    URL.
 
     :param url: URL of the server
     :param api_token: token needed to use the API
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url`
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
-    def __init__(self, url, api_token, cache=None, origin=None):
-        origin = origin if origin else url
+    def __init__(self, url, api_token, tag=None, cache=None):
+        origin = url
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.client = ConduitClient(url, api_token)
         self._users = {}
@@ -430,7 +430,7 @@ class PhabricatorCommand(BackendCommand):
         self.backend_token = self.parsed_args.backend_token
         self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.outfile = self.parsed_args.outfile
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
@@ -451,8 +451,8 @@ class PhabricatorCommand(BackendCommand):
 
         self.backend = Phabricator(self.url,
                                    self.backend_token,
-                                   cache=cache,
-                                   origin=self.origin)
+                                   tag=self.tag,
+                                   cache=cache)
 
     def run(self):
         """Fetch and print the tasks.

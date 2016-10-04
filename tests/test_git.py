@@ -61,19 +61,22 @@ class TestGitBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        git = Git('http://example.com', self.git_path, origin='test')
+        git = Git('http://example.com', self.git_path, tag='test')
 
         self.assertEqual(git.uri, 'http://example.com')
         self.assertEqual(git.gitpath, self.git_path)
-        self.assertEqual(git.origin, 'test')
+        self.assertEqual(git.origin, 'http://example.com')
+        self.assertEqual(git.tag, 'test')
 
-        # When origin is empty or None it will be set to
+        # When tag is empty or None it will be set to
         # the value in uri
         git = Git('http://example.com', self.git_path)
         self.assertEqual(git.origin, 'http://example.com')
+        self.assertEqual(git.tag, 'http://example.com')
 
-        git = Git('http://example.com', self.git_path, origin='')
+        git = Git('http://example.com', self.git_path, tag='')
         self.assertEqual(git.origin, 'http://example.com')
+        self.assertEqual(git.tag, 'http://example.com')
 
     def test_fetch(self):
         """Test whether commits are fetched from a Git repository"""
@@ -103,6 +106,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
             self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
 
         shutil.rmtree(new_path)
 
@@ -129,6 +133,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
             self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
 
         # Test it using a datetime that includes the timezone
         from_date = datetime.datetime(2012, 8, 14, 14, 30, 00,
@@ -146,6 +151,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
             self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
 
         shutil.rmtree(new_path)
 
@@ -178,6 +184,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
 
         # Now let's fetch lzp
         commits = [commit for commit in git.fetch(branches=['lzp'])]
@@ -199,6 +206,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
 
         # Now, let's fech master and lzp
         commits = [commit for commit in git.fetch(branches=['master', 'lzp'])]
@@ -222,6 +230,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
 
         # Now, let's fetch None, which means "all commits"
         commits = [commit for commit in git.fetch(branches=None)]
@@ -245,6 +254,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['origin'], self.git_path)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
 
         # Now, let's fetch [], which means "no commits"
         commits = [commit for commit in git.fetch(branches=[])]
@@ -292,6 +302,7 @@ class TestGitBackend(unittest.TestCase):
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
             self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], 'http://example.com.git')
 
     def test_git_parser(self):
         """Test if the static method parses a git log file"""
@@ -365,13 +376,13 @@ class TestGitCommand(unittest.TestCase):
         """Test if the class is initialized"""
 
         args = ['--git-log', 'data/git_log.txt', 'http://example.com/',
-                '--origin', 'test']
+                '--tag', 'test']
 
         cmd = GitCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.git_log, "data/git_log.txt")
         self.assertEqual(cmd.parsed_args.uri, 'http://example.com/')
-        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertIsInstance(cmd.backend, Git)
 
         args = ['--git-log', 'data/git_log.txt', 'http://example.com/',

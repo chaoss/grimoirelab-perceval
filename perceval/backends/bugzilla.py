@@ -48,23 +48,23 @@ class Bugzilla(Backend):
 
     This class allows the fetch the bugs stored in Bugzilla
     repository. To initialize this class the URL of the server
-    must be provided.
+    must be provided. The `url` will be set as the origin of
+    the data.
 
     :param url: Bugzilla server URL
     :param user: Bugzilla user
     :param password: Bugzilla user password
     :param max_bugs: maximum number of bugs requested on the same query
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url` value
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, url, user=None, password=None,
-                 max_bugs=MAX_BUGS, cache=None, origin=None):
-        origin = origin if origin else url
+                 max_bugs=MAX_BUGS, tag=None, cache=None):
+        origin = url
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.max_bugs = max(1, max_bugs)
         self.client = BugzillaClient(url, user=user, password=password)
@@ -360,7 +360,7 @@ class BugzillaCommand(BackendCommand):
         self.backend_password = self.parsed_args.backend_password
         self.max_bugs = self.parsed_args.max_bugs
         self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
 
         if not self.parsed_args.no_cache:
@@ -384,8 +384,8 @@ class BugzillaCommand(BackendCommand):
                                 user=self.backend_user,
                                 password=self.backend_password,
                                 max_bugs=self.max_bugs,
-                                cache=cache,
-                                origin=self.origin)
+                                tag=self.tag,
+                                cache=cache)
 
     def run(self):
         """Fetch and print the bugs.

@@ -41,6 +41,7 @@ class Git(Backend):
     This class allows the fetch the commits from a Git repository
     (local or remote) or from a log file. To initialize this class,
     you have to provide the URI repository and a value for `gitpath`.
+    This `uri` will be set as the origin of the data.
 
     When `gitpath` is a directory or does not exist, it will be
     considered as the place where the repository is/will be cloned;
@@ -48,19 +49,18 @@ class Git(Backend):
 
     :param uri: URI of the Git repository
     :param gitpath: path to the repository or to the log file
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `uri` value
 
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
-    def __init__(self, uri, gitpath, cache=None, origin=None):
-        origin = origin if origin else uri
+    def __init__(self, uri, gitpath, tag=None, cache=None):
+        origin = uri
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.uri = uri
         self.gitpath = gitpath
 
@@ -215,7 +215,7 @@ class GitCommand(BackendCommand):
         self.uri = self.parsed_args.uri
         self.outfile = self.parsed_args.outfile
         self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.branches = self.parsed_args.branches
 
         if self.parsed_args.git_log:
@@ -229,7 +229,7 @@ class GitCommand(BackendCommand):
         cache = None
 
         self.backend = Git(self.uri, git_path,
-                           cache=cache, origin=self.origin)
+                           tag=self.tag, cache=cache)
 
     def run(self):
         """Fetch and print the commits.
