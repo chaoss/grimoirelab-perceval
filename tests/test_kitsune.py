@@ -112,21 +112,24 @@ class TestKitsuneBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        kitsune = Kitsune(KITSUNE_SERVER_URL, origin='test')
+        kitsune = Kitsune(KITSUNE_SERVER_URL, tag='test')
 
         self.assertEqual(kitsune.url, KITSUNE_SERVER_URL)
-        self.assertEqual(kitsune.origin, 'test')
+        self.assertEqual(kitsune.origin, KITSUNE_SERVER_URL)
+        self.assertEqual(kitsune.tag, 'test')
         self.assertIsInstance(kitsune.client, KitsuneClient)
 
-        # When origin is empty or None it will be set to
+        # When tag is empty or None it will be set to
         # the value in url
         kitsune = Kitsune(KITSUNE_SERVER_URL)
         self.assertEqual(kitsune.url, KITSUNE_SERVER_URL)
         self.assertEqual(kitsune.origin, KITSUNE_SERVER_URL)
+        self.assertEqual(kitsune.tag, KITSUNE_SERVER_URL)
 
-        kitsune = Kitsune(KITSUNE_SERVER_URL, origin='')
+        kitsune = Kitsune(KITSUNE_SERVER_URL, tag='')
         self.assertEqual(kitsune.url, KITSUNE_SERVER_URL)
         self.assertEqual(kitsune.origin, KITSUNE_SERVER_URL)
+        self.assertEqual(kitsune.tag, KITSUNE_SERVER_URL)
 
     def __check_questions_contents(self, questions):
         self.assertEqual(questions[0]['data']['num_votes'], 2)
@@ -137,6 +140,7 @@ class TestKitsuneBackend(unittest.TestCase):
         self.assertEqual(questions[0]['updated_on'], 1467798846.0)
         self.assertEqual(questions[0]['offset'], 0)
         self.assertEqual(questions[0]['category'], 'question')
+        self.assertEqual(questions[0]['tag'], KITSUNE_SERVER_URL)
 
         if len(questions) > 1:
             self.assertEqual(questions[1]['data']['num_votes'], 1)
@@ -147,6 +151,7 @@ class TestKitsuneBackend(unittest.TestCase):
             self.assertEqual(questions[1]['updated_on'], 1467798439.0)
             self.assertEqual(questions[1]['offset'], 1)
             self.assertEqual(questions[1]['category'], 'question')
+            self.assertEqual(questions[1]['tag'], KITSUNE_SERVER_URL)
 
     @httpretty.activate
     def test_fetch(self):
@@ -265,12 +270,12 @@ class TestKitsuneCommand(unittest.TestCase):
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
-        args = ['--origin', 'test', KITSUNE_SERVER_URL]
+        args = ['--tag', 'test', KITSUNE_SERVER_URL]
 
         cmd = KitsuneCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.url, KITSUNE_SERVER_URL)
-        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertIsInstance(cmd.backend, Kitsune)
 
     def test_argument_parser(self):

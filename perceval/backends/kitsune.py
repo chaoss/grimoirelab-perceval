@@ -60,24 +60,24 @@ class Kitsune(Backend):
     """Kitsune backend for Perceval.
 
     This class retrieves the questions and answers from a
-    Kitsune url. To initialize this class a
-    url could be provided. If not, https://support.mozilla.org will be used.
+    Kitsune URL. To initialize this class a URL may be provided.
+    If not, https://support.mozilla.org will be used. The origin
+    of the data will be set to this URL.
 
     Questions and answers are returned from older to newer.
 
-    :param url: Kitsune url
+    :param url: Kitsune URL
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url` value
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
-    def __init__(self, url=None, cache=None, origin=None):
+    def __init__(self, url=None, tag=None, cache=None):
         if not url:
             url = KITSUNE_URL
-        origin = origin if origin else url
+        origin = url
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.client = KitsuneClient(url)
 
@@ -324,7 +324,7 @@ class KitsuneCommand(BackendCommand):
     def __init__(self, *args):
         super().__init__(*args)
         self.url = self.parsed_args.url
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
         self.offset = self.parsed_args.offset
 
@@ -345,7 +345,7 @@ class KitsuneCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = Kitsune(self.url, cache=cache, origin=self.origin)
+        self.backend = Kitsune(self.url, tag=self.tag, cache=cache)
 
     def run(self):
         """Fetch and print the Events.
