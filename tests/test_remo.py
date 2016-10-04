@@ -95,26 +95,30 @@ class TestReMoBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        remo = ReMo(MOZILLA_REPS_SERVER_URL, origin='test')
+        remo = ReMo(MOZILLA_REPS_SERVER_URL, tag='test')
 
         self.assertEqual(remo.url, MOZILLA_REPS_SERVER_URL)
-        self.assertEqual(remo.origin, 'test')
+        self.assertEqual(remo.origin, MOZILLA_REPS_SERVER_URL)
+        self.assertEqual(remo.tag, 'test')
         self.assertIsInstance(remo.client, ReMoClient)
 
-        # When origin is empty or None it will be set to
+        # When tag is empty or None it will be set to
         # the value in url
         remo = ReMo(MOZILLA_REPS_SERVER_URL)
         self.assertEqual(remo.url, MOZILLA_REPS_SERVER_URL)
         self.assertEqual(remo.origin, MOZILLA_REPS_SERVER_URL)
+        self.assertEqual(remo.tag, MOZILLA_REPS_SERVER_URL)
 
-        remo = ReMo(MOZILLA_REPS_SERVER_URL, origin='')
+        remo = ReMo(MOZILLA_REPS_SERVER_URL, tag='')
         self.assertEqual(remo.url, MOZILLA_REPS_SERVER_URL)
         self.assertEqual(remo.origin, MOZILLA_REPS_SERVER_URL)
+        self.assertEqual(remo.tag, MOZILLA_REPS_SERVER_URL)
 
         # If no url is provided, MOZILLA_REPS_URL is used
         remo = ReMo()
         self.assertEqual(remo.url, MOZILLA_REPS_URL)
         self.assertEqual(remo.origin, MOZILLA_REPS_URL)
+        self.assertEqual(remo.tag, MOZILLA_REPS_URL)
 
     def __check_events_contents(self, events):
         self.assertEqual(events[0]['data']['estimated_attendance'], 1000)
@@ -124,6 +128,7 @@ class TestReMoBackend(unittest.TestCase):
         self.assertEqual(events[0]['uuid'], 'e701d4ed3b954361383d678d2168a44307d7ff60')
         self.assertEqual(events[0]['updated_on'], 1339326000.0)
         self.assertEqual(events[0]['category'], 'event')
+        self.assertEqual(events[0]['tag'], MOZILLA_REPS_SERVER_URL)
 
         if len(events) > 1:
             self.assertEqual(events[1]['data']['estimated_attendance'], 50)
@@ -133,6 +138,7 @@ class TestReMoBackend(unittest.TestCase):
             self.assertEqual(events[1]['uuid'], 'e83e53b1f1039f62c66d2a977e23df3adf5bdc87')
             self.assertEqual(events[1]['updated_on'], 1339344000.0)
             self.assertEqual(events[1]['category'], 'event')
+            self.assertEqual(events[1]['tag'], MOZILLA_REPS_SERVER_URL)
 
     @httpretty.activate
     def test_fetch(self):
@@ -231,12 +237,12 @@ class TestReMoCommand(unittest.TestCase):
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
-        args = ['--origin', 'test', MOZILLA_REPS_SERVER_URL]
+        args = ['--tag', 'test', MOZILLA_REPS_SERVER_URL]
 
         cmd = ReMoCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.url, MOZILLA_REPS_SERVER_URL)
-        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertIsInstance(cmd.backend, ReMo)
 
     def test_argument_parser(self):
