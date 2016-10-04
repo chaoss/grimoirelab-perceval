@@ -46,9 +46,9 @@ MAX_RECENT_DAYS = 30  # max number of days included in MediaWiki recent changes
 class MediaWiki(Backend):
     """MediaWiki backend for Perceval.
 
-    This class retrieves the wiki pages and edits from a
-    MediaWiki site. To initialize this class the
-    URL must be provided.
+    This class retrieves the wiki pages and edits from a  MediaWiki site.
+    To initialize this class the URL must be provided. The origin
+    of the data will be set to this URL.
 
     It uses different APIs to support pre and post 1.27 MediaWiki versions.
     The pre 1.27 approach performance is better but it needs different
@@ -67,16 +67,15 @@ class MediaWiki(Backend):
     Deleted pages are not analyzed.
 
     :param url: MediaWiki url
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url` value
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
-    def __init__(self, url, cache=None, origin=None):
-        origin = origin if origin else url
+    def __init__(self, url, tag=None, cache=None):
+        origin = url
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.client = MediaWikiClient(url)
         self._test_mode = False
@@ -513,7 +512,7 @@ class MediaWikiCommand(BackendCommand):
         super().__init__(*args)
         self.url = self.parsed_args.url
         self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
         self.reviews_api = self.parsed_args.reviews_api
 
@@ -534,7 +533,7 @@ class MediaWikiCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = MediaWiki(self.url, cache=cache, origin=self.origin)
+        self.backend = MediaWiki(self.url, tag=self.tag, cache=cache)
 
     def run(self):
         """Fetch and print the pages and their revisions.
