@@ -1,7 +1,8 @@
 *.pyc
 *.pyo
-#*#
 build
+dist
+perceval.egg-info
 __pycache__
 
 # Eclipse's files and directories
