@@ -45,25 +45,31 @@ class Backend:
     requires the implementation of `metadata_id`, `metadata_updated_on`
     and `metadata_category` static methods.
 
+    The fetched items can be tagged using the `tag` parameter. It will
+    be useful to trace data. When it is set to `None` or to an empty
+    string, the tag will be the same that the `origin` attribute.
+
     To track which version of the backend was used during the fetching
     process, this class provides a `version` attribute that each backend
     may override.
 
     :param origin: identifier of the repository
+    :param tag: tag items using this label
     :param cache: object to cache raw data
 
     :raises ValueError: raised when `cache` is not an instance of
         `Cache` class
     """
-    version = '0.2'
+    version = '0.3'
 
-    def __init__(self, origin, cache=None):
+    def __init__(self, origin, tag=None, cache=None):
         if cache and not isinstance(cache, Cache):
             msg = "cache is not an instance of Cache. %s object given" \
                 % (str(type(cache)))
             raise ValueError(msg)
 
         self._origin = origin
+        self.tag = tag if tag else origin
         self.cache = cache
         self.cache_queue = []
 
@@ -136,8 +142,8 @@ class BackendCommand:
                            help="backend authentication token")
         group.add_argument('--from-date', dest='from_date', default='1970-01-01',
                            help="fetch items from this date")
-        group.add_argument('--origin', dest='origin',
-                           help="set the identifier of the repository")
+        group.add_argument('--tag', dest='tag',
+                           help="tag the items generated during the fetching process")
 
         # Cache arguments
         group = parser.add_argument_group('cache arguments')
@@ -182,6 +188,7 @@ def metadata(func):
                     'uuid' : uuid(self.origin, self.metadata_id(data)),
                     'updated_on' : self.metadata_updated_on(data),
                     'category' : self.metadata_category(data),
+                    'tag' : self.tag,
                     'data' : data,
                    }
             yield item
