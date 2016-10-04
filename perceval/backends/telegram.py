@@ -71,19 +71,20 @@ class Telegram(Backend):
     token used by this bot. The authentication token is provided by Telegram
     once the bot is created.
 
+    The origin of the data will be set to the `TELEGRAM_URL` plus the name
+    of the bot; i.e 'http://telegram.org/mybot'.
+
     :param bot: name of the bot
     :param bot_token: authentication token used by the bot
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to the `TELEGRAM_URL`
-        plus the name of the bot; i.e 'http://telegram.org/mybot'.
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
-    def __init__(self, bot, bot_token, cache=None, origin=None):
-        origin = origin if origin else urljoin(TELEGRAM_URL, bot)
+    def __init__(self, bot, bot_token, tag=None, cache=None):
+        origin = urljoin(TELEGRAM_URL, bot)
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.bot = bot
         self.client = TelegramBotClient(bot_token)
 
@@ -263,7 +264,7 @@ class TelegramCommand(BackendCommand):
         self.bot = self.parsed_args.bot
         self.backend_token = self.parsed_args.backend_token
         self.outfile = self.parsed_args.outfile
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.offset = self.parsed_args.offset
         self.chats = self.parsed_args.chats
 
@@ -286,8 +287,8 @@ class TelegramCommand(BackendCommand):
 
         self.backend = Telegram(self.bot,
                                 self.backend_token,
-                                cache=cache,
-                                origin=self.origin)
+                                tag=self.tag,
+                                cache=cache)
 
     def run(self):
         """Fetch and print the messages.
