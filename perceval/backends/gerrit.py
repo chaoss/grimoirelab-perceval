@@ -43,25 +43,25 @@ class Gerrit(Backend):
     """Gerrit backend.
 
     Class to fetch the reviews from a Gerrit server. To initialize
-    this class the URL of the server must be provided.
+    this class the URL of the server must be provided. The `url`
+    will be set as the origin of the data.
 
     :param url: Gerrit server URL
     :param user: SSH user used to connect to the Gerrit server
     :param max_reviews: maximum number of reviews requested on the same query
     :param blacklist_reviews: exclude the reviews of this list while fetching
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url` value
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, url,
                  user=None, max_reviews=MAX_REVIEWS,
                  blacklist_reviews=None,
-                 cache=None, origin=None):
-        origin = origin if origin else url
+                 tag=None, cache=None):
+        origin = url
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.max_reviews = max(1, max_reviews)
         self.blacklist_reviews = blacklist_reviews
@@ -391,7 +391,7 @@ class GerritCommand(BackendCommand):
         self.max_reviews = self.parsed_args.max_reviews
         self.blacklist_reviews = self.parsed_args.blacklist_reviews
         self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
 
         if not self.parsed_args.no_cache:
@@ -414,8 +414,8 @@ class GerritCommand(BackendCommand):
                               user=self.user,
                               max_reviews=self.max_reviews,
                               blacklist_reviews=self.blacklist_reviews,
-                              cache=cache,
-                              origin=self.origin)
+                              tag=self.tag,
+                              cache=cache)
 
     def run(self):
         """Fetch and print the reviews.
