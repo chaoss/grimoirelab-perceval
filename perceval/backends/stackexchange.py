@@ -51,17 +51,16 @@ class StackExchange(Backend):
     :param site: StackExchange site
     :param tagged: filter items by question Tag
     :param token: StackExchange access_token for the API
+    :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `site` value
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, site, tagged=None, token=None,
-                 max_questions=None, cache=None, origin=None):
-        origin = origin if origin else site
+                 max_questions=None, tag=None, cache=None):
+        origin = site
 
-        super().__init__(origin, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache)
         self.site = site
         self.tagged = tagged
         self.max_questions = max_questions
@@ -277,7 +276,7 @@ class StackExchangeCommand(BackendCommand):
         self.token = self.parsed_args.token
         self.max_questions = self.parsed_args.max_questions
         self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
 
         if not self.parsed_args.no_cache:
@@ -297,9 +296,12 @@ class StackExchangeCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = StackExchange(self.site, self.tagged,
-                                     self.token, self.max_questions,
-                                     cache=cache, origin=self.origin)
+        self.backend = StackExchange(self.site,
+                                     tagged=self.tagged,
+                                     token=self.token,
+                                     max_questions=self.max_questions,
+                                     tag=self.tag,
+                                     cache=cache)
 
     def run(self):
         """Fetch and print the Questions.
