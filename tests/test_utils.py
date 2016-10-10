@@ -195,6 +195,14 @@ class TestStrToDatetime(unittest.TestCase):
         self.assertIsInstance(date, datetime.datetime)
         self.assertEqual(date, expected)
 
+        # This date is invalid because the timezone section.
+        # Timezone will be removed, setting UTC as default
+        date = str_to_datetime('2001-12-01 02:00 +08888')
+        expected = datetime.datetime(2001, 12, 1, 2, 0, 0,
+                                     tzinfo=dateutil.tz.tzutc())
+        self.assertIsInstance(date, datetime.datetime)
+        self.assertEqual(date, expected)
+
     def test_invalid_date(self):
         """Check whether it fails with an invalid date"""
 
@@ -205,7 +213,6 @@ class TestStrToDatetime(unittest.TestCase):
         """Check whether it fails with invalid formats"""
 
         self.assertRaises(InvalidDateError, str_to_datetime, '2001-12-01mm')
-        self.assertRaises(InvalidDateError, str_to_datetime, '2001-12-01 02:00 +08888')
         self.assertRaises(InvalidDateError, str_to_datetime, 'nodate')
         self.assertRaises(InvalidDateError, str_to_datetime, None)
         self.assertRaises(InvalidDateError, str_to_datetime, '')

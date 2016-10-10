@@ -22,6 +22,7 @@
 #
 
 import datetime
+import logging
 import re
 import sys
 
@@ -31,6 +32,9 @@ import dateutil.parser
 import dateutil.tz
 
 from .errors import InvalidDateError, ParseError
+
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_DATETIME = datetime.datetime(1970, 1, 1, 0, 0, 0,
@@ -104,6 +108,12 @@ def str_to_datetime(ts):
     :raises IvalidDateError: when the given string cannot be converted into
         a valid date
     """
+    def parse_datetime(ts):
+        dt = dateutil.parser.parse(ts)
+        if not dt.tzinfo:
+            dt = dt.replace(tzinfo=dateutil.tz.tzutc())
+        return dt
+
     if not ts:
         raise InvalidDateError(date=str(ts))
 
@@ -112,16 +122,27 @@ def str_to_datetime(ts):
         # timezone section because it cannot be parsed,
         # like in 'Wed, 26 Oct 2005 15:20:32 -0100 (GMT+1)'
         # or in 'Thu, 14 Aug 2008 02:07:59 +0200 CEST'.
-        m = re.search(r"^.+?[\+\-]\d{4}(\s+.+)$", ts)
+        m = re.search(r"^.+?\s+[\+\-]\d{4}(\s+.+)$", ts)
         if m:
             ts = ts[:m.start(1)]
 
-        dt = dateutil.parser.parse(ts)
+        try:
+            dt = parse_datetime(ts)
+        except ValueError as e:
+            # Try to remove the timezone, usually it causes
+            # problems. If it doesn't work, raise an exception
+            m = re.search(r"^(.+?)\s+[\+\-]\d+$", ts)
 
-        if not dt.tzinfo:
-            dt = dt.replace(tzinfo=dateutil.tz.tzutc())
+            if not m:
+                raise e
+
+            dt = parse_datetime(m.group(1))
+
+            logger.warning("Date %s str does not have a valid timezone", ts)
+            logger.warning("Date converted removing timezone info")
+
         return dt
-    except Exception:
+    except ValueError as e:
         raise InvalidDateError(date=str(ts))
 
 
