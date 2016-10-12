@@ -171,7 +171,8 @@ class GmaneCommand(BackendCommand):
         self.offset = self.parsed_args.offset
 
         if not self.parsed_args.mboxes_path:
-            base_path = os.path.expanduser('~/.perceval/mailinglists/')
+            base_path = os.path.expanduser('~')
+            base_path = os.path.join(base_path, ".perceval", "cache")   
             self.mboxes_path = os.path.join(base_path, self.mailing_list)
         else:
             self.mboxes_path = self.parsed_args.mboxes_path
