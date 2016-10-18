@@ -47,6 +47,8 @@ KITSUNE_API = KITSUNE_SERVER_URL + '/api/2/'
 KITSUNE_API_QUESTION = KITSUNE_SERVER_URL + '/api/2/question/'
 KITSUNE_API_ANSWER = KITSUNE_SERVER_URL + '/api/2/answer/'
 
+KITSUNE_SERVER_FAIL_PAGE = 69
+KITSUNE_ITEMS_PER_PAGE = 20
 
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
@@ -87,6 +89,12 @@ class HTTPServer():
                     body = mozilla_questions_2
                 else:
                     body = mozilla_question_answers_1
+            elif page == str(KITSUNE_SERVER_FAIL_PAGE):
+                # To tests for Internal Server Error
+                return (500, headers, '')
+            elif page == str(KITSUNE_SERVER_FAIL_PAGE + 1):
+                # Next page to the server fail returns questions
+                return (200, headers, mozilla_questions_2)
             else:
                 return (404, headers, '')
 
@@ -210,6 +218,18 @@ class TestKitsuneBackend(unittest.TestCase):
         questions = [event for event in kitsune.fetch()]
 
         self.assertEqual(len(questions), 0)
+
+    @httpretty.activate
+    def test_fetch_server_error(self):
+        """Test whether it works when the server fails"""
+
+        HTTPServer.routes(empty=True)
+
+        kitsune = Kitsune(KITSUNE_SERVER_URL)
+        offset = (KITSUNE_SERVER_FAIL_PAGE - 1) * KITSUNE_ITEMS_PER_PAGE
+        questions = [event for event in kitsune.fetch(offset=offset)]
+        # After the failing page there are a page with 2 questions
+        self.assertEqual(len(questions), 2)
 
 
 class TestKitsuneBackendCache(unittest.TestCase):
