@@ -46,7 +46,7 @@ JENKINS_JOB_BUILDS_2 = 'apex-build-master'
 JENKINS_JOB_BUILDS_URL_1 = JENKINS_SERVER_URL + '/job/'+JENKINS_JOB_BUILDS_1+'/api/json?depth=2'
 JENKINS_JOB_BUILDS_URL_2 = JENKINS_SERVER_URL + '/job/'+JENKINS_JOB_BUILDS_2+'/api/json?depth=2'
 
-
+requests_http = []
 
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
@@ -78,12 +78,7 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
 
-    @httpretty.activate
-    def test_fetch(self):
-        """Test whether a list of builds is returned"""
-
-        requests_http = []
-
+    def __configure_http_server(self):
         bodies_jobs = read_file('data/jenkins_jobs.json', mode='rb')
         bodies_builds_job = read_file('data/jenkins_job_builds.json')
 
@@ -118,6 +113,12 @@ class TestJenkinsBackend(unittest.TestCase):
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(2)
                                ])
+
+    @httpretty.activate
+    def test_fetch(self):
+        """Test whether a list of builds is returned"""
+
+        self.__configure_http_server()
 
         # Test fetch builds from jobs list
         jenkins = Jenkins(JENKINS_SERVER_URL)
@@ -160,6 +161,24 @@ class TestJenkinsBackend(unittest.TestCase):
         builds = [build for build in jenkins.fetch()]
 
         self.assertEqual(len(builds), 0)
+
+    @httpretty.activate
+    def test_fetch_blacklist(self):
+        """Test whether jobs in balcklist are not retrieved"""
+
+        blacklist = [JENKINS_JOB_BUILDS_1]
+
+        self.__configure_http_server()
+
+        jenkins = Jenkins(JENKINS_SERVER_URL, blacklist_jobs=blacklist)
+        nrequests = len(requests_http)
+        builds = [build for build in jenkins.fetch()]
+        # No HTTP calls at all must be done for JENKINS_JOB_BUILDS_1
+        # Just the first call for all jobs and a second call for JENKINS_JOB_BUILDS_2
+        self.assertEqual(len(requests_http)-nrequests, 2)
+        # Builds just from JENKINS_JOB_BUILDS_2
+        self.assertEqual(len(builds), 32)
+
 
 class TestJenkinsBackendCache(unittest.TestCase):
     """Jenkins backend tests using a cache"""
