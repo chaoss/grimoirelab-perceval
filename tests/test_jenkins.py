@@ -175,7 +175,7 @@ class TestJenkinsBackend(unittest.TestCase):
         builds = [build for build in jenkins.fetch()]
         # No HTTP calls at all must be done for JENKINS_JOB_BUILDS_1
         # Just the first call for all jobs and a second call for JENKINS_JOB_BUILDS_2
-        self.assertEqual(len(requests_http)-nrequests, 2)
+        self.assertEqual(len(requests_http) - nrequests, 2)
         # Builds just from JENKINS_JOB_BUILDS_2
         self.assertEqual(len(builds), 32)
 

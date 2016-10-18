@@ -50,7 +50,7 @@ class Jenkins(Backend):
     :param cache: cache object to store raw data
     :param blacklist_jobs: exclude the jobs of this list while fetching
     """
-    version = '0.3.1'
+    version = '0.4.0'
 
     def __init__(self, url, tag=None, cache=None, blacklist_jobs=None):
         origin = url
