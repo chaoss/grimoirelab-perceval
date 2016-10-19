@@ -541,10 +541,14 @@ class ConduitClient:
         :param from_date: retrieve tasks that where updated from that date;
             dates are converted epoch time.
         """
-        ts = int(datetime_to_utc(from_date).timestamp())
-        consts = [{
-            self.PMODIFIED_START : ts,
-        }]
+        # Convert 'from_date' to epoch timestamp.
+        # Zero value (1970-01-01 00:00:00) is not allowed for
+        # 'modifiedStart' so it will be set to 1, by default.
+        ts = int(datetime_to_utc(from_date).timestamp()) or 1
+
+        consts = {
+            self.PMODIFIED_START : ts
+        }
 
         attachments = {
             self. PPROJECTS : True
