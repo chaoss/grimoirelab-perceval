@@ -56,7 +56,8 @@ are:
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
     redmine          Fetch issues from a Redmine server
-    remo             Fetch events and people from a ReMo site
+    remo             Fetch events and people from a ReMo site (old API v1)
+    remo2            Fetch events and people from a ReMo site (API v1)
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server
