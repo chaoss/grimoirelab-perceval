@@ -392,7 +392,7 @@ class GitHubCommand(BackendCommand):
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
+                base_path = os.path.expanduser('~/.perceval2/cache/')
             else:
                 base_path = self.parsed_args.cache_path
             # TODO: add get_id for backend to return the unique id
