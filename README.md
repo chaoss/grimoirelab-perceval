@@ -50,16 +50,39 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 
 ## Installation
 
+There are several ways for installing Perceval on your system: from packages,
+from a docker image or from the source code.
+
+### Pip
+
+Perceval can be installed using [pip](https://pip.pypa.io/en/stable/), a tool
+for installing Python packages. To do it, run the next command:
+
 ```
-$ pip install -r requirements.txt
-$ python3 setup.py install
+$ pip3 install perceval
 ```
 
-## Docker
+### Docker
 
 A Perceval Docker image is available at [DockerHub](https://hub.docker.com/r/grimoirelab/perceval/).
 
 Detailed information on how to run and/or build this image can be found [here](https://github.com/grimoirelab/perceval/tree/master/docker/images/).
+
+### Source code
+
+To install from the source code you will need to clone the repository first:
+
+```
+$ git clone https://github.com/grimoirelab/perceval.git
+```
+
+In this case, [setuptools](http://setuptools.readthedocs.io/en/latest/) package will be required.
+Make sure it is installed before running the next commands:
+
+```
+$ pip3 install -r requirements.txt
+$ python3 setup.py install
+```
 
 ## Documentation
 
@@ -68,7 +91,7 @@ Documentation is generated automagically in the [ReadTheDocs Perceval site](http
 ## Examples
 
 ### Bugzilla
-To fetch bugs from Bugzilla, you have to options:
+To fetch bugs from Bugzilla, you have two options:
 
 a) Use the traditional backend
 
