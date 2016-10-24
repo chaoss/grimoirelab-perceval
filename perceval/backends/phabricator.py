@@ -434,11 +434,12 @@ class PhabricatorCommand(BackendCommand):
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
+                base_path = os.path.expanduser('~')
+                base_path = os.path.join(base_path, '.perceval', 'cache')
             else:
                 base_path = self.parsed_args.cache_path
 
-            cache_path = os.path.join(base_path, self.url)
+            cache_path = os.path.join(base_path, self.url.split('://')[1])
 
             cache = Cache(cache_path)
 
@@ -541,14 +542,10 @@ class ConduitClient:
         :param from_date: retrieve tasks that where updated from that date;
             dates are converted epoch time.
         """
-        # Convert 'from_date' to epoch timestamp.
-        # Zero value (1970-01-01 00:00:00) is not allowed for
-        # 'modifiedStart' so it will be set to 1, by default.
-        ts = int(datetime_to_utc(from_date).timestamp()) or 1
-
-        consts = {
-            self.PMODIFIED_START : ts
-        }
+        ts = int(datetime_to_utc(from_date).timestamp())
+        consts = [{
+            self.PMODIFIED_START : ts,
+        }]
 
         attachments = {
             self. PPROJECTS : True

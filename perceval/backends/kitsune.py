@@ -98,7 +98,6 @@ class Kitsune(Backend):
 
         nquestions = 0  # number of questions processed
         tquestions = 0  # number of questions from API data
-        equestions = 0  # number of questions dropped by errors
 
         # Always get complete pages so the first item is always
         # the first one in the page
@@ -108,30 +107,8 @@ class Kitsune(Backend):
         drop_questions = offset - page_offset
         current_offset = offset
 
-        questions_page = self.client.get_questions(offset)
-
-        while True:
-            try:
-                raw_questions = next(questions_page)
-            except StopIteration:
-                break
-            except requests.exceptions.HTTPError as e:
-                # Continue with the next page if it is a 500 error
-                if e.response.status_code == 500:
-                    logger.exception(e)
-                    logger.error("Problem getting Kitsune questions. " +
-                                 "Loosing %i questions. Going to the next page.",
-                                 KitsuneClient.ITEMS_PER_PAGE)
-                    equestions += KitsuneClient.ITEMS_PER_PAGE
-                    current_offset += KitsuneClient.ITEMS_PER_PAGE
-                    questions_page = self.client.get_questions(current_offset)
-                    continue
-                else:
-                    # If it is another error just propagate the exception
-                    raise e
-
+        for raw_questions in self.client.get_questions(offset):
             self._push_cache_queue(raw_questions)
-
             try:
                 questions_data = json.loads(raw_questions)
                 tquestions = questions_data['count']
@@ -157,13 +134,11 @@ class Kitsune(Backend):
                 nquestions += 1
                 self._push_cache_queue('{}') # Mark with empty dict end of question
 
-            logger.debug("Questions: %i/%i", nquestions + offset, tquestions)
+            logger.debug("Questions: %i/%i", nquestions, tquestions)
 
             self._flush_cache_queue()
 
         logger.info("Total number of questions: %i (%i total)", nquestions, tquestions)
-        logger.info("Questions with errors dropped: %i", equestions)
-
 
     @kitsune_metadata
     @metadata
@@ -355,11 +330,12 @@ class KitsuneCommand(BackendCommand):
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
+                base_path = os.path.expanduser('~')
+                base_path = os.path.join(base_path, ".perceval", "cache")
             else:
                 base_path = self.parsed_args.cache_path
 
-            cache_path = os.path.join(base_path, self.url)
+            cache_path = os.path.join(base_path, self.url.split("://")[1])
 
             cache = Cache(cache_path)
 

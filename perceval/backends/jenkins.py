@@ -48,17 +48,15 @@ class Jenkins(Backend):
     :param url: Jenkins url
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
-    :param blacklist_jobs: exclude the jobs of this list while fetching
     """
-    version = '0.4.0'
+    version = '0.3.0'
 
-    def __init__(self, url, tag=None, cache=None, blacklist_jobs=None):
+    def __init__(self, url, tag=None, cache=None):
         origin = url
 
         super().__init__(origin, tag=tag, cache=cache)
         self.url = url
-        self.client = JenkinsClient(url, blacklist_jobs)
-        self.blacklist_jobs = blacklist_jobs
+        self.client = JenkinsClient(url)
 
     @metadata
     def fetch(self):
@@ -81,10 +79,8 @@ class Jenkins(Backend):
 
         for job in jobs:
             njobs += 1
-            logger.debug("Adding builds from %s (%i/%i)", job['url'], njobs, len(jobs))
+            logger.debug("Adding builds from %s (%i/%i)" % (job['url'], njobs, len(jobs)))
             raw_builds = self.client.get_builds(job['name'])
-            if not raw_builds:
-                continue
             self._push_cache_queue(raw_builds)
             self._flush_cache_queue()
             builds = json.loads(raw_builds)
@@ -155,9 +151,8 @@ class JenkinsClient:
     :raises HTTPError: when an error occurs doing the request
     """
 
-    def __init__(self, url, blacklist_jobs=None):
+    def __init__(self, url):
         self.url = url
-        self.blacklist_jobs = blacklist_jobs
 
     def get_jobs(self):
         """ Retrieve all jobs
@@ -171,11 +166,6 @@ class JenkinsClient:
     def get_builds(self, job_name):
         """ Retrieve all builds from a job
         """
-
-        if self.blacklist_jobs and job_name in self.blacklist_jobs:
-            logging.info("Not getting blacklisted job: %s", job_name)
-            return
-
         # depth=2 to get builds details
         job_url = self.url + "/job/%s/" % (job_name)
         url_jenkins = job_url + "api/json?depth=2"
@@ -192,16 +182,15 @@ class JenkinsCommand(BackendCommand):
         self.url = self.parsed_args.url
         self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
-        self.blacklist_jobs = self.parsed_args.blacklist_jobs
-
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
+                base_path = os.path.expanduser('~')
+                base_path = os.path.join(base_path, ".perceval", "cache")
             else:
                 base_path = self.parsed_args.cache_path
 
-            cache_path = os.path.join(base_path, self.url)
+            cache_path = os.path.join(base_path, self.url.split("://")[1])
 
             cache = Cache(cache_path)
 
@@ -212,8 +201,7 @@ class JenkinsCommand(BackendCommand):
         else:
             cache = None
 
-        self.backend = Jenkins(self.url, tag=self.tag, cache=cache,
-                               blacklist_jobs=self.blacklist_jobs)
+        self.backend = Jenkins(self.url, tag=self.tag, cache=cache)
 
     def run(self):
         """Fetch and print the Builds.
@@ -250,11 +238,9 @@ class JenkinsCommand(BackendCommand):
         # Jenkins options
         group = parser.add_argument_group('Jenkins arguments')
 
-        group.add_argument("--blacklist-jobs",  dest="blacklist_jobs",
-                           nargs='*', help="Wrong jobs that must not be retrieved.")
-
         # Required arguments
-        group.add_argument('url',
-                           help="URL of the Jenkins server")
+        parser.add_argument('url',
+                            help="URL of the Jenkins server")
+
 
         return parser
