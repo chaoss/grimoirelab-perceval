@@ -154,6 +154,11 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(redmine.origin, REDMINE_URL)
         self.assertEqual(redmine.tag, REDMINE_URL)
 
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Redmine.has_resuming(), True)
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether it fetches a set of issues"""
