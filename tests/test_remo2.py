@@ -130,6 +130,11 @@ class TestReMoBackend(unittest.TestCase):
         self.assertEqual(remo.origin, MOZILLA_REPS_URL)
         self.assertEqual(remo.tag, MOZILLA_REPS_URL)
 
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(ReMo.has_resuming(), True)
+
     def __check_events_contents(self, items):
         self.assertEqual(items[0]['data']['city'], 'Makassar')
         self.assertEqual(items[0]['data']['end'], '2012-06-10T11:00:00Z')

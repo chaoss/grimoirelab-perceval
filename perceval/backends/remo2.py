@@ -172,6 +172,14 @@ class ReMo(Backend):
         logger.info("Retrieval process completed: %s items retrieved from cache",
                     nitems)
 
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
+
     @staticmethod
     def metadata_id(item):
         """Extracts the identifier from a ReMo item."""
