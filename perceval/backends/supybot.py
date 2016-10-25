@@ -59,7 +59,7 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, uri, dirpath, tag=None, cache=None):
         origin = uri
@@ -151,6 +151,14 @@ class Supybot(Backend):
             logger.debug("Date set to default: %s", str(dt))
 
         return dt
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend does not support items cache
+        """
+        return False
 
     @classmethod
     def has_resuming(cls):
