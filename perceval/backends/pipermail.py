@@ -65,7 +65,7 @@ class Pipermail(MBox):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, url, dirpath, tag=None, cache=None):
         origin = url
@@ -97,6 +97,22 @@ class Pipermail(MBox):
 
         logger.info("Fetch process completed")
 
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend dooes not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
+
 
 class PipermailCommand(BackendCommand):
     """Class to run Pipermail backend from the command line."""
@@ -110,8 +126,9 @@ class PipermailCommand(BackendCommand):
         self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         if not self.parsed_args.mboxes_path:
-            base_path = os.path.expanduser('~/.perceval/mailinglists/')
-            self.mboxes_path = os.path.join(base_path, self.url)
+            base_path = os.path.expanduser('~')
+            base_path = os.path.join(base_path, '.perceval', 'mailinglists')
+            self.mboxes_path = os.path.join(base_path, self.url.split('://')[1])
         else:
             self.mboxes_path = self.parsed_args.mboxes_path
 

@@ -80,7 +80,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, owner=None, repository=None,
                  backend_token=None, base_url=None,
@@ -209,6 +209,22 @@ class GitHub(Backend):
                     issue[field + '_data'] = \
                         self._users[issue[field]['login']]
             yield issue
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return True
+
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
 
     @staticmethod
     def metadata_id(item):
@@ -392,7 +408,8 @@ class GitHubCommand(BackendCommand):
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval2/cache/')
+                base_path = os.path.expanduser('~')
+                base_path = os.path.join(base_path, ".perceval", "cache")
             else:
                 base_path = self.parsed_args.cache_path
             # TODO: add get_id for backend to return the unique id

@@ -59,7 +59,7 @@ class BugzillaREST(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, url, user=None, password=None, api_token=None,
                  max_bugs=MAX_BUGS, tag=None, cache=None):
@@ -237,6 +237,22 @@ class BugzillaREST(Backend):
         contents = json.loads(raw_attachments)['bugs']
         attachments = {k : v for k, v in contents.items()}
         return attachments
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return True
+
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
 
     @staticmethod
     def metadata_id(item):
@@ -456,11 +472,12 @@ class BugzillaRESTCommand(BackendCommand):
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
+                base_path = os.path.expanduser('~')
+                base_path = os.path.join(base_path, ".perceval", "cache")
             else:
                 base_path = self.parsed_args.cache_path
 
-            cache_path = os.path.join(base_path, self.url)
+            cache_path = os.path.join(base_path, self.url.split("://")[1])
 
             cache = Cache(cache_path)
 
