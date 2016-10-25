@@ -161,6 +161,11 @@ class TestMediaWikiBackend(unittest.TestCase):
         self.assertEqual(mediawiki.origin, MEDIAWIKI_SERVER_URL)
         self.assertEqual(mediawiki.tag, MEDIAWIKI_SERVER_URL)
 
+    def test_has_resuming(self):
+        """Test if it returns False when has_resuming is called"""
+
+        self.assertEqual(MediaWiki.has_resuming(), False)
+
     @httpretty.activate
     def _test_fetch_version(self, version, from_date=None, reviews_api=False):
         """Test whether the pages with their reviews are returned"""
