@@ -54,7 +54,7 @@ class StackExchange(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, site, tagged=None, token=None,
                  max_questions=None, tag=None, cache=None):
@@ -114,6 +114,14 @@ class StackExchange(Backend):
             questions = self.parse_questions(items)
             for question in questions:
                 yield question
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return True
 
     @classmethod
     def has_resuming(cls):
