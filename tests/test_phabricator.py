@@ -182,6 +182,11 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.origin, PHABRICATOR_URL)
         self.assertEqual(phab.tag, PHABRICATOR_URL)
 
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Phabricator.has_resuming(), True)
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether it fetches a set of tasks"""
