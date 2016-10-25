@@ -144,6 +144,11 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(confluence.origin, CONFLUENCE_URL)
         self.assertEqual(confluence.tag, CONFLUENCE_URL)
 
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(Confluence.has_caching(), True)
+
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 

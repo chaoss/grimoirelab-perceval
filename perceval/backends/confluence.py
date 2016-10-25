@@ -53,7 +53,7 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, url, tag=None, cache=None):
         origin = url
@@ -175,6 +175,14 @@ class Confluence(Backend):
             # Check whether it retrieved the latest version
             fetching = not hc['history']['latest']
             version += 1
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return True
 
     @classmethod
     def has_resuming(cls):
