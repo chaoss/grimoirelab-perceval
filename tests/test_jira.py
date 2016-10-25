@@ -156,6 +156,11 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(jira.origin, JIRA_SERVER_URL)
         self.assertEqual(jira.tag, JIRA_SERVER_URL)
 
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(Jira.has_caching(), True)
+
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 

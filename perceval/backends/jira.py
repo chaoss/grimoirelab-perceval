@@ -85,7 +85,7 @@ class Jira(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.6.0'
 
     def __init__(self, url, project=None, backend_user=None,
                  backend_password=None, verify=None,
@@ -158,6 +158,14 @@ class Jira(Backend):
             issues = self.parse_issues(items)
             for issue in issues:
                 yield issue
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return True
 
     @classmethod
     def has_resuming(cls):
