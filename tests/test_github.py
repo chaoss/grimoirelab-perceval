@@ -81,6 +81,11 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.origin, 'https://github.com/zhquan_example/repo')
         self.assertEqual(github.tag, 'https://github.com/zhquan_example/repo')
 
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(GitHub.has_resuming(), True)
+
     @httpretty.activate
     def test_fetch(self):
         """ Test whether a list of issues is returned """
