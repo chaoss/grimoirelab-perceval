@@ -60,7 +60,7 @@ class MBox(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
@@ -192,6 +192,14 @@ class MBox(Backend):
         msg[self.DATE_FIELD] = date
 
         return msg
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend does not support items cache
+        """
+        return False
 
     @classmethod
     def has_resuming(cls):
