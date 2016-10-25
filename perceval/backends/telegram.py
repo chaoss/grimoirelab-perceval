@@ -205,6 +205,14 @@ class Telegram(Backend):
 
         return chat_id in chats
 
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
+
     @staticmethod
     def metadata_id(item):
         """Extracts the identifier from a Telegram item."""

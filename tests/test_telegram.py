@@ -110,6 +110,11 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(tlg.origin, origin)
         self.assertEqual(tlg.tag, origin)
 
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Telegram.has_resuming(), True)
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether a list of messages is returned"""
