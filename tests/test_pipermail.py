@@ -67,6 +67,11 @@ class TestPipermailList(unittest.TestCase):
         self.assertEqual(pmls.dirpath, self.tmp_path)
         self.assertEqual(pmls.url, PIPERMAIL_URL)
 
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Pipermail.has_resuming(), True)
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether archives are fetched"""

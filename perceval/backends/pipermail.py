@@ -97,6 +97,14 @@ class Pipermail(MBox):
 
         logger.info("Fetch process completed")
 
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
+
 
 class PipermailCommand(BackendCommand):
     """Class to run Pipermail backend from the command line."""
