@@ -143,6 +143,11 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         self.assertEqual(bg.origin, BUGZILLA_SERVER_URL)
         self.assertEqual(bg.tag, BUGZILLA_SERVER_URL)
 
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(BugzillaREST.has_resuming(), True)
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether a list of bugs is returned"""
