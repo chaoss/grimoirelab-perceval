@@ -78,6 +78,11 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
 
+    def test_has_resuming(self):
+        """Test if it returns False when has_resuming is called"""
+
+        self.assertEqual(Jenkins.has_resuming(), False)
+
     def __configure_http_server(self):
         bodies_jobs = read_file('data/jenkins_jobs.json', mode='rb')
         bodies_builds_job = read_file('data/jenkins_job_builds.json')

@@ -115,6 +115,14 @@ class Jenkins(Backend):
             for build in builds:
                 yield build
 
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend does not supports items resuming
+        """
+        return False
+
     @staticmethod
     def metadata_id(item):
         """Extracts the identifier from a Build item."""
