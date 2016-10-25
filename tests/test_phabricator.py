@@ -182,6 +182,11 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.origin, PHABRICATOR_URL)
         self.assertEqual(phab.tag, PHABRICATOR_URL)
 
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(Phabricator.has_caching(), True)
+
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 
