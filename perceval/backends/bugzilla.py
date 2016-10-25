@@ -194,6 +194,14 @@ class Bugzilla(Backend):
         activity = self.parse_bug_activity(raw_activity)
         return [event for event in activity]
 
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
+
     @staticmethod
     def metadata_id(item):
         """Extracts the identifier from a Bugzilla item."""
