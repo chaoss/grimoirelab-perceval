@@ -78,6 +78,11 @@ class TestGitBackend(unittest.TestCase):
         self.assertEqual(git.origin, 'http://example.com')
         self.assertEqual(git.tag, 'http://example.com')
 
+    def test_has_caching(self):
+        """Test if it returns False when has_caching is called"""
+
+        self.assertEqual(Git.has_caching(), False)
+
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 
