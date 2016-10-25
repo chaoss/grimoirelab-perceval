@@ -111,6 +111,11 @@ class TestGmaneBackend(unittest.TestCase):
         self.assertEqual(backend.origin, GMANE_MYLIST_URL)
         self.assertEqual(backend.tag, GMANE_MYLIST_URL)
 
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Gmane.has_resuming(), True)
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether it fetches and parses messages"""

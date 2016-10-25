@@ -158,6 +158,14 @@ class Gmane(MBox):
         logger.info("Done. %s/%s messages fetched; %s ignored",
                     nmsgs, tmsgs, imsgs)
 
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
+
 
 class GmaneCommand(BackendCommand):
     """Class to run Gmane backend from the command line."""
