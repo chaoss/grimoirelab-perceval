@@ -154,6 +154,11 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(redmine.origin, REDMINE_URL)
         self.assertEqual(redmine.tag, REDMINE_URL)
 
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(Redmine.has_caching(), True)
+
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 
