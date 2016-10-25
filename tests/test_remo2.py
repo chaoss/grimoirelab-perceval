@@ -130,6 +130,11 @@ class TestReMoBackend(unittest.TestCase):
         self.assertEqual(remo.origin, MOZILLA_REPS_URL)
         self.assertEqual(remo.tag, MOZILLA_REPS_URL)
 
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(ReMo.has_caching(), True)
+
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 

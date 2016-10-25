@@ -173,6 +173,14 @@ class ReMo(Backend):
                     nitems)
 
     @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return True
+
+    @classmethod
     def has_resuming(cls):
         """Returns whether it supports to resume the fetch process.
 
