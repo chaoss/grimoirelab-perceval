@@ -55,7 +55,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.5.0'
+    version = '0.6.0'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -131,6 +131,22 @@ class Git(Backend):
         repo.pull()
 
         return repo
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
 
     @staticmethod
     def metadata_id(item):

@@ -56,7 +56,7 @@ class Redmine(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
                  tag=None, cache=None):
@@ -155,6 +155,22 @@ class Redmine(Backend):
         raw_issue = self.client.issue(issue_id)
         self._push_cache_queue(raw_issue)
         return self.parse_issue_data(raw_issue)
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return True
+
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
 
     @staticmethod
     def metadata_id(item):

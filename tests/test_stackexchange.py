@@ -83,6 +83,16 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(stack.origin, 'stackoverflow')
         self.assertEqual(stack.tag, 'stackoverflow')
 
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(StackExchange.has_caching(), True)
+
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(StackExchange.has_resuming(), True)
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether a list of questions is returned"""

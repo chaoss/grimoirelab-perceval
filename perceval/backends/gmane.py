@@ -81,7 +81,7 @@ class Gmane(MBox):
     :raises  RepositoryError: when the given mailing list repository
         is not stored by Gmane
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, mailing_list_address, dirpath,
                  tag=None, cache=None):
@@ -157,6 +157,22 @@ class Gmane(MBox):
 
         logger.info("Done. %s/%s messages fetched; %s ignored",
                     nmsgs, tmsgs, imsgs)
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
 
 
 class GmaneCommand(BackendCommand):

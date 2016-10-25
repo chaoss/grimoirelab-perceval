@@ -181,6 +181,15 @@ class TestMBoxBackend(TestBaseMBox):
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'http://example.com/')
 
+    def test_has_caching(self):
+        """Test if it returns False when has_caching is called"""
+
+        self.assertEqual(MBox.has_caching(), False)
+
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(MBox.has_resuming(), True)
 
     def test_fetch(self):
         """Test whether it parses a set of mbox files"""

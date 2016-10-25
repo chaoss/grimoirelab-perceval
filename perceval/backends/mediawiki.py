@@ -70,7 +70,7 @@ class MediaWiki(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, url, tag=None, cache=None):
         origin = url
@@ -161,6 +161,22 @@ class MediaWiki(Backend):
                         if not page_reviews:
                             continue
                         yield page_reviews
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return True
+
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend does not support items resuming
+        """
+        return False
 
     @staticmethod
     def metadata_id(item):

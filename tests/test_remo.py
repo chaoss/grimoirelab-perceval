@@ -120,6 +120,16 @@ class TestReMoBackend(unittest.TestCase):
         self.assertEqual(remo.origin, MOZILLA_REPS_URL)
         self.assertEqual(remo.tag, MOZILLA_REPS_URL)
 
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(ReMo.has_caching(), True)
+
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(ReMo.has_resuming(), True)
+
     def __check_events_contents(self, events):
         self.assertEqual(events[0]['data']['estimated_attendance'], 1000)
         self.assertEqual(events[0]['data']['local_start'], '2012-06-06T10:00:00')

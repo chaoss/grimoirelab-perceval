@@ -139,6 +139,16 @@ class TestKitsuneBackend(unittest.TestCase):
         self.assertEqual(kitsune.origin, KITSUNE_SERVER_URL)
         self.assertEqual(kitsune.tag, KITSUNE_SERVER_URL)
 
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(Kitsune.has_caching(), True)
+
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Kitsune.has_resuming(), True)
+
     def __check_questions_contents(self, questions):
         self.assertEqual(questions[0]['data']['num_votes'], 2)
         self.assertEqual(questions[0]['data']['num_answers'], 0)

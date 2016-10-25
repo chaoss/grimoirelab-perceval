@@ -50,7 +50,7 @@ class Jenkins(Backend):
     :param cache: cache object to store raw data
     :param blacklist_jobs: exclude the jobs of this list while fetching
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, url, tag=None, cache=None, blacklist_jobs=None):
         origin = url
@@ -114,6 +114,22 @@ class Jenkins(Backend):
             builds = json.loads(items)['builds']
             for build in builds:
                 yield build
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return True
+
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend does not supports items resuming
+        """
+        return False
 
     @staticmethod
     def metadata_id(item):
