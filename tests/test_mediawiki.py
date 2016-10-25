@@ -161,6 +161,11 @@ class TestMediaWikiBackend(unittest.TestCase):
         self.assertEqual(mediawiki.origin, MEDIAWIKI_SERVER_URL)
         self.assertEqual(mediawiki.tag, MEDIAWIKI_SERVER_URL)
 
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(MediaWiki.has_caching(), True)
+
     def test_has_resuming(self):
         """Test if it returns False when has_resuming is called"""
 
