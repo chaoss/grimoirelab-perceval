@@ -53,7 +53,7 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.6.0'
 
     def __init__(self, url,
                  user=None, max_reviews=MAX_REVIEWS,
@@ -202,6 +202,14 @@ class Gerrit(Backend):
         logger.info("Received %i reviews in %.2fs" % (len(reviews),
                                                        time.time()-task_init))
         return reviews
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return True
 
     @classmethod
     def has_resuming(cls):
