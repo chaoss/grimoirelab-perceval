@@ -203,6 +203,14 @@ class Gerrit(Backend):
                                                        time.time()-task_init))
         return reviews
 
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend does not support items resuming
+        """
+        return False
+
     @staticmethod
     def metadata_id(item):
         """Extracts the identifier from a Gerrit item."""
