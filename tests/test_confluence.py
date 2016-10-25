@@ -144,6 +144,11 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(confluence.origin, CONFLUENCE_URL)
         self.assertEqual(confluence.tag, CONFLUENCE_URL)
 
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Confluence.has_resuming(), True)
+
     @httpretty.activate
     def test_fetch(self):
         """Test it it fetches and parses a list of contents"""
