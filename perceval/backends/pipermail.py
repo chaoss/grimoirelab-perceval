@@ -65,7 +65,7 @@ class Pipermail(MBox):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.0'
+    version = '0.4.1'
 
     def __init__(self, url, dirpath, tag=None, cache=None):
         origin = url
@@ -302,12 +302,12 @@ class PipermailList(MailingList):
         return dt
 
     def _download_archive(self, url, filepath):
-        r = requests.get(url)
+        r = requests.get(url, stream=True)
         r.raise_for_status()
 
         try:
             with open(filepath, 'wb') as fd:
-                fd.write(r.content)
+                fd.write(r.raw.read())
         except OSError as e:
             logger.warning("Ignoring %s archive due to: %s", url, str(e))
             return False
