@@ -42,10 +42,10 @@ class TestBackend(unittest.TestCase):
     def test_version(self):
         """Test whether the backend version is initialized"""
 
-        self.assertEqual(Backend.version, '0.3')
+        self.assertEqual(Backend.version, '0.4')
 
         b = Backend('test')
-        self.assertEqual(b.version, '0.3')
+        self.assertEqual(b.version, '0.4')
 
     def test_origin(self):
         """Test whether origin value is initialized"""

@@ -39,11 +39,11 @@ class Backend:
     will be named as 'origin'. During the initialization, a `Cache`
     object can be provided for caching raw data from the repositories.
 
-    Derivated classes have to implement `fetch`, `fetch_from_cache`
-    and `has_resuming` methods. Otherwise, `NotImplementedError` exception
-    will be raised. Metadata decorator can be used together with fetch methods
-    but requires the implementation of `metadata_id`, `metadata_updated_on` and
-    `metadata_category` static methods.
+    Derivated classes have to implement `fetch`, `fetch_from_cache`,
+    `has_caching` and `has_resuming` methods. Otherwise, `NotImplementedError`
+    exception will be raised. Metadata decorator can be used together with
+    fetch methods but requires the implementation of `metadata_id`,
+    `metadata_updated_on` and `metadata_category` static methods.
 
     The fetched items can be tagged using the `tag` parameter. It will
     be useful to trace data. When it is set to `None` or to an empty
@@ -60,7 +60,7 @@ class Backend:
     :raises ValueError: raised when `cache` is not an instance of
         `Cache` class
     """
-    version = '0.3'
+    version = '0.4'
 
     def __init__(self, origin, tag=None, cache=None):
         if cache and not isinstance(cache, Cache):
@@ -81,6 +81,10 @@ class Backend:
         raise NotImplementedError
 
     def fetch_from_cache(self):
+        raise NotImplementedError
+
+    @classmethod
+    def has_caching(cls):
         raise NotImplementedError
 
     @classmethod
