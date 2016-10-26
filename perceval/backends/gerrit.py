@@ -412,10 +412,12 @@ class GerritCommand(BackendCommand):
 
         if not self.parsed_args.no_cache:
             if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
+                base_path = os.path.expanduser('~')
+                base_path = os.path.join(base_path, ".perceval", "cache")
             else:
                 base_path = self.parsed_args.cache_path
-            cache_path = os.path.join(base_path, self.url)
+
+            cache_path = os.path.join(base_path, self.url.split("://")[1])
 
             cache = Cache(cache_path)
 

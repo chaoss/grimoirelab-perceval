@@ -237,8 +237,9 @@ class GitCommand(BackendCommand):
         if self.parsed_args.git_log:
             git_path = self.parsed_args.git_log
         elif not self.parsed_args.git_path:
-            base_path = os.path.expanduser('~/.perceval/repositories/')
-            git_path = os.path.join(base_path, self.uri)
+            base_path = os.path.expanduser('~')
+            base_path = os.path.join(base_path, ".perceval", "cache")
+            git_path = os.path.join(base_path, self.uri.split("://")[1])
         else:
             git_path = self.parsed_args.git_path
 

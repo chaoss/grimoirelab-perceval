@@ -126,8 +126,9 @@ class PipermailCommand(BackendCommand):
         self.from_date = str_to_datetime(self.parsed_args.from_date)
 
         if not self.parsed_args.mboxes_path:
-            base_path = os.path.expanduser('~/.perceval/mailinglists/')
-            self.mboxes_path = os.path.join(base_path, self.url)
+            base_path = os.path.expanduser('~')
+            base_path = os.path.join(base_path, '.perceval', 'mailinglists')
+            self.mboxes_path = os.path.join(base_path, self.url.split('://')[1])
         else:
             self.mboxes_path = self.parsed_args.mboxes_path
 
