@@ -85,7 +85,7 @@ class Jira(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.6.0'
+    version = '0.6.1'
 
     def __init__(self, url, project=None, backend_user=None,
                  backend_password=None, verify=None,
@@ -260,18 +260,24 @@ class JiraClient:
         return base_api_url
 
     def __build_jql_query(self, from_date):
-        AND_OP = ' AND '
-        UPDATED_OP = ' updated > '
-        PROJECT_OP = ' project = '
+        AND_OP = 'AND'
+        UPDATED_OP = 'updated >'
+        PROJECT_OP = 'project ='
+        ORDER_BY_OP = 'order by'
+        ASC_OP = 'asc'
 
         # Convert datetime to milliseconds since 1970-01-01.
         # This allows us to use the timezone of the given date
         strdate = str(int(from_date.timestamp() * 1000))
 
         if self.project:
-            jql_query = PROJECT_OP + self.project + AND_OP + UPDATED_OP + strdate
+            jql_query = ' '.join([PROJECT_OP, self.project, AND_OP,
+                                  UPDATED_OP, strdate])
         else:
-            jql_query = UPDATED_OP + strdate
+            jql_query = ' '.join([UPDATED_OP, strdate])
+
+        jql_query += ' '.join(['', ORDER_BY_OP, 'updated', ASC_OP])
+
         return jql_query
 
     def __build_payload(self, start_at, from_date):

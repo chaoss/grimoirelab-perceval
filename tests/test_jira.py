@@ -201,12 +201,12 @@ class TestJiraBackend(unittest.TestCase):
 
         expected_req = [{
                             'expand': ['renderedFields,transitions,operations,changelog'],
-                            'jql': [' updated > 0'],
+                            'jql': ['updated > 0 order by updated asc'],
                             'startAt': ['0']
                         },
                         {
                             'expand': ['renderedFields,transitions,operations,changelog'],
-                            'jql': [' updated > 0'],
+                            'jql': ['updated > 0 order by updated asc'],
                             'startAt': ['2']
                         }]
 
@@ -322,7 +322,7 @@ class TestJiraBackend(unittest.TestCase):
 
         expected_req = {
                             'expand': ['renderedFields,transitions,operations,changelog'],
-                            'jql': [' updated > 1420070400000'],
+                            'jql': ['updated > 1420070400000 order by updated asc'],
                             'startAt': ['0']
                         }
 
@@ -361,7 +361,7 @@ class TestJiraBackend(unittest.TestCase):
 
         expected_req = {
                             'expand': ['renderedFields,transitions,operations,changelog'],
-                            'jql': [' updated > 0'],
+                            'jql': ['updated > 0 order by updated asc'],
                             'startAt': ['0']
                         }
 
@@ -421,12 +421,12 @@ class TestJiraBackendCache(unittest.TestCase):
 
         expected_req = [{
                             'expand': ['renderedFields,transitions,operations,changelog'],
-                            'jql': [' updated > 0'],
+                            'jql': ['updated > 0 order by updated asc'],
                             'startAt': ['0']
                         },
                         {
                             'expand': ['renderedFields,transitions,operations,changelog'],
-                            'jql': [' updated > 0'],
+                            'jql': ['updated > 0 order by updated asc'],
                             'startAt': ['2']
                         }]
 
@@ -554,13 +554,13 @@ class TestJiraClient(unittest.TestCase):
 
         expected_req = [{
                             'expand': ['renderedFields,transitions,operations,changelog'],
-                            'jql': [' project = perceval AND  updated > 1420070400000'],
+                            'jql': ['project = perceval AND updated > 1420070400000 order by updated asc'],
                             'maxResults': ['2'],
                             'startAt': ['0']
                         },
                         {
                             'expand': ['renderedFields,transitions,operations,changelog'],
-                            'jql': [' project = perceval AND  updated > 1420070400000'],
+                            'jql': ['project = perceval AND updated > 1420070400000 order by updated asc'],
                             'maxResults': ['2'],
                             'startAt': ['2']
                        }]
@@ -619,7 +619,7 @@ class TestJiraClient(unittest.TestCase):
 
         expected_req = {
                             'expand': ['renderedFields,transitions,operations,changelog'],
-                            'jql': [' project = perceval AND  updated > 1420070400000'],
+                            'jql': ['project = perceval AND updated > 1420070400000 order by updated asc'],
                             'maxResults': ['1'],
                             'startAt': ['0']
                         }
