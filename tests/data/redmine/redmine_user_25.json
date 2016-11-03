@@ -1,0 +1,12 @@
+{
+    "user": {
+        "created_on": "2011-12-08T06:25:29.000Z",
+        "firstname": "Generic",
+        "id": 25,
+        "last_login_on": "2016-10-31T09:55:00.000Z",
+        "lastname": "User",
+        "login": "generic",
+        "mail": "generic@example.com",
+        "status": 1
+    }
+}

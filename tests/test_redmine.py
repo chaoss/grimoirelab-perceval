@@ -45,6 +45,16 @@ REDMINE_ISSUE_2_URL = REDMINE_URL + '/issues/2.json'
 REDMINE_ISSUE_5_URL = REDMINE_URL + '/issues/5.json'
 REDMINE_ISSUE_9_URL = REDMINE_URL + '/issues/9.json'
 REDMINE_ISSUE_7311_URL = REDMINE_URL + '/issues/7311.json'
+REDMINE_USER_3_URL = REDMINE_URL + '/users/3.json'
+REDMINE_USER_4_URL = REDMINE_URL + '/users/4.json'
+REDMINE_USER_24_URL = REDMINE_URL + '/users/24.json'
+REDMINE_USER_25_URL = REDMINE_URL + '/users/25.json'
+
+REDMINE_URL_LIST = [
+    REDMINE_ISSUES_URL, REDMINE_ISSUE_2_URL, REDMINE_ISSUE_5_URL,
+    REDMINE_ISSUE_9_URL, REDMINE_ISSUE_7311_URL, REDMINE_USER_3_URL,
+    REDMINE_USER_4_URL, REDMINE_USER_24_URL, REDMINE_USER_25_URL
+]
 
 
 def read_file(filename, mode='r'):
@@ -65,6 +75,10 @@ def setup_http_server():
     issue_5_body = read_file('data/redmine/redmine_issue_5.json', 'rb')
     issue_9_body = read_file('data/redmine/redmine_issue_9.json', 'rb')
     issue_7311_body = read_file('data/redmine/redmine_issue_7311.json', 'rb')
+    user_3_body = read_file('data/redmine/redmine_user_3.json', 'rb')
+    user_4_body = read_file('data/redmine/redmine_user_4.json', 'rb')
+    user_24_body = read_file('data/redmine/redmine_user_24.json', 'rb')
+    user_25_body = read_file('data/redmine/redmine_user_25.json', 'rb')
 
     def request_callback(method, uri, headers):
         last_request = httpretty.last_request()
@@ -90,6 +104,14 @@ def setup_http_server():
             body = issue_9_body
         elif uri.startswith(REDMINE_ISSUE_7311_URL):
             body = issue_7311_body
+        elif uri.startswith(REDMINE_USER_3_URL):
+            body = user_3_body
+        elif uri.startswith(REDMINE_USER_4_URL):
+            body = user_4_body
+        elif uri.startswith(REDMINE_USER_24_URL):
+            body = user_24_body
+        elif uri.startswith(REDMINE_USER_25_URL):
+            body = user_25_body
         else:
             raise
 
@@ -97,32 +119,12 @@ def setup_http_server():
 
         return (200, headers, body)
 
-    httpretty.register_uri(httpretty.GET,
-                           REDMINE_ISSUES_URL,
-                           responses=[
-                                httpretty.Response(body=request_callback)
-                           ])
-    httpretty.register_uri(httpretty.GET,
-                           REDMINE_ISSUE_2_URL,
-                           responses=[
-                                httpretty.Response(body=request_callback)
-                           ])
-    httpretty.register_uri(httpretty.GET,
-                           REDMINE_ISSUE_5_URL,
-                           responses=[
-                                httpretty.Response(body=request_callback)
-                           ])
-    httpretty.register_uri(httpretty.GET,
-                           REDMINE_ISSUE_9_URL,
-                           responses=[
-                                httpretty.Response(body=request_callback)
-                           ])
-    httpretty.register_uri(httpretty.GET,
-                           REDMINE_ISSUE_7311_URL,
-                           responses=[
-                                httpretty.Response(body=request_callback)
-                           ])
-
+    for url in REDMINE_URL_LIST:
+        httpretty.register_uri(httpretty.GET,
+                               url,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
     return http_requests
 
 
@@ -174,10 +176,10 @@ class TestRedmineBackend(unittest.TestCase):
                           max_issues=3)
         issues = [issue for issue in redmine.fetch()]
 
-        expected = [(9, '91a8349c2f6ebffcccc49409529c61cfd3825563', 1323367020.0),
-                    (5, 'c4aeb9e77fec8e4679caa23d4012e7cc36ae8b98', 1323367075.0),
-                    (2, '3c3d67925b108a37f88cc6663f7f7dd493fa818c', 1323367117.0),
-                    (7311, '4ab289ab60aee93a66e5490529799cf4a2b4d94c', 1469607427.0)]
+        expected = [(9, '91a8349c2f6ebffcccc49409529c61cfd3825563', 1323367020.0, 3, 3),
+                    (5, 'c4aeb9e77fec8e4679caa23d4012e7cc36ae8b98', 1323367075.0, 3, 3),
+                    (2, '3c3d67925b108a37f88cc6663f7f7dd493fa818c', 1323367117.0, 3, 3),
+                    (7311, '4ab289ab60aee93a66e5490529799cf4a2b4d94c', 1469607427.0, 24, 4)]
 
         self.assertEqual(len(issues), len(expected))
 
@@ -190,6 +192,8 @@ class TestRedmineBackend(unittest.TestCase):
             self.assertEqual(issue['updated_on'], expc[2])
             self.assertEqual(issue['category'], 'issue')
             self.assertEqual(issue['tag'], REDMINE_URL)
+            self.assertEqual(issue['data']['author_data']['id'], expc[3])
+            self.assertEqual(issue['data']['journals'][0]['user_data']['id'], expc[4])
 
         # Check requests
         expected = [{
@@ -203,6 +207,9 @@ class TestRedmineBackend(unittest.TestCase):
                     {
                      'key' : ['AAAA'],
                      'include' : ['attachments,changesets,children,journals,relations,watchers']
+                    },
+                    {
+                     'key' : ['AAAA']
                     },
                     {
                      'key' : ['AAAA'],
@@ -223,6 +230,15 @@ class TestRedmineBackend(unittest.TestCase):
                     {
                      'key' : ['AAAA'],
                      'include' : ['attachments,changesets,children,journals,relations,watchers']
+                    },
+                    {
+                     'key' : ['AAAA']
+                    },
+                    {
+                     'key' : ['AAAA']
+                    },
+                    {
+                     'key' : ['AAAA']
                     },
                     {
                      'key' : ['AAAA'],
@@ -259,6 +275,8 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(issue['updated_on'], 1469607427.0)
         self.assertEqual(issue['category'], 'issue')
         self.assertEqual(issue['tag'], REDMINE_URL)
+        self.assertEqual(issue['data']['author_data']['id'], 24)
+        self.assertEqual(issue['data']['journals'][0]['user_data']['id'], 4)
 
         expected = [{
                      'key' : ['AAAA'],
@@ -271,6 +289,15 @@ class TestRedmineBackend(unittest.TestCase):
                     {
                      'key' : ['AAAA'],
                      'include' : ['attachments,changesets,children,journals,relations,watchers']
+                    },
+                    {
+                     'key' : ['AAAA']
+                    },
+                    {
+                     'key' : ['AAAA']
+                    },
+                    {
+                     'key' : ['AAAA']
                     },
                     {
                      'key' : ['AAAA'],
@@ -344,6 +371,17 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(len(issue['journals']), 22)
         self.assertEqual(len(issue['changesets']), 0)
 
+    def test_parse_user_data(self):
+        """"Test if it parses a user stream"""
+
+        raw_json = read_file('data/redmine/redmine_user_3.json')
+
+        user = Redmine.parse_user_data(raw_json)
+
+        self.assertEqual(user['id'], 3)
+        self.assertEqual(user['lastname'], 'User')
+        self.assertEqual(user['login'], 'generic')
+
 
 class TestRedmineBackendCache(unittest.TestCase):
     """Redmine backend tests using a cache"""
@@ -367,7 +405,7 @@ class TestRedmineBackendCache(unittest.TestCase):
                           max_issues=3, cache=cache)
 
         issues = [issue for issue in redmine.fetch()]
-        self.assertEqual(len(http_requests), 7)
+        self.assertEqual(len(http_requests), 11)
 
         # Now, we get the issues from the cache.
         # The issues should be the same and there won't be
@@ -375,10 +413,10 @@ class TestRedmineBackendCache(unittest.TestCase):
         cached_issues = [issue for issue in redmine.fetch_from_cache()]
         self.assertEqual(len(cached_issues), len(issues))
 
-        expected = [(9, '91a8349c2f6ebffcccc49409529c61cfd3825563', 1323367020.0),
-                    (5, 'c4aeb9e77fec8e4679caa23d4012e7cc36ae8b98', 1323367075.0),
-                    (2, '3c3d67925b108a37f88cc6663f7f7dd493fa818c', 1323367117.0),
-                    (7311, '4ab289ab60aee93a66e5490529799cf4a2b4d94c', 1469607427.0)]
+        expected = [(9, '91a8349c2f6ebffcccc49409529c61cfd3825563', 1323367020.0, 3, 3),
+                    (5, 'c4aeb9e77fec8e4679caa23d4012e7cc36ae8b98', 1323367075.0, 3, 3),
+                    (2, '3c3d67925b108a37f88cc6663f7f7dd493fa818c', 1323367117.0, 3, 3),
+                    (7311, '4ab289ab60aee93a66e5490529799cf4a2b4d94c', 1469607427.0, 24, 4)]
 
         self.assertEqual(len(cached_issues), len(expected))
 
@@ -391,10 +429,12 @@ class TestRedmineBackendCache(unittest.TestCase):
             self.assertEqual(issue['updated_on'], expc[2])
             self.assertEqual(issue['category'], 'issue')
             self.assertEqual(issue['tag'], REDMINE_URL)
+            self.assertEqual(issue['data']['author_data']['id'], expc[3])
+            self.assertEqual(issue['data']['journals'][0]['user_data']['id'], expc[4])
             self.assertDictEqual(issue['data'], issues[x]['data'])
 
         # No more requests were sent
-        self.assertEqual(len(http_requests), 7)
+        self.assertEqual(len(http_requests), 11)
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any issue returned when the cache is empty"""
@@ -509,6 +549,32 @@ class TestRedmineClient(unittest.TestCase):
 
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/issues/7311.json')
+        self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_user(self):
+        """Test if user call works"""
+
+        body = read_file('data/redmine/redmine_user_3.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               REDMINE_USER_3_URL,
+                               body=body, status=200)
+
+        client = RedmineClient(REDMINE_URL, 'aaaa')
+
+        result = client.user(3)
+
+        self.assertEqual(result, body)
+
+        expected = {
+                    'key' : ['aaaa']
+                   }
+
+        req = httpretty.last_request()
+
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/users/3.json')
         self.assertDictEqual(req.querystring, expected)
 
 
