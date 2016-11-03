@@ -1,5 +1,53 @@
 # Releases
 
+## Perceval 0.4 - (2016-11-03)
+
+** New features and improvements: **
+
+ * `category` field was added to items metadata to classify the type of
+   the item generated with each backend.
+ * The `tag` attribute added to the backends allows to mark the items
+   with a custom label.
+ * Two class methods, `has_caching` and `has_resuming`, are part now
+   of `Backend` class interface to notify whether a backend supports
+   caching and/or resuming of items.
+
+** Backend improvements: **
+
+ * **jenkins**
+   - support blacklist of jobs
+ * **mediawiki**
+   - use API pages methods by default
+ * **phabricator**
+   - fetch and include projects data assigned to each task
+ * **redmine**
+   - fetch and include users data
+ * **remo**
+   - support new version of the API
+ * **supybot**
+   - parse messages written by special bots
+
+** Bugs fixed: **
+
+ * Filepaths on merge commits were not captured on Git backend. This was
+   neccesary in those cases where merge commits only include data about
+   lines added and removed because the filepaths were not parsed and
+   included on the item data. (#63)
+ * The `url` argument on the Gerrit backend was set to optional. It is
+   mandatory. Thus, it was set to positional on the argument parser. (#60)
+ * Newer versions of Phabricator fixed a bug on API Conduit regarding
+   'constraints' parameter. The Phabricator client was modified to fix
+   this bug, too. (#80)
+ * Python's `requests` library decompresses gzip-encoded responses, but
+   in some cases is only able to decompress some parts due to encoding
+   issues or to mixed contents. This problem was fixed downloading and
+   storing the orinal/raw data (compressed or decompressed) for furthed
+   processing.
+ * Jira backend did not return items in order, from oldest to newest. (#89)
+ * Dates with invalid timezones were not parsed. In those cases, the
+   the dates will be converted usin UTC by default. (#73)
+
+
 ## Perceval 0.3 - (2016-09-19)
 
 ** New features and improvements: **
@@ -9,25 +57,23 @@
     - Redmine
  * Add support for creating PyPi packages
 
-
 ** Backend improvements: **
 
  * **jira**
    - fetch additional information about custom fields
- * **mediawiki **
+ * **mediawiki**
    - add a flag which ignores the MAX_RECENT_DAYS constraint when the
      backend is tested
 
-
 ** Bugs fixed: **
 
-* Cache tests for Redmine backend checked the values retrieved from the
-  repository but not from the cache.
-* Timestamps generated to fetch data from a given date included invalid
-  timezone information for Mediawiki API (>=1.27). It only works with Zulu
-  dates. (#54)
-* Date strings that included information after the timezone were not parsed:
-  `Thu, 14 Aug 2008 02:07:59 +0200 CEST`. (#57)
+ * Cache tests for Redmine backend checked the values retrieved from the
+   repository but not from the cache.
+ * Timestamps generated to fetch data from a given date included invalid
+   timezone information for Mediawiki API (>=1.27). It only works with Zulu
+   dates. (#54)
+ * Date strings that included information after the timezone were not parsed:
+   `Thu, 14 Aug 2008 02:07:59 +0200 CEST`. (#57)
 
 
 ## Perceval 0.2 - (2016-07-20)
@@ -51,7 +97,6 @@
    were added and improved. Now, the unit tests framework covers a 83% of
    the source code.
 
-
 ** Backend improvements: **
 
  * **gerrit**
@@ -67,7 +112,6 @@
    - fetches messages since a given date
  * **pipermail**
    - fetches messages from a *mod_mbox* interface (i.e: Apache)
-
 
 ** Bugs fixed: **
 
@@ -101,7 +145,6 @@
  * Dates and times used to request data are always converted to UTC.
  * Unit testing framework is available. Currently, these
    unit tests cover the 62% of the source code.
-
 
 ** Bugs fixed: **
 
