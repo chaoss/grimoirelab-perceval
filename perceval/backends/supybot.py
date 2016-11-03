@@ -59,7 +59,7 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.0'
+    version = '0.4.1'
 
     def __init__(self, uri, dirpath, tag=None, cache=None):
         origin = uri
@@ -314,6 +314,7 @@ class SupybotParser:
     COMMENT_PATTERN = r"^<(?P<nick>(.*?)(!.*)?)>\s(?P<body>.+)$"
     COMMENT_ACTION_PATTERN = r"^\*\s(?P<body>(?P<nick>(.*?)(!.*)?)\s.+)$"
     SERVER_PATTERN = r"^\*\*\*\s(?P<body>(?P<nick>(.*?)(!.*)?)\s.+)$"
+    BOT_PATTERN = r"^-(?P<nick>(.*?)(!.*)?)-\s(?P<body>.+)$"
     EMPTY_PATTERN = r"^\s*$"
     EMPTY_COMMENT_PATTERN = r"^<(.*?)(!.*)?>\s*$"
 
@@ -322,6 +323,7 @@ class SupybotParser:
     SUPYBOT_COMMENT_REGEX = re.compile(COMMENT_PATTERN, re.VERBOSE)
     SUPYBOT_COMMENT_ACTION_REGEX = re.compile(COMMENT_ACTION_PATTERN, re.VERBOSE)
     SUPYBOT_SERVER_REGEX = re.compile(SERVER_PATTERN, re.VERBOSE)
+    SUPYBOT_BOT_REGEX = re.compile(BOT_PATTERN, re.VERBOSE)
     SUPYBOT_EMPTY_REGEX = re.compile(EMPTY_PATTERN, re.VERBOSE)
     SUPYBOT_EMPTY_COMMENT_REGEX = re.compile(EMPTY_COMMENT_PATTERN, re.VERBOSE)
 
@@ -380,7 +382,8 @@ class SupybotParser:
 
         patterns = [(self.SUPYBOT_COMMENT_REGEX, self.TCOMMENT),
                     (self.SUPYBOT_COMMENT_ACTION_REGEX, self.TCOMMENT),
-                    (self.SUPYBOT_SERVER_REGEX, self.TSERVER)]
+                    (self.SUPYBOT_SERVER_REGEX, self.TSERVER),
+                    (self.SUPYBOT_BOT_REGEX, self.TCOMMENT)]
 
         for p in patterns:
             m = p[0].match(line)

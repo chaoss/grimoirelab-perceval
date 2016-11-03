@@ -141,13 +141,19 @@ class TestSupybotBackend(unittest.TestCase):
         messages = Supybot.parse_supybot_log('data/supybot_valid.log')
         messages = [m for m in messages]
 
-        self.assertEqual(len(messages), 96)
+        self.assertEqual(len(messages), 97)
 
         msg = messages[1]
         self.assertEqual(msg['timestamp'], '2012-10-17T09:16:29+0000')
         self.assertEqual(msg['type'], SupybotParser.TCOMMENT)
         self.assertEqual(msg['nick'], 'benpol')
         self.assertEqual(msg['body'], "they're related to fragmentation?")
+
+        msg = messages[-2]
+        self.assertEqual(msg['timestamp'], '2012-10-17T23:42:10+0000')
+        self.assertEqual(msg['type'], SupybotParser.TCOMMENT)
+        self.assertEqual(msg['nick'], 'supy-bot')
+        self.assertEqual(msg['body'], "[backend] Fix bug #23: invalid timestamp")
 
         msg = messages[-1]
         self.assertEqual(msg['timestamp'], '2012-10-17T23:42:26+0000')
@@ -196,7 +202,7 @@ class TestSupybotParser(unittest.TestCase):
             parser = SupybotParser(f)
             items = [item for item in parser.parse()]
 
-        self.assertEqual(len(items), 96)
+        self.assertEqual(len(items), 97)
 
         item = items[1]
         self.assertEqual(item['timestamp'], '2012-10-17T09:16:29+0000')
@@ -216,6 +222,12 @@ class TestSupybotParser(unittest.TestCase):
         self.assertEqual(item['nick'], 'MikeMcClurg')
         self.assertEqual(item['body'], "MikeMcClurg has quit IRC")
 
+        item = items[-2]
+        self.assertEqual(item['timestamp'], '2012-10-17T23:42:10+0000')
+        self.assertEqual(item['type'], SupybotParser.TCOMMENT)
+        self.assertEqual(item['nick'], 'supy-bot')
+        self.assertEqual(item['body'], "[backend] Fix bug #23: invalid timestamp")
+
         item = items[-1]
         self.assertEqual(item['timestamp'], '2012-10-17T23:42:26+0000')
         self.assertEqual(item['type'], SupybotParser.TCOMMENT)
@@ -232,7 +244,7 @@ class TestSupybotParser(unittest.TestCase):
             else:
                 nserver += 1
 
-        self.assertEqual(ncomments, 50)
+        self.assertEqual(ncomments, 51)
         self.assertEqual(nserver, 46)
 
     def test_parse_invalid_date(self):
@@ -393,6 +405,34 @@ class TestSupybotParser(unittest.TestCase):
 
         # There is not a message
         s = "*** X "
+        m = pattern.match(s)
+        self.assertIsNone(m)
+
+    def test_bot_pattern(self):
+        """Test the validation of bot lines"""
+
+        pattern = SupybotParser.SUPYBOT_BOT_REGEX
+
+        # These should have valid nicks and messages
+        s = "-mybot- a message"
+        m = pattern.match(s)
+        self.assertEqual(m.group('nick'), 'mybot')
+        self.assertEqual(m.group('body'), "a message")
+
+        s = "-skynet-bot- [remove] skynet removed the internet #801"
+        m = pattern.match(s)
+        self.assertEqual(m.group('nick'), 'skynet-bot')
+        self.assertEqual(m.group('body'), "[remove] skynet removed the internet #801")
+
+        # These messages are not valid
+
+        # Bot name not ends with - ***
+        s = "-mybot a message"
+        m = pattern.match(s)
+        self.assertIsNone(m)
+
+        # No message
+        s = "-mybot-"
         m = pattern.match(s)
         self.assertIsNone(m)
 

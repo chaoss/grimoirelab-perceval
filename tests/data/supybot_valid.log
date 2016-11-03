@@ -95,4 +95,5 @@
 2012-10-17T23:34:21+0000  <Q310> its so anoying i can create rbd's with cinder etc, i can even image a rbd from glance with cinder but yet when i create a new vm with the dashboard it seems to know nothing about rbd
 2012-10-17T23:34:48+0000  <Q310> i can even create the rbd's in the dashboard as additional volumes no worries but not provision/boot from one
 2012-10-17T23:42:07+0000  <gregaf> Q310: I'm about to sleep, but are you actually telling them to boot from volume? I think that's still a checkbox you need to set in Folsom
+2012-10-17T23:42:10+0000  -supy-bot- [backend] Fix bug #23: invalid timestamp
 2012-10-17T23:42:26+0000  <gregaf> but I may be wrong or debugging at the wrong level...
