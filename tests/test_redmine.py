@@ -49,11 +49,13 @@ REDMINE_USER_3_URL = REDMINE_URL + '/users/3.json'
 REDMINE_USER_4_URL = REDMINE_URL + '/users/4.json'
 REDMINE_USER_24_URL = REDMINE_URL + '/users/24.json'
 REDMINE_USER_25_URL = REDMINE_URL + '/users/25.json'
+REDMINE_NOT_FOUND_USER_URL = REDMINE_URL + '/users/99.json'
 
 REDMINE_URL_LIST = [
     REDMINE_ISSUES_URL, REDMINE_ISSUE_2_URL, REDMINE_ISSUE_5_URL,
     REDMINE_ISSUE_9_URL, REDMINE_ISSUE_7311_URL, REDMINE_USER_3_URL,
-    REDMINE_USER_4_URL, REDMINE_USER_24_URL, REDMINE_USER_25_URL
+    REDMINE_USER_4_URL, REDMINE_USER_24_URL, REDMINE_USER_25_URL,
+    REDMINE_NOT_FOUND_USER_URL
 ]
 
 
@@ -84,6 +86,8 @@ def setup_http_server():
         last_request = httpretty.last_request()
         params = last_request.querystring
 
+        status = 200
+
         if uri.startswith(REDMINE_ISSUES_URL):
             if params['updated_on'][0] == '>=1970-01-01T00:00:00Z' and \
                 params['offset'][0] == '0':
@@ -112,12 +116,15 @@ def setup_http_server():
             body = user_24_body
         elif uri.startswith(REDMINE_USER_25_URL):
             body = user_25_body
+        elif uri.startswith(REDMINE_NOT_FOUND_USER_URL):
+            body = "Not Found"
+            status = 404
         else:
             raise
 
         http_requests.append(last_request)
 
-        return (200, headers, body)
+        return (status, headers, body)
 
     for url in REDMINE_URL_LIST:
         httpretty.register_uri(httpretty.GET,
@@ -241,6 +248,9 @@ class TestRedmineBackend(unittest.TestCase):
                      'key' : ['AAAA']
                     },
                     {
+                     'key' : ['AAAA']
+                    },
+                    {
                      'key' : ['AAAA'],
                      'status_id' : ['*'],
                      'sort' : ['updated_on'],
@@ -300,6 +310,9 @@ class TestRedmineBackend(unittest.TestCase):
                      'key' : ['AAAA']
                     },
                     {
+                     'key' : ['AAAA']
+                    },
+                    {
                      'key' : ['AAAA'],
                      'status_id' : ['*'],
                      'sort' : ['updated_on'],
@@ -312,6 +325,24 @@ class TestRedmineBackend(unittest.TestCase):
 
         for i in range(len(expected)):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_not_found_user(self):
+        """Test if it works when a user is not found"""
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2016, 7, 27)
+
+        redmine = Redmine(REDMINE_URL, api_token='AAAA',
+                          max_issues=3)
+        issues = [issue for issue in redmine.fetch(from_date=from_date)]
+
+        self.assertEqual(len(issues), 1)
+
+        # The user 99 does not have information
+        self.assertEqual(issues[0]['data']['journals'][1]['user']['id'], 99)
+        self.assertDictEqual(issues[0]['data']['journals'][1]['user_data'], {})
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -405,7 +436,7 @@ class TestRedmineBackendCache(unittest.TestCase):
                           max_issues=3, cache=cache)
 
         issues = [issue for issue in redmine.fetch()]
-        self.assertEqual(len(http_requests), 11)
+        self.assertEqual(len(http_requests), 12)
 
         # Now, we get the issues from the cache.
         # The issues should be the same and there won't be
@@ -433,8 +464,12 @@ class TestRedmineBackendCache(unittest.TestCase):
             self.assertEqual(issue['data']['journals'][0]['user_data']['id'], expc[4])
             self.assertDictEqual(issue['data'], issues[x]['data'])
 
+        # The user 99 does not have information
+        self.assertEqual(issues[3]['data']['journals'][1]['user']['id'], 99)
+        self.assertDictEqual(issues[3]['data']['journals'][1]['user_data'], {})
+
         # No more requests were sent
-        self.assertEqual(len(http_requests), 11)
+        self.assertEqual(len(http_requests), 12)
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any issue returned when the cache is empty"""

@@ -57,7 +57,7 @@ class Redmine(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.5.1'
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
                  tag=None, cache=None):
@@ -164,7 +164,17 @@ class Redmine(Backend):
             return self._users[user_id]
 
         logger.debug("User %s not found on client cache; fetching it", user_id)
-        user = self.__fetch_and_parse_user(user_id)
+
+        try:
+            user = self.__fetch_and_parse_user(user_id)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                logger.warning("User %s not found on the server; skipping it",
+                               user_id)
+                user = {}
+            else:
+                raise e
+
         self._users[user_id] = user
 
         return user
@@ -190,7 +200,7 @@ class Redmine(Backend):
                 user_id = issue[key]['id']
 
                 try:
-                    issue[key + '_data'] = self._users[user_id]
+                    issue[key + '_data'] = self._users.get(user_id, {})
                 except KeyError:
                     # Fatal error. Keys must exist.
                     cause = "invalid cached data, user id %s not found" % user_id
@@ -203,7 +213,7 @@ class Redmine(Backend):
                 user_id = journal['user']['id']
 
                 try:
-                    journal['user_data'] = self._users[user_id]
+                    journal['user_data'] = self._users.get(user_id, {})
                 except KeyError:
                     # Fatal error. Keys must exist.
                     cause = "invalid cached data, user id %s not found" % user_id
