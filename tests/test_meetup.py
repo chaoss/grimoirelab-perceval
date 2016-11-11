@@ -29,7 +29,7 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.meetup import MeetupClient
+from perceval.backends.meetup import MEETUP_URL, Meetup, MeetupClient
 
 
 MEETUP_URL = 'https://api.meetup.com'
@@ -72,11 +72,13 @@ def setup_http_server():
         read_file('data/meetup/meetup_events.json', 'rb'),
         read_file('data/meetup/meetup_events_next.json', 'rb')
     ]
-    event_comments_body = read_file('data/meetup/meetup_comments.json')
+    events_empty_body = read_file('data/meetup/meetup_events_empty.json', 'rb')
+    event_comments_body = read_file('data/meetup/meetup_comments.json', 'rb')
     event_rsvps_body = read_file('data/meetup/meetup_rsvps.json', 'rb')
 
     def request_callback(method, uri, headers):
-        print(uri)
+        last_request = httpretty.last_request()
+
         if uri.startswith(MEETUP_EVENT_1_COMMENTS_URL):
             body = event_comments_body
         elif uri.startswith(MEETUP_EVENT_2_COMMENTS_URL):
@@ -90,15 +92,24 @@ def setup_http_server():
         elif uri.startswith(MEETUP_EVENT_3_RSVPS_URL):
             body = event_rsvps_body
         elif uri.startswith(MEETUP_EVENTS_URL):
-            body = events_bodies.pop(0)
+            params = last_request.querystring
+            scroll = params.get('scroll', None)
 
-            if events_bodies:
-                # Mock the 'Link' header with a fake URL
-                headers['Link'] = '<' + MEETUP_EVENTS_URL + '>; rel="next"'
+            if scroll and scroll[0] == 'since:2016-09-25T00:00:00.000Z':
+                # Last events and no pagination
+                body = events_bodies[-1]
+            elif scroll and scroll[0] == 'since:2017-01-01T00:00:00.000Z':
+                body = events_empty_body
+            else:
+                body = events_bodies.pop(0)
+
+                if events_bodies:
+                    # Mock the 'Link' header with a fake URL
+                    headers['Link'] = '<' + MEETUP_EVENTS_URL + '>; rel="next"'
         else:
             raise
 
-        http_requests.append(httpretty.last_request())
+        http_requests.append(last_request)
 
         return (200, headers, body)
 
@@ -123,6 +134,237 @@ def setup_http_server():
                                ])
 
     return http_requests
+
+
+class TestMeetupBackend(unittest.TestCase):
+    """Meetup backend tests"""
+
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        meetup = Meetup('mygroup', 'aaaa', max_items=5, tag='test')
+
+        self.assertEqual(meetup.origin, 'https://meetup.com/')
+        self.assertEqual(meetup.tag, 'test')
+        self.assertEqual(meetup.group, 'mygroup')
+        self.assertEqual(meetup.max_items, 5)
+        self.assertIsInstance(meetup.client, MeetupClient)
+        self.assertEqual(meetup.client.api_key, 'aaaa')
+
+        # When tag is empty or None it will be set to
+        # the value in URL
+        meetup = Meetup('mygroup', 'aaaa')
+        self.assertEqual(meetup.origin, 'https://meetup.com/')
+        self.assertEqual(meetup.tag, 'https://meetup.com/')
+
+        meetup = Meetup('mygroup', 'aaaa', tag='')
+        self.assertEqual(meetup.origin, 'https://meetup.com/')
+        self.assertEqual(meetup.tag, 'https://meetup.com/')
+
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(Meetup.has_caching(), True)
+
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Meetup.has_resuming(), True)
+
+    @httpretty.activate
+    def test_fetch(self):
+        """Test whether it fetches a set of events"""
+
+        http_requests = setup_http_server()
+
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
+        events = [event for event in meetup.fetch()]
+
+        expected = [('1', '0d07fe36f994a6c78dfcf60fb73674bcf158cb5a', 1460065164.0, 2, 3),
+                    ('2', '24b47b622eb33965676dd951b18eea7689b1d81c', 1465503498.0, 2, 3),
+                    ('3', 'a42b7cf556c17b17f05b951e2eb5e07a7cb0a731', 1474842748.0, 2, 3)]
+
+        self.assertEqual(len(events), len(expected))
+
+        for x in range(len(events)):
+            event = events[x]
+            expc = expected[x]
+            self.assertEqual(event['data']['id'], expc[0])
+            self.assertEqual(event['uuid'], expc[1])
+            self.assertEqual(event['origin'], 'https://meetup.com/')
+            self.assertEqual(event['updated_on'], expc[2])
+            self.assertEqual(event['category'], 'event')
+            self.assertEqual(event['tag'], 'https://meetup.com/')
+            self.assertEqual(len(event['data']['comments']), expc[3])
+            self.assertEqual(len(event['data']['rsvps']), expc[4])
+
+        # Check requests
+        expected = [
+            {
+             'fields' : ['event_hosts', 'featured', 'group_topics',
+                         'plain_text_description', 'rsvpable', 'series'],
+             'key' : ['aaaa'],
+             'order' : ['updated'],
+             'page' : ['2'],
+             'scroll' : ['since:1970-01-01T00:00:00.000Z'],
+             'sign' : ['true'],
+             'status' : ['cancelled', 'upcoming', 'past', 'proposed',
+                         'suggested', 'draft']
+            },
+            {
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'sign' : ['true']
+            },
+            {
+             'fields' : ['attendance_status'],
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'response' : ['yes', 'no'],
+             'sign' : ['true']
+            },
+            {
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'sign' : ['true']
+            },
+            {
+             'fields' : ['attendance_status'],
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'response' : ['yes', 'no'],
+             'sign' : ['true']
+            },
+            {
+             'key': ['aaaa'],
+             'sign': ['true']
+            },
+            {
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'sign' : ['true']
+            },
+            {
+             'fields' : ['attendance_status'],
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'response' : ['yes', 'no'],
+             'sign' : ['true']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_from_date(self):
+        """Test wether if fetches a set of events from the given date"""
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2016, 9, 25)
+
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
+        events = [event for event in meetup.fetch(from_date=from_date)]
+
+        expected = [('3', 'a42b7cf556c17b17f05b951e2eb5e07a7cb0a731', 1474842748.0, 2, 3)]
+
+        self.assertEqual(len(events), len(expected))
+
+        for x in range(len(events)):
+            event = events[x]
+            expc = expected[x]
+            self.assertEqual(event['data']['id'], expc[0])
+            self.assertEqual(event['uuid'], expc[1])
+            self.assertEqual(event['origin'], 'https://meetup.com/')
+            self.assertEqual(event['updated_on'], expc[2])
+            self.assertEqual(event['category'], 'event')
+            self.assertEqual(event['tag'], 'https://meetup.com/')
+            self.assertEqual(len(event['data']['comments']), expc[3])
+            self.assertEqual(len(event['data']['rsvps']), expc[4])
+
+        # Check requests
+        expected = [
+            {
+             'fields' : ['event_hosts', 'featured', 'group_topics',
+                         'plain_text_description', 'rsvpable', 'series'],
+             'key' : ['aaaa'],
+             'order' : ['updated'],
+             'page' : ['2'],
+             'scroll' : ['since:2016-09-25T00:00:00.000Z'],
+             'sign' : ['true'],
+             'status' : ['cancelled', 'upcoming', 'past', 'proposed',
+                         'suggested', 'draft']
+            },
+            {
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'sign' : ['true']
+            },
+            {
+             'fields' : ['attendance_status'],
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'response' : ['yes', 'no'],
+             'sign' : ['true']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_empty(self):
+        """Test if nothing is returned when there are no events"""
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2017, 1, 1)
+
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
+        events = [event for event in meetup.fetch(from_date=from_date)]
+
+        self.assertEqual(len(events), 0)
+
+        # Check requests
+        expected = {
+            'fields' : ['event_hosts', 'featured', 'group_topics',
+                        'plain_text_description', 'rsvpable', 'series'],
+            'key' : ['aaaa'],
+            'order' : ['updated'],
+            'page' : ['2'],
+            'scroll' : ['since:2017-01-01T00:00:00.000Z'],
+            'sign' : ['true'],
+            'status' : ['cancelled', 'upcoming', 'past', 'proposed',
+                         'suggested', 'draft']
+        }
+
+        self.assertEqual(len(http_requests), 1)
+        self.assertDictEqual(http_requests[0].querystring, expected)
+
+    def test_parse_json(self):
+        """Test if it parses a JSON stream"""
+
+        raw_json = read_file('data/meetup/meetup_events.json')
+
+        items = Meetup.parse_json(raw_json)
+        results = [item for item in items]
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]['id'], '1')
+        self.assertEqual(results[1]['id'], '2')
+
+        # Parse a file without results
+        raw_json = read_file('data/meetup/meetup_events_empty.json')
+
+        items = Meetup.parse_json(raw_json)
+        results = [item for item in items]
+
+        self.assertEqual(len(results), 0)
 
 
 class TestMeetupClient(unittest.TestCase):
