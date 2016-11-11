@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import argparse
 import datetime
 import shutil
 import sys
@@ -33,7 +34,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.meetup import Meetup, MeetupClient
+from perceval.backends.meetup import (Meetup,
+                                      MeetupCommand,
+                                      MeetupClient)
 
 
 MEETUP_URL = 'https://api.meetup.com'
@@ -439,6 +442,33 @@ class TestMeetupBackendCache(unittest.TestCase):
 
         with self.assertRaises(CacheError):
             _ = [event for event in meetup.fetch_from_cache()]
+
+
+class TestMeetupCommand(unittest.TestCase):
+    """Tests for MeetupCommand class"""
+
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['sqlpass-es',
+                '--backend-token', 'aaaa',
+                '--max-items', '5',
+                '--tag', 'test']
+
+        cmd = MeetupCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.group, 'sqlpass-es')
+        self.assertEqual(cmd.parsed_args.backend_token, 'aaaa')
+        self.assertEqual(cmd.parsed_args.max_items, 5)
+        self.assertEqual(cmd.parsed_args.tag, 'test')
+        self.assertIsInstance(cmd.backend, Meetup)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = MeetupCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
+
 
 class TestMeetupClient(unittest.TestCase):
     """Meetup REST API client tests.

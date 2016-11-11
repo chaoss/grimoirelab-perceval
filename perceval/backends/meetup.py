@@ -22,12 +22,17 @@
 
 import json
 import logging
+import os.path
 
 import requests
 
-from ..backend import Backend, metadata
+from ..backend import Backend, BackendCommand, metadata
+from ..cache import Cache
 from ..errors import CacheError
-from ..utils import DEFAULT_DATETIME, datetime_to_utc, urljoin
+from ..utils import (DEFAULT_DATETIME,
+                     datetime_to_utc,
+                     str_to_datetime,
+                     urljoin)
 
 
 logger = logging.getLogger(__name__)
@@ -257,6 +262,85 @@ class Meetup(Backend):
         """
         result = json.loads(raw_json)
         return result
+
+
+class MeetupCommand(BackendCommand):
+    """Class to run Meetup backend from the command line."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.group = self.parsed_args.group
+        self.backend_token = self.parsed_args.backend_token
+        self.max_items = self.parsed_args.max_items
+        self.from_date = str_to_datetime(self.parsed_args.from_date)
+        self.tag = self.parsed_args.tag
+        self.outfile = self.parsed_args.outfile
+
+        if not self.parsed_args.no_cache:
+            if not self.parsed_args.cache_path:
+                base_path = os.path.expanduser('~/.perceval/cache/')
+            else:
+                base_path = self.parsed_args.cache_path
+
+            cache_path = os.path.join(base_path, MEETUP_URL)
+
+            cache = Cache(cache_path)
+
+            if self.parsed_args.clean_cache:
+                cache.clean()
+            else:
+                cache.backup()
+        else:
+            cache = None
+
+        self.backend = Meetup(self.group,
+                              api_key=self.backend_token,
+                              max_items=self.max_items,
+                              tag=self.tag,
+                              cache=cache)
+
+    def run(self):
+        """Fetch and print the events.
+
+        This method runs the backend to fetch the events from the given
+        group. Events are converted to JSON objects and printed to the
+        defined output.
+        """
+        if self.parsed_args.fetch_cache:
+            events = self.backend.fetch_from_cache()
+        else:
+            events = self.backend.fetch(from_date=self.from_date)
+
+        try:
+            for event in events:
+                obj = json.dumps(event, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            if self.backend.cache:
+                self.backend.cache.recover()
+            raise RuntimeError(str(e))
+
+    @classmethod
+    def create_argument_parser(cls):
+        """Returns the Meetup argument parser."""
+
+        parser = super().create_argument_parser()
+
+        # Meetup options
+        group = parser.add_argument_group('Meetup arguments')
+        group.add_argument('--max-items', dest='max_items',
+                           type=int, default=MAX_ITEMS,
+                           help="Maximum number of items requested on the same query")
+
+        # Required arguments
+        parser.add_argument('group',
+                            help="Meetup group name")
+
+        return parser
 
 
 class MeetupClient:
