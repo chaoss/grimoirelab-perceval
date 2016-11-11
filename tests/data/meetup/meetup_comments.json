@@ -1,0 +1,46 @@
+[
+    {
+        "comment": "Fue mi primera asistencia, y me encant\u00f3, as\u00ed que seguro que repetir\u00e9!!",
+        "created": 1474842748000,
+        "id": 470710161,
+        "like_count": 1,
+        "link": "https://www.meetup.com/sqlpass-es/events/233964056/comments/470710161/",
+        "member": {
+            "event_context": {
+                "host": false
+            },
+            "id": 4,
+            "name": "J",
+            "photo": {
+                "base_url": "http://photos2.meetupstatic.com",
+                "highres_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                "id": 257876340,
+                "photo_link": "http://photos2.meetupstatic.com/photos/member/jpeg",
+                "thumb_link": "http://photos2.meetupstatic.com/photos/member/jpeg",
+                "type": "member"
+            }
+        }
+    },
+    {
+        "comment": "Excelente evento",
+        "created": 1474800183000,
+        "id": 470685627,
+        "like_count": 2,
+        "link": "https://www.meetup.com/sqlpass-es/events/233964056/comments/470685627/",
+        "member": {
+            "event_context": {
+                "host": false
+            },
+            "id": 5,
+            "name": "Ana",
+            "photo": {
+                "base_url": "http://photos3.meetupstatic.com",
+                "highres_link": "http://photos3.meetupstatic.com/photos/member/jpeg",
+                "id": 253321956,
+                "photo_link": "http://photos1.meetupstatic.com/photos/member/jpeg",
+                "thumb_link": "http://photos3.meetupstatic.com/photos/member/jpeg",
+                "type": "member"
+            }
+        }
+    }
+]

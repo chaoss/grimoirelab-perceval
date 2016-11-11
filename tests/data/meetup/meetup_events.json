@@ -1,0 +1,278 @@
+[
+    {
+        "created": 1458664604000,
+        "description": "<p>Toda la informaci\u00f3n y registro en <a href=\"http://www.sqlpass.es/2016/03/sqlpasses-evento-7-abril-dba-vs-ssis-alberto-lopez.html\" class=\"linkified\">http://www.sqlpass.es/2016/03/sqlpasses-evento-7-abril-dba-vs-ssis-alberto-lopez.html</a></p> ",
+        "event_hosts": [
+            {
+                "id": 1,
+                "name": "Alberto",
+                "photo": {
+                    "base_url": "http://photos4.meetupstatic.com",
+                    "highres_link": "http://photos2.meetupstatic.com/photos/member/jpeg",
+                    "id": 1,
+                    "photo_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                    "thumb_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                    "type": "member"
+                }
+            }
+        ],
+        "featured": false,
+        "group": {
+            "created": 1458486827000,
+            "id": 19734270,
+            "join_mode": "open",
+            "lat": 40.41999816894531,
+            "lon": -3.7100000381469727,
+            "name": "sqlpass.es",
+            "topics": [
+                {
+                    "id": 1245,
+                    "lang": "en_US",
+                    "name": "Database Professionals",
+                    "urlkey": "databasepro"
+                },
+                {
+                    "id": 7463,
+                    "lang": "en_US",
+                    "name": "SQL Server",
+                    "urlkey": "sqlserver"
+                },
+                {
+                    "id": 15167,
+                    "lang": "en_US",
+                    "name": "Cloud Computing",
+                    "urlkey": "cloud-computing"
+                },
+                {
+                    "id": 18062,
+                    "lang": "en_US",
+                    "name": "Big Data",
+                    "urlkey": "big-data"
+                },
+                {
+                    "id": 21506,
+                    "lang": "en_US",
+                    "name": "Database Development",
+                    "urlkey": "database-development"
+                },
+                {
+                    "id": 30928,
+                    "lang": "en_US",
+                    "name": "Data Analytics",
+                    "urlkey": "data-analytics"
+                },
+                {
+                    "id": 55324,
+                    "lang": "en_US",
+                    "name": "Data Mining",
+                    "urlkey": "data-mining"
+                },
+                {
+                    "id": 84069,
+                    "lang": "en_US",
+                    "name": "DBA",
+                    "urlkey": "dba"
+                },
+                {
+                    "id": 99537,
+                    "lang": "en_US",
+                    "name": "Microsoft Technology",
+                    "urlkey": "microsoft-technology"
+                },
+                {
+                    "id": 150163,
+                    "lang": "en_US",
+                    "name": "SQL Server Azure",
+                    "urlkey": "sql-server-azure"
+                },
+                {
+                    "id": 579452,
+                    "lang": "en_US",
+                    "name": "Business Intelligence Data Warehousing",
+                    "urlkey": "business-intelligence-data-warehousing"
+                },
+                {
+                    "id": 1454872,
+                    "lang": "en_US",
+                    "name": "High Availability",
+                    "urlkey": "high-availability"
+                },
+                {
+                    "id": 1507755,
+                    "lang": "en_US",
+                    "name": "PowerBI",
+                    "urlkey": "powerbi"
+                }
+            ],
+            "urlname": "sqlpass-es",
+            "who": "Profesionales de SQL Server"
+        },
+        "id": "1",
+        "link": "https://www.meetup.com/sqlpass-es/events/229789593/",
+        "name": "Evento 7 Abril: DBA vs SSIS, consigue que tus proyectos SSIS vuelen",
+        "plain_text_description": "Toda la informaci\u00f3n y registro en http://www.sqlpass.es/2016/03/sqlpasses-evento-7-abril-dba-vs-ssis-alberto-lopez.html",
+        "rsvpable": false,
+        "status": "past",
+        "time": 1460046600000,
+        "updated": 1460065164000,
+        "utc_offset": 7200000,
+        "venue": {
+            "address_1": "Gran V\u00eda, 28",
+            "city": "Madrid",
+            "country": "es",
+            "id": 24442542,
+            "lat": 40.46653747558594,
+            "localized_country_name": "Spain",
+            "lon": -3.654146909713745,
+            "name": "Gran V\u00eda Open Future (Espacio Wayra)",
+            "repinned": false
+        },
+        "visibility": "public",
+        "waitlist_count": 0,
+        "yes_rsvp_count": 9
+    },
+    {
+        "created": 1464715848000,
+        "description": "<p>Desde SQLPASS Spain continuamos con un nuevo\u00a0evento presencial\u00a0gratuito en el que tendremos a\u00a0<b>Ana Mar\u00eda Bisb\u00e9, experta en Microsoft Data Platform</b>,\u00a0cont\u00e1ndonos c\u00f3mo extraer <b>p</b><b>atrones utilizando tecnolog\u00edas como Excel, R, AzureML y SQL.</b></p> <p>Esta vez se celebrar\u00e1 en\u00a0<b>Aula Nave Boetticher</b>, en la c/ Cifuentes 3,\u00a0<b>Madrid</b>, con conexi\u00f3n directa desde el metro L3 (Villaverde Bajo, El cruce).\u00a0</p> <p><br/>Otra gran oportunidad de compartir conocimiento y hacer networking con todos los miembros de la comunidad<b>\u00a0<a href=\"http://www.sqlpass.es/\">SQLPASS.es</a><br/></b></p> <p><br/>Agenda:</p> <p>18:30 - 18:45: Registro y bienvenida</p> <p>18:45 - 19:50:\u00a0Analizando patrones con Excel, SQL, R y Azure ML, con Ana Mar\u00eda Bisb\u00e9.\u00a0</p> <p>19:50 - 20:00: Preguntas</p> <p>20:00 - 21:00: Networking y #sqlbeer</p> <p><b>Analizando patrones con Excel, SQL, R y Azure ML</b></p> <p>En la actualidad tenemos a nuestra disposici\u00f3n una gran variedad de herramientas para an\u00e1lisis y b\u00fasqueda de patrones en datos de formatos muy diversos. Entre las m\u00e1s destacadas se incluyen soluciones que llegan del mundo acad\u00e9mico como R, otras integradas en la esfera productiva como SQL Server Analysis Services o Excel, y m\u00e1s recientemente, plataformas \"Software as a Service\" como Azure Machine Learning.En esta sesi\u00f3n utilizaremos dichas herramientas para analizar datos, determinar su composici\u00f3n, posible segmentaci\u00f3n y patrones presentes en la muestra que permitan realizar predicciones con modelos de miner\u00eda de datos.</p> <p>\n\n\n<b>Ana Mar\u00eda Bisb\u00e9:</b></p> <p>Durante casi 20 a\u00f1os fue desarrolladora de aplicaciones de gesti\u00f3n con Bases de datos Visual FoxPro y SQL Server.Durante este per\u00edodo particip\u00f3 activamente en la comunidad, en proyectos de traducci\u00f3n a escala internacional, as\u00ed como en la traducci\u00f3n de numerosos art\u00edculos al castellano. Cubri\u00f3 en tres ocasiones eventos Visual FoxPro de primer nivel en EEUU para la comunidad hispano-hablante.\u00a0Desde 2008 es consultora de Business Intelligence, freelance. Ha participado en proyectos y consultor\u00edas que abarcan las fases de Integraci\u00f3n, Modelado dimensional, multidimensional y tabular, as\u00ed como Creaci\u00f3n de informes y cuadros de mandos con los Servicios de SQL Server y los componentes de MS Office Excel. Adem\u00e1s ha tenido ocasi\u00f3n de trabajar en proyectos de Limpieza y Calidad de datos, as\u00ed como de Estad\u00edsticas y Miner\u00eda de datos con SSAS y MS Office Excel. \u00a0Mantiene un blog t\u00e9cnico en\u00a0<a href=\"http://amby.net/\"><a href=\"http://amby.net/\" class=\"linkified\">http://amby.net/</a></a></p> <p>Desde el a\u00f1o 2011, participa activamente, como asistente y/o ponente en encuentros organizados por PASS, eventos 24H en espa\u00f1ol, ITWoman, SQLSaturday y TechEd. Pertenece al cap\u00edtulo PASS en Espa\u00f1a, as\u00ed como PASS virtual en espa\u00f1ol y al Grupo de usuarios PowerBI.\u00a0</p> <p>Twitter:\u00a0<a href=\"https://twitter.com/ambynet\">@ambynet</a></p> ",
+        "event_hosts": [
+            {
+                "id": 2,
+                "name": "Ruben",
+                "photo": {
+                    "base_url": "http://photos4.meetupstatic.com",
+                    "highres_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                    "id": 2,
+                    "photo_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                    "thumb_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                    "type": "member"
+                }
+            },
+            {
+                "id": 1,
+                "name": "Alberto",
+                "photo": {
+                    "base_url": "http://photos4.meetupstatic.com",
+                    "highres_link": "http://photos2.meetupstatic.com/photos/member/jpeg",
+                    "id": 1,
+                    "photo_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                    "thumb_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                    "type": "member"
+                }
+            }
+        ],
+        "featured": false,
+        "group": {
+            "created": 1458486827000,
+            "id": 19734270,
+            "join_mode": "open",
+            "lat": 40.41999816894531,
+            "lon": -3.7100000381469727,
+            "name": "sqlpass.es",
+            "topics": [
+                {
+                    "id": 1245,
+                    "lang": "en_US",
+                    "name": "Database Professionals",
+                    "urlkey": "databasepro"
+                },
+                {
+                    "id": 7463,
+                    "lang": "en_US",
+                    "name": "SQL Server",
+                    "urlkey": "sqlserver"
+                },
+                {
+                    "id": 15167,
+                    "lang": "en_US",
+                    "name": "Cloud Computing",
+                    "urlkey": "cloud-computing"
+                },
+                {
+                    "id": 18062,
+                    "lang": "en_US",
+                    "name": "Big Data",
+                    "urlkey": "big-data"
+                },
+                {
+                    "id": 21506,
+                    "lang": "en_US",
+                    "name": "Database Development",
+                    "urlkey": "database-development"
+                },
+                {
+                    "id": 30928,
+                    "lang": "en_US",
+                    "name": "Data Analytics",
+                    "urlkey": "data-analytics"
+                },
+                {
+                    "id": 55324,
+                    "lang": "en_US",
+                    "name": "Data Mining",
+                    "urlkey": "data-mining"
+                },
+                {
+                    "id": 84069,
+                    "lang": "en_US",
+                    "name": "DBA",
+                    "urlkey": "dba"
+                },
+                {
+                    "id": 99537,
+                    "lang": "en_US",
+                    "name": "Microsoft Technology",
+                    "urlkey": "microsoft-technology"
+                },
+                {
+                    "id": 150163,
+                    "lang": "en_US",
+                    "name": "SQL Server Azure",
+                    "urlkey": "sql-server-azure"
+                },
+                {
+                    "id": 579452,
+                    "lang": "en_US",
+                    "name": "Business Intelligence Data Warehousing",
+                    "urlkey": "business-intelligence-data-warehousing"
+                },
+                {
+                    "id": 1454872,
+                    "lang": "en_US",
+                    "name": "High Availability",
+                    "urlkey": "high-availability"
+                },
+                {
+                    "id": 1507755,
+                    "lang": "en_US",
+                    "name": "PowerBI",
+                    "urlkey": "powerbi"
+                }
+            ],
+            "urlname": "sqlpass-es",
+            "who": "Profesionales de SQL Server"
+        },
+        "id": "2",
+        "link": "https://www.meetup.com/sqlpass-es/events/231539759/",
+        "name": "Analizando patrones con Excel, SQL, R y Azure Machine Learning",
+        "plain_text_description": "Desde SQLPASS Spain continuamos con un nuevo evento presencial gratuito en el que tendremos a Ana Mar\u00eda Bisb\u00e9, experta en Microsoft Data Platform, cont\u00e1ndonos c\u00f3mo extraer patrones utilizando tecnolog\u00edas como Excel, R, AzureML y SQL.\n\nEsta vez se celebrar\u00e1 en Aula Nave Boetticher, en la c/ Cifuentes 3, Madrid, con conexi\u00f3n directa desde el metro L3 (Villaverde Bajo, El cruce).\n\nOtra gran oportunidad de compartir conocimiento y hacer networking con todos los miembros de la comunidad SQLPASS.es (http://www.sqlpass.es/)\n\nAgenda:\n\n18:30 - 18:45: Registro y bienvenida\n\n18:45 - 19:50: Analizando patrones con Excel, SQL, R y Azure ML, con Ana Mar\u00eda Bisb\u00e9.\n\n19:50 - 20:00: Preguntas\n\n20:00 - 21:00: Networking y #sqlbeer\n\nAnalizando patrones con Excel, SQL, R y Azure ML\n\nEn la actualidad tenemos a nuestra disposici\u00f3n una gran variedad de herramientas para an\u00e1lisis y b\u00fasqueda de patrones en datos de formatos muy diversos. Entre las m\u00e1s destacadas se incluyen soluciones que llegan del mundo acad\u00e9mico como R, otras integradas en la esfera productiva como SQL Server Analysis Services o Excel, y m\u00e1s recientemente, plataformas \"Software as a Service\" como Azure Machine Learning.En esta sesi\u00f3n utilizaremos dichas herramientas para analizar datos, determinar su composici\u00f3n, posible segmentaci\u00f3n y patrones presentes en la muestra que permitan realizar predicciones con modelos de miner\u00eda de datos.\n\nAna Mar\u00eda Bisb\u00e9:\n\nDurante casi 20 a\u00f1os fue desarrolladora de aplicaciones de gesti\u00f3n con Bases de datos Visual FoxPro y SQL Server.Durante este per\u00edodo particip\u00f3 activamente en la comunidad, en proyectos de traducci\u00f3n a escala internacional, as\u00ed como en la traducci\u00f3n de numerosos art\u00edculos al castellano. Cubri\u00f3 en tres ocasiones eventos Visual FoxPro de primer nivel en EEUU para la comunidad hispano-hablante. Desde 2008 es consultora de Business Intelligence, freelance. Ha participado en proyectos y consultor\u00edas que abarcan las fases de Integraci\u00f3n, Modelado dimensional, multidimensional y tabular, as\u00ed como Creaci\u00f3n de informes y cuadros de mandos con los Servicios de SQL Server y los componentes de MS Office Excel. Adem\u00e1s ha tenido ocasi\u00f3n de trabajar en proyectos de Limpieza y Calidad de datos, as\u00ed como de Estad\u00edsticas y Miner\u00eda de datos con SSAS y MS Office Excel. Mantiene un blog t\u00e9cnico en http://amby.net/ (http://amby.net/)\n\nDesde el a\u00f1o 2011, participa activamente, como asistente y/o ponente en encuentros organizados por PASS, eventos 24H en espa\u00f1ol, ITWoman, SQLSaturday y TechEd. Pertenece al cap\u00edtulo PASS en Espa\u00f1a, as\u00ed como PASS virtual en espa\u00f1ol y al Grupo de usuarios PowerBI.\n\nTwitter: @ambynet (https://twitter.com/ambynet)",
+        "rsvpable": false,
+        "status": "past",
+        "time": 1465490700000,
+        "updated": 1465503498000,
+        "utc_offset": 7200000,
+        "venue": {
+            "address_1": "c/ Cifuentes 3, Madrid",
+            "city": "Madrid",
+            "country": "es",
+            "id": 24578967,
+            "lat": 40.34842300415039,
+            "localized_country_name": "Spain",
+            "lon": -3.694735050201416,
+            "name": "Aula Nave Boetticher",
+            "repinned": false
+        },
+        "visibility": "public",
+        "waitlist_count": 0,
+        "yes_rsvp_count": 12
+    }
+]
