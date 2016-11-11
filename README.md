@@ -187,12 +187,12 @@ $ perceval mediawiki 'https://wiki.mozilla.org' --from-date '2016-06-30'
 
 ### Meetup
 ```
-$ perceval meetup 'Software-Development-Analytics' --from-date '2016-06-01 -t abcdefghijk'
+$ perceval meetup 'Software-Development-Analytics' --from-date '2016-06-01' -t abcdefghijk
 ```
 
 ### Phabricator
 ```
-$ perceval phabricator -t 123456789abcefe 'https://secure.phabricator.com/'
+$ perceval phabricator 'https://secure.phabricator.com/' -t 123456789abcefe 
 ```
 
 ### Pipermail
@@ -203,7 +203,7 @@ $ perceval pipermail 'https://mail.gnome.org/archives/libart-hackers/'
 ### Redmine
 
 ```
-$ perceval redmine 'https://www.redmine.org/' --from-date 2016-01-01 --token abcdefghijk
+$ perceval redmine 'https://www.redmine.org/' --from-date '2016-01-01' -t abcdefghijk
 ```
 
 ### ReMo
@@ -213,7 +213,7 @@ $ perceval remo
 
 ### StackExchange
 ```
-$ perceval stackexchange --site stackoverflow --tagged python --from-date 2016-01-01 --token abcdabcdabcdabcd
+$ perceval stackexchange --site stackoverflow --tagged python --from-date '2016-01-01' --token abcdabcdabcdabcd
 ```
 
 ### Supybot
