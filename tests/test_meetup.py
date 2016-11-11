@@ -21,7 +21,9 @@
 #
 
 import datetime
+import shutil
 import sys
+import tempfile
 import unittest
 
 import httpretty
@@ -29,7 +31,9 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.meetup import MEETUP_URL, Meetup, MeetupClient
+from perceval.cache import Cache
+from perceval.errors import CacheError
+from perceval.backends.meetup import Meetup, MeetupClient
 
 
 MEETUP_URL = 'https://api.meetup.com'
@@ -366,6 +370,75 @@ class TestMeetupBackend(unittest.TestCase):
 
         self.assertEqual(len(results), 0)
 
+
+class TestMeetupBackendCache(unittest.TestCase):
+    """Redmine backend tests using a cache"""
+
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    @httpretty.activate
+    def test_fetch_from_cache(self):
+        """Test whether the cache works"""
+
+        http_requests = setup_http_server()
+
+        # First, we fetch the events from the server,
+        # storing them in a cache
+        cache = Cache(self.tmp_path)
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2, cache=cache)
+        events = [event for event in meetup.fetch()]
+
+        self.assertEqual(len(http_requests), 8)
+
+        # Now, we get the events from the cache.
+        # The events should be the same and there won't be
+        # any new request to the server
+        cached_events = [event for event in meetup.fetch_from_cache()]
+        self.assertEqual(len(cached_events), len(events))
+
+        expected = [('1', '0d07fe36f994a6c78dfcf60fb73674bcf158cb5a', 1460065164.0, 2, 3),
+                    ('2', '24b47b622eb33965676dd951b18eea7689b1d81c', 1465503498.0, 2, 3),
+                    ('3', 'a42b7cf556c17b17f05b951e2eb5e07a7cb0a731', 1474842748.0, 2, 3)]
+
+        self.assertEqual(len(cached_events), len(expected))
+
+        for x in range(len(cached_events)):
+            event = cached_events[x]
+            expc = expected[x]
+            self.assertEqual(event['data']['id'], expc[0])
+            self.assertEqual(event['uuid'], expc[1])
+            self.assertEqual(event['origin'], 'https://meetup.com/')
+            self.assertEqual(event['updated_on'], expc[2])
+            self.assertEqual(event['category'], 'event')
+            self.assertEqual(event['tag'], 'https://meetup.com/')
+            self.assertEqual(len(event['data']['comments']), expc[3])
+            self.assertEqual(len(event['data']['rsvps']), expc[4])
+
+            # Compare chached and fetched task
+            self.assertDictEqual(event['data'], events[x]['data'])
+
+        # No more requests were sent
+        self.assertEqual(len(http_requests), 8)
+
+    def test_fetch_from_empty_cache(self):
+        """Test if there are not any event returned when the cache is empty"""
+
+        cache = Cache(self.tmp_path)
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2, cache=cache)
+        cached_events = [event for event in meetup.fetch_from_cache()]
+        self.assertEqual(len(cached_events), 0)
+
+    def test_fetch_from_non_set_cache(self):
+        """Test if a error is raised when the cache was not set"""
+
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
+
+        with self.assertRaises(CacheError):
+            _ = [event for event in meetup.fetch_from_cache()]
 
 class TestMeetupClient(unittest.TestCase):
     """Meetup REST API client tests.

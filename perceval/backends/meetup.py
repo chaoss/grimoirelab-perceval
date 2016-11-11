@@ -26,6 +26,7 @@ import logging
 import requests
 
 from ..backend import Backend, metadata
+from ..errors import CacheError
 from ..utils import DEFAULT_DATETIME, datetime_to_utc, urljoin
 
 
@@ -76,6 +77,8 @@ class Meetup(Backend):
         logger.info("Fetching events of '%s' group from %s",
                     self.group, str(from_date))
 
+        self._purge_cache_queue()
+
         from_date = datetime_to_utc(from_date)
 
         nevents = 0
@@ -83,6 +86,8 @@ class Meetup(Backend):
         ev_pages = self.client.events(self.group, from_date=from_date)
 
         for evp in ev_pages:
+            self._push_cache_queue(evp)
+
             events = [event for event in self.parse_json(evp)]
 
             for event in events:
@@ -94,7 +99,68 @@ class Meetup(Backend):
                 yield event
                 nevents += 1
 
+            self._flush_cache_queue()
+
         logger.info("Fetch process completed: %s events fetched", nevents)
+
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch the events from the cache.
+
+        It returns the events stored in the cache object, provided during
+        the initialization of the object. If this method is called but
+        no cache object was provided, the method will raise a `CacheError`
+        exception.
+
+        :returns: a generator of events
+
+        :raises CacheError: raised when an error occurs accesing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        logger.info("Retrieving cached events: %s", self.origin)
+
+        nevents = 0
+
+        for event in self.__fetch_from_cache():
+            yield event
+            nevents += 1
+
+        logger.info("Retrieval process completed: %s events retrieved from cache",
+                    nevents)
+
+    def __fetch_from_cache(self):
+        def fetch_items_from_cache(cache_items, checkpoint):
+            items = []
+
+            while True:
+                raw_page = next(cache_items)
+                if raw_page == checkpoint:
+                    break
+                items += [item for item in self.parse_json(raw_page)]
+            return items
+
+        # Fetch from cache starts here
+        cache_items = self.cache.retrieve()
+
+        while True:
+            try:
+                raw_events = next(cache_items)
+            except StopIteration:
+                break
+
+            events = [event for event in self.parse_json(raw_events)]
+
+            for event in events:
+                comments = fetch_items_from_cache(cache_items, '{ENDCOMMENTS}')
+                rsvps = fetch_items_from_cache(cache_items, '{ENDRSVPS}')
+
+                event['comments'] = comments
+                event['rsvps'] = rsvps
+
+                yield event
 
     def __fetch_and_parse_comments(self, event_id):
         logger.debug("Fetching and parsing comments from group '%s' event '%s'",
@@ -104,8 +170,12 @@ class Meetup(Backend):
         raw_pages = self.client.comments(self.group, event_id)
 
         for raw_page in raw_pages:
+            self._push_cache_queue(raw_page)
+
             for comment in self.parse_json(raw_page):
                 comments.append(comment)
+
+        self._push_cache_queue('{ENDCOMMENTS}')
 
         return comments
 
@@ -117,8 +187,12 @@ class Meetup(Backend):
         raw_pages = self.client.rsvps(self.group, event_id)
 
         for raw_page in raw_pages:
+            self._push_cache_queue(raw_page)
+
             for rsvp in self.parse_json(raw_page):
                 rsvps.append(rsvp)
+
+        self._push_cache_queue('{ENDRSVPS}')
 
         return rsvps
 
