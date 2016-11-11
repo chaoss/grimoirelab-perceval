@@ -24,6 +24,7 @@ are:
     kitsune          Fetch questions and answers from Kitsune site
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
+    meetup           Fetch events from a Meetup group
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
     redmine          Fetch issues from a Redmine server
@@ -182,6 +183,11 @@ $ perceval mbox 'http://example.com' /tmp/mboxes/
 ### MediaWiki
 ```
 $ perceval mediawiki 'https://wiki.mozilla.org' --from-date '2016-06-30'
+```
+
+### Meetup
+```
+$ perceval meetup 'Software-Development-Analytics' --from-date '2016-06-01 -t abcdefghijk'
 ```
 
 ### Phabricator
