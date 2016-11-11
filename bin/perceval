@@ -53,6 +53,7 @@ are:
     kitsune          Fetch questions and answers from Kitsune site
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
+    meetup           Fetch events from a Meetup group
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
     redmine          Fetch issues from a Redmine server

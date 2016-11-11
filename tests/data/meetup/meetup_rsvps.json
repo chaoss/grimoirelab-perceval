@@ -1,0 +1,145 @@
+[
+    {
+        "created": 1473326428000,
+        "event": {
+            "id": "233964056",
+            "name": "SQL Saturday Madrid 2016",
+            "time": 1474696800000,
+            "utc_offset": 7200000,
+            "yes_rsvp_count": 21
+        },
+        "group": {
+            "id": 19734270,
+            "join_mode": "open",
+            "members": 161,
+            "name": "sqlpass.es",
+            "urlname": "sqlpass-es",
+            "who": "Profesionales de SQL Server"
+        },
+        "guests": 0,
+        "member": {
+            "bio": "Data Platform MVP / Organizador y ponente en sqlpass.es / Data Platform & BI Team Leader en MVP Cluster / Director Dpto. de BI y Adm\u00f3n. de BB.DD. - Plus Ultra en Grupo Catalana Occidente TS",
+            "event_context": {
+                "host": true
+            },
+            "id": 1,
+            "name": "Alberto",
+            "photo": {
+                "base_url": "http://photos4.meetupstatic.com",
+                "highres_link": "http://photos2.meetupstatic.com/photos/member/jpeg",
+                "id": 1,
+                "photo_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                "thumb_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                "type": "member"
+            },
+            "role": "organizer"
+        },
+        "response": "yes",
+        "updated": 1473326428000,
+        "venue": {
+            "address_1": "Paseo del Club Deportivo, 1       28223 Pozuelo de Alarc\u00f3n-Madrid",
+            "city": "Madrid",
+            "country": "es",
+            "id": 23960570,
+            "lat": 40.41856002807617,
+            "localized_country_name": "Spain",
+            "lon": -3.8021740913391113,
+            "name": "Oficinas de Microsoft: Parque empresarial la Finca.",
+            "repinned": false
+        }
+    },
+    {
+        "created": 1473683042000,
+        "event": {
+            "id": "233964056",
+            "name": "SQL Saturday Madrid 2016",
+            "time": 1474696800000,
+            "utc_offset": 7200000,
+            "yes_rsvp_count": 21
+        },
+        "group": {
+            "id": 19734270,
+            "join_mode": "open",
+            "members": 161,
+            "name": "sqlpass.es",
+            "urlname": "sqlpass-es",
+            "who": "Profesionales de SQL Server"
+        },
+        "guests": 0,
+        "member": {
+            "event_context": {
+                "host": false
+            },
+            "id": 184594357,
+            "name": "Alfonso",
+            "photo": {
+                "base_url": "http://photos2.meetupstatic.com",
+                "highres_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                "id": 243952335,
+                "photo_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                "thumb_link": "http://photos2.meetupstatic.com/photos/member/jpeg",
+                "type": "member"
+            }
+        },
+        "response": "yes",
+        "updated": 1473683042000,
+        "venue": {
+            "address_1": "Paseo del Club Deportivo, 1       28223 Pozuelo de Alarc\u00f3n-Madrid",
+            "city": "Madrid",
+            "country": "es",
+            "id": 23960570,
+            "lat": 40.41856002807617,
+            "localized_country_name": "Spain",
+            "lon": -3.8021740913391113,
+            "name": "Oficinas de Microsoft: Parque empresarial la Finca.",
+            "repinned": false
+        }
+    },
+    {
+        "created": 1473683048000,
+        "event": {
+            "id": "233964056",
+            "name": "SQL Saturday Madrid 2016",
+            "time": 1474696800000,
+            "utc_offset": 7200000,
+            "yes_rsvp_count": 21
+        },
+        "group": {
+            "id": 19734270,
+            "join_mode": "open",
+            "members": 161,
+            "name": "sqlpass.es",
+            "urlname": "sqlpass-es",
+            "who": "Profesionales de SQL Server"
+        },
+        "guests": 0,
+        "member": {
+            "event_context": {
+                "host": false
+            },
+            "id": 294594357,
+            "name": "Arturo",
+            "photo": {
+                "base_url": "http://photos2.meetupstatic.com",
+                "highres_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                "id": 294594357,
+                "photo_link": "http://photos4.meetupstatic.com/photos/member/jpeg",
+                "thumb_link": "http://photos2.meetupstatic.com/photos/member/jpeg",
+                "type": "member"
+            }
+        },
+        "response": "yes",
+        "updated": 1473683042000,
+        "venue": {
+            "address_1": "Paseo del Club Deportivo, 1       28223 Pozuelo de Alarc\u00f3n-Madrid",
+            "city": "Madrid",
+            "country": "es",
+            "id": 23960570,
+            "lat": 40.41856002807617,
+            "localized_country_name": "Spain",
+            "lon": -3.8021740913391113,
+            "name": "Oficinas de Microsoft: Parque empresarial la Finca.",
+            "repinned": false
+        }
+    }
+]
