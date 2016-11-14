@@ -1,0 +1,57 @@
+{
+    "accepted_answer_id": null,
+    "added_at": "1364278178",
+    "answer_count": 31,
+    "answer_ids": [
+        24427,
+        24426,
+        24425,
+        24424,
+        24423,
+        24419,
+        24418,
+        24417,
+        24416,
+        24414,
+        24413,
+        24412,
+        24411,
+        24410,
+        24409,
+        24406,
+        24405,
+        24404,
+        24403,
+        24402,
+        24401,
+        24400,
+        24399,
+        24398,
+        24415,
+        24422,
+        24421,
+        24420,
+        24408,
+        24407,
+        24397
+    ],
+    "author": {
+        "id": 4200,
+        "username": "xinxin-shu"
+    },
+    "id": 24396,
+    "last_activity_at": "1372890482",
+    "last_activity_by": {
+        "id": 338,
+        "username": "arosen"
+    },
+    "score": 1,
+    "summary": "<div class=\"snippet\"><p>i have install grizzly-g3, but quantum does not work well, when i boot 128 instances, i found one of instances got more than one fixed ip, howerver, when i boot 64 intances, it nerver happened, besides that , sometimes i can not ping vm with floatingip, i did not find any error message in my quantum log( all the files in the /var/log/quantum),  follows are the error output and configurations</p>\n\n<p>| 97a93600-38e2-4700-9851-15ef56c1d628 | slave  | ACTIVE | demo-int-net=172.16.100.4                   |\n| 99aeb6b8-4252-4839-a7d1-f87853116100 | slave  | ACTIVE | demo-int-net=172.16.100.117                 |\n| 9aa82a35-c9f1-4f44-a108-d14e74eec231 | slave  | ACTIVE | demo-int-net=172.16.100.108, 172.16.100.109 |\n| 9b6b1289-c450-4614-b647-e5ebdffff80a | slave  | ACTIVE | demo-int-net=172.16.100.5                   |\n| 9e0d3aa5-0f15-4b24-944a-6d6c3e18ce64 | slave  | ACTIVE | demo-int-net=172.16.100.35                  |\n| 9ea62124-9128-43cc-acdd-142f1e7743d6 | slave  | ACTIVE | demo-int-net=172.16.100.132                 |</p>\n\n<p>my setup : one db host(db service), one glance host(glance service), on api host(keystone,nova-api,nova-scheduler, nova-conductor, quantum-server,quantum-dhcp, quantum-l3-agent,quantum-plugin-openvswitch-agent), eight compute host(each host with nova-compute, quantum-plugin-openvswitch-agent), i check that all the service on all hosts works well</p>\n\n<p>i used vlan type network and openvswitch plugin:</p>\n\n<p>my quantum.conf </p>\n\n<p>[DEFAULT]</p>\n\n<h1>Default log level is INFO</h1>\n\n<h1>verbose and debug has the same result.</h1>\n\n<h1>One of them will set DEBUG log level output</h1>\n\n<p>debug = True</p>\n\n<h1>Address to bind the API server</h1>\n\n<p>bind_host = 0.0.0.0</p>\n\n<h1>Port the bind the API server to</h1>\n\n<p>bind_port = 9696</p>\n\n<h1>Quantum plugin provider module</h1>\n\n<h1>core_plugin =</h1>\n\n<p>core_plugin = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2</p>\n\n<h1>Advanced service modules</h1>\n\n<h1>service_plugins =</h1>\n\n<h1>Paste configuration file</h1>\n\n<p>api_paste_config = /etc/quantum/api-paste.ini</p>\n\n<h1>The strategy to be used for auth.</h1>\n\n<h1>Supported values are 'keystone'(default), 'noauth'.</h1>\n\n<p>auth_strategy = keystone</p>\n\n<h1>Modules of exceptions that are permitted to be recreated</h1>\n\n<h1>upon receiving exception data from an rpc call.</h1>\n\n<h1>allowed_rpc_exception_modules = quantum.openstack.common.exception, nova.exception</h1>\n\n<h1>AMQP exchange to connect to if using RabbitMQ or QPID</h1>\n\n<p>control_exchange = quantum</p>\n\n<h1>RPC driver. DHCP agents needs it.</h1>\n\n<p>notification_driver = quantum.openstack.common.notifier.rpc_notifier</p>\n\n<h1>default_notification_level is used to form actual topic name(s) or to set logging level</h1>\n\n<p>default_notification_level = INFO</p>\n\n<h1>Defined in rpc_notifier, can be comma separated values.</h1>\n\n<h1>The actual topic names will be %s.%(default_notification_level)s</h1>\n\n<p>notification_topics = notifications</p>\n\n<p>[QUOTAS]</p>\n\n<h1>resource name(s) that are supported in quota features</h1>\n\n<h1>quota_items = network,subnet,port</h1>\n\n<h1>default number of resource allowed per tenant, minus for unlimited</h1>\n\n<h1>default_quota = -1</h1>\n\n<h1>number of networks allowed per tenant, and minus means unlimited</h1>\n\n<h1>quota_network = 10</h1>\n\n<h1>number of subnets allowed per tenant, and minus means unlimited</h1>\n\n<h1>quota_subnet = 10</h1>\n\n<h1>number of ports allowed per tenant, and minus means unlimited</h1>\n\n<p>quota_port = 5000\nquota_floatingip = 5000</p>\n\n<h1>default driver to use for quota checks</h1>\n\n<h1>quota_driver = quantum.quota.ConfDriver</h1>\n\n<h1>=========== items for agent management extension =============</h1>\n\n<h1>Seconds to regard the agent as down.</h1>\n\n<h1>agent_down_time = 5</h1>\n\n<h1>===========  end of items for agent management extension =====</h1>\n\n<p>[DEFAULT_SERVICETYPE]</p>\n\n<h1>Description of the default service type (optional)</h1>\n\n<h1>description = \"default service type\"</h1>\n\n<h1>Enter a service definition line for each advanced service provided</h1>\n\n<h1>by the default service type.</h1>\n\n<h1>Each service definition should be in the following format:</h1>\n\n<h1>&lt;service&gt;:&lt;plugin&gt;[:driver]</h1>\n\n<p>[SECURITYGROUP]</p>\n\n<h1>If set to true this allows quantum to receive proxied security group calls from nova</h1>\n\n<h1>proxy_mode = False</h1>\n\n<p>[AGENT]\nroot_helper = sudo quantum-rootwrap /etc/quantum ...<span class=\"expander\"> <a>(more)</a></span></p></div>",
+    "tags": [
+        "neutron",
+        "migrated"
+    ],
+    "title": "instance get more than one fixed ip(grizzly-g3)",
+    "url": "https://ask.openstack.org/en/question/24396/instance-get-more-than-one-fixed-ipgrizzly-g3/",
+    "view_count": 232
+}
