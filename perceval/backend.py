@@ -191,7 +191,7 @@ def metadata(func):
                     'backend_name' : self.__class__.__name__,
                     'backend_version' : self.version,
                     'perceval_version' : __version__,
-                    'timestamp' : dt.now().timestamp(),
+                    'timestamp' : dt.utcnow().timestamp(),
                     'origin' : self.origin,
                     'uuid' : uuid(self.origin, self.metadata_id(data)),
                     'updated_on' : self.metadata_updated_on(data),
