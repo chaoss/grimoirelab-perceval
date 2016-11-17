@@ -372,6 +372,15 @@ class Askbot(Backend):
         """
         return float(item['last_activity_at'])
 
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from an Askbot item.
+
+        This backend only generates one type of item which is
+        'question'.
+        """
+        return 'question'
+
     def fetch_html_question(self, question):
         """Fetch an Askbot HTML question body.
 

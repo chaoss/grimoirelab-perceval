@@ -460,10 +460,12 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(questions[0]['uuid'], '3fb5f945a0dd223c60218a98ad35bad6043f9f5f')
         self.assertEqual(questions[0]['updated_on'], 1408116902.0)
         self.assertEqual(questions[0]['data']['id'], 2488)
+        self.assertEqual(questions[0]['category'], 'question')
         self.assertEqual(questions[1]['tag'], 'http://example.com')
         self.assertEqual(questions[1]['uuid'], 'ecc1320265e400edb28700cc3d02efc6d76410be')
         self.assertEqual(questions[1]['updated_on'], 1349928216.0)
         self.assertEqual(questions[1]['data']['id'], 2481)
+        self.assertEqual(questions[1]['category'], 'question')
 
     @httpretty.activate
     def test_fetch_from_date(self):
