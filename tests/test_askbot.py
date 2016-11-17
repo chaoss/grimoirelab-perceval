@@ -549,6 +549,11 @@ class TestAskbotBackend(unittest.TestCase):
 
         self.assertEqual(Askbot.has_resuming(), True)
 
+    def test_has_caching(self):
+        """Test if it returns True when has_caching is called"""
+
+        self.assertEqual(Askbot.has_caching(), False)
+
 class TestAskboteCommand(unittest.TestCase):
     """Tests for AskbotCommand class"""
 

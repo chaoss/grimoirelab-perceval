@@ -389,6 +389,14 @@ class Askbot(Backend):
         """
         return True
 
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend supports items cache
+        """
+        return False
+
     def fetch_html_question(self, question):
         """Fetch an Askbot HTML question body.
 
