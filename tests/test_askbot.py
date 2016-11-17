@@ -26,13 +26,14 @@ import requests
 import bs4
 import json
 import datetime
+import argparse
 
 import httpretty
 
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.askbot import Askbot, AskbotClient, AskbotParser
+from perceval.backends.askbot import Askbot, AskbotClient, AskbotParser, AskbotCommand
 
 ASKBOT_URL = 'http://example.com'
 ASKBOT_QUESTIONS_API_URL = ASKBOT_URL + '/api/v1/questions'
@@ -539,6 +540,27 @@ class TestAskbotBackend(unittest.TestCase):
         html_question_items = backend.fetch_html_question(question_api_json)
 
         self.assertEqual(len(html_question_items), 4)
+
+class TestAskboteCommand(unittest.TestCase):
+    """Tests for AskbotCommand class"""
+
+    @httpretty.activate
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['--origin', 'test', ASKBOT_URL]
+
+        cmd = AskbotCommand(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.url, ASKBOT_URL)
+        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertIsInstance(cmd.backend, Askbot)
+
+    def test_argument_parser(self):
+        """Test if it returns a argument parser object"""
+
+        parser = AskbotCommand.create_argument_parser()
+        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 if __name__ == "__main__":
     unittest.main(warnings='ignore')
