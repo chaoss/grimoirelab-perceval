@@ -544,6 +544,11 @@ class TestAskbotBackend(unittest.TestCase):
 
         self.assertEqual(len(html_question_items), 4)
 
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Askbot.has_resuming(), True)
+
 class TestAskboteCommand(unittest.TestCase):
     """Tests for AskbotCommand class"""
 
