@@ -302,10 +302,10 @@ class Askbot(Backend):
     """
     version = '0.1.0'
 
-    def __init__(self, url, origin=None):
-        origin = origin if origin else url
+    def __init__(self, url, tag=None):
+        origin = url
 
-        super().__init__(origin)
+        super().__init__(origin, tag=tag)
         self.url = url
         self.client = AskbotClient(url)
         self.ab_parser = AskbotParser()
@@ -472,11 +472,10 @@ class AskbotCommand(BackendCommand):
 
         self.url = self.parsed_args.url
         self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.origin = self.parsed_args.origin
+        self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
 
-        self.backend = Askbot(self.url,
-                              origin=self.origin)
+        self.backend = Askbot(self.url, tag=self.tag)
 
     def run(self):
         """Fetch and print the bugs.

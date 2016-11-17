@@ -304,8 +304,9 @@ class TestAskbotClient(unittest.TestCase):
     def test_init(self):
         """Test initialization parameters"""
 
-        client = AskbotClient(ASKBOT_URL)
-        self.assertEqual(client.base_url, ASKBOT_URL)
+        ab = AskbotClient(ASKBOT_URL)
+
+        self.assertEqual(ab.base_url, ASKBOT_URL)
 
     @httpretty.activate
     def test_get_api_questions(self):
@@ -407,21 +408,21 @@ class TestAskbotBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        ab = Askbot(ASKBOT_URL, origin='test')
+        ab = Askbot(ASKBOT_URL, tag='test')
 
         self.assertEqual(ab.url, ASKBOT_URL)
-        self.assertEqual(ab.origin, 'test')
+        self.assertEqual(ab.tag, 'test')
         self.assertIsInstance(ab.client, AskbotClient)
 
-        # When origin is empty or None it will be set to
+        # When tag is empty or None it will be set to
         # the value in url
         ab = Askbot(ASKBOT_URL)
         self.assertEqual(ab.url, ASKBOT_URL)
-        self.assertEqual(ab.origin, ASKBOT_URL)
+        self.assertEqual(ab.tag, ASKBOT_URL)
 
-        ab = Askbot(ASKBOT_URL, origin='')
+        ab = Askbot(ASKBOT_URL, tag='')
         self.assertEqual(ab.url, ASKBOT_URL)
-        self.assertEqual(ab.origin, ASKBOT_URL)
+        self.assertEqual(ab.tag, ASKBOT_URL)
 
     @httpretty.activate
     def test_fetch(self):
@@ -455,11 +456,11 @@ class TestAskbotBackend(unittest.TestCase):
 
         questions = [question for question in backend.fetch(from_date=None)]
 
-        self.assertEqual(questions[0]['origin'], 'http://example.com')
+        self.assertEqual(questions[0]['tag'], 'http://example.com')
         self.assertEqual(questions[0]['uuid'], '3fb5f945a0dd223c60218a98ad35bad6043f9f5f')
         self.assertEqual(questions[0]['updated_on'], 1408116902.0)
         self.assertEqual(questions[0]['data']['id'], 2488)
-        self.assertEqual(questions[1]['origin'], 'http://example.com')
+        self.assertEqual(questions[1]['tag'], 'http://example.com')
         self.assertEqual(questions[1]['uuid'], 'ecc1320265e400edb28700cc3d02efc6d76410be')
         self.assertEqual(questions[1]['updated_on'], 1349928216.0)
         self.assertEqual(questions[1]['data']['id'], 2481)
@@ -498,7 +499,7 @@ class TestAskbotBackend(unittest.TestCase):
 
         questions = [question for question in backend.fetch(from_date=from_date)]
 
-        self.assertEqual(questions[0]['origin'], 'http://example.com')
+        self.assertEqual(questions[0]['tag'], 'http://example.com')
         self.assertEqual(questions[0]['uuid'], '3fb5f945a0dd223c60218a98ad35bad6043f9f5f')
         self.assertEqual(questions[0]['updated_on'], 1408116902.0)
         self.assertEqual(questions[0]['data']['id'], 2488)
@@ -548,12 +549,12 @@ class TestAskboteCommand(unittest.TestCase):
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
-        args = ['--origin', 'test', ASKBOT_URL]
+        args = ['--tag', 'test', ASKBOT_URL]
 
         cmd = AskbotCommand(*args)
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.url, ASKBOT_URL)
-        self.assertEqual(cmd.parsed_args.origin, 'test')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertIsInstance(cmd.backend, Askbot)
 
     def test_argument_parser(self):
