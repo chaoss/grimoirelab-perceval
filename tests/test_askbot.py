@@ -25,18 +25,20 @@ import unittest
 import requests
 import bs4
 import json
+import datetime
 
 import httpretty
 
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.askbot import AskbotClient, AskbotParser
+from perceval.backends.askbot import Askbot, AskbotClient, AskbotParser
 
 ASKBOT_URL = 'http://example.com'
 ASKBOT_QUESTIONS_API_URL = ASKBOT_URL + '/api/v1/questions'
 ASKBOT_QUESTION_2481_URL = ASKBOT_URL + '/question/2481'
 ASKBOT_QUESTION_2488_URL = ASKBOT_URL + '/question/2488'
+ASKBOT_QUESTION_24396_URL = ASKBOT_URL + '/question/24396'
 ASKBOT_QUESTION_EMPTY_URL = ASKBOT_URL + '/question/0'
 
 
@@ -397,6 +399,146 @@ class TestAskbotClient(unittest.TestCase):
 
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/question/0')
+
+
+class TestAskbotBackend(unittest.TestCase):
+    """Askbot backend tests"""
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        ab = Askbot(ASKBOT_URL, origin='test')
+
+        self.assertEqual(ab.url, ASKBOT_URL)
+        self.assertEqual(ab.origin, 'test')
+        self.assertIsInstance(ab.client, AskbotClient)
+
+        # When origin is empty or None it will be set to
+        # the value in url
+        ab = Askbot(ASKBOT_URL)
+        self.assertEqual(ab.url, ASKBOT_URL)
+        self.assertEqual(ab.origin, ASKBOT_URL)
+
+        ab = Askbot(ASKBOT_URL, origin='')
+        self.assertEqual(ab.url, ASKBOT_URL)
+        self.assertEqual(ab.origin, ASKBOT_URL)
+
+    @httpretty.activate
+    def test_fetch(self):
+        """Test whether a list of questions is returned"""
+        question_api_1 = read_file('data/askbot/askbot_api_questions.json')
+        question_api_2 = read_file('data/askbot/askbot_api_questions_2.json')
+        question_html_1 = read_file('data/askbot/askbot_question.html')
+        question_html_2 = read_file('data/askbot/askbot_question_multipage_1.html')
+        question_html_2_2 = read_file('data/askbot/askbot_question_multipage_2.html')
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_1, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2481_URL,
+                               body=question_html_1, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2_2, status=200)
+
+        backend = Askbot(ASKBOT_URL)
+
+        questions = [question for question in backend.fetch(from_date=None)]
+
+        self.assertEqual(questions[0]['origin'], 'http://example.com')
+        self.assertEqual(questions[0]['uuid'], '3fb5f945a0dd223c60218a98ad35bad6043f9f5f')
+        self.assertEqual(questions[0]['updated_on'], 1408116902.0)
+        self.assertEqual(questions[0]['data']['id'], 2488)
+        self.assertEqual(questions[1]['origin'], 'http://example.com')
+        self.assertEqual(questions[1]['uuid'], 'ecc1320265e400edb28700cc3d02efc6d76410be')
+        self.assertEqual(questions[1]['updated_on'], 1349928216.0)
+        self.assertEqual(questions[1]['data']['id'], 2481)
+
+    @httpretty.activate
+    def test_fetch_from_date(self):
+        """Test whether a list of questions is returned from a given date"""
+        question_api_1 = read_file('data/askbot/askbot_api_questions.json')
+        question_api_2 = read_file('data/askbot/askbot_api_questions_2.json')
+        question_html_1 = read_file('data/askbot/askbot_question.html')
+        question_html_2 = read_file('data/askbot/askbot_question_multipage_1.html')
+        question_html_2_2 = read_file('data/askbot/askbot_question_multipage_2.html')
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_1, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2481_URL,
+                               body=question_html_1, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2_2, status=200)
+
+        backend = Askbot(ASKBOT_URL)
+
+        from_date = datetime.datetime(2013, 1, 1)
+
+        questions = [question for question in backend.fetch(from_date=from_date)]
+
+        self.assertEqual(questions[0]['origin'], 'http://example.com')
+        self.assertEqual(questions[0]['uuid'], '3fb5f945a0dd223c60218a98ad35bad6043f9f5f')
+        self.assertEqual(questions[0]['updated_on'], 1408116902.0)
+        self.assertEqual(questions[0]['data']['id'], 2488)
+        self.assertEqual(len(questions), 1)
+
+    @httpretty.activate
+    def test_fetch_html_question(self):
+        """Test whether a question with pagination is retrieved correctly"""
+        question_api = read_file('data/askbot/api_24396_openstack.json')
+        question_html_1 = read_file('data/askbot/html_24396_multipage_openstack.html')
+        question_html_2 = read_file('data/askbot/html_24396_multipage_2_openstack.html')
+        question_html_3 = read_file('data/askbot/html_24396_multipage_3_openstack.html')
+        question_html_4 = read_file('data/askbot/html_24396_multipage_4_openstack.html')
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_24396_URL,
+                               body=question_html_1, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_24396_URL,
+                               body=question_html_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_24396_URL,
+                               body=question_html_3, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_24396_URL,
+                               body=question_html_4, status=200)
+
+        backend = Askbot(ASKBOT_URL)
+
+        question_api_json = json.loads(question_api)
+
+        html_question_items = backend.fetch_html_question(question_api_json)
+
+        self.assertEqual(len(html_question_items), 4)
 
 if __name__ == "__main__":
     unittest.main(warnings='ignore')
