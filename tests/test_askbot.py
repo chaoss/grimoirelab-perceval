@@ -51,22 +51,6 @@ def read_file(filename, mode='r'):
 
 class TestAskbotParser(unittest.TestCase):
     "Askbot parser tests"
-    def test_parse_question(self):
-        """Test question parser. This test covers the case when a question contains more than
-        ten answers and pagination is needed."""
-        abparser = AskbotParser()
-
-        page_1 = read_file('data/askbot/html_24396_multipage_openstack.html')
-        page_2 = read_file('data/askbot/html_24396_multipage_2_openstack.html')
-        page_3 = read_file('data/askbot/html_24396_multipage_3_openstack.html')
-        page_4 = read_file('data/askbot/html_24396_multipage_4_openstack.html')
-
-        html_question = [page_1, page_2, page_3, page_4]
-
-        parsed_question = abparser.parse_question(html_question)
-
-        self.assertIsNotNone(parsed_question['author'])
-        self.assertIsNotNone(parsed_question['answers'])
 
     def test_parse_question_container(self):
         """Test parse question container. This tests the full case when a question is, apart from

@@ -41,43 +41,6 @@ class AskbotParser:
     """
 
     @staticmethod
-    def parse_question(html_question):
-        """Parse an Askbot HTML response.
-
-        The method parses the HTML question elements.
-
-        :param html_question: HTML raw question
-
-        :returns: a dict item with the parsed question information
-        """
-        question_object = {}
-        # Initial case
-        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
-        # Parse the user info from the soup container
-        question_container = AskbotParser.parse_question_container(bs_question)
-        # Add the info to the question object
-        question_object.update(question_container)
-        # Add the comments of the question (if any)
-        if AskbotParser.parse_question_comments(bs_question):
-            question_object['comments'] = AskbotParser.parse_question_comments(bs_question)
-
-        answers = AskbotParser.parse_answers(bs_question)
-
-        for page in range(2, len(html_question)+1):
-            position = page - 1
-            try:
-                html_question[position]
-            except IndexError:
-                continue
-            else:
-                bs_question = bs4.BeautifulSoup(html_question[position], "html.parser")
-                answers.extend(AskbotParser.parse_answers(bs_question))
-
-        if len(answers) != 0:
-            question_object['answers'] = answers
-        return question_object
-
-    @staticmethod
     def parse_question_container(bs_question):
         """Parse the question info container of a given HTML question.
 
@@ -355,7 +318,7 @@ class Askbot(Backend):
                 if updated_at > from_date:
                     bs_question = self.__fetch_question(question)
                     logger.debug("Fetching HTML question %s", question['id'])
-                    html_question = self.ab_parser.parse_question(bs_question)
+                    html_question = self.__build_question(bs_question)
                     question.update(html_question)
                     yield question
 
@@ -437,6 +400,43 @@ class Askbot(Backend):
         :returns: a UNIX timestamp
         """
         return float(item['last_activity_at'])
+
+    @staticmethod
+    def __build_question(html_question):
+        """Build an Askbot HTML response.
+
+        The method puts together all the information regarding a question
+
+        :param html_question: array of HTML raw pages
+
+        :returns: a dict item with the parsed question information
+        """
+        question_object = {}
+        # Initial case
+        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
+        # Parse the user info from the soup container
+        question_container = AskbotParser.parse_question_container(bs_question)
+        # Add the info to the question object
+        question_object.update(question_container)
+        # Add the comments of the question (if any)
+        if AskbotParser.parse_question_comments(bs_question):
+            question_object['comments'] = AskbotParser.parse_question_comments(bs_question)
+
+        answers = AskbotParser.parse_answers(bs_question)
+
+        for page in range(2, len(html_question)+1):
+            position = page - 1
+            try:
+                html_question[position]
+            except IndexError:
+                continue
+            else:
+                bs_question = bs4.BeautifulSoup(html_question[position], "html.parser")
+                answers.extend(AskbotParser.parse_answers(bs_question))
+
+        if len(answers) != 0:
+            question_object['answers'] = answers
+        return question_object
 
 
 class AskbotClient:
