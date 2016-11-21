@@ -422,20 +422,15 @@ class Askbot(Backend):
         if AskbotParser.parse_question_comments(bs_question):
             question_object['comments'] = AskbotParser.parse_question_comments(bs_question)
 
-        answers = AskbotParser.parse_answers(bs_question)
+        answers = []
 
-        for page in range(2, len(html_question)+1):
-            position = page - 1
-            try:
-                html_question[position]
-            except IndexError:
-                continue
-            else:
-                bs_question = bs4.BeautifulSoup(html_question[position], "html.parser")
-                answers.extend(AskbotParser.parse_answers(bs_question))
+        for page in html_question:
+            bs_question = bs4.BeautifulSoup(page, "html.parser")
+            answers.extend(AskbotParser.parse_answers(bs_question))
 
         if len(answers) != 0:
             question_object['answers'] = answers
+
         return question_object
 
 
