@@ -116,20 +116,6 @@ class TestAskbotParser(unittest.TestCase):
             self.assertIsNotNone(parsed_answer['score'])
             self.assertIsNotNone(parsed_answer['summary'])
 
-    def test_parse_answer_comments(self):
-        """Iterate over all the comments"""
-        abparser = AskbotParser()
-        page = read_file('data/askbot/html_148_comments_answer_2_openstack.html')
-
-        html_question = [page]
-
-        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
-        bs_answers = bs_question.select("div.answer")
-        comments_to_test = abparser.parse_answer_comments(bs_answers[1])
-        comments = bs_answers[1].select("div.comment")
-        parsed_comments = abparser.parse_comments(comments)
-        self.assertEqual(comments_to_test, parsed_comments)
-
     def test_parse_comments(self):
         """Given a list of comments, test all the elements about to be parsed"""
         page = read_file('data/askbot/html_148_comments_answer_2_openstack.html')
@@ -185,53 +171,6 @@ class TestAskbotParser(unittest.TestCase):
 
         pages = AskbotParser.parse_number_of_html_pages(bs_question)
         self.assertEqual(pages, 4)
-
-    def test_parse_comment_author(self):
-        """Get the user id and username of the author of the comment"""
-        page = read_file('data/askbot/html_7893_answer_3_updated.html')
-
-        html_question = [page]
-
-        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
-        question = bs_question.select("div.js-question")
-        comments = question[0].select("div.comment")
-        author = AskbotParser.parse_comment_author(comments[0])
-        self.assertEqual(author['id'], "625")
-        self.assertEqual(author['username'], "todofixthis")
-
-    def test_parse_answer_container(self):
-        """Test answer container parsing. The answer container can be one or two elements,
-        one containing the user (or wiki) info, and one optional one containing information
-        regarding updates in the answer."""
-
-        page = read_file('data/askbot/html_7893_answer_3_updated.html')
-
-        html_question = [page]
-
-        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
-
-        bs_answers = bs_question.select("div.answer")
-        body = bs_answers[2].select("div.post-body")
-        update_info = body[0].select("div.post-update-info")
-        answer_container = AskbotParser.parse_answer_container(update_info)
-        expected_answered_by = {
-                                'country': 'Germany',
-                                'reputation': '283',
-                                'id': '707',
-                                'username': 'Jtrain',
-                                'badges': 'Jtrain has 9 gold badges, 5 silver badges and 16 bronze badges'
-                                }
-        expected_updated_by = {
-                               'country': 'Chile',
-                               'reputation': '1242',
-                               'id': '625',
-                               'username': 'todofixthis',
-                               'badges': 'todofixthis has 35 gold badges, 28 silver badges and 50 bronze badges'
-                               }
-
-        self.assertEqual(answer_container['answered_by'], expected_answered_by)
-        self.assertEqual(answer_container['updated_by'], expected_updated_by)
-
 
     def test_parse_user_info(self):
         """Test user info parsing. User info can be a wiki post or a user. When a user, some

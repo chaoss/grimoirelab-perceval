@@ -96,6 +96,51 @@ class AskbotParser:
 
         :returns: a list with the answers
         """
+        def parse_answer_comments(bs_answer):
+            """Parse the comments of a given HTML answer.
+
+            The method parses the comments available for each answer.
+
+            :param bs_answer: beautiful soup answer element
+
+            :returns: a list with the desired comments
+            """
+            comments = bs_answer.select("div.comment")
+            answer_comments = AskbotParser.parse_comments(comments)
+            return answer_comments
+
+        def parse_answer_container(update_info):
+            """Parse the answer info container of a given HTML question.
+
+            The method parses the information available in the answer information
+            container. The container can have up to 2 elements: the first one
+            contains the information related with the user who generated the question
+            and the date (if any). The second one contains the date of the updated,
+            and the user who updated it (if not the same who generated the question).
+
+            :param bs_question: beautiful soup answer container element
+
+            :returns: an object with the parsed information
+            """
+            container_info = {}
+            created = update_info[0]
+            answered_at = created.abbr.attrs["title"]
+            # Convert date to UNIX timestamp
+            container_info['added_at'] = str(str_to_datetime(answered_at).timestamp())
+            container_info['answered_by'] = AskbotParser.parse_user_info(created)
+            try:
+                update_info[1]
+            except IndexError:
+                pass
+            else:
+                updated = update_info[1]
+                updated_at = updated.abbr.attrs["title"]
+                # Convert date to UNIX timestamp
+                container_info['updated_at'] = str(str_to_datetime(updated_at).timestamp())
+                if AskbotParser.parse_user_info(updated):
+                    container_info['updated_by'] = AskbotParser.parse_user_info(updated)
+            return container_info
+
         answer_list = []
         # Select all the answers
         bs_answers = bs_question.select("div.answer")
@@ -103,12 +148,12 @@ class AskbotParser:
             answer_id = bs_answer.attrs["data-post-id"]
             votes_element = bs_answer.select("div.vote-number")[0].text
             # Select all the comments in the answer
-            comments = AskbotParser.parse_answer_comments(bs_answer)
+            comments = parse_answer_comments(bs_answer)
             # Select the body of the answer
             body = bs_answer.select("div.post-body")
             # Get the user information container and parse it
             update_info = body[0].select("div.post-update-info")
-            answer_container = AskbotParser.parse_answer_container(update_info)
+            answer_container = parse_answer_container(update_info)
             # Remove the update-info-container div to be able to get the body
             body[0].div.extract().select("div.post-update-info-container")
             # Override the body with a clean one
@@ -126,53 +171,6 @@ class AskbotParser:
         return answer_list
 
     @staticmethod
-    def parse_answer_comments(bs_answer):
-        """Parse the comments of a given HTML answer.
-
-        The method parses the comments available for each answer.
-
-        :param bs_answer: beautiful soup answer element
-
-        :returns: a list with the desired comments
-        """
-        comments = bs_answer.select("div.comment")
-        answer_comments = AskbotParser.parse_comments(comments)
-        return answer_comments
-
-    @staticmethod
-    def parse_answer_container(update_info):
-        """Parse the answer info container of a given HTML question.
-
-        The method parses the information available in the answer information
-        container. The container can have up to 2 elements: the first one
-        contains the information related with the user who generated the question
-        and the date (if any). The second one contains the date of the updated,
-        and the user who updated it (if not the same who generated the question).
-
-        :param bs_question: beautiful soup answer container element
-
-        :returns: an object with the parsed information
-        """
-        container_info = {}
-        created = update_info[0]
-        answered_at = created.abbr.attrs["title"]
-        # Convert date to UNIX timestamp
-        container_info['added_at'] = str(str_to_datetime(answered_at).timestamp())
-        container_info['answered_by'] = AskbotParser.parse_user_info(created)
-        try:
-            update_info[1]
-        except IndexError:
-            pass
-        else:
-            updated = update_info[1]
-            updated_at = updated.abbr.attrs["title"]
-            # Convert date to UNIX timestamp
-            container_info['updated_at'] = str(str_to_datetime(updated_at).timestamp())
-            if AskbotParser.parse_user_info(updated):
-                container_info['updated_by'] = AskbotParser.parse_user_info(updated)
-        return container_info
-
-    @staticmethod
     def parse_comments(comments):
         """Parse the HTML comments information of a given list of them.
 
@@ -182,11 +180,25 @@ class AskbotParser:
 
         :returns: a list with the parsed comments
         """
+        def parse_comment_author(comment):
+            """Parse the author information from an HTML comment.
+
+            The method parses the user information available inside a comment.
+
+            :param comment: beautiful soup comment
+
+            :returns: an object with the user information
+            """
+            username = comment.select("a.author")[0].text
+            href = comment.select("a.author")[0].attrs["href"]
+            user_id = re.search('\d+', href).group(0)
+            return {'id': user_id, 'username': username}
+
         comments_list = []
         for comment in comments:
             added_at = comment.select("abbr.timeago")[0].attrs["title"]
             element = {'added_at': str(str_to_datetime(added_at).timestamp()),
-                       'author': AskbotParser.parse_comment_author(comment),
+                       'author': parse_comment_author(comment),
                        'id': comment.attrs["data-comment-id"],
                        'summary': comment.select("div.comment-body")[0].get_text(strip=True),
                        'score': comment.select("div.upvote")[0].text
@@ -208,21 +220,6 @@ class AskbotParser:
             return 1
         else:
             return int(bs_question.select('div.paginator')[0].attrs['data-num-pages'])
-
-    @staticmethod
-    def parse_comment_author(comment):
-        """Parse the author information from an HTML comment.
-
-        The method parses the user information available inside a comment.
-
-        :param comment: beautiful soup comment
-
-        :returns: an object with the user information
-        """
-        username = comment.select("a.author")[0].text
-        href = comment.select("a.author")[0].attrs["href"]
-        user_id = re.search('\d+', href).group(0)
-        return {'id': user_id, 'username': username}
 
     @staticmethod
     def parse_user_info(update_info):
