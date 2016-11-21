@@ -507,43 +507,6 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(questions[0]['data']['id'], 2488)
         self.assertEqual(len(questions), 1)
 
-    @httpretty.activate
-    def test_fetch_html_question(self):
-        """Test whether a question with pagination is retrieved correctly"""
-        question_api = read_file('data/askbot/api_24396_openstack.json')
-        question_html_1 = read_file('data/askbot/html_24396_multipage_openstack.html')
-        question_html_2 = read_file('data/askbot/html_24396_multipage_2_openstack.html')
-        question_html_3 = read_file('data/askbot/html_24396_multipage_3_openstack.html')
-        question_html_4 = read_file('data/askbot/html_24396_multipage_4_openstack.html')
-
-        httpretty.register_uri(httpretty.GET,
-                               ASKBOT_QUESTIONS_API_URL,
-                               body=question_api, status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               ASKBOT_QUESTION_24396_URL,
-                               body=question_html_1, status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               ASKBOT_QUESTION_24396_URL,
-                               body=question_html_2, status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               ASKBOT_QUESTION_24396_URL,
-                               body=question_html_3, status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               ASKBOT_QUESTION_24396_URL,
-                               body=question_html_4, status=200)
-
-        backend = Askbot(ASKBOT_URL)
-
-        question_api_json = json.loads(question_api)
-
-        html_question_items = backend.fetch_html_question(question_api_json)
-
-        self.assertEqual(len(html_question_items), 4)
-
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 

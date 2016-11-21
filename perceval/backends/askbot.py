@@ -345,7 +345,7 @@ class Askbot(Backend):
             for question in questions:
                 updated_at = int(question['last_activity_at'])
                 if updated_at > from_date:
-                    bs_question = self.fetch_html_question(question)
+                    bs_question = self.__fetch_question(question)
                     logger.debug("Fetching HTML question %s", question['id'])
                     question = self.ab_parser.parse_question(question, bs_question)
                     yield question
@@ -355,7 +355,7 @@ class Askbot(Backend):
 
             npages = npages + 1
 
-    def fetch_html_question(self, question):
+    def __fetch_question(self, question):
         """Fetch an Askbot HTML question body.
 
         The method fetchs the HTML question retrieving the
