@@ -20,11 +20,12 @@
 #     Alberto Martín <alberto.martin@bitergia.com>
 #
 
-import requests
-import json
-import re
+
 import bs4
+import json
 import logging
+import re
+import requests
 
 from ..backend import Backend, metadata, BackendCommand
 from ..utils import urljoin, DEFAULT_DATETIME, str_to_datetime
@@ -33,17 +34,20 @@ logger = logging.getLogger(__name__)
 
 
 class AskbotParser:
+    """Askbot HTML parser.
+
+    This class parses a plain HTML document, converting questions, answers,
+    comments and user information into dict items.
+    """
 
     def parse_question(self, question, html_question):
-        """Parse an Askbot API raw response.
+        """Parse an Askbot HTML response.
 
-        The method parses the API question elements and adds
-        the extra information of the HTML question
+        The method parses the HTML question elements.
 
-        :param question: item with the API question
         :param html_question: HTML raw question
 
-        :returns: a generator of questions
+        :returns: a dict item with the parsed question information
         """
         # Initial case
         bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
@@ -166,6 +170,38 @@ class AskbotParser:
         answer_comments = self.parse_comments(comments)
         return answer_comments
 
+    def parse_answer_container(self, update_info):
+        """Parse the answer info container of a given HTML question.
+
+        The method parses the information available in the answer information
+        container. The container can have up to 2 elements: the first one
+        contains the information related with the user who generated the question
+        and the date (if any). The second one contains the date of the updated,
+        and the user who updated it (if not the same who generated the question).
+
+        :param bs_question: beautiful soup answer container element
+
+        :returns: an object with the parsed information
+        """
+        container_info = {}
+        created = update_info[0]
+        answered_at = created.abbr.attrs["title"]
+        # Convert date to UNIX timestamp
+        container_info['added_at'] = str(str_to_datetime(answered_at).timestamp())
+        container_info['answered_by'] = self.parse_user_info(created)
+        try:
+            update_info[1]
+        except IndexError:
+            pass
+        else:
+            updated = update_info[1]
+            updated_at = updated.abbr.attrs["title"]
+            # Convert date to UNIX timestamp
+            container_info['updated_at'] = str(str_to_datetime(updated_at).timestamp())
+            if self.parse_user_info(updated):
+                container_info['updated_by'] = self.parse_user_info(updated)
+        return container_info
+
     def parse_comments(self, comments):
         """Parse the HTML comments information of a given list of them.
 
@@ -217,38 +253,6 @@ class AskbotParser:
         user_id = re.search('\d+', href).group(0)
         return {'id': user_id, 'username': username}
 
-    def parse_answer_container(self, update_info):
-        """Parse the answer info container of a given HTML question.
-
-        The method parses the information available in the answer information
-        container. The container can have up to 2 elements: the first one
-        contains the information related with the user who generated the question
-        and the date (if any). The second one contains the date of the updated,
-        and the user who updated it (if not the same who generated the question).
-
-        :param bs_question: beautiful soup answer container element
-
-        :returns: an object with the parsed information
-        """
-        container_info = {}
-        created = update_info[0]
-        answered_at = created.abbr.attrs["title"]
-        # Convert date to UNIX timestamp
-        container_info['added_at'] = str(str_to_datetime(answered_at).timestamp())
-        container_info['answered_by'] = self.parse_user_info(created)
-        try:
-            update_info[1]
-        except IndexError:
-            pass
-        else:
-            updated = update_info[1]
-            updated_at = updated.abbr.attrs["title"]
-            # Convert date to UNIX timestamp
-            container_info['updated_at'] = str(str_to_datetime(updated_at).timestamp())
-            if self.parse_user_info(updated):
-                container_info['updated_by'] = self.parse_user_info(updated)
-        return container_info
-
     @staticmethod
     def parse_user_info(update_info):
         """Parse the user information of a given HTML container.
@@ -297,8 +301,7 @@ class Askbot(Backend):
     will be set as the origin of the data.
 
     :param url: Askbot site URL
-    :param origin: identifier of the repository; when `None` or an
-        empty string are given, it will be set to `url` value
+    :param tag: label used to mark the data
     """
     version = '0.1.0'
 
@@ -352,51 +355,6 @@ class Askbot(Backend):
 
             npages = npages + 1
 
-    @staticmethod
-    def metadata_id(item):
-        """Extracts the identifier from an Askbot question item."""
-
-        return str(item['id'])
-
-    @staticmethod
-    def metadata_updated_on(item):
-        """Extracts the update time from an Askbot item.
-
-        The timestamp is extracted from 'last_activity_at' field.
-        This date is a UNIX timestamp but needs to be converted to
-        a float value.
-
-        :param item: item generated by the backend
-
-        :returns: a UNIX timestamp
-        """
-        return float(item['last_activity_at'])
-
-    @staticmethod
-    def metadata_category(item):
-        """Extracts the category from an Askbot item.
-
-        This backend only generates one type of item which is
-        'question'.
-        """
-        return 'question'
-
-    @classmethod
-    def has_resuming(cls):
-        """Returns whether it supports to resume the fetch process.
-
-        :returns: this backend supports items resuming
-        """
-        return True
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend supports items cache
-        """
-        return False
-
     def fetch_html_question(self, question):
         """Fetch an Askbot HTML question body.
 
@@ -426,6 +384,51 @@ class Askbot(Backend):
 
         return html_question_items
 
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @staticmethod
+    def metadata_category(item):
+        """Extracts the category from an Askbot item.
+
+        This backend only generates one type of item which is
+        'question'.
+        """
+        return 'question'
+
+    @staticmethod
+    def metadata_id(item):
+        """Extracts the identifier from an Askbot question item."""
+
+        return str(item['id'])
+
+    @staticmethod
+    def metadata_updated_on(item):
+        """Extracts the update time from an Askbot item.
+
+        The timestamp is extracted from 'last_activity_at' field.
+        This date is a UNIX timestamp but needs to be converted to
+        a float value.
+
+        :param item: item generated by the backend
+
+        :returns: a UNIX timestamp
+        """
+        return float(item['last_activity_at'])
+
 
 class AskbotClient:
     """Askbot client.
@@ -434,7 +437,6 @@ class AskbotClient:
     kind of data from an Askbot site.
 
     :param base_url: URL of the Askbot site
-    :param max_questions
 
     :raises HTTPError: when an error occurs doing the request
     """
@@ -446,21 +448,6 @@ class AskbotClient:
 
     def __init__(self, base_url):
         self.base_url = base_url
-
-    def __call(self, path, params=None):
-        """Retrieve all the questions.
-
-        :param path: path of the url
-        :param params: dict with the HTTP parameters needed to run
-            the given command
-        """
-
-        url = urljoin(self.base_url, path)
-
-        req = requests.get(url, params=params)
-        req.raise_for_status()
-
-        return req.text
 
     def get_api_questions(self, page=1):
         """Retrieve a question page using the API.
@@ -479,6 +466,7 @@ class AskbotClient:
         """Retrieve a raw HTML question and all it's information.
 
         :param question_id: question identifier
+        :param page: page to retrieve
         """
         path = urljoin(self.HTML_QUESTION, question_id)
         params = {
@@ -487,6 +475,21 @@ class AskbotClient:
                  }
         response = self.__call(path, params)
         return response
+
+    def __call(self, path, params=None):
+        """Retrieve all the questions.
+
+        :param path: path of the url
+        :param params: dict with the HTTP parameters needed to run
+            the given command
+        """
+
+        url = urljoin(self.base_url, path)
+
+        req = requests.get(url, params=params)
+        req.raise_for_status()
+
+        return req.text
 
 
 class AskbotCommand(BackendCommand):
@@ -503,10 +506,10 @@ class AskbotCommand(BackendCommand):
         self.backend = Askbot(self.url, tag=self.tag)
 
     def run(self):
-        """Fetch and print the bugs.
+        """Fetch and print the questions.
 
-        This method runs the backend to fetch the bugs from the given
-        repository. Bugs are converted to JSON objects and printed to the
+        This method runs the backend to fetch the questions from the given
+        site. Questions are converted to JSON objects and printed to the
         defined output.
         """
         questions = self.backend.fetch(from_date=self.from_date)
