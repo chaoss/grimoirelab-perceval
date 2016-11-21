@@ -28,7 +28,7 @@ import re
 import requests
 
 from ..backend import Backend, metadata, BackendCommand
-from ..utils import urljoin, DEFAULT_DATETIME, str_to_datetime
+from ..utils import urljoin, DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
 
 logger = logging.getLogger(__name__)
 
@@ -328,7 +328,7 @@ class Askbot(Backend):
         if not from_date:
             from_date = DEFAULT_DATETIME
 
-        from_date = from_date.timestamp()
+        from_date = datetime_to_utc(from_date).timestamp()
 
         npages = 1
         next_request = True
