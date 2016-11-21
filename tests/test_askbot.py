@@ -61,26 +61,12 @@ class TestAskbotParser(unittest.TestCase):
         page_3 = read_file('data/askbot/html_24396_multipage_3_openstack.html')
         page_4 = read_file('data/askbot/html_24396_multipage_4_openstack.html')
 
-        question_api = json.loads(read_file('data/askbot/api_24396_openstack.json'))
-
         html_question = [page_1, page_2, page_3, page_4]
 
-        parsed_question = abparser.parse_question(question_api, html_question)
+        parsed_question = abparser.parse_question(html_question)
 
-        self.assertEqual(len(parsed_question['answers']), len(parsed_question['answer_ids']))
-
-        self.assertIsNotNone(parsed_question['added_at'])
-        self.assertIsNotNone(parsed_question['answer_count'])
         self.assertIsNotNone(parsed_question['author'])
-        self.assertIsNotNone(parsed_question['id'])
-        self.assertIsNotNone(parsed_question['last_activity_at'])
-        self.assertIsNotNone(parsed_question['last_activity_by'])
-        self.assertIsNotNone(parsed_question['score'])
-        self.assertIsNotNone(parsed_question['summary'])
-        self.assertIsNotNone(parsed_question['tags'])
-        self.assertIsNotNone(parsed_question['title'])
-        self.assertIsNotNone(parsed_question['url'])
-        self.assertIsNotNone(parsed_question['view_count'])
+        self.assertIsNotNone(parsed_question['answers'])
 
     def test_parse_question_container(self):
         """Test parse question container. This tests the full case when a question is, apart from
@@ -169,7 +155,7 @@ class TestAskbotParser(unittest.TestCase):
         bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
         bs_answers = bs_question.select("div.answer")
         comments = bs_answers[1].select("div.comment")
-        parsed_comments = AskbotParser.parse_comments(AskbotParser, comments)
+        parsed_comments = AskbotParser.parse_comments(comments)
         expected_comment_0 = {
                               'summary': "HI, are there any guide on debugging with eclipse and pydev with the latest branch. I have tried commented out eventlet.monkeypatch(os=False) and replaced it with eventlet.monkeypatch(all=False,socket=True,time=True,os=False) and added import sys;sys.path.append('path') but breakpoints are ignored",
                               'author': {
@@ -243,7 +229,7 @@ class TestAskbotParser(unittest.TestCase):
         bs_answers = bs_question.select("div.answer")
         body = bs_answers[2].select("div.post-body")
         update_info = body[0].select("div.post-update-info")
-        answer_container = AskbotParser.parse_answer_container(AskbotParser, update_info)
+        answer_container = AskbotParser.parse_answer_container(update_info)
         expected_answered_by = {
                                 'country': 'Germany',
                                 'reputation': '283',
@@ -456,11 +442,13 @@ class TestAskbotBackend(unittest.TestCase):
 
         questions = [question for question in backend.fetch(from_date=None)]
 
+        self.assertEqual(len(questions[0]['data']['answers']), len(questions[0]['data']['answer_ids']))
         self.assertEqual(questions[0]['tag'], 'http://example.com')
         self.assertEqual(questions[0]['uuid'], '3fb5f945a0dd223c60218a98ad35bad6043f9f5f')
         self.assertEqual(questions[0]['updated_on'], 1408116902.0)
         self.assertEqual(questions[0]['data']['id'], 2488)
         self.assertEqual(questions[0]['category'], 'question')
+        self.assertEqual(len(questions[1]['data']['answers']), len(questions[1]['data']['answer_ids']))
         self.assertEqual(questions[1]['tag'], 'http://example.com')
         self.assertEqual(questions[1]['uuid'], 'ecc1320265e400edb28700cc3d02efc6d76410be')
         self.assertEqual(questions[1]['updated_on'], 1349928216.0)

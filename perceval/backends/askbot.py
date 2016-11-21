@@ -40,7 +40,8 @@ class AskbotParser:
     comments and user information into dict items.
     """
 
-    def parse_question(self, question, html_question):
+    @staticmethod
+    def parse_question(html_question):
         """Parse an Askbot HTML response.
 
         The method parses the HTML question elements.
@@ -49,17 +50,18 @@ class AskbotParser:
 
         :returns: a dict item with the parsed question information
         """
+        question_object = {}
         # Initial case
         bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
         # Parse the user info from the soup container
-        question_container = self.parse_question_container(bs_question)
+        question_container = AskbotParser.parse_question_container(bs_question)
         # Add the info to the question object
-        question.update(question_container)
+        question_object.update(question_container)
         # Add the comments of the question (if any)
-        if self.parse_question_comments(bs_question):
-            question['comments'] = self.parse_question_comments(bs_question)
+        if AskbotParser.parse_question_comments(bs_question):
+            question_object['comments'] = AskbotParser.parse_question_comments(bs_question)
 
-        answers = self.parse_answers(bs_question)
+        answers = AskbotParser.parse_answers(bs_question)
 
         for page in range(2, len(html_question)+1):
             position = page - 1
@@ -69,13 +71,14 @@ class AskbotParser:
                 continue
             else:
                 bs_question = bs4.BeautifulSoup(html_question[position], "html.parser")
-                answers.extend(self.parse_answers(bs_question))
+                answers.extend(AskbotParser.parse_answers(bs_question))
 
         if len(answers) != 0:
-            question['answers'] = answers
-        return question
+            question_object['answers'] = answers
+        return question_object
 
-    def parse_question_container(self, bs_question):
+    @staticmethod
+    def parse_question_container(bs_question):
         """Parse the question info container of a given HTML question.
 
         The method parses the information available in the question information
@@ -92,19 +95,20 @@ class AskbotParser:
         question = bs_question.select("div.js-question")
         container = question[0].select("div.post-update-info")
         created = container[0]
-        container_info['author'] = self.parse_user_info(created)
+        container_info['author'] = AskbotParser.parse_user_info(created)
         try:
             container[1]
         except IndexError:
             pass
         else:
             updated = container[1]
-            if self.parse_user_info(updated):
-                container_info['updated_by'] = self.parse_user_info(updated)
+            if AskbotParser.parse_user_info(updated):
+                container_info['updated_by'] = AskbotParser.parse_user_info(updated)
 
         return container_info
 
-    def parse_question_comments(self, bs_question):
+    @staticmethod
+    def parse_question_comments(bs_question):
         """Parse the comments of a given HTML question.
 
         The method parses the comments available for each question.
@@ -115,10 +119,11 @@ class AskbotParser:
         """
         question = bs_question.select("div.js-question")
         comments = question[0].select("div.comment")
-        question_comments = self.parse_comments(comments)
+        question_comments = AskbotParser.parse_comments(comments)
         return question_comments
 
-    def parse_answers(self, bs_question):
+    @staticmethod
+    def parse_answers(bs_question):
         """Parse the answers of a given HTML question.
 
         The method parses the answers related with a given HTML question,
@@ -135,12 +140,12 @@ class AskbotParser:
             answer_id = bs_answer.attrs["data-post-id"]
             votes_element = bs_answer.select("div.vote-number")[0].text
             # Select all the comments in the answer
-            comments = self.parse_answer_comments(bs_answer)
+            comments = AskbotParser.parse_answer_comments(bs_answer)
             # Select the body of the answer
             body = bs_answer.select("div.post-body")
             # Get the user information container and parse it
             update_info = body[0].select("div.post-update-info")
-            answer_container = self.parse_answer_container(update_info)
+            answer_container = AskbotParser.parse_answer_container(update_info)
             # Remove the update-info-container div to be able to get the body
             body[0].div.extract().select("div.post-update-info-container")
             # Override the body with a clean one
@@ -157,7 +162,8 @@ class AskbotParser:
             answer_list.append(answer)
         return answer_list
 
-    def parse_answer_comments(self, bs_answer):
+    @staticmethod
+    def parse_answer_comments(bs_answer):
         """Parse the comments of a given HTML answer.
 
         The method parses the comments available for each answer.
@@ -167,10 +173,11 @@ class AskbotParser:
         :returns: a list with the desired comments
         """
         comments = bs_answer.select("div.comment")
-        answer_comments = self.parse_comments(comments)
+        answer_comments = AskbotParser.parse_comments(comments)
         return answer_comments
 
-    def parse_answer_container(self, update_info):
+    @staticmethod
+    def parse_answer_container(update_info):
         """Parse the answer info container of a given HTML question.
 
         The method parses the information available in the answer information
@@ -188,7 +195,7 @@ class AskbotParser:
         answered_at = created.abbr.attrs["title"]
         # Convert date to UNIX timestamp
         container_info['added_at'] = str(str_to_datetime(answered_at).timestamp())
-        container_info['answered_by'] = self.parse_user_info(created)
+        container_info['answered_by'] = AskbotParser.parse_user_info(created)
         try:
             update_info[1]
         except IndexError:
@@ -198,11 +205,12 @@ class AskbotParser:
             updated_at = updated.abbr.attrs["title"]
             # Convert date to UNIX timestamp
             container_info['updated_at'] = str(str_to_datetime(updated_at).timestamp())
-            if self.parse_user_info(updated):
-                container_info['updated_by'] = self.parse_user_info(updated)
+            if AskbotParser.parse_user_info(updated):
+                container_info['updated_by'] = AskbotParser.parse_user_info(updated)
         return container_info
 
-    def parse_comments(self, comments):
+    @staticmethod
+    def parse_comments(comments):
         """Parse the HTML comments information of a given list of them.
 
         The method parses the information available inside each comment.
@@ -215,7 +223,7 @@ class AskbotParser:
         for comment in comments:
             added_at = comment.select("abbr.timeago")[0].attrs["title"]
             element = {'added_at': str(str_to_datetime(added_at).timestamp()),
-                       'author': self.parse_comment_author(comment),
+                       'author': AskbotParser.parse_comment_author(comment),
                        'id': comment.attrs["data-comment-id"],
                        'summary': comment.select("div.comment-body")[0].get_text(strip=True),
                        'score': comment.select("div.upvote")[0].text
@@ -347,7 +355,8 @@ class Askbot(Backend):
                 if updated_at > from_date:
                     bs_question = self.__fetch_question(question)
                     logger.debug("Fetching HTML question %s", question['id'])
-                    question = self.ab_parser.parse_question(question, bs_question)
+                    html_question = self.ab_parser.parse_question(bs_question)
+                    question.update(html_question)
                     yield question
 
             if npages == tpages:
