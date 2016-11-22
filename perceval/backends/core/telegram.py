@@ -27,10 +27,10 @@ import os
 
 import requests
 
-from ..backend import Backend, BackendCommand, metadata
-from ..cache import Cache
-from ..errors import CacheError
-from ..utils import urljoin
+from ...backend import Backend, BackendCommand, metadata
+from ...cache import Cache
+from ...errors import CacheError
+from ...utils import urljoin
 
 
 logger = logging.getLogger(__name__)

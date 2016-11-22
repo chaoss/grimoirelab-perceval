@@ -32,9 +32,9 @@ import posixpath
 import requests
 
 from .mbox import MailingList, MBox
-from ..backend import BackendCommand, metadata
-from ..errors import RepositoryError
-from ..utils import urljoin
+from ...backend import BackendCommand, metadata
+from ...errors import RepositoryError
+from ...utils import urljoin
 
 
 logger = logging.getLogger(__name__)

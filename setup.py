@@ -19,19 +19,19 @@
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
+#     Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
 #
 
-# To use a consistent encoding
 import codecs
-from os import path
+import os.path
 import re
 
-# Always prefer setuptools over distutils
 from setuptools import setup
 
-here = path.abspath(path.dirname(__file__))
-readme_md = path.join(here, 'README.md')
-version_py = path.join(here, 'perceval', '_version.py')
+
+here = os.path.abspath(os.path.dirname(__file__))
+readme_md = os.path.join(here, 'README.md')
+version_py = os.path.join(here, 'perceval', '_version.py')
 
 # Pypi wants the description to be in reStrcuturedText, but
 # we have it in Markdown. So, let's convert formats.
@@ -50,6 +50,7 @@ with codecs.open(version_py, 'r', encoding='utf-8') as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                         fd.read(), re.MULTILINE).group(1)
 
+
 setup(name="perceval",
       description="Fetch data from software repositories",
       long_description=long_description,
@@ -66,8 +67,20 @@ setup(name="perceval",
         'Programming Language :: Python :: 3'
       ],
       keywords="development repositories analytics git github bugzilla jira jenkins",
-      packages=['perceval', 'perceval.backends'],
-      install_requires=['python-dateutil>=2.0.0', 'requests>=2.7.0', 'beautifulsoup4>=4.3.2'],
-      scripts=["bin/perceval"],
-      zip_safe=False
-      )
+      packages=[
+        'perceval',
+        'perceval.backends',
+        'perceval.backends.core'
+      ],
+      namespaces=[
+        'perceval.backends'
+      ],
+      install_requires=[
+        'python-dateutil>=2.0.0',
+        'requests>=2.7.0',
+        'beautifulsoup4>=4.3.2'
+      ],
+      scripts=[
+        'bin/perceval'
+      ],
+      zip_safe=False)

@@ -33,11 +33,11 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.errors import RepositoryError
-from perceval.backends.gmane import (Gmane,
-                                     GmaneClient,
-                                     GmaneCommand,
-                                     GmaneMailingList)
-from perceval.backends.mbox import MailingList
+from perceval.backends.core.gmane import (Gmane,
+                                          GmaneClient,
+                                          GmaneCommand,
+                                          GmaneMailingList)
+from perceval.backends.core.mbox import MailingList
 
 
 GMANE_LIST_URL = 'http://list.gmane.org/mylist@example.com'

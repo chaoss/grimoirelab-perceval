@@ -35,10 +35,10 @@ import gzip
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.mbox import (MBox,
-                                    MBoxCommand,
-                                    MBoxArchive,
-                                    MailingList)
+from perceval.backends.core.mbox import (MBox,
+                                         MBoxCommand,
+                                         MBoxArchive,
+                                         MailingList)
 
 
 class TestBaseMBox(unittest.TestCase):

@@ -38,7 +38,10 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.github import GitHub, GitHubCommand, GitHubClient, RateLimitError
+from perceval.backends.core.github import (GitHub,
+                                           GitHubCommand,
+                                           GitHubClient,
+                                           RateLimitError)
 
 
 GITHUB_API_URL = "https://api.github.com"

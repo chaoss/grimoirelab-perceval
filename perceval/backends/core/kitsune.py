@@ -27,13 +27,12 @@ import os.path
 
 import requests
 
-from ..backend import Backend, BackendCommand, metadata
-from ..cache import Cache
-from ..errors import CacheError, ParseError
-
-from ..utils import (DEFAULT_DATETIME,
-                     str_to_datetime,
-                     urljoin)
+from ...backend import Backend, BackendCommand, metadata
+from ...cache import Cache
+from ...errors import CacheError, ParseError
+from ...utils import (DEFAULT_DATETIME,
+                      str_to_datetime,
+                      urljoin)
 
 
 logger = logging.getLogger(__name__)

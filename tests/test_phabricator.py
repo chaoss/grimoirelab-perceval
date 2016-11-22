@@ -35,10 +35,10 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.phabricator import (Phabricator,
-                                           PhabricatorCommand,
-                                           ConduitClient,
-                                           ConduitError)
+from perceval.backends.core.phabricator import (Phabricator,
+                                                PhabricatorCommand,
+                                                ConduitClient,
+                                                ConduitError)
 
 PHABRICATOR_URL = 'http://example.com'
 PHABRICATOR_API_URL = PHABRICATOR_URL + '/api'

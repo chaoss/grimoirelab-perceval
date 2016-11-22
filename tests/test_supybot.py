@@ -31,7 +31,9 @@ import unittest
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.supybot import Supybot, SupybotCommand, SupybotParser
+from perceval.backends.core.supybot import (Supybot,
+                                            SupybotCommand,
+                                            SupybotParser)
 from perceval.errors import ParseError
 
 

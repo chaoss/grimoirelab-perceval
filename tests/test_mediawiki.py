@@ -39,7 +39,9 @@ from dateutil import parser
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.mediawiki import MediaWiki, MediaWikiCommand, MediaWikiClient
+from perceval.backends.core.mediawiki import (MediaWiki,
+                                              MediaWikiCommand,
+                                              MediaWikiClient)
 from perceval.utils import str_to_datetime, datetime_to_utc
 
 MEDIAWIKI_SERVER_URL = 'http://example.com'

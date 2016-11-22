@@ -38,9 +38,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.stackexchange import (StackExchange,
-                                             StackExchangeCommand,
-                                             StackExchangeClient)
+from perceval.backends.core.stackexchange import (StackExchange,
+                                                  StackExchangeCommand,
+                                                  StackExchangeClient)
 
 
 VERSION_API = '/2.2'

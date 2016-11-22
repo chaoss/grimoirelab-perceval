@@ -32,10 +32,10 @@ import bs4
 import dateutil.tz
 import requests
 
-from ..backend import Backend, BackendCommand, metadata
-from ..cache import Cache
-from ..errors import BackendError, CacheError, ParseError
-from ..utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
+from ...backend import Backend, BackendCommand, metadata
+from ...cache import Cache
+from ...errors import BackendError, CacheError, ParseError
+from ...utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
 
 MAX_BUGS = 200 # Maximum number of bugs per query

@@ -28,13 +28,13 @@ import os.path
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-from ..backend import Backend, BackendCommand, metadata
-from ..cache import Cache
-from ..errors import CacheError
-from ..utils import (DEFAULT_DATETIME,
-                     datetime_to_utc,
-                     str_to_datetime,
-                     urljoin)
+from ...backend import Backend, BackendCommand, metadata
+from ...cache import Cache
+from ...errors import CacheError
+from ...utils import (DEFAULT_DATETIME,
+                      datetime_to_utc,
+                      str_to_datetime,
+                      urljoin)
 
 MAX_ISSUES = 100  # Maximum number of issues per query
 

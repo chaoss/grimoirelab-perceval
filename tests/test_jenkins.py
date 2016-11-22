@@ -36,7 +36,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.jenkins import Jenkins, JenkinsCommand, JenkinsClient
+from perceval.backends.core.jenkins import (Jenkins,
+                                            JenkinsCommand,
+                                            JenkinsClient)
 
 
 JENKINS_SERVER_URL = 'http://example.com/ci'
