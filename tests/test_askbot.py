@@ -61,9 +61,7 @@ class TestAskbotParser(unittest.TestCase):
 
         html_question = [page]
 
-        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
-
-        container_info = abparser.parse_question_container(bs_question)
+        container_info = abparser.parse_question_container(html_question[0])
 
         expected_container = {
                               'author': {
@@ -90,8 +88,7 @@ class TestAskbotParser(unittest.TestCase):
 
         html_question = [page]
 
-        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
-        parsed_comments = abparser.parse_question_comments(bs_question)
+        parsed_comments = abparser.parse_question_comments(html_question[0])
         self.assertEqual(len(parsed_comments), 3)
         for parsed_comment in parsed_comments:
             self.assertIsNotNone(parsed_comment['id'])
@@ -108,8 +105,7 @@ class TestAskbotParser(unittest.TestCase):
 
         html_question = [page]
 
-        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
-        parsed_answers = abparser.parse_answers(bs_question)
+        parsed_answers = abparser.parse_answers(html_question[0])
         self.assertEqual(len(parsed_answers), 10)
         for parsed_answer in parsed_answers:
             self.assertIsNotNone(parsed_answer['id'])
@@ -167,9 +163,7 @@ class TestAskbotParser(unittest.TestCase):
 
         html_question = [page]
 
-        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
-
-        pages = AskbotParser.parse_number_of_html_pages(bs_question)
+        pages = AskbotParser.parse_number_of_html_pages(html_question[0])
         self.assertEqual(pages, 4)
 
     def test_parse_user_info(self):

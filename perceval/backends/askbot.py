@@ -41,7 +41,7 @@ class AskbotParser:
     """
 
     @staticmethod
-    def parse_question_container(bs_question):
+    def parse_question_container(html_question):
         """Parse the question info container of a given HTML question.
 
         The method parses the information available in the question information
@@ -50,11 +50,12 @@ class AskbotParser:
         and the date (if any). The second one contains the date of the updated,
         and the user who updated it (if not the same who generated the question).
 
-        :param bs_question: beautiful soup question element
+        :param html_question: raw HTML question element
 
         :returns: an object with the parsed information
         """
         container_info = {}
+        bs_question = bs4.BeautifulSoup(html_question, "html.parser")
         question = bs_question.select("div.js-question")
         container = question[0].select("div.post-update-info")
         created = container[0]
@@ -71,28 +72,29 @@ class AskbotParser:
         return container_info
 
     @staticmethod
-    def parse_question_comments(bs_question):
+    def parse_question_comments(html_question):
         """Parse the comments of a given HTML question.
 
         The method parses the comments available for each question.
 
-        :param bs_question: beautiful soup question element
+        :param html_question: raw HTML question element
 
         :returns: a list with the desired comments
         """
+        bs_question = bs4.BeautifulSoup(html_question, "html.parser")
         question = bs_question.select("div.js-question")
         comments = question[0].select("div.comment")
         question_comments = AskbotParser.parse_comments(comments)
         return question_comments
 
     @staticmethod
-    def parse_answers(bs_question):
+    def parse_answers(html_question):
         """Parse the answers of a given HTML question.
 
         The method parses the answers related with a given HTML question,
         as well as all the comments related to the answer.
 
-        :param bs_question: beautiful soup question element
+        :param html_question: raw HTML question element
 
         :returns: a list with the answers
         """
@@ -118,7 +120,7 @@ class AskbotParser:
             and the date (if any). The second one contains the date of the updated,
             and the user who updated it (if not the same who generated the question).
 
-            :param bs_question: beautiful soup answer container element
+            :param update_info: beautiful soup update_info container element
 
             :returns: an object with the parsed information
             """
@@ -143,6 +145,7 @@ class AskbotParser:
 
         answer_list = []
         # Select all the answers
+        bs_question = bs4.BeautifulSoup(html_question, "html.parser")
         bs_answers = bs_question.select("div.answer")
         for bs_answer in bs_answers:
             answer_id = bs_answer.attrs["data-post-id"]
@@ -207,13 +210,14 @@ class AskbotParser:
         return comments_list
 
     @staticmethod
-    def parse_number_of_html_pages(bs_question):
+    def parse_number_of_html_pages(html_question):
         """Parse number of answer pages to paginate over them.
 
-        :param bs_question: beautiful soup question element
+        :param html_question: raw HTML question element
 
         :returns: an integer with the number of pages
         """
+        bs_question = bs4.BeautifulSoup(html_question, "html.parser")
         try:
             bs_question.select('div.paginator')[0]
         except IndexError:
@@ -230,7 +234,7 @@ class AskbotParser:
         information in the container. If not, if a class "tip" exists, it will be
         a wiki post with no user associated. Else, it can be an empty container.
 
-        :param bs_question: beautiful soup answer container element
+        :param update_info: beautiful soup answer container element
 
         :returns: an object with the parsed information
         """
@@ -313,10 +317,10 @@ class Askbot(Backend):
             for question in questions:
                 updated_at = int(question['last_activity_at'])
                 if updated_at > from_date:
-                    bs_question = self.__fetch_question(question)
+                    html_question = self.__fetch_question(question)
                     logger.debug("Fetching HTML question %s", question['id'])
-                    html_question = self.__build_question(bs_question)
-                    question.update(html_question)
+                    question_obj = self.__build_question(html_question)
+                    question.update(question_obj)
                     yield question
 
             if npages == tpages:
@@ -343,8 +347,7 @@ class Askbot(Backend):
         while next_request:
             html_question = self.client.get_html_question(question['id'], npages)
             html_question_items.append(html_question)
-            bs_question = bs4.BeautifulSoup(html_question, "html.parser")
-            tpages = self.ab_parser.parse_number_of_html_pages(bs_question)
+            tpages = self.ab_parser.parse_number_of_html_pages(html_question)
 
             if npages == tpages:
                 next_request = False
@@ -409,21 +412,18 @@ class Askbot(Backend):
         :returns: a dict item with the parsed question information
         """
         question_object = {}
-        # Initial case
-        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
         # Parse the user info from the soup container
-        question_container = AskbotParser.parse_question_container(bs_question)
+        question_container = AskbotParser.parse_question_container(html_question[0])
         # Add the info to the question object
         question_object.update(question_container)
         # Add the comments of the question (if any)
-        if AskbotParser.parse_question_comments(bs_question):
-            question_object['comments'] = AskbotParser.parse_question_comments(bs_question)
+        if AskbotParser.parse_question_comments(html_question[0]):
+            question_object['comments'] = AskbotParser.parse_question_comments(html_question[0])
 
         answers = []
 
         for page in html_question:
-            bs_question = bs4.BeautifulSoup(page, "html.parser")
-            answers.extend(AskbotParser.parse_answers(bs_question))
+            answers.extend(AskbotParser.parse_answers(page))
 
         if len(answers) != 0:
             question_object['answers'] = answers
