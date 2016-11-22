@@ -65,7 +65,7 @@ class ReMo(Backend):
     this class an URL may be provided. If not, https://reps.mozilla.org
     will be used. The origin of the data will be set to this URL.
 
-    It uses v2 API to get events, people and activities data.
+    It uses API v1 final to get events, people and activities data.
 
     :param url: ReMo URL
     :param tag: label used to mark the data
@@ -267,7 +267,7 @@ class ReMoClient:
         :param params: dict with the HTTP parameters needed to run
             the given command
         """
-        logger.debug("ReMo client calls APIv2: %s params: %s",
+        logger.debug("ReMo client calls API v1 final: %s params: %s",
                      uri, str(params))
 
         req = requests.get(uri, params=params)
