@@ -23,5 +23,7 @@
 import logging
 
 from ._version import __version__
+from .backend import find_backends
+
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

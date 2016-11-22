@@ -23,6 +23,9 @@
 import argparse
 import functools
 import hashlib
+import importlib
+import os
+import pkgutil
 import sys
 
 from datetime import datetime as dt
@@ -232,3 +235,48 @@ def uuid(*args):
     uuid_sha1 = sha1.hexdigest()
 
     return uuid_sha1
+
+
+def find_backends(top_package):
+    """Find available backends.
+
+    Look for the Perceval backends and commands under `top_package`
+    and its sub-packages. When `top_package` defines a namespace,
+    backends under that same namespace will be found too.
+
+    :param top_package: package storing backends
+
+    :returns: a tuple with two dicts: one with `Backend` classes and one
+        with `BackendCommand` classes
+    """
+    candidates = pkgutil.walk_packages(top_package.__path__,
+                                       prefix=top_package.__name__ + '.')
+
+    modules = [name for _, name, is_pkg in candidates if not is_pkg]
+
+    return _import_backends(modules)
+
+
+def _import_backends(modules):
+    for module in modules:
+        importlib.import_module(module)
+
+    bkls = _filter_classes(Backend.__subclasses__(), modules)
+    ckls = _filter_classes(BackendCommand.__subclasses__(), modules)
+
+    backends = {name: kls for name, kls in bkls}
+    commands = {name: klass for name, klass in ckls}
+
+    return backends, commands
+
+
+def _filter_classes(klasses, modules):
+    for kls in klasses:
+        m = kls.__module__
+
+        if m not in modules:
+            continue
+
+        name = m.split('.')[-1]
+
+        yield name, kls
