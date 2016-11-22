@@ -24,7 +24,6 @@ import sys
 import unittest
 import requests
 import bs4
-import json
 import datetime
 import argparse
 
@@ -33,7 +32,7 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.askbot import Askbot, AskbotClient, AskbotParser, AskbotCommand
+from perceval.backends.core.askbot import Askbot, AskbotClient, AskbotParser, AskbotCommand
 
 ASKBOT_URL = 'http://example.com'
 ASKBOT_QUESTIONS_API_URL = ASKBOT_URL + '/api/v1/questions'

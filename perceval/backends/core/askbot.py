@@ -27,8 +27,8 @@ import logging
 import re
 import requests
 
-from ..backend import Backend, metadata, BackendCommand
-from ..utils import urljoin, DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
+from ...backend import Backend, metadata, BackendCommand
+from ...utils import urljoin, DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
 
 logger = logging.getLogger(__name__)
 
