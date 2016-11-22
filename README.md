@@ -21,14 +21,12 @@ are:
     gmane            Fetch messages from Gmane
     jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
-    kitsune          Fetch questions and answers from Kitsune site
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
     meetup           Fetch events from a Meetup group
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
     redmine          Fetch issues from a Redmine server
-    remo             Fetch events and people from a ReMo site
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server
@@ -170,11 +168,6 @@ $ perceval jenkins 'http://jenkins.cyanogenmod.com/'
 $ perceval jira 'https://tickets.puppetlabs.com' --project PUP --from-date '2016-01-01'
 ```
 
-### Kitsune
-```
-$ perceval kitsune --offset 373990
-```
-
 ### MBox
 ```
 $ perceval mbox 'http://example.com' /tmp/mboxes/
@@ -192,7 +185,7 @@ $ perceval meetup 'Software-Development-Analytics' --from-date '2016-06-01' -t a
 
 ### Phabricator
 ```
-$ perceval phabricator 'https://secure.phabricator.com/' -t 123456789abcefe 
+$ perceval phabricator 'https://secure.phabricator.com/' -t 123456789abcefe
 ```
 
 ### Pipermail
@@ -204,11 +197,6 @@ $ perceval pipermail 'https://mail.gnome.org/archives/libart-hackers/'
 
 ```
 $ perceval redmine 'https://www.redmine.org/' --from-date '2016-01-01' -t abcdefghijk
-```
-
-### ReMo
-```
-$ perceval remo
 ```
 
 ### StackExchange
