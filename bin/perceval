@@ -27,7 +27,8 @@ import logging
 import os.path
 import sys
 
-from perceval.backends import PERCEVAL_CMDS
+import perceval
+import perceval.backends
 
 
 PERCEVAL_USAGE_MSG = \
@@ -85,6 +86,8 @@ def main():
         defaults = read_config_file(args.config_file, args.backend)
     else:
         defaults = {}
+
+    _, PERCEVAL_CMDS = perceval.find_backends(perceval.backends)
 
     if args.backend not in PERCEVAL_CMDS:
         raise RuntimeError("Unknown backend %s" % args.backend)
