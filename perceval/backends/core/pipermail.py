@@ -33,11 +33,11 @@ import dateutil
 import requests
 
 from .mbox import MBox, MailingList
-from ..backend import BackendCommand, metadata
-from ..utils import (DEFAULT_DATETIME,
-                     datetime_to_utc,
-                     str_to_datetime,
-                     urljoin)
+from ...backend import BackendCommand, metadata
+from ...utils import (DEFAULT_DATETIME,
+                      datetime_to_utc,
+                      str_to_datetime,
+                      urljoin)
 
 
 logger = logging.getLogger(__name__)

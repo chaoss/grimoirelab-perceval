@@ -28,10 +28,10 @@ import re
 import subprocess
 import time
 
-from ..backend import Backend, BackendCommand, metadata
-from ..cache import Cache
-from ..errors import BackendError, CacheError
-from ..utils import DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
+from ...backend import Backend, BackendCommand, metadata
+from ...cache import Cache
+from ...errors import BackendError, CacheError
+from ...utils import DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
 
 
 MAX_REVIEWS = 500 # Maximum number of reviews per query

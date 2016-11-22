@@ -36,8 +36,11 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.remo2 import (
-    ReMo, ReMoCommand, ReMoClient, MOZILLA_REPS_URL, REMO_DEFAULT_OFFSET)
+from perceval.backends.core.remo2 import (ReMo,
+                                          ReMoCommand,
+                                          ReMoClient,
+                                          MOZILLA_REPS_URL,
+                                          REMO_DEFAULT_OFFSET)
 
 
 MOZILLA_REPS_SERVER_URL = 'http://example.com'

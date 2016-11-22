@@ -34,9 +34,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.meetup import (Meetup,
-                                      MeetupCommand,
-                                      MeetupClient)
+from perceval.backends.core.meetup import (Meetup,
+                                           MeetupCommand,
+                                           MeetupClient)
 
 
 MEETUP_URL = 'https://api.meetup.com'

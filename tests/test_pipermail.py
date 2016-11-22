@@ -33,10 +33,10 @@ import httpretty
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.backends.mbox import MailingList
-from perceval.backends.pipermail import (Pipermail,
-                                         PipermailCommand,
-                                         PipermailList)
+from perceval.backends.core.mbox import MailingList
+from perceval.backends.core.pipermail import (Pipermail,
+                                              PipermailCommand,
+                                              PipermailList)
 
 
 PIPERMAIL_URL = 'http://example.com/'

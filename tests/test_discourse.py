@@ -37,7 +37,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.discourse import Discourse, DiscourseCommand, DiscourseClient
+from perceval.backends.core.discourse import (Discourse,
+                                              DiscourseCommand,
+                                              DiscourseClient)
 
 
 DISCOURSE_SERVER_URL = 'http://example.com'

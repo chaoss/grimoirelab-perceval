@@ -38,7 +38,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.kitsune import Kitsune, KitsuneCommand, KitsuneClient
+from perceval.backends.core.kitsune import (Kitsune,
+                                            KitsuneCommand,
+                                            KitsuneClient)
 from perceval.utils import str_to_datetime
 
 

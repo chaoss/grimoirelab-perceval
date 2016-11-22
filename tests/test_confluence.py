@@ -35,9 +35,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.confluence import (Confluence,
-                                          ConfluenceClient,
-                                          ConfluenceCommand)
+from perceval.backends.core.confluence import (Confluence,
+                                               ConfluenceClient,
+                                               ConfluenceCommand)
 
 
 CONFLUENCE_URL = 'http://example.com'

@@ -36,9 +36,9 @@ if not '..' in sys.path:
 from perceval.cache import Cache
 from perceval.errors import CacheError
 from perceval.errors import BackendError
-from perceval.backends.bugzillarest import (BugzillaREST,
-                                            BugzillaRESTCommand,
-                                            BugzillaRESTClient)
+from perceval.backends.core.bugzillarest import (BugzillaREST,
+                                                 BugzillaRESTCommand,
+                                                 BugzillaRESTClient)
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'

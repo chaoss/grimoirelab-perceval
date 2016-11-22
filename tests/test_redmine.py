@@ -34,9 +34,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.redmine import (Redmine,
-                                       RedmineCommand,
-                                       RedmineClient)
+from perceval.backends.core.redmine import (Redmine,
+                                            RedmineCommand,
+                                            RedmineClient)
 
 
 REDMINE_URL = 'http://example.com'

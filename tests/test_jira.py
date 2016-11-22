@@ -36,11 +36,11 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.jira import (Jira,
-                                    JiraClient,
-                                    JiraCommand,
-                                    filter_custom_fields,
-                                    map_custom_field)
+from perceval.backends.core.jira import (Jira,
+                                         JiraClient,
+                                         JiraCommand,
+                                         filter_custom_fields,
+                                         map_custom_field)
 from perceval.utils import str_to_datetime
 
 

@@ -34,9 +34,9 @@ if not '..' in sys.path:
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.telegram import (Telegram,
-                                        TelegramCommand,
-                                        TelegramBotClient)
+from perceval.backends.core.telegram import (Telegram,
+                                             TelegramCommand,
+                                             TelegramBotClient)
 
 
 TELEGRAM_BOT = 'mybot'
