@@ -10,7 +10,7 @@ usage: perceval [-c <file>] [-g] <backend> [<args>] | --help
 
 Repositories are reached using specific backends. The most common backends
 are:
-
+    askbot           Fetch questions and answers from Askbot site
     bugzilla         Fetch bugs from a Bugzilla server
     bugzillarest     Fetch bugs from a Bugzilla server (>=5.0) using its REST API
     confluence       Fetch contents from a Confluence server
@@ -88,6 +88,11 @@ $ python3 setup.py install
 Documentation is generated automagically in the [ReadTheDocs Perceval site](http://perceval.readthedocs.org/).
 
 ## Examples
+
+### Askbot
+```
+$ perceval askbot 'http://askbot.org/' --from-date '2016-01-01'
+```
 
 ### Bugzilla
 To fetch bugs from Bugzilla, you have two options:
@@ -194,7 +199,6 @@ $ perceval pipermail 'https://mail.gnome.org/archives/libart-hackers/'
 ```
 
 ### Redmine
-
 ```
 $ perceval redmine 'https://www.redmine.org/' --from-date '2016-01-01' -t abcdefghijk
 ```

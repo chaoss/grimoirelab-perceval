@@ -1,0 +1,42 @@
+{
+    "count": 2,
+    "pages": 2,
+    "questions": [
+      {
+         "tags":[
+            "askbot-sites"
+         ],
+         "answer_count":11,
+         "accepted_answer_id":null,
+         "answer_ids":[
+            12214,
+            3470,
+            12691,
+            6730,
+            6754,
+            7143,
+            6635,
+            7221,
+            7227,
+            12230,
+            3573
+         ],
+         "id":2488,
+         "last_activity_by":{
+            "username":"ezequielc",
+            "id":1837
+         },
+         "view_count":15150,
+         "last_activity_at":"1408116902",
+         "title":"list of askbot sites",
+         "url":"http://askbot.org/en/question/2488/list-of-askbot-sites/",
+         "author":{
+            "username":"DealsVistaCom",
+            "id":7
+         },
+         "added_at":"1271528199",
+         "summary":"<p>Is there a list of public askbot sites?</p>\n\n<ul>\n<li><a href=\"http://answers.ros.org/questions/\">answers.ros.org</a> - Robotics Operating System Answers site</li>\n<li><a href=\"http://ask.fedoraproject.org/\">ask.fedoraproject.org</a> - Fedora Linux</li>\n<li><a href=\"http://answers.dotcloud.com/\">answers.dotcloud.com</a> - dotCloud - commercial web-application hosting platform</li>\n<li><a href=\"http://asterisk-support.ru/\">asterisk-support.ru</a> - Russian Asterisk user &amp; developer community.</li>\n<li><a href=\"http://ask.sagemath.org\">ask.sagemath.org</a> - Sage is a Mathematics engine written in Python.</li>\n<li><a href=\"http://investmentqa.com\">investmentqa.com</a> - forum affiliated with <a href=\"http://moneyterms.co.uk/\">moneyterms.co.uk</a></li>\n<li><a href=\"http://community.econometrics.com/questions/\">SHAZAM econometrics software user community</a></li>\n<li><a href=\"http://answers.gameduino.com\">answers.gameduino.com</a></li>\n<li><a href=\"http://macfaq.ru\">macfaq.ru</a></li>\n<li><a href=\"http://ask.libreoffice.org/\">ask.libreoffice.org</a></li>\n<li><a href=\"http://questions.astrobin.com/\">questions.astrobin.com</a> - astrophotography and astronomy.</li>\n</ul>\n\n<p>Less active:</p>\n\n<ul>\n<li><a href=\"http://www.dieselpushertalk.com\">http://www.dieselpushertalk.com</a></li>\n<li><a href=\"http://ask.gi-link.com\">http://ask.gi-link.com</a></li>\n<li><a href=\"http://ask.xbase.ac.uk\">http://ask.xbase.ac.uk</a></li>\n<li><a href=\"http://help.freeavailabledomains.com/\">http://help.freeavailabledomains.com/</a></li>\n<li><a href=\"http://how2occupy.com/\">http://how2occupy.com/</a></li>\n<li><a href=\"http://fifooverflow.com/\">http://fifooverflow.com/</a></li>\n</ul>\n\n<p>This list is incomplete. Please add to the list once your site is up.</p>\n\n<p>Thanks.</p>\n",
+         "score":6
+      }
+    ]
+}

@@ -1,0 +1,33 @@
+{
+    "count": 2,
+    "pages": 2,
+    "questions": [
+      {
+         "tags":[
+            "feature-request",
+            "messaging"
+         ],
+         "answer_count":1,
+         "accepted_answer_id":null,
+         "answer_ids":[
+            7429
+         ],
+         "id":2481,
+         "last_activity_by":{
+            "username":"todofixthis",
+            "id":625
+         },
+         "view_count":981,
+         "last_activity_at":"1349928216",
+         "title":"Sending public/private messages between users",
+         "url":"http://askbot.org/en/question/2481/sending-publicprivate-messages-between-users/",
+         "author":{
+            "username":"thekooliest09",
+            "id":9
+         },
+         "added_at":"1270788444",
+         "summary":"<p>Like most forums and communities, you should have the ability to private message a user or leave a public visitor message on their public 'wall'.  It would just give a more of a sense of community.</p>\n",
+         "score":10
+      }
+    ]
+}
