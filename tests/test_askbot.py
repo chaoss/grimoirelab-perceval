@@ -49,11 +49,14 @@ def read_file(filename, mode='r'):
 
 
 class TestAskbotParser(unittest.TestCase):
-    "Askbot parser tests"
+    """Askbot parser tests"""
 
     def test_parse_question_container(self):
-        """Test parse question container. This tests the full case when a question is, apart from
-        created, edited by another user"""
+        """Test parse question container.
+
+        This tests the full case when a question is, apart from
+        created, edited by another user.
+        """
         abparser = AskbotParser()
 
         page = read_file('data/askbot/html_26830_comments_question_openstack.html')
@@ -63,24 +66,25 @@ class TestAskbotParser(unittest.TestCase):
         container_info = abparser.parse_question_container(html_question[0])
 
         expected_container = {
-                              'author': {
-                                         'badges': 'Ignacio Mulas has 4 gold badges, 6 silver badges and 9 bronze badges',
-                                         'reputation': '111',
-                                         'username': 'Ignacio Mulas',
-                                         'id': '5000'
-                                         },
-                              'updated_by': {
-                                            'website': 'http://maffulli.net/',
-                                            'badges': 'smaffulli has 36 gold badges, 67 silver badges and 100 bronze badges',
-                                            'reputation': '6898',
-                                            'username': 'smaffulli',
-                                            'id': '9'
-                                            }
-                            }
+            'author': {
+                'badges': 'Ignacio Mulas has 4 gold badges, 6 silver badges and 9 bronze badges',
+                'reputation': '111',
+                'username': 'Ignacio Mulas',
+                'id': '5000'
+            },
+            'updated_by': {
+                'website': 'http://maffulli.net/',
+                'badges': 'smaffulli has 36 gold badges, 67 silver badges and 100 bronze badges',
+                'reputation': '6898',
+                'username': 'smaffulli',
+                'id': '9'
+            }
+        }
         self.assertEqual(container_info, expected_container)
 
     def test_parse_question_comments(self):
-        """Test comments retrieved from questions contains all its elements"""
+        """Test comments retrieved from questions contains all its elements."""
+
         abparser = AskbotParser()
 
         page = read_file('data/askbot/html_26830_comments_question_openstack.html')
@@ -89,15 +93,27 @@ class TestAskbotParser(unittest.TestCase):
 
         parsed_comments = abparser.parse_question_comments(html_question[0])
         self.assertEqual(len(parsed_comments), 3)
-        for parsed_comment in parsed_comments:
-            self.assertIsNotNone(parsed_comment['id'])
-            self.assertIsNotNone(parsed_comment['score'])
-            self.assertIsNotNone(parsed_comment['summary'])
-            self.assertIsNotNone(parsed_comment['author'])
-            self.assertIsNotNone(parsed_comment['added_at'])
+        self.assertEqual(parsed_comments[0]['id'], '26835')
+        self.assertEqual(parsed_comments[0]['score'], '')
+        self.assertEqual(parsed_comments[0]['summary'], 'Earlier I tried stable havana:\ngit clonehttps://github.com/openstack-dev/devs...-b stable/havanaCurrently; in dev branch, I am also facing same issue.')
+        self.assertEqual(parsed_comments[0]['author'], {'id': '3070', 'username': 'SGPJ'})
+        self.assertEqual(parsed_comments[0]['added_at'], '1396977715.0')
+
+        self.assertEqual(parsed_comments[1]['id'], '26844')
+        self.assertEqual(parsed_comments[1]['score'], '')
+        self.assertEqual(parsed_comments[1]['summary'], 'Yes! I tried the same neither the stable or development branches contains the docker installation script... :(')
+        self.assertEqual(parsed_comments[1]['author'], {'id': '5000', 'username': 'Ignacio Mulas'})
+        self.assertEqual(parsed_comments[1]['added_at'], '1396989971.0')
+
+        self.assertEqual(parsed_comments[2]['id'], '26878')
+        self.assertEqual(parsed_comments[2]['score'], '')
+        self.assertEqual(parsed_comments[2]['summary'], "Vote for the question instead of using the space for an answer to say 'me too'")
+        self.assertEqual(parsed_comments[2]['author'], {'id': '9', 'username': 'smaffulli'})
+        self.assertEqual(parsed_comments[2]['added_at'], '1397033347.0')
 
     def test_parse_answers(self):
-        """Given a question, parse all the answers available (pagination included)"""
+        """Given a question, parse all the answers available (pagination included)."""
+
         abparser = AskbotParser()
 
         page = read_file('data/askbot/html_24396_multipage_openstack.html')
@@ -106,13 +122,50 @@ class TestAskbotParser(unittest.TestCase):
 
         parsed_answers = abparser.parse_answers(html_question[0])
         self.assertEqual(len(parsed_answers), 10)
-        for parsed_answer in parsed_answers:
-            self.assertIsNotNone(parsed_answer['id'])
-            self.assertIsNotNone(parsed_answer['score'])
-            self.assertIsNotNone(parsed_answer['summary'])
+
+        self.assertEqual(parsed_answers[0]['id'], '24427')
+        self.assertEqual(parsed_answers[0]['score'], '0')
+        self.assertEqual(parsed_answers[0]['added_at'], '1372894082.0')
+
+        self.assertEqual(parsed_answers[1]['id'], '24426')
+        self.assertEqual(parsed_answers[1]['score'], '0')
+        self.assertEqual(parsed_answers[1]['added_at'], '1372475606.0')
+
+        self.assertEqual(parsed_answers[2]['id'], '24425')
+        self.assertEqual(parsed_answers[2]['score'], '0')
+        self.assertEqual(parsed_answers[2]['added_at'], '1365772426.0')
+
+        self.assertEqual(parsed_answers[3]['id'], '24424')
+        self.assertEqual(parsed_answers[3]['score'], '0')
+        self.assertEqual(parsed_answers[3]['added_at'], '1365766666.0')
+
+        self.assertEqual(parsed_answers[4]['id'], '24423')
+        self.assertEqual(parsed_answers[4]['score'], '0')
+        self.assertEqual(parsed_answers[4]['added_at'], '1365762818.0')
+
+        self.assertEqual(parsed_answers[5]['id'], '24419')
+        self.assertEqual(parsed_answers[5]['score'], '0')
+        self.assertEqual(parsed_answers[5]['added_at'], '1365715423.0')
+
+        self.assertEqual(parsed_answers[6]['id'], '24418')
+        self.assertEqual(parsed_answers[6]['score'], '0')
+        self.assertEqual(parsed_answers[6]['added_at'], '1365687337.0')
+
+        self.assertEqual(parsed_answers[7]['id'], '24417')
+        self.assertEqual(parsed_answers[7]['score'], '0')
+        self.assertEqual(parsed_answers[7]['added_at'], '1364970027.0')
+
+        self.assertEqual(parsed_answers[8]['id'], '24416')
+        self.assertEqual(parsed_answers[8]['score'], '0')
+        self.assertEqual(parsed_answers[8]['added_at'], '1364965468.0')
+
+        self.assertEqual(parsed_answers[9]['id'], '24414')
+        self.assertEqual(parsed_answers[9]['score'], '0')
+        self.assertEqual(parsed_answers[9]['added_at'], '1364453025.0')
 
     def test_parse_comments(self):
-        """Given a list of comments, test all the elements about to be parsed"""
+        """Given a list of comments, test all the elements about to be parsed."""
+
         page = read_file('data/askbot/html_148_comments_answer_2_openstack.html')
 
         html_question = [page]
@@ -122,42 +175,43 @@ class TestAskbotParser(unittest.TestCase):
         comments = bs_answers[1].select("div.comment")
         parsed_comments = AskbotParser.parse_comments(comments)
         expected_comment_0 = {
-                              'summary': "HI, are there any guide on debugging with eclipse and pydev with the latest branch. I have tried commented out eventlet.monkeypatch(os=False) and replaced it with eventlet.monkeypatch(all=False,socket=True,time=True,os=False) and added import sys;sys.path.append('path') but breakpoints are ignored",
-                              'author': {
-                                        'id': '451',
-                                        'username': 'sak'
-                                        },
-                              'id': '814',
-                              'added_at': '1367914127.0',
-                              'score': ''
-                              }
+            'summary': "HI, are there any guide on debugging with eclipse and pydev with the latest branch. I have tried commented out eventlet.monkeypatch(os=False) and replaced it with eventlet.monkeypatch(all=False,socket=True,time=True,os=False) and added import sys;sys.path.append('path') but breakpoints are ignored",
+            'author': {
+                'id': '451',
+                'username': 'sak'
+            },
+            'id': '814',
+            'added_at': '1367914127.0',
+            'score': ''
+        }
         expected_comment_1 = {
-                              'summary': '@sakthanks for asking. I believe yours would be a very good new question, more than a comment here. Do you mind posting it as a new question?',
-                              'author': {
-                                        'id': '9',
-                                        'username': 'smaffulli'
-                                        },
-                              'id': '872',
-                              'added_at': '1367949923.0',
-                              'score': ''
-                              }
+            'summary': '@sakthanks for asking. I believe yours would be a very good new question, more than a comment here. Do you mind posting it as a new question?',
+            'author': {
+                'id': '9',
+                'username': 'smaffulli'
+            },
+            'id': '872',
+            'added_at': '1367949923.0',
+            'score': ''
+        }
         expected_comment_2 = {
-                              'summary': 'cool. I have posted this as a new question: https://ask.openstack.org/question/815/how-do-i-debug-nova-service-with-eclipse-and-pydev/',
-                              'author': {
-                                         'id': '451',
-                                         'username': 'sak'
-                                         },
-                              'id': '886',
-                              'added_at': '1368003922.0',
-                              'score': ''
-                              }
+            'summary': 'cool. I have posted this as a new question: https://ask.openstack.org/question/815/how-do-i-debug-nova-service-with-eclipse-and-pydev/',
+            'author': {
+                'id': '451',
+                'username': 'sak'
+            },
+            'id': '886',
+            'added_at': '1368003922.0',
+            'score': ''
+        }
         self.assertEqual(parsed_comments[0], expected_comment_0)
         self.assertEqual(parsed_comments[1], expected_comment_1)
         self.assertEqual(parsed_comments[2], expected_comment_2)
         self.assertEqual(len(parsed_comments), 3)
 
     def test_parse_number_of_html_pages(self):
-        """Get the number of html needed to retrieve all the answers of a given page"""
+        """Get the number of html needed to retrieve all the answers of a given page."""
+
         page = read_file('data/askbot/html_24396_multipage_openstack.html')
 
         html_question = [page]
@@ -166,8 +220,11 @@ class TestAskbotParser(unittest.TestCase):
         self.assertEqual(pages, 4)
 
     def test_parse_user_info(self):
-        """Test user info parsing. User info can be a wiki post or a user. When a user, some
-        additional information can be added like country or website when available"""
+        """Test user info parsing.
+
+        User info can be a wiki post or a user. When a user, some additional information
+        can be added like country or website when available.
+        """
 
         page = read_file('data/askbot/askbot_question_multipage_1.html')
 
@@ -239,7 +296,7 @@ class TestAskbotClient(unittest.TestCase):
 
     @httpretty.activate
     def test_get_html_question(self):
-        """Test if HTML Questions call works"""
+        """Test if HTML Questions call works."""
 
         body = read_file('data/askbot/askbot_question.html')
 
@@ -260,7 +317,7 @@ class TestAskbotClient(unittest.TestCase):
 
     @httpretty.activate
     def test_get_html_question_multipage(self):
-        """Test if HTML Questions multipage call works"""
+        """Test if HTML Questions multipage call works."""
 
         body = read_file('data/askbot/askbot_question_multipage_2.html')
 
@@ -287,7 +344,7 @@ class TestAskbotClient(unittest.TestCase):
 
     @httpretty.activate
     def test_get_html_question_empty(self):
-        """Test if HTML Questions call (non-existing question) works"""
+        """Test if HTML Questions call (non-existing question) works."""
 
         body = read_file('data/askbot/askbot_question_empty.html')
 
@@ -306,9 +363,10 @@ class TestAskbotClient(unittest.TestCase):
 
 
 class TestAskbotBackend(unittest.TestCase):
-    """Askbot backend tests"""
+    """Askbot backend tests."""
+
     def test_initialization(self):
-        """Test whether attributes are initializated"""
+        """Test whether attributes are initializated."""
 
         ab = Askbot(ASKBOT_URL, tag='test')
 
@@ -329,6 +387,7 @@ class TestAskbotBackend(unittest.TestCase):
     @httpretty.activate
     def test_fetch(self):
         """Test whether a list of questions is returned"""
+
         question_api_1 = read_file('data/askbot/askbot_api_questions.json')
         question_api_2 = read_file('data/askbot/askbot_api_questions_2.json')
         question_html_1 = read_file('data/askbot/askbot_question.html')
@@ -373,7 +432,8 @@ class TestAskbotBackend(unittest.TestCase):
 
     @httpretty.activate
     def test_fetch_from_date(self):
-        """Test whether a list of questions is returned from a given date"""
+        """Test whether a list of questions is returned from a given date."""
+
         question_api_1 = read_file('data/askbot/askbot_api_questions.json')
         question_api_2 = read_file('data/askbot/askbot_api_questions_2.json')
         question_html_1 = read_file('data/askbot/askbot_question.html')
@@ -412,21 +472,21 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(len(questions), 1)
 
     def test_has_resuming(self):
-        """Test if it returns True when has_resuming is called"""
+        """Test if it returns True when has_resuming is called."""
 
         self.assertEqual(Askbot.has_resuming(), True)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns True when has_caching is called."""
 
         self.assertEqual(Askbot.has_caching(), False)
 
 class TestAskboteCommand(unittest.TestCase):
-    """Tests for AskbotCommand class"""
+    """Tests for AskbotCommand class."""
 
     @httpretty.activate
     def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+        """Test if the class is initialized."""
 
         args = ['--tag', 'test', ASKBOT_URL]
 
@@ -437,7 +497,7 @@ class TestAskboteCommand(unittest.TestCase):
         self.assertIsInstance(cmd.backend, Askbot)
 
     def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
+        """Test if it returns a argument parser object."""
 
         parser = AskbotCommand.create_argument_parser()
         self.assertIsInstance(parser, argparse.ArgumentParser)
