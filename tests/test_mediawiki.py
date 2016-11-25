@@ -31,11 +31,14 @@ import unittest
 import urllib
 
 import httpretty
-
-if not '..' in sys.path:
-    sys.path.insert(0, '..')
+import pkg_resources
 
 from dateutil import parser
+
+# Hack to make sure that tests import the right packages
+# due to setuptools behaviour
+sys.path.insert(0, '..')
+pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.cache import Cache
 from perceval.errors import CacheError

@@ -28,8 +28,12 @@ import sys
 import tempfile
 import unittest
 
-if not '..' in sys.path:
-    sys.path.insert(0, '..')
+import pkg_resources
+
+# Hack to make sure that tests import the right packages
+# due to setuptools behaviour
+sys.path.insert(0, '..')
+pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backends.core.supybot import (Supybot,
                                             SupybotCommand,

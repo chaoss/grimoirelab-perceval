@@ -29,9 +29,12 @@ import tempfile
 import unittest
 
 import httpretty
+import pkg_resources
 
-if not '..' in sys.path:
-    sys.path.insert(0, '..')
+# Hack to make sure that tests import the right packages
+# due to setuptools behaviour
+sys.path.insert(0, '..')
+pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backends.core.mbox import MailingList
 from perceval.backends.core.pipermail import (Pipermail,

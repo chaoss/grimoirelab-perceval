@@ -20,19 +20,26 @@
 #     Alberto Martín <alberto.martin@bitergia.com>
 #
 
+import argparse
+import datetime
 import sys
 import unittest
-import requests
+
 import bs4
-import datetime
-import argparse
-
 import httpretty
+import pkg_resources
+import requests
 
-if not '..' in sys.path:
-    sys.path.insert(0, '..')
+# Hack to make sure that tests import the right packages
+# due to setuptools behaviour
+sys.path.insert(0, '..')
+pkg_resources.declare_namespace('perceval.backends')
 
-from perceval.backends.core.askbot import Askbot, AskbotClient, AskbotParser, AskbotCommand
+from perceval.backends.core.askbot import (Askbot,
+                                           AskbotClient,
+                                           AskbotParser,
+                                           AskbotCommand)
+
 
 ASKBOT_URL = 'http://example.com'
 ASKBOT_QUESTIONS_API_URL = ASKBOT_URL + '/api/v1/questions'

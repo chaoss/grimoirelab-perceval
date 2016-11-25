@@ -31,9 +31,12 @@ import tempfile
 import unittest
 
 import dateutil.tz
+import pkg_resources
 
-if not '..' in sys.path:
-    sys.path.insert(0, '..')
+# Hack to make sure that tests import the right packages
+# due to setuptools behaviour
+sys.path.insert(0, '..')
+pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.errors import ParseError, RepositoryError
 from perceval.backend import uuid
