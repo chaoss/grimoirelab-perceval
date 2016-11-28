@@ -428,9 +428,16 @@ class AskbotParser:
         comments_list = []
         for comment in comments:
             added_at = comment.select("abbr.timeago")[0].attrs["title"]
+
+            # Compatibility between versions
+            if "data-post-id" in comment.attrs:
+                comment_id = comment.attrs["data-post-id"]
+            else:
+                comment_id = comment.attrs["data-comment-id"]
+
             element = {'added_at': str(str_to_datetime(added_at).timestamp()),
                        'author': parse_comment_author(comment),
-                       'id': comment.attrs["data-comment-id"],
+                       'id': comment_id,
                        'summary': comment.select("div.comment-body")[0].get_text(strip=True),
                        'score': comment.select("div.upvote")[0].text
                        }

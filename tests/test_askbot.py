@@ -112,6 +112,7 @@ class TestAskbotParser(unittest.TestCase):
         self.assertEqual(parsed_comments[1]['author'], {'id': '5000', 'username': 'Ignacio Mulas'})
         self.assertEqual(parsed_comments[1]['added_at'], '1396989971.0')
 
+        # Test 'data-post-id' comment
         self.assertEqual(parsed_comments[2]['id'], '26878')
         self.assertEqual(parsed_comments[2]['score'], '')
         self.assertEqual(parsed_comments[2]['summary'], "Vote for the question instead of using the space for an answer to say 'me too'")
