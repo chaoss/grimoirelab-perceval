@@ -18,13 +18,14 @@
 #
 # Authors:
 #     Alberto Martín <alberto.martin@bitergia.com>
+#     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-
-import bs4
 import json
 import logging
 import re
+
+import bs4
 import requests
 
 from ...backend import Backend, metadata, BackendCommand
@@ -43,7 +44,7 @@ class Askbot(Backend):
     :param url: Askbot site URL
     :param tag: label used to mark the data
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     def __init__(self, url, tag=None):
         origin = url
@@ -284,8 +285,8 @@ class AskbotParser:
         """
         container_info = {}
         bs_question = bs4.BeautifulSoup(html_question, "html.parser")
-        question = bs_question.select("div.js-question")
-        container = question[0].select("div.post-update-info")
+        question = AskbotParser._find_question_container(bs_question)
+        container = question.select("div.post-update-info")
         created = container[0]
         container_info['author'] = AskbotParser.parse_user_info(created)
         try:
@@ -310,8 +311,8 @@ class AskbotParser:
         :returns: a list with the desired comments
         """
         bs_question = bs4.BeautifulSoup(html_question, "html.parser")
-        question = bs_question.select("div.js-question")
-        comments = question[0].select("div.comment")
+        question = AskbotParser._find_question_container(bs_question)
+        comments = question.select("div.comment")
         question_comments = AskbotParser.parse_comments(comments)
         return question_comments
 
@@ -498,6 +499,15 @@ class AskbotParser:
             return user_info
         else:
             return
+
+    @staticmethod
+    def _find_question_container(bs_question):
+        questions = bs_question.find_all("div",
+                                         attrs={'class': re.compile(".*question")})
+        for question in questions:
+            if 'post' in question.attrs['class']:
+                return question
+
 
 class AskbotCommand(BackendCommand):
     """Class to run Askbot backend from the command line."""
