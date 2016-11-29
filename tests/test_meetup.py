@@ -211,15 +211,13 @@ class TestMeetupBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'fields' : ['event_hosts', 'featured', 'group_topics',
-                         'plain_text_description', 'rsvpable', 'series'],
+             'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
              'key' : ['aaaa'],
              'order' : ['updated'],
              'page' : ['2'],
              'scroll' : ['since:1970-01-01T00:00:00.000Z'],
              'sign' : ['true'],
-             'status' : ['cancelled', 'upcoming', 'past', 'proposed',
-                         'suggested', 'draft']
+             'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
              'key' : ['aaaa'],
@@ -230,7 +228,7 @@ class TestMeetupBackend(unittest.TestCase):
              'fields' : ['attendance_status'],
              'key' : ['aaaa'],
              'page' : ['2'],
-             'response' : ['yes', 'no'],
+             'response' : ['yes,no'],
              'sign' : ['true']
             },
             {
@@ -242,7 +240,7 @@ class TestMeetupBackend(unittest.TestCase):
              'fields' : ['attendance_status'],
              'key' : ['aaaa'],
              'page' : ['2'],
-             'response' : ['yes', 'no'],
+             'response' : ['yes,no'],
              'sign' : ['true']
             },
             {
@@ -258,7 +256,7 @@ class TestMeetupBackend(unittest.TestCase):
              'fields' : ['attendance_status'],
              'key' : ['aaaa'],
              'page' : ['2'],
-             'response' : ['yes', 'no'],
+             'response' : ['yes,no'],
              'sign' : ['true']
             }
         ]
@@ -298,15 +296,13 @@ class TestMeetupBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'fields' : ['event_hosts', 'featured', 'group_topics',
-                         'plain_text_description', 'rsvpable', 'series'],
+             'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
              'key' : ['aaaa'],
              'order' : ['updated'],
              'page' : ['2'],
              'scroll' : ['since:2016-09-25T00:00:00.000Z'],
              'sign' : ['true'],
-             'status' : ['cancelled', 'upcoming', 'past', 'proposed',
-                         'suggested', 'draft']
+             'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
              'key' : ['aaaa'],
@@ -317,7 +313,7 @@ class TestMeetupBackend(unittest.TestCase):
              'fields' : ['attendance_status'],
              'key' : ['aaaa'],
              'page' : ['2'],
-             'response' : ['yes', 'no'],
+             'response' : ['yes,no'],
              'sign' : ['true']
             }
         ]
@@ -342,15 +338,13 @@ class TestMeetupBackend(unittest.TestCase):
 
         # Check requests
         expected = {
-            'fields' : ['event_hosts', 'featured', 'group_topics',
-                        'plain_text_description', 'rsvpable', 'series'],
+            'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
             'key' : ['aaaa'],
             'order' : ['updated'],
             'page' : ['2'],
             'scroll' : ['since:2017-01-01T00:00:00.000Z'],
             'sign' : ['true'],
-            'status' : ['cancelled', 'upcoming', 'past', 'proposed',
-                         'suggested', 'draft']
+            'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
         }
 
         self.assertEqual(len(http_requests), 1)
@@ -506,15 +500,13 @@ class TestMeetupClient(unittest.TestCase):
 
         expected = [
             {
-             'fields' : ['event_hosts', 'featured', 'group_topics',
-                         'plain_text_description', 'rsvpable', 'series'],
+             'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
              'key' : ['aaaa'],
              'order' : ['updated'],
              'page' : ['2'],
              'scroll' : ['since:2016-01-01T00:00:00.000Z'],
              'sign' : ['true'],
-             'status' : ['cancelled', 'upcoming', 'past', 'proposed',
-                         'suggested', 'draft']
+             'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
              'key': ['aaaa'],
@@ -575,7 +567,7 @@ class TestMeetupClient(unittest.TestCase):
             'fields' : ['attendance_status'],
             'key' : ['aaaa'],
             'page' : ['2'],
-            'response' : ['yes', 'no'],
+            'response' : ['yes,no'],
             'sign' : ['true']
         }
 

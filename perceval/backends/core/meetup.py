@@ -56,7 +56,7 @@ class Meetup(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, group, api_key, max_items=MAX_ITEMS,
                  tag=None, cache=None):
@@ -386,12 +386,20 @@ class MeetupClient:
 
         resource = urljoin(group, self.REVENTS)
 
+        # Hack required due to Metup API does not support list
+        # values with the format `?param=value1&param=value2`.
+        # It only works with `?param=value1,value2`.
+        # Morever, urrlib3 encodes comma characters when values
+        # are given using params dict, which it doesn't work
+        # with Meetup, either.
+        fixed_params = '?' + self.PFIELDS + '=' + ','.join(self.VEVENT_FIELDS)
+        fixed_params += '&' + self.PSTATUS + '=' + ','.join(self.VSTATUS)
+        resource += fixed_params
+
         params = {
-            self.PFIELDS : self.VEVENT_FIELDS,
-            self.PSTATUS : self.VSTATUS,
             self.PORDER : self.VUPDATED,
             self.PSCROLL : date,
-            self.PPAGE : self.max_items,
+            self.PPAGE : self.max_items
         }
 
         for page in self._fetch(resource, params):
@@ -414,10 +422,13 @@ class MeetupClient:
 
         resource = urljoin(group, self.REVENTS, event_id, self.RRSVPS)
 
+        # Same hack that in 'events' method
+        fixed_params = '?' + self.PFIELDS + '=' + ','.join(self.VRSVP_FIELDS)
+        fixed_params += '&' + self.PRESPONSE + '=' + ','.join(self.VRESPONSE)
+        resource += fixed_params
+
         params = {
-            self.PFIELDS : self.VRSVP_FIELDS,
-            self.PPAGE : self.max_items,
-            self.PRESPONSE : self.VRESPONSE
+            self.PPAGE : self.max_items
         }
 
         for page in self._fetch(resource, params):
