@@ -78,7 +78,8 @@ setup(name="perceval",
       install_requires=[
         'python-dateutil>=2.0.0',
         'requests>=2.7.0',
-        'beautifulsoup4>=4.3.2'
+        'beautifulsoup4>=4.3.2',
+        'feedparser>=5.1.3'
       ],
       scripts=[
         'bin/perceval'
