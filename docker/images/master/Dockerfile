@@ -11,7 +11,6 @@ RUN apt-get update && \
     apt-get install -y git --no-install-recommends && \
     pip install python-dateutil requests beautifulsoup4 git+${GIT_URL_PERCEVAL}@${GIT_REV_PERCEVAL} && \
     apt-get clean && \
-    apt-get purge -y git && \
     apt-get autoremove --purge -y && \
     find /var/lib/apt/lists -type f -delete
 
