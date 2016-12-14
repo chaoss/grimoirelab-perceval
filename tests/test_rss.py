@@ -39,9 +39,7 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.core.rss import (RSS,
-                                            RSSCommand,
-                                            RSSClient)
+from perceval.backends.core.rss import RSS, RSSCommand, RSSClient
 
 
 RSS_FEED_URL = 'http://example.com/rss'
@@ -52,6 +50,35 @@ def read_file(filename, mode='r'):
     with open(filename, mode) as f:
         content = f.read()
     return content
+
+def configure_http_server():
+    bodies_entries_job = read_file('data/rss_entries.xml')
+
+    http_requests = []
+
+    def request_callback(method, uri, headers):
+        last_request = httpretty.last_request()
+
+        if uri.startswith(RSS_FEED_URL):
+            body = bodies_entries_job
+        else:
+            body = ''
+
+        requests_http.append(httpretty.last_request())
+
+        http_requests.append(last_request)
+
+        return (200, headers, body)
+
+    httpretty.register_uri(httpretty.GET,
+                           RSS_FEED_URL,
+                           responses=[
+                                httpretty.Response(body=request_callback) \
+                                for _ in range(2)
+                           ])
+
+    return http_requests
+
 
 class TestRSSBackend(unittest.TestCase):
     """RSS backend tests"""
@@ -88,49 +115,34 @@ class TestRSSBackend(unittest.TestCase):
 
         self.assertEqual(RSS.has_resuming(), False)
 
-    def __configure_http_server(self):
-        bodies_entries_job = read_file('data/rss_entries.xml')
-
-        def request_callback(method, uri, headers):
-            if uri.startswith(RSS_FEED_URL):
-                body = bodies_entries_job
-            else:
-                body = ''
-
-            requests_http.append(httpretty.last_request())
-
-            return (200, headers, body)
-
-        httpretty.register_uri(httpretty.GET,
-                               RSS_FEED_URL,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
-                               ])
-
     @httpretty.activate
     def test_fetch(self):
         """Test whether a list of entries is returned"""
 
-        self.__configure_http_server()
+        http_requests = configure_http_server()
 
         # Test fetch entries from feed
         rss = RSS(RSS_FEED_URL)
-        entries = [item for item in rss.fetch()]
+        entries = [entry for entry in rss.fetch()]
         self.assertEqual(len(entries), 30)
+        self.assertEqual(len(http_requests), 1)
 
         # Test metadata
-        expected = [('98572defb3a652afbfdfe96517edefb88a22dcfa', 1481044620.0),
-                    ('e3b0d7463fca0c47d82debc3ddc37d8906f77548', 1480955040.0),
-                    ('28bca39353ff0825f53b157b69da319e2f49ab4d', 1480886040.0)]
+        expected = [('98572defb3a652afbfdfe96517edefb88a22dcfa', 1481044620.0,
+                     'Connect 2016 Developer Workshop'),
+                    ('e3b0d7463fca0c47d82debc3ddc37d8906f77548', 1480955040.0,
+                     'Create a URL Shortener with Node.js and Couchbase using N1QL'),
+                    ('28bca39353ff0825f53b157b69da319e2f49ab4d', 1480886040.0,
+                     'ELT processing with Couchbase and N1QL')]
 
         for x in range(len(expected)):
-            item = entries[x]
-            self.assertEqual(item['origin'], 'http://example.com/rss')
-            self.assertEqual(item['uuid'], expected[x][0])
-            self.assertEqual(item['updated_on'], expected[x][1])
-            self.assertEqual(item['category'], 'item')
-            self.assertEqual(item['tag'], 'http://example.com/rss')
+            entry = entries[x]
+            self.assertEqual(entry['origin'], 'http://example.com/rss')
+            self.assertEqual(entry['uuid'], expected[x][0])
+            self.assertEqual(entry['updated_on'], expected[x][1])
+            self.assertEqual(entry['category'], 'entry')
+            self.assertEqual(entry['tag'], 'http://example.com/rss')
+            self.assertEqual(entry['data']['title'], expected[x][2])
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -146,9 +158,34 @@ class TestRSSBackend(unittest.TestCase):
                                body=body, status=200)
 
         rss = RSS(RSS_FEED_URL)
-        entries = [item for item in rss.fetch()]
+        entries = [entry for entry in rss.fetch()]
 
         self.assertEqual(len(entries), 0)
+
+    @httpretty.activate
+    def test_parse(self):
+        """Test whether the parser works """
+
+        xml_feed = read_file('data/rss_entries.xml')
+        json_feed = RSS.parse_feed(xml_feed)['entries']
+        entry = json_feed[0]
+
+        """ rss version="2.0"
+        <entry><title>Connect 2016 Developer Workshop</title>
+        <link>http://blog.couchbase.com/2016/november/connect-2016-developer-workshop</link>
+        <description>&lt;p&gt;For the first day  ... </description>
+        <pubDate>Tue, 06 Dec 2016 17:17:00 +0000</pubDate>
+        <author>Matthew Groves</author>
+        <avatar>/content/gallery/speakers/speakersCouchbase/mebricks.jpg/mebricks.jpg/hippogallery:original</avatar>
+        </entry>
+        """
+
+        self.assertEqual(entry['title'], 'Connect 2016 Developer Workshop')
+        self.assertEqual(entry['published'], 'Tue, 06 Dec 2016 17:17:00 +0000')
+        self.assertEqual(entry['avatar'], '/content/gallery/speakers/speakersCouchbase/mebricks.jpg/mebricks.jpg/hippogallery:original')
+        self.assertEqual(entry['link'], 'http://blog.couchbase.com/2016/november/connect-2016-developer-workshop')
+        self.assertEqual(len(entry['summary']), 410)
+        self.assertEqual(entry['author'], 'Matthew Groves')
 
 
 class TestRSSBackendCache(unittest.TestCase):
@@ -164,35 +201,22 @@ class TestRSSBackendCache(unittest.TestCase):
     def test_fetch_from_cache(self):
         """Test whether the cache works"""
 
-        bodies_entries = read_file('data/rss_entries.xml')
-
-        def request_callback(method, uri, headers):
-            if uri.startswith(RSS_FEED_URL):
-                body = bodies_entries
-            else:
-                body = ''
-
-            return (200, headers, body)
-
-        httpretty.register_uri(httpretty.GET,
-                               RSS_FEED_URL,
-                               responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
-                               ])
+        http_requests = configure_http_server()
 
         # First, we fetch the entries from the server, storing them
         # in a cache
         cache = Cache(self.tmp_path)
         rss = RSS(RSS_FEED_URL, cache=cache)
 
-        entries = [item for item in rss.fetch()]
+        entries = [entry for entry in rss.fetch()]
+        self.assertEqual(len(http_requests), 1)
 
         # Now, we get the entries from the cache.
         # The contents should be the same and there won't be
         # any new request to the server
-        cached_entries = [item for item in rss.fetch_from_cache()]
+        cached_entries = [entry for entry in rss.fetch_from_cache()]
         self.assertEqual(len(cached_entries), len(entries))
+        self.assertEqual(len(http_requests), 1)  # no more requests done
 
 
     def test_fetch_from_empty_cache(self):
@@ -200,7 +224,7 @@ class TestRSSBackendCache(unittest.TestCase):
 
         cache = Cache(self.tmp_path)
         rss = RSS(RSS_FEED_URL, cache=cache)
-        cached_entries = [item for item in rss.fetch_from_cache()]
+        cached_entries = [entry for entry in rss.fetch_from_cache()]
         self.assertEqual(len(cached_entries), 0)
 
     def test_fetch_from_non_set_cache(self):
@@ -209,7 +233,7 @@ class TestRSSBackendCache(unittest.TestCase):
         rss = RSS(RSS_FEED_URL)
 
         with self.assertRaises(CacheError):
-            _ = [item for item in rss.fetch_from_cache()]
+            _ = [entry for entry in rss.fetch_from_cache()]
 
 
 class TestRSSCommand(unittest.TestCase):
