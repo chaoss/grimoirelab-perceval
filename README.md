@@ -27,6 +27,7 @@ are:
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
     redmine          Fetch issues from a Redmine server
+    rss              Fetch entries from a RSS feed server
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server
@@ -46,6 +47,7 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 * python3-dateutil >= 2.0
 * python3-requests >= 2.7
 * python3-bs4 (beautifulsoup4) >= 4.3
+* python3-feedparser >= 5.1.3
 
 ## Installation
 
@@ -211,6 +213,11 @@ $ perceval pipermail 'https://mail.gnome.org/archives/libart-hackers/'
 ### Redmine
 ```
 $ perceval redmine 'https://www.redmine.org/' --from-date '2016-01-01' -t abcdefghijk
+```
+
+### RSS
+```
+$ perceval rss 'https://blog.bitergia.com/feed/'
 ```
 
 ### StackExchange
