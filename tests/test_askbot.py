@@ -22,6 +22,7 @@
 
 import argparse
 import datetime
+import json
 import sys
 import unittest
 
@@ -47,6 +48,7 @@ ASKBOT_QUESTION_2481_URL = ASKBOT_URL + '/question/2481'
 ASKBOT_QUESTION_2488_URL = ASKBOT_URL + '/question/2488'
 ASKBOT_QUESTION_24396_URL = ASKBOT_URL + '/question/24396'
 ASKBOT_QUESTION_EMPTY_URL = ASKBOT_URL + '/question/0'
+ASKBOT_COMMENTS_API_URL = ASKBOT_URL + '/post_comments'
 
 
 def read_file(filename, mode='r'):
@@ -88,36 +90,6 @@ class TestAskbotParser(unittest.TestCase):
             }
         }
         self.assertEqual(container_info, expected_container)
-
-    def test_parse_question_comments(self):
-        """Test comments retrieved from questions contains all its elements."""
-
-        abparser = AskbotParser()
-
-        page = read_file('data/askbot/html_26830_comments_question_openstack.html')
-
-        html_question = [page]
-
-        parsed_comments = abparser.parse_question_comments(html_question[0])
-        self.assertEqual(len(parsed_comments), 3)
-        self.assertEqual(parsed_comments[0]['id'], '26835')
-        self.assertEqual(parsed_comments[0]['score'], '')
-        self.assertEqual(parsed_comments[0]['summary'], 'Earlier I tried stable havana:\ngit clonehttps://github.com/openstack-dev/devs...-b stable/havanaCurrently; in dev branch, I am also facing same issue.')
-        self.assertEqual(parsed_comments[0]['author'], {'id': '3070', 'username': 'SGPJ'})
-        self.assertEqual(parsed_comments[0]['added_at'], '1396977715.0')
-
-        self.assertEqual(parsed_comments[1]['id'], '26844')
-        self.assertEqual(parsed_comments[1]['score'], '')
-        self.assertEqual(parsed_comments[1]['summary'], 'Yes! I tried the same neither the stable or development branches contains the docker installation script... :(')
-        self.assertEqual(parsed_comments[1]['author'], {'id': '5000', 'username': 'Ignacio Mulas'})
-        self.assertEqual(parsed_comments[1]['added_at'], '1396989971.0')
-
-        # Test 'data-post-id' comment
-        self.assertEqual(parsed_comments[2]['id'], '26878')
-        self.assertEqual(parsed_comments[2]['score'], '')
-        self.assertEqual(parsed_comments[2]['summary'], "Vote for the question instead of using the space for an answer to say 'me too'")
-        self.assertEqual(parsed_comments[2]['author'], {'id': '9', 'username': 'smaffulli'})
-        self.assertEqual(parsed_comments[2]['added_at'], '1397033347.0')
 
     def test_parse_answers(self):
         """Given a question, parse all the answers available (pagination included)."""
@@ -170,52 +142,6 @@ class TestAskbotParser(unittest.TestCase):
         self.assertEqual(parsed_answers[9]['id'], '24414')
         self.assertEqual(parsed_answers[9]['score'], '0')
         self.assertEqual(parsed_answers[9]['added_at'], '1364453025.0')
-
-    def test_parse_comments(self):
-        """Given a list of comments, test all the elements about to be parsed."""
-
-        page = read_file('data/askbot/html_148_comments_answer_2_openstack.html')
-
-        html_question = [page]
-
-        bs_question = bs4.BeautifulSoup(html_question[0], "html.parser")
-        bs_answers = bs_question.select("div.answer")
-        comments = bs_answers[1].select("div.comment")
-        parsed_comments = AskbotParser.parse_comments(comments)
-        expected_comment_0 = {
-            'summary': "HI, are there any guide on debugging with eclipse and pydev with the latest branch. I have tried commented out eventlet.monkeypatch(os=False) and replaced it with eventlet.monkeypatch(all=False,socket=True,time=True,os=False) and added import sys;sys.path.append('path') but breakpoints are ignored",
-            'author': {
-                'id': '451',
-                'username': 'sak'
-            },
-            'id': '814',
-            'added_at': '1367914127.0',
-            'score': ''
-        }
-        expected_comment_1 = {
-            'summary': '@sakthanks for asking. I believe yours would be a very good new question, more than a comment here. Do you mind posting it as a new question?',
-            'author': {
-                'id': '9',
-                'username': 'smaffulli'
-            },
-            'id': '872',
-            'added_at': '1367949923.0',
-            'score': ''
-        }
-        expected_comment_2 = {
-            'summary': 'cool. I have posted this as a new question: https://ask.openstack.org/question/815/how-do-i-debug-nova-service-with-eclipse-and-pydev/',
-            'author': {
-                'id': '451',
-                'username': 'sak'
-            },
-            'id': '886',
-            'added_at': '1368003922.0',
-            'score': ''
-        }
-        self.assertEqual(parsed_comments[0], expected_comment_0)
-        self.assertEqual(parsed_comments[1], expected_comment_1)
-        self.assertEqual(parsed_comments[2], expected_comment_2)
-        self.assertEqual(len(parsed_comments), 3)
 
     def test_parse_number_of_html_pages(self):
         """Get the number of html needed to retrieve all the answers of a given page."""
@@ -369,6 +295,33 @@ class TestAskbotClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/question/0')
 
+    @httpretty.activate
+    def test_get_comments(self):
+        """Test if API Questions call works"""
+
+        body = read_file('data/askbot/askbot_2481_multicomments.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL,
+                               body=body, status=200)
+
+        client = AskbotClient(ASKBOT_URL)
+
+        result = client.get_comments(17)
+
+        self.assertEqual(result, body)
+
+        expected = {
+                    'post_id': ['17'],
+                    'post_type': ['answer'],
+                    'avatar_size': ['0']
+                 }
+
+        req = httpretty.last_request()
+
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/post_comments')
+        self.assertDictEqual(req.querystring, expected)
 
 class TestAskbotBackend(unittest.TestCase):
     """Askbot backend tests."""
@@ -401,6 +354,7 @@ class TestAskbotBackend(unittest.TestCase):
         question_html_1 = read_file('data/askbot/askbot_question.html')
         question_html_2 = read_file('data/askbot/askbot_question_multipage_1.html')
         question_html_2_2 = read_file('data/askbot/askbot_question_multipage_2.html')
+        comments = read_file('data/askbot/askbot_2481_multicomments.json')
 
         httpretty.register_uri(httpretty.GET,
                                ASKBOT_QUESTIONS_API_URL,
@@ -421,9 +375,15 @@ class TestAskbotBackend(unittest.TestCase):
                                ASKBOT_QUESTION_2488_URL,
                                body=question_html_2_2, status=200)
 
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL,
+                               body=comments, status=200)
+
         backend = Askbot(ASKBOT_URL)
 
         questions = [question for question in backend.fetch(from_date=None)]
+
+        json_comments = json.loads(comments)
 
         self.assertEqual(len(questions[0]['data']['answers']), len(questions[0]['data']['answer_ids']))
         self.assertEqual(questions[0]['tag'], 'http://example.com')
@@ -431,6 +391,8 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(questions[0]['updated_on'], 1408116902.0)
         self.assertEqual(questions[0]['data']['id'], 2488)
         self.assertEqual(questions[0]['category'], 'question')
+        self.assertEqual(questions[0]['data']['comments'][0], json_comments[0])
+        self.assertEqual(len(questions[0]['data']['comments']), len(json_comments))
         self.assertEqual(len(questions[1]['data']['answers']), len(questions[1]['data']['answer_ids']))
         self.assertEqual(questions[1]['tag'], 'http://example.com')
         self.assertEqual(questions[1]['uuid'], 'ecc1320265e400edb28700cc3d02efc6d76410be')
@@ -447,6 +409,7 @@ class TestAskbotBackend(unittest.TestCase):
         question_html_1 = read_file('data/askbot/askbot_question.html')
         question_html_2 = read_file('data/askbot/askbot_question_multipage_1.html')
         question_html_2_2 = read_file('data/askbot/askbot_question_multipage_2.html')
+        comments = read_file('data/askbot/askbot_2481_multicomments.json')
 
         httpretty.register_uri(httpretty.GET,
                                ASKBOT_QUESTIONS_API_URL,
@@ -466,6 +429,10 @@ class TestAskbotBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                ASKBOT_QUESTION_2488_URL,
                                body=question_html_2_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL,
+                               body=comments, status=200)
 
         backend = Askbot(ASKBOT_URL)
 
