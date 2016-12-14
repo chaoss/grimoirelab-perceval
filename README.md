@@ -137,6 +137,10 @@ $ perceval gerrit --user user 'review.openstack.org' --from-date '2016-01-01'
 ```
 
 ### Git
+
+To run this backend execute the next command. Take into account that to run
+this backend Git program has to be installed on your system.
+
 ```
 $ perceval git 'https://github.com/grimoirelab/perceval.git' --from-date '2016-01-01'
 ```
@@ -147,10 +151,16 @@ Git backend can also work with a Git log file as input. We recommend to use the 
 git log --raw --numstat --pretty=fuller --decorate=full --parents --reverse --topo-order -M -C -c --remotes=origin --all > /tmp/gitlog.log
 ```
 
-Then, to run the backend, just execute the next command:
+Then, to run the backend, just execute any of the next commands:
 
 ```
-$ perceval git /tmp/gitlog.log
+$ perceval git --git-log '/tmp/gitlog.log' 'file:///myrepo.git'
+```
+
+or
+
+```
+$ perceval git '/tmp/gitlog.log'
 ```
 
 ### GitHub
