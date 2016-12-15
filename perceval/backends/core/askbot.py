@@ -44,7 +44,7 @@ class Askbot(Backend):
     :param url: Askbot site URL
     :param tag: label used to mark the data
     """
-    version = '0.1.1'
+    version = '0.2.0'
 
     def __init__(self, url, tag=None):
         origin = url
@@ -88,7 +88,8 @@ class Askbot(Backend):
                 if updated_at > from_date:
                     html_question = self.__fetch_question(question)
                     logger.debug("Fetching HTML question %s", question['id'])
-                    question_obj = self.__build_question(html_question)
+                    comments = self.__fetch_comments(question)
+                    question_obj = self.__build_question(html_question, question, comments)
                     question.update(question_obj)
                     yield question
 
@@ -124,6 +125,22 @@ class Askbot(Backend):
             npages = npages + 1
 
         return html_question_items
+
+    def __fetch_comments(self, question):
+        """Fetch all the comments of an Askbot question and answers.
+
+        The method fetchs the list of every comment existing in a question and
+        its answers.
+
+        :param question: item with the question itself
+
+        :returns: a list of comments with the ids as hashes
+        """
+        comments = {}
+        comments[question['id']] = json.loads(self.client.get_comments(question['id']))
+        for object_id in question['answer_ids']:
+            comments[object_id] = json.loads(self.client.get_comments(object_id))
+        return comments
 
     @classmethod
     def has_resuming(cls):
@@ -171,12 +188,14 @@ class Askbot(Backend):
         return float(item['last_activity_at'])
 
     @staticmethod
-    def __build_question(html_question):
+    def __build_question(html_question, question, comments):
         """Build an Askbot HTML response.
 
         The method puts together all the information regarding a question
 
         :param html_question: array of HTML raw pages
+        :param question: question object from the API
+        :param comments: list of comments to add
 
         :returns: a dict item with the parsed question information
         """
@@ -186,8 +205,8 @@ class Askbot(Backend):
         # Add the info to the question object
         question_object.update(question_container)
         # Add the comments of the question (if any)
-        if AskbotParser.parse_question_comments(html_question[0]):
-            question_object['comments'] = AskbotParser.parse_question_comments(html_question[0])
+        if comments[int(question['id'])]:
+            question_object['comments'] = comments[int(question['id'])]
 
         answers = []
 
@@ -196,6 +215,9 @@ class Askbot(Backend):
 
         if len(answers) != 0:
             question_object['answers'] = answers
+            for answer in question_object['answers']:
+                if comments[int(answer['id'])]:
+                    answer['comments'] = comments[int(answer['id'])]
 
         return question_object
 
@@ -215,6 +237,7 @@ class AskbotClient:
     HTML_QUESTION = 'question/'
     ORDER_API = 'activity-asc'
     ORDER_HTML = 'votes'
+    COMMENTS = 'post_comments'
 
     def __init__(self, base_url):
         self.base_url = base_url
@@ -246,17 +269,33 @@ class AskbotClient:
         response = self.__call(path, params)
         return response
 
-    def __call(self, path, params=None):
+    def get_comments(self, post_id):
+        """Retrieve a list of comments by a given id.
+
+        :param object_id: object identifiere
+        """
+        path = self.COMMENTS
+        params = {
+                    'post_id': post_id,
+                    'post_type': 'answer',
+                    'avatar_size': 0
+                 }
+        headers = {'X-Requested-With': 'XMLHttpRequest'}
+        response = self.__call(path, params, headers)
+        return response
+
+    def __call(self, path, params=None, headers=None):
         """Retrieve all the questions.
 
         :param path: path of the url
         :param params: dict with the HTTP parameters needed to run
             the given command
+        :param headers: headers to use in the request
         """
 
         url = urljoin(self.base_url, path)
 
-        req = requests.get(url, params=params)
+        req = requests.get(url, params=params, headers=headers)
         req.raise_for_status()
 
         return req.text
@@ -301,22 +340,6 @@ class AskbotParser:
         return container_info
 
     @staticmethod
-    def parse_question_comments(html_question):
-        """Parse the comments of a given HTML question.
-
-        The method parses the comments available for each question.
-
-        :param html_question: raw HTML question element
-
-        :returns: a list with the desired comments
-        """
-        bs_question = bs4.BeautifulSoup(html_question, "html.parser")
-        question = AskbotParser._find_question_container(bs_question)
-        comments = question.select("div.comment")
-        question_comments = AskbotParser.parse_comments(comments)
-        return question_comments
-
-    @staticmethod
     def parse_answers(html_question):
         """Parse the answers of a given HTML question.
 
@@ -327,18 +350,6 @@ class AskbotParser:
 
         :returns: a list with the answers
         """
-        def parse_answer_comments(bs_answer):
-            """Parse the comments of a given HTML answer.
-
-            The method parses the comments available for each answer.
-
-            :param bs_answer: beautiful soup answer element
-
-            :returns: a list with the desired comments
-            """
-            comments = bs_answer.select("div.comment")
-            answer_comments = AskbotParser.parse_comments(comments)
-            return answer_comments
 
         def parse_answer_container(update_info):
             """Parse the answer info container of a given HTML question.
@@ -379,8 +390,6 @@ class AskbotParser:
         for bs_answer in bs_answers:
             answer_id = bs_answer.attrs["data-post-id"]
             votes_element = bs_answer.select("div.vote-number")[0].text
-            # Select all the comments in the answer
-            comments = parse_answer_comments(bs_answer)
             # Select the body of the answer
             body = bs_answer.select("div.post-body")
             # Get the user information container and parse it
@@ -395,55 +404,10 @@ class AskbotParser:
                       'score': votes_element,
                       'summary': body
                       }
-            if comments:
-                answer['comments'] = comments
             # Update the object with the information in the answer container
             answer.update(answer_container)
             answer_list.append(answer)
         return answer_list
-
-    @staticmethod
-    def parse_comments(comments):
-        """Parse the HTML comments information of a given list of them.
-
-        The method parses the information available inside each comment.
-
-        :param comments: beautiful soup list of comments
-
-        :returns: a list with the parsed comments
-        """
-        def parse_comment_author(comment):
-            """Parse the author information from an HTML comment.
-
-            The method parses the user information available inside a comment.
-
-            :param comment: beautiful soup comment
-
-            :returns: an object with the user information
-            """
-            username = comment.select("a.author")[0].text
-            href = comment.select("a.author")[0].attrs["href"]
-            user_id = re.search('\d+', href).group(0)
-            return {'id': user_id, 'username': username}
-
-        comments_list = []
-        for comment in comments:
-            added_at = comment.select("abbr.timeago")[0].attrs["title"]
-
-            # Compatibility between versions
-            if "data-post-id" in comment.attrs:
-                comment_id = comment.attrs["data-post-id"]
-            else:
-                comment_id = comment.attrs["data-comment-id"]
-
-            element = {'added_at': str(str_to_datetime(added_at).timestamp()),
-                       'author': parse_comment_author(comment),
-                       'id': comment_id,
-                       'summary': comment.select("div.comment-body")[0].get_text(strip=True),
-                       'score': comment.select("div.upvote")[0].text
-                       }
-            comments_list.append(element)
-        return comments_list
 
     @staticmethod
     def parse_number_of_html_pages(html_question):
