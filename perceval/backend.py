@@ -63,22 +63,30 @@ class Backend:
     :raises ValueError: raised when `cache` is not an instance of
         `Cache` class
     """
-    version = '0.4'
+    version = '0.5'
 
     def __init__(self, origin, tag=None, cache=None):
-        if cache and not isinstance(cache, Cache):
-            msg = "cache is not an instance of Cache. %s object given" \
-                % (str(type(cache)))
-            raise ValueError(msg)
-
         self._origin = origin
         self.tag = tag if tag else origin
-        self.cache = cache
+        self.cache = cache or None
         self.cache_queue = []
 
     @property
     def origin(self):
         return self._origin
+
+    @property
+    def cache(self):
+        return self._cache
+
+    @cache.setter
+    def cache(self, obj):
+        if obj and not isinstance(obj, Cache):
+            msg = "obj is not an instance of Cache. %s object given" \
+                % (str(type(obj)))
+            raise ValueError(msg)
+
+        self._cache = obj
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         raise NotImplementedError

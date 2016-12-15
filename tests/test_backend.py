@@ -23,7 +23,10 @@
 
 import argparse
 import datetime
+import os
+import shutil
 import sys
+import tempfile
 import unittest
 
 if not '..' in sys.path:
@@ -34,18 +37,25 @@ from perceval.backend import (Backend,
                               BackendCommand,
                               metadata,
                               uuid)
+from perceval.cache import Cache
 
 
 class TestBackend(unittest.TestCase):
     """Unit tests for Backend"""
 
+    def setUp(self):
+        self.test_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
+
     def test_version(self):
         """Test whether the backend version is initialized"""
 
-        self.assertEqual(Backend.version, '0.4')
+        self.assertEqual(Backend.version, '0.5')
 
         b = Backend('test')
-        self.assertEqual(b.version, '0.4')
+        self.assertEqual(b.version, '0.5')
 
     def test_origin(self):
         """Test whether origin value is initialized"""
@@ -64,11 +74,31 @@ class TestBackend(unittest.TestCase):
         self.assertEqual(b.origin, 'test')
         self.assertEqual(b.tag, 'mytag')
 
+    def test_cache(self):
+        """Test whether cache value is initializated"""
+
+        cache_path = os.path.join(self.test_path, 'mockrepo')
+        cache = Cache(cache_path)
+
+        b = Backend('test', cache=cache)
+        self.assertEqual(b.cache, cache)
+
+        b = Backend('test')
+        self.assertEqual(b.cache, None)
+
+        b.cache = cache
+        self.assertEqual(b.cache, cache)
+
     def test_cache_value_error(self):
         """Test whether it raises a error on invalid cache istances"""
 
         with self.assertRaises(ValueError):
             Backend('test', cache=8)
+
+        b = Backend('test')
+
+        with self.assertRaises(ValueError):
+            b.cache = 8
 
 
 class TestBackendCommand(unittest.TestCase):
