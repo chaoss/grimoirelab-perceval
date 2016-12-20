@@ -29,15 +29,20 @@ import sys
 import tempfile
 import unittest
 
+import dateutil.tz
+
 if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval import __version__
 from perceval.backend import (Backend,
+                              BackendCommandArgumentParser,
                               BackendCommand,
                               metadata,
                               uuid)
 from perceval.cache import Cache
+from perceval.errors import InvalidDateError
+from perceval.utils import DEFAULT_DATETIME
 
 
 class TestBackend(unittest.TestCase):
@@ -101,6 +106,155 @@ class TestBackend(unittest.TestCase):
             b.cache = 8
 
 
+class TestBackendCommandArgumentParser(unittest.TestCase):
+    """Unit tests for BackendCommandArgumentParser"""
+
+    def test_argument_parser(self):
+        """Test if an argument parser object is created on initialization"""
+
+        parser = BackendCommandArgumentParser()
+        self.assertIsInstance(parser.parser, argparse.ArgumentParser)
+
+    def test_parse_default_args(self):
+        """Test if the default configured arguments are parsed"""
+
+        args = ['--tag', 'test']
+
+        parser = BackendCommandArgumentParser()
+        parsed_args = parser.parse(*args)
+
+        self.assertIsInstance(parsed_args, argparse.Namespace)
+        self.assertEqual(parsed_args.tag, 'test')
+
+    def test_parse_with_aliases(self):
+        """Test if a set of aliases is created after parsing"""
+
+        aliases = {
+            'label' : 'tag',
+            'label2' : 'tag',
+            'newdate' : 'from_date',
+            'from_date' : 'tag',
+            'notfound' : 'backend_token'
+        }
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              aliases=aliases)
+
+        args = ['--tag', 'test', '--from-date', '2015-01-01']
+        parsed_args = parser.parse(*args)
+
+        expected_dt = datetime.datetime(2015, 1, 1, 0, 0,
+                                        tzinfo=dateutil.tz.tzutc())
+
+        self.assertIsInstance(parsed_args, argparse.Namespace)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, expected_dt)
+
+        # Check aliases
+        self.assertEqual(parsed_args.label, 'test')
+        self.assertEqual(parsed_args.label2, 'test')
+        self.assertEqual(parsed_args.newdate, expected_dt)
+        self.assertNotIn('notfound', parsed_args)
+
+    def test_parse_from_date_arg(self):
+        """Test if from-date parameter is parsed"""
+
+        parser = BackendCommandArgumentParser(from_date=True)
+
+        # Check default value
+        args = []
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+
+        # Check argument
+        args = ['--from-date', '2015-01-01']
+        parsed_args = parser.parse(*args)
+
+        expected = datetime.datetime(2015, 1, 1, 0, 0,
+                                     tzinfo=dateutil.tz.tzutc())
+        self.assertEqual(parsed_args.from_date, expected)
+
+        # Invalid date
+        args = ['--from-date', 'asdf']
+
+        with self.assertRaises(InvalidDateError):
+            parsed_args = parser.parse(*args)
+
+    def test_parse_offset_arg(self):
+        """Test if offset parameter is parsed"""
+
+        parser = BackendCommandArgumentParser(offset=True)
+
+        # Check default value
+        args = []
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.offset, 0)
+
+        # Check argument
+        args = ['--offset', '88']
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.offset, 88)
+
+    def test_incompatible_from_date_and_offset(self):
+        """Test if from-date and offset arguments are incompatible"""
+
+        with self.assertRaises(AttributeError):
+            _ = BackendCommandArgumentParser(from_date=True,
+                                             offset=True)
+
+    def test_parse_auth_args(self):
+        """Test if the authtentication arguments are parsed"""
+
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd']
+
+        parser = BackendCommandArgumentParser(basic_auth=True,
+                                              token_auth=True)
+        parsed_args = parser.parse(*args)
+
+        self.assertIsInstance(parsed_args, argparse.Namespace)
+        self.assertEqual(parsed_args.user, 'jsmith')
+        self.assertEqual(parsed_args.password, '1234')
+        self.assertEqual(parsed_args.api_token, 'abcd')
+
+    def test_parse_cache_args(self):
+        """Test if the authtentication arguments are parsed"""
+
+        args = ['--cache-path', '/tmp/cache',
+                '--clean-cache', '--fetch-cache']
+
+        parser = BackendCommandArgumentParser(cache=True)
+        parsed_args = parser.parse(*args)
+
+        self.assertIsInstance(parsed_args, argparse.Namespace)
+        self.assertEqual(parsed_args.cache_path, '/tmp/cache')
+        self.assertEqual(parsed_args.clean_cache, True)
+        self.assertEqual(parsed_args.fetch_cache, True)
+        self.assertEqual(parsed_args.no_cache, False)
+
+    def test_incompatible_fetch_cache_and_no_cache(self):
+        """Test if fetch-cache and no-cache arguments are incompatible"""
+
+        args = ['--fetch-cache', '--no-cache']
+        parser = BackendCommandArgumentParser(cache=True)
+
+        with self.assertRaises(AttributeError):
+            _ = parser.parse(*args)
+
+
+class MockBackendCommand(BackendCommand):
+    """Mock backend command class used for testing"""
+
+    @staticmethod
+    def setup_cmd_parser():
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              basic_auth=True,
+                                              token_auth=True,
+                                              cache=True)
+        return parser
+
+
 class TestBackendCommand(unittest.TestCase):
     """Unit tests for BackendCommand"""
 
@@ -108,22 +262,22 @@ class TestBackendCommand(unittest.TestCase):
         """Test if the arguments are parsed when the class is initialized"""
 
         args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--cache-path', '/tmp/cache', '--fetch-cache',
                 '--from-date', '2015-01-01', '--tag', 'test']
 
-        cmd = BackendCommand(*args)
+        dt_expected = datetime.datetime(2015, 1, 1, 0, 0,
+                                        tzinfo=dateutil.tz.tzutc())
+
+        cmd = MockBackendCommand(*args)
 
         self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.backend_user, 'jsmith')
-        self.assertEqual(cmd.parsed_args.backend_password, '1234')
-        self.assertEqual(cmd.parsed_args.backend_token, 'abcd')
-        self.assertEqual(cmd.parsed_args.from_date, '2015-01-01')
+        self.assertEqual(cmd.parsed_args.user, 'jsmith')
+        self.assertEqual(cmd.parsed_args.password, '1234')
+        self.assertEqual(cmd.parsed_args.api_token, 'abcd')
+        self.assertEqual(cmd.parsed_args.cache_path, self.test_path)
+        self.assertEqual(cmd.parsed_args.fetch_cache, True)
+        self.assertEqual(cmd.parsed_args.from_date, dt_expected)
         self.assertEqual(cmd.parsed_args.tag, 'test')
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = BackendCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 
 class MockDecoratorBackend(Backend):

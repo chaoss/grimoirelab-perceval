@@ -24,7 +24,6 @@ import argparse
 import functools
 import hashlib
 import importlib
-import os
 import pkgutil
 import sys
 
@@ -32,7 +31,7 @@ from datetime import datetime as dt
 
 from ._version import __version__
 from .cache import Cache
-from .utils import DEFAULT_DATETIME
+from .utils import DEFAULT_DATETIME, str_to_datetime
 
 
 class Backend:
@@ -129,43 +128,103 @@ class Backend:
         self.cache_queue.append(item)
 
 
-class BackendCommand:
-    """Abstract class to run backends from the command line.
+class BackendCommandArgumentParser:
+    """Manage and parse backend command arguments.
 
-    When the class is initialized, it parses the given arguments using
-    the defined argument parser on the class method. Those arguments
-    will be stored in the attribute 'parsed_args'.
+    This class defines and parses a set of arguments common to
+    backends commands. Some parameters like cache or the different
+    types of authentication can be set during the initialization
+    of the instance.
 
-    The method 'run' must be implemented to exectute the backend.
+    :param from_date: set from_date argument
+    :param offset: set offset argument
+    :param basic_auth: set basic authentication arguments
+    :param token_auth: set token/key authentication arguments
+    :param cache: set caching arguments
+    :param aliases: define aliases for parsed arguments
+
+    :raises AttributeArror: when both `from_date` and `offset` are set
+        to `True`
     """
-    def __init__(self, *args):
-        parser = self.create_argument_parser()
-        self.parsed_args = parser.parse_args(args)
+    def __init__(self, from_date=False, offset=False,
+                 basic_auth=False, token_auth=False,
+                 cache=False, aliases=None):
+        self._from_date = from_date
+        self._cache = cache
 
-    def run(self):
-        raise NotImplementedError
+        self.aliases = aliases or {}
+        self.parser = argparse.ArgumentParser()
 
-    @classmethod
-    def create_argument_parser(cls):
-        """Returns a generic argument parser."""
-
-        parser = argparse.ArgumentParser()
-
-        # Options
-        group = parser.add_argument_group('general arguments')
-        group.add_argument('-u', '--backend-user', dest='backend_user',
-                           help="backend user")
-        group.add_argument('-p', '--backend-password', dest='backend_password',
-                           help="backend password")
-        group.add_argument('-t', '--backend-token', dest='backend_token',
-                           help="backend authentication token")
-        group.add_argument('--from-date', dest='from_date', default='1970-01-01',
-                           help="fetch items from this date")
+        group = self.parser.add_argument_group('general arguments')
         group.add_argument('--tag', dest='tag',
                            help="tag the items generated during the fetching process")
 
-        # Cache arguments
-        group = parser.add_argument_group('cache arguments')
+        if from_date and offset:
+            raise AttributeError("from-date and offset parameters are incompatible")
+
+        if from_date:
+            group.add_argument('--from-date', dest='from_date',
+                               default='1970-01-01',
+                               help="fetch items updated since this date")
+        if offset:
+            group.add_argument('--offset', dest='offset',
+                               type=int, default=0,
+                               help="offset to start fetching items")
+
+        if basic_auth or token_auth:
+            self._set_auth_arguments(basic_auth=basic_auth,
+                                     token_auth=token_auth)
+
+        if cache:
+            self._set_cache_arguments()
+
+        self._set_output_arguments()
+
+    def parse(self, *args):
+        """Parse a list of arguments.
+
+        Parse argument strings needed to run a backend command. The result
+        will be a `argparse.Namespace` object populated with the values
+        obtained after the validation of the parameters.
+
+        :param args: argument strings
+
+        :result: an object with the parsed values
+        """
+        parsed_args = self.parser.parse_args(args)
+
+        if self._from_date:
+            parsed_args.from_date = str_to_datetime(parsed_args.from_date)
+
+        if self._cache and parsed_args.fetch_cache and parsed_args.no_cache:
+            raise AttributeError("fetch-cache and no-cache arguments are not compatible")
+
+        # Set aliases
+        for alias, arg in self.aliases.items():
+            if (alias not in parsed_args) and (arg in parsed_args):
+                value = getattr(parsed_args, arg, None)
+                setattr(parsed_args, alias, value)
+
+        return parsed_args
+
+    def _set_auth_arguments(self, basic_auth=True, token_auth=False):
+        """Activate authentication arguments parsing"""
+
+        group = self.parser.add_argument_group('authentication arguments')
+
+        if basic_auth:
+            group.add_argument('-u', '--backend-user', dest='user',
+                               help="backend user")
+            group.add_argument('-p', '--backend-password', dest='password',
+                               help="backend password")
+        if token_auth:
+            group.add_argument('-t', '--api-token', dest='api_token',
+                               help="backend authentication token / API key")
+
+    def _set_cache_arguments(self):
+        """Activate cache arguments parsing"""
+
+        group = self.parser.add_argument_group('cache arguments')
         group.add_argument('--cache-path', dest='cache_path', default=None,
                            help="directory path to the cache")
         group.add_argument('--clean-cache', dest='clean_cache', action='store_true',
@@ -175,13 +234,35 @@ class BackendCommand:
         group.add_argument('--fetch-cache', dest='fetch_cache', action='store_true',
                            help="fetch data from the cache")
 
-        # Output arguments
-        group = parser.add_argument_group('output arguments')
+    def _set_output_arguments(self):
+        """Activate output arguments parsing"""
+
+        group = self.parser.add_argument_group('output arguments')
         group.add_argument('-o', '--output', type=argparse.FileType('w'),
                            dest='outfile', default=sys.stdout,
                            help="output file")
 
-        return parser
+
+class BackendCommand:
+    """Abstract class to run backends from the command line.
+
+    When the class is initialized, it parses the given arguments using
+    the defined argument parser on `setump_cmd_parser` method. Those
+    arguments will be stored in the attribute `parsed_args`.
+
+    The methods `run` and `setup_cmd_parser` must be implemented to
+    exectute the backend.
+    """
+    def __init__(self, *args):
+        parser = self.setup_cmd_parser()
+        self.parsed_args = parser.parse(*args)
+
+    def run(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def setup_cmd_parser():
+        raise NotImplementedError
 
 
 def metadata(func):
