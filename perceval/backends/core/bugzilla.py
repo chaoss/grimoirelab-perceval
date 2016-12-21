@@ -38,7 +38,8 @@ from ...errors import BackendError, CacheError, ParseError
 from ...utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
 
-MAX_BUGS = 200 # Maximum number of bugs per query
+MAX_BUGS = 200  # Maximum number of bugs per query
+MAX_BUGS_CSV = 10000  # Maximum number of bugs per CSV query
 
 logger = logging.getLogger(__name__)
 
@@ -58,16 +59,18 @@ class Bugzilla(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.6.0'
 
     def __init__(self, url, user=None, password=None,
-                 max_bugs=MAX_BUGS, tag=None, cache=None):
+                 max_bugs=MAX_BUGS, max_bugs_csv=MAX_BUGS_CSV,
+                 tag=None, cache=None):
         origin = url
 
         super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.max_bugs = max(1, max_bugs)
-        self.client = BugzillaClient(url, user=user, password=password)
+        self.client = BugzillaClient(url, user=user, password=password,
+                                     max_bugs_csv=max_bugs_csv)
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -375,6 +378,7 @@ class BugzillaCommand(BackendCommand):
         self.backend_user = self.parsed_args.backend_user
         self.backend_password = self.parsed_args.backend_password
         self.max_bugs = self.parsed_args.max_bugs
+        self.max_bugs_csv = self.parsed_args.max_bugs_csv
         self.from_date = str_to_datetime(self.parsed_args.from_date)
         self.tag = self.parsed_args.tag
         self.outfile = self.parsed_args.outfile
@@ -400,6 +404,7 @@ class BugzillaCommand(BackendCommand):
                                 user=self.backend_user,
                                 password=self.backend_password,
                                 max_bugs=self.max_bugs,
+                                max_bugs_csv=self.max_bugs_csv,
                                 tag=self.tag,
                                 cache=cache)
 
@@ -438,6 +443,9 @@ class BugzillaCommand(BackendCommand):
         group.add_argument('--max-bugs', dest='max_bugs',
                            type=int, default=MAX_BUGS,
                            help="Maximum number of bugs requested on the same query")
+        group.add_argument('--max-bugs-csv', dest='max_bugs_csv',
+                           type=int, default=MAX_BUGS_CSV,
+                           help="Maximum number of bugs requested on CSV queries")
 
         # Required arguments
         parser.add_argument('url',
@@ -459,6 +467,7 @@ class BugzillaClient:
     :param base_url: URL of the Bugzilla server
     :param user: Bugzilla user
     :param password: user password
+    :param max_bugs_cvs: max bugs requested per CSV query
 
     :raises BackendError: when an error occurs initilizing the
         client
@@ -482,6 +491,7 @@ class BugzillaClient:
     # CGI params
     PBUGZILLA_LOGIN = 'Bugzilla_login'
     PBUGZILLA_PASSWORD = 'Bugzilla_password'
+    PLIMIT = 'limit'
     PLOGIN = 'GoAheadAndLogIn'
     PLOGOUT = 'logout'
     PBUG_ID = 'id'
@@ -495,13 +505,16 @@ class BugzillaClient:
     CTYPE_XML = 'xml'
 
 
-    def __init__(self, base_url, user=None, password=None):
+    def __init__(self, base_url, user=None, password=None,
+                 max_bugs_csv=MAX_BUGS_CSV):
         self.base_url = base_url
         self.version = None
         self._session = self.__create_http_session()
 
         if user is not None and password is not None:
             self.login(user, password)
+
+        self.max_bugs_csv = max_bugs_csv
 
     def login(self, user, password):
         """Authenticate a user in the server.
@@ -575,6 +588,7 @@ class BugzillaClient:
         params = {
             self.PCHFIELD_FROM : date,
             self.PCTYPE : self.CTYPE_CSV,
+            self.PLIMIT : self.max_bugs_csv,
             self.PORDER : order
         }
 

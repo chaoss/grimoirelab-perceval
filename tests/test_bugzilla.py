@@ -140,7 +140,8 @@ class TestBugzillaBackend(unittest.TestCase):
                                     for _ in range(7)
                                ])
 
-        bg = Bugzilla(BUGZILLA_SERVER_URL, max_bugs=5)
+        bg = Bugzilla(BUGZILLA_SERVER_URL,
+                      max_bugs=5, max_bugs_csv=500)
         bugs = [bug for bug in bg.fetch()]
 
         self.assertEqual(len(bugs), 7)
@@ -167,16 +168,19 @@ class TestBugzillaBackend(unittest.TestCase):
                     },
                     {
                      'ctype' : ['csv'],
+                     'limit' : ['500'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['1970-01-01 00:00:00']
                     },
                     {
                      'ctype' : ['csv'],
+                     'limit' : ['500'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['2009-07-30 11:35:33']
                     },
                     {
                      'ctype' : ['csv'],
+                     'limit' : ['500'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['2015-08-12 18:32:11']
                     },
@@ -287,11 +291,13 @@ class TestBugzillaBackend(unittest.TestCase):
                     },
                     {
                      'ctype' : ['csv'],
+                     'limit' : ['10000'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['2015-01-01 00:00:00']
                     },
                     {
                      'ctype' : ['csv'],
+                     'limit' : ['10000'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['2015-08-12 18:32:11']
                     },
@@ -335,6 +341,7 @@ class TestBugzillaBackend(unittest.TestCase):
         # Check request
         expected = {
                      'ctype' : ['csv'],
+                     'limit' : ['10000'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['2100-01-01 00:00:00']
                     }
@@ -427,11 +434,13 @@ class TestBugzillaBackend(unittest.TestCase):
                     },
                     {
                      'ctype' : ['csv'],
+                     'limit' : ['10000'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['2015-01-01 00:00:00']
                     },
                     {
                      'ctype' : ['csv'],
+                     'limit' : ['10000'],
                      'order' : ['changeddate'],
                      'chfieldfrom' : ['2015-08-12 18:32:11']
                     },
@@ -685,7 +694,8 @@ class TestBugzillaCommand(unittest.TestCase):
 
         args = ['--backend-user', 'jsmith@example.com',
                 '--backend-password', '1234',
-                '--max-bugs', '10', '--tag', 'test',
+                '--max-bugs', '10', '--max-bugs-csv', '5',
+                '--tag', 'test',
                 BUGZILLA_SERVER_URL]
 
         cmd = BugzillaCommand(*args)
@@ -693,6 +703,7 @@ class TestBugzillaCommand(unittest.TestCase):
         self.assertEqual(cmd.parsed_args.backend_user, 'jsmith@example.com')
         self.assertEqual(cmd.parsed_args.backend_password, '1234')
         self.assertEqual(cmd.parsed_args.max_bugs, 10)
+        self.assertEqual(cmd.parsed_args.max_bugs_csv, 5)
         self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertEqual(cmd.parsed_args.url, BUGZILLA_SERVER_URL)
         self.assertIsInstance(cmd.backend, Bugzilla)
@@ -826,6 +837,7 @@ class TestBugzillaClient(unittest.TestCase):
         # Check request params
         expected = {
                     'ctype' : ['csv'],
+                    'limit' : ['10000'],
                     'order' : ['changeddate'],
                     'chfieldfrom' : ['1970-01-01 00:00:00']
                    }
@@ -844,6 +856,7 @@ class TestBugzillaClient(unittest.TestCase):
         # Check request params
         expected = {
                     'ctype' : ['csv'],
+                    'limit' : ['10000'],
                     'order' : ['changeddate'],
                     'chfieldfrom' : ['2015-01-01 00:00:00']
                    }
@@ -853,6 +866,26 @@ class TestBugzillaClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/buglist.cgi')
         self.assertDictEqual(req.querystring, expected)
+
+        # Call API having defined max_bugs_cvs parameter
+        client = BugzillaClient(BUGZILLA_SERVER_URL,
+                                max_bugs_csv=300)
+        response = client.buglist()
+
+        # Check request params
+        expected = {
+                    'ctype' : ['csv'],
+                    'limit' : ['300'],
+                    'order' : ['changeddate'],
+                    'chfieldfrom' : ['1970-01-01 00:00:00']
+                   }
+
+        req = httpretty.last_request()
+
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/buglist.cgi')
+        self.assertDictEqual(req.querystring, expected)
+
 
     @httpretty.activate
     def test_buglist_old_version(self):
@@ -879,6 +912,7 @@ class TestBugzillaClient(unittest.TestCase):
         # Check request params
         expected = {
                     'ctype' : ['csv'],
+                    'limit' : ['10000'],
                     'order' : ['Last Changed'],
                     'chfieldfrom' : ['1970-01-01 00:00:00']
                     }
