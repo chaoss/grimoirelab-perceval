@@ -59,7 +59,7 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.1'
+    version = '0.4.2'
 
     def __init__(self, uri, dirpath, tag=None, cache=None):
         origin = uri
@@ -312,7 +312,7 @@ class SupybotParser:
                         (?P<msg>.+)$
                         """
     COMMENT_PATTERN = r"^<(?P<nick>(.*?)(!.*)?)>\s(?P<body>.+)$"
-    COMMENT_ACTION_PATTERN = r"^\*\s(?P<body>(?P<nick>(.*?)(!.*)?)\s.+)$"
+    COMMENT_ACTION_PATTERN = r"^\*\s?(?P<body>(?P<nick>([^\s\*]+?)(!.*)?)\s.+)$"
     SERVER_PATTERN = r"^\*\*\*\s(?P<body>(?P<nick>(.*?)(!.*)?)\s.+)$"
     BOT_PATTERN = r"^-(?P<nick>(.*?)(!.*)?)-\s(?P<body>.+)$"
     EMPTY_PATTERN = r"^\s*$"

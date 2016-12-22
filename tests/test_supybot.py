@@ -98,6 +98,7 @@ class TestSupybotBackend(unittest.TestCase):
                     ('MikeMcClurg', 'server', '6f873e788e289acca517a1c04eaa3e8557191f99', 1350465410.0),
                     ('Tv_', 'server', 'fe19251eb5068bb7a14892960574b565b100fb29', 1350465411.0),
                     ('benpol', 'comment', 'ec3206582c534cb725bc5153b5037089441735d3', 1350465447.0),
+                    ('benpol', 'comment', 'cf80a24d70b0bca15fde7d428363d3c18b2e8827', 1350465460.0),
                     ('Tv_', 'comment', '06b6fe28cdb55247d03430e72986068fdb168723',  1350465528.0),
                     ('jamespage', 'comment', '42a71797a6bd75c01b4de9476006e73ed14c0340', 1350552630.0),
                     ('LarsFronius_', 'server', '839f98f69f4d5c22973abaf67bc2931682e9a79b', 1350552630.0),
@@ -364,6 +365,11 @@ class TestSupybotParser(unittest.TestCase):
         m = pattern.match(s)
         self.assertEqual(m.group('nick'), 'mynick')
         self.assertEqual(m.group('body'), "mynick is waving hello")
+
+        s = "*mynick is waving goodbye"
+        m = pattern.match(s)
+        self.assertEqual(m.group('nick'), 'mynick')
+        self.assertEqual(m.group('body'), "mynick is waving goodbye")
 
         # These messages are not valid
 
