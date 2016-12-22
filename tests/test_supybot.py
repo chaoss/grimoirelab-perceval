@@ -485,6 +485,52 @@ class TestSupybotParser(unittest.TestCase):
         m = pattern.match(s)
         self.assertIsNone(m)
 
+    def test_empty_comment_action_pattern(self):
+        """Test the validation of empty comment action lines"""
+
+        pattern = SupybotParser.SUPYBOT_EMPTY_COMMENT_ACTION_REGEX
+
+        # These should be valid empty lines
+        s = "* nick"
+        m = pattern.match(s)
+        self.assertIsNotNone(m)
+
+        s = "*nick"
+        m = pattern.match(s)
+        self.assertIsNotNone(m)
+
+        s = "* nick      \t \r"
+        m = pattern.match(s)
+        self.assertIsNotNone(m)
+
+        # These are not valid empty lines
+        s = "* nick      \tmessage"
+        m = pattern.match(s)
+        self.assertIsNone(m)
+
+        s = "*nick  message"
+        m = pattern.match(s)
+        self.assertIsNone(m)
+
+    def test_empty_bot_pattern(self):
+        """Test the validation of empty bot lines"""
+
+        pattern = SupybotParser.SUPYBOT_EMPTY_BOT_REGEX
+
+        # These should be valid empty lines
+        s = "-mybot-"
+        m = pattern.match(s)
+        self.assertIsNotNone(m)
+
+        s = "-mybot-  \t"
+        m = pattern.match(s)
+        self.assertIsNotNone(m)
+
+        # These are not valid empty lines
+        s = "-mybot-   message"
+        m = pattern.match(s)
+        self.assertIsNone(m)
+
 
 if __name__ == "__main__":
     unittest.main()

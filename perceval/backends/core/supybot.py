@@ -59,7 +59,7 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.2'
+    version = '0.4.3'
 
     def __init__(self, uri, dirpath, tag=None, cache=None):
         origin = uri
@@ -317,6 +317,8 @@ class SupybotParser:
     BOT_PATTERN = r"^-(?P<nick>(.*?)(!.*)?)-\s(?P<body>.+)$"
     EMPTY_PATTERN = r"^\s*$"
     EMPTY_COMMENT_PATTERN = r"^<(.*?)(!.*)?>\s*$"
+    EMPTY_COMMENT_ACTION_PATTERN = r"^\*\s?([^\s\*]+?)(!.*)?\s*$"
+    EMPTY_BOT_PATTERN = r"^-(.*?)(!.*)?-\s*$"
 
     # Compiled patterns
     SUPYBOT_TIMESTAMP_REGEX = re.compile(TIMESTAMP_PATTERN, re.VERBOSE)
@@ -326,6 +328,8 @@ class SupybotParser:
     SUPYBOT_BOT_REGEX = re.compile(BOT_PATTERN, re.VERBOSE)
     SUPYBOT_EMPTY_REGEX = re.compile(EMPTY_PATTERN, re.VERBOSE)
     SUPYBOT_EMPTY_COMMENT_REGEX = re.compile(EMPTY_COMMENT_PATTERN, re.VERBOSE)
+    SUPYBOT_EMPTY_COMMENT_ACTION_REGEX = re.compile(EMPTY_COMMENT_ACTION_PATTERN, re.VERBOSE)
+    SUPYBOT_EMPTY_BOT_REGEX = re.compile(EMPTY_BOT_PATTERN, re.VERBOSE)
 
     # Item types
     TCOMMENT = 'comment'
@@ -356,6 +360,10 @@ class SupybotParser:
             ts, msg = self._parse_supybot_timestamp(line)
 
             if self.SUPYBOT_EMPTY_COMMENT_REGEX.match(msg):
+                continue
+            elif self.SUPYBOT_EMPTY_COMMENT_ACTION_REGEX.match(msg):
+                continue
+            elif self.SUPYBOT_EMPTY_BOT_REGEX.match(msg):
                 continue
 
             itype, nick, body = self._parse_supybot_msg(msg)
