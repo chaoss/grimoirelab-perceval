@@ -26,6 +26,7 @@ import os
 import re
 import subprocess
 import threading
+import sys
 
 from ..backend import Backend, BackendCommand, metadata
 from ..errors import RepositoryError, ParseError
@@ -778,9 +779,20 @@ class GitRepository:
                       ' '.join(cmd), cwd, str(env))
 
         try:
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    cwd=cwd, env=env)
+            if sys.platform == 'win32':
+                proc = subprocess.Popen( cmd,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE,
+                                         cwd=cwd
+                                       )
+            else:
+                proc = subprocess.Popen( cmd,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE,
+                                         cwd=cwd,
+                                         env=env
+                                       )
+
             (outs, errs) = proc.communicate()
         except OSError as e:
             raise RepositoryError(cause=str(e))
