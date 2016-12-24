@@ -24,13 +24,14 @@ import argparse
 import functools
 import hashlib
 import importlib
+import json
 import pkgutil
 import sys
 
 from datetime import datetime as dt
 
 from ._version import __version__
-from .cache import Cache
+from .cache import Cache, setup_cache
 from .utils import DEFAULT_DATETIME, str_to_datetime
 
 
@@ -250,15 +251,58 @@ class BackendCommand:
     the defined argument parser on `setump_cmd_parser` method. Those
     arguments will be stored in the attribute `parsed_args`.
 
-    The methods `run` and `setup_cmd_parser` must be implemented to
+    The method `setup_cmd_parser` must be implemented to
     exectute the backend.
     """
     def __init__(self, *args):
         parser = self.setup_cmd_parser()
         self.parsed_args = parser.parse(*args)
 
+        self.backend = None
+        self.outfile = self.parsed_args.outfile
+
     def run(self):
-        raise NotImplementedError
+        """Fetch and write items.
+
+        This method runs the backend to fetch the items from the given
+        origin. Items are converted to JSON objects and written to the
+        defined output.
+
+        If `fetch-cache` parameter was given as an argument during
+        the inizialization of the instance, the items will be retrieved
+        from the cache.
+        """
+        self.backend.cache = self._initialize_cache()
+
+        if self.parsed_args.fetch_cache:
+            items = self.backend.fetch_from_cache()
+        else:
+            items = self.backend.fetch(from_date=self.parsed_args.from_date)
+
+        try:
+            for item in items:
+                obj = json.dumps(item, indent=4, sort_keys=True)
+                self.outfile.write(obj)
+                self.outfile.write('\n')
+        except IOError as e:
+            raise RuntimeError(str(e))
+        except Exception as e:
+            if self.backend.cache:
+                self.backend.cache.recover()
+            raise RuntimeError(str(e))
+
+    def _initialize_cache(self):
+        """Initialize cache based on the parsed parameters"""
+
+        if 'cache_path' not in self.parsed_args:
+            return None
+
+        if self.parsed_args.no_cache:
+            return None
+
+        return setup_cache(self.backend.origin,
+                           cache_path=self.parsed_args.cache_path,
+                           clean_cache=self.parsed_args.clean_cache)
 
     @staticmethod
     def setup_cmd_parser():

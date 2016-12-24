@@ -23,6 +23,8 @@
 
 import argparse
 import datetime
+import io
+import json
 import os
 import shutil
 import sys
@@ -243,45 +245,8 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
             _ = parser.parse(*args)
 
 
-class MockBackendCommand(BackendCommand):
-    """Mock backend command class used for testing"""
-
-    @staticmethod
-    def setup_cmd_parser():
-        parser = BackendCommandArgumentParser(from_date=True,
-                                              basic_auth=True,
-                                              token_auth=True,
-                                              cache=True)
-        return parser
-
-
-class TestBackendCommand(unittest.TestCase):
-    """Unit tests for BackendCommand"""
-
-    def test_parsing_on_init(self):
-        """Test if the arguments are parsed when the class is initialized"""
-
-        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
-                '--cache-path', '/tmp/cache', '--fetch-cache',
-                '--from-date', '2015-01-01', '--tag', 'test']
-
-        dt_expected = datetime.datetime(2015, 1, 1, 0, 0,
-                                        tzinfo=dateutil.tz.tzutc())
-
-        cmd = MockBackendCommand(*args)
-
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.user, 'jsmith')
-        self.assertEqual(cmd.parsed_args.password, '1234')
-        self.assertEqual(cmd.parsed_args.api_token, 'abcd')
-        self.assertEqual(cmd.parsed_args.cache_path, self.test_path)
-        self.assertEqual(cmd.parsed_args.fetch_cache, True)
-        self.assertEqual(cmd.parsed_args.from_date, dt_expected)
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-
-
-class MockDecoratorBackend(Backend):
-    """Mock backend to test metadata decorators"""
+class MockedBackend(Backend):
+    """Mocked backend for testing"""
 
     version = '0.2.0'
 
@@ -297,7 +262,10 @@ class MockDecoratorBackend(Backend):
     @metadata
     def fetch_from_cache(self):
         for x in range(5):
-            item = {'item' : x}
+            item = {
+                'item' : x,
+                'cache' : True
+            }
             yield item
 
     @staticmethod
@@ -313,11 +281,168 @@ class MockDecoratorBackend(Backend):
         return 'mock_item'
 
 
+class MockedBackendCommand(BackendCommand):
+    """Mocked backend command class used for testing"""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.backend = MockedBackend('http://example.com/',
+                                     tag=self.parsed_args.tag)
+
+    @staticmethod
+    def setup_cmd_parser():
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              basic_auth=True,
+                                              token_auth=True,
+                                              cache=True)
+        return parser
+
+
+def convert_cmd_output_to_json(filepath):
+    """Transforms the output of a BackendCommand into json objects"""
+
+    with open(filepath) as fout:
+        buff = None
+
+        for line in fout.readlines():
+            if line.startswith('{\n'):
+                buff = line
+            elif line.startswith('}\n'):
+                buff += line
+                obj = json.loads(buff)
+                yield obj
+            else:
+                buff += line
+
+
+class TestBackendCommand(unittest.TestCase):
+    """Unit tests for BackendCommand"""
+
+    def setUp(self):
+        self.test_path = tempfile.mkdtemp(prefix='perceval_')
+        self.fout_path = tempfile.mktemp(dir=self.test_path)
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
+
+    def test_parsing_on_init(self):
+        """Test if the arguments are parsed when the class is initialized"""
+
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--cache-path', self.test_path, '--fetch-cache',
+                '--from-date', '2015-01-01', '--tag', 'test',
+                '--output', self.fout_path]
+
+        dt_expected = datetime.datetime(2015, 1, 1, 0, 0,
+                                        tzinfo=dateutil.tz.tzutc())
+
+        cmd = MockedBackendCommand(*args)
+
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.user, 'jsmith')
+        self.assertEqual(cmd.parsed_args.password, '1234')
+        self.assertEqual(cmd.parsed_args.api_token, 'abcd')
+        self.assertEqual(cmd.parsed_args.cache_path, self.test_path)
+        self.assertEqual(cmd.parsed_args.fetch_cache, True)
+        self.assertEqual(cmd.parsed_args.from_date, dt_expected)
+        self.assertEqual(cmd.parsed_args.tag, 'test')
+
+        self.assertIsInstance(cmd.outfile, io.TextIOWrapper)
+        self.assertEqual(cmd.outfile.name, self.fout_path)
+
+        self.assertIsInstance(cmd.backend, MockedBackend)
+        self.assertEqual(cmd.backend.origin, 'http://example.com/')
+        self.assertEqual(cmd.backend.tag, 'test')
+
+        cmd.outfile.close()
+
+    def test_run(self):
+        """Test run method"""
+
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--cache-path', self.test_path,
+                '--from-date', '2015-01-01', '--tag', 'test',
+                '--output', self.fout_path]
+
+        cmd = MockedBackendCommand(*args)
+        cmd.run()
+        cmd.outfile.close()
+
+        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+
+        self.assertIsInstance(cmd.backend.cache, Cache)
+
+    def test_run_fetch_cache(self):
+        """Test whether the command runs when fetch from cache is set"""
+
+        args = ['--cache-path', self.test_path, '--fetch-cache',
+                '--from-date', '2015-01-01',
+                '--tag', 'test', '--output', self.fout_path]
+
+        cmd = MockedBackendCommand(*args)
+        cmd.run()
+        cmd.outfile.close()
+
+        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            # MockedBackend sets 'cache' value when
+            # 'fetch_from_cache' is called
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['data']['cache'], True)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+
+        self.assertIsInstance(cmd.backend.cache, Cache)
+
+    def test_run_no_cache(self):
+        """Test whether the command runs when cache is not set"""
+
+        args = ['--no-cache', '--from-date', '2015-01-01',
+                '--tag', 'test', '--output', self.fout_path]
+
+        cmd = MockedBackendCommand(*args)
+        cmd.run()
+        cmd.outfile.close()
+
+        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+
+        self.assertIsNone(cmd.backend.cache)
+
+
 class TestMetadata(unittest.TestCase):
     """Test metadata decorator"""
 
     def test_decorator(self):
-        backend = MockDecoratorBackend('test', 'mytag')
+        backend = MockedBackend('test', 'mytag')
         before = datetime.datetime.utcnow().timestamp()
         items = [item for item in backend.fetch()]
         after = datetime.datetime.utcnow().timestamp()
@@ -328,7 +453,7 @@ class TestMetadata(unittest.TestCase):
             expected_uuid = uuid('test', str(x))
 
             self.assertEqual(item['data']['item'], x)
-            self.assertEqual(item['backend_name'], 'MockDecoratorBackend')
+            self.assertEqual(item['backend_name'], 'MockedBackend')
             self.assertEqual(item['backend_version'], '0.2.0')
             self.assertEqual(item['perceval_version'], __version__)
             self.assertEqual(item['origin'], 'test')
