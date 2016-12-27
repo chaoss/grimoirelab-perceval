@@ -32,7 +32,9 @@ from datetime import datetime as dt
 
 from ._version import __version__
 from .cache import Cache, setup_cache
-from .utils import DEFAULT_DATETIME, str_to_datetime
+from .utils import (DEFAULT_DATETIME,
+                    build_signature_parameters,
+                    str_to_datetime)
 
 
 class Backend:
@@ -251,14 +253,24 @@ class BackendCommand:
     the defined argument parser on `setump_cmd_parser` method. Those
     arguments will be stored in the attribute `parsed_args`.
 
-    The method `setup_cmd_parser` must be implemented to
-    exectute the backend.
+    The arguments will be used to inizialize and run the `Backend` object
+    assigned to this command. The backend used to run the command is stored
+    under `BACKEND` class attributed. Any class derived from this and must
+    set its own `Backend` class.
+
+    Moreover, the method `setup_cmd_parser` must be implemented to exectute
+    the backend.
     """
+    BACKEND = None
+
     def __init__(self, *args):
         parser = self.setup_cmd_parser()
         self.parsed_args = parser.parse(*args)
 
-        self.backend = None
+        parsed_args = vars(self.parsed_args)
+        kw = build_signature_parameters(parsed_args, self.BACKEND.__init__)
+        self.backend = self.BACKEND(**kw)
+
         self.outfile = self.parsed_args.outfile
 
     def run(self):
@@ -274,10 +286,14 @@ class BackendCommand:
         """
         self.backend.cache = self._initialize_cache()
 
-        if self.parsed_args.fetch_cache:
-            items = self.backend.fetch_from_cache()
+        if self.backend.cache and self.parsed_args.fetch_cache:
+            fetch = self.backend.fetch_from_cache
         else:
-            items = self.backend.fetch(from_date=self.parsed_args.from_date)
+            fetch = self.backend.fetch
+
+        parsed_args = vars(self.parsed_args)
+        kw = build_signature_parameters(parsed_args, fetch)
+        items = fetch(**kw)
 
         try:
             for item in items:

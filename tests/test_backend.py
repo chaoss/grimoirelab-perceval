@@ -284,10 +284,10 @@ class MockedBackend(Backend):
 class MockedBackendCommand(BackendCommand):
     """Mocked backend command class used for testing"""
 
+    BACKEND = MockedBackend
+
     def __init__(self, *args):
         super().__init__(*args)
-        self.backend = MockedBackend('http://example.com/',
-                                     tag=self.parsed_args.tag)
 
     @staticmethod
     def setup_cmd_parser():
@@ -295,6 +295,8 @@ class MockedBackendCommand(BackendCommand):
                                               basic_auth=True,
                                               token_auth=True,
                                               cache=True)
+        parser.parser.add_argument('origin')
+
         return parser
 
 
@@ -331,7 +333,7 @@ class TestBackendCommand(unittest.TestCase):
         args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
                 '--cache-path', self.test_path, '--fetch-cache',
                 '--from-date', '2015-01-01', '--tag', 'test',
-                '--output', self.fout_path]
+                '--output', self.fout_path, 'http://example.com/']
 
         dt_expected = datetime.datetime(2015, 1, 1, 0, 0,
                                         tzinfo=dateutil.tz.tzutc())
@@ -362,7 +364,7 @@ class TestBackendCommand(unittest.TestCase):
         args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
                 '--cache-path', self.test_path,
                 '--from-date', '2015-01-01', '--tag', 'test',
-                '--output', self.fout_path]
+                '--output', self.fout_path, 'http://example.com/']
 
         cmd = MockedBackendCommand(*args)
         cmd.run()
@@ -387,8 +389,8 @@ class TestBackendCommand(unittest.TestCase):
         """Test whether the command runs when fetch from cache is set"""
 
         args = ['--cache-path', self.test_path, '--fetch-cache',
-                '--from-date', '2015-01-01',
-                '--tag', 'test', '--output', self.fout_path]
+                '--from-date', '2015-01-01', '--tag', 'test',
+                '--output', self.fout_path, 'http://example.com/']
 
         cmd = MockedBackendCommand(*args)
         cmd.run()
@@ -416,7 +418,8 @@ class TestBackendCommand(unittest.TestCase):
         """Test whether the command runs when cache is not set"""
 
         args = ['--no-cache', '--from-date', '2015-01-01',
-                '--tag', 'test', '--output', self.fout_path]
+                '--tag', 'test', '--output', self.fout_path,
+                'http://example.com/']
 
         cmd = MockedBackendCommand(*args)
         cmd.run()
