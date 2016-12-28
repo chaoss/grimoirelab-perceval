@@ -20,7 +20,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import argparse
 import datetime
 import shutil
 import sys
@@ -36,8 +35,10 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.confluence import (Confluence,
                                                ConfluenceClient,
                                                ConfluenceCommand)
@@ -469,23 +470,26 @@ class TestConfluenceBackendCache(unittest.TestCase):
 class TestConfluenceCommand(unittest.TestCase):
     """Tests for ConfluenceCommand class"""
 
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is Confluence"""
+
+        self.assertIs(ConfluenceCommand.BACKEND, Confluence)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = ConfluenceCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['http://example.com',
-                '--tag', 'test']
+                '--tag', 'test', '--no-cache',
+                '--from-date', '1970-01-01']
 
-        cmd = ConfluenceCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.url, 'http://example.com')
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertIsInstance(cmd.backend, Confluence)
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = ConfluenceCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'http://example.com')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
 class TestConfluenceClient(unittest.TestCase):

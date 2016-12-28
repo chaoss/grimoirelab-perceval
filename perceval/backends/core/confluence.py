@@ -22,12 +22,13 @@
 
 import logging
 import json
-import os.path
 
 import requests
 
-from ...backend import Backend, BackendCommand, metadata
-from ...cache import Cache
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import CacheError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
@@ -268,68 +269,18 @@ class Confluence(Backend):
 class ConfluenceCommand(BackendCommand):
     """Class to run Confluence backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    BACKEND = Confluence
 
-        self.url = self.parsed_args.url
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.tag = self.parsed_args.tag
-        self.outfile = self.parsed_args.outfile
+    @staticmethod
+    def setup_cmd_parser():
+        """Returns the Bugzilla argument parser."""
 
-        if not self.parsed_args.no_cache:
-            if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
-            else:
-                base_path = self.parsed_args.cache_path
-
-            cache_path = os.path.join(base_path, self.url)
-
-            cache = Cache(cache_path)
-
-            if self.parsed_args.clean_cache:
-                cache.clean()
-            else:
-                cache.backup()
-        else:
-            cache = None
-
-        self.backend = Confluence(self.url,
-                                  tag=self.tag,
-                                  cache=cache)
-
-    def run(self):
-        """Fetch and print the contents.
-
-        This method runs the backend to fetch the historical contents
-        from the given repository. Contents are converted to JSON objects
-        and printed to the defined output.
-        """
-        if self.parsed_args.fetch_cache:
-            hcs = self.backend.fetch_from_cache()
-        else:
-            hcs = self.backend.fetch(from_date=self.from_date)
-
-        try:
-            for hc in hcs:
-                obj = json.dumps(hc, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            if self.backend.cache:
-                self.backend.cache.recover()
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
-        """Returns the Confluence argument parser."""
-
-        parser = super().create_argument_parser()
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              cache=True)
 
         # Required arguments
-        parser.add_argument('url',
-                            help="URL of the Confluence server")
+        parser.parser.add_argument('url',
+                                   help="URL of the Confluence server")
 
         return parser
 
