@@ -23,13 +23,14 @@
 
 import json
 import logging
-import os.path
 import re
 import subprocess
 import time
 
-from ...backend import Backend, BackendCommand, metadata
-from ...cache import Cache
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import BackendError, CacheError
 from ...utils import DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
 
@@ -399,86 +400,28 @@ class GerritClient():
 class GerritCommand(BackendCommand):
     """Class to run Gerrit backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    BACKEND = Gerrit
 
-        self.url = self.parsed_args.url
-        self.user = self.parsed_args.user
-        self.max_reviews = self.parsed_args.max_reviews
-        self.blacklist_reviews = self.parsed_args.blacklist_reviews
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.tag = self.parsed_args.tag
-        self.outfile = self.parsed_args.outfile
-
-        if not self.parsed_args.no_cache:
-            if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
-            else:
-                base_path = self.parsed_args.cache_path
-            cache_path = os.path.join(base_path, self.url)
-
-            cache = Cache(cache_path)
-
-            if self.parsed_args.clean_cache:
-                cache.clean()
-            else:
-                cache.backup()
-        else:
-            cache = None
-
-        self.backend = Gerrit(self.url,
-                              user=self.user,
-                              max_reviews=self.max_reviews,
-                              blacklist_reviews=self.blacklist_reviews,
-                              tag=self.tag,
-                              cache=cache)
-
-    def run(self):
-        """Fetch and print the reviews.
-
-        This method runs the backend to fetch the reviews from the given
-        repository. Reviews are converted to JSON objects and printed to the
-        defined output.
-        """
-        if self.parsed_args.fetch_cache:
-            bugs = self.backend.fetch_from_cache()
-        else:
-            bugs = self.backend.fetch(from_date=self.from_date)
-
-        try:
-            total = 0
-            for bug in bugs:
-                obj = json.dumps(bug, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-                total += 1
-            logger.info("Total reviews: %i", total)
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            if self.backend.cache:
-                self.backend.cache.recover()
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the Gerrit argument parser."""
 
-        parser = super().create_argument_parser()
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              cache=True)
 
         # Gerrit options
-        group = parser.add_argument_group('Gerrit arguments')
-
-        group.add_argument("--user",
+        group = parser.parser.add_argument_group('Gerrit arguments')
+        group.add_argument('--user', dest='user',
                            help="Gerrit ssh user")
-        group.add_argument("--max-reviews",  dest="max_reviews",
+        group.add_argument('--max-reviews',  dest='max_reviews',
                            type=int, default=MAX_REVIEWS,
                            help="Max number of reviews per ssh query.")
-        group.add_argument("--blacklist-reviews",  dest="blacklist_reviews",
-                           nargs='*', help="Wrong reviews that must not be retrieved.")
+        group.add_argument('--blacklist-reviews',  dest='blacklist_reviews',
+                           nargs='*',
+                           help="Wrong reviews that must not be retrieved.")
 
-        # Positional arguments
-        group.add_argument("url",
-                           help="URL of the Gerrit server")
+        # Required arguments
+        parser.parser.add_argument('url',
+                                   help="URL of the Gerrit server")
 
         return parser
