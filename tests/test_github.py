@@ -21,7 +21,6 @@
 #     Quan Zhou <quan@bitergia.com>
 #
 
-import argparse
 import datetime
 import json
 import shutil
@@ -39,8 +38,10 @@ import requests
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.github import (GitHub,
                                            GitHubCommand,
                                            GitHubClient,
@@ -650,31 +651,38 @@ class TestGitHubClient(unittest.TestCase):
         self.assertDictEqual(httpretty.last_request().querystring, expected)
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
 
+
 class TestGitHubCommand(unittest.TestCase):
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    """GitHubCommand unit tests"""
 
-        args = ['--owner', 'zhquan_example',
-                '--repository', 'repo',
-                '--sleep-for-rate',
+    def test_backend_class(self):
+        """Test if the backend class is GitHub"""
+
+        self.assertIs(GitHubCommand.BACKEND, GitHub)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = GitHubCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
+
+        args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',
-                '--tag', 'test']
+                '--tag', 'test', '--no-cache',
+                '--api-token', 'abcdefgh',
+                '--from-date', '1970-01-01',
+                'zhquan_example', 'repo']
 
-        cmd = GitHubCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.owner, "zhquan_example")
-        self.assertEqual(cmd.parsed_args.repository, "repo")
-        self.assertEqual(cmd.parsed_args.sleep_for_rate, True)
-        self.assertEqual(cmd.parsed_args.min_rate_to_sleep, 1)
-        self.assertEqual(cmd.parsed_args.tag, 'test')
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.owner, 'zhquan_example')
+        self.assertEqual(parsed_args.repository, 'repo')
+        self.assertEqual(parsed_args.sleep_for_rate, True)
+        self.assertEqual(parsed_args.min_rate_to_sleep, 1)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.api_token, 'abcdefgh')
 
-
-    @httpretty.activate
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = GitHubCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
 
 if __name__ == "__main__":
     unittest.main(warnings='ignore')

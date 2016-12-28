@@ -24,13 +24,14 @@
 
 import json
 import logging
-import os.path
 import time
 
 import requests
 
-from ...backend import Backend, BackendCommand, metadata
-from ...cache import Cache
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import CacheError, BaseError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
@@ -68,9 +69,9 @@ class GitHub(Backend):
     This class allows the fetch the issues stored in GitHub
     repository.
 
-    :param owner: GitHub owener
+    :param owner: GitHub owner
     :param repository: GitHub repository from the owner
-    :param backend_token: GitHub auth token to access the API
+    :param api_token: GitHub auth token to access the API
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitHub public site.
@@ -80,10 +81,10 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.5.0'
+    version = '0.6.0'
 
     def __init__(self, owner=None, repository=None,
-                 backend_token=None, base_url=None,
+                 api_token=None, base_url=None,
                  tag=None, cache=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
         origin = base_url if base_url else GITHUB_URL
@@ -92,8 +93,8 @@ class GitHub(Backend):
         super().__init__(origin, tag=tag, cache=cache)
         self.owner = owner
         self.repository = repository
-        self.backend_token = backend_token
-        self.client = GitHubClient(owner, repository, backend_token, base_url,
+        self.api_token = api_token
+        self.client = GitHubClient(owner, repository, api_token, base_url,
                                    sleep_for_rate, min_rate_to_sleep)
         self._users = {}  # internal users cache
 
@@ -394,87 +395,29 @@ class GitHubClient:
 class GitHubCommand(BackendCommand):
     """Class to run GitHub backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    BACKEND = GitHub
 
-        self.owner = self.parsed_args.owner
-        self.repository = self.parsed_args.repository
-        self.backend_token = self.parsed_args.backend_token
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.tag = self.parsed_args.tag
-        self.outfile = self.parsed_args.outfile
-        self.sleep_for_rate = self.parsed_args.sleep_for_rate
-        self.min_rate_to_sleep = self.parsed_args.min_rate_to_sleep
-
-        if not self.parsed_args.no_cache:
-            if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
-            else:
-                base_path = self.parsed_args.cache_path
-            # TODO: add get_id for backend to return the unique id
-            cache_path = os.path.join(base_path, self.owner + "_" +
-                                      self.repository)
-
-            cache = Cache(cache_path)
-
-            if self.parsed_args.clean_cache:
-                cache.clean()
-            else:
-                cache.backup()
-        else:
-            cache = None
-
-        self.backend = GitHub(self.owner, self.repository,
-                              backend_token=self.backend_token,
-                              tag=self.tag, cache=cache,
-                              sleep_for_rate=self.sleep_for_rate,
-                              min_rate_to_sleep=self.min_rate_to_sleep)
-
-    def run(self):
-        """Fetch and print the issues.
-
-        This method runs the backend to fetch the issues from the given
-        repository. Bugs are converted to JSON objects and printed to the
-        defined output.
-        """
-        if self.parsed_args.fetch_cache:
-            issues = self.backend.fetch_from_cache()
-        else:
-            issues = self.backend.fetch(from_date=self.from_date)
-
-        try:
-            for issue in issues:
-                obj = json.dumps(issue, indent=4, sort_keys=True)
-                # self.outfile.write(issue['url']+"\n")
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except requests.exceptions.HTTPError as e:
-            raise requests.exceptions.HTTPError(str(e.response.json()))
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            if self.backend.cache:
-                self.backend.cache.recover()
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the GitHub argument parser."""
 
-        parser = super().create_argument_parser()
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              token_auth=True,
+                                              cache=True)
 
         # GitHub options
-        group = parser.add_argument_group('GitHub arguments')
-
-        group.add_argument("--owner", required=True,
-                           help="GitHub owner")
-        group.add_argument("--repository", required=True,
-                           help="GitHub repository")
-        group.add_argument("--sleep-for-rate", dest='sleep_for_rate',
+        group = parser.parser.add_argument_group('GitHub arguments')
+        group.add_argument('--sleep-for-rate', dest='sleep_for_rate',
                            action='store_true',
                            help="sleep for getting more rate")
-        group.add_argument("--min-rate-to-sleep", dest='min_rate_to_sleep',
+        group.add_argument('--min-rate-to-sleep', dest='min_rate_to_sleep',
                            default=MIN_RATE_LIMIT, type=int,
                            help="sleep until reset when the rate limit reaches this value")
+
+        # Positional arguments
+        parser.parser.add_argument('owner',
+                                   help="GitHub owner")
+        parser.parser.add_argument('repository',
+                                   help="GitHub repository")
 
         return parser
