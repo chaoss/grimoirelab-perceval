@@ -22,7 +22,6 @@
 #     Alvaro del Castillo <acs@bitergia.com>
 #
 
-import argparse
 import datetime
 import json
 import shutil
@@ -38,8 +37,10 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.discourse import (Discourse,
                                               DiscourseCommand,
                                               DiscourseClient)
@@ -623,23 +624,26 @@ class TestDiscourseClient(unittest.TestCase):
 class TestDiscourseCommand(unittest.TestCase):
     """Tests for DiscourseCommand class"""
 
-    @httpretty.activate
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is Discourse"""
 
-        args = ['--tag', 'test', DISCOURSE_SERVER_URL]
+        self.assertIs(DiscourseCommand.BACKEND, Discourse)
 
-        cmd = DiscourseCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.url, DISCOURSE_SERVER_URL)
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertIsInstance(cmd.backend, Discourse)
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
 
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
+        parser = DiscourseCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
-        parser = DiscourseCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        args = ['--tag', 'test', '--no-cache',
+                '--from-date', '1970-01-01',
+                DISCOURSE_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, DISCOURSE_SERVER_URL)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
 if __name__ == "__main__":
