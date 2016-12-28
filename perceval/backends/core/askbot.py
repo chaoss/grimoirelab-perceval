@@ -28,7 +28,10 @@ import re
 import bs4
 import requests
 
-from ...backend import Backend, metadata, BackendCommand
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...utils import urljoin, DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
 
 logger = logging.getLogger(__name__)
@@ -476,43 +479,16 @@ class AskbotParser:
 class AskbotCommand(BackendCommand):
     """Class to run Askbot backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    BACKEND = Askbot
 
-        self.url = self.parsed_args.url
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.tag = self.parsed_args.tag
-        self.outfile = self.parsed_args.outfile
-
-        self.backend = Askbot(self.url, tag=self.tag)
-
-    def run(self):
-        """Fetch and print the questions.
-
-        This method runs the backend to fetch the questions from the given
-        site. Questions are converted to JSON objects and printed to the
-        defined output.
-        """
-        questions = self.backend.fetch(from_date=self.from_date)
-
-        try:
-            for question in questions:
-                obj = json.dumps(question, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the Askbot argument parser."""
 
-        parser = super().create_argument_parser()
+        parser = BackendCommandArgumentParser(from_date=True)
 
         # Required arguments
-        parser.add_argument('url',
-                            help="URL of the Askbot server")
+        parser.parser.add_argument('url',
+                                   help="URL of the Askbot server")
 
         return parser
