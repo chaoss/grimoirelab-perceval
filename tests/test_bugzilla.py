@@ -21,7 +21,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import argparse
 import datetime
 import shutil
 import sys
@@ -37,8 +36,10 @@ import requests
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import BackendError, CacheError, ParseError
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.bugzilla import (Bugzilla,
                                              BugzillaCommand,
                                              BugzillaClient)
@@ -676,43 +677,36 @@ class TestBugzillaBackendParsers(unittest.TestCase):
 
 
 class TestBugzillaCommand(unittest.TestCase):
+    """BugzillaCommand unit tests"""
 
-    @httpretty.activate
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is Bugzilla"""
 
-        # Set up a mock HTTP server
-        httpretty.register_uri(httpretty.POST,
-                               BUGZILLA_LOGIN_URL,
-                               body="index.cgi?logout=1",
-                               status=200)
+        self.assertIs(BugzillaCommand.BACKEND, Bugzilla)
 
-        body = read_file('data/bugzilla_version.xml')
-        httpretty.register_uri(httpretty.GET,
-                               BUGZILLA_METADATA_URL,
-                               body=body, status=200)
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = BugzillaCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['--backend-user', 'jsmith@example.com',
                 '--backend-password', '1234',
                 '--max-bugs', '10', '--max-bugs-csv', '5',
                 '--tag', 'test',
+                '--no-cache',
+                '--from-date', '1970-01-01',
                 BUGZILLA_SERVER_URL]
 
-        cmd = BugzillaCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.backend_user, 'jsmith@example.com')
-        self.assertEqual(cmd.parsed_args.backend_password, '1234')
-        self.assertEqual(cmd.parsed_args.max_bugs, 10)
-        self.assertEqual(cmd.parsed_args.max_bugs_csv, 5)
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertEqual(cmd.parsed_args.url, BUGZILLA_SERVER_URL)
-        self.assertIsInstance(cmd.backend, Bugzilla)
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = BugzillaCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.user, 'jsmith@example.com')
+        self.assertEqual(parsed_args.password, '1234')
+        self.assertEqual(parsed_args.max_bugs, 10)
+        self.assertEqual(parsed_args.max_bugs_csv, 5)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.url, BUGZILLA_SERVER_URL)
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
 class TestBugzillaClient(unittest.TestCase):
