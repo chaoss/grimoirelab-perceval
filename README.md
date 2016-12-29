@@ -177,7 +177,7 @@ $ perceval gmane --offset 2000 'evince-list@gnome.org'
 
 ### Jenkins
 ```
-$ perceval jenkins 'http://jenkins.cyanogenmod.com/'
+$ perceval jenkins 'http://jenkins.cyanogenmod.org/'
 ```
 
 ### JIRA

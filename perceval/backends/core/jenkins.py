@@ -26,8 +26,10 @@ import os.path
 
 import requests
 
-from ...backend import Backend, BackendCommand, metadata
-from ...cache import Cache
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import CacheError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
@@ -200,77 +202,26 @@ class JenkinsClient:
         req.raise_for_status()
         return req.text
 
+
 class JenkinsCommand(BackendCommand):
     """Class to run Jenkins backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.url = self.parsed_args.url
-        self.tag = self.parsed_args.tag
-        self.outfile = self.parsed_args.outfile
-        self.blacklist_jobs = self.parsed_args.blacklist_jobs
+    BACKEND = Jenkins
 
-
-        if not self.parsed_args.no_cache:
-            if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
-            else:
-                base_path = self.parsed_args.cache_path
-
-            cache_path = os.path.join(base_path, self.url)
-
-            cache = Cache(cache_path)
-
-            if self.parsed_args.clean_cache:
-                cache.clean()
-            else:
-                cache.backup()
-        else:
-            cache = None
-
-        self.backend = Jenkins(self.url, tag=self.tag, cache=cache,
-                               blacklist_jobs=self.blacklist_jobs)
-
-    def run(self):
-        """Fetch and print the Builds.
-
-        This method runs the backend to fetch the Builds of a given url.
-        Builds are converted to JSON objects and printed to the
-        defined output.
-        """
-        if self.parsed_args.fetch_cache:
-            builds = self.backend.fetch_from_cache()
-        else:
-            builds = self.backend.fetch()
-
-        try:
-            for build in builds:
-                obj = json.dumps(build, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except requests.exceptions.HTTPError as e:
-            raise requests.exceptions.HTTPError(str(e.response.json()))
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            if self.backend.cache:
-                self.backend.cache.recover()
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the Jenkins argument parser."""
 
-        parser = super().create_argument_parser()
+        parser = BackendCommandArgumentParser(cache=True)
 
         # Jenkins options
-        group = parser.add_argument_group('Jenkins arguments')
-
-        group.add_argument("--blacklist-jobs",  dest="blacklist_jobs",
-                           nargs='*', help="Wrong jobs that must not be retrieved.")
+        group = parser.parser.add_argument_group('Jenkins arguments')
+        group.add_argument('--blacklist-jobs',  dest='blacklist_jobs',
+                           nargs='*',
+                           help="Wrong jobs that must not be retrieved.")
 
         # Required arguments
-        group.add_argument('url',
-                           help="URL of the Jenkins server")
+        parser.parser.add_argument('url',
+                                   help="URL of the Jenkins server")
 
         return parser
