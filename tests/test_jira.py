@@ -22,7 +22,6 @@
 #     Quan Zhou <quan@bitergia.com>
 #
 
-import argparse
 import json
 import unittest
 import shutil
@@ -37,14 +36,15 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
+from perceval.utils import DEFAULT_DATETIME, str_to_datetime
 from perceval.backends.core.jira import (Jira,
                                          JiraClient,
                                          JiraCommand,
                                          filter_custom_fields,
                                          map_custom_field)
-from perceval.utils import str_to_datetime
 
 
 JIRA_SERVER_URL = 'http://example.com'
@@ -635,32 +635,41 @@ class TestJiraClient(unittest.TestCase):
 
 
 class TestJiraCommand(unittest.TestCase):
+    """JiraCommand unit tests"""
 
-    @httpretty.activate
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is Jira"""
 
-        args = ['--project', 'Perceval Jira',
+        self.assertIs(JiraCommand.BACKEND, Jira)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = JiraCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
+
+        args = ['--backend-user', 'jsmith',
+                '--backend-password', '1234',
+                '--project', 'Perceval Jira',
                 '--verify', False,
                 '--cert', 'aaaa',
                 '--max-issues', '1',
                 '--tag', 'test',
+                '--no-cache',
+                '--from-date', '1970-01-01',
                 JIRA_SERVER_URL]
 
-        cmd = JiraCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.project, 'Perceval Jira')
-        self.assertEqual(cmd.parsed_args.verify, False)
-        self.assertEqual(cmd.parsed_args.cert, 'aaaa')
-        self.assertEqual(cmd.parsed_args.max_issues, 1)
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertEqual(cmd.parsed_args.url, JIRA_SERVER_URL)
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = JiraCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.user, 'jsmith')
+        self.assertEqual(parsed_args.password, '1234')
+        self.assertEqual(parsed_args.project, 'Perceval Jira')
+        self.assertEqual(parsed_args.verify, False)
+        self.assertEqual(parsed_args.cert, 'aaaa')
+        self.assertEqual(parsed_args.max_issues, 1)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.url, JIRA_SERVER_URL)
 
 
 if __name__ == '__main__':

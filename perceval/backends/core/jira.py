@@ -23,13 +23,15 @@
 
 import json
 import logging
-import os.path
 
 import requests
+
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-from ...backend import Backend, BackendCommand, metadata
-from ...cache import Cache
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import CacheError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
@@ -80,29 +82,31 @@ class Jira(Backend):
 
     :param url: JIRA's endpoint
     :param project: filter issues by project
+    :param user: Jira user
+    :param password: Jira user password
     :param verify: allows to disable SSL verification
     :param cert: SSL certificate path (PEM)
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.6.1'
+    version = '0.7.0'
 
-    def __init__(self, url, project=None, backend_user=None,
-                 backend_password=None, verify=None,
-                 cert=None, max_issues=None,
-                 tag=None, cache=None):
+    def __init__(self, url, project=None,
+                 user=None, password=None,
+                 verify=None, cert=None,
+                 max_issues=None, tag=None, cache=None):
         origin = url
 
         super().__init__(origin, tag=tag, cache=cache)
         self.url = url
         self.project = project
-        self.backend_user = backend_user
-        self.backend_password = backend_password
+        self.user = user
+        self.password = password
         self.verify = verify
         self.cert = cert
         self.max_issues = max_issues
-        self.client = JiraClient(url, project, backend_user,
-                                 backend_password, verify, cert, max_issues)
+        self.client = JiraClient(url, project, user, password,
+                                 verify, cert, max_issues)
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -357,90 +361,30 @@ class JiraClient:
 class JiraCommand(BackendCommand):
     """Class to run Jira backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.url = self.parsed_args.url
-        self.project = self.parsed_args.project
-        self.verify = self.parsed_args.verify
-        self.cert = self.parsed_args.cert
-        self.max_issues = self.parsed_args.max_issues
-        self.backend_user = self.parsed_args.backend_user
-        self.backend_password = self.parsed_args.backend_password
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.tag = self.parsed_args.tag
-        self.outfile = self.parsed_args.outfile
+    BACKEND = Jira
 
-        if not self.parsed_args.no_cache:
-            if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
-            else:
-                base_path = self.parsed_args.cache_path
-
-            cache_path = os.path.join(base_path, self.url)
-
-            cache = Cache(cache_path)
-
-            if self.parsed_args.clean_cache:
-                cache.clean()
-            else:
-                cache.backup()
-        else:
-            cache = None
-
-        self.backend = Jira(self.url, self.project,
-                            self.backend_user, self.backend_password,
-                            self.verify, self.cert, self.max_issues,
-                            tag=self.tag, cache=cache)
-
-    def run(self):
-        """Fetch and print the issues.
-
-        This method runs the backend to fetch the issues (plus all
-        its answers and comments) of a given JIRA site.
-        Issues are converted to JSON objects and printed to the
-        defined output.
-        """
-        if self.parsed_args.fetch_cache:
-            issues = self.backend.fetch_from_cache()
-        else:
-            issues = self.backend.fetch(from_date=self.from_date)
-
-        try:
-            for issue in issues:
-                obj = json.dumps(issue, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except requests.exceptions.HTTPError as e:
-            raise requests.exceptions.HTTPError(str(e.response.json()))
-        except requests.exceptions.SSLError as e:
-            logging.error('SSL ERROR: Try adding a --cert or use --verify False')
-            raise requests.exceptions.SSLError(e)
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            if self.backend.cache:
-                self.backend.cache.recover()
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the Jira argument parser."""
 
-        parser = super().create_argument_parser()
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              basic_auth=True,
+                                              cache=True)
 
         # JIRA options
-        group = parser.add_argument_group('JIRA arguments')
-        group.add_argument("--project",
+        group = parser.parser.add_argument_group('JIRA arguments')
+        group.add_argument('--project',
                            help="filter issues by Project")
-        group.add_argument("--verify", default=True,
+        group.add_argument('--verify', default=True,
                            help="Value 'False' disables SSL verification")
-        group.add_argument("--cert",
+        group.add_argument('--cert',
                            help="SSL certificate path (PEM)")
         group.add_argument('--max-issues', dest='max_issues',
                            type=int, default=MAX_ISSUES,
                            help="Maximum number of issues requested in the same query")
 
         # Required arguments
-        parser.add_argument("url", help="JIRA's url")
+        parser.parser.add_argument('url',
+                                   help="JIRA's url")
 
         return parser
