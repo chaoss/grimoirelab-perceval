@@ -24,7 +24,6 @@
 #
 
 import email
-import json
 import logging
 import mailbox
 import os
@@ -35,7 +34,10 @@ import bz2
 
 import requests.structures
 
-from ...backend import Backend, BackendCommand, metadata
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import ParseError
 from ...utils import (DEFAULT_DATETIME,
                       check_compressed_file_type,
@@ -321,50 +323,19 @@ class MBox(Backend):
 class MBoxCommand(BackendCommand):
     """Class to run MBox backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    BACKEND = MBox
 
-        self.uri = self.parsed_args.uri
-        self.mboxes = self.parsed_args.mboxes
-        self.outfile = self.parsed_args.outfile
-        self.tag = self.parsed_args.tag
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-
-        cache = None
-
-        self.backend = MBox(self.uri, self.mboxes,
-                            tag=self.tag, cache=cache)
-
-    def run(self):
-        """Fetch and print the email messages.
-
-        This method runs the backend to fetch the email messages from
-        the given directory. Messages are converted to JSON objects
-        and printed to the defined output.
-        """
-        messages = self.backend.fetch(from_date=self.from_date)
-
-        try:
-            for message in messages:
-                obj = json.dumps(message, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the MBox argument parser."""
 
-        parser = super().create_argument_parser()
+        parser = BackendCommandArgumentParser(from_date=True)
 
         # Required arguments
-        parser.add_argument('uri',
-                            help='URI of the mboxes, usually the URL to their mailing list')
-        parser.add_argument('mboxes',
-                            help="Path to the mbox directory")
+        parser.parser.add_argument('uri',
+                                   help="URI of the mboxes, usually the URL to their mailing list")
+        parser.parser.add_argument('dirpath',
+                                   help="Path to the mbox directory")
 
         return parser
 
