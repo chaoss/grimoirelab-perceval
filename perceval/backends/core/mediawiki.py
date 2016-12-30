@@ -23,13 +23,14 @@
 import datetime
 import json
 import logging
-import os.path
 
 import dateutil
 import requests
 
-from ...backend import Backend, BackendCommand, metadata
-from ...cache import Cache
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import BackendError, CacheError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
@@ -524,74 +525,22 @@ class MediaWikiClient:
 class MediaWikiCommand(BackendCommand):
     """Class to run MediaWiki backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.url = self.parsed_args.url
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.tag = self.parsed_args.tag
-        self.outfile = self.parsed_args.outfile
-        self.reviews_api = self.parsed_args.reviews_api
+    BACKEND = MediaWiki
 
-        if not self.parsed_args.no_cache:
-            if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
-            else:
-                base_path = self.parsed_args.cache_path
-
-            cache_path = os.path.join(base_path, self.url)
-
-            cache = Cache(cache_path)
-
-            if self.parsed_args.clean_cache:
-                cache.clean()
-            else:
-                cache.backup()
-        else:
-            cache = None
-
-        self.backend = MediaWiki(self.url, tag=self.tag, cache=cache)
-
-    def run(self):
-        """Fetch and print the pages and their revisions.
-
-        This method runs the backend to fetch the wiki pages and revisions of a
-        given url. Builds are converted to JSON objects and printed to the
-        defined output.
-        """
-        if self.parsed_args.fetch_cache:
-            pages = self.backend.fetch_from_cache()
-        else:
-            pages = self.backend.fetch(from_date=self.from_date,
-                                       reviews_api=self.reviews_api)
-
-        try:
-            for build in pages:
-                obj = json.dumps(build, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except requests.exceptions.HTTPError as e:
-            raise requests.exceptions.HTTPError(str(e.response.json()))
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            if self.backend.cache:
-                self.backend.cache.recover()
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the MediaWiki argument parser."""
 
-        parser = super().create_argument_parser()
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              cache=True)
 
         # MediaWiki options
-        group = parser.add_argument_group('MediaWiki arguments')
-
-        group.add_argument("--reviews-api", action='store_true',
+        group = parser.parser.add_argument_group('MediaWiki arguments')
+        group.add_argument('--reviews-api', action='store_true',
                            help="Use the experimental Reviews API in MediaWiki >= 1.27")
 
-
         # Required arguments
-        group.add_argument('url', help="URL of the MediaWiki server")
+        parser.parser.add_argument('url',
+                                   help="URL of the MediaWiki server")
 
         return parser
