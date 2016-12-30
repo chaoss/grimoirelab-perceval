@@ -23,13 +23,14 @@
 
 import json
 import logging
-import os.path
 import time
 
 import requests
 
-from ...backend import Backend, BackendCommand, metadata
-from ...cache import Cache
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import CacheError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
@@ -50,13 +51,13 @@ class StackExchange(Backend):
 
     :param site: StackExchange site
     :param tagged: filter items by question Tag
-    :param token: StackExchange access_token for the API
+    :param api_token: StackExchange access_token for the API
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.6.0'
 
-    def __init__(self, site, tagged=None, token=None,
+    def __init__(self, site, tagged=None, api_token=None,
                  max_questions=None, tag=None, cache=None):
         origin = site
 
@@ -64,7 +65,7 @@ class StackExchange(Backend):
         self.site = site
         self.tagged = tagged
         self.max_questions = max_questions
-        self.client = StackExchangeClient(site, tagged, token, max_questions)
+        self.client = StackExchangeClient(site, tagged, api_token, max_questions)
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -285,82 +286,23 @@ class StackExchangeClient:
 class StackExchangeCommand(BackendCommand):
     """Class to run StackExchange backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.site = self.parsed_args.site
-        self.tagged = self.parsed_args.tagged
-        self.token = self.parsed_args.token
-        self.max_questions = self.parsed_args.max_questions
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.tag = self.parsed_args.tag
-        self.outfile = self.parsed_args.outfile
+    BACKEND = StackExchange
 
-        if not self.parsed_args.no_cache:
-            if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
-            else:
-                base_path = self.parsed_args.cache_path
-
-            cache_path = os.path.join(base_path, self.site)
-
-            cache = Cache(cache_path)
-
-            if self.parsed_args.clean_cache:
-                cache.clean()
-            else:
-                cache.backup()
-        else:
-            cache = None
-
-        self.backend = StackExchange(self.site,
-                                     tagged=self.tagged,
-                                     token=self.token,
-                                     max_questions=self.max_questions,
-                                     tag=self.tag,
-                                     cache=cache)
-
-    def run(self):
-        """Fetch and print the Questions.
-
-        This method runs the backend to fetch the Questions (plus all
-        its answers and comments) of a given site and tag.
-        Questions are converted to JSON objects and printed to the
-        defined output.
-        """
-        if self.parsed_args.fetch_cache:
-            questions = self.backend.fetch_from_cache()
-        else:
-            questions = self.backend.fetch(from_date=self.from_date)
-
-        try:
-            for question in questions:
-                obj = json.dumps(question, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except requests.exceptions.HTTPError as e:
-            raise requests.exceptions.HTTPError(str(e.response.json()))
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            if self.backend.cache:
-                self.backend.cache.recover()
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the StackExchange argument parser."""
 
-        parser = super().create_argument_parser()
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              token_auth=True,
+                                              cache=True)
 
         # StackExchange options
-        group = parser.add_argument_group('StackExchange arguments')
-
-        group.add_argument("--site", required=True,
+        group = parser.parser.add_argument_group('StackExchange arguments')
+        group.add_argument('--site', dest='site',
+                           required=True,
                            help="StackExchange site")
-        group.add_argument("--tagged",
+        group.add_argument('--tagged', dest='tagged',
                            help="filter items by question Tag")
-        group.add_argument("--token",
-                           help="StackExchange token for the API")
         group.add_argument('--max-questions', dest='max_questions',
                            type=int, default=MAX_QUESTIONS,
                            help="Maximum number of questions requested in the same query")
