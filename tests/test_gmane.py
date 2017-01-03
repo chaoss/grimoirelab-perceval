@@ -20,12 +20,12 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import argparse
 import os
 import shutil
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 import httpretty
 import pkg_resources
@@ -35,6 +35,7 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.errors import RepositoryError
 from perceval.backends.core.gmane import (Gmane,
                                           GmaneClient,
@@ -217,30 +218,49 @@ class TestGmaneBackend(unittest.TestCase):
 class TestGmaneCommand(unittest.TestCase):
     """Tests for GmaneCommand class"""
 
-    @httpretty.activate
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is Gmane"""
 
+        self.assertIs(GmaneCommand.BACKEND, Gmane)
+
+    @httpretty.activate
+    @unittest.mock.patch('os.path.expanduser')
+    def test_mboxes_path_init(self, mock_expanduser):
+        """Test dirpath initialization"""
+
+        mock_expanduser.return_value = 'testpath'
         setup_http_server()
+
+        args = ['mylist@example.com']
+
+        cmd = GmaneCommand(*args)
+        self.assertEqual(cmd.parsed_args.dirpath,
+                         'testpath/mylist@example.com')
+
+        args = ['mylist@example.com',
+                '--mboxes-path', '/tmp/perceval/']
+
+        cmd = GmaneCommand(*args)
+        self.assertEqual(cmd.parsed_args.dirpath, '/tmp/perceval/')
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = GmaneCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['mylist@example.com',
                 '--mboxes-path', '/tmp/perceval/',
                 '--offset', '10',
-                '--tag', 'test']
+                '--tag', 'test',
+                '--no-cache']
 
-        cmd = GmaneCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.mailing_list, 'mylist@example.com')
-        self.assertEqual(cmd.parsed_args.mboxes_path, '/tmp/perceval/')
-        self.assertEqual(cmd.parsed_args.offset, 10)
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertIsInstance(cmd.backend, Gmane)
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = GmaneCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.mailing_list_address, 'mylist@example.com')
+        self.assertEqual(parsed_args.mboxes_path, '/tmp/perceval/')
+        self.assertEqual(parsed_args.offset, 10)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_cache, True)
 
 
 class TestGmaneMailingList(unittest.TestCase):
