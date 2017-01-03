@@ -267,9 +267,11 @@ class BackendCommand:
         parser = self.setup_cmd_parser()
         self.parsed_args = parser.parse(*args)
 
+        self._pre_init()
         parsed_args = vars(self.parsed_args)
         kw = build_signature_parameters(parsed_args, self.BACKEND.__init__)
         self.backend = self.BACKEND(**kw)
+        self._post_init()
 
         self.outfile = self.parsed_args.outfile
 
@@ -306,6 +308,14 @@ class BackendCommand:
             if self.backend.cache:
                 self.backend.cache.recover()
             raise RuntimeError(str(e))
+
+    def _pre_init(self):
+        """Override to execute before backend is initialized."""
+        pass
+
+    def _post_init(self):
+        """Override to execute after backend is initialized."""
+        pass
 
     def _initialize_cache(self):
         """Initialize cache based on the parsed parameters"""

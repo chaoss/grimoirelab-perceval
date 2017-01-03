@@ -289,6 +289,12 @@ class MockedBackendCommand(BackendCommand):
     def __init__(self, *args):
         super().__init__(*args)
 
+    def _pre_init(self):
+        setattr(self.parsed_args, 'pre_init', True)
+
+    def _post_init(self):
+        setattr(self.parsed_args, 'post_init', True)
+
     @staticmethod
     def setup_cmd_parser():
         parser = BackendCommandArgumentParser(from_date=True,
@@ -357,6 +363,22 @@ class TestBackendCommand(unittest.TestCase):
         self.assertEqual(cmd.backend.tag, 'test')
 
         cmd.outfile.close()
+
+    def test_pre_init(self):
+        """Test if pre_init method is called during initialization"""
+
+        args = ['http://example.com/']
+
+        cmd = MockedBackendCommand(*args)
+        self.assertEqual(cmd.parsed_args.pre_init, True)
+
+    def test_post_init(self):
+        """Test if post_init method is called during initialization"""
+
+        args = ['http://example.com/']
+
+        cmd = MockedBackendCommand(*args)
+        self.assertEqual(cmd.parsed_args.post_init, True)
 
     def test_run(self):
         """Test run method"""
