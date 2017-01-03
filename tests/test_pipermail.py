@@ -20,13 +20,13 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import argparse
 import datetime
 import os
 import shutil
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 import httpretty
 import pkg_resources
@@ -36,6 +36,8 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.mbox import MailingList
 from perceval.backends.core.pipermail import (Pipermail,
                                               PipermailCommand,
@@ -403,6 +405,30 @@ class TestPipermailBackend(unittest.TestCase):
 class TestPipermailCommand(unittest.TestCase):
     """Tests for PipermailCommand class"""
 
+    def test_backend_class(self):
+        """Test if the backend class is Pipermail"""
+
+        self.assertIs(PipermailCommand.BACKEND, Pipermail)
+
+    @httpretty.activate
+    @unittest.mock.patch('os.path.expanduser')
+    def test_mboxes_path_init(self, mock_expanduser):
+        """Test dirpath initialization"""
+
+        mock_expanduser.return_value = 'testpath'
+
+        args = ['http://example.com/',]
+
+        cmd = PipermailCommand(*args)
+        self.assertEqual(cmd.parsed_args.dirpath,
+                         'testpath/http://example.com/')
+
+        args = ['http://example.com/',
+                '--mboxes-path', '/tmp/perceval/']
+
+        cmd = PipermailCommand(*args)
+        self.assertEqual(cmd.parsed_args.dirpath, '/tmp/perceval/')
+
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
@@ -411,17 +437,29 @@ class TestPipermailCommand(unittest.TestCase):
                 '--tag', 'test']
 
         cmd = PipermailCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
         self.assertEqual(cmd.parsed_args.url, 'http://example.com/')
         self.assertEqual(cmd.parsed_args.mboxes_path, '/tmp/perceval/')
         self.assertEqual(cmd.parsed_args.tag, 'test')
         self.assertIsInstance(cmd.backend, Pipermail)
 
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
 
-        parser = PipermailCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parser = PipermailCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
+
+        args = ['http://example.com/',
+                '--mboxes-path', '/tmp/perceval/',
+                '--tag', 'test',
+                '--no-cache',
+                '--from-date', '1970-01-01']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'http://example.com/')
+        self.assertEqual(parsed_args.mboxes_path, '/tmp/perceval/')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
 if __name__ == "__main__":
