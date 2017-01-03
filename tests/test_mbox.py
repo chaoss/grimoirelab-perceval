@@ -21,7 +21,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import argparse
 import datetime
 import os.path
 import sys
@@ -38,6 +37,8 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.mbox import (MBox,
                                          MBoxCommand,
                                          MBoxArchive,
@@ -418,26 +419,28 @@ class TestMBoxBackend(TestBaseMBox):
 
 
 class TestMBoxCommand(unittest.TestCase):
-    """Tests for MBoxCommand backend"""
+    """MBoxCommand unit tests"""
 
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is MBox"""
+
+        self.assertIs(MBoxCommand.BACKEND, MBox)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = MBoxCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['http://example.com/', '/tmp/perceval/',
-                '--tag', 'test']
+                '--tag', 'test',
+                '--from-date', '1970-01-01']
 
-        cmd = MBoxCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.uri, 'http://example.com/')
-        self.assertEqual(cmd.parsed_args.mboxes, '/tmp/perceval/')
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertIsInstance(cmd.backend, MBox)
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = MBoxCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.uri, 'http://example.com/')
+        self.assertEqual(parsed_args.dirpath, '/tmp/perceval/')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
 if __name__ == "__main__":

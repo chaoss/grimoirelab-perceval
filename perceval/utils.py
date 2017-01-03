@@ -22,6 +22,7 @@
 #
 
 import datetime
+import inspect
 import logging
 import re
 import sys
@@ -262,3 +263,48 @@ def xml_to_dict(raw_xml):
     d = node_to_dict(tree)
 
     return d
+
+
+def build_signature_parameters(candidates, callable_):
+    """Build from a set of candidates the parameters needed to exec a callable.
+
+    Returns a dict with the `candidates` found on `callable_`. When
+    any of the required parameters of a callable is not found, it
+    raises a `AttributeError` exception.
+
+    :param candidates: dict with the names of the possible parameters
+        and their values
+    :param callable_: callable object
+
+    :result: dict with the parameters needed to call `callable_`
+    """
+    to_match = inspect_signature_parameters(callable_)
+
+    result = {}
+
+    for p in to_match:
+        name = p.name
+        if name in candidates:
+            result[name] =  candidates[name]
+        elif p.default == inspect.Parameter.empty:
+            # Parameters which its default value is empty are
+            # considered as required
+            raise AttributeError("required argument %s not found" % name,
+                                 name)
+    return result
+
+
+def inspect_signature_parameters(callable_):
+    """Get the parameters of a callable.
+
+    Returns a list with the signature parameters of `callable_`.
+    Parameters 'self' and 'cls' are filtered from the result.
+
+    :param callable_: callable object
+
+    :result: list of parameters
+    """
+    signature = inspect.signature(callable_)
+    params = [v for p, v in signature.parameters.items() \
+              if p not in ('self', 'cls')]
+    return params

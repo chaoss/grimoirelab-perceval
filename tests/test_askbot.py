@@ -20,7 +20,6 @@
 #     Alberto Martín <alberto.martin@bitergia.com>
 #
 
-import argparse
 import datetime
 import json
 import sys
@@ -36,6 +35,8 @@ import requests
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.askbot import (Askbot,
                                            AskbotClient,
                                            AskbotParser,
@@ -456,26 +457,30 @@ class TestAskbotBackend(unittest.TestCase):
 
         self.assertEqual(Askbot.has_caching(), False)
 
-class TestAskboteCommand(unittest.TestCase):
+
+class TestAskbotCommand(unittest.TestCase):
     """Tests for AskbotCommand class."""
 
-    @httpretty.activate
-    def test_parsing_on_init(self):
-        """Test if the class is initialized."""
+    def test_backend_class(self):
+        """Test if the backend class is Askbot"""
 
-        args = ['--tag', 'test', ASKBOT_URL]
+        self.assertIs(AskbotCommand.BACKEND, Askbot)
 
-        cmd = AskbotCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.url, ASKBOT_URL)
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertIsInstance(cmd.backend, Askbot)
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
 
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object."""
+        parser = AskbotCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
-        parser = AskbotCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        args = ['--tag', 'test',
+                '--from-date', '1970-01-01',
+                ASKBOT_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, ASKBOT_URL)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+
 
 if __name__ == "__main__":
     unittest.main(warnings='ignore')

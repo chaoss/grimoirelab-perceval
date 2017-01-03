@@ -20,14 +20,16 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import json
 import logging
 import os
 import re
 import subprocess
 import threading
 
-from ...backend import Backend, BackendCommand, metadata
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import RepositoryError, ParseError
 from ...utils import DEFAULT_DATETIME, datetime_to_utc, str_to_datetime
 
@@ -225,69 +227,44 @@ class Git(Backend):
 class GitCommand(BackendCommand):
     """Class to run Git backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    BACKEND = Git
 
-        self.uri = self.parsed_args.uri
-        self.outfile = self.parsed_args.outfile
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.tag = self.parsed_args.tag
-        self.branches = self.parsed_args.branches
+    def _pre_init(self):
+        """Initialize repositories directory path"""
 
         if self.parsed_args.git_log:
             git_path = self.parsed_args.git_log
         elif not self.parsed_args.git_path:
             base_path = os.path.expanduser('~/.perceval/repositories/')
-            git_path = os.path.join(base_path, self.uri)
+            git_path = os.path.join(base_path, self.parsed_args.uri)
         else:
             git_path = self.parsed_args.git_path
 
-        cache = None
+        setattr(self.parsed_args, 'gitpath', git_path)
 
-        self.backend = Git(self.uri, git_path,
-                           tag=self.tag, cache=cache)
-
-    def run(self):
-        """Fetch and print the commits.
-
-        This method runs the backend to fetch the commits from the given
-        git log. Commits are converted to JSON objects and printed to the
-        defined output.
-        """
-        commits = self.backend.fetch(from_date=self.from_date,
-                                    branches=self.branches)
-
-        try:
-            for commit in commits:
-                obj = json.dumps(commit, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except OSError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the Git argument parser."""
 
-        parser = super().create_argument_parser()
-
-        # Mutual exclusive parameters
-        group = parser.add_mutually_exclusive_group()
-        group.add_argument('--git-path', dest='git_path',
-                           help="Path where the Git repository will be cloned")
-        group.add_argument('--git-log', dest='git_log',
-                           help="Path to the Git log file")
-
-        # Required arguments
-        parser.add_argument('uri',
-                            help="URI of the Git log repository")
+        parser = BackendCommandArgumentParser(from_date=True)
 
         # Optional arguments
-        parser.add_argument('--branches', dest='branches',
-                            nargs='+', type=str, default=None,
-                            help='Fetch commits only from these branches')
+        group = parser.parser.add_argument_group('Git arguments')
+        group.add_argument('--branches', dest='branches',
+                           nargs='+', type=str, default=None,
+                           help="Fetch commits only from these branches")
+
+        # Mutual exclusive parameters
+        exgroup = group.add_mutually_exclusive_group()
+        exgroup.add_argument('--git-path', dest='git_path',
+                             help="Path where the Git repository will be cloned")
+        exgroup.add_argument('--git-log', dest='git_log',
+                             help="Path to the Git log file")
+
+        # Required arguments
+        parser.parser.add_argument('uri',
+                                   help="URI of the Git log repository")
+
         return parser
 
 

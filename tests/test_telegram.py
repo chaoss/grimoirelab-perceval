@@ -20,7 +20,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import argparse
 import shutil
 import sys
 import tempfile
@@ -35,6 +34,7 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
 from perceval.backends.core.telegram import (Telegram,
@@ -331,29 +331,31 @@ class TestTelegramBackendCache(unittest.TestCase):
 class TestTelegramCommand(unittest.TestCase):
     """Tests for TelegramCommand class"""
 
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is Telegram"""
+
+        self.assertIs(TelegramCommand.BACKEND, Telegram)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = TelegramCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['mybot',
-                '--backend-token', '12345678',
+                '--api-token', '12345678',
                 '--offset', '10',
                 '--chats', '-10000',
-                '--tag', 'test']
+                '--tag', 'test',
+                '--no-cache']
 
-        cmd = TelegramCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.bot, 'mybot')
-        self.assertEqual(cmd.parsed_args.backend_token, '12345678')
-        self.assertEqual(cmd.parsed_args.offset, 10)
-        self.assertEqual(cmd.parsed_args.chats, [-10000])
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertIsInstance(cmd.backend, Telegram)
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = TelegramCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.bot, 'mybot')
+        self.assertEqual(parsed_args.bot_token, '12345678')
+        self.assertEqual(parsed_args.offset, 10)
+        self.assertEqual(parsed_args.chats, [-10000])
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_cache, True)
 
 
 class TestTelegramBotClient(unittest.TestCase):

@@ -21,14 +21,16 @@
 #
 
 import datetime
-import json
 import logging
 import os
 import re
 
 import dateutil
 
-from ...backend import Backend, BackendCommand, metadata
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import ParseError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
@@ -233,50 +235,23 @@ class Supybot(Backend):
 class SupybotCommand(BackendCommand):
     """Class to run Supybot backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    BACKEND = Supybot
 
-        self.uri = self.parsed_args.uri
-        self.ircdir = self.parsed_args.ircdir
-        self.outfile = self.parsed_args.outfile
-        self.tag = self.parsed_args.tag
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-
-        cache = None
-
-        self.backend = Supybot(self.uri, self.ircdir,
-                               tag=self.tag, cache=cache)
-
-    def run(self):
-        """Fetch and print the IRC messages.
-
-        This method runs the backend to fetch the IRC messages from
-        the given Supybot log files. Messages are converted to JSON
-        objects and printed to the defined output.
-        """
-        messages = self.backend.fetch(from_date=self.from_date)
-
-        try:
-            for message in messages:
-                obj = json.dumps(message, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except OSError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the Supybot argument parser."""
 
-        parser = super().create_argument_parser()
+        aliases = {
+            'dirpath' : 'ircdir'
+        }
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              aliases=aliases)
 
         # Required arguments
-        parser.add_argument('uri',
-                            help="URI of the IRC channel")
-        parser.add_argument('ircdir',
-                            help="Path to the IRC logs directory")
+        parser.parser.add_argument('uri',
+                                   help="URI of the IRC channel")
+        parser.parser.add_argument('ircdir',
+                                   help="Path to the IRC logs directory")
 
         return parser
 

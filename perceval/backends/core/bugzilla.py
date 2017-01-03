@@ -23,17 +23,17 @@
 
 import csv
 import datetime
-import json
 import logging
-import os.path
 import re
 
 import bs4
 import dateutil.tz
 import requests
 
-from ...backend import Backend, BackendCommand, metadata
-from ...cache import Cache
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import BackendError, CacheError, ParseError
 from ...utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
 
@@ -371,75 +371,18 @@ class Bugzilla(Backend):
 class BugzillaCommand(BackendCommand):
     """Class to run Bugzilla backend from the command line."""
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    BACKEND = Bugzilla
 
-        self.url = self.parsed_args.url
-        self.backend_user = self.parsed_args.backend_user
-        self.backend_password = self.parsed_args.backend_password
-        self.max_bugs = self.parsed_args.max_bugs
-        self.max_bugs_csv = self.parsed_args.max_bugs_csv
-        self.from_date = str_to_datetime(self.parsed_args.from_date)
-        self.tag = self.parsed_args.tag
-        self.outfile = self.parsed_args.outfile
-
-        if not self.parsed_args.no_cache:
-            if not self.parsed_args.cache_path:
-                base_path = os.path.expanduser('~/.perceval/cache/')
-            else:
-                base_path = self.parsed_args.cache_path
-
-            cache_path = os.path.join(base_path, self.url)
-
-            cache = Cache(cache_path)
-
-            if self.parsed_args.clean_cache:
-                cache.clean()
-            else:
-                cache.backup()
-        else:
-            cache = None
-
-        self.backend = Bugzilla(self.url,
-                                user=self.backend_user,
-                                password=self.backend_password,
-                                max_bugs=self.max_bugs,
-                                max_bugs_csv=self.max_bugs_csv,
-                                tag=self.tag,
-                                cache=cache)
-
-    def run(self):
-        """Fetch and print the bugs.
-
-        This method runs the backend to fetch the bugs from the given
-        repository. Bugs are converted to JSON objects and printed to the
-        defined output.
-        """
-        if self.parsed_args.fetch_cache:
-            bugs = self.backend.fetch_from_cache()
-        else:
-            bugs = self.backend.fetch(from_date=self.from_date)
-
-        try:
-            for bug in bugs:
-                obj = json.dumps(bug, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            if self.backend.cache:
-                self.backend.cache.recover()
-            raise RuntimeError(str(e))
-
-    @classmethod
-    def create_argument_parser(cls):
+    @staticmethod
+    def setup_cmd_parser():
         """Returns the Bugzilla argument parser."""
 
-        parser = super().create_argument_parser()
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              basic_auth=True,
+                                              cache=True)
 
         # Bugzilla options
-        group = parser.add_argument_group('Bugzilla arguments')
+        group = parser.parser.add_argument_group('Bugzilla arguments')
         group.add_argument('--max-bugs', dest='max_bugs',
                            type=int, default=MAX_BUGS,
                            help="Maximum number of bugs requested on the same query")
@@ -448,8 +391,8 @@ class BugzillaCommand(BackendCommand):
                            help="Maximum number of bugs requested on CSV queries")
 
         # Required arguments
-        parser.add_argument('url',
-                            help="URL of the Bugzilla server")
+        parser.parser.add_argument('url',
+                                   help="URL of the Bugzilla server")
 
         return parser
 

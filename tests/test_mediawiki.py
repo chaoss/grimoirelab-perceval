@@ -22,7 +22,6 @@
 #     Alvaro del Castillo <acs@bitergia.com>
 #
 
-import argparse
 import datetime
 import shutil
 import sys
@@ -30,22 +29,25 @@ import tempfile
 import unittest
 import urllib
 
+import dateutil
 import httpretty
 import pkg_resources
-
-from dateutil import parser
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
+from perceval.utils import (DEFAULT_DATETIME,
+                            datetime_to_utc,
+                            str_to_datetime)
 from perceval.backends.core.mediawiki import (MediaWiki,
                                               MediaWikiCommand,
                                               MediaWikiClient)
-from perceval.utils import str_to_datetime, datetime_to_utc
+
 
 MEDIAWIKI_SERVER_URL = 'http://example.com'
 MEDIAWIKI_API = MEDIAWIKI_SERVER_URL + '/api.php'
@@ -216,7 +218,7 @@ class TestMediaWikiBackend_1_23(TestMediaWikiBackend):
 
     @httpretty.activate
     def test_fetch_from_date(self):
-        from_date = parser.parse("2016-06-23 15:35")
+        from_date = dateutil.parser.parse("2016-06-23 15:35")
         self._test_fetch_version("1.23", from_date)
 
     @httpretty.activate
@@ -240,7 +242,7 @@ class TestMediaWikiBackend_1_28(TestMediaWikiBackend):
 
     @httpretty.activate
     def test_fetch_from_date(self):
-        from_date = parser.parse("2016-06-23 15:35")
+        from_date = dateutil.parser.parse("2016-06-23 15:35")
         self._test_fetch_version("1.28", from_date)
         self._test_fetch_version("1.28", from_date, reviews_api=True)
 
@@ -524,23 +526,26 @@ class TestMediaWikiClient(unittest.TestCase):
 class TestMediaWikiCommand(unittest.TestCase):
     """Tests for MediaWikiCommand class"""
 
-    @httpretty.activate
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is MediaWiki"""
 
-        args = ['--tag', 'test', MEDIAWIKI_SERVER_URL]
+        self.assertIs(MediaWikiCommand.BACKEND, MediaWiki)
 
-        cmd = MediaWikiCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.url, MEDIAWIKI_SERVER_URL)
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertIsInstance(cmd.backend, MediaWiki)
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
 
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
+        parser = MediaWikiCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
-        parser = MediaWikiCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        args = ['--tag', 'test',
+                '--no-cache', '--from-date', '1970-01-01',
+                MEDIAWIKI_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, MEDIAWIKI_SERVER_URL)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
 if __name__ == "__main__":

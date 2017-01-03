@@ -37,8 +37,10 @@ if not '..' in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.errors import InvalidDateError, ParseError
-from perceval.utils import (check_compressed_file_type,
+from perceval.utils import (build_signature_parameters,
+                            check_compressed_file_type,
                             datetime_to_utc,
+                            inspect_signature_parameters,
                             remove_invalid_xml_chars,
                             str_to_datetime,
                             unixtime_to_datetime,
@@ -327,6 +329,72 @@ class TestXMLtoDict(unittest.TestCase):
         raw_xml = read_file('data/xml_invalid.xml')
 
         self.assertRaises(ParseError, xml_to_dict, raw_xml)
+
+
+class MockCallable:
+    """Mock class for testing introspection"""
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def test(self, a, b, c=None):
+        pass
+
+    @classmethod
+    def class_test(cls, a, b):
+        pass
+
+
+class TestBuildSignatureParameters(unittest.TestCase):
+    """Unit tests for build_signature_parameters"""
+
+    def test_build_parameters(self):
+        """Test if a list of parameters is build"""
+
+        expected = {'a' : 1, 'b' : 2, 'c' : 3}
+        params = {'a' : 1, 'b' : 2, 'c' : 3}
+        found = build_signature_parameters(params, MockCallable.test)
+        self.assertDictEqual(found, expected)
+
+        expected = {'a' : 1, 'b' : 2}
+        params = {'a' : 1, 'b' : 2, 'd' : 3}
+        found = build_signature_parameters(params, MockCallable.test)
+        self.assertDictEqual(found, expected)
+
+    def test_attribute_error(self):
+        """Test if it raises an exception for not found arguments"""
+
+        with self.assertRaises(AttributeError) as e:
+            params = {'a' : 1, 'd' : 3}
+            _ = build_signature_parameters(params, MockCallable.test)
+            self.assertEqual(e.exception.args[1], 'b')
+
+
+class TestInspectSignatureParameters(unittest.TestCase):
+    """Unit tests for inspect_signature_parameters"""
+
+    def test_inspect(self):
+        """Check the parameters from a callable"""
+
+        expected = ['args', 'kwargs']
+        params = inspect_signature_parameters(MockCallable)
+        params = [p.name for p in params]
+        self.assertListEqual(params, expected)
+
+        expected = ['args', 'kwargs']
+        params = inspect_signature_parameters(MockCallable.__init__)
+        params = [p.name for p in params]
+        self.assertListEqual(params, expected)
+
+        expected = ['a', 'b', 'c']
+        params = inspect_signature_parameters(MockCallable.test)
+        params = [p.name for p in params]
+        self.assertListEqual(params, expected)
+
+        expected = ['a', 'b']
+        params = inspect_signature_parameters(MockCallable.class_test)
+        params = [p.name for p in params]
+        self.assertListEqual(params, expected)
 
 
 if __name__ == "__main__":

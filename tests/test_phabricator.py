@@ -20,7 +20,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import argparse
 import datetime
 import json
 import shutil
@@ -36,8 +35,10 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.phabricator import (Phabricator,
                                                 PhabricatorCommand,
                                                 ConduitClient,
@@ -627,25 +628,29 @@ class TestPhabricatorBackendCache(unittest.TestCase):
 class TestPhabricatorCommand(unittest.TestCase):
     """Tests for PhabricatorCommand class"""
 
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is Phabricator"""
+
+        self.assertIs(PhabricatorCommand.BACKEND, Phabricator)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = PhabricatorCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['http://example.com',
-                '--backend-token', '12345678',
-                '--tag', 'test']
+                '--api-token', '12345678',
+                '--tag', 'test',
+                '--no-cache',
+                '--from-date', '1970-01-01']
 
-        cmd = PhabricatorCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.url, 'http://example.com')
-        self.assertEqual(cmd.parsed_args.backend_token, '12345678')
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertIsInstance(cmd.backend, Phabricator)
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = PhabricatorCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'http://example.com')
+        self.assertEqual(parsed_args.api_token, '12345678')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
 class TestConduitClient(unittest.TestCase):

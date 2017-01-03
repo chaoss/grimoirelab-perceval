@@ -21,7 +21,6 @@
 #     Quan Zhou <quan@bitergia.com>
 #
 
-import argparse
 import datetime
 import json
 import shutil
@@ -39,8 +38,10 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.stackexchange import (StackExchange,
                                                   StackExchangeCommand,
                                                   StackExchangeClient)
@@ -107,7 +108,7 @@ class TestStackExchangeBackend(unittest.TestCase):
                                body=question, status=200)
 
         stack = StackExchange(site="stackoverflow", tagged="python",
-                              token="aaa", max_questions=1)
+                              api_token="aaa", max_questions=1)
         questions = [question for question in stack.fetch(from_date=None)]
 
         self.assertEqual(questions[0]['origin'], 'stackoverflow')
@@ -129,7 +130,8 @@ class TestStackExchangeBackend(unittest.TestCase):
                                STACKEXCHANGE_QUESTIONS_URL,
                                body=question, status=200)
 
-        stack = StackExchange(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
+        stack = StackExchange(site="stackoverflow", tagged="python",
+                              api_token="aaa", max_questions=1)
         questions = [question for question in stack.fetch(from_date=None)]
 
         self.assertEqual(len(questions), 0)
@@ -146,7 +148,7 @@ class TestStackExchangeBackend(unittest.TestCase):
 
         from_date = datetime.datetime(2016, 4, 5)
         stack = StackExchange(site="stackoverflow", tagged="python",
-                              token="aaa", max_questions=1)
+                              api_token="aaa", max_questions=1)
         questions = [question for question in stack.fetch(from_date=from_date)]
 
         self.assertEqual(questions[0]['origin'], 'stackoverflow')
@@ -184,7 +186,8 @@ class TestStackExchangeBackendCache(unittest.TestCase):
         # First, we fetch the bugs from the server, storing them
         # in a cache
         cache = Cache(self.tmp_path)
-        stack = StackExchange(site="stackoverflow", tagged="python", token="aaa", max_questions=1, cache=cache)
+        stack = StackExchange(site="stackoverflow", tagged="python",
+                              api_token="aaa", max_questions=1, cache=cache)
 
         questions = [question for question in stack.fetch(from_date=None)]
         del questions[0]['timestamp']
@@ -201,7 +204,8 @@ class TestStackExchangeBackendCache(unittest.TestCase):
         """Test if there are not any questions returned when the cache is empty"""
 
         cache = Cache(self.tmp_path)
-        stack = StackExchange(site="stackoverflow", tagged="python", token="aaa", max_questions=1, cache=cache)
+        stack = StackExchange(site="stackoverflow", tagged="python",
+                              api_token="aaa", max_questions=1, cache=cache)
 
         cache_questions = [cache_question for cache_question in stack.fetch_from_cache()]
 
@@ -210,7 +214,8 @@ class TestStackExchangeBackendCache(unittest.TestCase):
     def test_fetch_from_non_set_cache(self):
         """Test if a error is raised when the cache was not set"""
 
-        stack = StackExchange(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
+        stack = StackExchange(site="stackoverflow", tagged="python",
+                              api_token="aaa", max_questions=1)
 
         with self.assertRaises(CacheError):
             _ = [cache_question for cache_question in stack.fetch_from_cache()]
@@ -424,30 +429,35 @@ class TestStackExchangeClient(unittest.TestCase):
 
 
 class TestStackExchangeCommand(unittest.TestCase):
+    """StackExchangeCommand unit tests"""
 
-    @httpretty.activate
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is StackExchange"""
+
+        self.assertIs(StackExchangeCommand.BACKEND, StackExchange)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = StackExchangeCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['--site', 'stackoverflow',
                 '--tagged', 'python',
-                '--token', 'aaa',
+                '--api-token', 'aaa',
                 '--max-questions', '1',
-                '--tag', 'test']
+                '--tag', 'test',
+                '--no-cache',
+                '--from-date', '1970-01-01']
 
-        cmd = StackExchangeCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.site, 'stackoverflow')
-        self.assertEqual(cmd.parsed_args.tagged, 'python')
-        self.assertEqual(cmd.parsed_args.token, 'aaa')
-        self.assertEqual(cmd.parsed_args.max_questions, 1)
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = StackExchangeCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.site, 'stackoverflow')
+        self.assertEqual(parsed_args.tagged, 'python')
+        self.assertEqual(parsed_args.api_token, 'aaa')
+        self.assertEqual(parsed_args.max_questions, 1)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
 if __name__ == "__main__":

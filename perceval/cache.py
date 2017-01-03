@@ -26,6 +26,9 @@ import shutil
 import shelve
 
 
+CACHE_DEFAULT_PATH = '~/.perceval/cache/'
+
+
 class Cache:
     """Basic cache for Perceval.
 
@@ -117,3 +120,36 @@ class Cache:
         """
         shutil.rmtree(self.items_path)
         shutil.copytree(self.recovery_path, self.items_path)
+
+
+def setup_cache(repository, cache_path=None, clean_cache=False):
+    """Create and configure a cache object.
+
+    Create a new cache object for `repository` and store it under
+    the Perceval's default cache directory. When `cache_path` is
+    given, the default directory will be replace by that value.
+
+    If the cache already exists, a backup with its contents will be
+    done. When `clean_cache` is set, the current cache will be
+    removed and the backup will not be generated.
+
+    :param cache_path: path to the directory to store cache data
+    :param clean_cache: clean the contents of the cache, do not
+        a backup
+
+    :returns: a `Cache` instance
+    """
+    if not cache_path:
+        base_path = os.path.expanduser(CACHE_DEFAULT_PATH)
+    else:
+        base_path = cache_path
+
+    cache_path = os.path.join(base_path, repository)
+    cache = Cache(cache_path)
+
+    if clean_cache:
+        cache.clean()
+    else:
+        cache.backup()
+
+    return cache
