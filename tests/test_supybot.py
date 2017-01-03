@@ -20,7 +20,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import argparse
 import datetime
 import os
 import shutil
@@ -35,10 +34,13 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
+from perceval.errors import ParseError
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.supybot import (Supybot,
                                             SupybotCommand,
                                             SupybotParser)
-from perceval.errors import ParseError
+
 
 
 class TestSupybotBackend(unittest.TestCase):
@@ -179,24 +181,26 @@ class TestSupybotBackend(unittest.TestCase):
 class TestSupybotCommand(unittest.TestCase):
     """Supybot unit tests"""
 
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is Supybot"""
+
+        self.assertIs(SupybotCommand.BACKEND, Supybot)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = SupybotCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['--tag', 'test',
+                '--from-date', '1970-01-01',
                 'http://example.com', '/tmp/supybot']
 
-        cmd = SupybotCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertEqual(cmd.parsed_args.uri, 'http://example.com')
-        self.assertEqual(cmd.parsed_args.ircdir, '/tmp/supybot')
-        self.assertIsInstance(cmd.backend, Supybot)
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = SupybotCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.uri, 'http://example.com')
+        self.assertEqual(parsed_args.dirpath, '/tmp/supybot')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
 class TestSupybotParser(unittest.TestCase):
