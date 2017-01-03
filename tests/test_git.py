@@ -21,7 +21,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import argparse
 import datetime
 import os
 import shutil
@@ -29,6 +28,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 import dateutil.tz
 import pkg_resources
@@ -38,8 +38,9 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser, uuid
 from perceval.errors import ParseError, RepositoryError
-from perceval.backend import uuid
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.git import (Git,
                                         GitCommand,
                                         GitParser,
@@ -385,34 +386,61 @@ class TestGitBackend(unittest.TestCase):
 class TestGitCommand(unittest.TestCase):
     """GitCommand tests"""
 
-    def test_parsing_on_init(self):
-        """Test if the class is initialized"""
+    def test_backend_class(self):
+        """Test if the backend class is Git"""
 
-        args = ['--git-log', 'data/git_log.txt', 'http://example.com/',
-                '--tag', 'test']
+        self.assertIs(GitCommand.BACKEND, Git)
+
+    @unittest.mock.patch('os.path.expanduser')
+    def test_gitpath_init(self, mock_expanduser):
+        """Test gitpath initialization"""
+
+        mock_expanduser.return_value = 'testpath'
+
+        args = ['http://example.com/']
 
         cmd = GitCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.git_log, "data/git_log.txt")
-        self.assertEqual(cmd.parsed_args.uri, 'http://example.com/')
-        self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertIsInstance(cmd.backend, Git)
+        self.assertEqual(cmd.parsed_args.gitpath,
+                         'testpath/http://example.com/')
 
-        args = ['--git-log', 'data/git_log.txt', 'http://example.com/',
+        args = ['http://example.com/',
+                '--git-log', 'data/git_log.txt']
+
+        cmd = GitCommand(*args)
+        self.assertEqual(cmd.parsed_args.gitpath, 'data/git_log.txt')
+
+        args = ['http://example.com/',
+                '--git-path', '/tmp/gitpath']
+
+        cmd = GitCommand(*args)
+        self.assertEqual(cmd.parsed_args.gitpath, '/tmp/gitpath')
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = GitCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
+
+        args = ['http://example.com/',
+                '--git-log', 'data/git_log.txt',
+                '--tag', 'test',
+                '--from-date', '1970-01-01']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.uri, 'http://example.com/')
+        self.assertEqual(parsed_args.git_log, 'data/git_log.txt')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.branches, None)
+
+        args = ['http://example.com/',
+                '--git-path', '/tmp/gitpath',
                 '--branches', 'master', 'testing']
 
-        cmd = GitCommand(*args)
-        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
-        self.assertEqual(cmd.parsed_args.git_log, "data/git_log.txt")
-        self.assertEqual(cmd.parsed_args.uri, 'http://example.com/')
-        self.assertEqual(cmd.parsed_args.branches, ['master', 'testing'])
-        self.assertIsInstance(cmd.backend, Git)
-
-    def test_argument_parser(self):
-        """Test if it returns a argument parser object"""
-
-        parser = GitCommand.create_argument_parser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.git_path, '/tmp/gitpath')
+        self.assertEqual(parsed_args.uri, 'http://example.com/')
+        self.assertEqual(parsed_args.branches, ['master', 'testing'])
 
 
 class TestGitParser(unittest.TestCase):
