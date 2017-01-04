@@ -57,7 +57,7 @@ class Meetup(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None):
@@ -69,7 +69,7 @@ class Meetup(Backend):
         self.client = MeetupClient(api_token, max_items=max_items)
 
     @metadata
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, from_date=DEFAULT_DATETIME, to_date=None):
         """Fetch the events from the server.
 
         This method fetches those events of a group stored on the server
@@ -77,17 +77,21 @@ class Meetup(Backend):
         are included within each event.
 
         :param from_date: obtain events updated since this date
+        :param to_date: obtain events updated before this date
 
         :returns: a generator of events
         """
-        logger.info("Fetching events of '%s' group from %s",
-                    self.group, str(from_date))
+        logger.info("Fetching events of '%s' group from %s to %s",
+                    self.group, str(from_date),
+                    str(to_date) if to_date else '--')
 
         self._purge_cache_queue()
 
         from_date = datetime_to_utc(from_date)
+        to_date_ts = datetime_to_utc(to_date).timestamp() if to_date else None
 
         nevents = 0
+        stop_fetching = False
 
         ev_pages = self.client.events(self.group, from_date=from_date)
 
@@ -102,10 +106,22 @@ class Meetup(Backend):
                 event['comments'] = self.__fetch_and_parse_comments(event_id)
                 event['rsvps'] = self.__fetch_and_parse_rsvps(event_id)
 
+                # Check events updated before 'to_date'
+                event_ts = self.metadata_updated_on(event)
+
+                if to_date_ts and event_ts >= to_date_ts:
+                    # Comments and RSVPS of items from the current
+                    # page be fetched to avoid problems with the cache
+                    stop_fetching = True
+                    continue
+
                 yield event
                 nevents += 1
 
             self._flush_cache_queue()
+
+            if stop_fetching:
+                break
 
         logger.info("Fetch process completed: %s events fetched", nevents)
 
@@ -275,6 +291,7 @@ class MeetupCommand(BackendCommand):
         """Returns the Meetup argument parser."""
 
         parser = BackendCommandArgumentParser(from_date=True,
+                                              to_date=True,
                                               token_auth=True,
                                               cache=True)
 

@@ -26,6 +26,7 @@ import sys
 import tempfile
 import unittest
 
+import dateutil.tz
 import httpretty
 import pkg_resources
 
@@ -83,6 +84,7 @@ def setup_http_server():
         read_file('data/meetup/meetup_events.json', 'rb'),
         read_file('data/meetup/meetup_events_next.json', 'rb')
     ]
+    events_range_body = read_file('data/meetup/meetup_events_range.json', 'rb')
     events_empty_body = read_file('data/meetup/meetup_events_empty.json', 'rb')
     event_comments_body = read_file('data/meetup/meetup_comments.json', 'rb')
     event_rsvps_body = read_file('data/meetup/meetup_rsvps.json', 'rb')
@@ -109,6 +111,8 @@ def setup_http_server():
             if scroll and scroll[0] == 'since:2016-09-25T00:00:00.000Z':
                 # Last events and no pagination
                 body = events_bodies[-1]
+            elif scroll and scroll[0] == 'since:2016-04-08T00:00:00.000Z':
+                body = events_range_body
             elif scroll and scroll[0] == 'since:2017-01-01T00:00:00.000Z':
                 body = events_empty_body
             else:
@@ -269,7 +273,7 @@ class TestMeetupBackend(unittest.TestCase):
 
     @httpretty.activate
     def test_fetch_from_date(self):
-        """Test wether if fetches a set of events from the given date"""
+        """Test whether if fetches a set of events from the given date"""
 
         http_requests = setup_http_server()
 
@@ -309,6 +313,147 @@ class TestMeetupBackend(unittest.TestCase):
              'key' : ['aaaa'],
              'page' : ['2'],
              'sign' : ['true']
+            },
+            {
+             'fields' : ['attendance_status'],
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'response' : ['yes,no'],
+             'sign' : ['true']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_to_date(self):
+        """Test whether if fetches a set of events updated before the given date"""
+
+        http_requests = setup_http_server()
+
+        to_date = datetime.datetime(2016, 9, 25)
+
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
+        events = [event for event in meetup.fetch(to_date=to_date)]
+
+        expected = [('1', '0d07fe36f994a6c78dfcf60fb73674bcf158cb5a', 1460065164.0, 2, 3),
+                    ('2', '24b47b622eb33965676dd951b18eea7689b1d81c', 1465503498.0, 2, 3)]
+
+        self.assertEqual(len(events), len(expected))
+
+        for x in range(len(events)):
+            event = events[x]
+            expc = expected[x]
+            self.assertEqual(event['data']['id'], expc[0])
+            self.assertEqual(event['uuid'], expc[1])
+            self.assertEqual(event['origin'], 'https://meetup.com/')
+            self.assertEqual(event['updated_on'], expc[2])
+            self.assertEqual(event['category'], 'event')
+            self.assertEqual(event['tag'], 'https://meetup.com/')
+            self.assertEqual(len(event['data']['comments']), expc[3])
+            self.assertEqual(len(event['data']['rsvps']), expc[4])
+
+        # Check requests
+        expected = [
+            {
+             'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+             'key' : ['aaaa'],
+             'order' : ['updated'],
+             'page' : ['2'],
+             'scroll' : ['since:1970-01-01T00:00:00.000Z'],
+             'sign' : ['true'],
+             'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
+            },
+            {
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'sign' : ['true']
+            },
+            {
+             'fields' : ['attendance_status'],
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'response' : ['yes,no'],
+             'sign' : ['true']
+            },
+            {
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'sign' : ['true']
+            },
+            {
+             'fields' : ['attendance_status'],
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'response' : ['yes,no'],
+             'sign' : ['true']
+            },
+            {
+             'key': ['aaaa'],
+             'sign': ['true']
+            },
+            {
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'sign' : ['true']
+            },
+            {
+             'fields' : ['attendance_status'],
+             'key' : ['aaaa'],
+             'page' : ['2'],
+             'response' : ['yes,no'],
+             'sign' : ['true']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_date_range(self):
+        """Test whether if fetches a set of events updated withing the given range"""
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2016, 4, 8)
+        to_date = datetime.datetime(2016, 9, 25)
+
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
+        events = [event for event in meetup.fetch(from_date=from_date,
+                                                  to_date=to_date)]
+
+        self.assertEqual(len(events), 1)
+
+        event = events[0]
+        self.assertEqual(event['data']['id'], '2')
+        self.assertEqual(event['uuid'], '24b47b622eb33965676dd951b18eea7689b1d81c')
+        self.assertEqual(event['origin'], 'https://meetup.com/')
+        self.assertEqual(event['updated_on'], 1465503498.0)
+        self.assertEqual(event['category'], 'event')
+        self.assertEqual(event['tag'], 'https://meetup.com/')
+        self.assertEqual(len(event['data']['comments']), 2)
+        self.assertEqual(len(event['data']['rsvps']), 3)
+
+        # Check requests
+        expected = [
+            {
+             'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+             'key' : ['aaaa'],
+             'order' : ['updated'],
+             'page' : ['2'],
+             'scroll' : ['since:2016-04-08T00:00:00.000Z'],
+             'sign' : ['true'],
+             'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
+            },
+            {
+             'key': ['aaaa'],
+             'page' : ['2'],
+             'sign': ['true']
             },
             {
              'fields' : ['attendance_status'],
@@ -461,7 +606,11 @@ class TestMeetupCommand(unittest.TestCase):
                 '--max-items', '5',
                 '--tag', 'test',
                 '--no-cache',
-                '--from-date', '1970-01-01']
+                '--from-date', '1970-01-01',
+                '--to-date', '2016-01-01']
+
+        expected_ts = datetime.datetime(2016, 1, 1, 0, 0, 0,
+                                        tzinfo=dateutil.tz.tzutc())
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.group, 'sqlpass-es')
@@ -470,6 +619,7 @@ class TestMeetupCommand(unittest.TestCase):
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.no_cache, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.to_date, expected_ts)
 
 
 class TestMeetupClient(unittest.TestCase):
