@@ -32,7 +32,7 @@ import perceval.backends
 
 
 PERCEVAL_USAGE_MSG = \
-"""%(prog)s [-c <file>] [-g] <backend> [<args>] | --help """
+"""%(prog)s [-c <file>] [-g] <backend> [<args>] | --help | --version"""
 
 PERCEVAL_DESC_MSG = \
 """Send Sir Perceval on a quest to retrieve and gather data from software
@@ -65,6 +65,7 @@ are:
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v, --version         show version
   -c FILE, --config FILE
                         set configuration file
   -g, --debug           set debug mode on
@@ -72,6 +73,10 @@ optional arguments:
 
 PERCEVAL_EPILOG_MSG = \
 """Run '%(prog)s <backend> --help' to get information about a specific backend."""
+
+PERCEVAL_VERSION_MSG = \
+"""%(prog)s """  + perceval.__version__
+
 
 # Logging formats
 PERCEVAL_LOG_FORMAT = "[%(asctime)s] - %(message)s"
@@ -113,7 +118,10 @@ def parse_args():
                                      add_help=False)
 
     parser.add_argument('-h', '--help', action='help',
-                       help=argparse.SUPPRESS)
+                        help=argparse.SUPPRESS)
+    parser.add_argument('-v', '--version', action='version',
+                        version=PERCEVAL_VERSION_MSG,
+                        help=argparse.SUPPRESS)
     parser.add_argument('-c', '--config', dest='config_file',
                         default=os.path.expanduser('~/.perceval/perceval.cfg'),
                         help=argparse.SUPPRESS)
