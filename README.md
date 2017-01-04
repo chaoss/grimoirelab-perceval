@@ -6,7 +6,7 @@ repositories.
 ## Usage
 
 ```
-usage: perceval [-c <file>] [-g] <backend> [<args>] | --help
+usage: perceval [-c <file>] [-g] <backend> [<args>] | --help | --version
 
 Repositories are reached using specific backends. The most common backends
 are:
@@ -34,6 +34,7 @@ are:
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v, --version         show version
   -c FILE, --config FILE
                         set configuration file
   -g, --debug           set debug mode on
@@ -208,6 +209,11 @@ $ perceval phabricator 'https://secure.phabricator.com/' -t 123456789abcefe
 ### Pipermail
 ```
 $ perceval pipermail 'https://mail.gnome.org/archives/libart-hackers/'
+```
+
+Pipermail also is able to fetch data from Apache's `mod_box` interface:
+```
+$ perceval pipermail 'http://mail-archives.apache.org/mod_mbox/httpd-dev/'
 ```
 
 ### Redmine
