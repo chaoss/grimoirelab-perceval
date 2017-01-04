@@ -140,6 +140,7 @@ class BackendCommandArgumentParser:
     of the instance.
 
     :param from_date: set from_date argument
+    :param to_date: set to_date argument
     :param offset: set offset argument
     :param basic_auth: set basic authentication arguments
     :param token_auth: set token/key authentication arguments
@@ -149,10 +150,11 @@ class BackendCommandArgumentParser:
     :raises AttributeArror: when both `from_date` and `offset` are set
         to `True`
     """
-    def __init__(self, from_date=False, offset=False,
+    def __init__(self, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False,
                  cache=False, aliases=None):
         self._from_date = from_date
+        self._to_date = to_date
         self._cache = cache
 
         self.aliases = aliases or {}
@@ -162,13 +164,16 @@ class BackendCommandArgumentParser:
         group.add_argument('--tag', dest='tag',
                            help="tag the items generated during the fetching process")
 
-        if from_date and offset:
-            raise AttributeError("from-date and offset parameters are incompatible")
+        if (from_date or to_date) and offset:
+            raise AttributeError("date and offset parameters are incompatible")
 
         if from_date:
             group.add_argument('--from-date', dest='from_date',
                                default='1970-01-01',
                                help="fetch items updated since this date")
+        if to_date:
+            group.add_argument('--to-date', dest='to_date',
+                               help="fetch items updated before this date")
         if offset:
             group.add_argument('--offset', dest='offset',
                                type=int, default=0,
@@ -198,6 +203,8 @@ class BackendCommandArgumentParser:
 
         if self._from_date:
             parsed_args.from_date = str_to_datetime(parsed_args.from_date)
+        if self._to_date and parsed_args.to_date:
+            parsed_args.to_date = str_to_datetime(parsed_args.to_date)
 
         if self._cache and parsed_args.fetch_cache and parsed_args.no_cache:
             raise AttributeError("fetch-cache and no-cache arguments are not compatible")

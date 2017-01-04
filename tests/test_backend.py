@@ -157,30 +157,55 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         self.assertEqual(parsed_args.newdate, expected_dt)
         self.assertNotIn('notfound', parsed_args)
 
-    def test_parse_from_date_arg(self):
-        """Test if from-date parameter is parsed"""
+    def test_parse_date_args(self):
+        """Test if date parameters are parsed"""
 
-        parser = BackendCommandArgumentParser(from_date=True)
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              to_date=True)
 
         # Check default value
         args = []
         parsed_args = parser.parse(*args)
 
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.to_date, None)
 
-        # Check argument
+        # Check argument 'from-date'
         args = ['--from-date', '2015-01-01']
         parsed_args = parser.parse(*args)
 
         expected = datetime.datetime(2015, 1, 1, 0, 0,
                                      tzinfo=dateutil.tz.tzutc())
         self.assertEqual(parsed_args.from_date, expected)
+        self.assertEqual(parsed_args.to_date, None)
 
-        # Invalid date
+        # Invalid 'from-date'
         args = ['--from-date', 'asdf']
 
         with self.assertRaises(InvalidDateError):
             parsed_args = parser.parse(*args)
+
+        # Check argument 'to-date'
+        args = ['--to-date', '2016-01-01']
+        parsed_args = parser.parse(*args)
+
+        expected_dt = datetime.datetime(2016, 1, 1, 0, 0,
+                                        tzinfo=dateutil.tz.tzutc())
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.to_date, expected_dt)
+
+        # Invalid 'to-date'
+        args = ['--to-date', 'asdf']
+
+        with self.assertRaises(InvalidDateError):
+            parsed_args = parser.parse(*args)
+
+        # Check both arguments
+        args = ['--from-date', '2015-01-01', '--to-date', '2016-01-01']
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.from_date, expected)
+        self.assertEqual(parsed_args.to_date, expected_dt)
 
     def test_parse_offset_arg(self):
         """Test if offset parameter is parsed"""
@@ -199,11 +224,18 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
 
         self.assertEqual(parsed_args.offset, 88)
 
-    def test_incompatible_from_date_and_offset(self):
-        """Test if from-date and offset arguments are incompatible"""
+    def test_incompatible_date_and_offset(self):
+        """Test if date and offset arguments are incompatible"""
 
         with self.assertRaises(AttributeError):
             _ = BackendCommandArgumentParser(from_date=True,
+                                             offset=True)
+        with self.assertRaises(AttributeError):
+            _ = BackendCommandArgumentParser(to_date=True,
+                                             offset=True)
+        with self.assertRaises(AttributeError):
+            _ = BackendCommandArgumentParser(from_date=True,
+                                             to_date=True,
                                              offset=True)
 
     def test_parse_auth_args(self):
