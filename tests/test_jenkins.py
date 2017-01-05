@@ -45,11 +45,16 @@ from perceval.backends.core.jenkins import (Jenkins,
 
 
 JENKINS_SERVER_URL = 'http://example.com/ci'
-JENKINS_JOBS_URL = JENKINS_SERVER_URL+'/view/All/api/json'
+JENKINS_JOBS_URL = JENKINS_SERVER_URL + '/view/All/api/json'
 JENKINS_JOB_BUILDS_1 = 'apex-build-brahmaputra'
 JENKINS_JOB_BUILDS_2 = 'apex-build-master'
-JENKINS_JOB_BUILDS_URL_1 = JENKINS_SERVER_URL + '/job/'+JENKINS_JOB_BUILDS_1+'/api/json?depth=2'
-JENKINS_JOB_BUILDS_URL_2 = JENKINS_SERVER_URL + '/job/'+JENKINS_JOB_BUILDS_2+'/api/json?depth=2'
+JENKINS_JOB_BUILDS_500_ERROR = '500-error-job'
+JENKINS_JOB_BUILDS_JSON_ERROR = 'invalid-json-job'
+JENKINS_JOB_BUILDS_URL_1 = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_1 + '/api/json?depth=2'
+JENKINS_JOB_BUILDS_URL_2 = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_2 + '/api/json?depth=2'
+JENKINS_JOB_BUILDS_URL_500_ERROR = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_500_ERROR + '/api/json?depth=2'
+JENKINS_JOB_BUILDS_URL_JSON_ERROR = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_JSON_ERROR + '/api/json?depth=2'
+
 
 requests_http = []
 
@@ -98,17 +103,22 @@ class TestJenkinsBackend(unittest.TestCase):
         bodies_builds_job = read_file('data/jenkins_job_builds.json')
 
         def request_callback(method, uri, headers):
+            status = 200
+
             if uri.startswith(JENKINS_JOBS_URL):
                 body = bodies_jobs
             elif uri.startswith(JENKINS_JOB_BUILDS_URL_1) or \
                  uri.startswith(JENKINS_JOB_BUILDS_URL_2):
                 body = bodies_builds_job
+            elif uri.startswith(JENKINS_JOB_BUILDS_URL_500_ERROR):
+                status = 500
+                body = '500 Internal Server Error'
             else:
-                body = ''
+                body = '{'
 
             requests_http.append(httpretty.last_request())
 
-            return (200, headers, body)
+            return (status, headers, body)
 
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOBS_URL,
@@ -127,6 +137,16 @@ class TestJenkinsBackend(unittest.TestCase):
                                responses=[
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               JENKINS_JOB_BUILDS_URL_500_ERROR,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               JENKINS_JOB_BUILDS_URL_JSON_ERROR,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
                                ])
 
     @httpretty.activate
@@ -188,9 +208,12 @@ class TestJenkinsBackend(unittest.TestCase):
         jenkins = Jenkins(JENKINS_SERVER_URL, blacklist_jobs=blacklist)
         nrequests = len(requests_http)
         builds = [build for build in jenkins.fetch()]
+
         # No HTTP calls at all must be done for JENKINS_JOB_BUILDS_1
-        # Just the first call for all jobs and a second call for JENKINS_JOB_BUILDS_2
-        self.assertEqual(len(requests_http) - nrequests, 2)
+        # Just the first call for all jobs and one for each job,
+        # including those jobs that raise errors
+        self.assertEqual(len(requests_http) - nrequests, 4)
+
         # Builds just from JENKINS_JOB_BUILDS_2
         self.assertEqual(len(builds), 32)
 
@@ -212,15 +235,20 @@ class TestJenkinsBackendCache(unittest.TestCase):
         bodies_builds_job = read_file('data/jenkins_job_builds.json')
 
         def request_callback(method, uri, headers):
+            status = 200
+
             if uri.startswith(JENKINS_JOBS_URL):
                 body = bodies_jobs
             elif uri.startswith(JENKINS_JOB_BUILDS_URL_1) or \
                  uri.startswith(JENKINS_JOB_BUILDS_URL_2):
                 body = bodies_builds_job
+            elif uri.startswith(JENKINS_JOB_BUILDS_URL_500_ERROR):
+                status = 500
+                body = '500 Internal Server Error'
             else:
-                body = ''
+                body = '{'
 
-            return (200, headers, body)
+            return (status, headers, body)
 
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOBS_URL,
@@ -239,6 +267,16 @@ class TestJenkinsBackendCache(unittest.TestCase):
                                responses=[
                                     httpretty.Response(body=request_callback) \
                                     for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               JENKINS_JOB_BUILDS_URL_500_ERROR,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               JENKINS_JOB_BUILDS_URL_JSON_ERROR,
+                               responses=[
+                                    httpretty.Response(body=request_callback)
                                ])
 
         # First, we fetch the builds from the server, storing them

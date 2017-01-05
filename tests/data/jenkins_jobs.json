@@ -1,1 +1,25 @@
-{"description":null,"jobs":[{"name":"apex-build-brahmaputra","url":"http://example.com/ci/job/apex-build-brahmaputra/","color":"blue"},{"name":"apex-build-master","url":"http://example.com/ci/job/apex-build-master/","color":"red"}]}
+{
+    "description": null,
+    "jobs": [
+        {
+            "name": "apex-build-brahmaputra",
+            "url": "http://example.com/ci/job/apex-build-brahmaputra/",
+            "color": "blue"
+        },
+        {
+            "name": "apex-build-master",
+            "url": "http://example.com/ci/job/apex-build-master/",
+            "color": "red"
+        },
+        {
+            "name": "500-error-job",
+            "url": "http://example.com/ci/job/500-error-job/",
+            "color": "red"
+        },
+        {
+            "name": "invalid-json-job",
+            "url": "http://example.com/ci/job/invalid-json-job/",
+            "color": "red"
+        }
+    ]
+}

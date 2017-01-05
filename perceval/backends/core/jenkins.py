@@ -22,7 +22,6 @@
 
 import json
 import logging
-import os.path
 
 import requests
 
@@ -52,7 +51,7 @@ class Jenkins(Backend):
     :param cache: cache object to store raw data
     :param blacklist_jobs: exclude the jobs of this list while fetching
     """
-    version = '0.5.0'
+    version = '0.5.1'
 
     def __init__(self, url, tag=None, cache=None, blacklist_jobs=None):
         origin = url
@@ -71,10 +70,10 @@ class Jenkins(Backend):
 
         :returns: a generator of builds
         """
-
         logger.info("Looking for projects at url '%s'", self.url)
 
         self._purge_cache_queue()
+
         nbuilds = 0  # number of builds processed
         njobs = 0 # number of jobs processed
 
@@ -82,21 +81,41 @@ class Jenkins(Backend):
         jobs = projects['jobs']
 
         for job in jobs:
-            njobs += 1
-            logger.debug("Adding builds from %s (%i/%i)", job['url'], njobs, len(jobs))
-            raw_builds = self.client.get_builds(job['name'])
+            logger.debug("Adding builds from %s (%i/%i)",
+                         job['url'], njobs, len(jobs))
+
+            try:
+                raw_builds = self.client.get_builds(job['name'])
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 500:
+                    logger.warning(e)
+                    logger.warning("Unable to fetch builds from job %s; skipping",
+                                   job['url'])
+                    continue
+                else:
+                    raise e
+
             if not raw_builds:
                 continue
+
+            try:
+                builds = json.loads(raw_builds)
+            except json.decoder.JSONDecodeError:
+                logger.warning("Unable to parse builds from job %s; skipping",
+                               job['url'])
+                continue
+
             self._push_cache_queue(raw_builds)
-            self._flush_cache_queue()
-            builds = json.loads(raw_builds)
             builds = builds['builds']
             for build in builds:
                 yield build
                 nbuilds += 1
 
-        logger.info("Total number of jobs: %i" % (njobs))
-        logger.info("Total number of builds: %i" % (nbuilds))
+            self._flush_cache_queue()
+            njobs += 1
+
+        logger.info("Total number of jobs: %i/%i", njobs, len(jobs))
+        logger.info("Total number of builds: %i", nbuilds)
 
     @metadata
     def fetch_from_cache(self):
