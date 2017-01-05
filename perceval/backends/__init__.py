@@ -20,55 +20,66 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import importlib
-import os
-
-from ..backend import Backend, BackendCommand
-
-
-def register_backends(dirpath):
-    filenames = [fn for fn in os.listdir(dirpath)]
-
-    # Find candidate modules and remove
-    # the ".py" extension (fn[:-3])
-    candidates = [fn[:-3] for fn in filenames \
-                  if is_backend_module(fn, dirpath)]
-
-    return import_backends(candidates)
-
-
-def import_backends(modules):
-    for module in modules:
-        importlib.import_module('.' + module, __name__)
-
-    bkls = filter_classes(Backend.__subclasses__(), modules)
-    ckls = filter_classes(BackendCommand.__subclasses__(), modules)
-
-    backends = {name: kls for name, kls in bkls}
-    commands = {name: klass for name, klass in ckls}
-
-    return backends, commands
+from .bugzilla import Bugzilla, BugzillaCommand
+from .bugzillarest import BugzillaREST, BugzillaRESTCommand
+from .confluence import Confluence, ConfluenceCommand
+from .discourse import Discourse, DiscourseCommand
+from .gerrit import Gerrit, GerritCommand
+from .git import Git, GitCommand
+from .github import GitHub, GitHubCommand
+from .gmane import Gmane, GmaneCommand
+from .jenkins import Jenkins, JenkinsCommand
+from .jira import Jira, JiraCommand
+from .kitsune import Kitsune, KitsuneCommand
+from .mbox import MBox, MBoxCommand
+from .mediawiki import MediaWiki, MediaWikiCommand
+from .phabricator import Phabricator, PhabricatorCommand
+from .pipermail import Pipermail, PipermailCommand
+from .remo import ReMo, ReMoCommand
+from .stackexchange import StackExchange, StackExchangeCommand
+from .supybot import Supybot, SupybotCommand
+from .telegram import Telegram, TelegramCommand
 
 
-def filter_classes(klasses, modules):
-    prefix = __name__ + '.'
-
-    for kls in klasses:
-        name = kls.__module__.replace(prefix, '').lower()
-
-        if name not in modules:
-            continue
-
-        yield name, kls
-
-
-def is_backend_module(filename, dirpath):
-    is_valid = filename.endswith('.py') \
-        and not filename.startswith('__') \
-        and not filename.endswith('__') \
-        and os.path.isfile(os.path.join(dirpath, filename))
-    return is_valid
-
-
-PERCEVAL_BACKENDS, PERCEVAL_CMDS = \
-    register_backends(os.path.dirname(__file__))
+PERCEVAL_BACKENDS = {
+                     'bugzilla'      : Bugzilla,
+                     'bugzillarest'  : BugzillaREST,
+                     'confluence'    : Confluence,
+                     'discourse'     : Discourse,
+                     'gerrit'        : Gerrit,
+                     'git'           : Git,
+                     'github'        : GitHub,
+                     'gmane'         : Gmane,
+                     'jenkins'       : Jenkins,
+                     'jira'          : Jira,
+                     'kitsune'       : Kitsune,
+                     'mbox'          : MBox,
+                     'mediawiki'     : MediaWiki,
+                     'phabricator'   : Phabricator,
+                     'pipermail'     : Pipermail,
+                     'remo'          : ReMo,
+                     'stackexchange' : StackExchange,
+                     'supybot'       : Supybot,
+                     'telegram'      : Telegram
+                    }
+PERCEVAL_CMDS = {
+                 'bugzilla'      : BugzillaCommand,
+                 'bugzillarest'  : BugzillaRESTCommand,
+                 'confluence'    : ConfluenceCommand,
+                 'discourse'     : DiscourseCommand,
+                 'gerrit'        : GerritCommand,
+                 'git'           : GitCommand,
+                 'github'        : GitHubCommand,
+                 'gmane'         : GmaneCommand,
+                 'jenkins'       : JenkinsCommand,
+                 'jira'          : JiraCommand,
+                 'kitsune'       : KitsuneCommand,
+                 'mbox'          : MBoxCommand,
+                 'mediawiki'     : MediaWikiCommand,
+                 'phabricator'   : PhabricatorCommand,
+                 'pipermail'     : PipermailCommand,
+                 'remo'          : ReMoCommand,
+                 'stackexchange' : StackExchangeCommand,
+                 'supybot'       : SupybotCommand,
+                 'telegram'      : TelegramCommand
+                }
