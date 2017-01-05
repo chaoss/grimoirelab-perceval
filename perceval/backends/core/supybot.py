@@ -61,7 +61,7 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.3'
+    version = '0.5.0'
 
     def __init__(self, uri, dirpath, tag=None, cache=None):
         origin = uri
@@ -174,13 +174,13 @@ class Supybot(Backend):
     def metadata_id(item):
         """Extracts the identifier from a Supybot item.
 
-        This identifier will be the mix of two fields because IRC
+        This identifier will be the mix of three fields because IRC
         messages does not have any unique identifier. In this case,
-        'timestamp' and 'nick' values are combined because it should
-        not be possible to have two messages of the same user at the
-        same time.
+        'timestamp', 'nick' and 'body' values are combined because
+        there have been cases where two messages were sent by the
+        same user at the same time.
         """
-        return item['timestamp'] + item['nick']
+        return item['timestamp'] + item['nick'] + item['body']
 
     @staticmethod
     def metadata_updated_on(item):

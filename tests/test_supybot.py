@@ -94,20 +94,22 @@ class TestSupybotBackend(unittest.TestCase):
         backend = Supybot('http://example.com/', self.tmp_path)
         messages = [m for m in backend.fetch()]
 
-        expected = [('benpol', 'comment', '89b0d9fdbc3972aed183876f7f5ee2617542665c', 1350465381.0),
-                    ('benpol', 'comment', '81b1fbe651b58d6a4ef6fff026658f87b7c393fc', 1350465389.0),
-                    ('benpol', 'comment', 'bb72ef7fca57e89a7b46826cc0029713fbeba8d7', 1350465395.0),
-                    ('MikeMcClurg', 'server', '6f873e788e289acca517a1c04eaa3e8557191f99', 1350465410.0),
-                    ('Tv_', 'server', 'fe19251eb5068bb7a14892960574b565b100fb29', 1350465411.0),
-                    ('benpol', 'comment', 'ec3206582c534cb725bc5153b5037089441735d3', 1350465447.0),
-                    ('benpol', 'comment', 'cf80a24d70b0bca15fde7d428363d3c18b2e8827', 1350465460.0),
-                    ('Tv_', 'comment', '06b6fe28cdb55247d03430e72986068fdb168723',  1350465528.0),
-                    ('jamespage', 'comment', '42a71797a6bd75c01b4de9476006e73ed14c0340', 1350552630.0),
-                    ('LarsFronius_', 'server', '839f98f69f4d5c22973abaf67bc2931682e9a79b', 1350552630.0),
-                    ('bchrisman', 'server', '2e2ea19565203033622e005d8b5a004b4763d770', 1350552658.0),
-                    ('scuttlemonkey', 'comment', 'b756d43392386c6ed0d329a45d2afcbc11a9afe0', 1350552785.0),
-                    ('loicd', 'server', '5a4fc4c6bd5903ababaaa391b2a53ba1178ee75a', 1350584011.0),
-                    ('sagelap1', 'server', 'c68e87799f13dc346d580cc56daec0189f232276', 1350584041.0)]
+        expected = [('benpol', 'comment', '86cd62e954f3c81f2efd336b163b673419e722c4', 1350465381.0),
+                    ('benpol', 'comment', 'c3d38be79806e98b50d308f4fdf078ed89aef68c', 1350465389.0),
+                    ('benpol', 'comment', '7f68a35c1515a82e2731312eb38b07b7d62f66a0', 1350465395.0),
+                    ('MikeMcClurg', 'server', '175bf289ff1340275b358dad90887e031628942d', 1350465410.0),
+                    ('Tv_', 'server', '1952a9ee3b87144f608aa2a84271ff7d6871e1c8', 1350465411.0),
+                    ('benpol', 'comment', '17730fed09f82ea9d0a770ec6167df5a9ea9060c', 1350465447.0),
+                    ('benpol', 'comment', '6d1b61c2839218c170c9bd775edcb02caaf921f5', 1350465460.0),
+                    ('Tv_', 'comment', '395fa8fb2e6aafa8f3618746dcc56f2fdfe35eac',  1350465528.0),
+                    ('jamespage', 'comment', '056408f3064b80e69490fd65ff0d066431592b0f', 1350552630.0),
+                    ('LarsFronius_', 'server', '319701fa6768a935d08ae5d5afb2d058122030d4', 1350552630.0),
+                    ('bchrisman', 'server', '291faf2760c39f672e9900d509908e77153e930a', 1350552658.0),
+                    ('scuttlemonkey', 'comment', '768843f086ef41b2346eff72c8f2935b0e23148c', 1350552785.0),
+                    ('loicd', 'server', 'f4cdf0c9c3219d5931f704438d85a7665ad6d99e', 1350584011.0),
+                    ('sagelap1', 'server', 'ac3dd25dbcaf068f061a20263140a34cb354950d', 1350584041.0),
+                    ('guyfry', 'comment', 'cdd33f7c0f436b6f5299b969f27932a5454d15bb', 1350588930.0),
+                    ('guyfry', 'comment', '4d055dc4d487c3860391a2bf8b08ce48d97b11ca', 1350588930.0)]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -129,9 +131,11 @@ class TestSupybotBackend(unittest.TestCase):
         backend = Supybot('http://example.com/', self.tmp_path)
         messages = [m for m in backend.fetch(from_date=from_date)]
 
-        expected = [('scuttlemonkey', 'comment', 'b756d43392386c6ed0d329a45d2afcbc11a9afe0', 1350552785.0),
-                    ('loicd', 'server', '5a4fc4c6bd5903ababaaa391b2a53ba1178ee75a', 1350584011.0),
-                    ('sagelap1', 'server', 'c68e87799f13dc346d580cc56daec0189f232276', 1350584041.0)]
+        expected = [('scuttlemonkey', 'comment', '768843f086ef41b2346eff72c8f2935b0e23148c', 1350552785.0),
+                    ('loicd', 'server', 'f4cdf0c9c3219d5931f704438d85a7665ad6d99e', 1350584011.0),
+                    ('sagelap1', 'server', 'ac3dd25dbcaf068f061a20263140a34cb354950d', 1350584041.0),
+                    ('guyfry', 'comment', 'cdd33f7c0f436b6f5299b969f27932a5454d15bb', 1350588930.0),
+                    ('guyfry', 'comment', '4d055dc4d487c3860391a2bf8b08ce48d97b11ca', 1350588930.0)]
 
         for x in range(len(messages)):
             message = messages[x]
