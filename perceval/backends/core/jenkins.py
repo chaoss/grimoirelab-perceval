@@ -100,7 +100,7 @@ class Jenkins(Backend):
 
             try:
                 builds = json.loads(raw_builds)
-            except json.decoder.JSONDecodeError:
+            except ValueError:
                 logger.warning("Unable to parse builds from job %s; skipping",
                                job['url'])
                 continue
