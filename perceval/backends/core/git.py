@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -619,6 +619,30 @@ class GitRepository:
                       uri, dirpath)
 
         return cls(uri, dirpath)
+
+    def count_objects(self):
+        """Count the objects of a repository.
+
+        The method returns the number of objects available on the repository.
+
+        :raises RepositoryError: when an error occurs counting the objects
+            of a repository
+        """
+        cmd_count = ['git', 'count-objects']
+
+        outs = self._exec(cmd_count, cwd=self.dirpath, env={'LANG' : 'C'})
+
+        try:
+            outs = outs.decode('utf-8', errors='surrogateescape')
+            nobjs = int(outs.split('objects')[0])
+        except ValueError as e:
+            error = "unable to parse 'count-objects' output; reason: %s" % str(e)
+            raise RepositoryError(cause=str(error))
+
+        logger.debug("Git %s repository has %s objects",
+                     self.uri, str(nobjs))
+
+        return nobjs
 
     def pull(self):
         """Update repository from 'origin' remote.

@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -761,6 +761,35 @@ class TestGitRepository(unittest.TestCase):
 
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository.clone(self.git_path, self.tmp_path)
+
+    def test_count_objects(self):
+        """Test if it gets the number of objects in a repository"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        nobjs = repo.count_objects()
+        self.assertEqual(nobjs, 42)
+
+        shutil.rmtree(new_path)
+
+    def test_count_objects_invalid_output(self):
+        """Test if an exception is raised when count_objects output is invalid"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        expected = "unable to parse 'count-objects' output;" + \
+            " reason: invalid literal for int() with base 10: 'invalid value'"
+
+        with unittest.mock.patch('perceval.backends.core.git.GitRepository._exec') as mock_exec:
+            mock_exec.return_value = b'invalid value'
+
+            with self.assertRaises(RepositoryError) as e:
+                _ = repo.count_objects()
+                self.assertEqual(str(e.exception), expected)
+
+        shutil.rmtree(new_path)
 
     def test_pull(self):
         """Test if the repository is updated to 'origin' status"""
