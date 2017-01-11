@@ -644,6 +644,18 @@ class GitRepository:
 
         return nobjs
 
+    def is_empty(self):
+        """Determines whether the repository is empty or not.
+
+        Returns `True` when the repository is empty. Under the hood,
+        it checks the number of objects on the repository. When
+        this number is 0, the repositoy is empty.
+
+        :raises RepositoryError: when an error occurs accessing the
+            repository
+        """
+        return self.count_objects() == 0
+
     def pull(self):
         """Update repository from 'origin' remote.
 

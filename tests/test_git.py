@@ -687,8 +687,11 @@ class TestGitRepository(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
         cls.git_path = os.path.join(cls.tmp_path, 'gittest')
+        cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
 
         subprocess.check_call(['tar', '-xzf', 'data/gittest.tar.gz',
+                               '-C', cls.tmp_path])
+        subprocess.check_call(['tar', '-xzf', 'data/gittestempty.tar.gz',
                                '-C', cls.tmp_path])
 
     @classmethod
@@ -788,6 +791,25 @@ class TestGitRepository(unittest.TestCase):
             with self.assertRaises(RepositoryError) as e:
                 _ = repo.count_objects()
                 self.assertEqual(str(e.exception), expected)
+
+        shutil.rmtree(new_path)
+
+    def test_is_empty(self):
+        """Test if a repository is empty or not"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        is_empty = repo.is_empty()
+        self.assertEqual(is_empty, False)
+
+        shutil.rmtree(new_path)
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_empty_path, new_path)
+
+        is_empty = repo.is_empty()
+        self.assertEqual(is_empty, True)
 
         shutil.rmtree(new_path)
 
