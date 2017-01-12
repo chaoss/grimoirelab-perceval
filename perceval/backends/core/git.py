@@ -31,7 +31,9 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import RepositoryError, ParseError
-from ...utils import DEFAULT_DATETIME, datetime_to_utc, str_to_datetime
+from ...utils import (DEFAULT_DATETIME,
+                      datetime_to_utc,
+                      str_to_datetime)
 
 
 logger = logging.getLogger(__name__)
@@ -665,8 +667,8 @@ class GitRepository:
         cmd = ['git', 'clone', uri, dirpath]
         cls._exec(cmd, env={'LANG' : 'C'})
 
-        logging.debug("Git %s repository cloned into %s",
-                      uri, dirpath)
+        logger.debug("Git %s repository cloned into %s",
+                     uri, dirpath)
 
         return cls(uri, dirpath)
 
@@ -769,27 +771,32 @@ class GitRepository:
         cmd_log = ['git', 'log', '--raw', '--numstat', '--pretty=fuller',
                    '--decorate=full', '--reverse', '--topo-order',
                    '--parents', '-M', '-C', '-c']
+
         if from_date:
             dt = from_date.strftime("%Y-%m-%d %H:%M:%S %z")
             cmd_log.append('--since=' + dt)
-        if (branches is None):
+
+        if branches is None:
             cmd_log.extend(['--all', '--remotes=origin'])
         elif len(branches) == 0:
             cmd_log.append('--max-count=0')
         else:
             branches = ['remotes/origin/' + branch for branch in branches]
             cmd_log.extend(branches)
+
         env = {'LANG' : 'C', 'PAGER' : ''}
 
         self.failed_message = None
-        logging.debug("Running command %s (cwd: %s, env: %s)",
-                      ' '.join(cmd_log), self.dirpath, str(env))
+
+        logger.debug("Running command %s (cwd: %s, env: %s)",
+                     ' '.join(cmd_log), self.dirpath, str(env))
+
         try:
             self.proc = subprocess.Popen(cmd_log,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        cwd=self.dirpath,
-                                        env=env)
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE,
+                                         cwd=self.dirpath,
+                                         env=env)
             err_thread = threading.Thread(target=self._read_stderr,
                                           kwargs={'encoding': encoding},
                                           daemon=True)
@@ -797,6 +804,7 @@ class GitRepository:
             for line in self.proc.stdout:
                 yield line.decode(encoding, errors='surrogateescape')
             err_thread.join()
+
             self.proc.communicate()
             self.proc.stdout.close()
             self.proc.stderr.close()
@@ -805,12 +813,12 @@ class GitRepository:
             raise RepositoryError(cause=str(e))
 
         if self.proc.returncode != 0:
-            # Subprocess failed, error in failed_message, from stdout
             cause = "git command - %s (return code: %d)" % \
                 (self.failed_message, self.proc.returncode)
             raise RepositoryError(cause=cause)
-        logging.debug("Git log fetched from %s repository (%s)",
-                      self.uri, self.dirpath)
+
+        logger.debug("Git log fetched from %s repository (%s)",
+                     self.uri, self.dirpath)
 
     def _read_stderr(self, encoding='utf-8'):
         """Reads self.proc.stderr.
@@ -823,20 +831,20 @@ class GitRepository:
         Reads self.proc.stderr (self.proc is the subprocess running
         the git command), and reads / writes self.failed_message
         (the message sent to stderr when git fails, usually one line).
-
         """
         for line in self.proc.stderr:
             err_line = line.decode(encoding, errors='surrogateescape')
-            if (self.proc.returncode != 0):
+
+            if self.proc.returncode != 0:
                 # If the subprocess didn't finish successfully, we expect
                 # the last line in stderr to provide the cause
                 if self.failed_message is not None:
                     # We had a message, there is a newer line, print it
-                    logging.debug("Git log stderr: " + self.failed_message)
+                    logger.debug("Git log stderr: " + self.failed_message)
                 self.failed_message = err_line
             else:
                 # The subprocess is successfully up to now, print the line
-                logging.debug("Git log stderr: " + err_line)
+                logger.debug("Git log stderr: " + err_line)
 
     @staticmethod
     def _exec(cmd, cwd=None, env=None, encoding='utf-8'):
@@ -850,7 +858,7 @@ class GitRepository:
 
         :raises RepositoryError: when an error occurs running the command
         """
-        logging.debug("Running command %s (cwd: %s, env: %s)",
+        logger.debug("Running command %s (cwd: %s, env: %s)",
                       ' '.join(cmd), cwd, str(env))
 
         try:
@@ -866,6 +874,6 @@ class GitRepository:
             cause = "git command - %s" % err
             raise RepositoryError(cause=cause)
         else:
-            logging.debug(errs.decode(encoding, errors='surrogateescape'))
+            logger.debug(errs.decode(encoding, errors='surrogateescape'))
 
         return outs
