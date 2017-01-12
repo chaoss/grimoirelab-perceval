@@ -55,8 +55,11 @@ class TestGitBackend(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
         cls.git_path = os.path.join(cls.tmp_path, 'gittest')
+        cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
 
         subprocess.check_call(['tar', '-xzf', 'data/gittest.tar.gz',
+                               '-C', cls.tmp_path])
+        subprocess.check_call(['tar', '-xzf', 'data/gittestempty.tar.gz',
                                '-C', cls.tmp_path])
 
     @classmethod
@@ -290,6 +293,20 @@ class TestGitBackend(unittest.TestCase):
         commits = [commit for commit in git.fetch(from_date=from_date)]
 
         self.assertListEqual(commits, [])
+
+        shutil.rmtree(new_path)
+
+    def test_fetch_from_empty_repository(self):
+        """Test whether it parses from empty repository"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        git = Git(self.git_empty_path, new_path)
+        commits = [commit for commit in git.fetch()]
+
+        self.assertListEqual(commits, [])
+
+        shutil.rmtree(new_path)
 
     def test_fetch_from_file(self):
         """Test whether commits are fetched from a Git log file"""
@@ -873,6 +890,17 @@ class TestGitRepository(unittest.TestCase):
 
         shutil.rmtree(new_path)
 
+    def test_pull_empty_repository(self):
+        """Test if an exception is raised when the repository is empty"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_empty_path, new_path)
+
+        with self.assertRaises(EmptyRepositoryError):
+            repo.pull()
+
+        shutil.rmtree(new_path)
+
     def test_log(self):
         """Test log command"""
 
@@ -921,6 +949,18 @@ class TestGitRepository(unittest.TestCase):
 
         shutil.rmtree(new_path)
 
+    def test_log_from_empty_repository(self):
+        """Test if an exception is raised when the repository is empty"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_empty_path, new_path)
+        gitlog = repo.log()
+
+        with self.assertRaises(EmptyRepositoryError):
+            _ = [line for line in gitlog]
+
+        shutil.rmtree(new_path)
 
 if __name__ == "__main__":
     unittest.main()
