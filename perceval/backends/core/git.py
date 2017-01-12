@@ -790,10 +790,12 @@ class GitRepository:
                                         stderr=subprocess.PIPE,
                                         cwd=self.dirpath,
                                         env=env)
-            err_thread = threading.Thread(target=self._read_stderr, daemon=True)
+            err_thread = threading.Thread(target=self._read_stderr,
+                                          kwargs={'encoding': encoding},
+                                          daemon=True)
             err_thread.start()
             for line in self.proc.stdout:
-                yield line.decode('utf-8', errors='surrogateescape')
+                yield line.decode(encoding, errors='surrogateescape')
             err_thread.join()
             self.proc.communicate()
             self.proc.stdout.close()
@@ -810,7 +812,7 @@ class GitRepository:
         logging.debug("Git log fetched from %s repository (%s)",
                       self.uri, self.dirpath)
 
-    def _read_stderr(self):
+    def _read_stderr(self, encoding='utf-8'):
         """Reads self.proc.stderr.
 
         Usually, this should be read in a thread, to prevent blocking
@@ -823,9 +825,8 @@ class GitRepository:
         (the message sent to stderr when git fails, usually one line).
 
         """
-
         for line in self.proc.stderr:
-            err_line = line.decode('utf-8', errors='surrogateescape')
+            err_line = line.decode(encoding, errors='surrogateescape')
             if (self.proc.returncode != 0):
                 # If the subprocess didn't finish successfully, we expect
                 # the last line in stderr to provide the cause
@@ -838,7 +839,7 @@ class GitRepository:
                 logging.debug("Git log stderr: " + err_line)
 
     @staticmethod
-    def _exec(cmd, cwd=None, env=None):
+    def _exec(cmd, cwd=None, env=None, encoding='utf-8'):
         """Run a command.
 
         Execute `cmd` command in the directory set by `cwd`. Enviroment
@@ -861,10 +862,10 @@ class GitRepository:
             raise RepositoryError(cause=str(e))
 
         if proc.returncode != 0:
-            err = errs.decode('utf-8', errors='surrogateescape')
+            err = errs.decode(encoding, errors='surrogateescape')
             cause = "git command - %s" % err
             raise RepositoryError(cause=cause)
         else:
-            logging.debug(errs.decode('utf-8', errors='surrogateescape'))
+            logging.debug(errs.decode(encoding, errors='surrogateescape'))
 
         return outs
