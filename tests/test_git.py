@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -39,9 +39,10 @@ sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser, uuid
-from perceval.errors import ParseError, RepositoryError
+from perceval.errors import RepositoryError
 from perceval.utils import DEFAULT_DATETIME
-from perceval.backends.core.git import (Git,
+from perceval.backends.core.git import (EmptyRepositoryError,
+                                        Git,
                                         GitCommand,
                                         GitParser,
                                         GitRepository)
@@ -54,8 +55,11 @@ class TestGitBackend(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
         cls.git_path = os.path.join(cls.tmp_path, 'gittest')
+        cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
 
         subprocess.check_call(['tar', '-xzf', 'data/gittest.tar.gz',
+                               '-C', cls.tmp_path])
+        subprocess.check_call(['tar', '-xzf', 'data/gittestempty.tar.gz',
                                '-C', cls.tmp_path])
 
     @classmethod
@@ -289,6 +293,20 @@ class TestGitBackend(unittest.TestCase):
         commits = [commit for commit in git.fetch(from_date=from_date)]
 
         self.assertListEqual(commits, [])
+
+        shutil.rmtree(new_path)
+
+    def test_fetch_from_empty_repository(self):
+        """Test whether it parses from empty repository"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        git = Git(self.git_empty_path, new_path)
+        commits = [commit for commit in git.fetch()]
+
+        self.assertListEqual(commits, [])
+
+        shutil.rmtree(new_path)
 
     def test_fetch_from_file(self):
         """Test whether commits are fetched from a Git log file"""
@@ -680,6 +698,16 @@ class TestGitParser(unittest.TestCase):
         self.assertIsNotNone(m)
 
 
+class TestEmptyRepositoryError(unittest.TestCase):
+    """EmptyRepositoryError tests"""
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = EmptyRepositoryError(repository='gittest')
+        self.assertEqual('gittest is empty', str(e))
+
+
 class TestGitRepository(unittest.TestCase):
     """GitRepository tests"""
 
@@ -687,8 +715,11 @@ class TestGitRepository(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
         cls.git_path = os.path.join(cls.tmp_path, 'gittest')
+        cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
 
         subprocess.check_call(['tar', '-xzf', 'data/gittest.tar.gz',
+                               '-C', cls.tmp_path])
+        subprocess.check_call(['tar', '-xzf', 'data/gittestempty.tar.gz',
                                '-C', cls.tmp_path])
 
     @classmethod
@@ -762,6 +793,54 @@ class TestGitRepository(unittest.TestCase):
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository.clone(self.git_path, self.tmp_path)
 
+    def test_count_objects(self):
+        """Test if it gets the number of objects in a repository"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        nobjs = repo.count_objects()
+        self.assertEqual(nobjs, 42)
+
+        shutil.rmtree(new_path)
+
+    def test_count_objects_invalid_output(self):
+        """Test if an exception is raised when count_objects output is invalid"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        expected = "unable to parse 'count-objects' output;" + \
+            " reason: invalid literal for int() with base 10: 'invalid value'"
+
+        with unittest.mock.patch('perceval.backends.core.git.GitRepository._exec') as mock_exec:
+            mock_exec.return_value = b'invalid value'
+
+            with self.assertRaises(RepositoryError) as e:
+                _ = repo.count_objects()
+                self.assertEqual(str(e.exception), expected)
+
+        shutil.rmtree(new_path)
+
+    def test_is_empty(self):
+        """Test if a repository is empty or not"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        is_empty = repo.is_empty()
+        self.assertEqual(is_empty, False)
+
+        shutil.rmtree(new_path)
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_empty_path, new_path)
+
+        is_empty = repo.is_empty()
+        self.assertEqual(is_empty, True)
+
+        shutil.rmtree(new_path)
+
     def test_pull(self):
         """Test if the repository is updated to 'origin' status"""
 
@@ -808,6 +887,17 @@ class TestGitRepository(unittest.TestCase):
         # The number of commits should be updated to its original value
         ncommits = count_commits()
         self.assertEqual(ncommits, 9)
+
+        shutil.rmtree(new_path)
+
+    def test_pull_empty_repository(self):
+        """Test if an exception is raised when the repository is empty"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_empty_path, new_path)
+
+        with self.assertRaises(EmptyRepositoryError):
+            repo.pull()
 
         shutil.rmtree(new_path)
 
@@ -859,6 +949,18 @@ class TestGitRepository(unittest.TestCase):
 
         shutil.rmtree(new_path)
 
+    def test_log_from_empty_repository(self):
+        """Test if an exception is raised when the repository is empty"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_empty_path, new_path)
+        gitlog = repo.log()
+
+        with self.assertRaises(EmptyRepositoryError):
+            _ = [line for line in gitlog]
+
+        shutil.rmtree(new_path)
 
 if __name__ == "__main__":
     unittest.main()

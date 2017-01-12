@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -57,7 +57,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.6.0'
+    version = '0.6.1'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -97,6 +97,7 @@ class Git(Backend):
             branches_text = "no"
         else:
             branches_text = ", ".join(branches)
+
         logger.info("Fetching commits: '%s' git repository from %s; %s branches",
                     self.uri, str(from_date), branches_text)
 
@@ -110,9 +111,12 @@ class Git(Backend):
         ncommits = 0
         commits = self.__fetch_and_parse_log(from_date, branches)
 
-        for commit in commits:
-            yield commit
-            ncommits += 1
+        try:
+            for commit in commits:
+                yield commit
+                ncommits += 1
+        except EmptyRepositoryError:
+            pass
 
         logger.info("Fetch process completed: %s commits fetched",
                     ncommits)
@@ -130,7 +134,11 @@ class Git(Backend):
             repo = GitRepository.clone(self.uri, self.gitpath)
         elif os.path.isdir(self.gitpath):
             repo = GitRepository(self.uri, self.gitpath)
-        repo.pull()
+
+        try:
+            repo.pull()
+        except EmptyRepositoryError:
+            pass
 
         return repo
 
@@ -576,6 +584,12 @@ class GitParser:
             return f
 
 
+class EmptyRepositoryError(RepositoryError):
+    """Exception raised when a repository is empty"""
+
+    message = "%(repository)s is empty"
+
+
 class GitRepository:
     """Manage a Git repository.
 
@@ -620,6 +634,42 @@ class GitRepository:
 
         return cls(uri, dirpath)
 
+    def count_objects(self):
+        """Count the objects of a repository.
+
+        The method returns the number of objects available on the repository.
+
+        :raises RepositoryError: when an error occurs counting the objects
+            of a repository
+        """
+        cmd_count = ['git', 'count-objects']
+
+        outs = self._exec(cmd_count, cwd=self.dirpath, env={'LANG' : 'C'})
+
+        try:
+            outs = outs.decode('utf-8', errors='surrogateescape')
+            nobjs = int(outs.split('objects')[0])
+        except ValueError as e:
+            error = "unable to parse 'count-objects' output; reason: %s" % str(e)
+            raise RepositoryError(cause=str(error))
+
+        logger.debug("Git %s repository has %s objects",
+                     self.uri, str(nobjs))
+
+        return nobjs
+
+    def is_empty(self):
+        """Determines whether the repository is empty or not.
+
+        Returns `True` when the repository is empty. Under the hood,
+        it checks the number of objects on the repository. When
+        this number is 0, the repositoy is empty.
+
+        :raises RepositoryError: when an error occurs accessing the
+            repository
+        """
+        return self.count_objects() == 0
+
     def pull(self):
         """Update repository from 'origin' remote.
 
@@ -627,17 +677,24 @@ class GitRepository:
         'origin' repository. Any commit stored in the local copy will
         be removed.
 
+        :raises EmptyRepositoryError: when the repository is empty and
+            the action cannot be performed
         :raises RepositoryError: when an error occurs updating the
             repository
         """
+        if self.is_empty():
+            logger.warning("Git %s repository is empty; unable to pull",
+                           self.uri)
+            raise EmptyRepositoryError(repository=self.uri)
+
         cmd_fetch = ['git', 'fetch', 'origin']
         cmd_reset = ['git', 'reset', '--hard', 'origin']
 
         self._exec(cmd_fetch, cwd=self.dirpath, env={'LANG' : 'C'})
         self._exec(cmd_reset, cwd=self.dirpath, env={'LANG' : 'C'})
 
-        logging.debug("Git %s repository pulled into %s",
-                      self.uri, self.dirpath)
+        logger.debug("Git %s repository pulled into %s",
+                     self.uri, self.dirpath)
 
     def log(self, from_date=None, branches=None, encoding='utf-8'):
         """Read the commit log from the repository.
@@ -664,8 +721,14 @@ class GitRepository:
 
         :returns: a generator where each item is a line from the log
 
+        :raises EmptyRepositoryError: when the repository is empty and
+            the action cannot be performed
         :raises RepositoryError: when an error occurs fetching the log
         """
+        if self.is_empty():
+            logger.warning("Git %s repository is empty; unable to get the log",
+                           self.uri)
+            raise EmptyRepositoryError(repository=self.uri)
 
         cmd_log = ['git', 'log', '--raw', '--numstat', '--pretty=fuller',
                    '--decorate=full', '--reverse', '--topo-order',
