@@ -57,7 +57,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.6.1'
+    version = '0.7.0'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -326,6 +326,19 @@ class GitParser:
         Commit message splitted into one or several lines.
         Each line of the message stars with 4 spaces.
 
+    Commit messages can contain a list of 'trailers'. These trailers
+    have the same format of headers but their meaning is project
+    dependent. This is an example of a commit message with trailers:
+
+        Commit message with trailers
+
+        This is the body of the message where trailers are included.
+        Trailers are part of the body so each line of the message
+        stars with 4 spaces.
+
+        Signed-off-by: John Doe <jdoe@example.com>
+        Signed-off-by: Jane Rae <jrae@example.com>
+
     After a new empty line, actions and stats over files can be found.
     A action line starts with one or more ':' chars and contain data
     about the old and new permissions of a file, its old and new indexes,
@@ -358,7 +371,7 @@ class GitParser:
                      (?:[ \t]\((?P<refs>.+)\))?$
                      """
 
-    HEADER_PATTERN = r"^(?P<header>[a-zA-z0-9]+)\:[ \t]+(?P<value>.+)$"
+    HEADER_TRAILER_PATTERN = r"^(?P<name>[a-zA-z0-9\-]+)\:[ \t]+(?P<value>.+)$"
 
     MESSAGE_LINE_PATTERN = r"^[\s]{4}(?P<msg>.*)$"
 
@@ -375,7 +388,7 @@ class GitParser:
 
     # Compiled patterns
     GIT_COMMIT_REGEXP = re.compile(COMMIT_PATTERN, re.VERBOSE)
-    GIT_HEADER_REGEXP = re.compile(HEADER_PATTERN, re.VERBOSE)
+    GIT_HEADER_TRAILER_REGEXP = re.compile(HEADER_TRAILER_PATTERN, re.VERBOSE)
     GIT_MESSAGE_REGEXP = re.compile(MESSAGE_LINE_PATTERN, re.VERBOSE)
     GIT_ACTION_REGEXP = re.compile(ACTION_PATTERN, re.VERBOSE)
     GIT_STATS_REGEXP = re.compile(STATS_PATTERN, re.VERBOSE)
@@ -387,6 +400,9 @@ class GitParser:
      HEADER,
      MESSAGE,
      FILE) = range(5)
+
+    # Git trailers
+    TRAILERS = ['Signed-off-by']
 
     def __init__(self, stream):
         self.stream = stream
@@ -477,12 +493,12 @@ class GitParser:
             self.state = self.MESSAGE
             return True
 
-        m = self.GIT_HEADER_REGEXP.match(line)
+        m = self.GIT_HEADER_TRAILER_REGEXP.match(line)
         if not m:
             msg = "invalid header format on line %s" % (str(self.nline))
             raise ParseError(cause=msg)
 
-        header = m.group('header')
+        header = m.group('name')
         value = m.group('value')
         self.commit[header] = value
 
@@ -501,12 +517,17 @@ class GitParser:
             self.state = self.FILE
             return False
 
+        msg_line = m.group('msg')
+
         # Concatenate message lines
         if not 'message' in self.commit:
             self.commit['message'] = ''
         else:
             self.commit['message'] += '\n'
-        self.commit['message'] += m.group('msg')
+        self.commit['message'] += msg_line
+
+        # Check trailers
+        self._handle_trailer(msg_line)
 
         return True
 
@@ -533,6 +554,21 @@ class GitParser:
                      str(self.nline))
         self.state = self.COMMIT
         return False
+
+    def _handle_trailer(self, line):
+        m = self.GIT_HEADER_TRAILER_REGEXP.match(line)
+        if not m:
+            return
+
+        trailer = m.group('name')
+        value = m.group('value')
+
+        if not trailer in self.TRAILERS:
+            logger.debug("Trailer %s found on line %s but is not a core trailer. Skipping.",
+                         trailer, str(self.nline))
+            return
+
+        self.commit.setdefault(trailer, []).append(value)
 
     def _handle_action_data(self, data):
         modes = self.__parse_data_list(data['modes'])

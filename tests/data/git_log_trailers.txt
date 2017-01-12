@@ -1,0 +1,43 @@
+commit 7debcf8a2f57f86663809c58b5c07a398be7674c 87783129c3f00d2c81a3a8e585eb86a47e39891a
+Author:     Eduardo Morais <companheiro.vermelho@example.com>
+AuthorDate: Tue Aug 14 14:33:27 2012 -0300
+Commit:     Eduardo Morais <companheiro.vermelho@example.com>
+CommitDate: Tue Aug 14 14:33:27 2012 -0300
+
+    Commit with a list of trailers
+    
+    Signed-off-by: John Smith <jsmith@example.com>
+    MyTrailer: this is my trailer
+    Signed-off-by: John Doe <jdoe@example.com>
+
+:000000 100644 0000000... e69de29... A	bbb/ccc/yet_anotherthing
+0	0	bbb/ccc/yet_anotherthing
+
+commit 87783129c3f00d2c81a3a8e585eb86a47e39891a bc57a9209f096a130dcc5ba7089a8663f758a703
+Author:     Eduardo Morais <companheiro.vermelho@example.com>
+AuthorDate: Tue Aug 14 14:32:15 2012 -0300
+Commit:     Eduardo Morais <companheiro.vermelho@example.com>
+CommitDate: Tue Aug 14 14:32:15 2012 -0300
+
+    Commit with a list of core trailers
+    
+    Signed-off-by: John Smith <jsmith@example.com>
+    Signed-off-by: John Doe <jdoe@example.com>
+
+:100644 100644 e69de29... e69de29... R100	aaa/something	bbb/something
+0	0	{aaa => bbb}/something
+
+commit bc57a9209f096a130dcc5ba7089a8663f758a703
+Author:     Eduardo Morais <companheiro.vermelho@example.com>
+AuthorDate: Tue Aug 14 14:30:13 2012 -0300
+Commit:     Eduardo Morais <companheiro.vermelho@example.com>
+CommitDate: Tue Aug 14 14:30:13 2012 -0300
+
+    Initial commit on test repository
+
+:000000 100644 0000000... e69de29... A	aaa/otherthing
+:000000 100644 0000000... e69de29... A	aaa/something
+:000000 100644 0000000... e69de29... A	bbb/bthing
+0	0	aaa/otherthing
+0	0	aaa/something
+0	0	bbb/bthing

@@ -577,6 +577,40 @@ class TestGitParser(unittest.TestCase):
                     }
         self.assertDictEqual(commits[1], expected)
 
+    def test_parser_trailers_commit(self):
+        """Test if it parses all the available data of commits with trailers"""
+
+        with open("data/git_log_trailers.txt", 'r') as f:
+            parser = GitParser(f)
+            commits = [commit for commit in parser.parse()]
+
+        self.assertEqual(len(commits), 3)
+
+        expected = {
+                    'commit' : '7debcf8a2f57f86663809c58b5c07a398be7674c',
+                    'parents' : ['87783129c3f00d2c81a3a8e585eb86a47e39891a'],
+                    'refs' : [],
+                    'Author' : 'Eduardo Morais <companheiro.vermelho@example.com>',
+                    'AuthorDate' : 'Tue Aug 14 14:33:27 2012 -0300',
+                    'Commit' : 'Eduardo Morais <companheiro.vermelho@example.com>',
+                    'CommitDate' : 'Tue Aug 14 14:33:27 2012 -0300',
+                    'Signed-off-by' : ['John Smith <jsmith@example.com>',
+                                       'John Doe <jdoe@example.com>'],
+                    'message' : "Commit with a list of trailers\n" \
+                        "\n" \
+                        "Signed-off-by: John Smith <jsmith@example.com>\n" \
+                        "MyTrailer: this is my trailer\n" \
+                        "Signed-off-by: John Doe <jdoe@example.com>",
+                    'files' : [{'file': 'bbb/ccc/yet_anotherthing',
+                                'added': '0',
+                                'removed' : '0',
+                                'modes' : ['000000', '100644'],
+                                'indexes' : ['0000000...', 'e69de29...'],
+                                'action' : 'A'}]
+                   }
+
+        self.assertDictEqual(commits[0], expected)
+
     def test_parser_empty_log(self):
         """Test if it parsers an empty git log stream"""
 
@@ -612,25 +646,30 @@ class TestGitParser(unittest.TestCase):
         self.assertEqual(m.group('parents'), "ce8e0b86a1e9877f42fe9453ede418519115f367 51a3b654f252210572297f47597b31527c475fb8")
         self.assertEqual(m.group('refs'), "HEAD -> refs/heads/master")
 
-    def test_header_pattern(self):
+    def test_header_trailer_pattern(self):
         """Test header pattern"""
 
-        pattern = GitParser.GIT_HEADER_REGEXP
+        pattern = GitParser.GIT_HEADER_TRAILER_REGEXP
 
         s = "Merge: ce8e0b8 51a3b65"
         m = pattern.match(s)
-        self.assertEqual(m.group('header'), "Merge")
+        self.assertEqual(m.group('name'), "Merge")
         self.assertEqual(m.group('value'), "ce8e0b8 51a3b65")
 
         s = "Author:     Eduardo Morais <companheiro.vermelho@example.com>"
         m = pattern.match(s)
-        self.assertEqual(m.group('header'), "Author")
+        self.assertEqual(m.group('name'), "Author")
         self.assertEqual(m.group('value'), "Eduardo Morais <companheiro.vermelho@example.com>")
 
         s = "CommitDate: Tue Feb 11 22:07:49 2014 -0800"
         m = pattern.match(s)
-        self.assertEqual(m.group('header'), "CommitDate")
+        self.assertEqual(m.group('name'), "CommitDate")
         self.assertEqual(m.group('value'), "Tue Feb 11 22:07:49 2014 -0800")
+
+        s = "Signed-off-by:    Jonh Doe <jdoe@example.com>"
+        m = pattern.match(s)
+        self.assertEqual(m.group('name'), "Signed-off-by")
+        self.assertEqual(m.group('value'), "Jonh Doe <jdoe@example.com>")
 
     def test_message_line_pattern(self):
         """Test message line pattern"""
