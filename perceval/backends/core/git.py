@@ -576,6 +576,13 @@ class GitParser:
             return f
 
 
+class EmptyRepositoryError(RepositoryError):
+    """Exception raised when a repository is empty"""
+
+    message = "%(repository)s is empty"
+
+
+
 class GitRepository:
     """Manage a Git repository.
 

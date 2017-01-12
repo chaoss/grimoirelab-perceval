@@ -39,9 +39,10 @@ sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser, uuid
-from perceval.errors import ParseError, RepositoryError
+from perceval.errors import RepositoryError
 from perceval.utils import DEFAULT_DATETIME
-from perceval.backends.core.git import (Git,
+from perceval.backends.core.git import (EmptyRepositoryError,
+                                        Git,
                                         GitCommand,
                                         GitParser,
                                         GitRepository)
@@ -678,6 +679,16 @@ class TestGitParser(unittest.TestCase):
         s = ""
         m = pattern.match(s)
         self.assertIsNotNone(m)
+
+
+class TestEmptyRepositoryError(unittest.TestCase):
+    """EmptyRepositoryError tests"""
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = EmptyRepositoryError(repository='gittest')
+        self.assertEqual('gittest is empty', str(e))
 
 
 class TestGitRepository(unittest.TestCase):
