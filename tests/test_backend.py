@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -30,6 +30,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 import dateutil.tz
 
@@ -395,6 +396,33 @@ class TestBackendCommand(unittest.TestCase):
         self.assertEqual(cmd.backend.tag, 'test')
 
         cmd.outfile.close()
+
+    @unittest.mock.patch('os.path.expanduser')
+    def test_cache_on_init(self, mock_expanduser):
+        """Test if the cache is set when the class is initialized"""
+
+        mock_expanduser.return_value = self.test_path
+
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--from-date', '2015-01-01', '--tag', 'test',
+                '--output', self.fout_path, 'http://example.com/']
+
+        cmd = MockedBackendCommand(*args)
+
+        cache = cmd.backend.cache
+        self.assertIsInstance(cache, Cache)
+        self.assertEqual(os.path.exists(cache.cache_path), True)
+        self.assertEqual(cache.cache_path,
+                         os.path.join(self.test_path, 'http://example.com/'))
+
+        # Due to '--no-cache' is not given, no cache object is set
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--no-cache', '--from-date', '2015-01-01',
+                '--tag', 'test', '--output', self.fout_path,
+                'http://example.com/']
+
+        cmd = MockedBackendCommand(*args)
+        self.assertEqual(cmd.backend.cache, None)
 
     def test_pre_init(self):
         """Test if pre_init method is called during initialization"""

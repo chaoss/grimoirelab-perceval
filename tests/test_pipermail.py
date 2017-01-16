@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -405,6 +405,12 @@ class TestPipermailBackend(unittest.TestCase):
 class TestPipermailCommand(unittest.TestCase):
     """Tests for PipermailCommand class"""
 
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
     def test_backend_class(self):
         """Test if the backend class is Pipermail"""
 
@@ -415,13 +421,13 @@ class TestPipermailCommand(unittest.TestCase):
     def test_mboxes_path_init(self, mock_expanduser):
         """Test dirpath initialization"""
 
-        mock_expanduser.return_value = 'testpath'
+        mock_expanduser.return_value = os.path.join(self.tmp_path, 'testpath')
 
         args = ['http://example.com/',]
 
         cmd = PipermailCommand(*args)
         self.assertEqual(cmd.parsed_args.dirpath,
-                         'testpath/http://example.com/')
+                         os.path.join(self.tmp_path, 'testpath/http://example.com/'))
 
         args = ['http://example.com/',
                 '--mboxes-path', '/tmp/perceval/']

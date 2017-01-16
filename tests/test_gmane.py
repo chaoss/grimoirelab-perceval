@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -218,6 +218,12 @@ class TestGmaneBackend(unittest.TestCase):
 class TestGmaneCommand(unittest.TestCase):
     """Tests for GmaneCommand class"""
 
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
     def test_backend_class(self):
         """Test if the backend class is Gmane"""
 
@@ -228,14 +234,14 @@ class TestGmaneCommand(unittest.TestCase):
     def test_mboxes_path_init(self, mock_expanduser):
         """Test dirpath initialization"""
 
-        mock_expanduser.return_value = 'testpath'
+        mock_expanduser.return_value = os.path.join(self.tmp_path, 'testpath')
         setup_http_server()
 
         args = ['mylist@example.com']
 
         cmd = GmaneCommand(*args)
         self.assertEqual(cmd.parsed_args.dirpath,
-                         'testpath/mylist@example.com')
+                         os.path.join(self.tmp_path, 'testpath/mylist@example.com'))
 
         args = ['mylist@example.com',
                 '--mboxes-path', '/tmp/perceval/']

@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -275,9 +275,12 @@ class BackendCommand:
         self.parsed_args = parser.parse(*args)
 
         self._pre_init()
+
         parsed_args = vars(self.parsed_args)
         kw = build_signature_parameters(parsed_args, self.BACKEND.__init__)
         self.backend = self.BACKEND(**kw)
+        self.backend.cache = self._initialize_cache()
+
         self._post_init()
 
         self.outfile = self.parsed_args.outfile
@@ -293,8 +296,6 @@ class BackendCommand:
         the inizialization of the instance, the items will be retrieved
         from the cache.
         """
-        self.backend.cache = self._initialize_cache()
-
         if self.backend.cache and self.parsed_args.fetch_cache:
             fetch = self.backend.fetch_from_cache
         else:

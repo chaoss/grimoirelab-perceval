@@ -403,6 +403,12 @@ class TestGitBackend(unittest.TestCase):
 class TestGitCommand(unittest.TestCase):
     """GitCommand tests"""
 
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
     def test_backend_class(self):
         """Test if the backend class is Git"""
 
@@ -412,13 +418,13 @@ class TestGitCommand(unittest.TestCase):
     def test_gitpath_init(self, mock_expanduser):
         """Test gitpath initialization"""
 
-        mock_expanduser.return_value = 'testpath'
+        mock_expanduser.return_value = os.path.join(self.tmp_path, 'testpath')
 
         args = ['http://example.com/']
 
         cmd = GitCommand(*args)
         self.assertEqual(cmd.parsed_args.gitpath,
-                         'testpath/http://example.com/')
+                         os.path.join(self.tmp_path, 'testpath/http://example.com/'))
 
         args = ['http://example.com/',
                 '--git-log', 'data/git/git_log.txt']
