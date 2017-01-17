@@ -1,5 +1,58 @@
 # Releases
 
+## Perceval 0.5 - (2017-01-17)
+
+** New features and improvements: **
+
+ * New set of backends added:
+    - Askbot
+    - Meetup
+    - RSS
+ * Definition of `perceval.backends` namespace and dynamic loading of backends.
+   These two features allow to have third party backends or packages of
+   backends that can be imported and used at runtime.
+ * Mozilla's backends were moved to their own package: `perceval-mozilla`.
+ * Commands were refactorized generalizing their usage into `BackendCommand`
+   class which can run any type of backend. This was possible thanks to the
+   creation of `BackendCommandArgumentParser` class, that defines, manages and
+   parses those arguments needed to run a command; the definition of `pre_init()`
+   and `post_init()` methods during the initialization of the instance; and to
+   the implementation of `setup_cache()` as a public function of the `cache`
+   module.
+
+** Backend improvements: **
+
+ * **bugzilla**
+   - set maximum number of bugs requested on CSV queries
+ * **git**
+   - parse commit trailers
+   - new methods `is_empty()` and `count_objects()`
+   - set missing encodings for the command output
+   - cleaning up of the module
+ * **jenkins**
+   - ignore invalid job builds
+ * **supybot**
+   - parse action and bot empty lines
+   - parse user actions with the format `*nick msg`
+   - generate item ids using the body of the message
+
+** Bugs fixed: **
+
+ * The field 'timestamp' on metadata was not generated in UTC. The call
+   to `datetime.now()` does not generate a timestamp in UTC. It does using
+   the timezone of the system. The right way is to call to `datetime.utcnow()`
+   method. (#92)
+ * The docker image for Perceval purged the git package after installing
+   `perceval`. This made impossible to run the backend for Git because
+   Perceval needs of `git` command under the hood. (#95)
+ * Git empty repositories threw errors while fetching commits. Those were
+   raised because on empty repositories, those which do not have any history
+   or are only initialized, there are some commands that cannot be run, like
+   a pull or log. If any of this commands is called an error is be returned.
+   It was fixed checking whether the repository is empty and returning
+   an empty list of commits for those cases. (#102 and #107)
+
+
 ## Perceval 0.4 - (2016-11-03)
 
 ** New features and improvements: **
