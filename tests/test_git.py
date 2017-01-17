@@ -854,15 +854,29 @@ class TestGitRepository(unittest.TestCase):
         new_path = os.path.join(self.tmp_path, 'newgit')
         repo = GitRepository.clone(self.git_path, new_path)
 
+        # Check missing value
         expected = "unable to parse 'count-objects' output;" + \
-            " reason: invalid literal for int() with base 10: 'invalid value'"
+            " reason: 'in-pack' entry not found"
+
+        with unittest.mock.patch('perceval.backends.core.git.GitRepository._exec') as mock_exec:
+            mock_exec.return_value = b'count: 69\n:sze: 900\n'
+
+            with self.assertRaises(RepositoryError) as e:
+                _ = repo.count_objects()
+
+        self.assertEqual(str(e.exception), expected)
+
+        # Check invalid output
+        expected = "unable to parse 'count-objects' output;" + \
+            " reason: not enough values to unpack (expected 2, got 1)"
 
         with unittest.mock.patch('perceval.backends.core.git.GitRepository._exec') as mock_exec:
             mock_exec.return_value = b'invalid value'
 
             with self.assertRaises(RepositoryError) as e:
                 _ = repo.count_objects()
-                self.assertEqual(str(e.exception), expected)
+
+        self.assertEqual(str(e.exception), expected)
 
         shutil.rmtree(new_path)
 

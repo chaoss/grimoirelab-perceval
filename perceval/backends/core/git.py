@@ -59,7 +59,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.7.0'
+    version = '0.7.1'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -675,21 +675,27 @@ class GitRepository:
     def count_objects(self):
         """Count the objects of a repository.
 
-        The method returns the number of objects available on the repository.
+        The method returns the total number of objects (packed and unpacked)
+        available on the repository.
 
         :raises RepositoryError: when an error occurs counting the objects
             of a repository
         """
-        cmd_count = ['git', 'count-objects']
+        cmd_count = ['git', 'count-objects', '-v']
 
         outs = self._exec(cmd_count, cwd=self.dirpath, env={'LANG' : 'C'})
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
 
         try:
-            outs = outs.decode('utf-8', errors='surrogateescape')
-            nobjs = int(outs.split('objects')[0])
+            cobjs = {k : v for k, v in (x.split(': ') for x in outs.split('\n'))}
+            nobjs = int(cobjs['count']) + int(cobjs['in-pack'])
+        except KeyError as e:
+            error = "unable to parse 'count-objects' output; reason: '%s' entry not found" \
+                % e.args[0]
+            raise RepositoryError(cause=error)
         except ValueError as e:
             error = "unable to parse 'count-objects' output; reason: %s" % str(e)
-            raise RepositoryError(cause=str(error))
+            raise RepositoryError(cause=error)
 
         logger.debug("Git %s repository has %s objects",
                      self.uri, str(nobjs))
