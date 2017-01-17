@@ -867,16 +867,11 @@ class TestGitRepository(unittest.TestCase):
         self.assertEqual(str(e.exception), expected)
 
         # Check invalid output
-        expected = "unable to parse 'count-objects' output;" + \
-            " reason: not enough values to unpack (expected 2, got 1)"
-
         with unittest.mock.patch('perceval.backends.core.git.GitRepository._exec') as mock_exec:
             mock_exec.return_value = b'invalid value'
 
             with self.assertRaises(RepositoryError) as e:
                 _ = repo.count_objects()
-
-        self.assertEqual(str(e.exception), expected)
 
         shutil.rmtree(new_path)
 
