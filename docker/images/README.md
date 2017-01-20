@@ -22,7 +22,7 @@ Perceval Docker image is (until now), an image for testing purposes. Due to that
 for each command mapping a volume providing persistence to the cache:
 
 ```
-docker run --rm -it --name perceval -v ~/.perceval/cache:/root/.perceval/cache grimoirelab/perceval:latest [PERCEVAL_PARAMS]
+docker run --rm -it --name perceval -v ~/.perceval:/root/.perceval grimoirelab/perceval:latest [PERCEVAL_PARAMS]
 ```
 
 ## User feedback
