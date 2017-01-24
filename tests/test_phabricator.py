@@ -237,6 +237,10 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(trans[0]['authorData']['userName'], 'jdoe')
         self.assertEqual(trans[15]['authorData']['userName'], 'jdoe')
 
+        # Check authors that weren't found on the server: jsmith
+        trans = tasks[1]['data']['transactions']
+        self.assertEqual(trans[3]['authorData'], None)
+
         trans = tasks[3]['data']['transactions']
         self.assertEqual(trans[0]['authorData']['userName'], 'jrae')
         self.assertEqual(trans[15]['authorData']['userName'], 'jane')

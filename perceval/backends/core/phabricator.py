@@ -50,7 +50,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.1'
+    version = '0.5.2'
 
     def __init__(self, url, api_token, tag=None, cache=None):
         origin = url
@@ -185,8 +185,10 @@ class Phabricator(Backend):
             tasks_trans = self.parse_tasks_transactions(raw_trans)
 
             # Retrieve cached users from the transactions
-            users = self.__retrive_cached_users(cache_items)
+            users = self.__retrieve_cached_users(cache_items)
             for user in users:
+                if not user:
+                    continue
                 user_id = user['phid']
                 cached_users[user_id] = user
 
@@ -195,8 +197,10 @@ class Phabricator(Backend):
             checkpoint = raw_checkpoint == '{}'
 
             while not checkpoint:
-                users = self.__retrive_cached_users(cache_items)
+                users = self.__retrieve_cached_users(cache_items)
                 for user in users:
+                    if not user:
+                        continue
                     user_id = user['phid']
                     cached_users[user_id] = user
 
@@ -221,10 +225,19 @@ class Phabricator(Backend):
         logger.debug("User %s not found on client cache; fetching it", user_id)
 
         if user_id.startswith('PHID-USER-'):
-            user = self.__fetch_and_parse_users(user_id)[0]
+            users = self.__fetch_and_parse_users(user_id)
         else:
-            logger.debug("User %s is not a real user. Using PHID API to fetch it", user_id)
-            user = self.__fetch_and_parse_phids(user_id)[0]
+            logger.debug("User %s is not a real user. Using PHID API to fetch it",
+                         user_id)
+            users = self.__fetch_and_parse_phids(user_id)
+
+        if len(users) == 0:
+            logger.warning("User %s not found on the server. Setting empty data",
+                           user_id)
+            user = None
+        else:
+            user = users[0]
+
         self._users[user_id] = user
         return user
 
@@ -237,7 +250,7 @@ class Phabricator(Backend):
         self._projects[project_id] = project
         return project
 
-    def __retrive_cached_users(self, cache_items):
+    def __retrieve_cached_users(self, cache_items):
         checkpoint = False
 
         while not checkpoint:
@@ -251,7 +264,8 @@ class Phabricator(Backend):
                 yield phids[0]
             else:
                 users = [user for user in self.parse_users(raw_item)]
-                yield users[0]
+                user = users[0] if len(users) > 0 else None
+                yield user
 
     def __retrieve_cached_projects(self, cache_items):
         checkpoint = False
@@ -307,17 +321,17 @@ class Phabricator(Backend):
             author_id = task['fields']['authorPHID']
             owner_id = task['fields']['ownerPHID']
 
-            task['fields']['authorData'] = cached_users[author_id]
+            task['fields']['authorData'] = cached_users.get(author_id, None)
 
             if owner_id:
-                task['fields']['ownerData'] = cached_users[owner_id]
+                task['fields']['ownerData'] = cached_users.get(owner_id, None)
 
             # Build tasks transactions
             task_trans = transactions[tid]
 
             for tt in task_trans:
                 user_id = tt['authorPHID']
-                tt['authorData'] = cached_users[user_id]
+                tt['authorData'] = cached_users.get(user_id, None)
 
             # Build tasks projects
             projects_ids = task['attachments']['projects']['projectPHIDs']
