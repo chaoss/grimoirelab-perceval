@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -41,7 +41,8 @@ from perceval.errors import BackendError, CacheError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.bugzillarest import (BugzillaREST,
                                                  BugzillaRESTCommand,
-                                                 BugzillaRESTClient)
+                                                 BugzillaRESTClient,
+                                                 BugzillaRESTError)
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'
@@ -590,6 +591,24 @@ class TestBugzillaRESTClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/rest/bug/1273442/attachment')
         self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_rest_error(self):
+        """Test if an exception is raised when the server returns an error"""
+
+        # Set up a mock HTTP server
+        body = read_file('data/bugzilla_rest_error.json')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGS_URL,
+                               body=body, status=200)
+
+        client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
+
+        with self.assertRaises(BugzillaRESTError) as e:
+            _ = client.call('bug', {})
+            self.assertEqual(e.exception.code, 32000)
+            self.assertEqual(e.exception.error,
+                             "API key authentication is required.")
 
 
 class TestBugzillaRESTCommand(unittest.TestCase):

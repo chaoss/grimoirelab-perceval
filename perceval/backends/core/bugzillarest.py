@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -30,7 +30,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import BackendError, CacheError
+from ...errors import BaseError, BackendError, CacheError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
                       str_to_datetime,
@@ -60,7 +60,7 @@ class BugzillaREST(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.5.1'
 
     def __init__(self, url, user=None, password=None, api_token=None,
                  max_bugs=MAX_BUGS, tag=None, cache=None):
@@ -288,6 +288,12 @@ class BugzillaREST(Backend):
         return 'bug'
 
 
+class BugzillaRESTError(BaseError):
+    """Raised when an error occurs using the API"""
+
+    message = "%(error)s (code: %(code)s)"
+
+
 class BugzillaRESTClient:
     """Bugzilla REST API client.
 
@@ -441,6 +447,9 @@ class BugzillaRESTClient:
         :param resource: resource to retrieve
         :param params: dict with the HTTP parameters needed to retrieve
             the given resource
+
+        :raises BugzillaRESTError: raised when an error is returned by
+            the server
         """
         url = self.URL % {'base' : self.base_url, 'resource' : resource}
 
@@ -452,6 +461,13 @@ class BugzillaRESTClient:
 
         r = requests.get(url, params=params)
         r.raise_for_status()
+
+        # Check for possible Bugzilla API errors
+        result = r.json()
+
+        if result.get('error', False):
+            raise BugzillaRESTError(error=result['message'],
+                                    code=result['code'])
 
         return r.text
 

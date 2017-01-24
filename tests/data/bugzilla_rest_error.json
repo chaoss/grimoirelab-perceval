@@ -1,0 +1,6 @@
+{
+   "code" : 32000,
+   "documentation" : "http://www.bugzilla.org/docs/tip/en/html/api/",
+   "error" : true,
+   "message" : "API key authentication is required."
+}
