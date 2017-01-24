@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -22,6 +22,7 @@
 
 import json
 import logging
+import time
 
 import requests
 
@@ -49,7 +50,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.5.1'
 
     def __init__(self, url, api_token, tag=None, cache=None):
         origin = url
@@ -476,6 +477,9 @@ class ConduitClient:
     """
     URL = '%(base)s/api/%(method)s'
 
+    # Max retries for handled HTTP errors
+    MAX_RETRIES = 3
+
     # Methods
     MANIPHEST_TASKS = 'maniphest.search'
     MANIPHEST_TRANSACTIONS = 'maniphest.gettasktransactions'
@@ -593,7 +597,18 @@ class ConduitClient:
         logger.debug("Phabricator Conduit client requests: %s params: %s",
                      method, str(data))
 
-        r = requests.post(url, data=data, verify=False)
+        retries = 0
+
+        while retries < self.MAX_RETRIES:
+            r = requests.post(url, data=data, verify=False)
+
+            if r.status_code not in [502, 503]:
+                break
+
+            time.sleep(0.5 * retries)
+            retries += 1
+
+        # Check for other possible HTTP errors
         r.raise_for_status()
 
         # Check for possible Conduit API errors

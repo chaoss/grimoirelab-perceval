@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -29,6 +29,7 @@ import unittest
 
 import httpretty
 import pkg_resources
+import requests
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
@@ -800,6 +801,65 @@ class TestConduitClient(unittest.TestCase):
 
         with self.assertRaises(ConduitError):
             _ = client._call('error', {})
+
+    @httpretty.activate
+    def test_retry_on_server_errors(self):
+        """Test if the client retries when some HTTP errors are found"""
+
+        reqs = []
+        body = read_file('data/phabricator/phabricator_tasks_empty.json', 'rb')
+
+        responses = {
+            PHABRICATOR_TASKS_URL : [(502, 'error'), (503, 'error'), (200, body)],
+            PHABRICATOR_USERS_URL : [(503, 'error'), (503, 'error'), (503, 'error'), (503, 'error')],
+            PHABRICATOR_PHIDS_URL : [(404, 'not found')]
+         }
+
+        def request_callback(method, uri, headers):
+            reqs.append(httpretty.last_request())
+            resp = responses[uri].pop(0)
+            return (resp[0], headers, resp[1])
+
+        httpretty.register_uri(httpretty.POST,
+                               PHABRICATOR_TASKS_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback) \
+                                   for _ in range(3)
+                               ])
+        httpretty.register_uri(httpretty.POST,
+                               PHABRICATOR_USERS_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback) \
+                                   for _ in range(4)
+                               ])
+        httpretty.register_uri(httpretty.POST,
+                               PHABRICATOR_PHIDS_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback) \
+                                   for _ in range(1)
+                               ])
+
+        # These tests are based on the maximum number of retries,
+        # set by default to 3. The client only retries 502 and 503
+        # HTTP errors.
+        client = ConduitClient(PHABRICATOR_URL, 'aaaa')
+
+        # After 3 tries (request + 2 retries) it gets the result
+        reqs = []
+        _ = [r for r in client.tasks()]
+        self.assertEqual(len(reqs), 3)
+
+        # After 4 tries (request + 3 retries) it fails
+        reqs = []
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = client.users("PHID-USER-2uk52xorcqb6sjvp467y")
+            self.assertEqual(len(reqs), 4)
+
+        # After 1 trie if fails
+        reqs = []
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = client.phids("PHID-APPS-PhabricatorHeraldApplication")
+            self.assertEqual(len(reqs), 1)
 
 
 if __name__ == "__main__":
