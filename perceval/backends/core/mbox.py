@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -38,7 +38,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import ParseError
+from ...errors import InvalidDateError, ParseError
 from ...utils import (DEFAULT_DATETIME,
                       check_compressed_file_type,
                       datetime_to_utc,
@@ -62,7 +62,7 @@ class MBox(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.7.0'
+    version = '0.7.1'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
@@ -165,20 +165,30 @@ class MBox(Backend):
             logger.warning("Field 'Message-ID' not found in message %s; ignoring",
                            message['unixfrom'])
             return False
-        elif not message[self.MESSAGE_ID_FIELD]:
+
+        if not message[self.MESSAGE_ID_FIELD]:
             logger.warning("Field 'Message-ID' is empty in message %s; ignoring",
                            message['unixfrom'])
             return False
-        elif self.DATE_FIELD not in message:
+
+        if self.DATE_FIELD not in message:
             logger.warning("Field 'Date' not found in message %s; ignoring",
                            message['unixfrom'])
             return False
-        elif not message[self.DATE_FIELD]:
+
+        if not message[self.DATE_FIELD]:
             logger.warning("Field 'Date' is empty in message %s; ignoring",
                            message['unixfrom'])
             return False
-        else:
-            return True
+
+        try:
+            str_to_datetime(message[self.DATE_FIELD])
+        except InvalidDateError:
+            logger.warning("Invalid date %s in message %s; ignoring",
+                           message[self.DATE_FIELD], message['unixfrom'])
+            return False
+
+        return True
 
     def _casedict_to_dict(self, message):
         """Convert a message in CaseInsensitiveDict to dict.
