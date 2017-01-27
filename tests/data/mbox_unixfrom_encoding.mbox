@@ -1,0 +1,63 @@
+From christian at “example.org”  Thu Jan 15 13:22:25 2015
+From: christian at example.org (Christian Aistleitner)
+Date: Thu, 15 Jan 2015 14:22:25 +0100
+Subject: [Analytics] DNT, standards, and expectations
+In-Reply-To: <CAKP=3WwxhP=nNqT5kJ+6ohUU-pgvRu+PkW=7ASLpiQguf7CKxg@example.org>
+References: <4ADDAFD4-A226-4F68-B02D-EDA5DE355104@wikimedia.org>
+        <CAE4f==fqAcbM+hg3ZrHM1Jv+d7W3hdU5HXvPNq2Q5ZdxvdgJ+Q@example.org>
+        <CAKP=3WyH=YfNyq5uspTo-n5txswQ6xfBd1WpfdYyxf+JK3YyRA@example.org>
+        <20150113220428.GA26586@example.org>
+        <CAKP=3WyQZFSu3W04s1QEJY2kkUa6aWXcfghpQMS0hRdp-Pz5Tg@example.org>
+        <CAHXK4BwCqapFeS6d3-7S665Fm8kGWxQBBM1w9VHm=vxiRpVRYA@example.org>
+        <CAKP=3WwxhP=nNqT5kJ+6ohUU-pgvRu+PkW=7ASLpiQguf7CKxg@example.org>
+Message-ID: <20150115132225.GA22378@example.org>
+
+Hi,
+
+On Wed, Jan 14, 2015 at 12:07:57PM -0600, Aaron Halfaker wrote:
+> For example, not collecting usage data about certain sections of our
+> population (e.g. IE10 users where DNT is set by default) means that we
+> don't know if our software works for them.
+
+If WMF's main form of QA was through automated usage data collection,
+you'd have a point.
+
+But actually, I think WMF is doing better than that.
+
+ From my point of view, a central pillar in QA is “software getting tested”.
+That's happening widely across WMF.
+Both manually and automated.
+It's great already and getting better every day.
+
+And for me the main QA ingredient is listening to feedback from the
+users. Besides studies and dog-fooding, WMF's bugtracker is a
+testament to that and contains reports that “$X is not working on
+browser $Y” or “$X needs to also do $Z”.
+And that's really great!
+
+To me, user behaviour data collection is a way to support and assist
+the above two. But it is not a requirement when trying to determine
+“if our software works for them”.
+
+Users are sending us emails about issues, come to IRC to discuss
+issues, file a ticket, or they just tell someone.
+All without having their usage data collected.
+
+I am convinced “IE10 users that do not want to unset DNT” are no
+exception to that.
+
+Have fun,
+Christian
+
+
+P.S.: I for one received bug reports from IE10 users. (But I do not
+know whether or they used DNT.)
+
+
+
+-------------- next part --------------
+A non-text attachment was scrubbed...
+Name: signature.asc
+Type: application/pgp-signature
+Size: 490 bytes
+Desc: Digital signature

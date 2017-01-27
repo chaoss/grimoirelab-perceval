@@ -62,7 +62,7 @@ class MBox(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.7.1'
+    version = '0.7.2'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
@@ -314,7 +314,7 @@ class MBox(Backend):
                 payload = payload.decode('ascii', errors='surrogateescape')
             return payload
 
-        mbox = mailbox.mbox(filepath, create=False)
+        mbox = _MBox(filepath, create=False)
 
         for msg in mbox:
             message = requests.structures.CaseInsensitiveDict()
@@ -328,6 +328,26 @@ class MBox(Backend):
                 raise ParseError(str(e))
 
             yield message
+
+
+class _MBox(mailbox.mbox):
+    """Wrapper of `mailbox.mbox` to catch unhandled errors"""
+
+    def get_message(self, key):
+        """Return a Message representation or raise a KeyError."""
+
+        start, stop = self._lookup(key)
+        self._file.seek(start)
+        from_line = self._file.readline().replace(mailbox.linesep, b'')
+        string = self._file.read(stop - self._file.tell())
+        msg = self._message_factory(string.replace(mailbox.linesep, b'\n'))
+
+        try:
+            msg.set_from(from_line[5:].decode('ascii'))
+        except UnicodeDecodeError:
+            msg.set_from(from_line[5:].decode('utf-8'))
+
+        return msg
 
 
 class MBoxCommand(BackendCommand):
