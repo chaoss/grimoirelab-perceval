@@ -54,7 +54,7 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
     def __init__(self, url,
                  user=None, max_reviews=MAX_REVIEWS,
@@ -224,7 +224,7 @@ class Gerrit(Backend):
     def metadata_id(item):
         """Extracts the identifier from a Gerrit item."""
 
-        return item['id']
+        return item['number']
 
     @staticmethod
     def metadata_updated_on(item):
