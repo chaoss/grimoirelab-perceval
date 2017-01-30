@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -76,7 +76,7 @@ setup(name="perceval",
         'perceval.backends'
       ],
       install_requires=[
-        'python-dateutil>=2.0.0',
+        'python-dateutil>=2.6.0',
         'requests>=2.7.0',
         'beautifulsoup4>=4.3.2',
         'feedparser>=5.1.3'
