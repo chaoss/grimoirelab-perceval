@@ -59,7 +59,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.7.2'
+    version = '0.7.3'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -754,10 +754,14 @@ class GitRepository:
             raise EmptyRepositoryError(repository=self.uri)
 
         cmd_fetch = ['git', 'fetch', 'origin']
-        cmd_reset = ['git', 'reset', '--hard', 'FETCH_HEAD']
-
         self._exec(cmd_fetch, cwd=self.dirpath, env={'LANG' : 'C'})
-        self._exec(cmd_reset, cwd=self.dirpath, env={'LANG' : 'C'})
+
+        if not self.is_detached():
+            cmd_reset = ['git', 'reset', '--hard', 'FETCH_HEAD']
+            self._exec(cmd_reset, cwd=self.dirpath, env={'LANG' : 'C'})
+        else:
+            logger.debug("Git %s repository is in detached state; skipping reset",
+                         self.uri)
 
         logger.debug("Git %s repository pulled into %s",
                      self.uri, self.dirpath)
