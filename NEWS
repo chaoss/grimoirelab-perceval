@@ -1,5 +1,40 @@
 # Releases
 
+## Perceval 0.6 - (2017-02-02)
+
+** Backend improvements: **
+
+ * **bugzillarest**
+   - messages in client errors were improved
+ * **git**
+   - new method `is_detached()`
+ * **mbox**
+   - ignore messages with invalid dates on `Date` header
+ * **phabricator**
+   - retry requests on HTTP 502 and 503 errors
+
+** Bugs fixed: **
+
+ * The `mbox` class from Python's `mailbox` module fails when it tries to
+   decode non-ascii unix-from headers. This header is used as a separator
+   between messages. When this error is found, the class stops reading messages
+   from the mbox. Wrapping `mbox` class to override the way messages are read
+   was needed to catch the exception and decode the header using UTF-8.
+ * When a user does not exists on Phabricator, the API does not return an
+   error. It returns an empty list. The case where an empty list is returned
+   was not managed by the parser, which raised exceptions.
+ * In gerrit, the identifier of the change, `Change-Id` (or `id`), is not unique.
+   What it is unique in a gerrit sever is the number of each change and review.
+   This `number` is used now instead of `id` as the identifier of a review
+ * When Git repositories are reset to the current status on upstream, some of
+   them cannot deal with `origin` reference because it is ambiguous. Replacing
+   it by `FETCH_HEAD` works on those repositories with defined branches on
+   the origin.
+ * Git repositories in detached state do not need to be reset after `git fetch`
+   is called. This call is now skipped when a repository in this state
+   is in use. (#105)
+
+
 ## Perceval 0.5 - (2017-01-17)
 
 ** New features and improvements: **
