@@ -702,6 +702,28 @@ class GitRepository:
 
         return nobjs
 
+    def is_detached(self):
+        """Check if the repo is in a detached state.
+
+        The repository is in a detached state when HEAD is not a symbolic
+        reference.
+
+        :returns: whether the repository is detached or not
+
+        :raises RepositoryError: when an error occurs checking the state
+            of the repository
+        """
+        cmd_sym = ['git', 'symbolic-ref', 'HEAD']
+
+        try:
+            self._exec(cmd_sym, cwd=self.dirpath, env={'LANG' : 'C'})
+        except RepositoryError as e:
+            if e.msg.find("ref HEAD is not a symbolic ref") == -1:
+                raise e
+            return True
+        else:
+            return False
+
     def is_empty(self):
         """Determines whether the repository is empty or not.
 

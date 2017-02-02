@@ -759,9 +759,12 @@ class TestGitRepository(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
         cls.git_path = os.path.join(cls.tmp_path, 'gittest')
+        cls.git_detached_path = os.path.join(cls.tmp_path, 'gitdetached')
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
 
         subprocess.check_call(['tar', '-xzf', 'data/git/gittest.tar.gz',
+                               '-C', cls.tmp_path])
+        subprocess.check_call(['tar', '-xzf', 'data/git/gitdetached.tar.gz',
                                '-C', cls.tmp_path])
         subprocess.check_call(['tar', '-xzf', 'data/git/gittestempty.tar.gz',
                                '-C', cls.tmp_path])
@@ -872,6 +875,25 @@ class TestGitRepository(unittest.TestCase):
 
             with self.assertRaises(RepositoryError) as e:
                 _ = repo.count_objects()
+
+        shutil.rmtree(new_path)
+
+    def test_is_detached(self):
+        """Test if a repository is in detached state or not"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        is_detached = repo.is_detached()
+        self.assertEqual(is_detached, False)
+
+        shutil.rmtree(new_path)
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_detached_path, new_path)
+
+        is_detached = repo.is_detached()
+        self.assertEqual(is_detached, True)
 
         shutil.rmtree(new_path)
 
