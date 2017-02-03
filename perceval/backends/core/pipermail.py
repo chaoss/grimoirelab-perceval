@@ -35,7 +35,6 @@ from .mbox import MBox, MailingList
 from ...backend import BackendCommand, BackendCommandArgumentParser, metadata
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
-                      str_to_datetime,
                       urljoin)
 
 
@@ -64,11 +63,9 @@ class Pipermail(MBox):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.1'
+    version = '0.4.2'
 
     def __init__(self, url, dirpath, tag=None, cache=None):
-        origin = url
-
         super().__init__(url, dirpath, tag=tag, cache=cache)
         self.url = url
 
