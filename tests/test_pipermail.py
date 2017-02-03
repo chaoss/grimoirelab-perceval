@@ -72,16 +72,6 @@ class TestPipermailList(unittest.TestCase):
         self.assertEqual(pmls.dirpath, self.tmp_path)
         self.assertEqual(pmls.url, PIPERMAIL_URL)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(Pipermail.has_caching(), False)
-
-    def test_has_resuming(self):
-        """Test if it returns True when has_resuming is called"""
-
-        self.assertEqual(Pipermail.has_resuming(), True)
-
     @httpretty.activate
     def test_fetch(self):
         """Test whether archives are fetched"""
@@ -123,7 +113,7 @@ class TestPipermailList(unittest.TestCase):
 
     @httpretty.activate
     def test_fetch_empty(self):
-        """Test whether it do not stores anything when the list of archives is ampty"""
+        """Test whether it does not store anything when the list of archives is empty"""
 
         pipermail_index = read_file('data/pipermail_index_empty.html')
         httpretty.register_uri(httpretty.GET,
@@ -219,6 +209,16 @@ class TestPipermailBackend(unittest.TestCase):
         backend = Pipermail('http://example.com/', self.tmp_path, tag='')
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'http://example.com/')
+
+    def test_has_caching(self):
+        """Test if it returns False when has_caching is called"""
+
+        self.assertEqual(Pipermail.has_caching(), False)
+
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Pipermail.has_resuming(), True)
 
     @httpretty.activate
     def test_fetch(self):
