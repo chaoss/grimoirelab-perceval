@@ -97,6 +97,12 @@ def months_range(from_date, to_date):
         pos = x
 
 
+def datetime_utcnow():
+    """Handy function which returns the current date and time in UTC."""
+
+    return datetime.datetime.utcnow()
+
+
 def datetime_to_utc(ts):
     """Convert a timestamp to UTC+0 timezone.
 
