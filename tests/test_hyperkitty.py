@@ -38,7 +38,7 @@ sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backends.core.mbox import MailingList
-from perceval.backends.core.hyperkitty import HyperKittyList
+from perceval.backends.core.hyperkitty import HyperKitty, HyperKittyList
 
 
 HYPERKITTY_URL = 'http://example.com/archives/list/test@example.com/'
@@ -144,6 +144,115 @@ class TestHyperKittyList(unittest.TestCase):
         mboxes = hkls.mboxes
         self.assertEqual(mboxes[0].filepath, os.path.join(self.tmp_path, '2016-03.mbox.gz'))
         self.assertEqual(mboxes[1].filepath, os.path.join(self.tmp_path, '2016-04.mbox.gz'))
+
+
+class TestHyperKittyBackend(unittest.TestCase):
+    """Tests for HyperKitty backend class"""
+
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        backend = HyperKitty('http://example.com/', self.tmp_path, tag='test')
+
+        self.assertEqual(backend.url, 'http://example.com/')
+        self.assertEqual(backend.uri, 'http://example.com/')
+        self.assertEqual(backend.dirpath, self.tmp_path)
+        self.assertEqual(backend.origin, 'http://example.com/')
+        self.assertEqual(backend.tag, 'test')
+
+        # When tag is empty or None it will be set to
+        # the value in uri
+        backend = HyperKitty('http://example.com/', self.tmp_path)
+        self.assertEqual(backend.origin, 'http://example.com/')
+        self.assertEqual(backend.tag, 'http://example.com/')
+
+        backend = HyperKitty('http://example.com/', self.tmp_path, tag='')
+        self.assertEqual(backend.origin, 'http://example.com/')
+        self.assertEqual(backend.tag, 'http://example.com/')
+
+    def test_has_caching(self):
+        """Test if it returns False when has_caching is called"""
+
+        self.assertEqual(HyperKitty.has_caching(), False)
+
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(HyperKitty.has_resuming(), True)
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.hyperkitty.datetime_utcnow')
+    def test_fetch(self, mock_utcnow):
+        """Test whether archives are fetched"""
+
+        mock_utcnow.return_value = datetime.datetime(2016, 4, 10,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        mbox_march = read_file('data/hyperkitty/hyperkitty_2016_march.mbox')
+        mbox_april = read_file('data/hyperkitty/hyperkitty_2016_april.mbox')
+
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL,
+                               body="")
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL + 'export/2016-03.mbox.gz',
+                               body=mbox_march)
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL + 'export/2016-04.mbox.gz',
+                               body=mbox_april)
+
+        from_date = datetime.datetime(2016, 3, 10)
+
+        backend = HyperKitty('http://example.com/archives/list/test@example.com/',
+                             self.tmp_path)
+        messages = [m for m in backend.fetch(from_date=from_date)]
+
+        # Although there is a message in the mbox from March, this message
+        # was sent previous to the given date, so it is not included
+        # into the expected result
+        expected = [('<1460624816.5581.114.camel@example.com>',
+                     '26ad05669b2d2e6f6a8e244b2fd65cefafdb3d53', 1460624816.0),
+                    ('<CACRHdMZgAgzyhewu_aAJ2f2DWHVZdNH6J7zd2S=YWQuf-2yZDw@example.com>',
+                     'c785b05dd2a267d267e8497303157cea4a871838', 1461428336.0),
+                    ('<1461621607.19185.342.camel@example.com>',
+                     'fc3f60f140bba0e7f3fcad82890928e6b580a923', 1461621607.0)]
+
+        self.assertEqual(len(messages), 3)
+
+        for x in range(len(messages)):
+            message = messages[x]
+            self.assertEqual(message['data']['Message-ID'], expected[x][0])
+            self.assertEqual(message['origin'], 'http://example.com/archives/list/test@example.com/')
+            self.assertEqual(message['uuid'], expected[x][1])
+            self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'http://example.com/archives/list/test@example.com/')
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.hyperkitty.datetime_utcnow')
+    def test_fetch_from_date_after_current_day(self, mock_utcnow):
+        """Test if it does not fetch anything when from_date is a date from the future"""
+
+        mock_utcnow.return_value = datetime.datetime(2016, 4, 10,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL,
+                               body="")
+
+        from_date = datetime.datetime(2017, 1, 10)
+
+        backend = HyperKitty('http://example.com/archives/list/test@example.com/',
+                             self.tmp_path)
+        messages = [m for m in backend.fetch(from_date=from_date)]
+
+        self.assertEqual(len(messages), 0)
 
 
 if __name__ == "__main__":

@@ -29,7 +29,8 @@ import dateutil.relativedelta
 import dateutil.tz
 import requests
 
-from .mbox import MailingList
+from .mbox import MBox, MailingList
+from ...backend import metadata
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
                       datetime_utcnow,
@@ -38,6 +39,72 @@ from ...utils import (DEFAULT_DATETIME,
 
 
 logger = logging.getLogger(__name__)
+
+
+class HyperKitty(MBox):
+    """HyperKitty backend.
+
+    This class allows the fetch the email messages stored on a HyperKitty
+    archiver. Initialize this class passing the URL where the mailing list
+    archiver is and the directory path where the mbox files will be fetched
+    and stored. The origin of the data will be set to the value of `url`.
+
+    :param url: URL to the HyperKitty mailing list archiver
+    :param dirpath: directory path where the mboxes are stored
+    :param tag: label used to mark the data
+    :param cache: cache object to store raw data
+    """
+    version = '0.1.0'
+
+    def __init__(self, url, dirpath, tag=None, cache=None):
+        super().__init__(url, dirpath, tag=tag, cache=cache)
+        self.url = url
+
+    @metadata
+    def fetch(self, from_date=DEFAULT_DATETIME):
+        """Fetch the messages from the HyperKitty mailing list archiver.
+
+        The method fetches the mbox files from a remote HyperKitty
+        mailing list archiver and retrieves the messages stored on them.
+
+        Take into account that HyperKitty does not provide yet any kind
+        of info to know which is the first message on the mailing list.
+        For this reason, using a value in `from_date` previous to the
+        date where the first message was sent will make to download
+        empty mbox files.
+
+        :param from_date: obtain messages since this date
+
+        :returns: a generator of messages
+        """
+        logger.info("Looking for messages from '%s' since %s",
+                    self.url, str(from_date))
+
+        mailing_list = HyperKittyList(self.url, self.dirpath)
+        mailing_list.fetch(from_date=from_date)
+
+        messages = self._fetch_and_parse_messages(mailing_list, from_date)
+
+        for message in messages:
+            yield message
+
+        logger.info("Fetch process completed")
+
+    @classmethod
+    def has_caching(cls):
+        """Returns whether it supports caching items on the fetch process.
+
+        :returns: this backend dooes not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend supports items resuming
+        """
+        return True
 
 
 class HyperKittyList(MailingList):
