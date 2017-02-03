@@ -19,6 +19,7 @@ are:
     git              Fetch commits from Git
     github           Fetch issues from GitHub
     gmane            Fetch messages from Gmane
+    hyperkitty       Fetch messages from a HyperKitty archiver
     jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
     mbox             Fetch messages from MBox files
@@ -174,6 +175,11 @@ $ perceval github --owner elastic --repository filebeat --from-date '2016-01-01'
 ### Gmane
 ```
 $ perceval gmane --offset 2000 'evince-list@gnome.org'
+```
+
+### HyperKitty
+```
+$ perceval hyperkitty 'https://lists.mailman3.org/archives/list/mailman-users@mailman3.org' --from-date 2017-01-01
 ```
 
 ### Jenkins

@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -39,6 +39,7 @@ if not '..' in sys.path:
 from perceval.errors import InvalidDateError, ParseError
 from perceval.utils import (build_signature_parameters,
                             check_compressed_file_type,
+                            months_range,
                             datetime_to_utc,
                             inspect_signature_parameters,
                             remove_invalid_xml_chars,
@@ -95,6 +96,48 @@ class TestCheckCompressedFileType(unittest.TestCase):
         fname = os.path.join(self.tmp_path, 'mbox_single.mbox')
         filetype = check_compressed_file_type(fname)
         self.assertEqual(filetype, None)
+
+
+class TestMonthsRange(unittest.TestCase):
+    """Unit tests for months_range function"""
+
+    def test_range(self):
+        """Check if it generates a range on months"""
+
+        from_date = datetime.datetime(2016, 11, 10)
+        to_date = datetime.datetime(2017, 3, 30)
+
+        expected = [
+            (datetime.datetime(2016, 11, 1),
+             datetime.datetime(2016, 12, 1)),
+            (datetime.datetime(2016, 12, 1),
+             datetime.datetime(2017, 1, 1)),
+            (datetime.datetime(2017, 1, 1),
+             datetime.datetime(2017, 2, 1)),
+            (datetime.datetime(2017, 2, 1),
+             datetime.datetime(2017, 3, 1))
+        ]
+
+        result = [r for r in months_range(from_date, to_date)]
+        self.assertListEqual(result, expected)
+
+    def test_range_outbounds(self):
+        """Test if the range is empty when to_date is lower than from_date"""
+
+        from_date = datetime.datetime(2017, 3, 30)
+        to_date = datetime.datetime(2016, 11, 10)
+
+        result = [r for r in months_range(from_date, to_date)]
+        self.assertListEqual(result, [])
+
+    def test_range_same_month(self):
+        """Test if the range is empty when both dates are on the same month"""
+
+        from_date = datetime.datetime(2016, 11, 10)
+        to_date = datetime.datetime(2016, 11, 30)
+
+        result = [r for r in months_range(from_date, to_date)]
+        self.assertListEqual(result, [])
 
 
 class TestDatetimeToUTC(unittest.TestCase):

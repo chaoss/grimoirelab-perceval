@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -30,6 +30,7 @@ import sys
 import xml.etree.ElementTree
 
 import dateutil.parser
+import dateutil.rrule
 import dateutil.tz
 
 from .errors import InvalidDateError, ParseError
@@ -68,6 +69,38 @@ def check_compressed_file_type(filepath):
     with open(filepath, mode='rb') as f:
         magic_number = f.read(4)
     return compressed_file_type(magic_number)
+
+
+def months_range(from_date, to_date):
+    """Generate a months range.
+
+    Generator of months starting on `from_date` util `to_date`. Each
+    returned item is a tuple of two datatime objects like in (month, month+1).
+    Thus, the result will follow the sequence:
+        ((fd, fd+1), (fd+1, fd+2), ..., (td-2, td-1), (td-1, td))
+
+    :param from_date: generate dates starting on this month
+    :param to_date: generate dates until this month
+
+    :result: a generator of months range
+    """
+    start = datetime.datetime(from_date.year, from_date.month, 1)
+    end = datetime.datetime(to_date.year, to_date.month, 1)
+
+    month_gen = dateutil.rrule.rrule(freq=dateutil.rrule.MONTHLY,
+                                     dtstart=start, until=end)
+    months = [d for d in month_gen]
+
+    pos = 0
+    for x in range(1, len(months)):
+        yield months[pos], months[x]
+        pos = x
+
+
+def datetime_utcnow():
+    """Handy function which returns the current date and time in UTC."""
+
+    return datetime.datetime.utcnow()
 
 
 def datetime_to_utc(ts):
