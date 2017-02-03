@@ -37,8 +37,12 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.mbox import MailingList
-from perceval.backends.core.hyperkitty import HyperKitty, HyperKittyList
+from perceval.backends.core.hyperkitty import (HyperKitty,
+                                               HyperKittyCommand,
+                                               HyperKittyList)
 
 
 HYPERKITTY_URL = 'http://example.com/archives/list/test@example.com/'
@@ -253,6 +257,71 @@ class TestHyperKittyBackend(unittest.TestCase):
         messages = [m for m in backend.fetch(from_date=from_date)]
 
         self.assertEqual(len(messages), 0)
+
+
+class TestHyperKittyCommand(unittest.TestCase):
+    """Tests for HyperKittyCommand class"""
+
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    def test_backend_class(self):
+        """Test if the backend class is Pipermail"""
+
+        self.assertIs(HyperKittyCommand.BACKEND, HyperKitty)
+
+    @httpretty.activate
+    @unittest.mock.patch('os.path.expanduser')
+    def test_mboxes_path_init(self, mock_expanduser):
+        """Test dirpath initialization"""
+
+        mock_expanduser.return_value = os.path.join(self.tmp_path, 'testpath')
+
+        args = ['http://example.com/archives/list/test@example.com/',]
+
+        cmd = HyperKittyCommand(*args)
+        self.assertEqual(cmd.parsed_args.dirpath,
+                         os.path.join(self.tmp_path,
+                                      'testpath/http://example.com/archives/list/test@example.com/'))
+
+        args = ['http://example.com/archives/list/test@example.com/',
+                '--mboxes-path', '/tmp/perceval/']
+
+        cmd = HyperKittyCommand(*args)
+        self.assertEqual(cmd.parsed_args.dirpath, '/tmp/perceval/')
+
+    def test_parsing_on_init(self):
+        """Test if the class is initialized"""
+
+        args = ['http://example.com/archives/list/test@example.com/',
+                '--mboxes-path', '/tmp/perceval/',
+                '--tag', 'test']
+
+        cmd = HyperKittyCommand(*args)
+        self.assertEqual(cmd.parsed_args.url, 'http://example.com/archives/list/test@example.com/')
+        self.assertEqual(cmd.parsed_args.mboxes_path, '/tmp/perceval/')
+        self.assertEqual(cmd.parsed_args.tag, 'test')
+        self.assertIsInstance(cmd.backend, HyperKitty)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = HyperKittyCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
+
+        args = ['http://example.com/archives/list/test@example.com/',
+                '--mboxes-path', '/tmp/perceval/',
+                '--tag', 'test',
+                '--from-date', '1970-01-01']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'http://example.com/archives/list/test@example.com/')
+        self.assertEqual(parsed_args.mboxes_path, '/tmp/perceval/')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
 if __name__ == "__main__":

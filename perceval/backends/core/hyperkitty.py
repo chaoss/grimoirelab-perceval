@@ -30,7 +30,9 @@ import dateutil.tz
 import requests
 
 from .mbox import MBox, MailingList
-from ...backend import metadata
+from ...backend import (BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
                       datetime_utcnow,
@@ -233,3 +235,38 @@ class HyperKittyList(MailingList):
         logger.debug("%s archive downloaded and stored in %s", url, filepath)
 
         return True
+
+
+class HyperKittyCommand(BackendCommand):
+    """Class to run HyperKitty backend from the command line."""
+
+    BACKEND = HyperKitty
+
+    def _pre_init(self):
+        """Initialize mailing lists directory path"""
+
+        if not self.parsed_args.mboxes_path:
+            base_path = os.path.expanduser('~/.perceval/mailinglists/')
+            dirpath = os.path.join(base_path, self.parsed_args.url)
+        else:
+            dirpath = self.parsed_args.mboxes_path
+
+        setattr(self.parsed_args, 'dirpath', dirpath)
+
+    @staticmethod
+    def setup_cmd_parser():
+        """Returns the HyperKitty argument parser."""
+
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              cache=False)
+
+        # Optional arguments
+        group = parser.parser.add_argument_group('HyperKitty arguments')
+        group.add_argument('--mboxes-path', dest='mboxes_path',
+                           help="Path where mbox files will be stored")
+
+        # Required arguments
+        parser.parser.add_argument('url',
+                                   help="URL of the mailing list archiver")
+
+        return parser
