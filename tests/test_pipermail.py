@@ -457,14 +457,12 @@ class TestPipermailCommand(unittest.TestCase):
         args = ['http://example.com/',
                 '--mboxes-path', '/tmp/perceval/',
                 '--tag', 'test',
-                '--no-cache',
                 '--from-date', '1970-01-01']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, 'http://example.com/')
         self.assertEqual(parsed_args.mboxes_path, '/tmp/perceval/')
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
