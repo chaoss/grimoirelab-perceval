@@ -25,6 +25,7 @@ are:
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
     meetup           Fetch events from a Meetup group
+    nntp             Fetch articles from a NNTP news group
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
     redmine          Fetch issues from a Redmine server
@@ -205,6 +206,11 @@ $ perceval mediawiki 'https://wiki.mozilla.org' --from-date '2016-06-30'
 ### Meetup
 ```
 $ perceval meetup 'Software-Development-Analytics' --from-date '2016-06-01' -t abcdefghijk
+```
+
+### NNTP
+```
+$ perceval nntp 'news.mozilla.org' 'mozilla.dev.project-link' --offset 10
 ```
 
 ### Phabricator

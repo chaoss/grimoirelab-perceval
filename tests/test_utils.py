@@ -22,6 +22,7 @@
 #
 
 import datetime
+import email
 import os.path
 import shutil
 import sys
@@ -39,9 +40,10 @@ if not '..' in sys.path:
 from perceval.errors import InvalidDateError, ParseError
 from perceval.utils import (build_signature_parameters,
                             check_compressed_file_type,
-                            months_range,
                             datetime_to_utc,
                             inspect_signature_parameters,
+                            message_to_dict,
+                            months_range,
                             remove_invalid_xml_chars,
                             str_to_datetime,
                             unixtime_to_datetime,
@@ -314,6 +316,82 @@ class TestURLJoin(unittest.TestCase):
 
         url = urljoin(base_url_alt, path0, path1)
         self.assertEqual(url, 'http://example.com/owner/repository')
+
+
+class TestMessagetoDict(unittest.TestCase):
+    """Unit tests for message_to_dict"""
+
+    def test_convert_message(self):
+        """Test whether it converts an email message"""
+
+        raw_email = read_file('data/email_single.txt')
+        msg = email.message_from_string(raw_email)
+
+        message = message_to_dict(msg)
+        message = {k: v for k,v in message.items()}
+
+        expected = {
+                    'From' : 'goran at domain.com ( Göran Lastname )',
+                    'Date' : 'Wed, 01 Dec 2010 14:26:40 +0100',
+                    'Subject' : '[List-name] Protocol Buffers anyone?',
+                    'Message-ID' : '<4CF64D10.9020206@domain.com>',
+                    'unixfrom' : None,
+                    'body': {
+                             'plain' : "Hi!\n\nA message in English, with a signature "
+                                       "with a different encoding.\n\nregards, G?ran"
+                                       "\n\n\n",
+                            }
+                    }
+
+        self.assertDictEqual(message, expected)
+
+    def test_convert_multipart_message(self):
+        """Test if it converts email messages with multipart bodies"""
+
+        # Multipart message with defined encoding
+        raw_email = read_file('data/email_multipart_encoding.txt')
+        msg = email.message_from_string(raw_email)
+
+        message = message_to_dict(msg)
+
+        plain_body = message['body']['plain']
+        html_body = message['body']['html']
+        self.assertEqual(plain_body , 'technology.esl Committers,\n\n'
+                                      'This automatically generated message marks the successful completion of\n'
+                                      'voting for Chuwei Huang to receive full Committer status on the\n'
+                                      'technology.esl project. The next step is for the PMC to approve this vote,\n'
+                                      'followed by the EMO processing the paperwork and provisioning the account.\n\n\n\n'
+                                      'Vote summary: 4/0/0 with 0 not voting\n\n'
+                                      '  +1  Thomas Guiu\n\n'
+                                      '  +1  Jin Liu\n\n'
+                                      '  +1  Yves YANG\n\n'
+                                      '  +1  Bo Zhou\n\n\n\n'
+                                      'If you have any questions, please do not hesitate to contact your project\n'
+                                      'lead, PMC member, or the EMO <emo@example.org>\n\n\n\n\n\n')
+        self.assertEqual(len(html_body), 3103)
+
+        # Multipart message without defined encoding
+        raw_email = read_file('data/email_multipart_no_encoding.txt')
+        msg = email.message_from_string(raw_email)
+
+        message = message_to_dict(msg)
+
+        plain_body = message['body']['plain']
+        html_body = message['body']['html']
+        self.assertEqual(plain_body , 'I am fairly new to eclipse. I am evaluating the use of eclipse for a generic\n'
+                                      'UI framework that is not necessarily related to code generation.\n'
+                                      'Eclipse is very flexible and adding functionality seems straightforward. I\n'
+                                      'can still use the project concept for what I need but there are things in\n'
+                                      'the Workbench window that I don\'t want. For example the Open perspective\n'
+                                      'icon, or some of the menus, like the Windows and project menu .\n\n'
+                                      'I understand that by using retargetable actions I can have my view taking\n'
+                                      'over most of the actions, but I could not figure out how to block the core\n'
+                                      'plug-in to put their own actions. In the workbench plug-in (org.eclipse.ui)\n'
+                                      'I could not find where menus are defined and where actionsviews for all\n'
+                                      'generic toolbars are defined.\n\nHow do I do this?\nCan this be done?\n'
+                                      'Is anybody using eclipse as a generic UI framework?\n\nI appreciate any help.\n\n'
+                                      'Thanks,\n\nDaniel Nehren\n\n')
+        self.assertEqual(len(html_body), 1557)
 
 
 class TestRemoveInvalidXMLChars(unittest.TestCase):

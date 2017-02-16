@@ -1,0 +1,220 @@
+Path: buffer2.nntp.dca1.giganews.com!local2.nntp.dca.giganews.com!nntp.example.com!news.example.com.POSTED!not-for-mail
+NNTP-Posting-Date: Tue, 15 Mar 2016 16:15:06 -0500
+Return-Path: <jwajsberg@example.com>
+X-Original-To: dev-project-link@lists.example.com
+Delivered-To: dev-project-link@lists.example.com
+X-Virus-Scanned: amavisd-new at example.com
+X-Spam-Flag: NO
+X-Spam-Score: -0.039
+X-Spam-Level:
+X-Spam-Status: No, score=-0.039 tagged_above=-999 required=5
+	tests=[BAYES_00=-0.05, HTML_MESSAGE=0.001, T_DKIM_INVALID=0.01]
+	autolearn=ham
+Authentication-Results: mailman2.mail.scl3.example.com (amavisd-new);
+	dkim=pass (2048-bit key) header.d=mozilla-com.20150623.gappssmtp.com
+Received-SPF: pass (example.com: Sender is authorized to use
+	'jwajsberg@example.com' in 'mfrom' identity (mechanism
+	'include:_spf.google.com' matched))
+	receiver=mailman2.mail.scl3.example.com; identity=mailfrom;
+	envelope-from="jwajsberg@example.com";
+	helo=mail-wm0-f45.google.com; client-ip=74.125.82.45
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=mozilla-com.20150623.gappssmtp.com; s=20150623;
+	h=subject:to:references:from:message-id:date:user-agent:mime-version
+	:in-reply-to; bh=eKwelnEj8qS5FK+qkg7lRI3BiDUuDjQgJW6PmfUGc6w=;
+	b=arc6O5neNEi7/ikY6Kn9gPqY2Q0Th7mGzQbaBIghuOUzQDI/XoV3E55+x9HY59ctl6
+	Ya8GPEtg5s1peg/A2fTRBqWZKxVFjEtA3JYxgFLkFdomZ/iAO0N6yHeLEisvv0ua720V
+	0+BcOoWfkl7AraJXplr9loOajCi1b5zqeMplzHcnoNAa3r1vwJBqFhISnPFV+v/jy+Fx
+	MRVaJWfQD1tfK+stW3tJ0jatkbr4lYt9clHrm9+YyjGf8qd2pzGUbAzD+L/uRtljRDOo
+	TgbgH8C/T43e/ufsLdtE5A+hJ4uU2pi5MhKE4g/79B8WW2zql9dp/SmjeN0m+6GaMN4w
+	Rulw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20130820;
+	h=x-gm-message-state:subject:to:references:from:message-id:date
+	:user-agent:mime-version:in-reply-to;
+	bh=eKwelnEj8qS5FK+qkg7lRI3BiDUuDjQgJW6PmfUGc6w=;
+	b=LyFBABIyHwnaO37TMWADE0IjgRPwbgbO2HlNmbs1QZz2QnEj8K5+qkpavSmN0NY2xj
+	mXXFCqoy4EzWRLQRNVcltKTxaJs6VtQciXONGz59b7JS69CRb8C3VfzpPM1bE5MK7RV5
+	SOYKgBO3Fxsl08bXhhqeQmvxgx2h6s/I5m+SdaurVTCYpW9m+7sRnx8EGPfSwfIiiazK
+	pQHuWU6uz4tBsIkZlaSdWU3bVc2/y/PEJclVK0pp7q2wfGVWiEYX0lkU1R18J8zEZ+wu
+	URgvIoEAj+pVWF9Iu2P2obakLWYgj6qjbZFSPPqxo7fDvylANEbUvCvApO+1diWfjvug
+	gvNg==
+X-Gm-Message-State: AD7BkJLZ250IyfoPN4WKpJtciKdpJVTIXrjj5vVhkU6gxPbhPS/Zd3N4HhV08FVtbXTH2Uty0MY=
+X-Received: by 10.28.141.141 with SMTP id p135mr25942600wmd.30.1458076501335;
+	Tue, 15 Mar 2016 14:15:01 -0700 (PDT)
+Subject: Re: Github wiki vs Mozilla wiki
+To: dev-project-link@lists.example.com
+References: <CANG1D=sjAZJ9BYp3N6YFQJaCS75TXtskrhWwGinAjsnGpACbbw@mail.gmail.com>
+From: Julien Wajsberg <jwajsberg@example.com>
+Date: Tue, 15 Mar 2016 22:14:56 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:38.0) Gecko/20100101
+	Thunderbird/38.6.0
+MIME-Version: 1.0
+In-Reply-To: <CANG1D=sjAZJ9BYp3N6YFQJaCS75TXtskrhWwGinAjsnGpACbbw@mail.gmail.com>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature";
+	boundary="lATx5p5hwwFl8QooX4JNWNU6e6LBSB7ES"
+X-BeenThere: dev-project-link@lists.example.com
+X-Mailman-Version: 2.1.18
+Precedence: list
+List-Id: Project Link <dev-project-link.lists.example.com>
+List-Unsubscribe: <https://lists.example.com/options/dev-project-link>,
+	<mailto:dev-project-link-request@lists.example.com?subject=unsubscribe>
+List-Post: <mailto:dev-project-link@lists.example.com>
+List-Help: <mailto:dev-project-link-request@lists.example.com?subject=help>
+List-Subscribe: <https://lists.example.com/listinfo/dev-project-link>,
+	<mailto:dev-project-link-request@lists.example.com?subject=subscribe>
+Approved: dev-project-link@lists.example.com
+Newsgroups: mozilla.dev.project-link
+Message-ID: <mailman.361.1458076505.14303.dev-project-link@example.com>
+Lines: 138
+X-Usenet-Provider: http://www.giganews.com
+NNTP-Posting-Host: 63.245.214.181
+X-AuthenticatedUsername: NoAuthUser
+X-Trace: sv3-qGvmUZkg5TqcLyPF2o4H4Sm6nohi3KmqShtyU4arIeblLK1yTCldZmO/QTgaEj22n3x6C++pbnaHNn6!P629cwi2CeArApYU/3VX6DuetBV7j9G9cmDAB6vt8GICL/spuXlqSyF6ZlWIumkW1ZwgtbX7I1c4!yqe4U9anEbkn0mWqStG0j+Wnr+eelykDD8E+Z5U=
+X-Complaints-To: abuse@example.com
+X-DMCA-Complaints-To: abuse@example.com
+X-Abuse-and-DMCA-Info: Please be sure to forward a copy of ALL headers
+X-Abuse-and-DMCA-Info: Otherwise we will be unable to process your complaint properly
+X-Postfilter: 1.3.40
+Bytes: 9356
+Xref: number.nntp.giganews.com mozilla.dev.project-link:4
+
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--lATx5p5hwwFl8QooX4JNWNU6e6LBSB7ES
+Content-Type: multipart/mixed; boundary="BcBoSs3xscKruJDbxjX7lbb5MCNnoews6"
+From: Julien Wajsberg <jwajsberg@example.com>
+To: dev-project-link@lists.example.com
+Message-ID: <56E87B50.20008@example.com>
+Subject: Re: Github wiki vs Mozilla wiki
+References: <CANG1D=sjAZJ9BYp3N6YFQJaCS75TXtskrhWwGinAjsnGpACbbw@mail.gmail.com>
+In-Reply-To: <CANG1D=sjAZJ9BYp3N6YFQJaCS75TXtskrhWwGinAjsnGpACbbw@mail.gmail.com>
+
+--BcBoSs3xscKruJDbxjX7lbb5MCNnoews6
+Content-Type: multipart/alternative;
+ boundary="------------090301070208020303070904"
+
+This is a multi-part message in MIME format.
+--------------090301070208020303070904
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: quoted-printable
+
+both works for me, as long as there are links from each one to the other.=
+
+
+Le 15/03/2016 12:05, Fernando Jim=E9nez Moreno a =E9crit :
+> Hello folks,
+>
+> during yesterday's weekly meeting we talked about the need of starting
+> to document the decisions that we are taking for Link. One of the
+> questions was about whether we should use Github's or Mozilla's wiki
+> for it. Both options looks good to me, but since there's already  some
+> documentation at [1], I'll start adding more documentation there
+> tomorrow unless someone disagrees and prefers Github's option.
+>
+> Cheers,
+>
+> / Fernando
+>
+> [1] https://wiki.mozilla.org/Project_Link
+>
+>
+> _______________________________________________
+> dev-project-link mailing list
+> dev-project-link@lists.mozilla.org
+> https://lists.mozilla.org/listinfo/dev-project-link
+
+
+--------------090301070208020303070904
+Content-Type: text/html; charset=windows-1252
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+  <head>
+    <meta content=3D"text/html; charset=3Dwindows-1252"
+      http-equiv=3D"Content-Type">
+  </head>
+  <body bgcolor=3D"#FFFFFF" text=3D"#000000">
+    both works for me, as long as there are links from each one to the
+    other.<br>
+    <br>
+    <div class=3D"moz-cite-prefix">Le 15/03/2016 12:05, Fernando Jim=E9ne=
+z
+      Moreno a =E9crit=A0:<br>
+    </div>
+    <blockquote
+cite=3D"mid:CANG1D=3DsjAZJ9BYp3N6YFQJaCS75TXtskrhWwGinAjsnGpACbbw@mail.gm=
+ail.com"
+      type=3D"cite">
+      <div dir=3D"ltr">
+        <div>
+          <div>
+            <div>Hello folks,<br>
+              <br>
+            </div>
+            during yesterday's weekly meeting we talked about the need
+            of starting to document the decisions that we are taking for
+            Link. One of the questions was about whether we should use
+            Github's or Mozilla's wiki for it. Both options looks good
+            to me, but since there's already=A0 some documentation at [1]=
+,
+            I'll start adding more documentation there tomorrow unless
+            someone disagrees and prefers Github's option.<br>
+            <br>
+          </div>
+          Cheers,<br>
+          <br>
+        </div>
+        / Fernando<br>
+        <div>
+          <div><br>
+            [1] <a moz-do-not-send=3D"true"
+              href=3D"https://wiki.mozilla.org/Project_Link">https://wiki=
+=2Emozilla.org/Project_Link</a><br>
+          </div>
+        </div>
+      </div>
+      <br>
+      <fieldset class=3D"mimeAttachmentHeader"></fieldset>
+      <br>
+      <pre wrap=3D"">_______________________________________________
+dev-project-link mailing list
+<a class=3D"moz-txt-link-abbreviated" href=3D"mailto:dev-project-link@lis=
+ts.mozilla.org">dev-project-link@lists.mozilla.org</a>
+<a class=3D"moz-txt-link-freetext" href=3D"https://lists.mozilla.org/list=
+info/dev-project-link">https://lists.mozilla.org/listinfo/dev-project-lin=
+k</a>
+</pre>
+    </blockquote>
+    <br>
+  </body>
+</html>
+
+--------------090301070208020303070904--
+
+--BcBoSs3xscKruJDbxjX7lbb5MCNnoews6--
+
+--lATx5p5hwwFl8QooX4JNWNU6e6LBSB7ES
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJW6HtTAAoJEHjtma/kG/DBYNQP/24Ru2AoFphHqE2Q8v0dVc0Q
+waTtpeL8JWt4pg5P2krxEIG8pF3vHMnWkOtyNEKVpEeOqaeMFSWY7gXYa6itTjQb
+3iz4xWqJ3X8vfRTdj+Jt/COj6+0BQks3Ds45lH4eS6KH6j+pd46LRkp+cQSYzH25
+w9Q78XuIhe+fXy3gNoUTri+4iC7x4QfBE6BcXZfqnI9iWwUCveVXZcbphzdzfNWs
+PILf30chIfHvSpYibIEMK1qI20Nqi+4A/Ikcwhn10HiFV9ULUVuuOiH51iPVBNxE
+TVLpvuk52WEf6K1NjqBF8jjy1keUCJj+XDtOwrf5oxm3yYBr31AsWxo3VN1aOMu/
+WmODXsihxO+GDtw4ag7JupKgVE5m+1uxqHop4ligPFx2fGspDMoajoh1lYMeE/cW
+1pXcWOdH5WhUhwx6RQnihbaadHUU5ZMhNFcWuz7ZeoxY1Dc5H9AdN5ai6HwGA1S6
+x3bX8oiH2fLPxVu/E8345eawr1etx0FuHWjPDIQC8UlOUDHC2QV91KeivxmWl0er
+6P/QjiCqfzkB3HrnlYQDdg+Nwf77uegF0VKUg/3xBYGzrXDD5yqZGvoGj2iqxgG5
+KkLmJRqbfBAkq9t+wSMRGLrQYqy59TE5zt18oZYGaJPMyS+44BlCd7hDwRtHgQFR
+CtQ1wCe0JqcjJuFTbyQK
+=PpCi
+-----END PGP SIGNATURE-----
+
+--lATx5p5hwwFl8QooX4JNWNU6e6LBSB7ES--

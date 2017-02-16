@@ -1,0 +1,109 @@
+Path: buffer1.nntp.dca1.giganews.com!local2.nntp.dca.giganews.com!nntp.example.com!news.example.com.POSTED!not-for-mail
+NNTP-Posting-Date: Tue, 15 Mar 2016 11:49:40 -0500
+Return-Path: <fmoreno@example.com>
+X-Original-To: dev-project-link@example.com
+Delivered-To: dev-project-link@example.com
+X-Virus-Scanned: amavisd-new at example.com
+X-Spam-Flag: NO
+X-Spam-Score: -0.039
+X-Spam-Level:
+X-Spam-Status: No, score=-0.039 tagged_above=-999 required=5
+	tests=[BAYES_00=-0.05, HTML_MESSAGE=0.001, T_DKIM_INVALID=0.01]
+	autolearn=ham
+Authentication-Results: mailman2.mail.scl3.mozilla.com (amavisd-new);
+	dkim=pass (2048-bit key) header.d=mozilla-com.20150623.gappssmtp.com
+Received-SPF: pass (mozilla.com: Sender is authorized to use
+	'fmoreno@example.com' in 'mfrom' identity (mechanism
+	'include:_spf.google.com' matched))
+	receiver=mailman2.mail.scl3.example.com; identity=mailfrom;
+	envelope-from="fmoreno@example.com";
+	helo=mail-ig0-f180.google.com; client-ip=209.85.213.180
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=example-com.20150623.gappssmtp.com; s=20150623;
+	h=mime-version:from:date:message-id:subject:to;
+	bh=XpjjHr0J+PwJz/iZsNscNQUzAwDzyC71A8Od592R3+A=;
+	b=el9v0GciRHH6OVvC9FO9NJJN0waEwjkrcCPxT1TsHuRpqZ7t+WFXQo/9Dg5mViROY2
+	rqPPptN7b28+mvzrZMyE4+piFdL4/B4Rg3jrA58ly+eM9kv87eI3tabZC7yfOShHM0Tt
+	8dnZLeueLcu8yY8CQRKpemOFl4DMWOr7cNGLHb4nOCaoV+W7ZxVhqH7x+SAwFHpuod9R
+	IF/37aG4mQnGYhRnY7c/nTPnVdPth9HgzvXyJp8+jxSQzzLOmbA+zdYoHzgxuy8fr+rO
+	3CQt0CzdvdmcQs6Hkuozia2Pv3Ur+lf2jftXK+PRH/yBiQJSxDmRdydkjzmQfpobcFm9
+	tdCA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20130820;
+	h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+	bh=XpjjHr0J+PwJz/iZsNscNQUzAwDzyC71A8Od592R3+A=;
+	b=lBrcKjuTZMMaTtYeNSrSBInL5XYlxj7ByApUuxQCmFTPnELCNflOVOGj0h7kTG02hV
+	1jr02iR7NUalqQURQj+U8Q7XJsqXReDE/OYgfcOl3N+kENwMa1/3bfHdpIyCKy1MZ8Gi
+	MUH7K2Wszk5zmpqmp3mAIDScZvT5LYmmTbR/LwUNPzQqBVsNJRenvpNkorZJ1ZrNH4S3
+	UolHirKVScUSmYpNRkmYIb9U1MzyDr2+OPXFfHQlSkXkh6AoFzHesgupuFelScnU12+y
+	nzPgTgMBXUdVOekKv5lXHeVFtkE4RQtoWDq6PR/oKXYqJSblVxpkKZwIXb2EZT+1PMqK
+	sDKQ==
+X-Gm-Message-State: AD7BkJKWK2KbGMSfhjyJdJnamOXCQrwYJxfyK5lUGU1BVsADuC9dcBt42tg914koeZH6p/ceL0cFv5VETNRHEJx6e8E=
+X-Received: by 10.50.73.133 with SMTP id l5mr23319345igv.69.1458039968327;
+	Tue, 15 Mar 2016 04:06:08 -0700 (PDT)
+MIME-Version: 1.0
+From: =?UTF-8?Q?Fernando_Jim=C3=A9nez_Moreno?= <fmoreno@example.com>
+Date: Tue, 15 Mar 2016 12:05:48 +0100
+Subject: Github wiki vs Mozilla wiki
+To: dev-project-link@example.com
+Content-Type: multipart/alternative; boundary=089e0129483a618a18052e14622c
+X-Mailman-Approved-At: Tue, 15 Mar 2016 16:49:38 +0000
+X-BeenThere: dev-project-link@example.com
+X-Mailman-Version: 2.1.18
+Precedence: list
+List-Id: Project Link <dev-project-link.example.com>
+List-Unsubscribe: <https://lists.example.com/options/dev-project-link>,
+	<mailto:dev-project-link-request@example.com?subject=unsubscribe>
+List-Post: <mailto:dev-project-link@example.com>
+List-Help: <mailto:dev-project-link-request@example.com?subject=help>
+List-Subscribe: <https://example.com/listinfo/dev-project-link>,
+	<mailto:dev-project-link-request@example.com?subject=subscribe>
+Approved: dev-project-link@example.com
+Newsgroups: example.dev.project-link
+Message-ID: <mailman.350.1458060579.14303.dev-project-link@example.com>
+Lines: 33
+X-Usenet-Provider: http://www.giganews.com
+NNTP-Posting-Host: 63.245.214.181
+X-AuthenticatedUsername: NoAuthUser
+X-Trace: sv3-qQZkBDwnOwVOqdNdabkT/ZYOpArkZ/uPkNVLB1izscP2W3cVLymKopoD0eiqo/Dk3BJQ1Sd1RF9cBds!2uojUiUqSwRC/jg5CfsKk9fzTfKBSZZ8LXyoyD9gcLxEWJmQlCl262ebbHFCGojIxzzx7nY1Ql3m!4HgxF9GQHcdWaE6bWRxz7TFHjveAaIuHU53D0vI=
+X-Complaints-To: abuse@example.com
+X-DMCA-Complaints-To: abuse@example.com
+X-Abuse-and-DMCA-Info: Please be sure to forward a copy of ALL headers
+X-Abuse-and-DMCA-Info: Otherwise we will be unable to process your complaint properly
+X-Postfilter: 1.3.40
+Bytes: 5458
+Xref: number.nntp.giganews.com example.dev.project-link:2
+
+--089e0129483a618a18052e14622c
+Content-Type: text/plain; charset=UTF-8
+
+Hello folks,
+
+during yesterday's weekly meeting we talked about the need of starting to
+document the decisions that we are taking for Link. One of the questions
+was about whether we should use Github's or Mozilla's wiki for it. Both
+options looks good to me, but since there's already  some documentation at
+[1], I'll start adding more documentation there tomorrow unless someone
+disagrees and prefers Github's option.
+
+Cheers,
+
+/ Fernando
+
+[1] https://wiki.mozilla.org/Project_Link
+
+--089e0129483a618a18052e14622c
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><div><div>Hello folks,<br><br></div>during yesterday&=
+#39;s weekly meeting we talked about the need of starting to document the d=
+ecisions that we are taking for Link. One of the questions was about whethe=
+r we should use Github&#39;s or Mozilla&#39;s wiki for it. Both options loo=
+ks good to me, but since there&#39;s already=C2=A0 some documentation at [1=
+], I&#39;ll start adding more documentation there tomorrow unless someone d=
+isagrees and prefers Github&#39;s option.<br><br></div>Cheers,<br><br></div=
+>/ Fernando<br><div><div><br>[1] <a href=3D"https://wiki.mozilla.org/Projec=
+t_Link">https://wiki.mozilla.org/Project_Link</a><br></div></div></div>
+
+--089e0129483a618a18052e14622c--

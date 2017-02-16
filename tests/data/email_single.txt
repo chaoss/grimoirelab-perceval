@@ -1,0 +1,13 @@
+From goran at domain.com  Wed Dec  1 08:26:40 2010
+From: goran at domain.com (=?ISO-8859-1?Q?G=F6ran_Lastname?=)
+Date: Wed, 01 Dec 2010 14:26:40 +0100
+Subject: [List-name] Protocol Buffers anyone?
+Message-ID: <4CF64D10.9020206@domain.com>
+
+Hi!
+
+A message in English, with a signature with a different encoding.
+
+regards, G?ran
+
+
