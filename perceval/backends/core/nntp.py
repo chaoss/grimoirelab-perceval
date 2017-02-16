@@ -27,7 +27,10 @@ import nntplib
 
 import email.parser
 
-from ...backend import Backend, metadata
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import CacheError
 from ...utils import str_to_datetime, message_to_dict
 
@@ -243,3 +246,24 @@ class NNTP(Backend):
         message = email.message_from_string(raw_article)
         article = message_to_dict(message)
         return article
+
+
+class NNTPCommand(BackendCommand):
+    """Class to run NNTP backend from the command line."""
+
+    BACKEND = NNTP
+
+    @staticmethod
+    def setup_cmd_parser():
+        """Returns the NNTP argument parser."""
+
+        parser = BackendCommandArgumentParser(offset=True,
+                                              cache=True)
+
+        # Required arguments
+        parser.parser.add_argument('host',
+                                   help="NNTP server host")
+        parser.parser.add_argument('group',
+                                   help="Name of the NNTP group")
+
+        return parser

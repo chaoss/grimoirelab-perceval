@@ -35,9 +35,11 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
-from perceval.backends.core.nntp import NNTP
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
+from perceval.backends.core.nntp import (NNTP,
+                                         NNTPCommand)
 
 
 NNTP_SERVER = 'nntp.example.com'
@@ -267,6 +269,34 @@ class TestNNTPBackendCache(unittest.TestCase):
 
         with self.assertRaises(CacheError):
             _ = [article for article in nntp.fetch_from_cache()]
+
+
+class TestNNTPCommand(unittest.TestCase):
+    """Tests for NNTPCommand class"""
+
+    def test_backend_class(self):
+        """Test if the backend class is Phabricator"""
+
+        self.assertIs(NNTPCommand.BACKEND, NNTP)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = NNTPCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
+
+        args = ['nntp.example.com',
+                'example.dev.project-link',
+                '--tag', 'test',
+                '--no-cache',
+                '--offset', '6']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.host, 'nntp.example.com')
+        self.assertEqual(parsed_args.group, 'example.dev.project-link')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.offset, 6)
 
 
 if __name__ == "__main__":
