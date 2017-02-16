@@ -23,7 +23,6 @@
 # Note: some ot this code was taken from the MailingListStats project
 #
 
-import email
 import logging
 import mailbox
 import os
@@ -32,16 +31,15 @@ import tempfile
 import gzip
 import bz2
 
-import requests.structures
-
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import InvalidDateError, ParseError
+from ...errors import InvalidDateError
 from ...utils import (DEFAULT_DATETIME,
                       check_compressed_file_type,
                       datetime_to_utc,
+                      message_to_dict,
                       str_to_datetime)
 
 
@@ -62,7 +60,7 @@ class MBox(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.7.2'
+    version = '0.7.3'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
@@ -265,68 +263,10 @@ class MBox(Backend):
         :returns : generator of messages; each message is stored in a
             dictionary of type `requests.structures.CaseInsensitiveDict`
         """
-        def parse_headers(msg):
-            headers = {}
-
-            for header, value in msg.items():
-                hv = []
-
-                for text, charset in email.header.decode_header(value):
-                    if type(text) == bytes:
-                        charset = charset if charset else 'utf-8'
-                        try:
-                            text = text.decode(charset, errors='surrogateescape')
-                        except (UnicodeError, LookupError):
-                            # Try again with a 7bit encoding
-                            text = text.decode('ascii', errors='surrogateescape')
-                    hv.append(text)
-
-                v = ' '.join(hv)
-                headers[header] = v if v else None
-
-            return headers
-
-        def parse_payload(msg):
-            body = {}
-
-            if not msg.is_multipart():
-                payload = decode_payload(msg)
-                subtype = msg.get_content_subtype()
-                body[subtype] = [payload]
-            else:
-                # Include all the attached texts if it is multipart
-                # Ignores binary parts by default
-                for part in email.iterators.typed_subpart_iterator(msg):
-                    payload = decode_payload(part)
-                    subtype = part.get_content_subtype()
-                    body.setdefault(subtype, []).append(payload)
-
-            return {k : '\n'.join(v) for k, v in body.items()}
-
-        def decode_payload(msg_or_part):
-            charset = msg_or_part.get_content_charset('utf-8')
-            payload = msg_or_part.get_payload(decode=True)
-
-            try:
-                payload = payload.decode(charset, errors='surrogateescape')
-            except (UnicodeError, LookupError):
-                # Try again with a 7bit encoding
-                payload = payload.decode('ascii', errors='surrogateescape')
-            return payload
-
         mbox = _MBox(filepath, create=False)
 
         for msg in mbox:
-            message = requests.structures.CaseInsensitiveDict()
-            message['unixfrom'] = msg.get_from()
-
-            try:
-                for k, v in parse_headers(msg).items():
-                    message[k] = v
-                message['body'] = parse_payload(msg)
-            except UnicodeError as e:
-                raise ParseError(str(e))
-
+            message = message_to_dict(msg)
             yield message
 
 

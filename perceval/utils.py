@@ -22,8 +22,10 @@
 #
 
 import datetime
+import email
 import inspect
 import logging
+import mailbox
 import re
 import sys
 
@@ -32,6 +34,8 @@ import xml.etree.ElementTree
 import dateutil.parser
 import dateutil.rrule
 import dateutil.tz
+
+import requests
 
 from .errors import InvalidDateError, ParseError
 
@@ -215,6 +219,93 @@ def urljoin(*args):
     :returns: a URL string
     """
     return '/'.join(map(lambda x: str(x).strip('/'), args))
+
+
+def message_to_dict(msg):
+    """Convert an email message into a dictionary.
+
+    This function transforms an `email.message.Message` object
+    into a dictionary. Headers are stored as key:value pairs
+    while the body of the message is stored inside `body` key.
+    Body may have two other keys inside, 'plain', for plain body
+    messages and 'html', for HTML encoded messages.
+
+    The returned dictionary has the type `requests.structures.CaseInsensitiveDict`
+    due to same headers with different case formats can appear in
+    the same message.
+
+    :param msg: email message of type `email.message.Message`
+
+    :returns : dictionary of type `requests.structures.CaseInsensitiveDict`
+
+    :raises ParseError: when an error occurs transforming the message
+        to a dictionary
+    """
+    def parse_headers(msg):
+        headers = {}
+
+        for header, value in msg.items():
+            hv = []
+
+            for text, charset in email.header.decode_header(value):
+                if type(text) == bytes:
+                    charset = charset if charset else 'utf-8'
+                    try:
+                        text = text.decode(charset, errors='surrogateescape')
+                    except (UnicodeError, LookupError):
+                        # Try again with a 7bit encoding
+                        text = text.decode('ascii', errors='surrogateescape')
+                hv.append(text)
+
+            v = ' '.join(hv)
+            headers[header] = v if v else None
+
+        return headers
+
+    def parse_payload(msg):
+        body = {}
+
+        if not msg.is_multipart():
+            payload = decode_payload(msg)
+            subtype = msg.get_content_subtype()
+            body[subtype] = [payload]
+        else:
+            # Include all the attached texts if it is multipart
+            # Ignores binary parts by default
+            for part in email.iterators.typed_subpart_iterator(msg):
+                payload = decode_payload(part)
+                subtype = part.get_content_subtype()
+                body.setdefault(subtype, []).append(payload)
+
+        return {k : '\n'.join(v) for k, v in body.items()}
+
+    def decode_payload(msg_or_part):
+        charset = msg_or_part.get_content_charset('utf-8')
+        payload = msg_or_part.get_payload(decode=True)
+
+        try:
+            payload = payload.decode(charset, errors='surrogateescape')
+        except (UnicodeError, LookupError):
+            # Try again with a 7bit encoding
+            payload = payload.decode('ascii', errors='surrogateescape')
+        return payload
+
+    # The function starts here
+    message = requests.structures.CaseInsensitiveDict()
+
+    if isinstance(msg, mailbox.mboxMessage):
+        message['unixfrom'] = msg.get_from()
+    else:
+        message['unixfrom'] = None
+
+    try:
+        for k, v in parse_headers(msg).items():
+            message[k] = v
+        message['body'] = parse_payload(msg)
+    except UnicodeError as e:
+        raise ParseError(str(e))
+
+    return message
 
 
 def remove_invalid_xml_chars(raw_xml):

@@ -1,0 +1,191 @@
+From yves.yang@example.org  Wed Nov 11 21:29:20 2009
+Return-Path: <yves.yang@example.org>
+X-Original-To: esl-dev@eclipse.org
+Delivered-To: esl-dev@eclipse.org
+From: "yves (yingmin) yang" <yves.yang@example.com>
+To: <esl-dev@eclipse.org>
+Date: Thu, 12 Nov 2009 03:29:24 +0100
+Message-ID: <019801ca633f$f4376140$dca623c0$@yang@example.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_0199_01CA6348.55FBC940"
+X-Mailer: Microsoft Office Outlook 12.0
+Content-language: en-us
+Thread-Index: AcpjP/LglPpfCKgGQKS3Gc5CAsQpug==
+Subject: [esl-dev] Committer vote for Chuwei Huang has concluded successfully
+X-BeenThere: esl-dev@eclipse.org
+X-Mailman-Version: 2.1.5
+Precedence: list
+Reply-To: Eclipse Tools for Silverlight Development team <esl-dev@eclipse.org>
+List-Id: Eclipse Tools for Silverlight Development team <esl-dev.eclipse.org>
+List-Unsubscribe: <https://dev.eclipse.org/mailman/listinfo/esl-dev>,
+	<mailto:esl-dev-request@eclipse.org?subject=unsubscribe>
+List-Archive: <https://dev.eclipse.org/mailman/private/esl-dev>
+List-Post: <mailto:esl-dev@eclipse.org>
+List-Help: <mailto:esl-dev-request@eclipse.org?subject=help>
+List-Subscribe: <https://dev.eclipse.org/mailman/listinfo/esl-dev>,
+	<mailto:esl-dev-request@eclipse.org?subject=subscribe>
+X-List-Received-Date: Thu, 12 Nov 2009 02:29:21 -0000
+
+This is a multipart message in MIME format.
+
+------=_NextPart_000_0199_01CA6348.55FBC940
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+
+technology.esl Committers,
+
+This automatically generated message marks the successful completion of
+voting for Chuwei Huang to receive full Committer status on the
+technology.esl project. The next step is for the PMC to approve this vote,
+followed by the EMO processing the paperwork and provisioning the account.
+
+
+
+Vote summary: 4/0/0 with 0 not voting
+
+  +1  Thomas Guiu
+
+  +1  Jin Liu
+
+  +1  Yves YANG
+
+  +1  Bo Zhou
+
+
+
+If you have any questions, please do not hesitate to contact your project
+lead, PMC member, or the EMO <emo@example.org>
+
+
+
+
+
+
+------=_NextPart_000_0199_01CA6348.55FBC940
+Content-Type: text/html;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
+xmlns=3D"http://www.w3.org/TR/REC-html40">
+
+<head>
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
+charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 12 (filtered medium)">
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:SimSun;
+	panose-1:2 1 6 0 3 1 1 1 1 1;}
+@font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+@font-face
+	{font-family:"\@SimSun";
+	panose-1:2 1 6 0 3 1 1 1 1 1;}
+@font-face
+	{font-family:Consolas;
+	panose-1:2 11 6 9 2 2 4 3 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:purple;
+	text-decoration:underline;}
+p.MsoPlainText, li.MsoPlainText, div.MsoPlainText
+	{mso-style-priority:99;
+	mso-style-link:"Plain Text Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	font-size:10.5pt;
+	font-family:Consolas;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"Calibri","sans-serif";
+	color:windowtext;}
+span.PlainTextChar
+	{mso-style-name:"Plain Text Char";
+	mso-style-priority:99;
+	mso-style-link:"Plain Text";
+	font-family:Consolas;}
+.MsoChpDefault
+	{mso-style-type:export-only;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.0in 1.0in 1.0in;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+<!--[if gte mso 9]><xml>
+ <o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <o:shapelayout v:ext=3D"edit">
+  <o:idmap v:ext=3D"edit" data=3D"1" />
+ </o:shapelayout></xml><![endif]-->
+</head>
+
+<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
+
+<div class=3DSection1>
+
+<p class=3DMsoPlainText>technology.esl Committers,<o:p></o:p></p>
+
+<p class=3DMsoPlainText>This automatically generated message marks the =
+successful
+completion of voting for Chuwei Huang to receive full Committer status =
+on the
+technology.esl project. The next step is for the PMC to approve this =
+vote,
+followed by the EMO processing the paperwork and provisioning the =
+account.<o:p></o:p></p>
+
+<p class=3DMsoPlainText><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoPlainText>Vote summary: 4/0/0 with 0 not =
+voting<o:p></o:p></p>
+
+<p class=3DMsoPlainText>&nbsp; +1&nbsp; Thomas Guiu<o:p></o:p></p>
+
+<p class=3DMsoPlainText>&nbsp; +1&nbsp; Jin Liu<o:p></o:p></p>
+
+<p class=3DMsoPlainText>&nbsp; +1&nbsp; Yves YANG<o:p></o:p></p>
+
+<p class=3DMsoPlainText>&nbsp; +1&nbsp; Bo Zhou<o:p></o:p></p>
+
+<p class=3DMsoPlainText><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoPlainText>If you have any questions, please do not =
+hesitate to
+contact your project lead, PMC member, or the EMO =
+&lt;emo@example.org&gt;<o:p></o:p></p>
+
+<p class=3DMsoPlainText><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+</div>
+
+</body>
+
+</html>
+
+------=_NextPart_000_0199_01CA6348.55FBC940--

@@ -1,0 +1,107 @@
+From Daniel.Nehren@example.com  Wed Jan 29 17:30:32 2003
+Return-Path: <Daniel.Nehren@example.com>
+Delivered-To: platform-dev@eclipse.org
+Message-ID: <FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>
+From: "Nehren, Daniel" <Daniel.Nehren@example.com>
+To: "'platform-dev@eclipse.org'" <platform-dev@eclipse.org>
+Date: Wed, 29 Jan 2003 17:02:30 -0600
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2655.55)
+Content-Type: multipart/alternative;
+    boundary="----_=_NextPart_001_01C2C7EA.7C35AD84"
+Subject: [platform-dev] Removing standard menus and toolbar icons
+Sender: platform-dev-admin@eclipse.org
+Errors-To: platform-dev-admin@eclipse.org
+X-BeenThere: platform-dev@eclipse.org
+X-Mailman-Version: 2.0.13
+Precedence: bulk
+Reply-To: platform-dev@eclipse.org
+List-Help: <mailto:platform-dev-request@eclipse.org?subject=help>
+List-Post: <mailto:platform-dev@eclipse.org>
+List-Subscribe: <http://dev.eclipse.org/mailman/listinfo/platform-dev>,
+    <mailto:platform-dev-request@eclipse.org?subject=subscribe>
+List-Id: Eclipse platform general developers list. <platform-dev.eclipse.org>
+List-Unsubscribe: <http://dev.eclipse.org/mailman/listinfo/platform-dev>,
+    <mailto:platform-dev-request@eclipse.org?subject=unsubscribe>
+List-Archive: <http://dev.eclipse.org/pipermail/platform-dev/>
+
+This message is in MIME format. Since your mail reader does not understand
+this format, some or all of this message may not be legible.
+
+------_=_NextPart_001_01C2C7EA.7C35AD84
+Content-Type: text/plain
+
+I am fairly new to eclipse. I am evaluating the use of eclipse for a generic
+UI framework that is not necessarily related to code generation.
+Eclipse is very flexible and adding functionality seems straightforward. I
+can still use the project concept for what I need but there are things in
+the Workbench window that I don't want. For example the Open perspective
+icon, or some of the menus, like the Windows and project menu .
+
+I understand that by using retargetable actions I can have my view taking
+over most of the actions, but I could not figure out how to block the core
+plug-in to put their own actions. In the workbench plug-in (org.eclipse.ui)
+I could not find where menus are defined and where actionsviews for all
+generic toolbars are defined.
+
+How do I do this?
+Can this be done?
+Is anybody using eclipse as a generic UI framework?
+
+I appreciate any help.
+
+Thanks,
+
+Daniel Nehren
+
+
+------_=_NextPart_001_01C2C7EA.7C35AD84
+Content-Type: text/html
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
+charset=3Dus-ascii">
+<META NAME=3D"Generator" CONTENT=3D"MS Exchange Server version =
+5.5.2656.36">
+<TITLE>Removing standard menus and toolbar icons</TITLE>
+</HEAD>
+<BODY>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">I am fairly new to eclipse. I am =
+evaluating the use of eclipse for a generic UI framework that is not =
+necessarily related to code generation.</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">Eclipse is very flexible and adding =
+functionality seems straightforward. I can still use the project =
+concept for what I need but there are things in the Workbench window =
+that I don't want. For example the Open perspective icon, or some of =
+the menus, like the Windows and project menu .</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">I understand that by using =
+retargetable actions I can have my view taking over most of the =
+actions, but I could not figure out how to block the core plug-in to =
+put their own actions. In the workbench plug-in (org.eclipse.ui)&nbsp; =
+I could not find where menus are defined and where actionsviews for all =
+generic toolbars are defined.</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">How do I do this?</FONT>
+<BR><FONT SIZE=3D2 FACE=3D"Arial">Can this be done? </FONT>
+<BR><FONT SIZE=3D2 FACE=3D"Arial">Is anybody using eclipse as a generic =
+UI framework? </FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">I appreciate any help.</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">Thanks,</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">Daniel Nehren</FONT>
+</P>
+
+</BODY>
+</HTML>
+------_=_NextPart_001_01C2C7EA.7C35AD84--
