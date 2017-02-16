@@ -28,6 +28,7 @@ import nntplib
 import email.parser
 
 from ...backend import Backend, metadata
+from ...errors import CacheError
 from ...utils import str_to_datetime, message_to_dict
 
 
@@ -87,6 +88,8 @@ class NNTP(Backend):
         logger.info("Fetching articles of '%s' group on '%s' offset %s",
                     self.group, self.host, str(offset))
 
+        self._purge_cache_queue()
+
         narts, tarts = (0, 0)
 
         # Connect with the server and select the given group
@@ -103,12 +106,61 @@ class NNTP(Backend):
                 article = self.__fetch_and_parse_article(client, article_id)
                 yield article
                 narts += 1
+                self._flush_cache_queue()
 
         logger.info("Fetch process completed: %s/%s articles fetched",
                     narts, tarts)
 
+    @nntp_metadata
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch the articles from the cache.
+
+        It returns the articles stored in the cache object, provided during
+        the initialization of the object. If this method is called but
+        no cache object was provided, the method will raise a `CacheError`
+        exception.
+
+        :returns: a generator of articles
+
+        :raises CacheError: raised when an error occurs accessing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        logger.info("Retrieving cached articles of '%s' group on '%s'",
+                    self.group, self.host)
+
+        cache_items = self.cache.retrieve()
+
+        narts = 0
+
+        for raw_item in cache_items:
+            reader = io.BytesIO(b'\n'.join(raw_item['lines']))
+            raw_article = reader.read().decode('utf-8', errors='surrogateescape')
+            data = self.parse_article(raw_article)
+
+            article = self.__build_article(data,
+                                           raw_item['message_id'],
+                                           raw_item['number'])
+
+            yield article
+            narts += 1
+
+        logger.info("Retrieval process completed: %s articles retrieved from cache",
+                    narts)
+
     def __fetch_and_parse_article(self, client, article_id):
         _, info = client.article(article_id)
+
+        # Store data on the cache
+        cache_data = {
+            'number' : info.number,
+            'message_id' : info.message_id,
+            'lines' : info.lines
+        }
+        self._push_cache_queue(cache_data)
 
         # Parse article data
         reader = io.BytesIO(b'\n'.join(info.lines))
@@ -134,9 +186,9 @@ class NNTP(Backend):
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend does not support items cache
+        :returns: this backend supports items cache
         """
-        return False
+        return True
 
     @classmethod
     def has_resuming(cls):

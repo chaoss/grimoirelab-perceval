@@ -22,7 +22,9 @@
 #
 
 import collections
+import shutil
 import sys
+import tempfile
 import unittest
 import unittest.mock
 
@@ -34,6 +36,9 @@ sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backends.core.nntp import NNTP
+from perceval.cache import Cache
+from perceval.errors import CacheError
+
 
 NNTP_SERVER = 'nntp.example.com'
 NNTP_GROUP = 'example.dev.project-link'
@@ -105,9 +110,9 @@ class TestNNTPBackend(unittest.TestCase):
         self.assertEqual(nntp.tag, expected_origin)
 
     def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
+        """Test if it returns True when has_caching is called"""
 
-        self.assertEqual(NNTP.has_caching(), False)
+        self.assertEqual(NNTP.has_caching(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -197,6 +202,71 @@ class TestNNTPBackend(unittest.TestCase):
                                         "/ Fernando\n\n"
                                         "[1] https://wiki.mozilla.org/Project_Link\n")
         self.assertEqual(len(body['html']), 663)
+
+
+class TestNNTPBackendCache(unittest.TestCase):
+    """NNTP backend tests using a cache"""
+
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    @unittest.mock.patch('nntplib.NNTP')
+    def test_fetch_from_cache(self, mock_nntp):
+        """Test whether the cache works"""
+
+        mock_nntp.return_value = MockNNTPLib()
+
+        # First, we fetch the tasks from the server,
+        # storing them in a cache
+        cache = Cache(self.tmp_path)
+        nntp = NNTP(NNTP_SERVER, NNTP_GROUP, cache=cache)
+        articles = [article for article in nntp.fetch()]
+
+        self.assertEqual(len(articles), 2)
+
+        # Now, we get the articles from the cache which
+        # should be the same
+        cached_articles = [article for article in nntp.fetch_from_cache()]
+        self.assertEqual(len(cached_articles), len(articles))
+
+        expected = [('<mailman.350.1458060579.14303.dev-project-link@example.com>', 1, 'd088688545d7c2f3733993e215503b367193a26d', 1458060580.0),
+                    ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2, '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076506.0)]
+        expected_origin = NNTP_SERVER + '-' + NNTP_GROUP
+
+        self.assertEqual(len(cached_articles), len(expected))
+
+        for x in range(len(cached_articles)):
+            carticle = cached_articles[x]
+            expc = expected[x]
+            self.assertEqual(carticle['data']['message_id'], expc[0])
+            self.assertEqual(carticle['offset'], expc[1])
+            self.assertEqual(carticle['uuid'], expc[2])
+            self.assertEqual(carticle['origin'], expected_origin)
+            self.assertEqual(carticle['updated_on'], expc[3])
+            self.assertEqual(carticle['category'], 'article')
+            self.assertEqual(carticle['tag'], expected_origin)
+
+            # Compare chached and fetched task
+            self.assertDictEqual(carticle['data'], articles[x]['data'])
+
+    def test_fetch_from_empty_cache(self):
+        """Test if there are not any articles returned when the cache is empty"""
+
+        cache = Cache(self.tmp_path)
+        nntp = NNTP(NNTP_SERVER, NNTP_GROUP, cache=cache)
+        cached_articles = [article for article in nntp.fetch_from_cache()]
+        self.assertEqual(len(cached_articles), 0)
+
+    def test_fetch_from_non_set_cache(self):
+        """Test if a error is raised when the cache was not set"""
+
+        nntp = NNTP(NNTP_SERVER, NNTP_GROUP)
+
+        with self.assertRaises(CacheError):
+            _ = [article for article in nntp.fetch_from_cache()]
 
 
 if __name__ == "__main__":
