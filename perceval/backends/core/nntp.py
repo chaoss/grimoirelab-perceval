@@ -35,8 +35,10 @@ from ...errors import CacheError
 from ...utils import str_to_datetime, message_to_dict
 
 
-logger = logging.getLogger(__name__)
+# Hack to avoid "line too long" errors
+nntplib._MAXLINE = 4096
 
+logger = logging.getLogger(__name__)
 
 DEFAULT_OFFSET = 1
 
@@ -67,7 +69,7 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.2.0'
+    version = '0.2.1'
 
     def __init__(self, host, group, tag=None, cache=None):
         origin = host + '-' + group
