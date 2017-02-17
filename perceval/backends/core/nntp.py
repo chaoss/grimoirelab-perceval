@@ -67,7 +67,7 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     def __init__(self, host, group, tag=None, cache=None):
         origin = host + '-' + group
@@ -97,15 +97,19 @@ class NNTP(Backend):
 
         # Connect with the server and select the given group
         with nntplib.NNTP(self.host) as client:
-            _, _, first, last, _ = client.group(self.group)
+            _, _, first, last , _ = client.group(self.group)
 
-            first = max(first, offset)
-            last = last + 1
-            tarts = last - first if last >= first else 0
+            if offset <= last:
+                first = max(first, offset)
+                _, overview = client.over((first, last))
+            else:
+                overview = []
+
+            tarts = len(overview)
 
             logger.debug("Total number of articles to fetch: %s", tarts)
 
-            for article_id in range(first, last):
+            for article_id, _ in overview:
                 article = self.__fetch_and_parse_article(client, article_id)
                 yield article
                 narts += 1

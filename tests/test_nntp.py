@@ -74,6 +74,13 @@ class MockNNTPLib:
     def group(self, name):
         return None, None, 1, 2, None
 
+    def over(self, message_spec):
+        first = min(message_spec[0], len(self.__articles))
+        last = min(message_spec[1], len(self.__articles))
+        response = [(x, {'message_id': self.__articles[x][0]}) \
+                    for x in range(first, last + 1)]
+        return None, response
+
     def article(self, article_id):
         a = self.__articles[article_id]
         message_id = a[0]
