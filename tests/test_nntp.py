@@ -22,6 +22,7 @@
 #
 
 import collections
+import nntplib
 import shutil
 import sys
 import tempfile
@@ -62,7 +63,8 @@ class MockNNTPLib:
     def __init__(self):
         self.__articles = {
             1 : ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 'data/nntp/nntp_1.txt'),
-            2 : ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 'data/nntp/nntp_2.txt')
+            2 : ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 'data/nntp/nntp_2.txt'),
+            3 : ('error', 'error')
         }
 
     def __enter__(self):
@@ -84,6 +86,9 @@ class MockNNTPLib:
     def article(self, article_id):
         a = self.__articles[article_id]
         message_id = a[0]
+
+        if message_id == 'error':
+            raise nntplib.NNTPTemporaryError('not found')
 
         with open(a[1], 'rb') as f:
             lines = [l.rstrip() for l in f]

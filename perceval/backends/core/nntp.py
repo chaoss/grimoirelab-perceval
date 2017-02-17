@@ -69,7 +69,7 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.2.1'
+    version = '0.2.2'
 
     def __init__(self, host, group, tag=None, cache=None):
         origin = host + '-' + group
@@ -95,7 +95,7 @@ class NNTP(Backend):
 
         self._purge_cache_queue()
 
-        narts, tarts = (0, 0)
+        narts, iarts, tarts = (0, 0, 0)
 
         # Connect with the server and select the given group
         with nntplib.NNTP(self.host) as client:
@@ -112,13 +112,21 @@ class NNTP(Backend):
             logger.debug("Total number of articles to fetch: %s", tarts)
 
             for article_id, _ in overview:
-                article = self.__fetch_and_parse_article(client, article_id)
+                try:
+                    article = self.__fetch_and_parse_article(client, article_id)
+                except nntplib.NNTPTemporaryError as e:
+                    logger.warning("Error '%s' fetching article %s; skipping",
+                                   e.response, article_id)
+                    iarts += 1
+                    continue
+
                 yield article
                 narts += 1
+
                 self._flush_cache_queue()
 
-        logger.info("Fetch process completed: %s/%s articles fetched",
-                    narts, tarts)
+        logger.info("Fetch process completed: %s/%s articles fetched; %s ignored",
+                    narts, tarts, iarts)
 
     @nntp_metadata
     @metadata
