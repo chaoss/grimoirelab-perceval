@@ -1,0 +1,78 @@
+Path: num2.nntp.dca.giganews.com!num1.nntp.dca.giganews.com!number.nntp.dca.giganews.com!border3.nntp.dca.giganews.com!Xl.tags.giganews.com!border1.nntp.dca.giganews.com!nntp.giganews.com!local2.nntp.dca.giganews.com!nntp.example.com!news.example.com.POSTED!not-for-mail
+NNTP-Posting-Date: Wed, 10 Aug 2011 11:33:22 -0500
+Return-Path: <jebnoun.melek@example.com>
+X-Original-To: community-arab-world@lists.example.com
+Delivered-To: community-arab-world@lists.example.com
+X-Virus-Scanned: amavisd-new at example.com
+Authentication-Results: notorious.example.com (amavisd-new); dkim=pass
+	header.i=example.com
+Received-SPF: pass (gmail.com ... _spf.google.com: 74.125.82.48 is authorized
+	to use 'jebnoun.melekexample.com' in 'mfrom' identity (mechanism
+	'ip4:74.125.0.0/16' matched)) receiver=notorious.example.com;
+	identity=mailfrom; envelope-from="jebnoun.melekexample.com";
+	helo=mail-ww0-f48.google.com; client-ip=74.125.82.48
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
+	h=message-id:date:from:user-agent:mime-version:to:subject:references
+	:in-reply-to:content-type:content-transfer-encoding;
+	bh=4SJS48Qe0he4rMsOf4mbSZhrHvpCT0/vFRiq278qpiU=;
+	b=qYd81ZmXeS7HDFYcJPUgJKUwwAytyZbEYPFA8pZb8IbxjZ44akeVuEIt2SxS7ejrOO
+	RXjpyVGBVWIZfAJx+9O78bZQoJm+nVbGIAQ+JZSqksjNaN2PNXCkw2N2QmR7OXkD5Gni
+	sWF2W19trV6VUaoL6eOAbb13VyMHvg+ggbdsg=
+Date: Wed, 10 Aug 2011 18:33:03 +0200
+From: Jebnoun Melek <jebnoun.melek@example.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US;
+	rv:1.9.2.18) Gecko/20110617 Thunderbird/3.1.11
+MIME-Version: 1.0
+To: community-arab-world@lists.example.com
+Subject: Re: =?windows-1256?Q?=C8=DA=CF_=C7=E1=E3=DB=D1=C8_=C7=E1=D3=E6?=
+	=?windows-1256?Q?=CF=C7=E4?=
+References: <CABmD4sb6gd1k-QXnXq=8U-M7UPYrhq-nMwmVYahxXyrn8P=wUg@mail.gmail.com>
+In-Reply-To: <CABmD4sb6gd1k-QXnXq=8U-M7UPYrhq-nMwmVYahxXyrn8P=wUg@mail.gmail.com>
+Content-Type: text/plain; charset=windows-1256; format=flowed
+Content-Transfer-Encoding: 8bit
+X-BeenThere: community-arab-world@lists.example.com
+X-Mailman-Version: 2.1.14
+Precedence: list
+List-Id: <community-arab-world.lists.example.com>
+List-Unsubscribe: <https://lists.example.com/options/community-arab-world>,
+	<mailto:community-arab-world-request@lists.example.com?subject=unsubscribe>
+List-Post: <mailto:community-arab-world@lists.example.com>
+List-Help: <mailto:community-arab-world-request@lists.example.com?subject=help>
+List-Subscribe: <https://lists.example.com/listinfo/community-arab-world>,
+	<mailto:community-arab-world-request@lists.example.com?subject=subscribe>
+Newsgroups: example.community.arab-world
+Message-ID: <mailman.5377.1312994002.4544.community-arab-world@lists.example.com>
+Lines: 20
+X-Usenet-Provider: http://www.giganews.com
+NNTP-Posting-Host: 63.245.208.166
+X-AuthenticatedUsername: NoAuthUser
+X-Trace: sv3-UQDIKc33eR6y9JQx+x85MdkvDlrHMNHtOPi6woWv7D0XXBGhs+q2fzRslGi3/0Au8UonAfbHBv3wmJp!cuhzTb/MvnX4nHkfNJCruiAYa+FuZtadXFuyU2gJK+Yio8fS5wSsohqpG9Kjxmc09py7PokWd5Ne!K4nb28xLIEmtVgFK8F98kiecH2n+xerGCWi7n4MuvtjT
+X-Complaints-To: abuse@example.com
+X-DMCA-Complaints-To: abuse@example.com
+X-Abuse-and-DMCA-Info: Please be sure to forward a copy of ALL headers
+X-Abuse-and-DMCA-Info: Otherwise we will be unable to process your complaint properly
+X-Postfilter: 1.3.40
+Bytes: 3885
+X-Original-Bytes: 3824
+Xref: number.nntp.dca.giganews.com example.community.arab-world:80
+
+On 10/08/2011 18:27, Rami Khader wrote:
+> ������ ����� ����ǡ
+> ��� �� ������ ����� ����� ����� �� ���� ���� ���� ������� ��� ���� ����
+> ����� ���� �� ���� ������ ��� �� ������ �������� �� ������� ����� ���� ����
+> ����� ������ ���� �� �������
+>
+> ���� ��� ������ ���
+>
+> ����
+>
+> *Mozillian, and proud to be*
+> Arabic Mozilla<http://www.arabicexample.com>
+> _______________________________________________
+> community-arab-world mailing list
+> community-arab-world@lists.example.com
+> https://lists.example.com/listinfo/community-arab-world
+  ������ ����� �����
+����� ���� ���� � ���
+���� ��� �� ��� ������ �������� ���� �� ��� ������� ������
+���� � ���� ��� ����� :)

@@ -64,7 +64,8 @@ class MockNNTPLib:
         self.__articles = {
             1 : ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 'data/nntp/nntp_1.txt'),
             2 : ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 'data/nntp/nntp_2.txt'),
-            3 : ('error', 'error')
+            3 : ('error', 'error'),
+            4 : ('<mailman.5377.1312994002.4544.community-arab-world@lists.example.com>', 'data/nntp/nntp_parsing_error.txt')
         }
 
     def __enter__(self):
@@ -74,7 +75,7 @@ class MockNNTPLib:
         pass
 
     def group(self, name):
-        return None, None, 1, 2, None
+        return None, None, 1, 4, None
 
     def over(self, message_spec):
         first = min(message_spec[0], len(self.__articles))
@@ -146,6 +147,8 @@ class TestNNTPBackend(unittest.TestCase):
                     ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2, '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076496.0)]
         expected_origin = NNTP_SERVER + '-' + NNTP_GROUP
 
+        # Although there are 4 messages available on the server,
+        # only two are valid
         self.assertEqual(len(articles), 2)
 
         for x in range(len(articles)):
@@ -158,6 +161,8 @@ class TestNNTPBackend(unittest.TestCase):
             self.assertEqual(article['updated_on'], expc[3])
             self.assertEqual(article['category'], 'article')
             self.assertEqual(article['tag'], expected_origin)
+
+
 
     @unittest.mock.patch('nntplib.NNTP')
     def test_fetch_from_offset(self, mock_nntp):

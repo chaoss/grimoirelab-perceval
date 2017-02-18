@@ -303,7 +303,7 @@ def message_to_dict(msg):
             message[k] = v
         message['body'] = parse_payload(msg)
     except UnicodeError as e:
-        raise ParseError(str(e))
+        raise ParseError(cause=str(e))
 
     return message
 

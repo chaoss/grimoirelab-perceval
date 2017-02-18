@@ -31,7 +31,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError
+from ...errors import CacheError, ParseError
 from ...utils import str_to_datetime, message_to_dict
 
 
@@ -69,7 +69,7 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.2.2'
+    version = '0.2.3'
 
     def __init__(self, host, group, tag=None, cache=None):
         origin = host + '-' + group
@@ -114,6 +114,11 @@ class NNTP(Backend):
             for article_id, _ in overview:
                 try:
                     article = self.__fetch_and_parse_article(client, article_id)
+                except ParseError:
+                    logger.warning("Error parsing %s article; skipping",
+                                   article_id)
+                    iarts += 1
+                    continue
                 except nntplib.NNTPTemporaryError as e:
                     logger.warning("Error '%s' fetching article %s; skipping",
                                    e.response, article_id)
