@@ -1,0 +1,19 @@
+{
+    "has_more": false,
+    "latest": "1427135733.000068",
+    "messages": [
+        {
+            "text": "hi!",
+            "ts": "1427135689.000067",
+            "type": "message",
+            "user": "U0002"
+        },
+        {
+            "text": "hi!",
+            "ts": "1427135634.000066",
+            "type": "message",
+            "user": "U0001"
+        }
+    ],
+    "ok": true
+}

@@ -1,0 +1,39 @@
+{
+    "ok": true,
+    "user": {
+        "color": "9f69e7",
+        "deleted": false,
+        "has_2fa": false,
+        "id": "U0001",
+        "is_admin": true,
+        "is_bot": false,
+        "is_owner": true,
+        "is_primary_owner": true,
+        "is_restricted": false,
+        "is_ultra_restricted": false,
+        "name": "acs",
+        "profile": {
+            "avatar_hash": "ge934740e4ac",
+            "email": "acs@example.com",
+            "first_name": "Alvaro",
+            "image_192": "https://secure.gravatar.com",
+            "image_24": "https://secure.gravatar.com",
+            "image_32": "https://secure.gravatar.com",
+            "image_48": "https://secure.gravatar.com",
+            "image_512": "https://secure.gravatar.com",
+            "image_72": "https://secure.gravatar.com",
+            "last_name": "del Castillo",
+            "phone": "",
+            "real_name": "Alvaro del Castillo",
+            "real_name_normalized": "Alvaro del Castillo",
+            "skype": "",
+            "title": ""
+        },
+        "real_name": "Alvaro del Castillo",
+        "status": null,
+        "team_id": "T0001",
+        "tz": "Europe/Amsterdam",
+        "tz_label": "Central European Time",
+        "tz_offset": 3600
+    }
+}

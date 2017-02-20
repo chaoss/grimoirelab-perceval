@@ -1,0 +1,37 @@
+{
+    "has_more": true,
+    "messages": [
+        {
+            "subtype": "channel_join",
+            "text": "<@U0472B41U|dizquierdo> has joined the channel",
+            "ts": "1427799888.000000",
+            "type": "message",
+            "user": "U0003"
+        },
+        {
+            "text": "tengo el m\u00f3vil",
+            "ts": "1427135890.000071",
+            "type": "message",
+            "user": "U0002"
+        },
+        {
+            "text": "hey acs",
+            "ts": "1427135835.000070",
+            "type": "message",
+            "user": "U0002"
+        },
+        {
+            "text": "¿vale?",
+            "ts": "1427135740.000069",
+            "type": "message",
+            "user": "U0001"
+        },
+        {
+            "text": "jsmanrique: tenemos que dar m\u00e9tricas super chulas",
+            "ts": "1427135733.000068",
+            "type": "message",
+            "user": "U0001"
+        }
+    ],
+    "ok": true
+}
