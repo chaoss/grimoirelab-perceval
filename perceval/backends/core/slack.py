@@ -25,7 +25,10 @@ import logging
 
 import requests
 
-from ...backend import Backend, metadata
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import BaseError, CacheError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
@@ -362,3 +365,33 @@ class SlackClient:
             raise SlackClientError(error=result['error'])
 
         return r.text
+
+
+class SlackCommand(BackendCommand):
+    """Class to run Slack backend from the command line."""
+
+    BACKEND = Slack
+
+    @staticmethod
+    def setup_cmd_parser():
+        """Returns the Slack argument parser."""
+
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              token_auth=True,
+                                              cache=True)
+
+        # Backend token is required
+        action = parser.parser._option_string_actions['--api-token']
+        action.required = True
+
+        # Slack options
+        group = parser.parser.add_argument_group('Slack arguments')
+        group.add_argument('--max-items', dest='max_items',
+                           type=int, default=MAX_ITEMS,
+                           help="Maximum number of items requested on the same query")
+
+        # Required arguments
+        parser.parser.add_argument('channel',
+                                   help="Slack channel identifier")
+
+        return parser

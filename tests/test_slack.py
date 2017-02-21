@@ -36,9 +36,14 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.core.slack import Slack, SlackClient, SlackClientError
+from perceval.utils import DEFAULT_DATETIME
+from perceval.backends.core.slack import (Slack,
+                                          SlackClient,
+                                          SlackClientError,
+                                          SlackCommand)
 
 
 SLACK_API_URL = 'https://slack.com/api'
@@ -506,6 +511,35 @@ class TestSlackClient(unittest.TestCase):
 
         with self.assertRaises(SlackClientError):
             _ = client.history('CH0')
+
+
+class TestSlackCommand(unittest.TestCase):
+    """SlackCommand unit tests"""
+
+    def test_backend_class(self):
+        """Test if the backend class is Slack"""
+
+        self.assertIs(SlackCommand.BACKEND, Slack)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = SlackCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
+
+        args = ['--tag', 'test', '--no-cache',
+                '--api-token', 'abcdefgh',
+                '--from-date', '1970-01-01',
+                '--max-items', '10',
+                'C001']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.channel, 'C001')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.api_token, 'abcdefgh')
+        self.assertEqual(parsed_args.max_items, 10)
 
 
 if __name__ == "__main__":
