@@ -30,6 +30,7 @@ are:
     pipermail        Fetch messages from a Pipermail archiver
     redmine          Fetch issues from a Redmine server
     rss              Fetch entries from a RSS feed server
+    slack            Fetch messages from a Slack channel
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server
@@ -236,6 +237,11 @@ $ perceval redmine 'https://www.redmine.org/' --from-date '2016-01-01' -t abcdef
 ### RSS
 ```
 $ perceval rss 'https://blog.bitergia.com/feed/'
+```
+
+### Slack
+```
+$ perceval slack C0001 --from-date 2016-01-12 -t abcedefghijk
 ```
 
 ### StackExchange
