@@ -1,5 +1,5 @@
 {
-    "has_more": true,
+    "has_more": false,
     "messages": [
         {
             "subtype": "channel_join",
@@ -19,18 +19,6 @@
             "ts": "1427135835.000070",
             "type": "message",
             "user": "U0002"
-        },
-        {
-            "text": "¿vale?",
-            "ts": "1427135740.000069",
-            "type": "message",
-            "user": "U0001"
-        },
-        {
-            "text": "jsmanrique: tenemos que dar m\u00e9tricas super chulas",
-            "ts": "1427135733.000068",
-            "type": "message",
-            "user": "U0001"
         }
     ],
     "ok": true

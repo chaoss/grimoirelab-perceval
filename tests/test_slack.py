@@ -20,9 +20,12 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import datetime
 import sys
 import unittest
+import unittest.mock
 
+import dateutil
 import httpretty
 import pkg_resources
 
@@ -31,7 +34,7 @@ import pkg_resources
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
-from perceval.backends.core.slack import SlackClient, SlackClientError
+from perceval.backends.core.slack import Slack, SlackClient, SlackClientError
 
 
 SLACK_API_URL = 'https://slack.com/api'
@@ -51,9 +54,13 @@ def setup_http_server():
     http_requests = []
 
     channel_error = read_file('data/slack/slack_error.json', 'rb')
+    channel_empty =  read_file('data/slack/slack_history_empty.json', 'rb')
     channel_history = read_file('data/slack/slack_history.json', 'rb')
     channel_history_next = read_file('data/slack/slack_history_next.json', 'rb')
+    channel_history_date = read_file('data/slack/slack_history_20150323.json', 'rb')
     user_U0001 = read_file('data/slack/slack_user_U0001.json', 'rb')
+    user_U0002 = read_file('data/slack/slack_user_U0002.json', 'rb')
+    user_U0003 = read_file('data/slack/slack_user_U0003.json', 'rb')
 
     def request_callback(method, uri, headers):
         last_request = httpretty.last_request()
@@ -69,8 +76,25 @@ def setup_http_server():
             elif params['oldest'][0] == '1' and \
                 params['latest'][0] == '1427135733.000068':
                 body = channel_history_next
+            elif params['oldest'][0] == '0' and \
+                params['latest'][0] == '1483228800.0':
+                body = channel_history
+            elif params['oldest'][0] == '0' and \
+                params['latest'][0] == '1427135733.000068':
+                body = channel_history_next
+            elif params['oldest'][0] == '1427135740.000068' and \
+                params['latest'][0] == '1483228800.0':
+                body = channel_history_date
+            elif params['oldest'][0] == '1451606399.999999' and \
+                params['latest'][0] == '1483228800.0':
+                body = channel_empty
         elif uri.startswith(SLACK_USER_INFO_URL):
-            body = user_U0001
+            if params['user'][0] == 'U0001':
+                body = user_U0001
+            elif params['user'][0] == 'U0002':
+                body = user_U0002
+            else:
+                body = user_U0003
         else:
             raise
 
@@ -92,6 +116,238 @@ def setup_http_server():
                            ])
 
     return http_requests
+
+
+class TestSlackBackend(unittest.TestCase):
+    """Slack backend tests"""
+
+    def test_initialization(self):
+        """Test whether attributes are initializated"""
+
+        slack = Slack('C011DUKE8', 'aaaa', max_items=5, tag='test')
+
+        self.assertEqual(slack.origin, 'https://slack.com/C011DUKE8')
+        self.assertEqual(slack.tag, 'test')
+        self.assertEqual(slack.channel, 'C011DUKE8')
+        self.assertEqual(slack.max_items, 5)
+        self.assertIsInstance(slack.client, SlackClient)
+        self.assertEqual(slack.client.api_token, 'aaaa')
+
+        # When tag is empty or None it will be set to
+        # the value in URL
+        slack = Slack('C011DUKE8', 'aaaa')
+        self.assertEqual(slack.origin, 'https://slack.com/C011DUKE8')
+        self.assertEqual(slack.tag, 'https://slack.com/C011DUKE8')
+
+        slack = Slack('C011DUKE8', 'aaaa', tag='')
+        self.assertEqual(slack.origin, 'https://slack.com/C011DUKE8')
+        self.assertEqual(slack.tag, 'https://slack.com/C011DUKE8')
+
+    def test_has_caching(self):
+        """Test if it returns False when has_caching is called"""
+
+        self.assertEqual(Slack.has_caching(), False)
+
+    def test_has_resuming(self):
+        """Test if it returns False when has_resuming is called"""
+
+        self.assertEqual(Slack.has_resuming(), False)
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
+    def test_fetch(self, mock_utcnow):
+        """Test if it fetches a list of messages"""
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        http_requests = setup_http_server()
+
+        slack = Slack('C011DUKE8', 'aaaa', max_items=5)
+        messages = [msg for msg in slack.fetch()]
+
+        expected = [("<@U0003|dizquierdo> has joined the channel", 'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb', 1427799888.0, 'dizquierdo@example.com'),
+                    ("tengo el m\u00f3vil", 'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5', 1427135890.000071, 'jsmanrique@example.com'),
+                    ("hey acs", '29c2942a704c4e0b067daeb76edb2f826376cecf', 1427135835.000070, 'jsmanrique@example.com'),
+                    ("¿vale?", '757e88ea008db0fff739dd261179219aedb84a95', 1427135740.000069, 'acs@example.com'),
+                    ("jsmanrique: tenemos que dar m\u00e9tricas super chulas", 'e92555381bc431a53c0b594fc118850eafd6e212', 1427135733.000068, 'acs@example.com'),
+                    ("hi!", 'b92892e7b65add0e83d0839de20b2375a42014e8', 1427135689.000067, 'jsmanrique@example.com'),
+                    ("hi!", 'e59d9ca0d9a2ba1c747dc60a0904edd22d69e20e', 1427135634.000066, 'acs@example.com')]
+
+        self.assertEqual(len(messages), len(expected))
+
+        for x in range(len(messages)):
+            message = messages[x]
+            expc = expected[x]
+            self.assertEqual(message['data']['text'], expc[0])
+            self.assertEqual(message['uuid'], expc[1])
+            self.assertEqual(message['origin'], 'https://slack.com/C011DUKE8')
+            self.assertEqual(message['updated_on'], expc[2])
+            self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'https://slack.com/C011DUKE8')
+            self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
+
+        # Check requests
+        expected = [
+            {
+             'channel' : ['C011DUKE8'],
+             'oldest' : ['0'],
+             'latest' : ['1483228800.0'],
+             'token' : ['aaaa'],
+             'count' : ['5']
+            },
+            {
+             'user' : ['U0003'],
+             'token' : ['aaaa']
+            },
+            {
+             'user' : ['U0002'],
+             'token' : ['aaaa']
+            },
+            {
+             'user' : ['U0001'],
+             'token' : ['aaaa']
+            },
+            {
+             'channel' : ['C011DUKE8'],
+             'oldest' : ['0'],
+             'latest' : ['1427135733.000068'],
+             'token' : ['aaaa'],
+             'count' : ['5']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
+    def test_fetch_from_date(self, mock_utcnow):
+        """Test if it fetches a list of messages since a given date"""
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2015, 3, 23, 18, 35, 40, 69,
+                                      tzinfo=dateutil.tz.tzutc())
+
+        slack = Slack('C011DUKE8', 'aaaa', max_items=5)
+        messages = [msg for msg in slack.fetch(from_date=from_date)]
+
+        expected = [("<@U0003|dizquierdo> has joined the channel", 'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb', 1427799888.0, 'dizquierdo@example.com'),
+                    ("tengo el m\u00f3vil", 'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5', 1427135890.000071, 'jsmanrique@example.com'),
+                    ("hey acs", '29c2942a704c4e0b067daeb76edb2f826376cecf', 1427135835.000070, 'jsmanrique@example.com')]
+
+        self.assertEqual(len(messages), len(expected))
+
+        for x in range(len(messages)):
+            message = messages[x]
+            expc = expected[x]
+            self.assertEqual(message['data']['text'], expc[0])
+            self.assertEqual(message['uuid'], expc[1])
+            self.assertEqual(message['origin'], 'https://slack.com/C011DUKE8')
+            self.assertEqual(message['updated_on'], expc[2])
+            self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'https://slack.com/C011DUKE8')
+            self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
+
+        # Check requests
+        expected = [
+            {
+             'channel' : ['C011DUKE8'],
+             'oldest' : ['1427135740.000068'],
+             'latest' : ['1483228800.0'],
+             'token' : ['aaaa'],
+             'count' : ['5']
+            },
+            {
+             'user' : ['U0003'],
+             'token' : ['aaaa']
+            },
+            {
+             'user' : ['U0002'],
+             'token' : ['aaaa']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
+    def test_fetch_empty(self, mock_utcnow):
+        """Test if nothing is returned when there are no messages"""
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        http_requests = setup_http_server()
+
+        from_date = datetime.datetime(2016, 1, 1,
+                                      tzinfo=dateutil.tz.tzutc())
+
+        slack = Slack('C011DUKE8', 'aaaa', max_items=5)
+        messages = [msg for msg in slack.fetch(from_date=from_date)]
+
+        self.assertEqual(len(messages), 0)
+
+        # Check requests
+        expected = [
+            {
+             'channel' : ['C011DUKE8'],
+             'oldest' : ['1451606399.999999'],
+             'latest' : ['1483228800.0'],
+             'token' : ['aaaa'],
+             'count' : ['5']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    def test_parse_history(self):
+        """Test if it parses a channel history JSON stream"""
+
+        raw_json = read_file('data/slack/slack_history.json')
+
+        items, has_more = Slack.parse_history(raw_json)
+        results = [item for item in items]
+
+        self.assertEqual(len(results), 5)
+        self.assertEqual(results[0]['ts'], '1427799888.000000')
+        self.assertEqual(results[1]['ts'], '1427135890.000071')
+        self.assertEqual(results[2]['ts'], '1427135835.000070')
+        self.assertEqual(results[3]['ts'], '1427135740.000069')
+        self.assertEqual(results[4]['ts'], '1427135733.000068')
+        self.assertEqual(has_more, True)
+
+        # Parse a file without results
+        raw_json = read_file('data/slack/slack_history_empty.json')
+
+        items, has_more = Slack.parse_history(raw_json)
+        results = [item for item in items]
+
+        self.assertEqual(len(results), 0)
+        self.assertEqual(has_more, False)
+
+    def test_parse_user(self):
+        """Test if it parses a user info JSON stream"""
+
+        raw_json = read_file('data/slack/slack_user_U0001.json')
+
+        user = Slack.parse_user(raw_json)
+
+        self.assertEqual(user['id'], 'U0001')
+        self.assertEqual(user['name'], 'acs')
+        self.assertEqual(user['profile']['email'], 'acs@example.com')
 
 
 class TestSlackClient(unittest.TestCase):

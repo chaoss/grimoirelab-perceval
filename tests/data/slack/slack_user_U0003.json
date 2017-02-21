@@ -1,0 +1,34 @@
+{
+    "ok": true,
+    "user": {
+        "color": "674b1b",
+        "deleted": false,
+        "has_2fa": false,
+        "id": "U0003",
+        "is_admin": false,
+        "is_bot": false,
+        "is_owner": false,
+        "is_primary_owner": false,
+        "is_restricted": false,
+        "is_ultra_restricted": false,
+        "name": "dizquierdo",
+        "profile": {
+            "avatar_hash": "ge557006561e",
+            "email": "dizquierdo@example.com",
+            "image_192": "https://secure.gravatar.com",
+            "image_24": "https://secure.gravatar.com",
+            "image_32": "https://secure.gravatar.com",
+            "image_48": "https://secure.gravatar.com",
+            "image_512": "https://secure.gravatar.com",
+            "image_72": "https://secure.gravatar.com",
+            "real_name": "",
+            "real_name_normalized": ""
+        },
+        "real_name": "",
+        "status": null,
+        "team_id": "T0001",
+        "tz": "Europe/Amsterdam",
+        "tz_label": "Central European Time",
+        "tz_offset": 3600
+    }
+}
