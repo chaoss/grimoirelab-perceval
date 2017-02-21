@@ -26,7 +26,7 @@ import logging
 import requests
 
 from ...backend import Backend, metadata
-from ...errors import BaseError
+from ...errors import BaseError, CacheError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
                       datetime_utcnow,
@@ -81,6 +81,8 @@ class Slack(Backend):
         logger.info("Fetching messages of '%s' channel from %s",
                     self.channel, str(from_date))
 
+        self._purge_cache_queue()
+
         oldest = datetime_to_utc(from_date).timestamp()
         latest = datetime_utcnow().timestamp()
 
@@ -103,6 +105,8 @@ class Slack(Backend):
                                               oldest=oldest, latest=latest)
             messages, fetching = self.parse_history(raw_history)
 
+            self._push_cache_queue(raw_history)
+
             for message in messages:
                 message['user_data'] = self.__get_or_fetch_user(message['user'])
                 yield message
@@ -112,7 +116,68 @@ class Slack(Backend):
                 if fetching:
                     latest = float(message['ts'])
 
+            # Checkpoint. A set of messages ends here.
+            self._push_cache_queue('{}')
+            self._flush_cache_queue()
+
         logger.info("Fetch process completed: %s message fetched", nmsgs)
+
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch the messages from the cache.
+
+        It returns the messages stored in the cache object, provided during
+        the initialization of the object. If this method is called but
+        no cache object was provided, the method will raise a `CacheError`
+        exception.
+
+        :returns: a generator of messages
+
+        :raises CacheError: raised when an error occurs accesing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        logger.info("Retrieving cached messages: '%s'", self.channel)
+
+        cache_items = self.cache.retrieve()
+        cached_users = {}
+
+        nmsgs = 0
+
+        try:
+            while True:
+                try:
+                    raw_history = next(cache_items)
+                except StopIteration:
+                    break
+
+                checkpoint = False
+
+                while not checkpoint:
+                    raw_item = next(cache_items)
+
+                    if raw_item != '{}':
+                        user = self.parse_user(raw_item)
+                        cached_users[user['id']] = user
+                    else:
+                        checkpoint = True
+
+                messages, _ = self.parse_history(raw_history)
+
+                for message in messages:
+                    message['user_data'] = cached_users[message['user']]
+                    yield message
+                    nmsgs += 1
+        except StopIteration:
+            # Fatal error. The code should not reach here.
+            # Cache should had stored an activity item per parsed bug.
+            cause = "cache is exhausted but more items were expected"
+            raise CacheError(cause=cause)
+
+        logger.info("Retrieval process completed: %s messages retrieved from cache",
+                    nmsgs)
 
     def __get_or_fetch_user(self, user_id):
         if user_id in self._users:
@@ -122,6 +187,7 @@ class Slack(Backend):
 
         raw_user = self.client.user(user_id)
         user = self.parse_user(raw_user)
+        self._push_cache_queue(raw_user)
 
         self._users[user_id] = user
         return user
@@ -130,9 +196,9 @@ class Slack(Backend):
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend does not support items cache
+        :returns: this backend supports items cache
         """
-        return False
+        return True
 
     @classmethod
     def has_resuming(cls):
