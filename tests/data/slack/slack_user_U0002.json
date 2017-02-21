@@ -1,0 +1,36 @@
+{
+    "ok": true,
+    "user": {
+        "color": "3c989f",
+        "deleted": false,
+        "has_2fa": false,
+        "id": "U0002",
+        "is_admin": false,
+        "is_bot": false,
+        "is_owner": false,
+        "is_primary_owner": false,
+        "is_restricted": false,
+        "is_ultra_restricted": false,
+        "name": "jsmanrique",
+        "profile": {
+            "avatar_hash": "g9d147af7eb8",
+            "email": "jsmanrique@example.com",
+            "first_name": "Jose",
+            "image_192": "https://secure.gravatar.com",
+            "image_24": "https://secure.gravatar.com",
+            "image_32": "https://secure.gravatar.com",
+            "image_48": "https://secure.gravatar.com",
+            "image_512": "https://secure.gravatar.com",
+            "image_72": "https://secure.gravatar.com",
+            "last_name": "Manrique",
+            "real_name": "Jose Manrique",
+            "real_name_normalized": "Jose Manrique"
+        },
+        "real_name": "Jose Manrique",
+        "status": null,
+        "team_id": "T0001",
+        "tz": "Europe/Amsterdam",
+        "tz_label": "Central European Time",
+        "tz_offset": 3600
+    }
+}
