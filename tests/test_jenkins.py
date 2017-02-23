@@ -45,7 +45,7 @@ from perceval.backends.core.jenkins import (Jenkins,
 
 
 JENKINS_SERVER_URL = 'http://example.com/ci'
-JENKINS_JOBS_URL = JENKINS_SERVER_URL + '/view/All/api/json'
+JENKINS_JOBS_URL = JENKINS_SERVER_URL + '/api/json'
 JENKINS_JOB_BUILDS_1 = 'apex-build-brahmaputra'
 JENKINS_JOB_BUILDS_2 = 'apex-build-master'
 JENKINS_JOB_BUILDS_500_ERROR = '500-error-job'
