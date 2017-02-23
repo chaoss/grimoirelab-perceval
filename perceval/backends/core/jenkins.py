@@ -199,7 +199,7 @@ class JenkinsClient:
     def get_jobs(self):
         """ Retrieve all jobs
         """
-        url_jenkins = self.url + "/api/json"
+        url_jenkins = urljoin(self.url, "/api/json")
 
         req = requests.get(url_jenkins)
         req.raise_for_status()
