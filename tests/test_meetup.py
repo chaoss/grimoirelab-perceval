@@ -131,21 +131,21 @@ def setup_http_server():
     httpretty.register_uri(httpretty.GET,
                            MEETUP_EVENTS_URL,
                            responses=[
-                                httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                               httpretty.Response(body=request_callback)
+                               for _ in range(2)
                            ])
 
     for url in MEETUP_COMMENTS_URL:
         httpretty.register_uri(httpretty.GET,
                                url,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
     for url in MEETUP_RSVPS_URL:
         httpretty.register_uri(httpretty.GET,
                                url,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
     return http_requests
@@ -216,53 +216,53 @@ class TestMeetupBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-             'key': ['aaaa'],
-             'order': ['updated'],
-             'page': ['2'],
-             'scroll': ['since:1970-01-01T00:00:00.000Z'],
-             'sign': ['true'],
-             'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+                'key': ['aaaa'],
+                'order': ['updated'],
+                'page': ['2'],
+                'scroll': ['since:1970-01-01T00:00:00.000Z'],
+                'sign': ['true'],
+                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
-             'key': ['aaaa'],
-             'page': ['2'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
             },
             {
-             'fields': ['attendance_status'],
-             'key': ['aaaa'],
-             'page': ['2'],
-             'response': ['yes,no'],
-             'sign': ['true']
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
             },
             {
-             'key': ['aaaa'],
-             'page': ['2'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
             },
             {
-             'fields': ['attendance_status'],
-             'key': ['aaaa'],
-             'page': ['2'],
-             'response': ['yes,no'],
-             'sign': ['true']
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
             },
             {
-             'key': ['aaaa'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'sign': ['true']
             },
             {
-             'key': ['aaaa'],
-             'page': ['2'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
             },
             {
-             'fields': ['attendance_status'],
-             'key': ['aaaa'],
-             'page': ['2'],
-             'response': ['yes,no'],
-             'sign': ['true']
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
             }
         ]
 
@@ -301,25 +301,25 @@ class TestMeetupBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-             'key': ['aaaa'],
-             'order': ['updated'],
-             'page': ['2'],
-             'scroll': ['since:2016-09-25T00:00:00.000Z'],
-             'sign': ['true'],
-             'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+                'key': ['aaaa'],
+                'order': ['updated'],
+                'page': ['2'],
+                'scroll': ['since:2016-09-25T00:00:00.000Z'],
+                'sign': ['true'],
+                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
-             'key': ['aaaa'],
-             'page': ['2'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
             },
             {
-             'fields': ['attendance_status'],
-             'key': ['aaaa'],
-             'page': ['2'],
-             'response': ['yes,no'],
-             'sign': ['true']
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
             }
         ]
 
@@ -359,53 +359,53 @@ class TestMeetupBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-             'key': ['aaaa'],
-             'order': ['updated'],
-             'page': ['2'],
-             'scroll': ['since:1970-01-01T00:00:00.000Z'],
-             'sign': ['true'],
-             'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+                'key': ['aaaa'],
+                'order': ['updated'],
+                'page': ['2'],
+                'scroll': ['since:1970-01-01T00:00:00.000Z'],
+                'sign': ['true'],
+                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
-             'key': ['aaaa'],
-             'page': ['2'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
             },
             {
-             'fields': ['attendance_status'],
-             'key': ['aaaa'],
-             'page': ['2'],
-             'response': ['yes,no'],
-             'sign': ['true']
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
             },
             {
-             'key': ['aaaa'],
-             'page': ['2'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
             },
             {
-             'fields': ['attendance_status'],
-             'key': ['aaaa'],
-             'page': ['2'],
-             'response': ['yes,no'],
-             'sign': ['true']
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
             },
             {
-             'key': ['aaaa'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'sign': ['true']
             },
             {
-             'key': ['aaaa'],
-             'page': ['2'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
             },
             {
-             'fields': ['attendance_status'],
-             'key': ['aaaa'],
-             'page': ['2'],
-             'response': ['yes,no'],
-             'sign': ['true']
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
             }
         ]
 
@@ -442,25 +442,25 @@ class TestMeetupBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-             'key': ['aaaa'],
-             'order': ['updated'],
-             'page': ['2'],
-             'scroll': ['since:2016-04-08T00:00:00.000Z'],
-             'sign': ['true'],
-             'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+                'key': ['aaaa'],
+                'order': ['updated'],
+                'page': ['2'],
+                'scroll': ['since:2016-04-08T00:00:00.000Z'],
+                'sign': ['true'],
+                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
-             'key': ['aaaa'],
-             'page': ['2'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
             },
             {
-             'fields': ['attendance_status'],
-             'key': ['aaaa'],
-             'page': ['2'],
-             'response': ['yes,no'],
-             'sign': ['true']
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
             }
         ]
 
@@ -655,17 +655,17 @@ class TestMeetupClient(unittest.TestCase):
 
         expected = [
             {
-             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-             'key': ['aaaa'],
-             'order': ['updated'],
-             'page': ['2'],
-             'scroll': ['since:2016-01-01T00:00:00.000Z'],
-             'sign': ['true'],
-             'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+                'key': ['aaaa'],
+                'order': ['updated'],
+                'page': ['2'],
+                'scroll': ['since:2016-01-01T00:00:00.000Z'],
+                'sign': ['true'],
+                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
-             'key': ['aaaa'],
-             'sign': ['true']
+                'key': ['aaaa'],
+                'sign': ['true']
             }
         ]
 

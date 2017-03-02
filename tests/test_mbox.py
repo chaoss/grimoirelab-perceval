@@ -208,16 +208,17 @@ class TestMBoxBackend(TestBaseMBox):
         backend = MBox('http://example.com/', self.tmp_path)
         messages = [m for m in backend.fetch()]
 
-        expected = [('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'bd0185317b013beb21ad3ea04635de3db72496ad', 1095843820.0),
-                    ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
-                    ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
-                    ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 'ddda42422c55d08d56c017a6f128fcd7447484ea', 1043881350.0),
-                    ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0),
-                    ('<20020823171132.541DB44147@example.com>', '4e255acab6442424ecbf05cb0feb1eccb587f7de', 1030123489.0),
-                    ]
+        expected = [
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'bd0185317b013beb21ad3ea04635de3db72496ad', 1095843820.0),
+            ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
+            ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
+            ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 'ddda42422c55d08d56c017a6f128fcd7447484ea', 1043881350.0),
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0),
+            ('<20020823171132.541DB44147@example.com>', '4e255acab6442424ecbf05cb0feb1eccb587f7de', 1030123489.0),
+        ]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -238,12 +239,14 @@ class TestMBoxBackend(TestBaseMBox):
         backend = MBox('http://example.com/', self.tmp_path)
         messages = [m for m in backend.fetch(from_date=from_date)]
 
-        expected = [('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
-                    ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
-                    ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0)]
+        expected = [
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
+            ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0)
+        ]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -425,7 +428,7 @@ class TestMBoxBackend(TestBaseMBox):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['unixfrom'],
-            "christian at “example.org”  Thu Jan 15 13:22:25 2015")
+                         "christian at “example.org”  Thu Jan 15 13:22:25 2015")
 
     def test_parse_unknown_encoding_mbox(self):
         """Check whether it parses a mbox that contains an unknown encoding"""
@@ -435,7 +438,7 @@ class TestMBoxBackend(TestBaseMBox):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['From'],
-            '"\udcc3\udc94\udcc2\udcac\udcc2\udcb4\udcc3\udc8f" <yuancong@example.com>')
+                         '"\udcc3\udc94\udcc2\udcac\udcc2\udcb4\udcc3\udc8f" <yuancong@example.com>')
 
 
 class TestMBoxCommand(unittest.TestCase):

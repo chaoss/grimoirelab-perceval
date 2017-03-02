@@ -125,20 +125,20 @@ class TestBugzillaBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGLIST_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(3)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(3)
                                ])
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_ACTIVITY_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(7)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(7)
                                ])
 
         bg = Bugzilla(BUGZILLA_SERVER_URL,
@@ -164,58 +164,60 @@ class TestBugzillaBackend(unittest.TestCase):
         self.assertEqual(bugs[6]['tag'], BUGZILLA_SERVER_URL)
 
         # Check requests
-        expected = [{
-                     'ctype': ['xml']
-                    },
-                    {
-                     'ctype': ['csv'],
-                     'limit': ['500'],
-                     'order': ['changeddate'],
-                     'chfieldfrom': ['1970-01-01 00:00:00']
-                    },
-                    {
-                     'ctype': ['csv'],
-                     'limit': ['500'],
-                     'order': ['changeddate'],
-                     'chfieldfrom': ['2009-07-30 11:35:33']
-                    },
-                    {
-                     'ctype': ['csv'],
-                     'limit': ['500'],
-                     'order': ['changeddate'],
-                     'chfieldfrom': ['2015-08-12 18:32:11']
-                    },
-                    {
-                     'ctype': ['xml'],
-                     'id': ['15', '18', '17', '20', '19'],
-                     'excludefield': ['attachmentdata']
-                    },
-                    {
-                     'id': ['15']
-                    },
-                    {
-                     'id': ['18']
-                    },
-                    {
-                     'id': ['17']
-                    },
-                    {
-                     'id': ['20']
-                    },
-                    {
-                     'id': ['19']
-                    },
-                    {
-                     'ctype': ['xml'],
-                     'id': ['30', '888'],
-                     'excludefield': ['attachmentdata']
-                    },
-                    {
-                     'id': ['30']
-                    },
-                    {
-                     'id': ['888']
-                    }]
+        expected = [
+            {
+                'ctype': ['xml']
+            },
+            {
+                'ctype': ['csv'],
+                'limit': ['500'],
+                'order': ['changeddate'],
+                'chfieldfrom': ['1970-01-01 00:00:00']
+            },
+            {
+                'ctype': ['csv'],
+                'limit': ['500'],
+                'order': ['changeddate'],
+                'chfieldfrom': ['2009-07-30 11:35:33']
+            },
+            {
+                'ctype': ['csv'],
+                'limit': ['500'],
+                'order': ['changeddate'],
+                'chfieldfrom': ['2015-08-12 18:32:11']
+            },
+            {
+                'ctype': ['xml'],
+                'id': ['15', '18', '17', '20', '19'],
+                'excludefield': ['attachmentdata']
+            },
+            {
+                'id': ['15']
+            },
+            {
+                'id': ['18']
+            },
+            {
+                'id': ['17']
+            },
+            {
+                'id': ['20']
+            },
+            {
+                'id': ['19']
+            },
+            {
+                'ctype': ['xml'],
+                'id': ['30', '888'],
+                'excludefield': ['attachmentdata']
+            },
+            {
+                'id': ['30']
+            },
+            {
+                'id': ['888']
+            }
+        ]
 
         self.assertEqual(len(requests), len(expected))
 
@@ -249,19 +251,19 @@ class TestBugzillaBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGLIST_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_ACTIVITY_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
 
         from_date = datetime.datetime(2015, 1, 1)
@@ -287,32 +289,34 @@ class TestBugzillaBackend(unittest.TestCase):
         self.assertEqual(bugs[1]['tag'], BUGZILLA_SERVER_URL)
 
         # Check requests
-        expected = [{
-                     'ctype': ['xml']
-                    },
-                    {
-                     'ctype': ['csv'],
-                     'limit': ['10000'],
-                     'order': ['changeddate'],
-                     'chfieldfrom': ['2015-01-01 00:00:00']
-                    },
-                    {
-                     'ctype': ['csv'],
-                     'limit': ['10000'],
-                     'order': ['changeddate'],
-                     'chfieldfrom': ['2015-08-12 18:32:11']
-                    },
-                    {
-                     'ctype': ['xml'],
-                     'id': ['30', '888'],
-                     'excludefield': ['attachmentdata']
-                    },
-                    {
-                     'id': ['30']
-                    },
-                    {
-                     'id': ['888']
-                    }]
+        expected = [
+            {
+                'ctype': ['xml']
+            },
+            {
+                'ctype': ['csv'],
+                'limit': ['10000'],
+                'order': ['changeddate'],
+                'chfieldfrom': ['2015-01-01 00:00:00']
+            },
+            {
+                'ctype': ['csv'],
+                'limit': ['10000'],
+                'order': ['changeddate'],
+                'chfieldfrom': ['2015-08-12 18:32:11']
+            },
+            {
+                'ctype': ['xml'],
+                'id': ['30', '888'],
+                'excludefield': ['attachmentdata']
+            },
+            {
+                'id': ['30']
+            },
+            {
+                'id': ['888']
+            }
+        ]
 
         self.assertEqual(len(requests), len(expected))
 
@@ -340,11 +344,11 @@ class TestBugzillaBackend(unittest.TestCase):
 
         # Check request
         expected = {
-                     'ctype': ['csv'],
-                     'limit': ['10000'],
-                     'order': ['changeddate'],
-                     'chfieldfrom': ['2100-01-01 00:00:00']
-                    }
+            'ctype': ['csv'],
+            'limit': ['10000'],
+            'order': ['changeddate'],
+            'chfieldfrom': ['2100-01-01 00:00:00']
+        }
 
         req = httpretty.last_request()
 
@@ -379,24 +383,24 @@ class TestBugzillaBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.POST,
                                BUGZILLA_LOGIN_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGLIST_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_ACTIVITY_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
 
         from_date = datetime.datetime(2015, 1, 1)
@@ -425,36 +429,38 @@ class TestBugzillaBackend(unittest.TestCase):
 
         # Check requests
         auth_expected = {
-                         'Bugzilla_login': ['jsmith@example.com'],
-                         'Bugzilla_password': ['1234'],
-                         'GoAheadAndLogIn': ['Log in']
-                        }
-        expected = [{
-                     'ctype': ['xml']
-                    },
-                    {
-                     'ctype': ['csv'],
-                     'limit': ['10000'],
-                     'order': ['changeddate'],
-                     'chfieldfrom': ['2015-01-01 00:00:00']
-                    },
-                    {
-                     'ctype': ['csv'],
-                     'limit': ['10000'],
-                     'order': ['changeddate'],
-                     'chfieldfrom': ['2015-08-12 18:32:11']
-                    },
-                    {
-                     'ctype': ['xml'],
-                     'id': ['30', '888'],
-                     'excludefield': ['attachmentdata']
-                    },
-                    {
-                     'id': ['30']
-                    },
-                    {
-                     'id': ['888']
-                    }]
+            'Bugzilla_login': ['jsmith@example.com'],
+            'Bugzilla_password': ['1234'],
+            'GoAheadAndLogIn': ['Log in']
+        }
+        expected = [
+            {
+                'ctype': ['xml']
+            },
+            {
+                'ctype': ['csv'],
+                'limit': ['10000'],
+                'order': ['changeddate'],
+                'chfieldfrom': ['2015-01-01 00:00:00']
+            },
+            {
+                'ctype': ['csv'],
+                'limit': ['10000'],
+                'order': ['changeddate'],
+                'chfieldfrom': ['2015-08-12 18:32:11']
+            },
+            {
+                'ctype': ['xml'],
+                'id': ['30', '888'],
+                'excludefield': ['attachmentdata']
+            },
+            {
+                'id': ['30']
+            },
+            {
+                'id': ['888']
+            }
+        ]
 
         # Check authentication request
         auth_req = requests.pop(0)
@@ -505,20 +511,20 @@ class TestBugzillaBackendCache(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGLIST_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(3)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(3)
                                ])
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUG_ACTIVITY_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(7)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(7)
                                ])
 
         # First, we fetch the bugs from the server, storing them
@@ -598,8 +604,7 @@ class TestBugzillaBackendParsers(unittest.TestCase):
 
         self.assertEqual(len(result), 5)
 
-        bug_ids = [bug['bug_id'][0]['__text__'] \
-                   for bug in result]
+        bug_ids = [bug['bug_id'][0]['__text__'] for bug in result]
         expected = ['15', '18', '17', '20', '19']
 
         self.assertListEqual(bug_ids, expected)
@@ -629,21 +634,21 @@ class TestBugzillaBackendParsers(unittest.TestCase):
         self.assertEqual(len(result), 14)
 
         expected = {
-                    'Who': 'sduenas@example.org',
-                    'When': '2013-06-25 11:57:23 CEST',
-                    'What': 'Attachment #172 Attachment is obsolete',
-                    'Removed': '0',
-                    'Added': '1'
-                   }
+            'Who': 'sduenas@example.org',
+            'When': '2013-06-25 11:57:23 CEST',
+            'What': 'Attachment #172 Attachment is obsolete',
+            'Removed': '0',
+            'Added': '1'
+        }
         self.assertDictEqual(result[0], expected)
 
         expected = {
-                    'Who': 'sduenas@example.org',
-                    'When': '2013-06-25 11:59:07 CEST',
-                    'What': 'Depends on',
-                    'Removed': '350',
-                    'Added': ''
-                   }
+            'Who': 'sduenas@example.org',
+            'When': '2013-06-25 11:59:07 CEST',
+            'What': 'Depends on',
+            'Removed': '350',
+            'Added': ''
+        }
         self.assertDictEqual(result[6], expected)
 
     def test_parse_empty_activity(self):
@@ -740,10 +745,10 @@ class TestBugzillaClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'Bugzilla_login': ['jsmith@example.com'],
-                    'Bugzilla_password': ['1234'],
-                    'GoAheadAndLogIn': ['Log in']
-                   }
+            'Bugzilla_login': ['jsmith@example.com'],
+            'Bugzilla_password': ['1234'],
+            'GoAheadAndLogIn': ['Log in']
+        }
 
         req = httpretty.last_request()
 
@@ -829,11 +834,11 @@ class TestBugzillaClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'ctype': ['csv'],
-                    'limit': ['10000'],
-                    'order': ['changeddate'],
-                    'chfieldfrom': ['1970-01-01 00:00:00']
-                   }
+            'ctype': ['csv'],
+            'limit': ['10000'],
+            'order': ['changeddate'],
+            'chfieldfrom': ['1970-01-01 00:00:00']
+        }
 
         req = httpretty.last_request()
 
@@ -848,11 +853,11 @@ class TestBugzillaClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'ctype': ['csv'],
-                    'limit': ['10000'],
-                    'order': ['changeddate'],
-                    'chfieldfrom': ['2015-01-01 00:00:00']
-                   }
+            'ctype': ['csv'],
+            'limit': ['10000'],
+            'order': ['changeddate'],
+            'chfieldfrom': ['2015-01-01 00:00:00']
+        }
 
         req = httpretty.last_request()
 
@@ -867,11 +872,11 @@ class TestBugzillaClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'ctype': ['csv'],
-                    'limit': ['300'],
-                    'order': ['changeddate'],
-                    'chfieldfrom': ['1970-01-01 00:00:00']
-                   }
+            'ctype': ['csv'],
+            'limit': ['300'],
+            'order': ['changeddate'],
+            'chfieldfrom': ['1970-01-01 00:00:00']
+        }
 
         req = httpretty.last_request()
 
@@ -903,11 +908,11 @@ class TestBugzillaClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'ctype': ['csv'],
-                    'limit': ['10000'],
-                    'order': ['Last Changed'],
-                    'chfieldfrom': ['1970-01-01 00:00:00']
-                    }
+            'ctype': ['csv'],
+            'limit': ['10000'],
+            'order': ['Last Changed'],
+            'chfieldfrom': ['1970-01-01 00:00:00']
+        }
 
         req = httpretty.last_request()
 
@@ -933,10 +938,10 @@ class TestBugzillaClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'id': ['8', '9'],
-                    'ctype': ['xml'],
-                    'excludefield': ['attachmentdata']
-                   }
+            'id': ['8', '9'],
+            'ctype': ['xml'],
+            'excludefield': ['attachmentdata']
+        }
 
         req = httpretty.last_request()
 

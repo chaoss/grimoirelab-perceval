@@ -219,9 +219,9 @@ class TestAskbotClient(unittest.TestCase):
         self.assertEqual(result, body)
 
         expected = {
-                    'page': ['1'],
-                    'sort': ['activity-asc']
-                   }
+            'page': ['1'],
+            'sort': ['activity-asc']
+        }
 
         req = httpretty.last_request()
 
@@ -267,9 +267,9 @@ class TestAskbotClient(unittest.TestCase):
         self.assertEqual(result, body)
 
         expected = {
-                    'page': ['2'],
-                    'sort': ['votes']
-                   }
+            'page': ['2'],
+            'sort': ['votes']
+        }
 
         req = httpretty.last_request()
 
@@ -313,10 +313,10 @@ class TestAskbotClient(unittest.TestCase):
         self.assertEqual(result, body)
 
         expected = {
-                    'post_id': ['17'],
-                    'post_type': ['answer'],
-                    'avatar_size': ['0']
-                 }
+            'post_id': ['17'],
+            'post_type': ['answer'],
+            'avatar_size': ['0']
+        }
 
         req = httpretty.last_request()
 

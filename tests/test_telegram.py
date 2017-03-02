@@ -79,7 +79,7 @@ def setup_http_server():
     httpretty.register_uri(httpretty.GET,
                            TELEGRAM_UPDATES_URL,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
 
     return http_requests

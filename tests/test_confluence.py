@@ -102,22 +102,22 @@ def setup_http_server():
     httpretty.register_uri(httpretty.GET,
                            CONFLUENCE_CONTENTS_URL,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
     httpretty.register_uri(httpretty.GET,
                            CONFLUENCE_HISTORICAL_CONTENT_1,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
     httpretty.register_uri(httpretty.GET,
                            CONFLUENCE_HISTORICAL_CONTENT_2,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
     httpretty.register_uri(httpretty.GET,
                            CONFLUENCE_HISTORICAL_CONTENT_ATT,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
 
     return http_requests
@@ -186,36 +186,36 @@ class TestConfluenceBackend(unittest.TestCase):
 
         # Check requests
         expected = [
-                    {
-                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'limit': ['200']
-                    },
-                    {
-                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'start': ['2'],
-                     'limit': ['2']  # Hardcoded in JSON dataset
-                    },
-                    {
-                     'expand': ['body.storage,history,version'],
-                     'status': ['historical'],
-                     'version': ['1']
-                    },
-                    {
-                     'expand': ['body.storage,history,version'],
-                     'status': ['historical'],
-                     'version': ['2']
-                    },
-                    {
-                     'expand': ['body.storage,history,version'],
-                     'status': ['historical'],
-                     'version': ['1']
-                    },
-                    {
-                     'expand': ['body.storage,history,version'],
-                     'status': ['historical'],
-                     'version': ['1']
-                    }
-                   ]
+            {
+                'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                'limit': ['200']
+            },
+            {
+                'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                'start': ['2'],
+                'limit': ['2']  # Hardcoded in JSON dataset
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['1']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['2']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['1']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['1']
+            }
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -254,37 +254,37 @@ class TestConfluenceBackend(unittest.TestCase):
 
         # Check requests
         expected = [
-                    {
-                     'cql': ["lastModified>='2016-06-16 00:00' order by lastModified"],
-                     'limit': ['200']
-                    },
-                    {
-                     # Hardcoded in JSON dataset
-                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'start': ['2'],
-                     'limit': ['2']
-                    },
-                    {
-                     'expand': ['body.storage,history,version'],
-                     'status': ['historical'],
-                     'version': ['1']
-                    },
-                    {
-                     'expand': ['body.storage,history,version'],
-                     'status': ['historical'],
-                     'version': ['2']
-                    },
-                    {
-                     'expand': ['body.storage,history,version'],
-                     'status': ['historical'],
-                     'version': ['1']
-                    },
-                    {
-                     'expand': ['body.storage,history,version'],
-                     'status': ['historical'],
-                     'version': ['1']
-                    }
-                   ]
+            {
+                'cql': ["lastModified>='2016-06-16 00:00' order by lastModified"],
+                'limit': ['200']
+            },
+            {
+                # Hardcoded in JSON dataset
+                'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                'start': ['2'],
+                'limit': ['2']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['1']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['2']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['1']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['1']
+            }
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -322,26 +322,26 @@ class TestConfluenceBackend(unittest.TestCase):
 
         # Check requests
         expected = [
-                    {
-                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'limit': ['200']
-                    },
-                    {
-                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'start': ['2'],
-                     'limit': ['2']  # Hardcoded in JSON dataset
-                    },
-                    {
-                     'expand': ['body.storage,history,version'],
-                     'status': ['historical'],
-                     'version': ['1']
-                    },
-                    {
-                     'expand': ['body.storage,history,version'],
-                     'status': ['historical'],
-                     'version': ['1']
-                    }
-                   ]
+            {
+                'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                'limit': ['200']
+            },
+            {
+                'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                'start': ['2'],
+                'limit': ['2']  # Hardcoded in JSON dataset
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['1']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['1']
+            }
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -363,9 +363,9 @@ class TestConfluenceBackend(unittest.TestCase):
 
         # Check requests
         expected = {
-                    'cql': ["lastModified>='2016-07-08 00:00' order by lastModified"],
-                    'limit': ['200']
-                   }
+            'cql': ["lastModified>='2016-07-08 00:00' order by lastModified"],
+            'limit': ['200']
+        }
 
         self.assertEqual(len(http_requests), 1)
         self.assertDictEqual(http_requests[0].querystring, expected)
@@ -520,10 +520,10 @@ class TestConfluenceClient(unittest.TestCase):
         self.assertEqual(len(pages), 1)
 
         expected = {
-                     'cql': ["lastModified>='2016-07-08 00:00' order by lastModified"],
-                     'start': ['10'],
-                     'limit': ['2']
-                   }
+            'cql': ["lastModified>='2016-07-08 00:00' order by lastModified"],
+            'start': ['10'],
+            'limit': ['2']
+        }
 
         self.assertEqual(len(http_requests), 1)
         self.assertDictEqual(http_requests[0].querystring, expected)
@@ -541,15 +541,17 @@ class TestConfluenceClient(unittest.TestCase):
 
         self.assertEqual(len(pages), 2)
 
-        expected = [{
-                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'limit': ['2']
-                    },
-                    {
-                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'start': ['2'],
-                     'limit': ['2']
-                    }]
+        expected = [
+            {
+                'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                'limit': ['2']
+            },
+            {
+                'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                'start': ['2'],
+                'limit': ['2']
+            }
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -566,10 +568,10 @@ class TestConfluenceClient(unittest.TestCase):
         hc = client.historical_content(content_id='1', version='2')
 
         expected = {
-                    'expand': ['body.storage,history,version'],
-                    'status': ['historical'],
-                    'version': ['2']
-                   }
+            'expand': ['body.storage,history,version'],
+            'status': ['historical'],
+            'version': ['2']
+        }
 
         self.assertIsInstance(hc, str)
         self.assertDictEqual(http_requests[0].querystring, expected)

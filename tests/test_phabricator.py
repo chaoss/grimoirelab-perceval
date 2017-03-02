@@ -136,27 +136,27 @@ def setup_http_server():
     httpretty.register_uri(httpretty.POST,
                            PHABRICATOR_TASKS_URL,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
     httpretty.register_uri(httpretty.POST,
                            PHABRICATOR_TRANSACTIONS_URL,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
     httpretty.register_uri(httpretty.POST,
                            PHABRICATOR_USERS_URL,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
     httpretty.register_uri(httpretty.POST,
                            PHABRICATOR_PHIDS_URL,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
     httpretty.register_uri(httpretty.POST,
                            PHABRICATOR_API_ERROR_URL,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
 
     return http_requests
@@ -258,107 +258,109 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(prjs[1]['name'], 'Bug report')
 
         # Check requests
-        expected = [{
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'attachments': {'projects': True},
-                                'constraints': {'modifiedStart': 1},
-                                'order': 'outdated'
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'ids': [69, 73, 78]
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-USER-2uk52xorcqb6sjvp467y']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-USER-bjxhrstz5fb5gkrojmev']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-USER-mjr7pnwpg6slsnjcqki7']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'after': '335',
-                                'attachments': {'projects': True},
-                                'constraints': {'modifiedStart': 1},
-                                'order': 'outdated'
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'ids': [296]
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-USER-pr5fcxy4xk5ofqsfqcfc']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-USER-ojtcpympsmwenszuef7p']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-APPS-PhabricatorHeraldApplication']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-PROJ-2qnt6thbrd7qnx5bitzy']
-                               }
-                    }]
+        expected = [
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'attachments': {'projects': True},
+                    'constraints': {'modifiedStart': 1},
+                    'order': 'outdated'
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'ids': [69, 73, 78]
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-2uk52xorcqb6sjvp467y']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-bjxhrstz5fb5gkrojmev']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-mjr7pnwpg6slsnjcqki7']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'after': '335',
+                    'attachments': {'projects': True},
+                    'constraints': {'modifiedStart': 1},
+                    'order': 'outdated'
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'ids': [296]
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-pr5fcxy4xk5ofqsfqcfc']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-ojtcpympsmwenszuef7p']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-APPS-PhabricatorHeraldApplication']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-PROJ-2qnt6thbrd7qnx5bitzy']
+                }
+            }
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -392,64 +394,66 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(task['tag'], PHABRICATOR_URL)
 
         # Check requests
-        expected = [{
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'attachments': {'projects': True},
-                                'constraints': {'modifiedStart': 1467158400},
-                                'order': 'outdated'
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'ids': [296]
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-USER-pr5fcxy4xk5ofqsfqcfc']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-USER-ojtcpympsmwenszuef7p']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-APPS-PhabricatorHeraldApplication']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'AAAA'},
-                                'phids': ['PHID-PROJ-2qnt6thbrd7qnx5bitzy']
-                               }
-                    }]
+        expected = [
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'attachments': {'projects': True},
+                    'constraints': {'modifiedStart': 1467158400},
+                    'order': 'outdated'
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'ids': [296]
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-pr5fcxy4xk5ofqsfqcfc']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-ojtcpympsmwenszuef7p']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-APPS-PhabricatorHeraldApplication']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-PROJ-2qnt6thbrd7qnx5bitzy']
+                }
+            }
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -473,15 +477,15 @@ class TestPhabricatorBackend(unittest.TestCase):
 
         # Check requests
         expected = {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                 '__conduit__': {'token': 'AAAA'},
-                                 'attachments': {'projects': True},
-                                 'constraints': {'modifiedStart': 1483228800},
-                                 'order': 'outdated'
-                               }
-                   }
+            '__conduit__': ['True'],
+            'output': ['json'],
+            'params': {
+                '__conduit__': {'token': 'AAAA'},
+                'attachments': {'projects': True},
+                'constraints': {'modifiedStart': 1483228800},
+                'order': 'outdated'
+            }
+        }
 
         self.assertEqual(len(http_requests), 1)
 
@@ -684,27 +688,29 @@ class TestConduitClient(unittest.TestCase):
 
         self.assertEqual(len(result), 2)
 
-        expected = [{
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'aaaa'},
-                                'attachments': {'projects': True},
-                                'constraints': {'modifiedStart': 1462233600},
-                                'order': 'outdated'
-                               }
-                    },
-                    {
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'aaaa'},
-                                'after': '335',
-                                'attachments': {'projects': True},
-                                'constraints': {'modifiedStart': 1462233600},
-                                'order': 'outdated'
-                               }
-                    }]
+        expected = [
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'aaaa'},
+                    'attachments': {'projects': True},
+                    'constraints': {'modifiedStart': 1462233600},
+                    'order': 'outdated'
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'aaaa'},
+                    'after': '335',
+                    'attachments': {'projects': True},
+                    'constraints': {'modifiedStart': 1462233600},
+                    'order': 'outdated'
+                }
+            }
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -722,14 +728,16 @@ class TestConduitClient(unittest.TestCase):
         client = ConduitClient(PHABRICATOR_URL, 'aaaa')
         _ = client.transactions(69, 73, 78)
 
-        expected = [{
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'aaaa'},
-                                'ids': [69, 73, 78]
-                               }
-                   }]
+        expected = [
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'aaaa'},
+                    'ids': [69, 73, 78]
+                }
+            }
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -749,17 +757,21 @@ class TestConduitClient(unittest.TestCase):
                          "PHID-USER-bjxhrstz5fb5gkrojmev",
                          "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
                          "PHID-USER-ojtcpympsmwenszuef7p")
-        expected = [{
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'aaaa'},
-                                'phids': ["PHID-USER-2uk52xorcqb6sjvp467y",
-                                          "PHID-USER-bjxhrstz5fb5gkrojmev",
-                                          "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
-                                          "PHID-USER-ojtcpympsmwenszuef7p"]
-                               }
-                   }]
+        expected = [
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'aaaa'},
+                    'phids': [
+                        "PHID-USER-2uk52xorcqb6sjvp467y",
+                        "PHID-USER-bjxhrstz5fb5gkrojmev",
+                        "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
+                        "PHID-USER-ojtcpympsmwenszuef7p"
+                    ]
+                }
+            }
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -777,15 +789,19 @@ class TestConduitClient(unittest.TestCase):
         client = ConduitClient(PHABRICATOR_URL, 'aaaa')
         _ = client.phids("PHID-APPS-PhabricatorHeraldApplication",
                          "PHID-APPS-PhabricatorMockApplication")
-        expected = [{
-                     '__conduit__': ['True'],
-                     'output': ['json'],
-                     'params': {
-                                '__conduit__': {'token': 'aaaa'},
-                                'phids': ["PHID-APPS-PhabricatorHeraldApplication",
-                                          "PHID-APPS-PhabricatorMockApplication"]
-                               }
-                   }]
+        expected = [
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'aaaa'},
+                    'phids': [
+                        "PHID-APPS-PhabricatorHeraldApplication",
+                        "PHID-APPS-PhabricatorMockApplication"
+                    ]
+                }
+            }
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -816,7 +832,7 @@ class TestConduitClient(unittest.TestCase):
             PHABRICATOR_TASKS_URL: [(502, 'error'), (503, 'error'), (200, body)],
             PHABRICATOR_USERS_URL: [(503, 'error'), (503, 'error'), (503, 'error'), (503, 'error')],
             PHABRICATOR_PHIDS_URL: [(404, 'not found')]
-         }
+        }
 
         def request_callback(method, uri, headers):
             reqs.append(httpretty.last_request())
@@ -826,19 +842,19 @@ class TestConduitClient(unittest.TestCase):
         httpretty.register_uri(httpretty.POST,
                                PHABRICATOR_TASKS_URL,
                                responses=[
-                                   httpretty.Response(body=request_callback) \
+                                   httpretty.Response(body=request_callback)
                                    for _ in range(3)
                                ])
         httpretty.register_uri(httpretty.POST,
                                PHABRICATOR_USERS_URL,
                                responses=[
-                                   httpretty.Response(body=request_callback) \
+                                   httpretty.Response(body=request_callback)
                                    for _ in range(4)
                                ])
         httpretty.register_uri(httpretty.POST,
                                PHABRICATOR_PHIDS_URL,
                                responses=[
-                                   httpretty.Response(body=request_callback) \
+                                   httpretty.Response(body=request_callback)
                                    for _ in range(1)
                                ])
 

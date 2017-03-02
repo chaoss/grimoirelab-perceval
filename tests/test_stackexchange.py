@@ -355,30 +355,31 @@ class TestStackExchangeClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                STACKEXCHANGE_QUESTIONS_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
         expected = [
-                    {
-                     'page': ['1'],
-                     'pagesize': ['1'],
-                     'order': ['desc'],
-                     'sort': ['activity'],
-                     'tagged': ['python'],
-                     'site': ['stackoverflow'],
-                     'key': ['aaa'],
-                     'filter': [QUESTIONS_FILTER]
-                    },
-                    {
-                     'page': ['2'],
-                     'pagesize': ['1'],
-                     'order': ['desc'],
-                     'sort': ['activity'],
-                     'tagged': ['python'],
-                     'site': ['stackoverflow'],
-                     'key': ['aaa'],
-                     'filter': [QUESTIONS_FILTER]
-                    }]
+            {
+                'page': ['1'],
+                'pagesize': ['1'],
+                'order': ['desc'],
+                'sort': ['activity'],
+                'tagged': ['python'],
+                'site': ['stackoverflow'],
+                'key': ['aaa'],
+                'filter': [QUESTIONS_FILTER]
+            },
+            {
+                'page': ['2'],
+                'pagesize': ['1'],
+                'order': ['desc'],
+                'sort': ['activity'],
+                'tagged': ['python'],
+                'site': ['stackoverflow'],
+                'key': ['aaa'],
+                'filter': [QUESTIONS_FILTER]
+            }
+        ]
 
         client = StackExchangeClient(site="stackoverflow",
                                      tagged="python",
@@ -410,7 +411,7 @@ class TestStackExchangeClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                STACKEXCHANGE_QUESTIONS_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
         client = StackExchangeClient(site="stackoverflow",

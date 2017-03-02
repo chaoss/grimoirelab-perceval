@@ -74,8 +74,8 @@ def configure_http_server():
     httpretty.register_uri(httpretty.GET,
                            RSS_FEED_URL,
                            responses=[
-                                httpretty.Response(body=request_callback) \
-                                for _ in range(2)
+                               httpretty.Response(body=request_callback)
+                               for _ in range(2)
                            ])
 
     return http_requests
@@ -183,7 +183,8 @@ class TestRSSBackend(unittest.TestCase):
 
         self.assertEqual(entry['title'], 'Connect 2016 Developer Workshop')
         self.assertEqual(entry['published'], 'Tue, 06 Dec 2016 17:17:00 +0000')
-        self.assertEqual(entry['avatar'], '/content/gallery/speakers/speakersCouchbase/mebricks.jpg/mebricks.jpg/hippogallery:original')
+        self.assertEqual(entry['avatar'],
+                         '/content/gallery/speakers/speakersCouchbase/mebricks.jpg/mebricks.jpg/hippogallery:original')
         self.assertEqual(entry['link'], 'http://blog.couchbase.com/2016/november/connect-2016-developer-workshop')
         self.assertEqual(len(entry['summary']), 410)
         self.assertEqual(entry['author'], 'Matthew Groves')

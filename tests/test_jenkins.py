@@ -109,8 +109,8 @@ class TestJenkinsBackend(unittest.TestCase):
 
             if uri.startswith(JENKINS_JOBS_URL):
                 body = bodies_jobs
-            elif uri.startswith(JENKINS_JOB_BUILDS_URL_1) or \
-                 uri.startswith(JENKINS_JOB_BUILDS_URL_2):
+            elif (uri.startswith(JENKINS_JOB_BUILDS_URL_1) or
+                  uri.startswith(JENKINS_JOB_BUILDS_URL_2)):
                 body = bodies_builds_job
             elif uri.startswith(JENKINS_JOB_BUILDS_URL_500_ERROR):
                 status = 500
@@ -125,30 +125,30 @@ class TestJenkinsBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOBS_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(3)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(3)
                                ])
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOB_BUILDS_URL_1,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOB_BUILDS_URL_2,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOB_BUILDS_URL_500_ERROR,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOB_BUILDS_URL_JSON_ERROR,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
     @httpretty.activate
@@ -241,8 +241,8 @@ class TestJenkinsBackendCache(unittest.TestCase):
 
             if uri.startswith(JENKINS_JOBS_URL):
                 body = bodies_jobs
-            elif uri.startswith(JENKINS_JOB_BUILDS_URL_1) or \
-                 uri.startswith(JENKINS_JOB_BUILDS_URL_2):
+            elif (uri.startswith(JENKINS_JOB_BUILDS_URL_1) or
+                  uri.startswith(JENKINS_JOB_BUILDS_URL_2)):
                 body = bodies_builds_job
             elif uri.startswith(JENKINS_JOB_BUILDS_URL_500_ERROR):
                 status = 500
@@ -255,30 +255,30 @@ class TestJenkinsBackendCache(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOBS_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(3)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(3)
                                ])
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOB_BUILDS_URL_1,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOB_BUILDS_URL_2,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOB_BUILDS_URL_500_ERROR,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOB_BUILDS_URL_JSON_ERROR,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
         # First, we fetch the builds from the server, storing them
