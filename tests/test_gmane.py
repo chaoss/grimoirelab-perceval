@@ -102,8 +102,8 @@ class TestGmaneBackend(unittest.TestCase):
         self.assertEqual(backend.url, GMANE_MYLIST_URL)
         self.assertEqual(backend.uri, GMANE_MYLIST_URL)
         self.assertEqual(backend.dirpath, self.tmp_path)
-        self.assertEqual(backend.origin,  GMANE_MYLIST_URL)
-        self.assertEqual(backend.tag,  'test')
+        self.assertEqual(backend.origin, GMANE_MYLIST_URL)
+        self.assertEqual(backend.tag, 'test')
 
         # When origin is empty or None it will be set to
         # the value of the Gmane mailing list

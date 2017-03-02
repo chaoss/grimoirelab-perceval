@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -58,10 +58,12 @@ JENKINS_JOB_BUILDS_URL_JSON_ERROR = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_B
 
 requests_http = []
 
+
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
         content = f.read()
     return content
+
 
 class TestJenkinsBackend(unittest.TestCase):
     """Jenkins backend tests"""
@@ -295,7 +297,6 @@ class TestJenkinsBackendCache(unittest.TestCase):
         with open("data/jenkins_build.json") as build_json:
             first_build = json.load(build_json)
             self.assertDictEqual(cached_builds[0]['data'], first_build['data'])
-
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any builds returned when the cache is empty"""

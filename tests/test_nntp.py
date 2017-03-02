@@ -62,10 +62,10 @@ class MockNNTPLib:
 
     def __init__(self):
         self.__articles = {
-            1 : ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 'data/nntp/nntp_1.txt'),
-            2 : ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 'data/nntp/nntp_2.txt'),
-            3 : ('error', 'error'),
-            4 : ('<mailman.5377.1312994002.4544.community-arab-world@lists.example.com>', 'data/nntp/nntp_parsing_error.txt')
+            1: ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 'data/nntp/nntp_1.txt'),
+            2: ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 'data/nntp/nntp_2.txt'),
+            3: ('error', 'error'),
+            4: ('<mailman.5377.1312994002.4544.community-arab-world@lists.example.com>', 'data/nntp/nntp_parsing_error.txt')
         }
 
     def __enter__(self):
@@ -162,8 +162,6 @@ class TestNNTPBackend(unittest.TestCase):
             self.assertEqual(article['category'], 'article')
             self.assertEqual(article['tag'], expected_origin)
 
-
-
     @unittest.mock.patch('nntplib.NNTP')
     def test_fetch_from_offset(self, mock_nntp):
         """Test whether it fetches a set of articles from a given offset"""
@@ -204,7 +202,7 @@ class TestNNTPBackend(unittest.TestCase):
         raw_article = read_file('data/nntp/nntp_1.txt')
 
         article = NNTP.parse_article(raw_article)
-        article = {k: v for k,v in article.items()}
+        article = {k: v for k, v in article.items()}
 
         self.assertEqual(article['Message-ID'], '<mailman.350.1458060579.14303.dev-project-link@example.com>')
         self.assertEqual(article['NNTP-Posting-Date'], 'Tue, 15 Mar 2016 11:49:40 -0500')

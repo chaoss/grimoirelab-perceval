@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -216,53 +216,53 @@ class TestMeetupBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-             'key' : ['aaaa'],
-             'order' : ['updated'],
-             'page' : ['2'],
-             'scroll' : ['since:1970-01-01T00:00:00.000Z'],
-             'sign' : ['true'],
-             'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
+             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+             'key': ['aaaa'],
+             'order': ['updated'],
+             'page': ['2'],
+             'scroll': ['since:1970-01-01T00:00:00.000Z'],
+             'sign': ['true'],
+             'status': ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'sign' : ['true']
+             'key': ['aaaa'],
+             'page': ['2'],
+             'sign': ['true']
             },
             {
-             'fields' : ['attendance_status'],
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'response' : ['yes,no'],
-             'sign' : ['true']
+             'fields': ['attendance_status'],
+             'key': ['aaaa'],
+             'page': ['2'],
+             'response': ['yes,no'],
+             'sign': ['true']
             },
             {
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'sign' : ['true']
+             'key': ['aaaa'],
+             'page': ['2'],
+             'sign': ['true']
             },
             {
-             'fields' : ['attendance_status'],
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'response' : ['yes,no'],
-             'sign' : ['true']
+             'fields': ['attendance_status'],
+             'key': ['aaaa'],
+             'page': ['2'],
+             'response': ['yes,no'],
+             'sign': ['true']
             },
             {
              'key': ['aaaa'],
              'sign': ['true']
             },
             {
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'sign' : ['true']
+             'key': ['aaaa'],
+             'page': ['2'],
+             'sign': ['true']
             },
             {
-             'fields' : ['attendance_status'],
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'response' : ['yes,no'],
-             'sign' : ['true']
+             'fields': ['attendance_status'],
+             'key': ['aaaa'],
+             'page': ['2'],
+             'response': ['yes,no'],
+             'sign': ['true']
             }
         ]
 
@@ -301,25 +301,25 @@ class TestMeetupBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-             'key' : ['aaaa'],
-             'order' : ['updated'],
-             'page' : ['2'],
-             'scroll' : ['since:2016-09-25T00:00:00.000Z'],
-             'sign' : ['true'],
-             'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
+             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+             'key': ['aaaa'],
+             'order': ['updated'],
+             'page': ['2'],
+             'scroll': ['since:2016-09-25T00:00:00.000Z'],
+             'sign': ['true'],
+             'status': ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'sign' : ['true']
+             'key': ['aaaa'],
+             'page': ['2'],
+             'sign': ['true']
             },
             {
-             'fields' : ['attendance_status'],
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'response' : ['yes,no'],
-             'sign' : ['true']
+             'fields': ['attendance_status'],
+             'key': ['aaaa'],
+             'page': ['2'],
+             'response': ['yes,no'],
+             'sign': ['true']
             }
         ]
 
@@ -359,53 +359,53 @@ class TestMeetupBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-             'key' : ['aaaa'],
-             'order' : ['updated'],
-             'page' : ['2'],
-             'scroll' : ['since:1970-01-01T00:00:00.000Z'],
-             'sign' : ['true'],
-             'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
+             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+             'key': ['aaaa'],
+             'order': ['updated'],
+             'page': ['2'],
+             'scroll': ['since:1970-01-01T00:00:00.000Z'],
+             'sign': ['true'],
+             'status': ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'sign' : ['true']
+             'key': ['aaaa'],
+             'page': ['2'],
+             'sign': ['true']
             },
             {
-             'fields' : ['attendance_status'],
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'response' : ['yes,no'],
-             'sign' : ['true']
+             'fields': ['attendance_status'],
+             'key': ['aaaa'],
+             'page': ['2'],
+             'response': ['yes,no'],
+             'sign': ['true']
             },
             {
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'sign' : ['true']
+             'key': ['aaaa'],
+             'page': ['2'],
+             'sign': ['true']
             },
             {
-             'fields' : ['attendance_status'],
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'response' : ['yes,no'],
-             'sign' : ['true']
+             'fields': ['attendance_status'],
+             'key': ['aaaa'],
+             'page': ['2'],
+             'response': ['yes,no'],
+             'sign': ['true']
             },
             {
              'key': ['aaaa'],
              'sign': ['true']
             },
             {
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'sign' : ['true']
+             'key': ['aaaa'],
+             'page': ['2'],
+             'sign': ['true']
             },
             {
-             'fields' : ['attendance_status'],
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'response' : ['yes,no'],
-             'sign' : ['true']
+             'fields': ['attendance_status'],
+             'key': ['aaaa'],
+             'page': ['2'],
+             'response': ['yes,no'],
+             'sign': ['true']
             }
         ]
 
@@ -442,25 +442,25 @@ class TestMeetupBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-             'key' : ['aaaa'],
-             'order' : ['updated'],
-             'page' : ['2'],
-             'scroll' : ['since:2016-04-08T00:00:00.000Z'],
-             'sign' : ['true'],
-             'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
+             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+             'key': ['aaaa'],
+             'order': ['updated'],
+             'page': ['2'],
+             'scroll': ['since:2016-04-08T00:00:00.000Z'],
+             'sign': ['true'],
+             'status': ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
              'key': ['aaaa'],
-             'page' : ['2'],
+             'page': ['2'],
              'sign': ['true']
             },
             {
-             'fields' : ['attendance_status'],
-             'key' : ['aaaa'],
-             'page' : ['2'],
-             'response' : ['yes,no'],
-             'sign' : ['true']
+             'fields': ['attendance_status'],
+             'key': ['aaaa'],
+             'page': ['2'],
+             'response': ['yes,no'],
+             'sign': ['true']
             }
         ]
 
@@ -484,13 +484,13 @@ class TestMeetupBackend(unittest.TestCase):
 
         # Check requests
         expected = {
-            'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-            'key' : ['aaaa'],
-            'order' : ['updated'],
-            'page' : ['2'],
-            'scroll' : ['since:2017-01-01T00:00:00.000Z'],
-            'sign' : ['true'],
-            'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
+            'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+            'key': ['aaaa'],
+            'order': ['updated'],
+            'page': ['2'],
+            'scroll': ['since:2017-01-01T00:00:00.000Z'],
+            'sign': ['true'],
+            'status': ['cancelled,upcoming,past,proposed,suggested,draft']
         }
 
         self.assertEqual(len(http_requests), 1)
@@ -655,13 +655,13 @@ class TestMeetupClient(unittest.TestCase):
 
         expected = [
             {
-             'fields' : ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
-             'key' : ['aaaa'],
-             'order' : ['updated'],
-             'page' : ['2'],
-             'scroll' : ['since:2016-01-01T00:00:00.000Z'],
-             'sign' : ['true'],
-             'status' : ['cancelled,upcoming,past,proposed,suggested,draft']
+             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+             'key': ['aaaa'],
+             'order': ['updated'],
+             'page': ['2'],
+             'scroll': ['since:2016-01-01T00:00:00.000Z'],
+             'sign': ['true'],
+             'status': ['cancelled,upcoming,past,proposed,suggested,draft']
             },
             {
              'key': ['aaaa'],
@@ -692,9 +692,9 @@ class TestMeetupClient(unittest.TestCase):
         self.assertEqual(len(result), 1)
 
         expected = {
-            'key' : ['aaaa'],
-            'page' : ['2'],
-            'sign' : ['true']
+            'key': ['aaaa'],
+            'page': ['2'],
+            'sign': ['true']
         }
 
         self.assertEqual(len(http_requests), 1)
@@ -719,11 +719,11 @@ class TestMeetupClient(unittest.TestCase):
         self.assertEqual(len(result), 1)
 
         expected = {
-            'fields' : ['attendance_status'],
-            'key' : ['aaaa'],
-            'page' : ['2'],
-            'response' : ['yes,no'],
-            'sign' : ['true']
+            'fields': ['attendance_status'],
+            'key': ['aaaa'],
+            'page': ['2'],
+            'response': ['yes,no'],
+            'sign': ['true']
         }
 
         self.assertEqual(len(http_requests), 1)

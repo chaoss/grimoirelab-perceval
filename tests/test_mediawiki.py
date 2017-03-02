@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -53,6 +53,7 @@ MEDIAWIKI_SERVER_URL = 'http://example.com'
 MEDIAWIKI_API = MEDIAWIKI_SERVER_URL + '/api.php'
 
 TESTED_VERSIONS = ['1.23', '1.28']
+
 
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
@@ -215,7 +216,6 @@ class TestMediaWikiBackend_1_23(TestMediaWikiBackend):
         self._test_fetch_version("1.23")
         self._test_fetch_version("1.23", reviews_api=True)
 
-
     @httpretty.activate
     def test_fetch_from_date(self):
         from_date = dateutil.parser.parse("2016-06-23 15:35")
@@ -309,7 +309,7 @@ class TestMediaWikiBackendCache(unittest.TestCase):
             self.assertEqual(len(cached_pages), 4)
         elif version == "1.23" or not reviews_api:
             # 2 pages per each of the 5 name spaces, x2 caches
-            self.assertEqual(len(cached_pages), 10*2)
+            self.assertEqual(len(cached_pages), 10 * 2)
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any pages returned when the cache is empty"""
@@ -362,10 +362,10 @@ class TestMediaWikiClient(unittest.TestCase):
         self.assertRegex(req.path, '/api.php')
         # Check request params
         expected = {
-                    'action' : ['query'],
-                    'meta' : ['siteinfo'],
-                    'siprop':['namespaces'],
-                    'format':['json']
+                    'action': ['query'],
+                    'meta': ['siteinfo'],
+                    'siprop': ['namespaces'],
+                    'format': ['json']
                     }
         self.assertDictEqual(req.querystring, expected)
 
@@ -389,9 +389,9 @@ class TestMediaWikiClient(unittest.TestCase):
         self.assertRegex(req.path, '/api.php')
         # Check request params
         expected = {
-                    'action' : ['query'],
-                    'meta' : ['siteinfo'],
-                    'format':['json']
+                    'action': ['query'],
+                    'meta': ['siteinfo'],
+                    'format': ['json']
                     }
         self.assertDictEqual(req.querystring, expected)
 
@@ -416,11 +416,11 @@ class TestMediaWikiClient(unittest.TestCase):
         self.assertRegex(req.path, '/api.php')
         # Check request params
         expected = {
-                    'action' : ['query'],
-                    'list' : ['allpages'],
-                    'apnamespace':['0'],
-                    'aplimit':['max'],
-                    'format':['json']
+                    'action': ['query'],
+                    'list': ['allpages'],
+                    'apnamespace': ['0'],
+                    'aplimit': ['max'],
+                    'format': ['json']
                     }
         self.assertDictEqual(req.querystring, expected)
 
@@ -437,9 +437,9 @@ class TestMediaWikiClient(unittest.TestCase):
         self.assertRegex(req.path, '/api.php')
         # Check request params
         expected = {
-                    'action' : ['query'],
-                    'list' : ['recentchanges'],
-                    'format':['json'],
+                    'action': ['query'],
+                    'list': ['recentchanges'],
+                    'format': ['json'],
                     'rclimit': ['max'],
                     'rcnamespace': ['0'],
                     'rcprop': ['title|timestamp|ids']
@@ -458,10 +458,10 @@ class TestMediaWikiClient(unittest.TestCase):
         self.assertRegex(req.path, '/api.php')
         # Check request params
         expected = {
-                    'action' : ['query'],
-                    'prop':['revisions'],
-                    'titles':['VisualEditor'],
-                    'format':['json'],
+                    'action': ['query'],
+                    'prop': ['revisions'],
+                    'titles': ['VisualEditor'],
+                    'format': ['json'],
                     'rvlimit': ['max'],
                     'rvdir': ['newer']
                     }
@@ -480,12 +480,12 @@ class TestMediaWikiClient(unittest.TestCase):
         self.assertRegex(req.path, '/api.php')
         # Check request params
         expected = {
-                    'action' : ['query'],
-                    'list' : ['allrevisions'],
-                    'arvnamespace':['0'],
-                    'arvdir':['newer'],
-                    'arvlimit':['max'],
-                    'format':['json'],
+                    'action': ['query'],
+                    'list': ['allrevisions'],
+                    'arvnamespace': ['0'],
+                    'arvdir': ['newer'],
+                    'arvlimit': ['max'],
+                    'format': ['json'],
                     'arvprop': ['ids']
                     }
         self.assertDictEqual(req.querystring, expected)
@@ -506,12 +506,12 @@ class TestMediaWikiClient(unittest.TestCase):
         self.assertRegex(req.path, '/api.php')
         # Check request params
         expected = {
-                    'action' : ['query'],
-                    'list' : ['allrevisions'],
-                    'arvnamespace':['0'],
-                    'arvdir':['newer'],
-                    'arvlimit':['max'],
-                    'format':['json'],
+                    'action': ['query'],
+                    'list': ['allrevisions'],
+                    'arvnamespace': ['0'],
+                    'arvdir': ['newer'],
+                    'arvlimit': ['max'],
+                    'format': ['json'],
                     'arvprop': ['ids'],
                     'arvstart': ['2016-01-01T00:00:00Z']
                     }

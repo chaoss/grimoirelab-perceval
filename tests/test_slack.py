@@ -63,7 +63,7 @@ def setup_http_server():
     http_requests = []
 
     channel_error = read_file('data/slack/slack_error.json', 'rb')
-    channel_empty =  read_file('data/slack/slack_history_empty.json', 'rb')
+    channel_empty = read_file('data/slack/slack_history_empty.json', 'rb')
     channel_history = read_file('data/slack/slack_history.json', 'rb')
     channel_history_next = read_file('data/slack/slack_history_next.json', 'rb')
     channel_history_date = read_file('data/slack/slack_history_20150323.json', 'rb')
@@ -199,30 +199,30 @@ class TestSlackBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'channel' : ['C011DUKE8'],
-             'oldest' : ['0'],
-             'latest' : ['1483228800.0'],
-             'token' : ['aaaa'],
-             'count' : ['5']
+             'channel': ['C011DUKE8'],
+             'oldest': ['0'],
+             'latest': ['1483228800.0'],
+             'token': ['aaaa'],
+             'count': ['5']
             },
             {
-             'user' : ['U0003'],
-             'token' : ['aaaa']
+             'user': ['U0003'],
+             'token': ['aaaa']
             },
             {
-             'user' : ['U0002'],
-             'token' : ['aaaa']
+             'user': ['U0002'],
+             'token': ['aaaa']
             },
             {
-             'user' : ['U0001'],
-             'token' : ['aaaa']
+             'user': ['U0001'],
+             'token': ['aaaa']
             },
             {
-             'channel' : ['C011DUKE8'],
-             'oldest' : ['0'],
-             'latest' : ['1427135733.000068'],
-             'token' : ['aaaa'],
-             'count' : ['5']
+             'channel': ['C011DUKE8'],
+             'oldest': ['0'],
+             'latest': ['1427135733.000068'],
+             'token': ['aaaa'],
+             'count': ['5']
             }
         ]
 
@@ -267,19 +267,19 @@ class TestSlackBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'channel' : ['C011DUKE8'],
-             'oldest' : ['1427135740.000068'],
-             'latest' : ['1483228800.0'],
-             'token' : ['aaaa'],
-             'count' : ['5']
+             'channel': ['C011DUKE8'],
+             'oldest': ['1427135740.000068'],
+             'latest': ['1483228800.0'],
+             'token': ['aaaa'],
+             'count': ['5']
             },
             {
-             'user' : ['U0003'],
-             'token' : ['aaaa']
+             'user': ['U0003'],
+             'token': ['aaaa']
             },
             {
-             'user' : ['U0002'],
-             'token' : ['aaaa']
+             'user': ['U0002'],
+             'token': ['aaaa']
             }
         ]
 
@@ -309,11 +309,11 @@ class TestSlackBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'channel' : ['C011DUKE8'],
-             'oldest' : ['1451606399.999999'],
-             'latest' : ['1483228800.0'],
-             'token' : ['aaaa'],
-             'count' : ['5']
+             'channel': ['C011DUKE8'],
+             'oldest': ['1451606399.999999'],
+             'latest': ['1483228800.0'],
+             'token': ['aaaa'],
+             'count': ['5']
             }
         ]
 
@@ -464,11 +464,11 @@ class TestSlackClient(unittest.TestCase):
                            oldest=1, latest=1427135733.000068)
 
         expected = {
-            'channel' : ['C011DUKE8'],
-            'oldest' : ['1'],
-            'latest' : ['1427135733.000068'],
-            'token' : ['aaaa'],
-            'count' : ['5']
+            'channel': ['C011DUKE8'],
+            'oldest': ['1'],
+            'latest': ['1427135733.000068'],
+            'token': ['aaaa'],
+            'count': ['5']
         }
 
         self.assertEqual(len(http_requests), 1)
@@ -490,8 +490,8 @@ class TestSlackClient(unittest.TestCase):
         _ = client.user('U0001')
 
         expected = {
-            'user' : ['U0001'],
-            'token' : ['aaaa']
+            'user': ['U0001'],
+            'token': ['aaaa']
         }
 
         self.assertEqual(len(http_requests), 1)

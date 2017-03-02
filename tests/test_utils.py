@@ -64,8 +64,10 @@ class TestCheckCompressedFileType(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
 
-        cls.files = {'bz2' : os.path.join(cls.tmp_path, 'bz2'),
-                     'gz'  : os.path.join(cls.tmp_path, 'gz')}
+        cls.files = {
+            'bz2': os.path.join(cls.tmp_path, 'bz2'),
+            'gz': os.path.join(cls.tmp_path, 'gz')
+        }
 
         # Copy compressed files
         for ftype, fname in cls.files.items():
@@ -272,13 +274,13 @@ class TestUnixTimeToDatetime(unittest.TestCase):
         """Check if it converts some timestamps to datetime objects"""
 
         date = unixtime_to_datetime(0)
-        expected = datetime.datetime(1970,  1, 1, 0, 0, 0,
+        expected = datetime.datetime(1970, 1, 1, 0, 0, 0,
                                      tzinfo=dateutil.tz.tzutc())
         self.assertIsInstance(date, datetime.datetime)
         self.assertEqual(date, expected)
 
         date = unixtime_to_datetime(1426868155.0)
-        expected = datetime.datetime(2015,  3, 20, 16, 15, 55,
+        expected = datetime.datetime(2015, 3, 20, 16, 15, 55,
                                      tzinfo=dateutil.tz.tzutc())
         self.assertIsInstance(date, datetime.datetime)
         self.assertEqual(date, expected)
@@ -328,20 +330,20 @@ class TestMessagetoDict(unittest.TestCase):
         msg = email.message_from_string(raw_email)
 
         message = message_to_dict(msg)
-        message = {k: v for k,v in message.items()}
+        message = {k: v for k, v in message.items()}
 
         expected = {
-                    'From' : 'goran at domain.com ( Göran Lastname )',
-                    'Date' : 'Wed, 01 Dec 2010 14:26:40 +0100',
-                    'Subject' : '[List-name] Protocol Buffers anyone?',
-                    'Message-ID' : '<4CF64D10.9020206@domain.com>',
-                    'unixfrom' : None,
-                    'body': {
-                             'plain' : "Hi!\n\nA message in English, with a signature "
-                                       "with a different encoding.\n\nregards, G?ran"
-                                       "\n\n\n",
-                            }
-                    }
+            'From': 'goran at domain.com ( Göran Lastname )',
+            'Date': 'Wed, 01 Dec 2010 14:26:40 +0100',
+            'Subject': '[List-name] Protocol Buffers anyone?',
+            'Message-ID': '<4CF64D10.9020206@domain.com>',
+            'unixfrom': None,
+            'body': {
+                'plain': "Hi!\n\nA message in English, with a signature "
+                         "with a different encoding.\n\nregards, G?ran"
+                         "\n\n\n",
+            }
+        }
 
         self.assertDictEqual(message, expected)
 
@@ -356,18 +358,18 @@ class TestMessagetoDict(unittest.TestCase):
 
         plain_body = message['body']['plain']
         html_body = message['body']['html']
-        self.assertEqual(plain_body , 'technology.esl Committers,\n\n'
-                                      'This automatically generated message marks the successful completion of\n'
-                                      'voting for Chuwei Huang to receive full Committer status on the\n'
-                                      'technology.esl project. The next step is for the PMC to approve this vote,\n'
-                                      'followed by the EMO processing the paperwork and provisioning the account.\n\n\n\n'
-                                      'Vote summary: 4/0/0 with 0 not voting\n\n'
-                                      '  +1  Thomas Guiu\n\n'
-                                      '  +1  Jin Liu\n\n'
-                                      '  +1  Yves YANG\n\n'
-                                      '  +1  Bo Zhou\n\n\n\n'
-                                      'If you have any questions, please do not hesitate to contact your project\n'
-                                      'lead, PMC member, or the EMO <emo@example.org>\n\n\n\n\n\n')
+        self.assertEqual(plain_body, 'technology.esl Committers,\n\n'
+                                     'This automatically generated message marks the successful completion of\n'
+                                     'voting for Chuwei Huang to receive full Committer status on the\n'
+                                     'technology.esl project. The next step is for the PMC to approve this vote,\n'
+                                     'followed by the EMO processing the paperwork and provisioning the account.\n\n\n\n'
+                                     'Vote summary: 4/0/0 with 0 not voting\n\n'
+                                     '  +1  Thomas Guiu\n\n'
+                                     '  +1  Jin Liu\n\n'
+                                     '  +1  Yves YANG\n\n'
+                                     '  +1  Bo Zhou\n\n\n\n'
+                                     'If you have any questions, please do not hesitate to contact your project\n'
+                                     'lead, PMC member, or the EMO <emo@example.org>\n\n\n\n\n\n')
         self.assertEqual(len(html_body), 3103)
 
         # Multipart message without defined encoding
@@ -378,19 +380,19 @@ class TestMessagetoDict(unittest.TestCase):
 
         plain_body = message['body']['plain']
         html_body = message['body']['html']
-        self.assertEqual(plain_body , 'I am fairly new to eclipse. I am evaluating the use of eclipse for a generic\n'
-                                      'UI framework that is not necessarily related to code generation.\n'
-                                      'Eclipse is very flexible and adding functionality seems straightforward. I\n'
-                                      'can still use the project concept for what I need but there are things in\n'
-                                      'the Workbench window that I don\'t want. For example the Open perspective\n'
-                                      'icon, or some of the menus, like the Windows and project menu .\n\n'
-                                      'I understand that by using retargetable actions I can have my view taking\n'
-                                      'over most of the actions, but I could not figure out how to block the core\n'
-                                      'plug-in to put their own actions. In the workbench plug-in (org.eclipse.ui)\n'
-                                      'I could not find where menus are defined and where actionsviews for all\n'
-                                      'generic toolbars are defined.\n\nHow do I do this?\nCan this be done?\n'
-                                      'Is anybody using eclipse as a generic UI framework?\n\nI appreciate any help.\n\n'
-                                      'Thanks,\n\nDaniel Nehren\n\n')
+        self.assertEqual(plain_body, 'I am fairly new to eclipse. I am evaluating the use of eclipse for a generic\n'
+                                     'UI framework that is not necessarily related to code generation.\n'
+                                     'Eclipse is very flexible and adding functionality seems straightforward. I\n'
+                                     'can still use the project concept for what I need but there are things in\n'
+                                     'the Workbench window that I don\'t want. For example the Open perspective\n'
+                                     'icon, or some of the menus, like the Windows and project menu .\n\n'
+                                     'I understand that by using retargetable actions I can have my view taking\n'
+                                     'over most of the actions, but I could not figure out how to block the core\n'
+                                     'plug-in to put their own actions. In the workbench plug-in (org.eclipse.ui)\n'
+                                     'I could not find where menus are defined and where actionsviews for all\n'
+                                     'generic toolbars are defined.\n\nHow do I do this?\nCan this be done?\n'
+                                     'Is anybody using eclipse as a generic UI framework?\n\nI appreciate any help.\n\n'
+                                     'Thanks,\n\nDaniel Nehren\n\n')
         self.assertEqual(len(html_body), 1557)
 
 
@@ -472,13 +474,13 @@ class TestBuildSignatureParameters(unittest.TestCase):
     def test_build_parameters(self):
         """Test if a list of parameters is build"""
 
-        expected = {'a' : 1, 'b' : 2, 'c' : 3}
-        params = {'a' : 1, 'b' : 2, 'c' : 3}
+        expected = {'a': 1, 'b': 2, 'c': 3}
+        params = {'a': 1, 'b': 2, 'c': 3}
         found = build_signature_parameters(params, MockCallable.test)
         self.assertDictEqual(found, expected)
 
-        expected = {'a' : 1, 'b' : 2}
-        params = {'a' : 1, 'b' : 2, 'd' : 3}
+        expected = {'a': 1, 'b': 2}
+        params = {'a': 1, 'b': 2, 'd': 3}
         found = build_signature_parameters(params, MockCallable.test)
         self.assertDictEqual(found, expected)
 
@@ -486,7 +488,7 @@ class TestBuildSignatureParameters(unittest.TestCase):
         """Test if it raises an exception for not found arguments"""
 
         with self.assertRaises(AttributeError) as e:
-            params = {'a' : 1, 'd' : 3}
+            params = {'a': 1, 'd': 3}
             _ = build_signature_parameters(params, MockCallable.test)
             self.assertEqual(e.exception.args[1], 'b')
 

@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Alberto Martín <alberto.martin@bitergia.com>
@@ -323,6 +323,7 @@ class TestAskbotClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/post_comments')
         self.assertDictEqual(req.querystring, expected)
+
 
 class TestAskbotBackend(unittest.TestCase):
     """Askbot backend tests."""

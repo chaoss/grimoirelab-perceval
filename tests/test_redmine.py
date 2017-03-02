@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -208,59 +208,59 @@ class TestRedmineBackend(unittest.TestCase):
 
         # Check requests
         expected = [{
-                     'key' : ['AAAA'],
-                     'status_id' : ['*'],
-                     'sort' : ['updated_on'],
-                     'updated_on' : ['>=1970-01-01T00:00:00Z'],
-                     'offset' : ['0'],
-                     'limit' : ['3']
+                     'key': ['AAAA'],
+                     'status_id': ['*'],
+                     'sort': ['updated_on'],
+                     'updated_on': ['>=1970-01-01T00:00:00Z'],
+                     'offset': ['0'],
+                     'limit': ['3']
                     },
                     {
-                     'key' : ['AAAA'],
-                     'include' : ['attachments,changesets,children,journals,relations,watchers']
+                     'key': ['AAAA'],
+                     'include': ['attachments,changesets,children,journals,relations,watchers']
                     },
                     {
-                     'key' : ['AAAA']
+                     'key': ['AAAA']
                     },
                     {
-                     'key' : ['AAAA'],
-                     'include' : ['attachments,changesets,children,journals,relations,watchers']
+                     'key': ['AAAA'],
+                     'include': ['attachments,changesets,children,journals,relations,watchers']
                     },
                     {
-                     'key' : ['AAAA'],
-                     'include' : ['attachments,changesets,children,journals,relations,watchers']
+                     'key': ['AAAA'],
+                     'include': ['attachments,changesets,children,journals,relations,watchers']
                     },
                     {
-                     'key' : ['AAAA'],
-                     'status_id' : ['*'],
-                     'sort' : ['updated_on'],
-                     'updated_on' : ['>=1970-01-01T00:00:00Z'],
-                     'offset' : ['3'],
-                     'limit' : ['3']
+                     'key': ['AAAA'],
+                     'status_id': ['*'],
+                     'sort': ['updated_on'],
+                     'updated_on': ['>=1970-01-01T00:00:00Z'],
+                     'offset': ['3'],
+                     'limit': ['3']
                     },
                     {
-                     'key' : ['AAAA'],
-                     'include' : ['attachments,changesets,children,journals,relations,watchers']
+                     'key': ['AAAA'],
+                     'include': ['attachments,changesets,children,journals,relations,watchers']
                     },
                     {
-                     'key' : ['AAAA']
+                     'key': ['AAAA']
                     },
                     {
-                     'key' : ['AAAA']
+                     'key': ['AAAA']
                     },
                     {
-                     'key' : ['AAAA']
+                     'key': ['AAAA']
                     },
                     {
-                     'key' : ['AAAA']
+                     'key': ['AAAA']
                     },
                     {
-                     'key' : ['AAAA'],
-                     'status_id' : ['*'],
-                     'sort' : ['updated_on'],
-                     'updated_on' : ['>=1970-01-01T00:00:00Z'],
-                     'offset' : ['6'],
-                     'limit' : ['3']
+                     'key': ['AAAA'],
+                     'status_id': ['*'],
+                     'sort': ['updated_on'],
+                     'updated_on': ['>=1970-01-01T00:00:00Z'],
+                     'offset': ['6'],
+                     'limit': ['3']
                     }]
 
         self.assertEqual(len(http_requests), len(expected))
@@ -293,36 +293,36 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(issue['data']['journals'][0]['user_data']['id'], 4)
 
         expected = [{
-                     'key' : ['AAAA'],
-                     'status_id' : ['*'],
-                     'sort' : ['updated_on'],
-                     'updated_on' : ['>=2016-07-27T00:00:00Z'],
-                     'offset' : ['0'],
-                     'limit' : ['3']
+                     'key': ['AAAA'],
+                     'status_id': ['*'],
+                     'sort': ['updated_on'],
+                     'updated_on': ['>=2016-07-27T00:00:00Z'],
+                     'offset': ['0'],
+                     'limit': ['3']
                     },
                     {
-                     'key' : ['AAAA'],
-                     'include' : ['attachments,changesets,children,journals,relations,watchers']
+                     'key': ['AAAA'],
+                     'include': ['attachments,changesets,children,journals,relations,watchers']
                     },
                     {
-                     'key' : ['AAAA']
+                     'key': ['AAAA']
                     },
                     {
-                     'key' : ['AAAA']
+                     'key': ['AAAA']
                     },
                     {
-                     'key' : ['AAAA']
+                     'key': ['AAAA']
                     },
                     {
-                     'key' : ['AAAA']
+                     'key': ['AAAA']
                     },
                     {
-                     'key' : ['AAAA'],
-                     'status_id' : ['*'],
-                     'sort' : ['updated_on'],
-                     'updated_on' : ['>=2016-07-27T00:00:00Z'],
-                     'offset' : ['3'],
-                     'limit' : ['3']
+                     'key': ['AAAA'],
+                     'status_id': ['*'],
+                     'sort': ['updated_on'],
+                     'updated_on': ['>=2016-07-27T00:00:00Z'],
+                     'offset': ['3'],
+                     'limit': ['3']
                     }]
 
         self.assertEqual(len(http_requests), len(expected))
@@ -363,12 +363,12 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(len(issues), 0)
 
         expected = {
-                    'key' : ['AAAA'],
-                    'status_id' : ['*'],
-                    'sort' : ['updated_on'],
-                    'updated_on' : ['>=2017-01-01T00:00:00Z'],
-                    'offset' : ['0'],
-                    'limit' : ['3']
+                    'key': ['AAAA'],
+                    'status_id': ['*'],
+                    'sort': ['updated_on'],
+                    'updated_on': ['>=2017-01-01T00:00:00Z'],
+                    'offset': ['0'],
+                    'limit': ['3']
                    }
 
         self.assertEqual(len(http_requests), 1)
@@ -553,12 +553,12 @@ class TestRedmineClient(unittest.TestCase):
         self.assertEqual(result, body)
 
         expected = {
-                    'key' : ['aaaa'],
-                    'status_id' : ['*'],
-                    'sort' : ['updated_on'],
-                    'updated_on' : ['>=2016-07-01T00:00:00Z'],
-                    'offset' : ['10'],
-                    'limit' : ['200']
+                    'key': ['aaaa'],
+                    'status_id': ['*'],
+                    'sort': ['updated_on'],
+                    'updated_on': ['>=2016-07-01T00:00:00Z'],
+                    'offset': ['10'],
+                    'limit': ['200']
                    }
 
         req = httpretty.last_request()
@@ -584,8 +584,8 @@ class TestRedmineClient(unittest.TestCase):
         self.assertEqual(result, body)
 
         expected = {
-                    'key' : ['aaaa'],
-                    'include' : ['attachments,changesets,children,journals,relations,watchers']
+                    'key': ['aaaa'],
+                    'include': ['attachments,changesets,children,journals,relations,watchers']
                    }
 
         req = httpretty.last_request()
@@ -611,7 +611,7 @@ class TestRedmineClient(unittest.TestCase):
         self.assertEqual(result, body)
 
         expected = {
-                    'key' : ['aaaa']
+                    'key': ['aaaa']
                    }
 
         req = httpretty.last_request()

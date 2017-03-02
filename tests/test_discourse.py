@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -183,10 +183,10 @@ class TestDiscourseBackend(unittest.TestCase):
 
         # Check requests
         expected = [{
-                     'page' : ['0']
+                     'page': ['0']
                     },
                     {
-                     'page' : ['1']
+                     'page': ['1']
                     },
                     {},
                     {},
@@ -272,7 +272,7 @@ class TestDiscourseBackend(unittest.TestCase):
 
         # Check requests
         expected = [{
-                     'page' : ['0']
+                     'page': ['0']
                     },
                     {},
                     {},
@@ -542,7 +542,7 @@ class TestDiscourseClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'api_key' : ['aaaa']
+                    'api_key': ['aaaa']
                    }
 
         req = httpretty.last_request()
@@ -558,8 +558,8 @@ class TestDiscourseClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'api_key' : ['aaaa'],
-                    'page' : ['1']
+                    'api_key': ['aaaa'],
+                    'page': ['1']
                    }
 
         req = httpretty.last_request()
@@ -584,7 +584,7 @@ class TestDiscourseClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'api_key' : ['aaaa'],
+                    'api_key': ['aaaa'],
                    }
 
         req = httpretty.last_request()
@@ -611,7 +611,7 @@ class TestDiscourseClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'api_key' : ['aaaa'],
+                    'api_key': ['aaaa'],
                    }
 
         req = httpretty.last_request()

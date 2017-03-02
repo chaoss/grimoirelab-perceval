@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Alberto Martín <alberto.martin@bitergia.com>
@@ -226,7 +226,7 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issues[0]['category'], 'issue')
         self.assertEqual(issues[0]['tag'], 'http://example.com')
         self.assertEqual(issues[0]['data']['key'], 'HELP-6043')
-        self.assertEqual(issues[0]['data']['fields']['issuetype']['name'],  'extRequest')
+        self.assertEqual(issues[0]['data']['fields']['issuetype']['name'], 'extRequest')
         self.assertEqual(issues[0]['data']['fields']['creator']['name'], 'user2')
         self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
         self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
@@ -255,7 +255,7 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issues[1]['category'], 'issue')
         self.assertEqual(issues[1]['tag'], 'http://example.com')
         self.assertEqual(issues[1]['data']['key'], 'HELP-6042')
-        self.assertEqual(issues[1]['data']['fields']['issuetype']['name'],  'extRequest')
+        self.assertEqual(issues[1]['data']['fields']['issuetype']['name'], 'extRequest')
         self.assertEqual(issues[1]['data']['fields']['creator']['name'], 'user2')
         self.assertEqual(issues[1]['data']['fields']['assignee']['name'], 'user1')
         self.assertEqual(issues[1]['data']['fields']['customfield_10301']['id'],
@@ -281,7 +281,7 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issues[2]['category'], 'issue')
         self.assertEqual(issues[2]['tag'], 'http://example.com')
         self.assertEqual(issues[2]['data']['key'], 'HELP-6041')
-        self.assertEqual(issues[2]['data']['fields']['issuetype']['name'],  'extRequest')
+        self.assertEqual(issues[2]['data']['fields']['issuetype']['name'], 'extRequest')
         self.assertEqual(issues[2]['data']['fields']['creator']['name'], 'user2')
         self.assertEqual(issues[2]['data']['fields']['assignee']['name'], 'user3')
         self.assertEqual(issues[2]['data']['fields']['customfield_10301']['id'],

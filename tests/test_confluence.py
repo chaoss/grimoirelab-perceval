@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -187,33 +187,33 @@ class TestConfluenceBackend(unittest.TestCase):
         # Check requests
         expected = [
                     {
-                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'limit' : ['200']
+                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'limit': ['200']
                     },
                     {
-                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'start' : ['2'],
-                     'limit' : ['2'] # Hardcoded in JSON dataset
+                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'start': ['2'],
+                     'limit': ['2']  # Hardcoded in JSON dataset
                     },
                     {
-                     'expand' : ['body.storage,history,version'],
-                     'status' : ['historical'],
-                     'version' : ['1']
+                     'expand': ['body.storage,history,version'],
+                     'status': ['historical'],
+                     'version': ['1']
                     },
                     {
-                     'expand' : ['body.storage,history,version'],
-                     'status' : ['historical'],
-                     'version' : ['2']
+                     'expand': ['body.storage,history,version'],
+                     'status': ['historical'],
+                     'version': ['2']
                     },
                     {
-                     'expand' : ['body.storage,history,version'],
-                     'status' : ['historical'],
-                     'version' : ['1']
+                     'expand': ['body.storage,history,version'],
+                     'status': ['historical'],
+                     'version': ['1']
                     },
                     {
-                     'expand' : ['body.storage,history,version'],
-                     'status' : ['historical'],
-                     'version' : ['1']
+                     'expand': ['body.storage,history,version'],
+                     'status': ['historical'],
+                     'version': ['1']
                     }
                    ]
 
@@ -255,33 +255,34 @@ class TestConfluenceBackend(unittest.TestCase):
         # Check requests
         expected = [
                     {
-                     'cql' : ["lastModified>='2016-06-16 00:00' order by lastModified"],
-                     'limit' : ['200']
-                    },
-                    { # Hardcoded in JSON dataset
-                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'start' : ['2'],
-                     'limit' : ['2']
+                     'cql': ["lastModified>='2016-06-16 00:00' order by lastModified"],
+                     'limit': ['200']
                     },
                     {
-                     'expand' : ['body.storage,history,version'],
-                     'status' : ['historical'],
-                     'version' : ['1']
+                     # Hardcoded in JSON dataset
+                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'start': ['2'],
+                     'limit': ['2']
                     },
                     {
-                     'expand' : ['body.storage,history,version'],
-                     'status' : ['historical'],
-                     'version' : ['2']
+                     'expand': ['body.storage,history,version'],
+                     'status': ['historical'],
+                     'version': ['1']
                     },
                     {
-                     'expand' : ['body.storage,history,version'],
-                     'status' : ['historical'],
-                     'version' : ['1']
+                     'expand': ['body.storage,history,version'],
+                     'status': ['historical'],
+                     'version': ['2']
                     },
                     {
-                     'expand' : ['body.storage,history,version'],
-                     'status' : ['historical'],
-                     'version' : ['1']
+                     'expand': ['body.storage,history,version'],
+                     'status': ['historical'],
+                     'version': ['1']
+                    },
+                    {
+                     'expand': ['body.storage,history,version'],
+                     'status': ['historical'],
+                     'version': ['1']
                     }
                    ]
 
@@ -322,23 +323,23 @@ class TestConfluenceBackend(unittest.TestCase):
         # Check requests
         expected = [
                     {
-                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'limit' : ['200']
+                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'limit': ['200']
                     },
                     {
-                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'start' : ['2'],
-                     'limit' : ['2'] # Hardcoded in JSON dataset
+                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'start': ['2'],
+                     'limit': ['2']  # Hardcoded in JSON dataset
                     },
                     {
-                     'expand' : ['body.storage,history,version'],
-                     'status' : ['historical'],
-                     'version' : ['1']
+                     'expand': ['body.storage,history,version'],
+                     'status': ['historical'],
+                     'version': ['1']
                     },
                     {
-                     'expand' : ['body.storage,history,version'],
-                     'status' : ['historical'],
-                     'version' : ['1']
+                     'expand': ['body.storage,history,version'],
+                     'status': ['historical'],
+                     'version': ['1']
                     }
                    ]
 
@@ -362,8 +363,8 @@ class TestConfluenceBackend(unittest.TestCase):
 
         # Check requests
         expected = {
-                    'cql' : ["lastModified>='2016-07-08 00:00' order by lastModified"],
-                    'limit' : ['200']
+                    'cql': ["lastModified>='2016-07-08 00:00' order by lastModified"],
+                    'limit': ['200']
                    }
 
         self.assertEqual(len(http_requests), 1)
@@ -519,9 +520,9 @@ class TestConfluenceClient(unittest.TestCase):
         self.assertEqual(len(pages), 1)
 
         expected = {
-                     'cql' : ["lastModified>='2016-07-08 00:00' order by lastModified"],
-                     'start' : ['10'],
-                     'limit' : ['2']
+                     'cql': ["lastModified>='2016-07-08 00:00' order by lastModified"],
+                     'start': ['10'],
+                     'limit': ['2']
                    }
 
         self.assertEqual(len(http_requests), 1)
@@ -541,13 +542,13 @@ class TestConfluenceClient(unittest.TestCase):
         self.assertEqual(len(pages), 2)
 
         expected = [{
-                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'limit' : ['2']
+                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'limit': ['2']
                     },
                     {
-                     'cql' : ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                     'start' : ['2'],
-                     'limit' : ['2']
+                     'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
+                     'start': ['2'],
+                     'limit': ['2']
                     }]
 
         self.assertEqual(len(http_requests), len(expected))
@@ -565,9 +566,9 @@ class TestConfluenceClient(unittest.TestCase):
         hc = client.historical_content(content_id='1', version='2')
 
         expected = {
-                    'expand' : ['body.storage,history,version'],
-                    'status' : ['historical'],
-                    'version' : ['2']
+                    'expand': ['body.storage,history,version'],
+                    'status': ['historical'],
+                    'version': ['2']
                    }
 
         self.assertIsInstance(hc, str)

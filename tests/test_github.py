@@ -157,10 +157,10 @@ class TestGitHubBackend(unittest.TestCase):
                                forcing_headers={
                                     'X-RateLimit-Remaining': '20',
                                     'X-RateLimit-Reset': '5',
-                                    'Link': '<'+GITHUB_ISSUES_URL+'/?&page=2>; rel="next", <'+GITHUB_ISSUES_URL+'/?&page=3>; rel="last"'
+                                    'Link': '<' + GITHUB_ISSUES_URL + '/?&page=2>; rel="next", <' + GITHUB_ISSUES_URL + '/?&page=3>; rel="last"'
                                })
         httpretty.register_uri(httpretty.GET,
-                               GITHUB_ISSUES_URL+'/?&page=2',
+                               GITHUB_ISSUES_URL + '/?&page=2',
                                body=issue_2,
                                status=200,
                                forcing_headers={
@@ -340,8 +340,8 @@ class TestGitHubBackend(unittest.TestCase):
         with self.assertRaises(requests.exceptions.HTTPError) as e:
             issues = [issues for issues in github.fetch()]
 
+        GitHubClient._users_orgs = users_orgs  # restore the cache
 
-        GitHubClient._users_orgs = users_orgs # restore the cache
 
 class TestGitHubBackendCache(unittest.TestCase):
     """GitHub backend tests using a cache"""
@@ -497,10 +497,10 @@ class TestGitHubClient(unittest.TestCase):
                                forcing_headers={
                                     'X-RateLimit-Remaining': '20',
                                     'X-RateLimit-Reset': '15',
-                                    'Link': '<'+GITHUB_ISSUES_URL+'/?&page=2>; rel="next", <'+GITHUB_ISSUES_URL+'/?&page=3>; rel="last"'
+                                    'Link': '<' + GITHUB_ISSUES_URL + '/?&page=2>; rel="next", <' + GITHUB_ISSUES_URL + '/?&page=3>; rel="last"'
                                })
         httpretty.register_uri(httpretty.GET,
-                               GITHUB_ISSUES_URL+'/?&page=2',
+                               GITHUB_ISSUES_URL + '/?&page=2',
                                body=issue_2,
                                status=200,
                                forcing_headers={
@@ -643,10 +643,10 @@ class TestGitHubClient(unittest.TestCase):
                                forcing_headers={
                                     'X-RateLimit-Remaining': '0',
                                     'X-RateLimit-Reset': reset,
-                                    'Link': '<'+GITHUB_ISSUES_URL+'/?&page=2>; rel="next", <'+GITHUB_ISSUES_URL+'/?&page=3>; rel="last"'
+                                    'Link': '<' + GITHUB_ISSUES_URL + '/?&page=2>; rel="next", <' + GITHUB_ISSUES_URL + '/?&page=3>; rel="last"'
                                })
         httpretty.register_uri(httpretty.GET,
-                               GITHUB_ISSUES_URL+'/?&page=2',
+                               GITHUB_ISSUES_URL + '/?&page=2',
                                body=issue_2,
                                status=200,
                                forcing_headers={
@@ -659,7 +659,7 @@ class TestGitHubClient(unittest.TestCase):
         before = int(time.time())
         issues = [issues for issues in client.get_issues()]
         after = int(time.time())
-        dif = after-before
+        dif = after - before
 
         self.assertGreaterEqual(dif, wait)
         self.assertEqual(len(issues), 2)
@@ -691,7 +691,7 @@ class TestGitHubClient(unittest.TestCase):
                                forcing_headers={
                                     'X-RateLimit-Remaining': '0',
                                     'X-RateLimit-Reset': '0',
-                                    'Link': '<'+GITHUB_ISSUES_URL+'/?&page=2>; rel="next", <'+GITHUB_ISSUES_URL+'/?&page=3>; rel="last"'
+                                    'Link': '<' + GITHUB_ISSUES_URL + '/?&page=2>; rel="next", <' + GITHUB_ISSUES_URL + '/?&page=3>; rel="last"'
                                })
 
         client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=False)

@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -40,7 +40,6 @@ from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.supybot import (Supybot,
                                             SupybotCommand,
                                             SupybotParser)
-
 
 
 class TestSupybotBackend(unittest.TestCase):
@@ -101,7 +100,7 @@ class TestSupybotBackend(unittest.TestCase):
                     ('Tv_', 'server', '1952a9ee3b87144f608aa2a84271ff7d6871e1c8', 1350465411.0),
                     ('benpol', 'comment', '17730fed09f82ea9d0a770ec6167df5a9ea9060c', 1350465447.0),
                     ('benpol', 'comment', '6d1b61c2839218c170c9bd775edcb02caaf921f5', 1350465460.0),
-                    ('Tv_', 'comment', '395fa8fb2e6aafa8f3618746dcc56f2fdfe35eac',  1350465528.0),
+                    ('Tv_', 'comment', '395fa8fb2e6aafa8f3618746dcc56f2fdfe35eac', 1350465528.0),
                     ('jamespage', 'comment', '056408f3064b80e69490fd65ff0d066431592b0f', 1350552630.0),
                     ('LarsFronius_', 'server', '319701fa6768a935d08ae5d5afb2d058122030d4', 1350552630.0),
                     ('bchrisman', 'server', '291faf2760c39f672e9900d509908e77153e930a', 1350552658.0),

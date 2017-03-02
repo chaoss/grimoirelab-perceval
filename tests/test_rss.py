@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -45,10 +45,12 @@ RSS_FEED_URL = 'http://example.com/rss'
 
 requests_http = []
 
+
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
         content = f.read()
     return content
+
 
 def configure_http_server():
     bodies_entries_job = read_file('data/rss_entries.xml')
@@ -216,7 +218,6 @@ class TestRSSBackendCache(unittest.TestCase):
         cached_entries = [entry for entry in rss.fetch_from_cache()]
         self.assertEqual(len(cached_entries), len(entries))
         self.assertEqual(len(http_requests), 1)  # no more requests done
-
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any entries returned when the cache is empty"""

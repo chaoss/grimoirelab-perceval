@@ -48,16 +48,17 @@ from perceval.backends.core.bugzillarest import (BugzillaREST,
 BUGZILLA_SERVER_URL = 'http://example.com'
 BUGZILLA_LOGIN_URL = BUGZILLA_SERVER_URL + '/rest/login'
 BUGZILLA_BUGS_URL = BUGZILLA_SERVER_URL + '/rest/bug'
-BUGZILLA_BUGS_COMMENTS_1273442_URL =  BUGZILLA_SERVER_URL + '/rest/bug/1273442/comment'
-BUGZILLA_BUGS_HISTORY_1273442_URL =  BUGZILLA_SERVER_URL + '/rest/bug/1273442/history'
-BUGZILLA_BUGS_ATTACHMENTS_1273442_URL =  BUGZILLA_SERVER_URL + '/rest/bug/1273442/attachment'
-BUGZILLA_BUG_947945_URL =  BUGZILLA_SERVER_URL + '/rest/bug/947945/'
+BUGZILLA_BUGS_COMMENTS_1273442_URL = BUGZILLA_SERVER_URL + '/rest/bug/1273442/comment'
+BUGZILLA_BUGS_HISTORY_1273442_URL = BUGZILLA_SERVER_URL + '/rest/bug/1273442/history'
+BUGZILLA_BUGS_ATTACHMENTS_1273442_URL = BUGZILLA_SERVER_URL + '/rest/bug/1273442/attachment'
+BUGZILLA_BUG_947945_URL = BUGZILLA_SERVER_URL + '/rest/bug/947945/'
 
 
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
         content = f.read()
     return content
+
 
 def setup_http_server():
     http_requests = []
@@ -200,44 +201,44 @@ class TestBugzillaRESTBackend(unittest.TestCase):
 
         # Check requests
         expected = [{
-                     'last_change_time' : ['1970-01-01T00:00:00Z'],
-                     'limit' : ['2'],
-                     'order' : ['changeddate'],
-                     'include_fields' : ['_all']
+                     'last_change_time': ['1970-01-01T00:00:00Z'],
+                     'limit': ['2'],
+                     'order': ['changeddate'],
+                     'include_fields': ['_all']
                     },
                     {
-                     'ids' : ['1273442', '1273439']
+                     'ids': ['1273442', '1273439']
                     },
                     {
-                     'ids' : ['1273442', '1273439']
+                     'ids': ['1273442', '1273439']
                     },
                     {
-                     'ids' : ['1273442', '1273439'],
-                     'exclude_fields' : ['data']
+                     'ids': ['1273442', '1273439'],
+                     'exclude_fields': ['data']
                     },
                     {
-                     'last_change_time' : ['1970-01-01T00:00:00Z'],
-                     'offset' : ['2'],
-                     'limit' : ['2'],
-                     'order' : ['changeddate'],
-                     'include_fields' : ['_all']
+                     'last_change_time': ['1970-01-01T00:00:00Z'],
+                     'offset': ['2'],
+                     'limit': ['2'],
+                     'order': ['changeddate'],
+                     'include_fields': ['_all']
                     },
                     {
-                     'ids' : ['947945']
+                     'ids': ['947945']
                     },
                     {
-                     'ids' : ['947945']
+                     'ids': ['947945']
                     },
                     {
-                     'ids' : ['947945'],
-                     'exclude_fields' : ['data']
+                     'ids': ['947945'],
+                     'exclude_fields': ['data']
                     },
                     {
-                     'last_change_time' : ['1970-01-01T00:00:00Z'],
-                     'offset' : ['4'],
-                     'limit' : ['2'],
-                     'order' : ['changeddate'],
-                     'include_fields' : ['_all']
+                     'last_change_time': ['1970-01-01T00:00:00Z'],
+                     'offset': ['4'],
+                     'limit': ['2'],
+                     'order': ['changeddate'],
+                     'include_fields': ['_all']
                     }]
 
         self.assertEqual(len(http_requests), len(expected))
@@ -376,8 +377,8 @@ class TestBugzillaRESTClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'login' : ['jsmith@example.com'],
-                    'password' : ['1234'],
+                    'login': ['jsmith@example.com'],
+                    'password': ['1234'],
                    }
 
         req = httpretty.last_request()
@@ -430,11 +431,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                     'last_change_time' : ['1970-01-01T00:00:00Z'],
-                     'limit' : ['500'],
-                     'order' : ['changeddate'],
-                     'include_fields' : ['_all'],
-                     'token' :  ['786-OLaWfBisMY']
+                     'last_change_time': ['1970-01-01T00:00:00Z'],
+                     'limit': ['500'],
+                     'order': ['changeddate'],
+                     'include_fields': ['_all'],
+                     'token': ['786-OLaWfBisMY']
                    }
 
         req = httpretty.last_request()
@@ -446,11 +447,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
         _ = client.bugs()
 
         expected = {
-                    'last_change_time' : ['1970-01-01T00:00:00Z'],
-                    'limit' : ['500'],
-                    'order' : ['changeddate'],
-                    'include_fields' : ['_all'],
-                    'token' :  ['ABCD']
+                    'last_change_time': ['1970-01-01T00:00:00Z'],
+                    'limit': ['500'],
+                    'order': ['changeddate'],
+                    'include_fields': ['_all'],
+                    'token': ['ABCD']
                    }
 
         req = httpretty.last_request()
@@ -466,7 +467,6 @@ class TestBugzillaRESTClient(unittest.TestCase):
                                BUGZILLA_BUGS_URL,
                                body=body, status=200)
 
-
         # Call API
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
         response = client.bugs()
@@ -475,10 +475,10 @@ class TestBugzillaRESTClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                     'last_change_time' : ['1970-01-01T00:00:00Z'],
-                     'limit' : ['500'],
-                     'order' : ['changeddate'],
-                     'include_fields' : ['_all']
+                     'last_change_time': ['1970-01-01T00:00:00Z'],
+                     'limit': ['500'],
+                     'order': ['changeddate'],
+                     'include_fields': ['_all']
                    }
 
         req = httpretty.last_request()
@@ -496,11 +496,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
         self.assertEqual(response, body)
 
         expected = {
-                    'last_change_time' : ['2016-06-07T00:00:00Z'],
-                    'offset' : ['100'],
-                    'limit' : ['5'],
-                    'order' : ['changeddate'],
-                    'include_fields' : ['_all']
+                    'last_change_time': ['2016-06-07T00:00:00Z'],
+                    'offset': ['100'],
+                    'limit': ['5'],
+                    'order': ['changeddate'],
+                    'include_fields': ['_all']
                    }
 
         req = httpretty.last_request()
@@ -527,7 +527,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'ids' : ['1273442', '1273439']
+                    'ids': ['1273442', '1273439']
                    }
 
         req = httpretty.last_request()
@@ -546,7 +546,6 @@ class TestBugzillaRESTClient(unittest.TestCase):
                                BUGZILLA_BUGS_HISTORY_1273442_URL,
                                body=body, status=200)
 
-
         # Call API
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
         response = client.history('1273442', '1273439')
@@ -555,7 +554,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'ids' : ['1273442', '1273439']
+                    'ids': ['1273442', '1273439']
                    }
 
         req = httpretty.last_request()
@@ -582,8 +581,8 @@ class TestBugzillaRESTClient(unittest.TestCase):
 
         # Check request params
         expected = {
-            'ids' : ['1273442', '1273439'],
-            'exclude_fields' : ['data']
+            'ids': ['1273442', '1273439'],
+            'exclude_fields': ['data']
         }
 
         req = httpretty.last_request()
