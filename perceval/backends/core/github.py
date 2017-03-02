@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Alvaro del Castillo San Felix <acs@bitergia.com>
@@ -81,7 +81,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.6.0'
+    version = '0.6.1'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -384,8 +384,16 @@ class GitHubClient:
             return self._users_orgs[login]
 
         url = GITHUB_API_URL + "/users/" + login + "/orgs"
-        r = self.__send_request(url, headers=self.__get_headers())
-        orgs = r.text
+        try:
+            r = self.__send_request(url, headers=self.__get_headers())
+            orgs = r.text
+        except requests.exceptions.HTTPError as ex:
+            # 404 not found is wrongly received sometimes
+            if ex.response.status_code == 404:
+                logger.error("Can't get github login orgs: %s", ex)
+                orgs = '[]'
+            else:
+                raise ex
 
         self._users_orgs[login] = orgs
 

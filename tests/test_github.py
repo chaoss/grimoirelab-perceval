@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Quan Zhou <quan@bitergia.com>
@@ -283,6 +283,65 @@ class TestGitHubBackend(unittest.TestCase):
 
         self.assertEqual(len(issues), 0)
 
+    @httpretty.activate
+    def test_user_orgs_not_found(self):
+        """ Test whether 404 response when getting users orgs is managed """
+
+        body = read_file('data/github_request')
+        login = read_file('data/github_login')
+        orgs = read_file('data/github_orgs')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=body,
+                               status=200,
+                               forcing_headers={
+                                    'X-RateLimit-Remaining': '20',
+                                    'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                              GITHUB_USER_URL,
+                              body=login, status=200,
+                              forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                              })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body=orgs, status=200,
+                               forcing_headers={
+                                    'X-RateLimit-Remaining': '20',
+                                    'X-RateLimit-Reset': '15'
+                               })
+
+        # Check that 404 exception getting user orgs is managed
+        users_orgs = GitHubClient._users_orgs
+        GitHubClient._users_orgs = {}  # clean cache to get orgs using the API
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body=orgs, status=404,
+                               forcing_headers={
+                                    'X-RateLimit-Remaining': '20',
+                                    'X-RateLimit-Reset': '15'
+                               })
+        github = GitHub("zhquan_example", "repo", "aaa")
+        issues = [issues for issues in github.fetch()]
+
+        # Check that a no 404 exception getting user orgs is raised
+        GitHubClient._users_orgs = {}
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body=orgs, status=402,
+                               forcing_headers={
+                                    'X-RateLimit-Remaining': '20',
+                                    'X-RateLimit-Reset': '15'
+                               })
+        github = GitHub("zhquan_example", "repo", "aaa")
+        with self.assertRaises(requests.exceptions.HTTPError) as e:
+            issues = [issues for issues in github.fetch()]
+
+
+        GitHubClient._users_orgs = users_orgs # restore the cache
 
 class TestGitHubBackendCache(unittest.TestCase):
     """GitHub backend tests using a cache"""
