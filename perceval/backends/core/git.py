@@ -447,7 +447,7 @@ class GitParser:
 
     def _build_commit(self):
         def remove_none_values(d):
-            return {k: v for k, v in d.items() if v != None}
+            return {k: v for k, v in d.items() if v is not None}
 
         commit = self.commit
         commit = remove_none_values(commit)
@@ -522,7 +522,7 @@ class GitParser:
         msg_line = m.group('msg')
 
         # Concatenate message lines
-        if not 'message' in self.commit:
+        if 'message' not in self.commit:
             self.commit['message'] = ''
         else:
             self.commit['message'] += '\n'
@@ -565,7 +565,7 @@ class GitParser:
         trailer = m.group('name')
         value = m.group('value')
 
-        if not trailer in self.TRAILERS:
+        if trailer not in self.TRAILERS:
             logger.debug("Trailer %s found on line %s but is not a core trailer. Skipping.",
                          trailer, str(self.nline))
             return

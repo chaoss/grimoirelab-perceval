@@ -387,9 +387,9 @@ class ConfluenceClient:
 
             # Pagination is available when 'next' link exists
             j = r.json()
-            if not '_links' in j:
+            if '_links' not in j:
                 break
-            if not 'next' in j['_links']:
+            if 'next' not in j['_links']:
                 break
 
             url = urljoin(self.base_url, j['_links']['next'])

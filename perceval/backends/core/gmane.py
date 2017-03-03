@@ -124,7 +124,7 @@ class Gmane(MBox):
         nmsgs, imsgs, tmsgs = (0, 0, 0)
 
         for mbox in mailing_list.mboxes:
-            if not mbox.filepath in valid_filepaths:
+            if mbox.filepath not in valid_filepaths:
                 continue
 
             try:

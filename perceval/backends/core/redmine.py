@@ -95,14 +95,14 @@ class Redmine(Backend):
             issue = self.__fetch_and_parse_issue(issue_id)
 
             for key in USER_FIELDS:
-                if not key in issue:
+                if key not in issue:
                     continue
 
                 user = self.__get_or_fetch_user(issue[key]['id'])
                 issue[key + '_data'] = user
 
             for journal in issue['journals']:
-                if not 'user' in journal:
+                if 'user' not in journal:
                     continue
 
                 user = self.__get_or_fetch_user(journal['user']['id'])
@@ -195,7 +195,7 @@ class Redmine(Backend):
                 self._users[cache_user['id']] = cache_user
 
             for key in USER_FIELDS:
-                if not key in issue:
+                if key not in issue:
                     continue
 
                 user_id = issue[key]['id']
@@ -208,7 +208,7 @@ class Redmine(Backend):
                     raise CacheError(cause=cause)
 
             for journal in issue['journals']:
-                if not 'user' in journal:
+                if 'user' not in journal:
                     continue
 
                 user_id = journal['user']['id']
