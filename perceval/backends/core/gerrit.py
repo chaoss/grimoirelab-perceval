@@ -32,7 +32,7 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import BackendError, CacheError
-from ...utils import DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
+from ...utils import DEFAULT_DATETIME, datetime_to_utc
 
 
 MAX_REVIEWS = 500  # Maximum number of reviews per query

@@ -33,7 +33,6 @@ from ...backend import (Backend,
                         metadata)
 from ...errors import BackendError, CacheError
 from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
                       str_to_datetime,
                       datetime_to_utc,
                       urljoin)

@@ -31,7 +31,7 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import BaseError, CacheError
-from ...utils import DEFAULT_DATETIME, datetime_to_utc, str_to_datetime
+from ...utils import DEFAULT_DATETIME, datetime_to_utc
 
 
 logger = logging.getLogger(__name__)

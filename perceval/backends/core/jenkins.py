@@ -30,10 +30,7 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      str_to_datetime,
-                      urljoin)
+from ...utils import urljoin
 
 
 logger = logging.getLogger(__name__)
