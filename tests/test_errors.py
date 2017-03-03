@@ -23,7 +23,7 @@
 
 import sys
 
-if not '..' in sys.path:
+if '..' not in sys.path:
     sys.path.insert(0, '..')
 
 import unittest

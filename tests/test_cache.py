@@ -28,7 +28,7 @@ import tempfile
 import unittest
 import unittest.mock
 
-if not '..' in sys.path:
+if '..' not in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.cache import (CACHE_DEFAULT_PATH,

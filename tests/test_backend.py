@@ -34,7 +34,7 @@ import unittest.mock
 
 import dateutil.tz
 
-if not '..' in sys.path:
+if '..' not in sys.path:
     sys.path.insert(0, '..')
 
 from perceval import __version__

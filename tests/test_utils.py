@@ -34,7 +34,7 @@ import gzip
 
 import dateutil.tz
 
-if not '..' in sys.path:
+if '..' not in sys.path:
     sys.path.insert(0, '..')
 
 from perceval.errors import InvalidDateError, ParseError
