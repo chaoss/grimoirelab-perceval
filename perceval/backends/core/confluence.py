@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -336,12 +336,12 @@ class ConfluenceClient:
 
         # Set confluence query parameter (cql)
         date = from_date.strftime("%Y-%m-%d %H:%M")
-        cql = self.VCQL % {'date' : date}
+        cql = self.VCQL % {'date': date}
 
         # Set parameters
         params = {
-            self.PCQL : cql,
-            self.PLIMIT : max_contents
+            self.PCQL: cql,
+            self.PLIMIT: max_contents
         }
 
         if offset:
@@ -359,9 +359,9 @@ class ConfluenceClient:
         resource = self.RCONTENTS + '/' + str(content_id)
 
         params = {
-            self.PVERSION : version,
-            self.PSTATUS : self.VHISTORICAL,
-            self.PEXPAND : ','.join(self.VEXPAND)
+            self.PVERSION: version,
+            self.PSTATUS: self.VHISTORICAL,
+            self.PEXPAND: ','.join(self.VEXPAND)
         }
 
         # Only one item is returned
@@ -375,7 +375,7 @@ class ConfluenceClient:
         :param params: dict with the HTTP parameters needed to retrieve
             the given resource
         """
-        url = self.URL % {'base' : self.base_url, 'resource' : resource}
+        url = self.URL % {'base': self.base_url, 'resource': resource}
 
         logger.debug("Confluence client requests: %s params: %s",
                      resource, str(params))

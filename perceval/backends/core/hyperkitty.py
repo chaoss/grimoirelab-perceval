@@ -174,8 +174,8 @@ class HyperKittyList(MailingList):
             url = urljoin(self.url, 'export', filename)
 
             params = {
-                'start' : start.strftime("%Y-%m-%d"),
-                'end' : end.strftime("%Y-%m-%d")
+                'start': start.strftime("%Y-%m-%d"),
+                'end': end.strftime("%Y-%m-%d")
             }
 
             success = self._download_archive(url, params, filepath)

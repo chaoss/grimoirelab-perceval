@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -338,7 +338,6 @@ class MeetupClient:
                'suggested', 'draft']
     VUPDATED = 'updated'
 
-
     def __init__(self, api_key, max_items=MAX_ITEMS):
         self.api_key = api_key
         self.max_items = max_items
@@ -362,9 +361,9 @@ class MeetupClient:
         resource += fixed_params
 
         params = {
-            self.PORDER : self.VUPDATED,
-            self.PSCROLL : date,
-            self.PPAGE : self.max_items
+            self.PORDER: self.VUPDATED,
+            self.PSCROLL: date,
+            self.PPAGE: self.max_items
         }
 
         for page in self._fetch(resource, params):
@@ -376,7 +375,7 @@ class MeetupClient:
         resource = urljoin(group, self.REVENTS, event_id, self.RCOMMENTS)
 
         params = {
-            self.PPAGE : self.max_items
+            self.PPAGE: self.max_items
         }
 
         for page in self._fetch(resource, params):
@@ -393,7 +392,7 @@ class MeetupClient:
         resource += fixed_params
 
         params = {
-            self.PPAGE : self.max_items
+            self.PPAGE: self.max_items
         }
 
         for page in self._fetch(resource, params):
@@ -429,8 +428,8 @@ class MeetupClient:
             if r.links and 'next' in r.links:
                 url = r.links['next']['url']
                 params = {
-                    self.PKEY : self.api_key,
-                    self.PSIGN : 'true'
+                    self.PKEY: self.api_key,
+                    self.PSIGN: 'true'
                 }
             else:
                 do_fetch = False

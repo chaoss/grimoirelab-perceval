@@ -358,16 +358,16 @@ def metadata(func):
     def decorator(self, *args, **kwargs):
         for data in func(self, *args, **kwargs):
             item = {
-                    'backend_name' : self.__class__.__name__,
-                    'backend_version' : self.version,
-                    'perceval_version' : __version__,
-                    'timestamp' : dt.utcnow().timestamp(),
-                    'origin' : self.origin,
-                    'uuid' : uuid(self.origin, self.metadata_id(data)),
-                    'updated_on' : self.metadata_updated_on(data),
-                    'category' : self.metadata_category(data),
-                    'tag' : self.tag,
-                    'data' : data,
+                    'backend_name': self.__class__.__name__,
+                    'backend_version': self.version,
+                    'perceval_version': __version__,
+                    'timestamp': dt.utcnow().timestamp(),
+                    'origin': self.origin,
+                    'uuid': uuid(self.origin, self.metadata_id(data)),
+                    'updated_on': self.metadata_updated_on(data),
+                    'category': self.metadata_category(data),
+                    'tag': self.tag,
+                    'data': data,
                    }
             yield item
     return decorator

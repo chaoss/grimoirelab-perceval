@@ -277,7 +277,7 @@ def message_to_dict(msg):
                 subtype = part.get_content_subtype()
                 body.setdefault(subtype, []).append(payload)
 
-        return {k : '\n'.join(v) for k, v in body.items()}
+        return {k: '\n'.join(v) for k, v in body.items()}
 
     def decode_payload(msg_or_part):
         charset = msg_or_part.get_content_charset('utf-8')
@@ -409,7 +409,7 @@ def build_signature_parameters(candidates, callable_):
     for p in to_match:
         name = p.name
         if name in candidates:
-            result[name] =  candidates[name]
+            result[name] = candidates[name]
         elif p.default == inspect.Parameter.empty:
             # Parameters which its default value is empty are
             # considered as required

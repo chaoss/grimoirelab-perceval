@@ -40,8 +40,8 @@ from ...utils import (DEFAULT_DATETIME,
 logger = logging.getLogger(__name__)
 
 
-MAX_BUGS = 500 # Maximum number of bugs per query
-MAX_CONTENTS = 25 # Maximum number of bug contents (history, comments) per query
+MAX_BUGS = 500  # Maximum number of bugs per query
+MAX_CONTENTS = 25  # Maximum number of bug contents (history, comments) per query
 
 
 class BugzillaREST(Backend):
@@ -224,19 +224,19 @@ class BugzillaREST(Backend):
     @staticmethod
     def __parse_comments(raw_comments):
         contents = json.loads(raw_comments)['bugs']
-        comments = {k : v['comments'] for k, v in contents.items()}
+        comments = {k: v['comments'] for k, v in contents.items()}
         return comments
 
     @staticmethod
     def __parse_histories(raw_histories):
         contents = json.loads(raw_histories)['bugs']
-        history = {str(c['id']) : c['history'] for c in contents}
+        history = {str(c['id']): c['history'] for c in contents}
         return history
 
     @staticmethod
     def __parse_attachments(raw_attachments):
         contents = json.loads(raw_attachments)['bugs']
-        attachments = {k : v for k, v in contents.items()}
+        attachments = {k: v for k, v in contents.items()}
         return attachments
 
     @classmethod
@@ -354,8 +354,8 @@ class BugzillaRESTClient:
         :param password: user password
         """
         params = {
-            self.PBUGZILLA_LOGIN : user,
-            self.PBUGZILLA_PASSWORD : password
+            self.PBUGZILLA_LOGIN: user,
+            self.PBUGZILLA_PASSWORD: password
         }
 
         try:
@@ -381,10 +381,10 @@ class BugzillaRESTClient:
         date = date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         params = {
-            self.PLAST_CHANGE_TIME : date,
-            self.PLIMIT : max_bugs,
-            self.PORDER : self.VCHANGE_DATE_ORDER,
-            self.PINCLUDE_FIELDS : self.VINCLUDE_ALL
+            self.PLAST_CHANGE_TIME: date,
+            self.PLIMIT: max_bugs,
+            self.PORDER: self.VCHANGE_DATE_ORDER,
+            self.PINCLUDE_FIELDS: self.VINCLUDE_ALL
         }
 
         if offset:
@@ -403,7 +403,7 @@ class BugzillaRESTClient:
         resource = urljoin(self.RBUG, bug_ids[0], self.RCOMMENT)
 
         params = {
-            self.PIDS : bug_ids
+            self.PIDS: bug_ids
         }
 
         response = self.call(resource, params)
@@ -418,7 +418,7 @@ class BugzillaRESTClient:
         resource = urljoin(self.RBUG, bug_ids[0], self.RHISTORY)
 
         params = {
-            self.PIDS : bug_ids
+            self.PIDS: bug_ids
         }
 
         response = self.call(resource, params)
@@ -433,8 +433,8 @@ class BugzillaRESTClient:
         resource = urljoin(self.RBUG, bug_ids[0], self.RATTACHMENT)
 
         params = {
-            self.PIDS : bug_ids,
-            self.PEXCLUDE_FIELDS : self.VEXCLUDE_ATTCH_DATA
+            self.PIDS: bug_ids,
+            self.PEXCLUDE_FIELDS: self.VEXCLUDE_ATTCH_DATA
         }
 
         response = self.call(resource, params)
@@ -451,7 +451,7 @@ class BugzillaRESTClient:
         :raises BugzillaRESTError: raised when an error is returned by
             the server
         """
-        url = self.URL % {'base' : self.base_url, 'resource' : resource}
+        url = self.URL % {'base': self.base_url, 'resource': resource}
 
         if self.api_token:
             params[self.PBUGZILLA_TOKEN] = self.api_token

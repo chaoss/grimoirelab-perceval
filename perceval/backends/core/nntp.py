@@ -99,7 +99,7 @@ class NNTP(Backend):
 
         # Connect with the server and select the given group
         with nntplib.NNTP(self.host) as client:
-            _, _, first, last , _ = client.group(self.group)
+            _, _, first, last, _ = client.group(self.group)
 
             if offset <= last:
                 first = max(first, offset)
@@ -178,9 +178,9 @@ class NNTP(Backend):
 
         # Store data on the cache
         cache_data = {
-            'number' : info.number,
-            'message_id' : info.message_id,
-            'lines' : info.lines
+            'number': info.number,
+            'message_id': info.message_id,
+            'lines': info.lines
         }
         self._push_cache_queue(cache_data)
 
@@ -199,7 +199,7 @@ class NNTP(Backend):
         return article
 
     def __build_article(self, article, message_id, offset):
-        a = {k : v for k, v in article.items()}
+        a = {k: v for k, v in article.items()}
         a['message_id'] = message_id
         a['offset'] = offset
         return a

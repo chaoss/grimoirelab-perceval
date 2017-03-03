@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -282,7 +282,7 @@ class TelegramCommand(BackendCommand):
         """Returns the Telegram argument parser."""
 
         aliases = {
-            'bot_token' : 'api_token'
+            'bot_token': 'api_token'
         }
         parser = BackendCommandArgumentParser(offset=True,
                                               token_auth=True,
@@ -349,7 +349,7 @@ class TelegramBotClient:
         :param params: dict with the HTTP parameters needed to retrieve
             the given resource
         """
-        url = self.API_URL % {'token' : self.bot_token, 'method' : method}
+        url = self.API_URL % {'token': self.bot_token, 'method': method}
 
         logger.debug("Telegram bot calls method: %s params: %s",
                      method, str(params))

@@ -142,9 +142,9 @@ class GitHub(Backend):
             for issue in issues:
                 for field in ['user', 'assignee']:
                     if issue[field]:
-                        issue[field+"_data"] = self.__get_user(issue[field]['login'])
+                        issue[field + "_data"] = self.__get_user(issue[field]['login'])
                     else:
-                        issue[field+"_data"] = {}
+                        issue[field + "_data"] = {}
                 yield issue
 
     @metadata

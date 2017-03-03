@@ -55,6 +55,7 @@ def map_custom_field(custom_fields, fields):
 
     return {k: build_cf(custom_fields[k], v) for k, v in fields.items() if k in custom_fields}
 
+
 def filter_custom_fields(fields):
     """Filter custom fields from a given set of fields.
 

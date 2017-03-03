@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Alvaro del Castillo San Felix <acs@bitergia.com>
@@ -35,7 +35,7 @@ from ...errors import BackendError, CacheError
 from ...utils import DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
 
 
-MAX_REVIEWS = 500 # Maximum number of reviews per query
+MAX_REVIEWS = 500  # Maximum number of reviews per query
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +201,7 @@ class Gerrit(Backend):
         self._flush_cache_queue()
         reviews = self.parse_reviews(raw_data)
         logger.info("Received %i reviews in %.2fs" % (len(reviews),
-                                                       time.time()-task_init))
+                                                       time.time() - task_init))
         return reviews
 
     @classmethod
@@ -361,13 +361,13 @@ class GerritClient():
 
     def _get_gerrit_cmd(self, last_item, filter_=None):
 
-        if filter_ and filter_ not in ['status:open','status:closed']:
+        if filter_ and filter_ not in ['status:open', 'status:closed']:
             cause = "Filter not supported in gerrit %s" % (filter_)
             raise BackendError(cause=cause)
 
         cmd = self.gerrit_cmd + " query "
         if self.project:
-            cmd += "project:"+self.project+" "
+            cmd += "project:" + self.project + " "
         cmd += "limit:" + str(self.max_reviews)
 
         if not filter_:
@@ -413,10 +413,10 @@ class GerritCommand(BackendCommand):
         group = parser.parser.add_argument_group('Gerrit arguments')
         group.add_argument('--user', dest='user',
                            help="Gerrit ssh user")
-        group.add_argument('--max-reviews',  dest='max_reviews',
+        group.add_argument('--max-reviews', dest='max_reviews',
                            type=int, default=MAX_REVIEWS,
                            help="Max number of reviews per ssh query.")
-        group.add_argument('--blacklist-reviews',  dest='blacklist_reviews',
+        group.add_argument('--blacklist-reviews', dest='blacklist_reviews',
                            nargs='*',
                            help="Wrong reviews that must not be retrieved.")
 

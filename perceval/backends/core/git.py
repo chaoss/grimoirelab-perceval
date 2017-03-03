@@ -416,11 +416,11 @@ class GitParser:
         self.commit_files = {}
 
         self.handlers = {
-            self.INIT : self._handle_init,
-            self.COMMIT : self._handle_commit,
-            self.HEADER : self._handle_header,
-            self.MESSAGE : self._handle_message,
-            self.FILE : self._handle_file
+            self.INIT: self._handle_init,
+            self.COMMIT: self._handle_commit,
+            self.HEADER: self._handle_header,
+            self.MESSAGE: self._handle_message,
+            self.FILE: self._handle_file
         }
 
     def parse(self):
@@ -590,7 +590,7 @@ class GitParser:
         filename = self.__get_old_filepath(data['file'])
 
         if filename not in self.commit_files:
-            self.commit_files[filename] = {'file' : filename}
+            self.commit_files[filename] = {'file': filename}
 
         self.commit_files[filename]['added'] = data['added']
         self.commit_files[filename]['removed'] = data['removed']
@@ -615,8 +615,8 @@ class GitParser:
 
         if i > -1 and j > -1:
             prefix = f[0:i]
-            inner = f[i+1:f.find(' => ', i)]
-            suffix = f[j+1:]
+            inner = f[i + 1:f.find(' => ', i)]
+            suffix = f[j + 1:]
             return prefix + inner + suffix
         else:
             return f
@@ -665,7 +665,7 @@ class GitRepository:
             repository
         """
         cmd = ['git', 'clone', uri, dirpath]
-        cls._exec(cmd, env={'LANG' : 'C'})
+        cls._exec(cmd, env={'LANG': 'C'})
 
         logger.debug("Git %s repository cloned into %s",
                      uri, dirpath)
@@ -683,11 +683,11 @@ class GitRepository:
         """
         cmd_count = ['git', 'count-objects', '-v']
 
-        outs = self._exec(cmd_count, cwd=self.dirpath, env={'LANG' : 'C'})
+        outs = self._exec(cmd_count, cwd=self.dirpath, env={'LANG': 'C'})
         outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
 
         try:
-            cobjs = {k : v for k, v in (x.split(': ') for x in outs.split('\n'))}
+            cobjs = {k: v for k, v in (x.split(': ') for x in outs.split('\n'))}
             nobjs = int(cobjs['count']) + int(cobjs['in-pack'])
         except KeyError as e:
             error = "unable to parse 'count-objects' output; reason: '%s' entry not found" \
@@ -716,7 +716,7 @@ class GitRepository:
         cmd_sym = ['git', 'symbolic-ref', 'HEAD']
 
         try:
-            self._exec(cmd_sym, cwd=self.dirpath, env={'LANG' : 'C'})
+            self._exec(cmd_sym, cwd=self.dirpath, env={'LANG': 'C'})
         except RepositoryError as e:
             if e.msg.find("ref HEAD is not a symbolic ref") == -1:
                 raise e
@@ -754,11 +754,11 @@ class GitRepository:
             raise EmptyRepositoryError(repository=self.uri)
 
         cmd_fetch = ['git', 'fetch', 'origin']
-        self._exec(cmd_fetch, cwd=self.dirpath, env={'LANG' : 'C'})
+        self._exec(cmd_fetch, cwd=self.dirpath, env={'LANG': 'C'})
 
         if not self.is_detached():
             cmd_reset = ['git', 'reset', '--hard', 'FETCH_HEAD']
-            self._exec(cmd_reset, cwd=self.dirpath, env={'LANG' : 'C'})
+            self._exec(cmd_reset, cwd=self.dirpath, env={'LANG': 'C'})
         else:
             logger.debug("Git %s repository is in detached state; skipping reset",
                          self.uri)
@@ -816,7 +816,7 @@ class GitRepository:
             branches = ['remotes/origin/' + branch for branch in branches]
             cmd_log.extend(branches)
 
-        env = {'LANG' : 'C', 'PAGER' : ''}
+        env = {'LANG': 'C', 'PAGER': ''}
 
         self.failed_message = None
 

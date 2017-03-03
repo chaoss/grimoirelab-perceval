@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -360,11 +360,11 @@ class Bugzilla(Backend):
                 what = fields.pop(0)
                 removed = fields.pop(0)
                 added = fields.pop(0)
-                event = {'Who'     : format_text(who),
-                         'When'    : format_text(when),
-                         'What'    : format_text(what),
-                         'Removed' : format_text(removed),
-                         'Added'   : format_text(added)}
+                event = {'Who': format_text(who),
+                         'When': format_text(when),
+                         'What': format_text(what),
+                         'Removed': format_text(removed),
+                         'Added': format_text(added)}
                 yield event
 
 
@@ -447,7 +447,6 @@ class BugzillaClient:
     CTYPE_CSV = 'csv'
     CTYPE_XML = 'xml'
 
-
     def __init__(self, base_url, user=None, password=None,
                  max_bugs_csv=MAX_BUGS_CSV):
         self.base_url = base_url
@@ -465,15 +464,15 @@ class BugzillaClient:
         :param user: Bugzilla user
         :param password: user password
         """
-        url = self.URL % {'base' : self.base_url, 'cgi' : self.CGI_LOGIN}
+        url = self.URL % {'base': self.base_url, 'cgi': self.CGI_LOGIN}
 
         payload = {
-            self.PBUGZILLA_LOGIN : user,
-            self.PBUGZILLA_PASSWORD : password,
-            self.PLOGIN : 'Log in'
+            self.PBUGZILLA_LOGIN: user,
+            self.PBUGZILLA_PASSWORD: password,
+            self.PLOGIN: 'Log in'
         }
 
-        headers = {'Referer' : self.base_url}
+        headers = {'Referer': self.base_url}
 
         req = self._session.post(url, data=payload, headers=headers)
         req.raise_for_status()
@@ -493,7 +492,7 @@ class BugzillaClient:
         """Logout from the server."""
 
         params = {
-            self.PLOGOUT : '1'
+            self.PLOGOUT: '1'
         }
 
         self.call(self.CGI_LOGIN, params)
@@ -506,7 +505,7 @@ class BugzillaClient:
         """Get metadata information in XML format."""
 
         params = {
-            self.PCTYPE : self.CTYPE_XML
+            self.PCTYPE: self.CTYPE_XML
         }
 
         response = self.call(self.CGI_BUG, params)
@@ -529,10 +528,10 @@ class BugzillaClient:
         date = from_date.strftime("%Y-%m-%d %H:%M:%S")
 
         params = {
-            self.PCHFIELD_FROM : date,
-            self.PCTYPE : self.CTYPE_CSV,
-            self.PLIMIT : self.max_bugs_csv,
-            self.PORDER : order
+            self.PCHFIELD_FROM: date,
+            self.PCTYPE: self.CTYPE_CSV,
+            self.PLIMIT: self.max_bugs_csv,
+            self.PORDER: order
         }
 
         response = self.call(self.CGI_BUGLIST, params)
@@ -545,9 +544,9 @@ class BugzillaClient:
         :param bug_ids: list of bug identifiers
         """
         params = {
-            self.PBUG_ID : bug_ids,
-            self.PCTYPE : self.CTYPE_XML,
-            self.PEXCLUDE_FIELD : 'attachmentdata'
+            self.PBUG_ID: bug_ids,
+            self.PCTYPE: self.CTYPE_XML,
+            self.PEXCLUDE_FIELD: 'attachmentdata'
         }
 
         response = self.call(self.CGI_BUG, params)
@@ -560,7 +559,7 @@ class BugzillaClient:
         :param bug_id: bug identifier
         """
         params = {
-            self.PBUG_ID : bug_id
+            self.PBUG_ID: bug_id
         }
 
         response = self.call(self.CGI_BUG_ACTIVITY, params)
@@ -574,7 +573,7 @@ class BugzillaClient:
         :param params: dict with the HTTP parameters needed to run
             the given command
         """
-        url = self.URL % {'base' : self.base_url, 'cgi' : cgi}
+        url = self.URL % {'base': self.base_url, 'cgi': cgi}
 
         logger.debug("Bugzilla client calls command: %s params: %s",
                      cgi, str(params))
