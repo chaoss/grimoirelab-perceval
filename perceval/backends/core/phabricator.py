@@ -150,7 +150,7 @@ class Phabricator(Backend):
                 self._push_cache_queue('{ENDUSERS}')
 
                 project_ids = task['attachments']['projects']['projectPHIDs']
-                task_projects = [self.__get_or_fetch_project(project_id) \
+                task_projects = [self.__get_or_fetch_project(project_id)
                                  for project_id in project_ids]
 
                 # Projects checkpoint
@@ -335,7 +335,7 @@ class Phabricator(Backend):
 
             # Build tasks projects
             projects_ids = task['attachments']['projects']['projectPHIDs']
-            task_projects = [cached_projects[project_id] \
+            task_projects = [cached_projects[project_id]
                              for project_id in projects_ids]
 
             task['transactions'] = task_trans

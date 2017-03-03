@@ -107,8 +107,8 @@ class MediaWiki(Backend):
         self._flush_cache_queue()
 
         if reviews_api:
-            if (mediawiki_version[0] == 1 and mediawiki_version[1] >= 27) or \
-                mediawiki_version[0] > 1:
+            if ((mediawiki_version[0] == 1 and mediawiki_version[1] >= 27) or
+                mediawiki_version[0] > 1):
                 fetcher = self.__fetch_1_27(from_date)
             else:
                 logger.warning("Reviews API only available in MediaWiki >= 1.27")

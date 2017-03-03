@@ -451,7 +451,7 @@ class GitParser:
 
         commit = self.commit
         commit = remove_none_values(commit)
-        commit['files'] = [remove_none_values(item) \
+        commit['files'] = [remove_none_values(item)
                            for _, item in sorted(self.commit_files.items())]
 
         self.commit = None
@@ -891,7 +891,7 @@ class GitRepository:
         :raises RepositoryError: when an error occurs running the command
         """
         logger.debug("Running command %s (cwd: %s, env: %s)",
-                      ' '.join(cmd), cwd, str(env))
+                     ' '.join(cmd), cwd, str(env))
 
         try:
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,

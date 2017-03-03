@@ -429,6 +429,6 @@ def inspect_signature_parameters(callable_):
     :result: list of parameters
     """
     signature = inspect.signature(callable_)
-    params = [v for p, v in signature.parameters.items() \
+    params = [v for p, v in signature.parameters.items()
               if p not in ('self', 'cls')]
     return params

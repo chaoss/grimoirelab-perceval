@@ -372,10 +372,10 @@ class GmaneClient:
         :param resource: resource to fetch
         """
         url = self.URL % {
-                          'prefix': rtype,
-                          'domain': self.GMANE_DOMAIN,
-                          'resource': resource
-                         }
+            'prefix': rtype,
+            'domain': self.GMANE_DOMAIN,
+            'resource': resource
+        }
 
         logger.debug("Gmane client requests: %s, rtype: %s resource: %s",
                      url, rtype, resource)

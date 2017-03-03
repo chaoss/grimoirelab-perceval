@@ -379,8 +379,8 @@ class SupybotParser:
 
     def _build_item(self, ts, itype, nick, body):
         return {
-                'timestamp': ts,
-                'type': itype,
-                'nick': nick,
-                'body': body
-               }
+            'timestamp': ts,
+            'type': itype,
+            'nick': nick,
+            'body': body
+        }

@@ -362,7 +362,7 @@ class BugzillaRESTClient:
             r = self.call(self.RLOGIN, params)
         except requests.exceptions.HTTPError as e:
             cause = ("Bugzilla REST client could not authenticate user %s. "
-                "See exception: %s") % (user, str(e))
+                     "See exception: %s") % (user, str(e))
             raise BackendError(cause=cause)
 
         data = json.loads(r)

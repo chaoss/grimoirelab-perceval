@@ -481,8 +481,8 @@ class BugzillaClient:
         # is found means that the authentication was successful
         if req.text.find("index.cgi?logout=1") < 0:
             cause = ("Bugzilla client could not authenticate user %s. "
-                "Please check user and password parameters. "
-                "URLs may also need a trailing '/'.") % user
+                     "Please check user and password parameters. "
+                     "URLs may also need a trailing '/'.") % user
             raise BackendError(cause=cause)
 
         logger.debug("Bugzilla user %s authenticated in %s",

@@ -198,9 +198,9 @@ class PipermailList(MailingList):
 
             mbox_dt = self._parse_date_from_filepath(filename)
 
-            if (from_date.year == mbox_dt.year and \
-                from_date.month == mbox_dt.month) or \
-                from_date < mbox_dt:
+            if ((from_date.year == mbox_dt.year and
+                from_date.month == mbox_dt.month) or
+                from_date < mbox_dt):
 
                 filepath = os.path.join(self.dirpath, filename)
                 success = self._download_archive(l, filepath)

@@ -201,7 +201,7 @@ class Gerrit(Backend):
         self._flush_cache_queue()
         reviews = self.parse_reviews(raw_data)
         logger.info("Received %i reviews in %.2fs" % (len(reviews),
-                                                       time.time() - task_init))
+                                                      time.time() - task_init))
         return reviews
 
     @classmethod

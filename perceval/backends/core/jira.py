@@ -287,10 +287,10 @@ class JiraClient:
 
     def __build_payload(self, start_at, from_date):
         payload = {
-                    'jql': self.__build_jql_query(from_date),
-                    'startAt': start_at,
-                    'expand': self.EXPAND,
-                    'maxResults': self.max_issues
+            'jql': self.__build_jql_query(from_date),
+            'startAt': start_at,
+            'expand': self.EXPAND,
+            'maxResults': self.max_issues
         }
         return payload
 

@@ -340,7 +340,7 @@ class GitHubClient:
 
         logger.debug("Get GitHub issues from " + url_next)
         r = self.__send_request(url_next, self.__get_payload(start),
-                              self.__get_headers())
+                                self.__get_headers())
         issues = r.text
         page += 1
 
