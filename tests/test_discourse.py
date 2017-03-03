@@ -23,7 +23,6 @@
 #
 
 import datetime
-import json
 import shutil
 import sys
 import tempfile
