@@ -8,6 +8,7 @@ sudo: false
 before_install:
   - pip install -r "requirements.txt"
   - pip install httpretty==0.8.6
+  - pip install flake8
   - pip install coveralls
 
 install:
