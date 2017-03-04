@@ -301,7 +301,7 @@ class DiscourseClient:
     :raises HTTPError: when an error occurs doing the request
     """
     # Static resources
-    ALL_TOPICS = None # Topics do not need a resource
+    ALL_TOPICS = None  # Topics do not need a resource
     TOPICS_SUMMARY = 'latest'
     TOPIC = 't'
     POSTS = 'posts'
@@ -323,8 +323,8 @@ class DiscourseClient:
         :param page: number of page to retrieve
         """
         params = {
-            self.PKEY  : self.api_key,
-            self.PPAGE : page
+            self.PKEY: self.api_key,
+            self.PPAGE: page
         }
 
         # http://example.com/latest.json
@@ -339,7 +339,7 @@ class DiscourseClient:
         :param topic_id: identifier of the topic to retrieve
         """
         params = {
-            self.PKEY  : self.api_key
+            self.PKEY: self.api_key
         }
 
         # http://example.com/t/8.json
@@ -354,7 +354,7 @@ class DiscourseClient:
         :param post_id: identifier of the post to retrieve
         """
         params = {
-            self.PKEY  : self.api_key
+            self.PKEY: self.api_key
         }
 
         # http://example.com/posts/10.json

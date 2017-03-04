@@ -197,7 +197,7 @@ class MBox(Backend):
         message_id = message.pop(self.MESSAGE_ID_FIELD)
         date = message.pop(self.DATE_FIELD)
 
-        msg = {k : v for k, v in message.items()}
+        msg = {k: v for k, v in message.items()}
         msg[self.MESSAGE_ID_FIELD] = message_id
         msg[self.DATE_FIELD] = date
 

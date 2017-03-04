@@ -142,9 +142,9 @@ class GitHub(Backend):
             for issue in issues:
                 for field in ['user', 'assignee']:
                     if issue[field]:
-                        issue[field+"_data"] = self.__get_user(issue[field]['login'])
+                        issue[field + "_data"] = self.__get_user(issue[field]['login'])
                     else:
-                        issue[field+"_data"] = {}
+                        issue[field + "_data"] = {}
                 yield issue
 
     @metadata
@@ -340,7 +340,7 @@ class GitHubClient:
 
         logger.debug("Get GitHub issues from " + url_next)
         r = self.__send_request(url_next, self.__get_payload(start),
-                              self.__get_headers())
+                                self.__get_headers())
         issues = r.text
         page += 1
 

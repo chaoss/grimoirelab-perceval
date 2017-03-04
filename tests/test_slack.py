@@ -63,7 +63,7 @@ def setup_http_server():
     http_requests = []
 
     channel_error = read_file('data/slack/slack_error.json', 'rb')
-    channel_empty =  read_file('data/slack/slack_history_empty.json', 'rb')
+    channel_empty = read_file('data/slack/slack_history_empty.json', 'rb')
     channel_history = read_file('data/slack/slack_history.json', 'rb')
     channel_history_next = read_file('data/slack/slack_history_next.json', 'rb')
     channel_history_date = read_file('data/slack/slack_history_20150323.json', 'rb')
@@ -82,20 +82,20 @@ def setup_http_server():
                 body = channel_error
             elif 'latest' not in params:
                 body = channel_history
-            elif params['oldest'][0] == '1' and \
-                params['latest'][0] == '1427135733.000068':
+            elif (params['oldest'][0] == '1' and
+                  params['latest'][0] == '1427135733.000068'):
                 body = channel_history_next
-            elif params['oldest'][0] == '0' and \
-                params['latest'][0] == '1483228800.0':
+            elif (params['oldest'][0] == '0' and
+                  params['latest'][0] == '1483228800.0'):
                 body = channel_history
-            elif params['oldest'][0] == '0' and \
-                params['latest'][0] == '1427135733.000068':
+            elif (params['oldest'][0] == '0' and
+                  params['latest'][0] == '1427135733.000068'):
                 body = channel_history_next
-            elif params['oldest'][0] == '1427135740.000068' and \
-                params['latest'][0] == '1483228800.0':
+            elif (params['oldest'][0] == '1427135740.000068' and
+                  params['latest'][0] == '1483228800.0'):
                 body = channel_history_date
-            elif params['oldest'][0] == '1451606399.999999' and \
-                params['latest'][0] == '1483228800.0':
+            elif (params['oldest'][0] == '1451606399.999999' and
+                  params['latest'][0] == '1483228800.0'):
                 body = channel_empty
         elif uri.startswith(SLACK_USER_INFO_URL):
             if params['user'][0] == 'U0001':
@@ -114,14 +114,14 @@ def setup_http_server():
     httpretty.register_uri(httpretty.GET,
                            SLACK_CHANNEL_HISTORY_URL,
                            responses=[
-                                httpretty.Response(body=request_callback) \
-                                    for _ in range(1)
+                               httpretty.Response(body=request_callback)
+                               for _ in range(1)
                            ])
 
     httpretty.register_uri(httpretty.GET,
                            SLACK_USER_INFO_URL,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
 
     return http_requests
@@ -175,13 +175,29 @@ class TestSlackBackend(unittest.TestCase):
         slack = Slack('C011DUKE8', 'aaaa', max_items=5)
         messages = [msg for msg in slack.fetch()]
 
-        expected = [("<@U0003|dizquierdo> has joined the channel", 'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb', 1427799888.0, 'dizquierdo@example.com'),
-                    ("tengo el m\u00f3vil", 'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5', 1427135890.000071, 'jsmanrique@example.com'),
-                    ("hey acs", '29c2942a704c4e0b067daeb76edb2f826376cecf', 1427135835.000070, 'jsmanrique@example.com'),
-                    ("¿vale?", '757e88ea008db0fff739dd261179219aedb84a95', 1427135740.000069, 'acs@example.com'),
-                    ("jsmanrique: tenemos que dar m\u00e9tricas super chulas", 'e92555381bc431a53c0b594fc118850eafd6e212', 1427135733.000068, 'acs@example.com'),
-                    ("hi!", 'b92892e7b65add0e83d0839de20b2375a42014e8', 1427135689.000067, 'jsmanrique@example.com'),
-                    ("hi!", 'e59d9ca0d9a2ba1c747dc60a0904edd22d69e20e', 1427135634.000066, 'acs@example.com')]
+        expected = [
+            ("<@U0003|dizquierdo> has joined the channel",
+             'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
+             1427799888.0, 'dizquierdo@example.com'),
+            ("tengo el m\u00f3vil",
+             'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5',
+             1427135890.000071, 'jsmanrique@example.com'),
+            ("hey acs",
+             '29c2942a704c4e0b067daeb76edb2f826376cecf',
+             1427135835.000070, 'jsmanrique@example.com'),
+            ("¿vale?",
+             '757e88ea008db0fff739dd261179219aedb84a95',
+             1427135740.000069, 'acs@example.com'),
+            ("jsmanrique: tenemos que dar m\u00e9tricas super chulas",
+             'e92555381bc431a53c0b594fc118850eafd6e212',
+             1427135733.000068, 'acs@example.com'),
+            ("hi!",
+             'b92892e7b65add0e83d0839de20b2375a42014e8',
+             1427135689.000067, 'jsmanrique@example.com'),
+            ("hi!",
+             'e59d9ca0d9a2ba1c747dc60a0904edd22d69e20e',
+             1427135634.000066, 'acs@example.com')
+        ]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -199,30 +215,30 @@ class TestSlackBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'channel' : ['C011DUKE8'],
-             'oldest' : ['0'],
-             'latest' : ['1483228800.0'],
-             'token' : ['aaaa'],
-             'count' : ['5']
+                'channel': ['C011DUKE8'],
+                'oldest': ['0'],
+                'latest': ['1483228800.0'],
+                'token': ['aaaa'],
+                'count': ['5']
             },
             {
-             'user' : ['U0003'],
-             'token' : ['aaaa']
+                'user': ['U0003'],
+                'token': ['aaaa']
             },
             {
-             'user' : ['U0002'],
-             'token' : ['aaaa']
+                'user': ['U0002'],
+                'token': ['aaaa']
             },
             {
-             'user' : ['U0001'],
-             'token' : ['aaaa']
+                'user': ['U0001'],
+                'token': ['aaaa']
             },
             {
-             'channel' : ['C011DUKE8'],
-             'oldest' : ['0'],
-             'latest' : ['1427135733.000068'],
-             'token' : ['aaaa'],
-             'count' : ['5']
+                'channel': ['C011DUKE8'],
+                'oldest': ['0'],
+                'latest': ['1427135733.000068'],
+                'token': ['aaaa'],
+                'count': ['5']
             }
         ]
 
@@ -247,9 +263,17 @@ class TestSlackBackend(unittest.TestCase):
         slack = Slack('C011DUKE8', 'aaaa', max_items=5)
         messages = [msg for msg in slack.fetch(from_date=from_date)]
 
-        expected = [("<@U0003|dizquierdo> has joined the channel", 'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb', 1427799888.0, 'dizquierdo@example.com'),
-                    ("tengo el m\u00f3vil", 'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5', 1427135890.000071, 'jsmanrique@example.com'),
-                    ("hey acs", '29c2942a704c4e0b067daeb76edb2f826376cecf', 1427135835.000070, 'jsmanrique@example.com')]
+        expected = [
+            ("<@U0003|dizquierdo> has joined the channel",
+             'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
+             1427799888.0, 'dizquierdo@example.com'),
+            ("tengo el m\u00f3vil",
+             'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5',
+             1427135890.000071, 'jsmanrique@example.com'),
+            ("hey acs",
+             '29c2942a704c4e0b067daeb76edb2f826376cecf',
+             1427135835.000070, 'jsmanrique@example.com')
+        ]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -267,19 +291,19 @@ class TestSlackBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'channel' : ['C011DUKE8'],
-             'oldest' : ['1427135740.000068'],
-             'latest' : ['1483228800.0'],
-             'token' : ['aaaa'],
-             'count' : ['5']
+                'channel': ['C011DUKE8'],
+                'oldest': ['1427135740.000068'],
+                'latest': ['1483228800.0'],
+                'token': ['aaaa'],
+                'count': ['5']
             },
             {
-             'user' : ['U0003'],
-             'token' : ['aaaa']
+                'user': ['U0003'],
+                'token': ['aaaa']
             },
             {
-             'user' : ['U0002'],
-             'token' : ['aaaa']
+                'user': ['U0002'],
+                'token': ['aaaa']
             }
         ]
 
@@ -309,11 +333,11 @@ class TestSlackBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-             'channel' : ['C011DUKE8'],
-             'oldest' : ['1451606399.999999'],
-             'latest' : ['1483228800.0'],
-             'token' : ['aaaa'],
-             'count' : ['5']
+                'channel': ['C011DUKE8'],
+                'oldest': ['1451606399.999999'],
+                'latest': ['1483228800.0'],
+                'token': ['aaaa'],
+                'count': ['5']
             }
         ]
 
@@ -392,13 +416,29 @@ class TestSlackBackendCache(unittest.TestCase):
         cached_messages = [msg for msg in slack.fetch_from_cache()]
         self.assertEqual(len(cached_messages), len(messages))
 
-        expected = [("<@U0003|dizquierdo> has joined the channel", 'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb', 1427799888.0, 'dizquierdo@example.com'),
-                    ("tengo el m\u00f3vil", 'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5', 1427135890.000071, 'jsmanrique@example.com'),
-                    ("hey acs", '29c2942a704c4e0b067daeb76edb2f826376cecf', 1427135835.000070, 'jsmanrique@example.com'),
-                    ("¿vale?", '757e88ea008db0fff739dd261179219aedb84a95', 1427135740.000069, 'acs@example.com'),
-                    ("jsmanrique: tenemos que dar m\u00e9tricas super chulas", 'e92555381bc431a53c0b594fc118850eafd6e212', 1427135733.000068, 'acs@example.com'),
-                    ("hi!", 'b92892e7b65add0e83d0839de20b2375a42014e8', 1427135689.000067, 'jsmanrique@example.com'),
-                    ("hi!", 'e59d9ca0d9a2ba1c747dc60a0904edd22d69e20e', 1427135634.000066, 'acs@example.com')]
+        expected = [
+            ("<@U0003|dizquierdo> has joined the channel",
+             'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
+             1427799888.0, 'dizquierdo@example.com'),
+            ("tengo el m\u00f3vil",
+             'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5',
+             1427135890.000071, 'jsmanrique@example.com'),
+            ("hey acs",
+             '29c2942a704c4e0b067daeb76edb2f826376cecf',
+             1427135835.000070, 'jsmanrique@example.com'),
+            ("¿vale?",
+             '757e88ea008db0fff739dd261179219aedb84a95',
+             1427135740.000069, 'acs@example.com'),
+            ("jsmanrique: tenemos que dar m\u00e9tricas super chulas",
+             'e92555381bc431a53c0b594fc118850eafd6e212',
+             1427135733.000068, 'acs@example.com'),
+            ("hi!",
+             'b92892e7b65add0e83d0839de20b2375a42014e8',
+             1427135689.000067, 'jsmanrique@example.com'),
+            ("hi!",
+             'e59d9ca0d9a2ba1c747dc60a0904edd22d69e20e',
+             1427135634.000066, 'acs@example.com')
+        ]
 
         self.assertEqual(len(cached_messages), len(expected))
 
@@ -464,11 +504,11 @@ class TestSlackClient(unittest.TestCase):
                            oldest=1, latest=1427135733.000068)
 
         expected = {
-            'channel' : ['C011DUKE8'],
-            'oldest' : ['1'],
-            'latest' : ['1427135733.000068'],
-            'token' : ['aaaa'],
-            'count' : ['5']
+            'channel': ['C011DUKE8'],
+            'oldest': ['1'],
+            'latest': ['1427135733.000068'],
+            'token': ['aaaa'],
+            'count': ['5']
         }
 
         self.assertEqual(len(http_requests), 1)
@@ -490,8 +530,8 @@ class TestSlackClient(unittest.TestCase):
         _ = client.user('U0001')
 
         expected = {
-            'user' : ['U0001'],
-            'token' : ['aaaa']
+            'user': ['U0001'],
+            'token': ['aaaa']
         }
 
         self.assertEqual(len(http_requests), 1)

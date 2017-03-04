@@ -34,7 +34,7 @@ import unittest.mock
 
 import dateutil.tz
 
-if not '..' in sys.path:
+if '..' not in sys.path:
     sys.path.insert(0, '..')
 
 from perceval import __version__
@@ -133,11 +133,11 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         """Test if a set of aliases is created after parsing"""
 
         aliases = {
-            'label' : 'tag',
-            'label2' : 'tag',
-            'newdate' : 'from_date',
-            'from_date' : 'tag',
-            'notfound' : 'backend_token'
+            'label': 'tag',
+            'label2': 'tag',
+            'newdate': 'from_date',
+            'from_date': 'tag',
+            'notfound': 'backend_token'
         }
         parser = BackendCommandArgumentParser(from_date=True,
                                               aliases=aliases)
@@ -289,15 +289,15 @@ class MockedBackend(Backend):
     @metadata
     def fetch(self, from_date=None):
         for x in range(5):
-            item = {'item' : x}
+            item = {'item': x}
             yield item
 
     @metadata
     def fetch_from_cache(self):
         for x in range(5):
             item = {
-                'item' : x,
-                'cache' : True
+                'item': x,
+                'cache': True
             }
             yield item
 

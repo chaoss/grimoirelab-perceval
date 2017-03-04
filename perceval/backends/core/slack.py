@@ -316,8 +316,8 @@ class SlackClient:
         resource = self.RCHANNEL_HISTORY
 
         params = {
-            self.PCHANNEL : channel,
-            self.PCOUNT : self.max_items
+            self.PCHANNEL: channel,
+            self.PCOUNT: self.max_items
         }
 
         if oldest is not None:
@@ -335,7 +335,7 @@ class SlackClient:
         resource = self.RUSER_INFO
 
         params = {
-            self.PUSER : user_id
+            self.PUSER: user_id
         }
 
         response = self._fetch(resource, params)
@@ -349,7 +349,7 @@ class SlackClient:
         :param params: dict with the HTTP parameters needed to get
             the given resource
         """
-        url = self.URL % {'resource' : resource}
+        url = self.URL % {'resource': resource}
         params[self.PTOKEN] = self.api_token
 
         logger.debug("Slack client requests: %s params: %s",

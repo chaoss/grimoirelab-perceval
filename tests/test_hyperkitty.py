@@ -280,7 +280,7 @@ class TestHyperKittyCommand(unittest.TestCase):
 
         mock_expanduser.return_value = os.path.join(self.tmp_path, 'testpath')
 
-        args = ['http://example.com/archives/list/test@example.com/',]
+        args = ['http://example.com/archives/list/test@example.com/']
 
         cmd = HyperKittyCommand(*args)
         self.assertEqual(cmd.parsed_args.dirpath,

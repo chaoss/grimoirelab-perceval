@@ -62,10 +62,10 @@ class MockNNTPLib:
 
     def __init__(self):
         self.__articles = {
-            1 : ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 'data/nntp/nntp_1.txt'),
-            2 : ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 'data/nntp/nntp_2.txt'),
-            3 : ('error', 'error'),
-            4 : ('<mailman.5377.1312994002.4544.community-arab-world@lists.example.com>', 'data/nntp/nntp_parsing_error.txt')
+            1: ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 'data/nntp/nntp_1.txt'),
+            2: ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 'data/nntp/nntp_2.txt'),
+            3: ('error', 'error'),
+            4: ('<mailman.5377.1312994002.4544.community-arab-world@lists.example.com>', 'data/nntp/nntp_parsing_error.txt')
         }
 
     def __enter__(self):
@@ -80,7 +80,7 @@ class MockNNTPLib:
     def over(self, message_spec):
         first = min(message_spec[0], len(self.__articles))
         last = min(message_spec[1], len(self.__articles))
-        response = [(x, {'message_id': self.__articles[x][0]}) \
+        response = [(x, {'message_id': self.__articles[x][0]})
                     for x in range(first, last + 1)]
         return None, response
 
@@ -143,8 +143,12 @@ class TestNNTPBackend(unittest.TestCase):
         nntp = NNTP(NNTP_SERVER, NNTP_GROUP)
         articles = [article for article in nntp.fetch()]
 
-        expected = [('<mailman.350.1458060579.14303.dev-project-link@example.com>', 1, 'd088688545d7c2f3733993e215503b367193a26d', 1458039948.0),
-                    ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2, '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076496.0)]
+        expected = [
+            ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 1,
+             'd088688545d7c2f3733993e215503b367193a26d', 1458039948.0),
+            ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2,
+             '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076496.0)
+        ]
         expected_origin = NNTP_SERVER + '-' + NNTP_GROUP
 
         # Although there are 4 messages available on the server,
@@ -162,8 +166,6 @@ class TestNNTPBackend(unittest.TestCase):
             self.assertEqual(article['category'], 'article')
             self.assertEqual(article['tag'], expected_origin)
 
-
-
     @unittest.mock.patch('nntplib.NNTP')
     def test_fetch_from_offset(self, mock_nntp):
         """Test whether it fetches a set of articles from a given offset"""
@@ -173,7 +175,8 @@ class TestNNTPBackend(unittest.TestCase):
         nntp = NNTP(NNTP_SERVER, NNTP_GROUP)
         articles = [article for article in nntp.fetch(offset=2)]
 
-        expected = ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2, '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076496.0)
+        expected = ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2,
+                    '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076496.0)
         expected_origin = NNTP_SERVER + '-' + NNTP_GROUP
 
         self.assertEqual(len(articles), 1)
@@ -204,7 +207,7 @@ class TestNNTPBackend(unittest.TestCase):
         raw_article = read_file('data/nntp/nntp_1.txt')
 
         article = NNTP.parse_article(raw_article)
-        article = {k: v for k,v in article.items()}
+        article = {k: v for k, v in article.items()}
 
         self.assertEqual(article['Message-ID'], '<mailman.350.1458060579.14303.dev-project-link@example.com>')
         self.assertEqual(article['NNTP-Posting-Date'], 'Tue, 15 Mar 2016 11:49:40 -0500')
@@ -251,8 +254,12 @@ class TestNNTPBackendCache(unittest.TestCase):
         cached_articles = [article for article in nntp.fetch_from_cache()]
         self.assertEqual(len(cached_articles), len(articles))
 
-        expected = [('<mailman.350.1458060579.14303.dev-project-link@example.com>', 1, 'd088688545d7c2f3733993e215503b367193a26d', 1458039948.0),
-                    ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2, '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076496.0)]
+        expected = [
+            ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 1,
+             'd088688545d7c2f3733993e215503b367193a26d', 1458039948.0),
+            ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2,
+             '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076496.0)
+        ]
         expected_origin = NNTP_SERVER + '-' + NNTP_GROUP
 
         self.assertEqual(len(cached_articles), len(expected))

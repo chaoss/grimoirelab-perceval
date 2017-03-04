@@ -33,7 +33,6 @@ from ...backend import (Backend,
                         metadata)
 from ...errors import BackendError, CacheError
 from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
                       str_to_datetime,
                       datetime_to_utc,
                       urljoin)
@@ -103,12 +102,12 @@ class MediaWiki(Backend):
 
         mediawiki_version = self.client.get_version()
         logger.info("MediaWiki version: %s", mediawiki_version)
-        self._push_cache_queue(json.dumps({"reviews_api":reviews_api}))
+        self._push_cache_queue(json.dumps({"reviews_api": reviews_api}))
         self._flush_cache_queue()
 
         if reviews_api:
-            if (mediawiki_version[0] == 1 and mediawiki_version[1] >= 27) or \
-                mediawiki_version[0] > 1:
+            if ((mediawiki_version[0] == 1 and mediawiki_version[1] >= 27) or
+                mediawiki_version[0] > 1):
                 fetcher = self.__fetch_1_27(from_date)
             else:
                 logger.warning("Reviews API only available in MediaWiki >= 1.27")
@@ -217,7 +216,6 @@ class MediaWiki(Backend):
                 max_ts = ts.timestamp()
         return max_ts
 
-
     def __get_namespaces_contents(self):
         # The pages are organized in namespaces of different types
         # Only contents namespaces are analyzed in this backend
@@ -244,7 +242,7 @@ class MediaWiki(Backend):
 
         namespaces_contents = self.__get_namespaces_contents()
 
-        arvcontinue = '' # pagination for getting revisions and their pages
+        arvcontinue = ''  # pagination for getting revisions and their pages
         while arvcontinue is not None:
             raw_pages = self.client.get_pages_from_allrevisions(namespaces_contents, from_date, arvcontinue)
             self._push_cache_queue(raw_pages)
@@ -302,7 +300,7 @@ class MediaWiki(Backend):
                 pages_json = data_json['query']['recentchanges']
                 for page in pages_json:
                     page_ts = dateutil.parser.parse(page['timestamp'])
-                    if  from_date >= page_ts:
+                    if from_date >= page_ts:
                         # The rest of recent changes are older than from_date
                         logger.debug("All recent changes newer than %s processed.", from_date)
                         rccontinue = None
@@ -323,7 +321,7 @@ class MediaWiki(Backend):
             npages = 0  # number of pages processed
 
             for ns in namespaces_contents:
-                apcontinue = '' # pagination for getting pages
+                apcontinue = ''  # pagination for getting pages
                 logger.debug("Getting pages for namespace: %s", ns)
                 while apcontinue is not None:
                     raw_pages = self.client.get_pages(ns, apcontinue)
@@ -357,7 +355,7 @@ class MediaWiki(Backend):
 
         self._purge_cache_queue()
 
-        namespaces_contents= self.__get_namespaces_contents()
+        namespaces_contents = self.__get_namespaces_contents()
 
         if not from_date:
             return fetch_all_pages(namespaces_contents)
@@ -413,19 +411,19 @@ class MediaWikiClient:
         """ Retrieve all contents namespaces."""
 
         params = {
-            "action":"query",
-            "meta":"siteinfo",
-            "siprop":"namespaces",
-            "format":"json"
+            "action": "query",
+            "meta": "siteinfo",
+            "siprop": "namespaces",
+            "format": "json"
         }
 
         return self.call(params)
 
     def get_version(self):
         params = {
-            "action":"query",
-            "meta":"siteinfo",
-            "format":"json"
+            "action": "query",
+            "meta": "siteinfo",
+            "format": "json"
         }
 
         try:
@@ -448,11 +446,11 @@ class MediaWikiClient:
     def get_pages(self, namespace, apcontinue=''):
         """Retrieve all pages from a namespace starting from apcontinue."""
         params = {
-            "action":"query",
-            "list":"allpages",
-            "aplimit":self.limit,
-            "apnamespace":namespace,
-            "format":"json"
+            "action": "query",
+            "list": "allpages",
+            "aplimit": self.limit,
+            "apnamespace": namespace,
+            "format": "json"
         }
         if apcontinue:
             params['apcontinue'] = apcontinue
@@ -463,16 +461,15 @@ class MediaWikiClient:
         """Retrieve recent pages from all namespaces starting from rccontinue."""
 
         params = {
-            "action":"query",
-            "list":"recentchanges",
-            "rclimit":self.limit,
-            "rcnamespace":"|".join(namespaces),
-            "rcprop":"title|timestamp|ids",
-            "format":"json"
+            "action": "query",
+            "list": "recentchanges",
+            "rclimit": self.limit,
+            "rcnamespace": "|".join(namespaces),
+            "rcprop": "title|timestamp|ids",
+            "format": "json"
         }
         if rccontinue:
             params['rccontinue'] = rccontinue
-
 
         return self.call(params)
 
@@ -483,12 +480,12 @@ class MediaWikiClient:
             last_date_str = last_date.isoformat()
 
         params = {
-            "action":"query",
-            "prop":"revisions",
-            "titles":title,
-            "rvdir":"newer",
-            "rvlimit":self.limit,
-            "format":"json"
+            "action": "query",
+            "prop": "revisions",
+            "titles": title,
+            "rvdir": "newer",
+            "rvlimit": self.limit,
+            "format": "json"
         }
         if last_date:
             params['rvstart'] = last_date_str
@@ -504,13 +501,13 @@ class MediaWikiClient:
             from_date_str = from_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         params = {
-            "action":"query",
-            "list":"allrevisions",
-            "arvnamespace":"|".join(namespaces),
-            "arvdir":"newer",
-            "arvlimit":self.limit,
-            "arvprop":"ids",
-            "format":"json"
+            "action": "query",
+            "list": "allrevisions",
+            "arvnamespace": "|".join(namespaces),
+            "arvdir": "newer",
+            "arvlimit": self.limit,
+            "arvprop": "ids",
+            "format": "json"
         }
 
         if arvcontinue:

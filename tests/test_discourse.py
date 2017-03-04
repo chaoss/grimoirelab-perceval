@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -23,7 +23,6 @@
 #
 
 import datetime
-import json
 import shutil
 import sys
 import tempfile
@@ -115,8 +114,8 @@ class TestDiscourseBackend(unittest.TestCase):
                 body = body_topic_1148
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
-            elif uri.startswith(DISCOURSE_POST_URL_1) or \
-                 uri.startswith(DISCOURSE_POST_URL_2):
+            elif (uri.startswith(DISCOURSE_POST_URL_1) or
+                  uri.startswith(DISCOURSE_POST_URL_2)):
                 body = body_post
             else:
                 raise
@@ -128,28 +127,28 @@ class TestDiscourseBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPIC_URL_1148,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPIC_URL_1149,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_POST_URL_1,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_POST_URL_2,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
         # Test fetch topics
@@ -182,16 +181,14 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(topics[1]['data']['post_stream']['posts'][20]['id'], 2500)
 
         # Check requests
-        expected = [{
-                     'page' : ['0']
-                    },
-                    {
-                     'page' : ['1']
-                    },
-                    {},
-                    {},
-                    {},
-                    {}]
+        expected = [
+            {'page': ['0']},
+            {'page': ['1']},
+            {},
+            {},
+            {},
+            {}
+        ]
 
         self.assertEqual(len(requests_http), len(expected))
 
@@ -217,8 +214,8 @@ class TestDiscourseBackend(unittest.TestCase):
                 body = body_topic_1148
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
-            elif uri.startswith(DISCOURSE_POST_URL_1) or \
-                 uri.startswith(DISCOURSE_POST_URL_2):
+            elif (uri.startswith(DISCOURSE_POST_URL_1) or
+                  uri.startswith(DISCOURSE_POST_URL_2)):
                 body = body_post
             else:
                 raise
@@ -230,28 +227,28 @@ class TestDiscourseBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPIC_URL_1148,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPIC_URL_1149,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_POST_URL_1,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_POST_URL_2,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
         # On this tests only one topic will be retrieved
@@ -271,12 +268,12 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(topics[0]['tag'], DISCOURSE_SERVER_URL)
 
         # Check requests
-        expected = [{
-                     'page' : ['0']
-                    },
-                    {},
-                    {},
-                    {}]
+        expected = [
+            {'page': ['0']},
+            {},
+            {},
+            {}
+        ]
 
         self.assertEqual(len(requests_http), len(expected))
 
@@ -317,8 +314,8 @@ class TestDiscourseBackend(unittest.TestCase):
                 body = body_topic_1149
             elif uri.startswith(DISCOURSE_TOPIC_URL_1150):
                 body = body_topic_1150
-            elif uri.startswith(DISCOURSE_POST_URL_1) or \
-                 uri.startswith(DISCOURSE_POST_URL_2):
+            elif (uri.startswith(DISCOURSE_POST_URL_1) or
+                  uri.startswith(DISCOURSE_POST_URL_2)):
                 body = body_post
             else:
                 raise
@@ -327,33 +324,33 @@ class TestDiscourseBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPIC_URL_1148,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPIC_URL_1149,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPIC_URL_1150,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_POST_URL_1,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_POST_URL_2,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
         # On this tests two topics will be retrieved.
@@ -410,8 +407,8 @@ class TestDiscourseBackendCache(unittest.TestCase):
                 body = body_topic_1148
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
-            elif uri.startswith(DISCOURSE_POST_URL_1) or \
-                 uri.startswith(DISCOURSE_POST_URL_2):
+            elif (uri.startswith(DISCOURSE_POST_URL_1) or
+                  uri.startswith(DISCOURSE_POST_URL_2)):
                 body = body_post
             else:
                 raise
@@ -423,28 +420,28 @@ class TestDiscourseBackendCache(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback) \
-                                    for _ in range(2)
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPIC_URL_1148,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPIC_URL_1149,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_POST_URL_1,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_POST_URL_2,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
         # First, we fetch the topics from the server, storing them
@@ -542,8 +539,8 @@ class TestDiscourseClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'api_key' : ['aaaa']
-                   }
+            'api_key': ['aaaa']
+        }
 
         req = httpretty.last_request()
 
@@ -558,9 +555,9 @@ class TestDiscourseClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'api_key' : ['aaaa'],
-                    'page' : ['1']
-                   }
+            'api_key': ['aaaa'],
+            'page': ['1']
+        }
 
         req = httpretty.last_request()
 
@@ -584,8 +581,8 @@ class TestDiscourseClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'api_key' : ['aaaa'],
-                   }
+            'api_key': ['aaaa'],
+        }
 
         req = httpretty.last_request()
 
@@ -611,8 +608,8 @@ class TestDiscourseClient(unittest.TestCase):
 
         # Check request params
         expected = {
-                    'api_key' : ['aaaa'],
-                   }
+            'api_key': ['aaaa'],
+        }
 
         req = httpretty.last_request()
 

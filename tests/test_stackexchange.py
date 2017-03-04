@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Quan Zhou <quan@bitergia.com>
@@ -157,7 +157,7 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(questions[0]['category'], 'question')
         self.assertEqual(questions[0]['tag'], 'stackoverflow')
 
-        #The date on the questions must be greater than from_date
+        # The date on the questions must be greater than from_date
         self.assertGreater(questions[0]['updated_on'], 1459900800)
 
         data = json.loads(question)
@@ -355,30 +355,31 @@ class TestStackExchangeClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                STACKEXCHANGE_QUESTIONS_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
         expected = [
-                    {
-                     'page': ['1'],
-                     'pagesize': ['1'],
-                     'order': ['desc'],
-                     'sort': ['activity'],
-                     'tagged': ['python'],
-                     'site': ['stackoverflow'],
-                     'key': ['aaa'],
-                     'filter': [QUESTIONS_FILTER]
-                    },
-                    {
-                     'page': ['2'],
-                     'pagesize': ['1'],
-                     'order': ['desc'],
-                     'sort': ['activity'],
-                     'tagged': ['python'],
-                     'site': ['stackoverflow'],
-                     'key': ['aaa'],
-                     'filter': [QUESTIONS_FILTER]
-                    }]
+            {
+                'page': ['1'],
+                'pagesize': ['1'],
+                'order': ['desc'],
+                'sort': ['activity'],
+                'tagged': ['python'],
+                'site': ['stackoverflow'],
+                'key': ['aaa'],
+                'filter': [QUESTIONS_FILTER]
+            },
+            {
+                'page': ['2'],
+                'pagesize': ['1'],
+                'order': ['desc'],
+                'sort': ['activity'],
+                'tagged': ['python'],
+                'site': ['stackoverflow'],
+                'key': ['aaa'],
+                'filter': [QUESTIONS_FILTER]
+            }
+        ]
 
         client = StackExchangeClient(site="stackoverflow",
                                      tagged="python",
@@ -410,7 +411,7 @@ class TestStackExchangeClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                STACKEXCHANGE_QUESTIONS_URL,
                                responses=[
-                                    httpretty.Response(body=request_callback)
+                                   httpretty.Response(body=request_callback)
                                ])
 
         client = StackExchangeClient(site="stackoverflow",

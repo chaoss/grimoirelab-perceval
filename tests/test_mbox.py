@@ -52,8 +52,10 @@ class TestBaseMBox(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
 
-        cls.cfiles = {'bz2' : os.path.join(cls.tmp_path, 'bz2'),
-                      'gz'  : os.path.join(cls.tmp_path, 'gz')}
+        cls.cfiles = {
+            'bz2': os.path.join(cls.tmp_path, 'bz2'),
+            'gz': os.path.join(cls.tmp_path, 'gz')
+        }
 
         # Copy compressed files
         for ftype, fname in cls.cfiles.items():
@@ -67,11 +69,13 @@ class TestBaseMBox(unittest.TestCase):
                     shutil.copyfileobj(f_in, f_out)
 
         # Copy a plain file
-        cls.files = {'single'    : os.path.join(cls.tmp_path, 'mbox_single.mbox'),
-                     'complex'   : os.path.join(cls.tmp_path, 'mbox_complex.mbox'),
-                     'multipart' : os.path.join(cls.tmp_path, 'mbox_multipart.mbox'),
-                     'unixfrom'  : os.path.join(cls.tmp_path, 'mbox_unixfrom_encoding.mbox'),
-                     'unknown'   : os.path.join(cls.tmp_path, 'mbox_unknown_encoding.mbox')}
+        cls.files = {
+            'single': os.path.join(cls.tmp_path, 'mbox_single.mbox'),
+            'complex': os.path.join(cls.tmp_path, 'mbox_complex.mbox'),
+            'multipart': os.path.join(cls.tmp_path, 'mbox_multipart.mbox'),
+            'unixfrom': os.path.join(cls.tmp_path, 'mbox_unixfrom_encoding.mbox'),
+            'unknown': os.path.join(cls.tmp_path, 'mbox_unknown_encoding.mbox')
+        }
 
         shutil.copy('data/mbox_single.mbox', cls.tmp_path)
         shutil.copy('data/mbox_complex.mbox', cls.tmp_path)
@@ -204,16 +208,17 @@ class TestMBoxBackend(TestBaseMBox):
         backend = MBox('http://example.com/', self.tmp_path)
         messages = [m for m in backend.fetch()]
 
-        expected = [('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'bd0185317b013beb21ad3ea04635de3db72496ad', 1095843820.0),
-                    ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
-                    ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
-                    ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 'ddda42422c55d08d56c017a6f128fcd7447484ea', 1043881350.0),
-                    ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0),
-                    ('<20020823171132.541DB44147@example.com>', '4e255acab6442424ecbf05cb0feb1eccb587f7de', 1030123489.0),
-                    ]
+        expected = [
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'bd0185317b013beb21ad3ea04635de3db72496ad', 1095843820.0),
+            ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
+            ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
+            ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 'ddda42422c55d08d56c017a6f128fcd7447484ea', 1043881350.0),
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0),
+            ('<20020823171132.541DB44147@example.com>', '4e255acab6442424ecbf05cb0feb1eccb587f7de', 1030123489.0),
+        ]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -234,12 +239,14 @@ class TestMBoxBackend(TestBaseMBox):
         backend = MBox('http://example.com/', self.tmp_path)
         messages = [m for m in backend.fetch(from_date=from_date)]
 
-        expected = [('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
-                    ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
-                    ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-                    ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0)]
+        expected = [
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
+            ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
+            ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0)
+        ]
 
         self.assertEqual(len(messages), len(expected))
 
@@ -262,17 +269,17 @@ class TestMBoxBackend(TestBaseMBox):
         self.assertEqual(len(messages), 2)
 
         expected = {
-                    'From' : 'goran at domain.com ( Göran Lastname )',
-                    'Date' : 'Wed, 01 Dec 2010 14:26:40 +0100',
-                    'Subject' : '[List-name] Protocol Buffers anyone?',
-                    'Message-ID' : '<4CF64D10.9020206@domain.com>',
-                    'unixfrom' : 'goran at domain.com  Wed Dec  1 08:26:40 2010',
-                    'body': {
-                             'plain' : "Hi!\n\nA message in English, with a signature "
-                                       "with a different encoding.\n\nregards, G?ran"
-                                       "\n",
-                            }
-                   }
+            'From': 'goran at domain.com ( Göran Lastname )',
+            'Date': 'Wed, 01 Dec 2010 14:26:40 +0100',
+            'Subject': '[List-name] Protocol Buffers anyone?',
+            'Message-ID': '<4CF64D10.9020206@domain.com>',
+            'unixfrom': 'goran at domain.com  Wed Dec  1 08:26:40 2010',
+            'body': {
+                'plain': "Hi!\n\nA message in English, with a signature "
+                         "with a different encoding.\n\nregards, G?ran"
+                         "\n",
+            }
+        }
 
         message = messages[0]['data']
         self.assertDictEqual(message, expected)
@@ -311,20 +318,20 @@ class TestMBoxBackend(TestBaseMBox):
 
         self.assertEqual(len(result), 1)
 
-        message = {k: v for k,v in result[0].items()}
+        message = {k: v for k, v in result[0].items()}
 
         expected = {
-                    'From' : 'goran at domain.com ( Göran Lastname )',
-                    'Date' : 'Wed, 01 Dec 2010 14:26:40 +0100',
-                    'Subject' : '[List-name] Protocol Buffers anyone?',
-                    'Message-ID' : '<4CF64D10.9020206@domain.com>',
-                    'unixfrom' : 'goran at domain.com  Wed Dec  1 08:26:40 2010',
-                    'body': {
-                             'plain' : "Hi!\n\nA message in English, with a signature "
-                                       "with a different encoding.\n\nregards, G?ran"
-                                       "\n\n\n",
-                            }
-                    }
+            'From': 'goran at domain.com ( Göran Lastname )',
+            'Date': 'Wed, 01 Dec 2010 14:26:40 +0100',
+            'Subject': '[List-name] Protocol Buffers anyone?',
+            'Message-ID': '<4CF64D10.9020206@domain.com>',
+            'unixfrom': 'goran at domain.com  Wed Dec  1 08:26:40 2010',
+            'body': {
+                'plain': "Hi!\n\nA message in English, with a signature "
+                         "with a different encoding.\n\nregards, G?ran"
+                         "\n\n\n",
+            }
+        }
 
         self.assertDictEqual(message, expected)
 
@@ -336,7 +343,7 @@ class TestMBoxBackend(TestBaseMBox):
 
         self.assertEqual(len(result), 2)
 
-        m0 = {k: v for k,v in result[0].items()}
+        m0 = {k: v for k, v in result[0].items()}
         self.assertEqual(len(m0.keys()), 34)
         self.assertEqual(m0['Message-ID'], '<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>')
         self.assertEqual(m0['Date'], 'Wed, 22 Sep 2004 02:03:40 -0700')
@@ -347,17 +354,17 @@ class TestMBoxBackend(TestBaseMBox):
         self.assertEqual(m0['unixfrom'], 'eloli@hotmail.com  Wed Sep 22 05:05:28 2004')
 
         expected_body = {
-                         'plain' : ">I don't think it's fair to blame the Foundation [...]\n"
-                                   ">of packaging since it's really not (just) a case [...]\n"
-                                   ">marketing.\n\n"
-                                   "No matter what is really to blame, it ultimately [...]\n\n"
-                                   "[...]\n\n"
-                                   "Rgds,\n"
-                                   "Eugenia\n"
-                        }
+            'plain': ">I don't think it's fair to blame the Foundation [...]\n"
+                     ">of packaging since it's really not (just) a case [...]\n"
+                     ">marketing.\n\n"
+                     "No matter what is really to blame, it ultimately [...]\n\n"
+                     "[...]\n\n"
+                     "Rgds,\n"
+                     "Eugenia\n"
+        }
         self.assertDictEqual(m0['body'], expected_body)
 
-        m1 = {k: v for k,v in result[1].items()}
+        m1 = {k: v for k, v in result[1].items()}
         self.assertEqual(len(m1.keys()), 35)
         self.assertEqual(m1['Message-ID'], '<87iqzlofqu.fsf@avet.kvota.net>')
         self.assertEqual(m1['Date'], 'Mon, 17 Mar 2008 10:35:05 +0100')
@@ -365,7 +372,7 @@ class TestMBoxBackend(TestBaseMBox):
         self.assertEqual(m1['To'], 'Simos Xenitellis <simos.lists@googlemail.com>')
         self.assertEqual(m1['Cc'], 'desktop-devel-list@gnome.org, '
                                    '"Nikolay V. Shmyrev" <nshmyrev@yandex.ru>,\n\t'
-        	                       'Brian Nitz <Brian.Nitz@sun.com>, '
+                                   'Brian Nitz <Brian.Nitz@sun.com>, '
                                    'Bastien Nocera <hadess@hadess.net>')
         self.assertEqual(m1['Subject'], 'Re: Low memory hacks')
         self.assertEqual(m1['unixfrom'], 'danilo@adsl-236-193.eunet.yu  Mon Mar 17 09:35:25 2008')
@@ -381,36 +388,36 @@ class TestMBoxBackend(TestBaseMBox):
         # Multipart message
         plain_body = result[0]['body']['plain']
         html_body = result[0]['body']['html']
-        self.assertEqual(plain_body , 'technology.esl Committers,\n\n'
-                                      'This automatically generated message marks the successful completion of\n'
-                                      'voting for Chuwei Huang to receive full Committer status on the\n'
-                                      'technology.esl project. The next step is for the PMC to approve this vote,\n'
-                                      'followed by the EMO processing the paperwork and provisioning the account.\n\n\n\n'
-                                      'Vote summary: 4/0/0 with 0 not voting\n\n'
-                                      '  +1  Thomas Guiu\n\n'
-                                      '  +1  Jin Liu\n\n'
-                                      '  +1  Yves YANG\n\n'
-                                      '  +1  Bo Zhou\n\n\n\n'
-                                      'If you have any questions, please do not hesitate to contact your project\n'
-                                      'lead, PMC member, or the EMO <emo@example.org>\n\n\n\n\n\n')
+        self.assertEqual(plain_body, 'technology.esl Committers,\n\n'
+                                     'This automatically generated message marks the successful completion of\n'
+                                     'voting for Chuwei Huang to receive full Committer status on the\n'
+                                     'technology.esl project. The next step is for the PMC to approve this vote,\n'
+                                     'followed by the EMO processing the paperwork and provisioning the account.\n\n\n\n'
+                                     'Vote summary: 4/0/0 with 0 not voting\n\n'
+                                     '  +1  Thomas Guiu\n\n'
+                                     '  +1  Jin Liu\n\n'
+                                     '  +1  Yves YANG\n\n'
+                                     '  +1  Bo Zhou\n\n\n\n'
+                                     'If you have any questions, please do not hesitate to contact your project\n'
+                                     'lead, PMC member, or the EMO <emo@example.org>\n\n\n\n\n\n')
         self.assertEqual(len(html_body), 3103)
 
         # Multipart message without defined encoding
         plain_body = result[1]['body']['plain']
         html_body = result[1]['body']['html']
-        self.assertEqual(plain_body , 'I am fairly new to eclipse. I am evaluating the use of eclipse for a generic\n'
-                                      'UI framework that is not necessarily related to code generation.\n'
-                                      'Eclipse is very flexible and adding functionality seems straightforward. I\n'
-                                      'can still use the project concept for what I need but there are things in\n'
-                                      'the Workbench window that I don\'t want. For example the Open perspective\n'
-                                      'icon, or some of the menus, like the Windows and project menu .\n\n'
-                                      'I understand that by using retargetable actions I can have my view taking\n'
-                                      'over most of the actions, but I could not figure out how to block the core\n'
-                                      'plug-in to put their own actions. In the workbench plug-in (org.eclipse.ui)\n'
-                                      'I could not find where menus are defined and where actionsviews for all\n'
-                                      'generic toolbars are defined.\n\nHow do I do this?\nCan this be done?\n'
-                                      'Is anybody using eclipse as a generic UI framework?\n\nI appreciate any help.\n\n'
-                                      'Thanks,\n\nDaniel Nehren\n\n')
+        self.assertEqual(plain_body, 'I am fairly new to eclipse. I am evaluating the use of eclipse for a generic\n'
+                                     'UI framework that is not necessarily related to code generation.\n'
+                                     'Eclipse is very flexible and adding functionality seems straightforward. I\n'
+                                     'can still use the project concept for what I need but there are things in\n'
+                                     'the Workbench window that I don\'t want. For example the Open perspective\n'
+                                     'icon, or some of the menus, like the Windows and project menu .\n\n'
+                                     'I understand that by using retargetable actions I can have my view taking\n'
+                                     'over most of the actions, but I could not figure out how to block the core\n'
+                                     'plug-in to put their own actions. In the workbench plug-in (org.eclipse.ui)\n'
+                                     'I could not find where menus are defined and where actionsviews for all\n'
+                                     'generic toolbars are defined.\n\nHow do I do this?\nCan this be done?\n'
+                                     'Is anybody using eclipse as a generic UI framework?\n\nI appreciate any help.\n\n'
+                                     'Thanks,\n\nDaniel Nehren\n\n')
         self.assertEqual(len(html_body), 1557)
 
     def test_parse_unixfrom_decoding_error(self):
@@ -421,7 +428,7 @@ class TestMBoxBackend(TestBaseMBox):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['unixfrom'],
-            "christian at “example.org”  Thu Jan 15 13:22:25 2015")
+                         "christian at “example.org”  Thu Jan 15 13:22:25 2015")
 
     def test_parse_unknown_encoding_mbox(self):
         """Check whether it parses a mbox that contains an unknown encoding"""
@@ -431,7 +438,7 @@ class TestMBoxBackend(TestBaseMBox):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['From'],
-            '"\udcc3\udc94\udcc2\udcac\udcc2\udcb4\udcc3\udc8f" <yuancong@example.com>')
+                         '"\udcc3\udc94\udcc2\udcac\udcc2\udcb4\udcc3\udc8f" <yuancong@example.com>')
 
 
 class TestMBoxCommand(unittest.TestCase):

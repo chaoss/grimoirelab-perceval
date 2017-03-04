@@ -51,9 +51,15 @@ def map_custom_field(custom_fields, fields):
 
     :returns: an set of items with the extra information mapped
     """
-    build_cf = lambda cf, v: {'id': cf['id'], 'name': cf['name'], 'value': v}
+    def build_cf(cf, v):
+        return {'id': cf['id'], 'name': cf['name'], 'value': v}
 
-    return {k: build_cf(custom_fields[k], v) for k, v in fields.items() if k in custom_fields}
+    return {
+        k: build_cf(custom_fields[k], v)
+        for k, v in fields.items()
+        if k in custom_fields
+    }
+
 
 def filter_custom_fields(fields):
     """Filter custom fields from a given set of fields.
@@ -286,10 +292,10 @@ class JiraClient:
 
     def __build_payload(self, start_at, from_date):
         payload = {
-                    'jql': self.__build_jql_query(from_date),
-                    'startAt': start_at,
-                    'expand': self.EXPAND,
-                    'maxResults': self.max_issues
+            'jql': self.__build_jql_query(from_date),
+            'startAt': start_at,
+            'expand': self.EXPAND,
+            'maxResults': self.max_issues
         }
         return payload
 

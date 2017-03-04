@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -23,7 +23,7 @@
 
 import sys
 
-if not '..' in sys.path:
+if '..' not in sys.path:
     sys.path.insert(0, '..')
 
 import unittest
@@ -64,7 +64,7 @@ class TestBaseError(unittest.TestCase):
 
         When this happens, it raises a KeyError exception.
         """
-        kwargs = {'code' : 1, 'error' : 'Fatal error'}
+        kwargs = {'code': 1, 'error': 'Fatal error'}
         self.assertRaises(KeyError, MockErrorArgs, **kwargs)
 
 

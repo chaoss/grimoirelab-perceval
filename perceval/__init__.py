@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -25,5 +25,6 @@ import logging
 from ._version import __version__
 from .backend import find_backends
 
+__all__ = [__version__, find_backends]
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

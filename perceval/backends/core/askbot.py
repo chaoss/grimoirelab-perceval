@@ -252,9 +252,9 @@ class AskbotClient:
         """
         path = self.API_QUESTIONS
         params = {
-                    'page': page,
-                    'sort': self.ORDER_API
-                 }
+            'page': page,
+            'sort': self.ORDER_API
+        }
         response = self.__call(path, params)
         return response
 
@@ -266,9 +266,9 @@ class AskbotClient:
         """
         path = urljoin(self.HTML_QUESTION, question_id)
         params = {
-                    'page': page,
-                    'sort': self.ORDER_HTML
-                 }
+            'page': page,
+            'sort': self.ORDER_HTML
+        }
         response = self.__call(path, params)
         return response
 
@@ -279,10 +279,10 @@ class AskbotClient:
         """
         path = self.COMMENTS
         params = {
-                    'post_id': post_id,
-                    'post_type': 'answer',
-                    'avatar_size': 0
-                 }
+            'post_id': post_id,
+            'post_type': 'answer',
+            'avatar_size': 0
+        }
         headers = {'X-Requested-With': 'XMLHttpRequest'}
         response = self.__call(path, params, headers)
         return response

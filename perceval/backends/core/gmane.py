@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_OFFSET = 0
-MAX_MESSAGES = 2000 # Maximum number of messages per query
+MAX_MESSAGES = 2000  # Maximum number of messages per query
 
 
 def gmane_metadata(func):
@@ -124,7 +124,7 @@ class Gmane(MBox):
         nmsgs, imsgs, tmsgs = (0, 0, 0)
 
         for mbox in mailing_list.mboxes:
-            if not mbox.filepath in valid_filepaths:
+            if mbox.filepath not in valid_filepaths:
                 continue
 
             try:
@@ -195,7 +195,7 @@ class GmaneCommand(BackendCommand):
         """Returns the Gmane argument parser."""
 
         aliases = {
-            'mailing_list_address' : 'mailing_list'
+            'mailing_list_address': 'mailing_list'
         }
         parser = BackendCommandArgumentParser(offset=True,
                                               cache=True,
@@ -331,7 +331,6 @@ class GmaneClient:
 
     URL = "http://%(prefix)s.%(domain)s/%(resource)s"
 
-
     def messages(self, mailing_list, offset, max_messages=MAX_MESSAGES):
         """Fetch a set of messages from the given mailing list.
 
@@ -373,10 +372,10 @@ class GmaneClient:
         :param resource: resource to fetch
         """
         url = self.URL % {
-                          'prefix' : rtype,
-                          'domain' : self.GMANE_DOMAIN,
-                          'resource' : resource
-                         }
+            'prefix': rtype,
+            'domain': self.GMANE_DOMAIN,
+            'resource': resource
+        }
 
         logger.debug("Gmane client requests: %s, rtype: %s resource: %s",
                      url, rtype, resource)

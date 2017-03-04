@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -45,10 +45,12 @@ RSS_FEED_URL = 'http://example.com/rss'
 
 requests_http = []
 
+
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
         content = f.read()
     return content
+
 
 def configure_http_server():
     bodies_entries_job = read_file('data/rss_entries.xml')
@@ -72,8 +74,8 @@ def configure_http_server():
     httpretty.register_uri(httpretty.GET,
                            RSS_FEED_URL,
                            responses=[
-                                httpretty.Response(body=request_callback) \
-                                for _ in range(2)
+                               httpretty.Response(body=request_callback)
+                               for _ in range(2)
                            ])
 
     return http_requests
@@ -181,7 +183,8 @@ class TestRSSBackend(unittest.TestCase):
 
         self.assertEqual(entry['title'], 'Connect 2016 Developer Workshop')
         self.assertEqual(entry['published'], 'Tue, 06 Dec 2016 17:17:00 +0000')
-        self.assertEqual(entry['avatar'], '/content/gallery/speakers/speakersCouchbase/mebricks.jpg/mebricks.jpg/hippogallery:original')
+        self.assertEqual(entry['avatar'],
+                         '/content/gallery/speakers/speakersCouchbase/mebricks.jpg/mebricks.jpg/hippogallery:original')
         self.assertEqual(entry['link'], 'http://blog.couchbase.com/2016/november/connect-2016-developer-workshop')
         self.assertEqual(len(entry['summary']), 410)
         self.assertEqual(entry['author'], 'Matthew Groves')
@@ -216,7 +219,6 @@ class TestRSSBackendCache(unittest.TestCase):
         cached_entries = [entry for entry in rss.fetch_from_cache()]
         self.assertEqual(len(cached_entries), len(entries))
         self.assertEqual(len(http_requests), 1)  # no more requests done
-
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any entries returned when the cache is empty"""

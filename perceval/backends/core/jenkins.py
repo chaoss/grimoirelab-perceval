@@ -30,10 +30,7 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      str_to_datetime,
-                      urljoin)
+from ...utils import urljoin
 
 
 logger = logging.getLogger(__name__)
@@ -75,7 +72,7 @@ class Jenkins(Backend):
         self._purge_cache_queue()
 
         nbuilds = 0  # number of builds processed
-        njobs = 0 # number of jobs processed
+        njobs = 0  # number of jobs processed
 
         projects = json.loads(self.client.get_jobs())
         jobs = projects['jobs']
@@ -169,7 +166,7 @@ class Jenkins(Backend):
 
         :returns: a UNIX timestamp
         """
-        return float(item['timestamp']/1000)
+        return float(item['timestamp'] / 1000)
 
     @staticmethod
     def metadata_category(item):
@@ -235,7 +232,7 @@ class JenkinsCommand(BackendCommand):
 
         # Jenkins options
         group = parser.parser.add_argument_group('Jenkins arguments')
-        group.add_argument('--blacklist-jobs',  dest='blacklist_jobs',
+        group.add_argument('--blacklist-jobs', dest='blacklist_jobs',
                            nargs='*',
                            help="Wrong jobs that must not be retrieved.")
 

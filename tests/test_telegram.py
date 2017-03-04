@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA. 
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
@@ -79,7 +79,7 @@ def setup_http_server():
     httpretty.register_uri(httpretty.GET,
                            TELEGRAM_UPDATES_URL,
                            responses=[
-                                httpretty.Response(body=request_callback)
+                               httpretty.Response(body=request_callback)
                            ])
 
     return http_requests
@@ -142,19 +142,19 @@ class TestTelegramBackend(unittest.TestCase):
         for x in range(len(messages)):
             message = messages[x]
             self.assertEqual(message['data']['message']['message_id'], expected[x][0])
-            self.assertEqual(message['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
+            self.assertEqual(message['origin'], 'https://telegram.org/' + TELEGRAM_BOT)
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
-            self.assertEqual(message['tag'], 'https://telegram.org/' +  TELEGRAM_BOT)
+            self.assertEqual(message['tag'], 'https://telegram.org/' + TELEGRAM_BOT)
 
         # Check requests
         expected = [
-                    {'offset' : ['1']},
-                    {'offset' : ['319280321']},
-                    {'offset' : ['319280322']}
-                   ]
+            {'offset': ['1']},
+            {'offset': ['319280321']},
+            {'offset': ['319280322']}
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -174,18 +174,18 @@ class TestTelegramBackend(unittest.TestCase):
 
         msg = messages[0]
         self.assertEqual(msg['data']['message']['message_id'], 34)
-        self.assertEqual(msg['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
+        self.assertEqual(msg['origin'], 'https://telegram.org/' + TELEGRAM_BOT)
         self.assertEqual(msg['uuid'], '2e61e72b64c9084f3c5a36671c3119641c3ae42f')
         self.assertEqual(msg['updated_on'], 1467370372.0)
         self.assertEqual(msg['offset'], 319280321)
         self.assertEqual(msg['category'], 'message')
-        self.assertEqual(msg['tag'], 'https://telegram.org/' +  TELEGRAM_BOT)
+        self.assertEqual(msg['tag'], 'https://telegram.org/' + TELEGRAM_BOT)
 
         # Check requests
         expected = [
-                    {'offset' : ['319280321']},
-                    {'offset' : ['319280322']}
-                   ]
+            {'offset': ['319280321']},
+            {'offset': ['319280322']}
+        ]
 
         self.assertEqual(len(http_requests), len(expected))
 
@@ -212,12 +212,12 @@ class TestTelegramBackend(unittest.TestCase):
         for x in range(len(messages)):
             message = messages[x]
             self.assertEqual(message['data']['message']['message_id'], expected[x][0])
-            self.assertEqual(message['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
+            self.assertEqual(message['origin'], 'https://telegram.org/' + TELEGRAM_BOT)
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
-            self.assertEqual(message['tag'], 'https://telegram.org/' +  TELEGRAM_BOT)
+            self.assertEqual(message['tag'], 'https://telegram.org/' + TELEGRAM_BOT)
 
         # Empty list of chats will return no messages
         chats = []
@@ -240,7 +240,7 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(len(http_requests), 1)
 
         self.assertDictEqual(http_requests[0].querystring,
-                             {'offset' : ['319280322']})
+                             {'offset': ['319280322']})
 
     def test_parse_messages(self):
         """Test whether the method parses a raw file"""
@@ -301,12 +301,12 @@ class TestTelegramBackendCache(unittest.TestCase):
         for x in range(len(cached_messages)):
             message = cached_messages[x]
             self.assertEqual(message['data']['message']['message_id'], expected[x][0])
-            self.assertEqual(message['origin'], 'https://telegram.org/' +  TELEGRAM_BOT)
+            self.assertEqual(message['origin'], 'https://telegram.org/' + TELEGRAM_BOT)
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
-            self.assertEqual(message['tag'], 'https://telegram.org/' +  TELEGRAM_BOT)
+            self.assertEqual(message['tag'], 'https://telegram.org/' + TELEGRAM_BOT)
 
         # No more requests were sent
         self.assertEqual(len(http_requests), 3)
@@ -393,8 +393,8 @@ class TestTelegramBotClient(unittest.TestCase):
         client.updates(offset=319280321)
 
         expected = {
-                    'offset' : ['319280321']
-                   }
+            'offset': ['319280321']
+        }
 
         req = httpretty.last_request()
 
