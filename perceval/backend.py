@@ -398,7 +398,7 @@ def uuid(*args):
 
     s = ':'.join(map(check_value, args))
 
-    sha1 = hashlib.sha1(s.encode('utf-8'))
+    sha1 = hashlib.sha1(s.encode('utf-8', errors='surrogateescape'))
     uuid_sha1 = sha1.hexdigest()
 
     return uuid_sha1
