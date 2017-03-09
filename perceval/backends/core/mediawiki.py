@@ -371,8 +371,8 @@ class MediaWiki(Backend):
                 page["revisions"] = reviews_json['revisions']
                 page['update'] = self.__get_max_date(page['revisions'])
         else:
-            logger.error("Revisions not found in %s", reviews["query"]["pages"])
-            logger.error("for page: %s", page)
+            logger.warning("Revisions not found in %s", reviews["query"]["pages"])
+            logger.warning("for page: %s", page)
             page = None
         return page
 
