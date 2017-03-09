@@ -58,7 +58,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None):
@@ -111,7 +111,8 @@ class Slack(Backend):
             self._push_cache_queue(raw_history)
 
             for message in messages:
-                message['user_data'] = self.__get_or_fetch_user(message['user'])
+                if 'user' in message:
+                    message['user_data'] = self.__get_or_fetch_user(message['user'])
                 yield message
 
                 nmsgs += 1
@@ -170,7 +171,8 @@ class Slack(Backend):
                 messages, _ = self.parse_history(raw_history)
 
                 for message in messages:
-                    message['user_data'] = cached_users[message['user']]
+                    if 'user' in message:
+                        message['user_data'] = cached_users[message['user']]
                     yield message
                     nmsgs += 1
         except StopIteration:
@@ -217,11 +219,13 @@ class Slack(Backend):
 
         This identifier will be the mix of two fields because Slack
         messages does not have any unique identifier. In this case,
-        'ts' and 'nick' values are combined because there have been
-        cases where two messages were sent by different users at
-        the same time.
+        'ts' and 'user' values (or 'bot_id' when the message is sent by a bot)
+        are combined because there have been cases where two messages were sent
+        by different users at the same time.
         """
-        return item['ts'] + item['user']
+        nick = item['user'] if 'user' in item else item['bot_id']
+
+        return item['ts'] + nick
 
     @staticmethod
     def metadata_updated_on(item):

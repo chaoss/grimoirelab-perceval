@@ -2,6 +2,13 @@
     "has_more": false,
     "messages": [
         {
+            "bot_id": "B0001",
+            "subtype": "bot_message",
+            "text": "There are no events this week.",
+            "ts": "1486969200.000136",
+            "type": "message"
+        },
+        {
             "subtype": "channel_join",
             "text": "<@U0003|dizquierdo> has joined the channel",
             "ts": "1427799888.000000",

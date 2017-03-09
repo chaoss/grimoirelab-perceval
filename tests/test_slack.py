@@ -176,6 +176,9 @@ class TestSlackBackend(unittest.TestCase):
         messages = [msg for msg in slack.fetch()]
 
         expected = [
+            ("There are no events this week.",
+             'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
+             1486969200.000136, 'B0001'),
             ("<@U0003|dizquierdo> has joined the channel",
              'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
              1427799888.0, 'dizquierdo@example.com'),
@@ -210,7 +213,12 @@ class TestSlackBackend(unittest.TestCase):
             self.assertEqual(message['updated_on'], expc[2])
             self.assertEqual(message['category'], 'message')
             self.assertEqual(message['tag'], 'https://slack.com/C011DUKE8')
-            self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
+
+            # The first message was sent by a bot
+            if x == 0:
+                self.assertEqual(message['data']['bot_id'], expc[3])
+            else:
+                self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
 
         # Check requests
         expected = [
@@ -264,6 +272,9 @@ class TestSlackBackend(unittest.TestCase):
         messages = [msg for msg in slack.fetch(from_date=from_date)]
 
         expected = [
+            ("There are no events this week.",
+             'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
+             1486969200.000136, 'B0001'),
             ("<@U0003|dizquierdo> has joined the channel",
              'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
              1427799888.0, 'dizquierdo@example.com'),
@@ -286,7 +297,12 @@ class TestSlackBackend(unittest.TestCase):
             self.assertEqual(message['updated_on'], expc[2])
             self.assertEqual(message['category'], 'message')
             self.assertEqual(message['tag'], 'https://slack.com/C011DUKE8')
-            self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
+
+            # The first message was sent by a bot
+            if x == 0:
+                self.assertEqual(message['data']['bot_id'], expc[3])
+            else:
+                self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
 
         # Check requests
         expected = [
@@ -354,12 +370,13 @@ class TestSlackBackend(unittest.TestCase):
         items, has_more = Slack.parse_history(raw_json)
         results = [item for item in items]
 
-        self.assertEqual(len(results), 5)
-        self.assertEqual(results[0]['ts'], '1427799888.000000')
-        self.assertEqual(results[1]['ts'], '1427135890.000071')
-        self.assertEqual(results[2]['ts'], '1427135835.000070')
-        self.assertEqual(results[3]['ts'], '1427135740.000069')
-        self.assertEqual(results[4]['ts'], '1427135733.000068')
+        self.assertEqual(len(results), 6)
+        self.assertEqual(results[0]['ts'], '1486969200.000136')
+        self.assertEqual(results[1]['ts'], '1427799888.000000')
+        self.assertEqual(results[2]['ts'], '1427135890.000071')
+        self.assertEqual(results[3]['ts'], '1427135835.000070')
+        self.assertEqual(results[4]['ts'], '1427135740.000069')
+        self.assertEqual(results[5]['ts'], '1427135733.000068')
         self.assertEqual(has_more, True)
 
         # Parse a file without results
@@ -417,6 +434,9 @@ class TestSlackBackendCache(unittest.TestCase):
         self.assertEqual(len(cached_messages), len(messages))
 
         expected = [
+            ("There are no events this week.",
+             'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
+             1486969200.000136, 'B0001'),
             ("<@U0003|dizquierdo> has joined the channel",
              'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
              1427799888.0, 'dizquierdo@example.com'),
@@ -451,7 +471,12 @@ class TestSlackBackendCache(unittest.TestCase):
             self.assertEqual(cmessage['updated_on'], expc[2])
             self.assertEqual(cmessage['category'], 'message')
             self.assertEqual(cmessage['tag'], 'https://slack.com/C011DUKE8')
-            self.assertEqual(cmessage['data']['user_data']['profile']['email'], expc[3])
+
+            # The first message was sent by a bot
+            if x == 0:
+                self.assertEqual(cmessage['data']['bot_id'], expc[3])
+            else:
+                self.assertEqual(cmessage['data']['user_data']['profile']['email'], expc[3])
 
             # Compare chached and fetched message
             self.assertDictEqual(cmessage['data'], messages[x]['data'])
