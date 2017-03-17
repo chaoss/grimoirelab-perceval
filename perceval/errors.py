@@ -61,6 +61,20 @@ class RepositoryError(BaseError):
     message = "%(cause)s"
 
 
+class RateLimitError(BaseError):
+    """Exception raised when the rate limit is exceeded"""
+
+    message = "%(cause)s; %(seconds_to_reset)s seconds to rate reset"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._seconds_to_reset = kwargs['seconds_to_reset']
+
+    @property
+    def seconds_to_reset(self):
+        return self._seconds_to_reset
+
+
 class ParseError(BaseError):
     """Exception raised a parsing errors occurs"""
 

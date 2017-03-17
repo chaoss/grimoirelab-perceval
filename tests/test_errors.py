@@ -105,6 +105,24 @@ class TestRepositoryError(unittest.TestCase):
         self.assertEqual('error cloning repository', str(e))
 
 
+class TestRateLimitError(unittest.TestCase):
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = errors.RateLimitError(cause="client rate exhausted",
+                                  seconds_to_reset=10)
+        self.assertEqual("client rate exhausted; 10 seconds to rate reset",
+                         str(e))
+
+    def test_seconds_to_reset_property(self):
+        """Test property"""
+
+        e = errors.RateLimitError(cause="client rate exhausted",
+                                  seconds_to_reset=10)
+        self.assertEqual(e.seconds_to_reset, 10)
+
+
 class TestParseError(unittest.TestCase):
 
     def test_message(self):
