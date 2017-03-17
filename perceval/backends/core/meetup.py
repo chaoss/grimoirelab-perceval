@@ -22,6 +22,7 @@
 
 import json
 import logging
+import time
 
 import requests
 
@@ -29,7 +30,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError
+from ...errors import CacheError, RateLimitError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
                       urljoin)
@@ -41,6 +42,11 @@ logger = logging.getLogger(__name__)
 MEETUP_URL = 'https://meetup.com/'
 MEETUP_API_URL = 'https://api.meetup.com/'
 MAX_ITEMS = 200
+
+
+# Range before sleeping until rate limit reset
+MIN_RATE_LIMIT = 1
+MAX_RATE_LIMIT = 30
 
 
 class Meetup(Backend):
@@ -55,17 +61,23 @@ class Meetup(Backend):
     :param max_items:  maximum number of issues requested on the same query
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param sleep_for_rate: sleep until rate limit is reset
+    :param min_rate_to_sleep: minimun rate needed to sleep until
+         it will be reset
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
-                 tag=None, cache=None):
+                 tag=None, cache=None,
+                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
         origin = MEETUP_URL
 
         super().__init__(origin, tag=tag, cache=cache)
         self.group = group
         self.max_items = max_items
-        self.client = MeetupClient(api_token, max_items=max_items)
+        self.client = MeetupClient(api_token, max_items=max_items,
+                                   sleep_for_rate=sleep_for_rate,
+                                   min_rate_to_sleep=min_rate_to_sleep)
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME, to_date=None):
@@ -299,6 +311,12 @@ class MeetupCommand(BackendCommand):
         group.add_argument('--max-items', dest='max_items',
                            type=int, default=MAX_ITEMS,
                            help="Maximum number of items requested on the same query")
+        group.add_argument('--sleep-for-rate', dest='sleep_for_rate',
+                           action='store_true',
+                           help="sleep for getting more rate")
+        group.add_argument('--min-rate-to-sleep', dest='min_rate_to_sleep',
+                           default=MIN_RATE_LIMIT, type=int,
+                           help="sleep until reset when the rate limit reaches this value")
 
         # Required arguments
         parser.parser.add_argument('group',
@@ -337,9 +355,21 @@ class MeetupClient:
                'suggested', 'draft']
     VUPDATED = 'updated'
 
-    def __init__(self, api_key, max_items=MAX_ITEMS):
+    def __init__(self, api_key, max_items=MAX_ITEMS,
+                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
         self.api_key = api_key
         self.max_items = max_items
+        self.rate_limit = None
+        self.rate_limit_reset_ts = None
+        self.sleep_for_rate = sleep_for_rate
+
+        if min_rate_to_sleep > MAX_RATE_LIMIT:
+            msg = "Minimum rate to sleep value exceeded (%d)."
+            msg += "High values might cause the client to sleep forever."
+            msg += "Reset to %d."
+            logger.warning(msg, min_rate_to_sleep, MAX_RATE_LIMIT)
+
+        self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
 
     def events(self, group, from_date=DEFAULT_DATETIME):
         """Fetch the events pages of a given group."""
@@ -420,8 +450,21 @@ class MeetupClient:
             logger.debug("Meetup client calls resource: %s params: %s",
                          resource, str(params))
 
+            if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
+                cause = "Meetup rate limit exceeded"
+
+                if self.sleep_for_rate:
+                    logger.warning("%s; waiting %i secs for rate limit reset.",
+                                   cause, self.rate_limit_reset_ts)
+                    time.sleep(self.rate_limit_reset_ts)
+                else:
+                    raise RateLimitError(cause=cause,
+                                         seconds_to_reset=self.rate_limit_reset_ts)
+
             r = requests.get(url, params=params)
             r.raise_for_status()
+            self.rate_limit = float(r.headers['X-RateLimit-Remaining'])
+            self.rate_limit_reset_ts = float(r.headers['X-RateLimit-Reset'])
             yield r.text
 
             if r.links and 'next' in r.links:
