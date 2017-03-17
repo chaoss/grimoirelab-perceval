@@ -1,0 +1,41 @@
+{
+    "channel": {
+        "created": 1480595743,
+        "creator": "U0001",
+        "id": "C011DUKE8",
+        "is_archived": false,
+        "is_channel": true,
+        "is_general": true,
+        "is_member": true,
+        "is_read_only": false,
+        "last_read": "1489127926.000217",
+        "latest": {
+            "bot_id": "B0001",
+            "subtype": "bot_message",
+            "text": "There are no events this week.",
+            "ts": "1486969200.000136",
+            "type": "message"
+        },
+        "members": [
+            "U0001",
+            "U0002",
+            "U0003"
+        ],
+        "name": "test channel",
+        "name_normalized": "test channel",
+        "previous_names": [],
+        "purpose": {
+            "creator": "",
+            "last_set": 0,
+            "value": "Test channel."
+        },
+        "topic": {
+            "creator": "",
+            "last_set": 0,
+            "value": "A test channel for testing Perceval"
+        },
+        "unread_count": 1,
+        "unread_count_display": 1
+    },
+    "ok": true
+}

@@ -58,7 +58,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.1'
+    version = '0.2.0'
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None):
@@ -85,6 +85,10 @@ class Slack(Backend):
                     self.channel, str(from_date))
 
         self._purge_cache_queue()
+
+        raw_info = self.client.channel_info(self.channel)
+        self._push_cache_queue(raw_info)
+        channel_info = self.parse_channel_info(raw_info)
 
         oldest = datetime_to_utc(from_date).timestamp()
         latest = datetime_utcnow().timestamp()
@@ -113,6 +117,7 @@ class Slack(Backend):
             for message in messages:
                 if 'user' in message:
                     message['user_data'] = self.__get_or_fetch_user(message['user'])
+                message['channel_info'] = channel_info
                 yield message
 
                 nmsgs += 1
@@ -123,6 +128,10 @@ class Slack(Backend):
             # Checkpoint. A set of messages ends here.
             self._push_cache_queue('{}')
             self._flush_cache_queue()
+
+        # Checkpoint for batch. A batch ends here.
+        self._push_cache_queue('{END}')
+        self._flush_cache_queue()
 
         logger.info("Fetch process completed: %s message fetched", nmsgs)
 
@@ -147,15 +156,27 @@ class Slack(Backend):
 
         cache_items = self.cache.retrieve()
         cached_users = {}
+        channel_info = None
 
         nmsgs = 0
+        start_batch = True
 
         try:
             while True:
                 try:
-                    raw_history = next(cache_items)
+                    raw_json = next(cache_items)
                 except StopIteration:
                     break
+
+                if start_batch:
+                    channel_info = self.parse_channel_info(raw_json)
+                    start_batch = False
+                    continue
+                elif raw_json == '{END}':
+                    start_batch = True
+                    continue
+                else:
+                    raw_history = raw_json
 
                 checkpoint = False
 
@@ -173,6 +194,7 @@ class Slack(Backend):
                 for message in messages:
                     if 'user' in message:
                         message['user_data'] = cached_users[message['user']]
+                    message['channel_info'] = channel_info
                     yield message
                     nmsgs += 1
         except StopIteration:
@@ -252,6 +274,20 @@ class Slack(Backend):
         return 'message'
 
     @staticmethod
+    def parse_channel_info(raw_channel_info):
+        """Parse a channel info JSON stream.
+
+        This method parses a JSON stream, containing the information
+        from a channel, and returns a dict with the parsed data.
+
+        :param raw_channel_info
+
+        :returns: a dict with the parsed information about a channel
+        """
+        result = json.loads(raw_channel_info)
+        return result['channel']
+
+    @staticmethod
     def parse_history(raw_history):
         """Parse a channel history JSON stream.
 
@@ -300,6 +336,7 @@ class SlackClient:
     """
     URL = urljoin(SLACK_URL, 'api', '%(resource)s')
 
+    RCHANNEL_INFO = 'channels.info'
     RCHANNEL_HISTORY = 'channels.history'
     RUSER_INFO = 'users.info'
 
@@ -313,6 +350,19 @@ class SlackClient:
     def __init__(self, api_token, max_items=MAX_ITEMS):
         self.api_token = api_token
         self.max_items = max_items
+
+    def channel_info(self, channel):
+        """Fetch information about a channel."""
+
+        resource = self.RCHANNEL_INFO
+
+        params = {
+            self.PCHANNEL: channel,
+        }
+
+        response = self._fetch(resource, params)
+
+        return response
 
     def history(self, channel, oldest=None, latest=None):
         """Fetch the history of a channel."""

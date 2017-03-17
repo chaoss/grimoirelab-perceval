@@ -47,6 +47,7 @@ from perceval.backends.core.slack import (Slack,
 
 
 SLACK_API_URL = 'https://slack.com/api'
+SLACK_CHANNEL_INFO_URL = SLACK_API_URL + '/channels.info'
 SLACK_CHANNEL_HISTORY_URL = SLACK_API_URL + '/channels.history'
 SLACK_USER_INFO_URL = SLACK_API_URL + '/users.info'
 
@@ -64,6 +65,7 @@ def setup_http_server():
 
     channel_error = read_file('data/slack/slack_error.json', 'rb')
     channel_empty = read_file('data/slack/slack_history_empty.json', 'rb')
+    channel_info = read_file('data/slack/slack_info.json', 'rb')
     channel_history = read_file('data/slack/slack_history.json', 'rb')
     channel_history_next = read_file('data/slack/slack_history_next.json', 'rb')
     channel_history_date = read_file('data/slack/slack_history_20150323.json', 'rb')
@@ -77,7 +79,9 @@ def setup_http_server():
 
         status = 200
 
-        if uri.startswith(SLACK_CHANNEL_HISTORY_URL):
+        if uri.startswith(SLACK_CHANNEL_INFO_URL):
+            body = channel_info
+        elif uri.startswith(SLACK_CHANNEL_HISTORY_URL):
             if params['channel'][0] != 'C011DUKE8':
                 body = channel_error
             elif 'latest' not in params:
@@ -110,6 +114,12 @@ def setup_http_server():
         http_requests.append(last_request)
 
         return (status, headers, body)
+
+    httpretty.register_uri(httpretty.GET,
+                           SLACK_CHANNEL_INFO_URL,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                           ])
 
     httpretty.register_uri(httpretty.GET,
                            SLACK_CHANNEL_HISTORY_URL,
@@ -178,28 +188,28 @@ class TestSlackBackend(unittest.TestCase):
         expected = [
             ("There are no events this week.",
              'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
-             1486969200.000136, 'B0001'),
+             1486969200.000136, 'B0001', 'test channel'),
             ("<@U0003|dizquierdo> has joined the channel",
              'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
-             1427799888.0, 'dizquierdo@example.com'),
+             1427799888.0, 'dizquierdo@example.com', 'test channel'),
             ("tengo el m\u00f3vil",
              'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5',
-             1427135890.000071, 'jsmanrique@example.com'),
+             1427135890.000071, 'jsmanrique@example.com', 'test channel'),
             ("hey acs",
              '29c2942a704c4e0b067daeb76edb2f826376cecf',
-             1427135835.000070, 'jsmanrique@example.com'),
+             1427135835.000070, 'jsmanrique@example.com', 'test channel'),
             ("¿vale?",
              '757e88ea008db0fff739dd261179219aedb84a95',
-             1427135740.000069, 'acs@example.com'),
+             1427135740.000069, 'acs@example.com', 'test channel'),
             ("jsmanrique: tenemos que dar m\u00e9tricas super chulas",
              'e92555381bc431a53c0b594fc118850eafd6e212',
-             1427135733.000068, 'acs@example.com'),
+             1427135733.000068, 'acs@example.com', 'test channel'),
             ("hi!",
              'b92892e7b65add0e83d0839de20b2375a42014e8',
-             1427135689.000067, 'jsmanrique@example.com'),
+             1427135689.000067, 'jsmanrique@example.com', 'test channel'),
             ("hi!",
              'e59d9ca0d9a2ba1c747dc60a0904edd22d69e20e',
-             1427135634.000066, 'acs@example.com')
+             1427135634.000066, 'acs@example.com', 'test channel')
         ]
 
         self.assertEqual(len(messages), len(expected))
@@ -220,8 +230,14 @@ class TestSlackBackend(unittest.TestCase):
             else:
                 self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
 
+            self.assertEqual(message['data']['channel_info']['name'], expc[4])
+
         # Check requests
         expected = [
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa']
+            },
             {
                 'channel': ['C011DUKE8'],
                 'oldest': ['0'],
@@ -274,16 +290,16 @@ class TestSlackBackend(unittest.TestCase):
         expected = [
             ("There are no events this week.",
              'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
-             1486969200.000136, 'B0001'),
+             1486969200.000136, 'B0001', 'test channel'),
             ("<@U0003|dizquierdo> has joined the channel",
              'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
-             1427799888.0, 'dizquierdo@example.com'),
+             1427799888.0, 'dizquierdo@example.com', 'test channel'),
             ("tengo el m\u00f3vil",
              'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5',
-             1427135890.000071, 'jsmanrique@example.com'),
+             1427135890.000071, 'jsmanrique@example.com', 'test channel'),
             ("hey acs",
              '29c2942a704c4e0b067daeb76edb2f826376cecf',
-             1427135835.000070, 'jsmanrique@example.com')
+             1427135835.000070, 'jsmanrique@example.com', 'test channel')
         ]
 
         self.assertEqual(len(messages), len(expected))
@@ -304,8 +320,14 @@ class TestSlackBackend(unittest.TestCase):
             else:
                 self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
 
+            self.assertEqual(message['data']['channel_info']['name'], expc[4])
+
         # Check requests
         expected = [
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa']
+            },
             {
                 'channel': ['C011DUKE8'],
                 'oldest': ['1427135740.000068'],
@@ -350,6 +372,10 @@ class TestSlackBackend(unittest.TestCase):
         expected = [
             {
                 'channel': ['C011DUKE8'],
+                'token': ['aaaa']
+            },
+            {
+                'channel': ['C011DUKE8'],
                 'oldest': ['1451606399.999999'],
                 'latest': ['1483228800.0'],
                 'token': ['aaaa'],
@@ -361,6 +387,16 @@ class TestSlackBackend(unittest.TestCase):
 
         for i in range(len(expected)):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    def test_parse_channel_info(self):
+        """Test if it parses a channel info JSON stream"""
+
+        raw_json = read_file('data/slack/slack_info.json')
+
+        user = Slack.parse_channel_info(raw_json)
+
+        self.assertEqual(user['id'], 'C011DUKE8')
+        self.assertEqual(user['name'], 'test channel')
 
     def test_parse_history(self):
         """Test if it parses a channel history JSON stream"""
@@ -425,7 +461,7 @@ class TestSlackBackendCache(unittest.TestCase):
         slack = Slack('C011DUKE8', 'aaaa', max_items=5, cache=cache)
         messages = [msg for msg in slack.fetch()]
 
-        self.assertEqual(len(http_requests), 5)
+        self.assertEqual(len(http_requests), 6)
 
         # Now, we get the messages from the cache.
         # The events should be the same and there won't be
@@ -436,28 +472,28 @@ class TestSlackBackendCache(unittest.TestCase):
         expected = [
             ("There are no events this week.",
              'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
-             1486969200.000136, 'B0001'),
+             1486969200.000136, 'B0001', 'test channel'),
             ("<@U0003|dizquierdo> has joined the channel",
              'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
-             1427799888.0, 'dizquierdo@example.com'),
+             1427799888.0, 'dizquierdo@example.com', 'test channel'),
             ("tengo el m\u00f3vil",
              'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5',
-             1427135890.000071, 'jsmanrique@example.com'),
+             1427135890.000071, 'jsmanrique@example.com', 'test channel'),
             ("hey acs",
              '29c2942a704c4e0b067daeb76edb2f826376cecf',
-             1427135835.000070, 'jsmanrique@example.com'),
+             1427135835.000070, 'jsmanrique@example.com', 'test channel'),
             ("¿vale?",
              '757e88ea008db0fff739dd261179219aedb84a95',
-             1427135740.000069, 'acs@example.com'),
+             1427135740.000069, 'acs@example.com', 'test channel'),
             ("jsmanrique: tenemos que dar m\u00e9tricas super chulas",
              'e92555381bc431a53c0b594fc118850eafd6e212',
-             1427135733.000068, 'acs@example.com'),
+             1427135733.000068, 'acs@example.com', 'test channel'),
             ("hi!",
              'b92892e7b65add0e83d0839de20b2375a42014e8',
-             1427135689.000067, 'jsmanrique@example.com'),
+             1427135689.000067, 'jsmanrique@example.com', 'test channel'),
             ("hi!",
              'e59d9ca0d9a2ba1c747dc60a0904edd22d69e20e',
-             1427135634.000066, 'acs@example.com')
+             1427135634.000066, 'acs@example.com', 'test channel')
         ]
 
         self.assertEqual(len(cached_messages), len(expected))
@@ -478,11 +514,13 @@ class TestSlackBackendCache(unittest.TestCase):
             else:
                 self.assertEqual(cmessage['data']['user_data']['profile']['email'], expc[3])
 
+            self.assertEqual(cmessage['data']['channel_info']['name'], expc[4])
+
             # Compare chached and fetched message
             self.assertDictEqual(cmessage['data'], messages[x]['data'])
 
         # No more requests were sent
-        self.assertEqual(len(http_requests), 5)
+        self.assertEqual(len(http_requests), 6)
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any message returned when the cache is empty"""
@@ -515,6 +553,28 @@ class TestSlackClient(unittest.TestCase):
         client = SlackClient('aaaa', max_items=5)
         self.assertEqual(client.api_token, 'aaaa')
         self.assertEqual(client.max_items, 5)
+
+    @httpretty.activate
+    def test_channel_info(self):
+        """Test channel info API call"""
+
+        http_requests = setup_http_server()
+
+        client = SlackClient('aaaa', max_items=5)
+
+        _ = client.channel_info('C011DUKE8')
+
+        expected = {
+            'channel': ['C011DUKE8'],
+            'token': ['aaaa'],
+        }
+
+        self.assertEqual(len(http_requests), 1)
+
+        req = http_requests[0]
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/channels.info')
+        self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
     def test_history(self):
