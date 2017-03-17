@@ -40,12 +40,11 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
-from perceval.errors import CacheError
+from perceval.errors import CacheError, RateLimitError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.github import (GitHub,
                                            GitHubCommand,
-                                           GitHubClient,
-                                           RateLimitError)
+                                           GitHubClient)
 
 
 GITHUB_API_URL = "https://api.github.com"

@@ -24,6 +24,7 @@ import datetime
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 
 import dateutil.tz
@@ -37,11 +38,13 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
-from perceval.errors import CacheError
+from perceval.errors import CacheError, RateLimitError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.meetup import (Meetup,
                                            MeetupCommand,
-                                           MeetupClient)
+                                           MeetupClient,
+                                           MIN_RATE_LIMIT,
+                                           MAX_RATE_LIMIT)
 
 
 MEETUP_URL = 'https://api.meetup.com'
@@ -75,7 +78,7 @@ def read_file(filename, mode='r'):
     return content
 
 
-def setup_http_server():
+def setup_http_server(rate_limit=-1, reset_rate_limit=-1):
     """Setup a mock HTTP server"""
 
     http_requests = []
@@ -121,8 +124,18 @@ def setup_http_server():
                 if events_bodies:
                     # Mock the 'Link' header with a fake URL
                     headers['Link'] = '<' + MEETUP_EVENTS_URL + '>; rel="next"'
+
+                if rate_limit != -1:
+                    headers['X-RateLimit-Remaining'] = str(rate_limit)
+                if reset_rate_limit != -1:
+                    headers['X-RateLimit-Reset'] = str(reset_rate_limit)
         else:
             raise
+
+        if rate_limit == -1:
+            headers['X-RateLimit-Remaining'] = '10000000'
+        if reset_rate_limit == -1:
+            headers['X-RateLimit-Reset'] = '0'
 
         http_requests.append(last_request)
 
@@ -157,7 +170,8 @@ class TestMeetupBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        meetup = Meetup('mygroup', 'aaaa', max_items=5, tag='test')
+        meetup = Meetup('mygroup', 'aaaa', max_items=5, tag='test',
+                        sleep_for_rate=True, min_rate_to_sleep=10)
 
         self.assertEqual(meetup.origin, 'https://meetup.com/')
         self.assertEqual(meetup.tag, 'test')
@@ -165,6 +179,8 @@ class TestMeetupBackend(unittest.TestCase):
         self.assertEqual(meetup.max_items, 5)
         self.assertIsInstance(meetup.client, MeetupClient)
         self.assertEqual(meetup.client.api_key, 'aaaa')
+        self.assertEqual(meetup.client.sleep_for_rate, True)
+        self.assertEqual(meetup.client.min_rate_to_sleep, 10)
 
         # When tag is empty or None it will be set to
         # the value in URL
@@ -607,7 +623,9 @@ class TestMeetupCommand(unittest.TestCase):
                 '--tag', 'test',
                 '--no-cache',
                 '--from-date', '1970-01-01',
-                '--to-date', '2016-01-01']
+                '--to-date', '2016-01-01',
+                '--sleep-for-rate',
+                '--min-rate-to-sleep', '10']
 
         expected_ts = datetime.datetime(2016, 1, 1, 0, 0, 0,
                                         tzinfo=dateutil.tz.tzutc())
@@ -620,6 +638,8 @@ class TestMeetupCommand(unittest.TestCase):
         self.assertEqual(parsed_args.no_cache, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.to_date, expected_ts)
+        self.assertEqual(parsed_args.sleep_for_rate, True)
+        self.assertEqual(parsed_args.min_rate_to_sleep, 10)
 
 
 class TestMeetupClient(unittest.TestCase):
@@ -636,6 +656,22 @@ class TestMeetupClient(unittest.TestCase):
         client = MeetupClient('aaaa', max_items=10)
         self.assertEqual(client.api_key, 'aaaa')
         self.assertEqual(client.max_items, 10)
+        self.assertEqual(client.sleep_for_rate, False)
+        self.assertEqual(client.min_rate_to_sleep, MIN_RATE_LIMIT)
+
+        client = MeetupClient('aaaa', max_items=10,
+                              sleep_for_rate=True,
+                              min_rate_to_sleep=4)
+        self.assertEqual(client.api_key, 'aaaa')
+        self.assertEqual(client.max_items, 10)
+        self.assertEqual(client.sleep_for_rate, True)
+        self.assertEqual(client.min_rate_to_sleep, 4)
+
+        # Max rate limit is never overtaken
+        client = MeetupClient('aaaa', max_items=10,
+                              sleep_for_rate=True,
+                              min_rate_to_sleep=100000000)
+        self.assertEqual(client.min_rate_to_sleep, MAX_RATE_LIMIT)
 
     @httpretty.activate
     def test_events(self):
@@ -731,6 +767,85 @@ class TestMeetupClient(unittest.TestCase):
         req = http_requests[0]
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/sqlpass-es/events/1/rsvps')
+        self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_sleep_for_rate(self):
+        """ Test if the clients sleeps when the rate limit is reached"""
+
+        wait_to_reset = 1
+
+        http_requests = setup_http_server(rate_limit=0,
+                                          reset_rate_limit=wait_to_reset)
+
+        client = MeetupClient('aaaa', max_items=2,
+                              min_rate_to_sleep=2,
+                              sleep_for_rate=True)
+
+        # Call API
+        before = float(time.time())
+        events = client.events('sqlpass-es')
+        results = [event for event in events]
+        after = float(time.time())
+        diff = after - before
+
+        self.assertGreaterEqual(diff, wait_to_reset)
+        self.assertEqual(len(results), 2)
+
+        expected = [
+            {
+                'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+                'key': ['aaaa'],
+                'order': ['updated'],
+                'page': ['2'],
+                'scroll': ['since:1970-01-01T00:00:00.000Z'],
+                'sign': ['true'],
+                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+            },
+            {
+                'key': ['aaaa'],
+                'sign': ['true']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), 2)
+
+        for x in range(0, len(http_requests)):
+            req = http_requests[x]
+            self.assertEqual(req.method, 'GET')
+            self.assertRegex(req.path, '/sqlpass-es/events')
+            self.assertDictEqual(req.querystring, expected[x])
+
+    @httpretty.activate
+    def test_rate_limit_error(self):
+        """Test if a rate limit error is raised when rate is exhausted"""
+
+        http_requests = setup_http_server(rate_limit=0,
+                                          reset_rate_limit=0.5)
+
+        client = MeetupClient('aaaa', max_items=2)
+
+        # Call API
+        events = client.events('sqlpass-es')
+
+        with self.assertRaises(RateLimitError):
+            _ = [event for event in events]
+
+        expected = {
+            'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+            'key': ['aaaa'],
+            'order': ['updated'],
+            'page': ['2'],
+            'scroll': ['since:1970-01-01T00:00:00.000Z'],
+            'sign': ['true'],
+            'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+        }
+
+        self.assertEqual(len(http_requests), 1)
+
+        req = http_requests[0]
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/sqlpass-es/events')
         self.assertDictEqual(req.querystring, expected)
 
 

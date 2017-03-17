@@ -32,7 +32,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError, BaseError
+from ...errors import CacheError, RateLimitError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
                       str_to_datetime,
@@ -48,19 +48,6 @@ MAX_RATE_LIMIT = 500
 
 
 logger = logging.getLogger(__name__)
-
-
-class RateLimitError(BaseError):
-
-    message = "%(cause)s %(seconds_to_reset)s seconds for rate reset"
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._seconds_to_reset = kwargs['seconds_to_reset']
-
-    @property
-    def seconds_to_reset(self):
-        return self._seconds_to_reset
 
 
 class GitHub(Backend):
@@ -81,7 +68,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.6.1'
+    version = '0.6.2'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
