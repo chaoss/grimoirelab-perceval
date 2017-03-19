@@ -54,7 +54,7 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.7.0'
+    version = '0.7.1'
 
     def __init__(self, url,
                  user=None, max_reviews=MAX_REVIEWS,
@@ -283,6 +283,8 @@ class GerritClient():
     CMD_GERRIT = 'gerrit'
     CMD_VERSION = 'version'
     PORT = '29418'
+    MAX_RETRIES = 3  # max number of retries when a command fails
+    RETRY_WAIT = 60  # number of seconds when retrying a ssh command
 
     def __init__(self, repository, user, max_reviews, blacklist_reviews=[]):
         self.gerrit_user = user
@@ -295,6 +297,27 @@ class GerritClient():
                                                self.repository)
         self.gerrit_cmd += " %s " % (GerritClient.CMD_GERRIT)
 
+    def __execute(self, cmd):
+        """ Execute gerrit command with retry if it fails """
+
+        data = None  # data result from the cmd execution
+
+        retries = 0
+
+        while retries < self.MAX_RETRIES:
+            try:
+                data = subprocess.check_output(cmd, shell=True)
+                break
+            except subprocess.CalledProcessError as ex:
+                logger.error("gerrit cmd %s failed: %s", cmd, ex)
+                time.sleep(self.RETRY_WAIT * retries)
+                retries += 1
+
+        if data is None:
+            raise RuntimeError(cmd + " failed " + str(self.MAX_RETRIES) + " times. Giving up!")
+
+        return data
+
     @property
     def version(self):
         """ Return the Gerrit server version."""
@@ -305,7 +328,7 @@ class GerritClient():
         cmd = self.gerrit_cmd + " %s " % (GerritClient.CMD_VERSION)
 
         logger.debug("Getting version: %s" % (cmd))
-        raw_data = subprocess.check_output(cmd, shell=True)
+        raw_data = self.__execute(cmd)
         raw_data = str(raw_data, "UTF-8")
         logger.debug("Gerrit version: %s" % (raw_data))
 
@@ -331,8 +354,8 @@ class GerritClient():
 
         cmd = self._get_gerrit_cmd(last_item, filter_)
 
-        logger.debug(cmd)
-        raw_data = subprocess.check_output(cmd, shell=True)
+        logger.debug("Getting reviews with command: %s", cmd)
+        raw_data = self.__execute(cmd)
         raw_data = str(raw_data, "UTF-8")
 
         return raw_data
