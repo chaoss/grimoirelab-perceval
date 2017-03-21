@@ -1,5 +1,36 @@
 # Releases
 
+## Perceval 0.7 - (2017-03-21)
+
+** New features and improvements: **
+
+ * New set of backends added:
+    - Hyperkitty
+    - NNTP
+    - Slack
+ * `RateLimitError` exception added for handling rate limit errors.
+ * Code was cleaned to follow most of the PEP8 style guidelines.
+
+** Backend improvements: **
+
+  * **git**
+    - retry calls on SSH commands were added to avoid temporal server errors
+  * **github**
+    - HHTP 404 errors are managed when user's organizations are fetched
+    - generic `RateLimitError` exception is used
+
+** Bugs fixed: **
+
+ * In Mediawiki backend, the log messages written when a revision is not
+   found were set to ERROR when the real level should have been WARNING.
+ * The URL used to fetch jobs in Jenkins was not common to all servers.
+ * When UUIDs are generated with some input data, some errors may be raised
+   due to problems encoding invalid characters on the input. To avoid these
+   problems, a surrogate escape control error has been set when data is
+   encoded to UTF8. (#123)
+ * Handle Meetup requests rate limit. (#126)
+
+
 ## Perceval 0.6 - (2017-02-02)
 
 ** Backend improvements: **
