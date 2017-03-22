@@ -69,7 +69,7 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.2.3'
+    version = '0.2.4'
 
     def __init__(self, host, group, tag=None, cache=None):
         origin = host + '-' + group
@@ -260,10 +260,15 @@ class NNTP(Backend):
 
         :param raw_article: NNTP article string
 
-        :returns : a dictionary of type `requests.structures.CaseInsensitiveDict`
+        :returns: a dictionary of type `requests.structures.CaseInsensitiveDict`
+
+        :raises ParseError: when an error is found parsing the article
         """
-        message = email.message_from_string(raw_article)
-        article = message_to_dict(message)
+        try:
+            message = email.message_from_string(raw_article)
+            article = message_to_dict(message)
+        except UnicodeEncodeError as e:
+            raise ParseError(cause=str(e))
         return article
 
 

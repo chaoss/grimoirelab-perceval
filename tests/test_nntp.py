@@ -38,7 +38,7 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
-from perceval.errors import CacheError
+from perceval.errors import CacheError, ParseError
 from perceval.backends.core.nntp import (NNTP,
                                          NNTPCommand)
 
@@ -224,6 +224,18 @@ class TestNNTPBackend(unittest.TestCase):
                                         "/ Fernando\n\n"
                                         "[1] https://wiki.mozilla.org/Project_Link\n")
         self.assertEqual(len(body['html']), 663)
+
+    @unittest.mock.patch('email.message_from_string')
+    def test_parse_error_encoding(self, mock_parser):
+        """Test if an exception is raised when an error is found with the enconding"""
+
+        mock_parser.side_effect = UnicodeEncodeError("mockcodec", "astring",
+                                                     1, 2, "fake reason")
+
+        raw_article = read_file('data/nntp/nntp_1.txt')
+
+        with self.assertRaises(ParseError):
+            _ = NNTP.parse_article(raw_article)
 
 
 class TestNNTPBackendCache(unittest.TestCase):
