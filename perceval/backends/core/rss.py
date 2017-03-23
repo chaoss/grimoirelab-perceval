@@ -166,7 +166,8 @@ class RSSClient:
     def get_entries(self):
         """ Retrieve all entries from a RSS feed"""
 
-        req = requests.get(self.url)
+        # wordpress.com blogs need a User-Agent header
+        req = requests.get(self.url, headers={'User-Agent':'perceval'})
         req.raise_for_status()
         return req.text
 
