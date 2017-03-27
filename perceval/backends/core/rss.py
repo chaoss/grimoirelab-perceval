@@ -31,6 +31,7 @@ from ...backend import (Backend,
                         metadata)
 from ...errors import CacheError
 from ...utils import str_to_datetime
+from ..._version import __version__
 
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class RSS(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     def __init__(self, url, tag=None, cache=None):
         origin = url
@@ -167,7 +168,9 @@ class RSSClient:
         """ Retrieve all entries from a RSS feed"""
 
         # wordpress.com blogs need a User-Agent header
-        req = requests.get(self.url, headers={'User-Agent': 'perceval'})
+        headers = {'User-Agent': 'perceval-' + __version__}
+
+        req = requests.get(self.url, headers=headers)
         req.raise_for_status()
         return req.text
 
