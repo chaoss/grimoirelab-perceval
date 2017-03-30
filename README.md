@@ -171,7 +171,7 @@ $ perceval git '/tmp/gitlog.log'
 
 ### GitHub
 ```
-$ perceval github --owner elastic --repository filebeat --from-date '2016-01-01'
+$ perceval github elastic logstash --from-date '2016-01-01'
 ```
 
 ### Gmane
