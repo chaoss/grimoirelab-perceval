@@ -54,11 +54,12 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.7.1'
+    version = '0.7.2'
 
     def __init__(self, url,
                  user=None, max_reviews=MAX_REVIEWS,
                  blacklist_reviews=None,
+                 disable_host_key_check=False,
                  tag=None, cache=None):
         origin = url
 
@@ -67,7 +68,7 @@ class Gerrit(Backend):
         self.max_reviews = max(1, max_reviews)
         self.blacklist_reviews = blacklist_reviews
         self.client = GerritClient(self.url, user, max_reviews,
-                                   blacklist_reviews)
+                                   blacklist_reviews, disable_host_key_check)
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -286,15 +287,20 @@ class GerritClient():
     MAX_RETRIES = 3  # max number of retries when a command fails
     RETRY_WAIT = 60  # number of seconds when retrying a ssh command
 
-    def __init__(self, repository, user, max_reviews, blacklist_reviews=[]):
+    def __init__(self, repository, user, max_reviews, blacklist_reviews=[],
+                 disable_host_key_check=False):
         self.gerrit_user = user
         self.max_reviews = max_reviews
         self.blacklist_reviews = blacklist_reviews
         self.repository = repository
         self.project = None
         self._version = None
-        self.gerrit_cmd = "ssh -p %s %s@%s" % (GerritClient.PORT, self.gerrit_user,
-                                               self.repository)
+        ssh_opts = ''
+        if disable_host_key_check:
+            ssh_opts += "-o StrictHostKeyChecking=no "
+
+        self.gerrit_cmd = "ssh %s -p %s %s@%s" % (ssh_opts, GerritClient.PORT,
+                                                  self.gerrit_user, self.repository)
         self.gerrit_cmd += " %s " % (GerritClient.CMD_GERRIT)
 
     def __execute(self, cmd):
@@ -442,6 +448,8 @@ class GerritCommand(BackendCommand):
         group.add_argument('--blacklist-reviews', dest='blacklist_reviews',
                            nargs='*',
                            help="Wrong reviews that must not be retrieved.")
+        group.add_argument('--disable-host-key-check', dest='disable_host_key_check', action='store_true',
+                           help="Don't check remote host identity")
 
         # Required arguments
         parser.parser.add_argument('url',
