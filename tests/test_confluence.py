@@ -63,13 +63,13 @@ def setup_http_server():
 
     http_requests = []
 
-    body_contents = read_file('data/confluence_contents.json', 'rb')
-    body_contents_next = read_file('data/confluence_contents_next.json', 'rb')
-    body_contents_empty = read_file('data/confluence_contents_empty.json', 'rb')
-    body_content_1_v1 = read_file('data/confluence_content_1_v1.json', 'rb')
-    body_content_1_v2 = read_file('data/confluence_content_1_v2.json', 'rb')
-    body_content_2 = read_file('data/confluence_content_2_v1.json', 'rb')
-    body_content_att = read_file('data/confluence_content_att_v1.json', 'rb')
+    body_contents = read_file('data/confluence/confluence_contents.json', 'rb')
+    body_contents_next = read_file('data/confluence/confluence_contents_next.json', 'rb')
+    body_contents_empty = read_file('data/confluence/confluence_contents_empty.json', 'rb')
+    body_content_1_v1 = read_file('data/confluence/confluence_content_1_v1.json', 'rb')
+    body_content_1_v2 = read_file('data/confluence/confluence_content_1_v2.json', 'rb')
+    body_content_2 = read_file('data/confluence/confluence_content_2_v1.json', 'rb')
+    body_content_att = read_file('data/confluence/confluence_content_att_v1.json', 'rb')
 
     def request_callback(method, uri, headers):
         if uri.startswith(CONFLUENCE_CONTENTS_URL):
@@ -391,7 +391,7 @@ class TestConfluenceBackend(unittest.TestCase):
     def test_parse_contents_summary(self):
         """Test if it parses a contents summary stream"""
 
-        raw_contents = read_file('data/confluence_contents.json')
+        raw_contents = read_file('data/confluence/confluence_contents.json')
 
         contents = Confluence.parse_contents_summary(raw_contents)
         results = [content for content in contents]
@@ -401,7 +401,7 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(results[1]['id'], '2')
 
         # Parse a file without results
-        raw_contents = read_file('data/confluence_contents_empty.json')
+        raw_contents = read_file('data/confluence/confluence_contents_empty.json')
 
         contents = Confluence.parse_contents_summary(raw_contents)
         results = [content for content in contents]
@@ -411,7 +411,7 @@ class TestConfluenceBackend(unittest.TestCase):
     def test_parse_historical_content(self):
         """Test if it parses a historical content stream"""
 
-        raw_hc = read_file('data/confluence_content_1_v1.json')
+        raw_hc = read_file('data/confluence/confluence_content_1_v1.json')
         hc = Confluence.parse_historical_content(raw_hc)
 
         self.assertEqual(hc['id'], '1')
