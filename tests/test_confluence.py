@@ -63,13 +63,13 @@ def setup_http_server():
 
     http_requests = []
 
-    body_contents = read_file('data/confluence_contents.json', 'rb')
-    body_contents_next = read_file('data/confluence_contents_next.json', 'rb')
-    body_contents_empty = read_file('data/confluence_contents_empty.json', 'rb')
-    body_content_1_v1 = read_file('data/confluence_content_1_v1.json', 'rb')
-    body_content_1_v2 = read_file('data/confluence_content_1_v2.json', 'rb')
-    body_content_2 = read_file('data/confluence_content_2_v1.json', 'rb')
-    body_content_att = read_file('data/confluence_content_att_v1.json', 'rb')
+    body_contents = read_file('data/confluence/confluence_contents.json', 'rb')
+    body_contents_next = read_file('data/confluence/confluence_contents_next.json', 'rb')
+    body_contents_empty = read_file('data/confluence/confluence_contents_empty.json', 'rb')
+    body_content_1_v1 = read_file('data/confluence/confluence_content_1_v1.json', 'rb')
+    body_content_1_v2 = read_file('data/confluence/confluence_content_1_v2.json', 'rb')
+    body_content_2 = read_file('data/confluence/confluence_content_2_v1.json', 'rb')
+    body_content_att = read_file('data/confluence/confluence_content_att_v1.json', 'rb')
 
     def request_callback(method, uri, headers):
         if uri.startswith(CONFLUENCE_CONTENTS_URL):
@@ -167,10 +167,16 @@ class TestConfluenceBackend(unittest.TestCase):
         confluence = Confluence(CONFLUENCE_URL)
         hcs = [hc for hc in confluence.fetch()]
 
-        expected = [('1', 1, '5b8bf26bfd906214ec82f5a682649e8f6fe87984', 1465589121.0),
-                    ('1', 2, '94b8015bcb52fca1155ecee14153c8634856f1bc', 1466107110.0),
-                    ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976', 1467402626.0),
-                    ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd', 1467831550.0)]
+        expected = [
+            ('1', 1, '5b8bf26bfd906214ec82f5a682649e8f6fe87984',
+             1465589121.0, 'http://example.com/display/meetings/TSC'),
+            ('1', 2, '94b8015bcb52fca1155ecee14153c8634856f1bc',
+             1466107110.0, 'http://example.com/display/meetings/TSC'),
+            ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976',
+             1467402626.0, 'http://example.com/display/fuel/Colorado+Release+Status'),
+            ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd',
+             1467831550.0, 'http://example.com/pages/viewpage.action?pageId=131079&preview=%2F131079%2F131085%2Fstep05-04.png')
+        ]
 
         self.assertEqual(len(hcs), len(expected))
 
@@ -181,6 +187,7 @@ class TestConfluenceBackend(unittest.TestCase):
             self.assertEqual(hc['uuid'], expected[x][2])
             self.assertEqual(hc['origin'], CONFLUENCE_URL)
             self.assertEqual(hc['updated_on'], expected[x][3])
+            self.assertEqual(hc['data']['content_url'], expected[x][4])
             self.assertEqual(hc['category'], 'historical content')
             self.assertEqual(hc['tag'], CONFLUENCE_URL)
 
@@ -236,9 +243,14 @@ class TestConfluenceBackend(unittest.TestCase):
         # On this test case the first version of content #1
         # will not be returned becasue this version was
         # created before the given date
-        expected = [('1', 2, '94b8015bcb52fca1155ecee14153c8634856f1bc', 1466107110.0),
-                    ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976', 1467402626.0),
-                    ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd', 1467831550.0)]
+        expected = [
+            ('1', 2, '94b8015bcb52fca1155ecee14153c8634856f1bc',
+             1466107110.0, 'http://example.com/display/meetings/TSC'),
+            ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976',
+             1467402626.0, 'http://example.com/display/fuel/Colorado+Release+Status'),
+            ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd',
+             1467831550.0, 'http://example.com/pages/viewpage.action?pageId=131079&preview=%2F131079%2F131085%2Fstep05-04.png')
+        ]
 
         self.assertEqual(len(hcs), len(expected))
 
@@ -249,6 +261,7 @@ class TestConfluenceBackend(unittest.TestCase):
             self.assertEqual(hc['uuid'], expected[x][2])
             self.assertEqual(hc['origin'], CONFLUENCE_URL)
             self.assertEqual(hc['updated_on'], expected[x][3])
+            self.assertEqual(hc['data']['content_url'], expected[x][4])
             self.assertEqual(hc['category'], 'historical content')
             self.assertEqual(hc['tag'], CONFLUENCE_URL)
 
@@ -305,8 +318,12 @@ class TestConfluenceBackend(unittest.TestCase):
         confluence = Confluence(CONFLUENCE_URL)
         hcs = [hc for hc in confluence.fetch()]
 
-        expected = [('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976', 1467402626.0),
-                    ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd', 1467831550.0)]
+        expected = [
+            ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976',
+             1467402626.0, 'http://example.com/display/fuel/Colorado+Release+Status'),
+            ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd',
+             1467831550.0, 'http://example.com/pages/viewpage.action?pageId=131079&preview=%2F131079%2F131085%2Fstep05-04.png')
+        ]
 
         self.assertEqual(len(hcs), len(expected))
 
@@ -317,6 +334,7 @@ class TestConfluenceBackend(unittest.TestCase):
             self.assertEqual(hc['uuid'], expected[x][2])
             self.assertEqual(hc['origin'], CONFLUENCE_URL)
             self.assertEqual(hc['updated_on'], expected[x][3])
+            self.assertEqual(hc['data']['content_url'], expected[x][4])
             self.assertEqual(hc['category'], 'historical content')
             self.assertEqual(hc['tag'], CONFLUENCE_URL)
 
@@ -373,7 +391,7 @@ class TestConfluenceBackend(unittest.TestCase):
     def test_parse_contents_summary(self):
         """Test if it parses a contents summary stream"""
 
-        raw_contents = read_file('data/confluence_contents.json')
+        raw_contents = read_file('data/confluence/confluence_contents.json')
 
         contents = Confluence.parse_contents_summary(raw_contents)
         results = [content for content in contents]
@@ -383,7 +401,7 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(results[1]['id'], '2')
 
         # Parse a file without results
-        raw_contents = read_file('data/confluence_contents_empty.json')
+        raw_contents = read_file('data/confluence/confluence_contents_empty.json')
 
         contents = Confluence.parse_contents_summary(raw_contents)
         results = [content for content in contents]
@@ -393,7 +411,7 @@ class TestConfluenceBackend(unittest.TestCase):
     def test_parse_historical_content(self):
         """Test if it parses a historical content stream"""
 
-        raw_hc = read_file('data/confluence_content_1_v1.json')
+        raw_hc = read_file('data/confluence/confluence_content_1_v1.json')
         hc = Confluence.parse_historical_content(raw_hc)
 
         self.assertEqual(hc['id'], '1')
@@ -431,10 +449,16 @@ class TestConfluenceBackendCache(unittest.TestCase):
         cached_hcs = [hc for hc in confluence.fetch_from_cache()]
         self.assertEqual(len(cached_hcs), len(hcs))
 
-        expected = [('1', 1, '5b8bf26bfd906214ec82f5a682649e8f6fe87984', 1465589121.0),
-                    ('1', 2, '94b8015bcb52fca1155ecee14153c8634856f1bc', 1466107110.0),
-                    ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976', 1467402626.0),
-                    ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd', 1467831550.0)]
+        expected = [
+            ('1', 1, '5b8bf26bfd906214ec82f5a682649e8f6fe87984',
+             1465589121.0, 'http://example.com/display/meetings/TSC'),
+            ('1', 2, '94b8015bcb52fca1155ecee14153c8634856f1bc',
+             1466107110.0, 'http://example.com/display/meetings/TSC'),
+            ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976',
+             1467402626.0, 'http://example.com/display/fuel/Colorado+Release+Status'),
+            ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd',
+             1467831550.0, 'http://example.com/pages/viewpage.action?pageId=131079&preview=%2F131079%2F131085%2Fstep05-04.png')
+        ]
 
         self.assertEqual(len(cached_hcs), len(expected))
 
@@ -445,6 +469,7 @@ class TestConfluenceBackendCache(unittest.TestCase):
             self.assertEqual(hc['uuid'], expected[x][2])
             self.assertEqual(hc['origin'], CONFLUENCE_URL)
             self.assertEqual(hc['updated_on'], expected[x][3])
+            self.assertEqual(hc['data']['content_url'], expected[x][4])
             self.assertEqual(hc['category'], 'historical content')
             self.assertEqual(hc['tag'], CONFLUENCE_URL)
 
