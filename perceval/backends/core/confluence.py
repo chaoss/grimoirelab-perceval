@@ -54,7 +54,7 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, url, tag=None, cache=None):
         origin = url
@@ -91,16 +91,22 @@ class Confluence(Backend):
         nhcs = 0
 
         contents = self.__fetch_contents_summary(from_date)
-        cids = [content['id'] for content in contents]
+        contents = [content for content in contents]
+        self._push_cache_queue('{}')
 
-        for cid in cids:
+        for content in contents:
+            cid = content['id']
+            content_url = urljoin(self.origin, content['_links']['webui'])
+
             hcs = self.__fetch_historical_contents(cid, from_date)
 
             for hc in hcs:
+                hc['content_url'] = content_url
                 yield hc
                 nhcs += 1
 
-            self._flush_cache_queue()
+        self._push_cache_queue('END')
+        self._flush_cache_queue()
 
         logger.info("Fetch process completed: %s historical contents fetched",
                     nhcs)
@@ -123,17 +129,32 @@ class Confluence(Backend):
 
         nhcs = 0
 
-        for raw_json in cache_items:
-            hc = self.parse_historical_content(raw_json)
-            nhcs += 1
-            yield hc
+        checkpoint = False
+        contents = {}
 
+        for raw_json in cache_items:
+            if raw_json == '{}':
+                checkpoint = True
+                continue
+            elif raw_json == 'END':
+                checkpoint = False
+                contents = {}
+                continue
+            elif not checkpoint:
+                for cs in self.parse_contents_summary(raw_json):
+                    contents[cs['id']] = urljoin(self.origin, cs['_links']['webui'])
+            else:
+                hc = self.parse_historical_content(raw_json)
+                hc['content_url'] = contents[hc['id']]
+                nhcs += 1
+                yield hc
         logger.info("Retrieval process completed: %s historical contents retrieved from cache",
                     nhcs)
 
     def __fetch_contents_summary(self, from_date):
         logger.debug("Fetching contents summary from %s", str(from_date))
         for page in self.client.contents(from_date=from_date):
+            self._push_cache_queue(page)
             for cs in self.parse_contents_summary(page):
                 yield cs
 
