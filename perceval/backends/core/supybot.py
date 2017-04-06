@@ -61,7 +61,7 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.5.1'
 
     def __init__(self, uri, dirpath, tag=None, cache=None):
         origin = uri
@@ -228,8 +228,12 @@ class Supybot(Backend):
                   newline=os.linesep) as f:
             parser = SupybotParser(f)
 
-            for message in parser.parse():
-                yield message
+            try:
+                for message in parser.parse():
+                    yield message
+            except ParseError as e:
+                cause = "file: %s; reason: %s" % (filepath, str(e))
+                raise ParseError(cause=cause)
 
 
 class SupybotCommand(BackendCommand):
