@@ -671,7 +671,7 @@ class GitRepository:
         cmd = ['git', 'clone', uri, dirpath]
         cls._exec(cmd, env={'LANG': 'C'})
         logger.info("Git repository %s cloned into %s",
-                     uri, dirpath)
+                    uri, dirpath)
 
         return cls(uri, dirpath)
 
