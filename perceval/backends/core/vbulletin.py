@@ -26,7 +26,6 @@ import platform
 import uuid
 import urllib
 import hashlib
-import copy
 
 import requests
 
@@ -34,11 +33,9 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError
 from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
-                      str_to_datetime,
-                      urljoin)
+                      str_to_datetime)
 
 
 logger = logging.getLogger(__name__)
@@ -92,10 +89,11 @@ class vBulletin(Backend):
 
         while forum_ids_to_fetch:
             next_forum_id = forum_ids_to_fetch.pop()
-            if next_forum_id in forums_yielded: continue
+            if next_forum_id in forums_yielded:
+                continue
             details = self.client.forum(next_forum_id)
             threadlist, new_forum_ids = self._parse_forum_details(details, from_date)
-            forums_yielded.add(next_forum_id) # even if we don't actually do anything with it
+            forums_yielded.add(next_forum_id)
             if threadlist:
                 for t in threadlist:
                     yield t
@@ -103,7 +101,8 @@ class vBulletin(Backend):
     def _parse_forum_details(self, details, from_date):
         d = json.loads(details)
         response = d.get("response")
-        if not response: return (None, [])
+        if not response:
+            return (None, [])
         sub_forumbits = response.get("forumbits")
         if sub_forumbits:
             sub_forumids = self._get_forum_ids_from_forumbits(sub_forumbits)
@@ -124,7 +123,8 @@ class vBulletin(Backend):
                     qualifying_threads.append(t)
             if qualifying_threads:
                 threadlist = sorted(qualifying_threads, key=lambda x: x["timestamp"])
-                for t in threadlist: t["forum"] = foruminfo
+                for t in threadlist:
+                    t["forum"] = foruminfo
                 return (threadlist, sub_forumids)
 
         return (None, sub_forumids)
@@ -280,8 +280,7 @@ class vBulletinClient:
         sorted_params = sorted(params.items())
         signstr = urllib.parse.urlencode(sorted_params)
         tosign = "%s%s%s%s%s" % (signstr, self.apiaccesstoken,
-            self.apiclientid, self.secret, self.api_key)
-        #logger.debug("tosign: %s", tosign)
+                                 self.apiclientid, self.secret, self.api_key)
         signature = hashlib.md5(tosign.encode("utf-8")).hexdigest()
         return {
             "api_c": self.apiclientid,
@@ -309,13 +308,10 @@ class vBulletinClient:
         if not initing:
             all_params.update(self._get_request_signature(all_params))
 
-        #logger.debug("vBulletin client calls method: %s with params: %s",
-        #             method, str(params))
-
         r = requests.get(url, params=all_params)
         r.raise_for_status()
 
-        #logger.debug("vBulletin client returns %s", r.text)
+        logger.debug("vBulletin client returns %s", r.text)
         return r.text
 
 

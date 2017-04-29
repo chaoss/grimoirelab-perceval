@@ -23,9 +23,7 @@
 #
 
 import datetime
-import shutil
 import sys
-import tempfile
 import unittest
 
 import httpretty
@@ -37,8 +35,6 @@ sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.vbulletin import (vBulletin,
                                               vBulletinCommand,
@@ -80,9 +76,9 @@ class TestvBulletinClient(unittest.TestCase):
         client.secret = "secret"
         result = client._get_request_signature({"one": "two", "three": "four"})
         expected = {'api_c': 'clicli',
-            'api_s': 'access',
-            'api_sig': 'c17c27db7c4bd21b18802766685f4d6c',
-            'api_v': 1}
+                    'api_s': 'access',
+                    'api_sig': 'c17c27db7c4bd21b18802766685f4d6c',
+                    'api_v': 1}
 
         self.assertDictEqual(result, expected)
 
@@ -107,10 +103,8 @@ class TestvBulletinClient(unittest.TestCase):
             return (200, headers, body)
 
         httpretty.register_uri(httpretty.GET,
-            VBULLETIN_API_URL,
-            responses=[
-               httpretty.Response(body=request_callback, status=200)
-            ])
+                               VBULLETIN_API_URL,
+                               responses=[httpretty.Response(body=request_callback, status=200)])
         # Call API without args
         client = vBulletin(VBULLETIN_SERVER_URL, api_token='aaaa')
         from_date = datetime.datetime(2000, 5, 25, 2, 0, 0)
@@ -135,6 +129,7 @@ class TestvBulletinClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/api.php')
         self.assertDictEqual(req.querystring, expected)
+
 
 class TestvBulletinCommand(unittest.TestCase):
     """Tests for vBulletinCommand class"""
