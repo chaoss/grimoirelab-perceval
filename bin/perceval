@@ -65,6 +65,7 @@ are:
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server
+    vbulletin        Fetch posts from a vBulletin 3/4 forum
 
 optional arguments:
   -h, --help            show this help message and exit
