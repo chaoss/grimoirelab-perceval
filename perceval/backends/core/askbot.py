@@ -47,7 +47,7 @@ class Askbot(Backend):
     :param url: Askbot site URL
     :param tag: label used to mark the data
     """
-    version = '0.2.0'
+    version = '0.2.1'
 
     def __init__(self, url, tag=None):
         origin = url
@@ -240,7 +240,7 @@ class AskbotClient:
     HTML_QUESTION = 'question/'
     ORDER_API = 'activity-asc'
     ORDER_HTML = 'votes'
-    COMMENTS = 'post_comments'
+    COMMENTS = 's/post_comments'
 
     def __init__(self, base_url):
         self.base_url = base_url

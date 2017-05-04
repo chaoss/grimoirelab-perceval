@@ -49,7 +49,7 @@ ASKBOT_QUESTION_2481_URL = ASKBOT_URL + '/question/2481'
 ASKBOT_QUESTION_2488_URL = ASKBOT_URL + '/question/2488'
 ASKBOT_QUESTION_24396_URL = ASKBOT_URL + '/question/24396'
 ASKBOT_QUESTION_EMPTY_URL = ASKBOT_URL + '/question/0'
-ASKBOT_COMMENTS_API_URL = ASKBOT_URL + '/post_comments'
+ASKBOT_COMMENTS_API_URL = ASKBOT_URL + '/s/post_comments'
 
 
 def read_file(filename, mode='r'):
@@ -321,7 +321,7 @@ class TestAskbotClient(unittest.TestCase):
         req = httpretty.last_request()
 
         self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, '/post_comments')
+        self.assertRegex(req.path, 's/post_comments')
         self.assertDictEqual(req.querystring, expected)
 
 
