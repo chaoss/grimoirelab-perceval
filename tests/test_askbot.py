@@ -50,6 +50,7 @@ ASKBOT_QUESTION_2488_URL = ASKBOT_URL + '/question/2488'
 ASKBOT_QUESTION_24396_URL = ASKBOT_URL + '/question/24396'
 ASKBOT_QUESTION_EMPTY_URL = ASKBOT_URL + '/question/0'
 ASKBOT_COMMENTS_API_URL = ASKBOT_URL + '/s/post_comments'
+ASKBOT_COMMENTS_API_URL_OLD = ASKBOT_URL + '/post_comments'
 
 
 def read_file(filename, mode='r'):
@@ -298,7 +299,7 @@ class TestAskbotClient(unittest.TestCase):
 
     @httpretty.activate
     def test_get_comments(self):
-        """Test if API Questions call works"""
+        """Test if comments call works"""
 
         body = read_file('data/askbot/askbot_2481_multicomments.json')
 
@@ -323,6 +324,41 @@ class TestAskbotClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, 's/post_comments')
         self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_get_comments_old_url(self):
+        """Test if commits call works with the old URL schema"""
+
+        body = read_file('data/askbot/askbot_2481_multicomments.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL,
+                               body='', status=404)
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL_OLD,
+                               body=body, status=200)
+
+        client = AskbotClient(ASKBOT_URL)
+
+        result = client.get_comments(17)
+
+        self.assertEqual(result, body)
+
+        expected = {
+            'post_id': ['17'],
+            'post_type': ['answer'],
+            'avatar_size': ['0']
+        }
+
+        reqs = httpretty.httpretty.latest_requests
+
+        self.assertEqual(len(reqs), 2)
+        self.assertEqual(reqs[0].method, 'GET')
+        self.assertRegex(reqs[0].path, '/s/post_comments')
+        self.assertDictEqual(reqs[0].querystring, expected)
+        self.assertEqual(reqs[1].method, 'GET')
+        self.assertRegex(reqs[1].path, '/post_comments')
+        self.assertDictEqual(reqs[1].querystring, expected)
 
 
 class TestAskbotBackend(unittest.TestCase):

@@ -47,7 +47,7 @@ class Askbot(Backend):
     :param url: Askbot site URL
     :param tag: label used to mark the data
     """
-    version = '0.2.1'
+    version = '0.2.2'
 
     def __init__(self, url, tag=None):
         origin = url
@@ -241,9 +241,11 @@ class AskbotClient:
     ORDER_API = 'activity-asc'
     ORDER_HTML = 'votes'
     COMMENTS = 's/post_comments'
+    COMMENTS_OLD = 'post_comments'
 
     def __init__(self, base_url):
         self.base_url = base_url
+        self._use_new_urls = True
 
     def get_api_questions(self, page=1):
         """Retrieve a question page using the API.
@@ -277,14 +279,25 @@ class AskbotClient:
 
         :param object_id: object identifiere
         """
-        path = self.COMMENTS
+        path = self.COMMENTS if self._use_new_urls else self.COMMENTS_OLD
         params = {
             'post_id': post_id,
             'post_type': 'answer',
             'avatar_size': 0
         }
         headers = {'X-Requested-With': 'XMLHttpRequest'}
-        response = self.__call(path, params, headers)
+
+        try:
+            response = self.__call(path, params, headers)
+        except requests.exceptions.HTTPError as ex:
+            if ex.response.status_code == 404:
+                logger.debug("Comments URL did not work. Using old URL schema.")
+                self._use_new_urls = False
+                path = self.COMMENTS_OLD
+                response = self.__call(path, params, headers)
+            else:
+                raise ex
+
         return response
 
     def __call(self, path, params=None, headers=None):
