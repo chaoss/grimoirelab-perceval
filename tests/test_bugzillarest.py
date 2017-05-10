@@ -594,6 +594,31 @@ class TestBugzillaRESTClient(unittest.TestCase):
         self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
+    def test_user_agent_header(self):
+        """Test if the User-Agent header is included on every API call"""
+
+        # Set up a mock HTTP server
+        body = read_file('data/bugzilla_rest_bugs_history.json')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGS_HISTORY_1273442_URL,
+                               body=body, status=200)
+
+        # Call API
+        client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
+        response = client.history('1273442', '1273439')
+
+        self.assertEqual(response, body)
+
+        # Check request params
+        expected = {
+            'ids': ['1273442', '1273439']
+        }
+
+        req = httpretty.last_request()
+        user_agent = req.headers['User-Agent']
+        self.assertEqual(user_agent.startswith('Perceval/'), True)
+
+    @httpretty.activate
     def test_rest_error(self):
         """Test if an exception is raised when the server returns an error"""
 

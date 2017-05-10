@@ -35,6 +35,7 @@ from ...utils import (DEFAULT_DATETIME,
                       datetime_to_utc,
                       str_to_datetime,
                       urljoin)
+from ..._version import __version__
 
 
 logger = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ class BugzillaREST(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.1'
+    version = '0.5.2'
 
     def __init__(self, url, user=None, password=None, api_token=None,
                  max_bugs=MAX_BUGS, tag=None, cache=None):
@@ -315,6 +316,7 @@ class BugzillaRESTClient:
         client
     """
     URL = "%(base)s/rest/%(resource)s"
+    HEADERS = {'User-Agent': 'Perceval/' + __version__}
 
     # API resources
     RBUG = 'bug'
@@ -459,7 +461,8 @@ class BugzillaRESTClient:
         logger.debug("Bugzilla REST client requests: %s params: %s",
                      resource, str(params))
 
-        r = requests.get(url, params=params)
+        headers = self.HEADERS
+        r = requests.get(url, headers=headers, params=params)
         r.raise_for_status()
 
         # Check for possible Bugzilla API errors

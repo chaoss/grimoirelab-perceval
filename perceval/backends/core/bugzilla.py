@@ -36,6 +36,7 @@ from ...backend import (Backend,
                         metadata)
 from ...errors import BackendError, CacheError, ParseError
 from ...utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
+from ..._version import __version__
 
 
 MAX_BUGS = 200  # Maximum number of bugs per query
@@ -59,7 +60,7 @@ class Bugzilla(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.6.0'
+    version = '0.6.1'
 
     def __init__(self, url, user=None, password=None,
                  max_bugs=MAX_BUGS, max_bugs_csv=MAX_BUGS_CSV,
@@ -416,7 +417,7 @@ class BugzillaClient:
         client
     """
     URL = "%(base)s/%(cgi)s"
-    HEADERS = {'User-Agent': 'perceval-bg-0.1'}
+    HEADERS = {'User-Agent': 'Perceval/' + __version__}
 
     # Regular expression to check the Bugzilla version
     VERSION_REGEX = re.compile(r'.+bugzilla version="([^"]+)"',
