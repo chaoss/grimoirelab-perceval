@@ -27,15 +27,15 @@ import logging
 import dateutil
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import BackendError, CacheError
-from ...utils import (DEFAULT_DATETIME,
-                      str_to_datetime,
-                      datetime_to_utc,
-                      urljoin)
+from ...utils import DEFAULT_DATETIME
 
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ class MediaWiki(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.5.1'
 
     def __init__(self, url, tag=None, cache=None):
         origin = url
@@ -390,7 +390,7 @@ class MediaWikiClient:
 
     def __init__(self, url):
         self.url = url
-        self.api_url = urljoin(self.url, "api.php")
+        self.api_url = urijoin(self.url, "api.php")
         self.limit = "max"  # Always get the max number of items
 
     def call(self, params):

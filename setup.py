@@ -79,7 +79,8 @@ setup(name="perceval",
           'python-dateutil>=2.6.0',
           'requests>=2.7.0',
           'beautifulsoup4>=4.3.2',
-          'feedparser>=5.1.3'
+          'feedparser>=5.1.3',
+          'grimoirelab-toolkit>=0.1.0'
       ],
       scripts=[
           'bin/perceval'

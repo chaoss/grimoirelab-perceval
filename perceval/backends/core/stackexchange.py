@@ -27,14 +27,16 @@ import time
 
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      urljoin)
+from ...utils import DEFAULT_DATETIME
+
 
 MAX_QUESTIONS = 100  # Maximum number of reviews per query
 
@@ -54,7 +56,7 @@ class StackExchange(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.6.0'
+    version = '0.6.1'
 
     def __init__(self, site, tagged=None, api_token=None,
                  max_questions=None, tag=None, cache=None):
@@ -208,7 +210,7 @@ class StackExchangeClient:
 
     def __build_base_url(self, type='questions'):
         base_api_url = self.STACKEXCHANGE_API_URL
-        base_api_url = urljoin(base_api_url, self.VERSION_API, type)
+        base_api_url = urijoin(base_api_url, self.VERSION_API, type)
         return base_api_url
 
     def __build_payload(self, page, from_date, order='desc', sort='activity'):

@@ -25,12 +25,13 @@ import logging
 
 import requests
 
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError
-from ...utils import urljoin
 
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ class Jenkins(Backend):
     :param cache: cache object to store raw data
     :param blacklist_jobs: exclude the jobs of this list while fetching
     """
-    version = '0.5.2'
+    version = '0.5.3'
 
     def __init__(self, url, tag=None, cache=None, blacklist_jobs=None):
         origin = url
@@ -196,7 +197,7 @@ class JenkinsClient:
     def get_jobs(self):
         """ Retrieve all jobs
         """
-        url_jenkins = urljoin(self.url, "/api/json")
+        url_jenkins = urijoin(self.url, "/api/json")
 
         req = requests.get(url_jenkins)
         req.raise_for_status()

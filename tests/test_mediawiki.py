@@ -33,6 +33,8 @@ import dateutil
 import httpretty
 import pkg_resources
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
 sys.path.insert(0, '..')
@@ -41,9 +43,7 @@ pkg_resources.declare_namespace('perceval.backends')
 from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.utils import (DEFAULT_DATETIME,
-                            datetime_to_utc,
-                            str_to_datetime)
+from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.mediawiki import (MediaWiki,
                                               MediaWikiCommand,
                                               MediaWikiClient)

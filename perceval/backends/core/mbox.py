@@ -31,16 +31,17 @@ import tempfile
 import gzip
 import bz2
 
+from grimoirelab.toolkit.datetime import (InvalidDateError,
+                                          datetime_to_utc,
+                                          str_to_datetime)
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import InvalidDateError
 from ...utils import (DEFAULT_DATETIME,
                       check_compressed_file_type,
-                      datetime_to_utc,
-                      message_to_dict,
-                      str_to_datetime)
+                      message_to_dict)
 
 
 logger = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ class MBox(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.7.3'
+    version = '0.7.4'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'

@@ -25,15 +25,15 @@ import logging
 
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, datetime_utcnow
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import BaseError, CacheError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      datetime_utcnow,
-                      urljoin)
+from ...utils import DEFAULT_DATETIME
 
 
 logger = logging.getLogger(__name__)
@@ -58,11 +58,11 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.2.0'
+    version = '0.2.1'
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None):
-        origin = urljoin(SLACK_URL, channel)
+        origin = urijoin(SLACK_URL, channel)
 
         super().__init__(origin, tag=tag, cache=cache)
         self.channel = channel
@@ -334,7 +334,7 @@ class SlackClient:
     :param api_key: key needed to use the API
     :param max_items: maximum number of items per request
     """
-    URL = urljoin(SLACK_URL, 'api', '%(resource)s')
+    URL = urijoin(SLACK_URL, 'api', '%(resource)s')
 
     RCHANNEL_INFO = 'channels.info'
     RCHANNEL_HISTORY = 'channels.history'

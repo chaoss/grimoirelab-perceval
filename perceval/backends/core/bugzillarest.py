@@ -26,15 +26,15 @@ import logging
 
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import BaseError, BackendError, CacheError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      str_to_datetime,
-                      urljoin)
+from ...utils import DEFAULT_DATETIME
 from ..._version import __version__
 
 
@@ -61,7 +61,7 @@ class BugzillaREST(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.2'
+    version = '0.5.3'
 
     def __init__(self, url, user=None, password=None, api_token=None,
                  max_bugs=MAX_BUGS, tag=None, cache=None):
@@ -402,7 +402,7 @@ class BugzillaRESTClient:
         :param bug_ids: list of bug identifiers
         """
         # Hack. The first value must be a valid bug id
-        resource = urljoin(self.RBUG, bug_ids[0], self.RCOMMENT)
+        resource = urijoin(self.RBUG, bug_ids[0], self.RCOMMENT)
 
         params = {
             self.PIDS: bug_ids
@@ -417,7 +417,7 @@ class BugzillaRESTClient:
 
         :param bug_ids: list of bug identifiers
         """
-        resource = urljoin(self.RBUG, bug_ids[0], self.RHISTORY)
+        resource = urijoin(self.RBUG, bug_ids[0], self.RHISTORY)
 
         params = {
             self.PIDS: bug_ids
@@ -432,7 +432,7 @@ class BugzillaRESTClient:
 
         :param bug_id: list of bug identifiers
         """
-        resource = urljoin(self.RBUG, bug_ids[0], self.RATTACHMENT)
+        resource = urijoin(self.RBUG, bug_ids[0], self.RATTACHMENT)
 
         params = {
             self.PIDS: bug_ids,

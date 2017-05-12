@@ -25,12 +25,13 @@ import logging
 import feedparser
 import requests
 
+from grimoirelab.toolkit.datetime import str_to_datetime
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError
-from ...utils import str_to_datetime
 from ..._version import __version__
 
 
@@ -48,7 +49,7 @@ class RSS(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.1'
+    version = '0.1.2'
 
     def __init__(self, url, tag=None, cache=None):
         origin = url

@@ -28,15 +28,15 @@ import time
 
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError, RateLimitError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      str_to_datetime,
-                      urljoin)
+from ...utils import DEFAULT_DATETIME
 
 
 GITHUB_URL = "https://github.com/"
@@ -68,14 +68,14 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.6.2'
+    version = '0.6.3'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
                  tag=None, cache=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
         origin = base_url if base_url else GITHUB_URL
-        origin = urljoin(origin, owner, repository)
+        origin = urijoin(origin, owner, repository)
 
         super().__init__(origin, tag=tag, cache=cache)
         self.owner = owner

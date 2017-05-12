@@ -26,14 +26,15 @@ import time
 
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError, RateLimitError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      urljoin)
+from ...utils import DEFAULT_DATETIME
 
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ class Meetup(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.5.0'
+    version = '0.5.1'
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None,
@@ -377,7 +378,7 @@ class MeetupClient:
         date = datetime_to_utc(from_date)
         date = date.strftime("since:%Y-%m-%dT%H:%M:%S.000Z")
 
-        resource = urljoin(group, self.REVENTS)
+        resource = urijoin(group, self.REVENTS)
 
         # Hack required due to Metup API does not support list
         # values with the format `?param=value1&param=value2`.
@@ -401,7 +402,7 @@ class MeetupClient:
     def comments(self, group, event_id):
         """Fetch the comments of a given event."""
 
-        resource = urljoin(group, self.REVENTS, event_id, self.RCOMMENTS)
+        resource = urijoin(group, self.REVENTS, event_id, self.RCOMMENTS)
 
         params = {
             self.PPAGE: self.max_items
@@ -413,7 +414,7 @@ class MeetupClient:
     def rsvps(self, group, event_id):
         """Fetch the rsvps of a given event."""
 
-        resource = urljoin(group, self.REVENTS, event_id, self.RRSVPS)
+        resource = urijoin(group, self.REVENTS, event_id, self.RRSVPS)
 
         # Same hack that in 'events' method
         fixed_params = '?' + self.PFIELDS + '=' + ','.join(self.VRSVP_FIELDS)
@@ -439,7 +440,7 @@ class MeetupClient:
 
         :returns: a generator of pages for the requeste resource
         """
-        url = urljoin(MEETUP_API_URL, resource)
+        url = urijoin(MEETUP_API_URL, resource)
 
         params[self.PKEY] = self.api_key
         params[self.PSIGN] = 'true',

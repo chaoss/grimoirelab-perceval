@@ -30,10 +30,11 @@ import posixpath
 
 import requests
 
+from grimoirelab.toolkit.uris import urijoin
+
 from .mbox import MailingList, MBox
 from ...backend import BackendCommand, BackendCommandArgumentParser, metadata
 from ...errors import RepositoryError
-from ...utils import urljoin
 
 
 logger = logging.getLogger(__name__)
@@ -80,7 +81,7 @@ class Gmane(MBox):
     :raises  RepositoryError: when the given mailing list repository
         is not stored by Gmane
     """
-    version = '0.4.0'
+    version = '0.4.1'
 
     def __init__(self, mailing_list_address, dirpath,
                  tag=None, cache=None):
@@ -342,7 +343,7 @@ class GmaneClient:
         :param max_messages: maximum number of messages to fetch
         """
         end_offset = offset + max_messages
-        resource = urljoin(mailing_list, offset, end_offset)
+        resource = urijoin(mailing_list, offset, end_offset)
 
         r = self.fetch(self.GMANE_DOWNLOAD_RTYPE, resource)
 

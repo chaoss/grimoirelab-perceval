@@ -27,14 +27,14 @@ import re
 
 import dateutil
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import ParseError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      str_to_datetime)
+from ...utils import DEFAULT_DATETIME
 
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.1'
+    version = '0.5.2'
 
     def __init__(self, uri, dirpath, tag=None, cache=None):
         origin = uri

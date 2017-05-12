@@ -27,12 +27,14 @@ import nntplib
 
 import email.parser
 
+from grimoirelab.toolkit.datetime import str_to_datetime
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError, ParseError
-from ...utils import str_to_datetime, message_to_dict
+from ...utils import message_to_dict
 
 
 # Hack to avoid "line too long" errors
@@ -69,7 +71,7 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.2.4'
+    version = '0.2.5'
 
     def __init__(self, host, group, tag=None, cache=None):
         origin = host + '-' + group

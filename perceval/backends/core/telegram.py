@@ -26,12 +26,13 @@ import logging
 
 import requests
 
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError
-from ...utils import urljoin
 
 
 logger = logging.getLogger(__name__)
@@ -80,10 +81,10 @@ class Telegram(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.5.1'
 
     def __init__(self, bot, bot_token, tag=None, cache=None):
-        origin = urljoin(TELEGRAM_URL, bot)
+        origin = urijoin(TELEGRAM_URL, bot)
 
         super().__init__(origin, tag=tag, cache=cache)
         self.bot = bot

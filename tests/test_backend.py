@@ -34,6 +34,8 @@ import unittest.mock
 
 import dateutil.tz
 
+from grimoirelab.toolkit.datetime import InvalidDateError
+
 if '..' not in sys.path:
     sys.path.insert(0, '..')
 
@@ -44,7 +46,6 @@ from perceval.backend import (Backend,
                               metadata,
                               uuid)
 from perceval.cache import Cache
-from perceval.errors import InvalidDateError
 from perceval.utils import DEFAULT_DATETIME
 
 

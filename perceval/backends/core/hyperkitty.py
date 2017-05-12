@@ -29,15 +29,15 @@ import dateutil.relativedelta
 import dateutil.tz
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, datetime_utcnow
+from grimoirelab.toolkit.uris import urijoin
+
 from .mbox import MBox, MailingList
 from ...backend import (BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      datetime_utcnow,
-                      months_range,
-                      urljoin)
+                      months_range)
 
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ class HyperKitty(MBox):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     def __init__(self, url, dirpath, tag=None, cache=None):
         super().__init__(url, dirpath, tag=tag, cache=cache)
@@ -171,7 +171,7 @@ class HyperKittyList(MailingList):
             filename = start.strftime("%Y-%m.mbox.gz")
             filepath = os.path.join(self.dirpath, filename)
 
-            url = urljoin(self.url, 'export', filename)
+            url = urijoin(self.url, 'export', filename)
 
             params = {
                 'start': start.strftime("%Y-%m-%d"),

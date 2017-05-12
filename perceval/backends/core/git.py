@@ -26,14 +26,14 @@ import re
 import subprocess
 import threading
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import RepositoryError, ParseError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      str_to_datetime)
+from ...utils import DEFAULT_DATETIME
 
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.7.3'
+    version = '0.7.4'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri

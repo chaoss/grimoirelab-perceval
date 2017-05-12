@@ -30,11 +30,12 @@ import sys
 
 from datetime import datetime as dt
 
+from grimoirelab.toolkit.introspect import find_signature_parameters
+from grimoirelab.toolkit.datetime import str_to_datetime
+
 from ._version import __version__
 from .cache import Cache, setup_cache
-from .utils import (DEFAULT_DATETIME,
-                    build_signature_parameters,
-                    str_to_datetime)
+from .utils import DEFAULT_DATETIME
 
 
 class Backend:
@@ -277,7 +278,7 @@ class BackendCommand:
         self._pre_init()
 
         parsed_args = vars(self.parsed_args)
-        kw = build_signature_parameters(parsed_args, self.BACKEND.__init__)
+        kw = find_signature_parameters(self.BACKEND.__init__, parsed_args)
         self.backend = self.BACKEND(**kw)
         self.backend.cache = self._initialize_cache()
 
@@ -302,7 +303,7 @@ class BackendCommand:
             fetch = self.backend.fetch
 
         parsed_args = vars(self.parsed_args)
-        kw = build_signature_parameters(parsed_args, fetch)
+        kw = find_signature_parameters(fetch, parsed_args)
         items = fetch(**kw)
 
         try:

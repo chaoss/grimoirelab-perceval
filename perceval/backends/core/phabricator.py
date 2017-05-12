@@ -26,13 +26,14 @@ import time
 
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import BaseError, CacheError
-from ...utils import DEFAULT_DATETIME, datetime_to_utc
-
+from ...utils import DEFAULT_DATETIME
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.2'
+    version = '0.5.3'
 
     def __init__(self, url, api_token, tag=None, cache=None):
         origin = url

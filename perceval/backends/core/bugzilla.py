@@ -30,12 +30,14 @@ import bs4
 import dateutil.tz
 import requests
 
+from grimoirelab.toolkit.datetime import str_to_datetime
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import BackendError, CacheError, ParseError
-from ...utils import DEFAULT_DATETIME, str_to_datetime, xml_to_dict
+from ...utils import DEFAULT_DATETIME, xml_to_dict
 from ..._version import __version__
 
 
@@ -60,7 +62,7 @@ class Bugzilla(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.6.1'
+    version = '0.6.2'
 
     def __init__(self, url, user=None, password=None,
                  max_bugs=MAX_BUGS, max_bugs_csv=MAX_BUGS_CSV,

@@ -25,15 +25,15 @@ import json
 
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      str_to_datetime,
-                      urljoin)
+from ...utils import DEFAULT_DATETIME
 
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.0'
+    version = '0.5.1'
 
     def __init__(self, url, tag=None, cache=None):
         origin = url
@@ -96,7 +96,7 @@ class Confluence(Backend):
 
         for content in contents:
             cid = content['id']
-            content_url = urljoin(self.origin, content['_links']['webui'])
+            content_url = urijoin(self.origin, content['_links']['webui'])
 
             hcs = self.__fetch_historical_contents(cid, from_date)
 
@@ -142,7 +142,7 @@ class Confluence(Backend):
                 continue
             elif not checkpoint:
                 for cs in self.parse_contents_summary(raw_json):
-                    contents[cs['id']] = urljoin(self.origin, cs['_links']['webui'])
+                    contents[cs['id']] = urijoin(self.origin, cs['_links']['webui'])
             else:
                 hc = self.parse_historical_content(raw_json)
                 hc['content_url'] = contents[hc['id']]
@@ -413,5 +413,5 @@ class ConfluenceClient:
             if 'next' not in j['_links']:
                 break
 
-            url = urljoin(self.base_url, j['_links']['next'])
+            url = urijoin(self.base_url, j['_links']['next'])
             params = {}

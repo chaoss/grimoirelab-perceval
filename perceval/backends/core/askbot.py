@@ -28,11 +28,15 @@ import re
 import bs4
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...utils import urljoin, DEFAULT_DATETIME, str_to_datetime, datetime_to_utc
+from ...utils import DEFAULT_DATETIME
+
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +51,7 @@ class Askbot(Backend):
     :param url: Askbot site URL
     :param tag: label used to mark the data
     """
-    version = '0.2.2'
+    version = '0.2.3'
 
     def __init__(self, url, tag=None):
         origin = url
@@ -266,7 +270,7 @@ class AskbotClient:
         :param question_id: question identifier
         :param page: page to retrieve
         """
-        path = urljoin(self.HTML_QUESTION, question_id)
+        path = urijoin(self.HTML_QUESTION, question_id)
         params = {
             'page': page,
             'sort': self.ORDER_HTML
@@ -309,7 +313,7 @@ class AskbotClient:
         :param headers: headers to use in the request
         """
 
-        url = urljoin(self.base_url, path)
+        url = urijoin(self.base_url, path)
 
         req = requests.get(url, params=params, headers=headers)
         req.raise_for_status()

@@ -25,15 +25,15 @@ import logging
 
 import requests
 
+from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab.toolkit.uris import urijoin
+
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
 from ...errors import CacheError
-from ...utils import (DEFAULT_DATETIME,
-                      datetime_to_utc,
-                      str_to_datetime,
-                      urljoin)
+from ...utils import DEFAULT_DATETIME
 
 
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ class Redmine(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.1'
+    version = '0.5.2'
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
                  tag=None, cache=None):
@@ -450,7 +450,7 @@ class RedmineClient:
 
         :param issue_id: issue identifier
         """
-        resource = urljoin(self.RISSUES, str(issue_id) + self.CJSON)
+        resource = urijoin(self.RISSUES, str(issue_id) + self.CJSON)
 
         params = {
             self.PINCLUDE: ','.join([self.CATTACHMENTS, self.CCHANGESETS,
@@ -467,7 +467,7 @@ class RedmineClient:
 
         :param user_id: user identifier
         """
-        resource = urljoin(self.RUSERS, str(user_id) + self.CJSON)
+        resource = urijoin(self.RUSERS, str(user_id) + self.CJSON)
 
         params = {}
 
