@@ -23,7 +23,6 @@
 
 import datetime
 import email
-import inspect
 import logging
 import mailbox
 import re
@@ -37,7 +36,7 @@ import dateutil.tz
 
 import requests
 
-from .errors import InvalidDateError, ParseError
+from .errors import ParseError
 
 
 logger = logging.getLogger(__name__)
@@ -99,126 +98,6 @@ def months_range(from_date, to_date):
     for x in range(1, len(months)):
         yield months[pos], months[x]
         pos = x
-
-
-def datetime_utcnow():
-    """Handy function which returns the current date and time in UTC."""
-
-    return datetime.datetime.utcnow()
-
-
-def datetime_to_utc(ts):
-    """Convert a timestamp to UTC+0 timezone.
-
-    Returns the given datetime object converted to a date with
-    UTC+0 timezone. For naive datetimes, it will be assumed that
-    they are in UTC+0.
-
-    :param dt: timestamp to convert
-
-    :returns: a datetime object
-
-    :raises InvalidDateError: when the given parameter is not an
-        instance of datetime
-    """
-    if not isinstance(ts, datetime.datetime):
-        msg = '<%s> object' % type(ts)
-        raise InvalidDateError(date=msg)
-
-    if not ts.tzinfo:
-        ts = ts.replace(tzinfo=dateutil.tz.tzutc())
-
-    return ts.astimezone(dateutil.tz.tzutc())
-
-
-def str_to_datetime(ts):
-    """Format a string to a datetime object.
-
-    This functions supports several date formats like YYYY-MM-DD,
-    MM-DD-YYYY, YY-MM-DD, YYYY-MM-DD HH:mm:SS +HH:MM, among others.
-    When the timezone is not provided, UTC+0 will be set as default
-    (using `dateutil.tz.tzutc` object).
-
-    :param ts: string to convert
-
-    :returns: a datetime object
-
-    :raises IvalidDateError: when the given string cannot be converted into
-        a valid date
-    """
-    def parse_datetime(ts):
-        dt = dateutil.parser.parse(ts)
-        if not dt.tzinfo:
-            dt = dt.replace(tzinfo=dateutil.tz.tzutc())
-        return dt
-
-    if not ts:
-        raise InvalidDateError(date=str(ts))
-
-    try:
-        # Try to remove additional information after
-        # timezone section because it cannot be parsed,
-        # like in 'Wed, 26 Oct 2005 15:20:32 -0100 (GMT+1)'
-        # or in 'Thu, 14 Aug 2008 02:07:59 +0200 CEST'.
-        m = re.search(r"^.+?\s+[\+\-]\d{4}(\s+.+)$", ts)
-        if m:
-            ts = ts[:m.start(1)]
-
-        try:
-            dt = parse_datetime(ts)
-        except ValueError as e:
-            # Try to remove the timezone, usually it causes
-            # problems. If it doesn't work, raise an exception
-            m = re.search(r"^(.+?)\s+[\+\-]\d+$", ts)
-
-            if not m:
-                raise e
-
-            dt = parse_datetime(m.group(1))
-
-            logger.warning("Date %s str does not have a valid timezone", ts)
-            logger.warning("Date converted removing timezone info")
-
-        return dt
-    except ValueError as e:
-        raise InvalidDateError(date=str(ts))
-
-
-def unixtime_to_datetime(ut):
-    """Convert a unixtime timestamp to a datetime object.
-
-    The function converts a timestamp in Unix format to a
-    datetime object. UTC timezone will also be set.
-
-    :param ut: Unix timestamp to convert
-
-    :returns: a datetime object
-
-    :raises InvalidDateError: when the given timestamp cannot be
-        converted into a valid date
-    """
-    try:
-        dt = datetime.datetime.utcfromtimestamp(ut)
-        dt = dt.replace(tzinfo=dateutil.tz.tzutc())
-        return dt
-    except Exception:
-        raise InvalidDateError(date=str(ut))
-
-
-def urljoin(*args):
-    """Joins given arguments into a URL.
-
-    Trailing and leading slashes are stripped for each argument.
-
-    This code is based on a Rune Kaagaard's answer on StackOverflow.
-    See http://stackoverflow.com/questions/1793261 for more into. The
-    code was licensed as cc by-sa 3.0.
-
-    :params *args: list of arguments to join
-
-    :returns: a URL string
-    """
-    return '/'.join(map(lambda x: str(x).strip('/'), args))
 
 
 def message_to_dict(msg):
@@ -387,48 +266,3 @@ def xml_to_dict(raw_xml):
     d = node_to_dict(tree)
 
     return d
-
-
-def build_signature_parameters(candidates, callable_):
-    """Build from a set of candidates the parameters needed to exec a callable.
-
-    Returns a dict with the `candidates` found on `callable_`. When
-    any of the required parameters of a callable is not found, it
-    raises a `AttributeError` exception.
-
-    :param candidates: dict with the names of the possible parameters
-        and their values
-    :param callable_: callable object
-
-    :result: dict with the parameters needed to call `callable_`
-    """
-    to_match = inspect_signature_parameters(callable_)
-
-    result = {}
-
-    for p in to_match:
-        name = p.name
-        if name in candidates:
-            result[name] = candidates[name]
-        elif p.default == inspect.Parameter.empty:
-            # Parameters which its default value is empty are
-            # considered as required
-            raise AttributeError("required argument %s not found" % name,
-                                 name)
-    return result
-
-
-def inspect_signature_parameters(callable_):
-    """Get the parameters of a callable.
-
-    Returns a list with the signature parameters of `callable_`.
-    Parameters 'self' and 'cls' are filtered from the result.
-
-    :param callable_: callable object
-
-    :result: list of parameters
-    """
-    signature = inspect.signature(callable_)
-    params = [v for p, v in signature.parameters.items()
-              if p not in ('self', 'cls')]
-    return params

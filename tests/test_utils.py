@@ -32,22 +32,14 @@ import unittest
 import bz2
 import gzip
 
-import dateutil.tz
-
 if '..' not in sys.path:
     sys.path.insert(0, '..')
 
-from perceval.errors import InvalidDateError, ParseError
-from perceval.utils import (build_signature_parameters,
-                            check_compressed_file_type,
-                            datetime_to_utc,
-                            inspect_signature_parameters,
+from perceval.errors import ParseError
+from perceval.utils import (check_compressed_file_type,
                             message_to_dict,
                             months_range,
                             remove_invalid_xml_chars,
-                            str_to_datetime,
-                            unixtime_to_datetime,
-                            urljoin,
                             xml_to_dict)
 
 
@@ -142,182 +134,6 @@ class TestMonthsRange(unittest.TestCase):
 
         result = [r for r in months_range(from_date, to_date)]
         self.assertListEqual(result, [])
-
-
-class TestDatetimeToUTC(unittest.TestCase):
-    """Unit tests for datetime_to_utc function"""
-
-    def test_conversion(self):
-        """Check if it converts some timestamps to timestamps with UTC+0"""
-
-        date = datetime.datetime(2001, 12, 1, 23, 15, 32,
-                                 tzinfo=dateutil.tz.tzoffset(None, -21600))
-        expected = datetime.datetime(2001, 12, 2, 5, 15, 32,
-                                     tzinfo=dateutil.tz.tzutc())
-        utc = datetime_to_utc(date)
-        self.assertIsInstance(utc, datetime.datetime)
-        self.assertEqual(utc, expected)
-
-        date = datetime.datetime(2001, 12, 1, 23, 15, 32,
-                                 tzinfo=dateutil.tz.tzutc())
-        expected = datetime.datetime(2001, 12, 1, 23, 15, 32,
-                                     tzinfo=dateutil.tz.tzutc())
-        utc = datetime_to_utc(date)
-        self.assertIsInstance(utc, datetime.datetime)
-        self.assertEqual(utc, expected)
-
-        date = datetime.datetime(2001, 12, 1, 23, 15, 32)
-        expected = datetime.datetime(2001, 12, 1, 23, 15, 32,
-                                     tzinfo=dateutil.tz.tzutc())
-        utc = datetime_to_utc(date)
-        self.assertIsInstance(utc, datetime.datetime)
-        self.assertEqual(utc, expected)
-
-    def test_invalid_datetime(self):
-        """Check if it raises an exception on invalid instances"""
-
-        self.assertRaises(InvalidDateError, datetime_to_utc, "2016-01-01 01:00:00 +0800")
-        self.assertRaises(InvalidDateError, datetime_to_utc, None)
-        self.assertRaises(InvalidDateError, datetime_to_utc, 1)
-
-
-class TestStrToDatetime(unittest.TestCase):
-    """Unit tests for str_to_datetime function"""
-
-    def test_dates(self):
-        """Check if it converts some dates to datetime objects"""
-
-        date = str_to_datetime('2001-12-01')
-        expected = datetime.datetime(2001, 12, 1, tzinfo=dateutil.tz.tzutc())
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        date = str_to_datetime('13-01-2001')
-        expected = datetime.datetime(2001, 1, 13, tzinfo=dateutil.tz.tzutc())
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        date = str_to_datetime('12-01-01')
-        expected = datetime.datetime(2001, 12, 1, tzinfo=dateutil.tz.tzutc())
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        date = str_to_datetime('2001-12-01 23:15:32')
-        expected = datetime.datetime(2001, 12, 1, 23, 15, 32,
-                                     tzinfo=dateutil.tz.tzutc())
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        date = str_to_datetime('2001-12-01 23:15:32 -0600')
-        expected = datetime.datetime(2001, 12, 1, 23, 15, 32,
-                                     tzinfo=dateutil.tz.tzoffset(None, -21600))
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        date = str_to_datetime('2001-12-01 23:15:32Z')
-        expected = datetime.datetime(2001, 12, 1, 23, 15, 32,
-                                     tzinfo=dateutil.tz.tzutc())
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        date = str_to_datetime('Wed, 26 Oct 2005 15:20:32 -0100 (GMT+1)')
-        expected = datetime.datetime(2005, 10, 26, 15, 20, 32,
-                                     tzinfo=dateutil.tz.tzoffset(None, -3600))
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        date = str_to_datetime('Wed, 22 Jul 2009 11:15:50 +0300 (FLE Daylight Time)')
-        expected = datetime.datetime(2009, 7, 22, 11, 15, 50,
-                                     tzinfo=dateutil.tz.tzoffset(None, 10800))
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        date = str_to_datetime('Thu, 14 Aug 2008 02:07:59 +0200 CEST')
-        expected = datetime.datetime(2008, 8, 14, 2, 7, 59,
-                                     tzinfo=dateutil.tz.tzoffset(None, 7200))
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        date = str_to_datetime('Thu, 14 Aug 2008 02:07:59 +0200 +0100')
-        expected = datetime.datetime(2008, 8, 14, 2, 7, 59,
-                                     tzinfo=dateutil.tz.tzoffset(None, 7200))
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        # This date is invalid because the timezone section.
-        # Timezone will be removed, setting UTC as default
-        date = str_to_datetime('2001-12-01 02:00 +08888')
-        expected = datetime.datetime(2001, 12, 1, 2, 0, 0,
-                                     tzinfo=dateutil.tz.tzutc())
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-    def test_invalid_date(self):
-        """Check whether it fails with an invalid date"""
-
-        self.assertRaises(InvalidDateError, str_to_datetime, '2001-13-01')
-        self.assertRaises(InvalidDateError, str_to_datetime, '2001-04-31')
-
-    def test_invalid_format(self):
-        """Check whether it fails with invalid formats"""
-
-        self.assertRaises(InvalidDateError, str_to_datetime, '2001-12-01mm')
-        self.assertRaises(InvalidDateError, str_to_datetime, 'nodate')
-        self.assertRaises(InvalidDateError, str_to_datetime, None)
-        self.assertRaises(InvalidDateError, str_to_datetime, '')
-
-
-class TestUnixTimeToDatetime(unittest.TestCase):
-    """Unit tests for str_to_datetime function"""
-
-    def test_dates(self):
-        """Check if it converts some timestamps to datetime objects"""
-
-        date = unixtime_to_datetime(0)
-        expected = datetime.datetime(1970, 1, 1, 0, 0, 0,
-                                     tzinfo=dateutil.tz.tzutc())
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-        date = unixtime_to_datetime(1426868155.0)
-        expected = datetime.datetime(2015, 3, 20, 16, 15, 55,
-                                     tzinfo=dateutil.tz.tzutc())
-        self.assertIsInstance(date, datetime.datetime)
-        self.assertEqual(date, expected)
-
-    def test_invalid_format(self):
-        """Check whether it fails with invalid formats"""
-
-        self.assertRaises(InvalidDateError, str_to_datetime, '2001-12-01mm')
-        self.assertRaises(InvalidDateError, str_to_datetime, 'nodate')
-        self.assertRaises(InvalidDateError, str_to_datetime, None)
-        self.assertRaises(InvalidDateError, str_to_datetime, '')
-
-
-class TestURLJoin(unittest.TestCase):
-    """Unit tests for urljoin"""
-
-    def test_join(self):
-        """Test basic joins"""
-
-        base_url = 'http://example.com/'
-        base_url_alt = 'http://example.com'
-        path0 = 'owner'
-        path1 = 'repository'
-        path2 = '/owner/repository'
-        path3 = 'issues/8'
-
-        url = urljoin(base_url, path0, path1)
-        self.assertEqual(url, 'http://example.com/owner/repository')
-
-        url = urljoin(base_url, path2)
-        self.assertEqual(url, 'http://example.com/owner/repository')
-
-        url = urljoin(base_url, path0, path1, path3)
-        self.assertEqual(url, 'http://example.com/owner/repository/issues/8')
-
-        url = urljoin(base_url_alt, path0, path1)
-        self.assertEqual(url, 'http://example.com/owner/repository')
 
 
 class TestMessagetoDict(unittest.TestCase):
@@ -452,72 +268,6 @@ class TestXMLtoDict(unittest.TestCase):
         raw_xml = read_file('data/xml_invalid.xml')
 
         self.assertRaises(ParseError, xml_to_dict, raw_xml)
-
-
-class MockCallable:
-    """Mock class for testing introspection"""
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def test(self, a, b, c=None):
-        pass
-
-    @classmethod
-    def class_test(cls, a, b):
-        pass
-
-
-class TestBuildSignatureParameters(unittest.TestCase):
-    """Unit tests for build_signature_parameters"""
-
-    def test_build_parameters(self):
-        """Test if a list of parameters is build"""
-
-        expected = {'a': 1, 'b': 2, 'c': 3}
-        params = {'a': 1, 'b': 2, 'c': 3}
-        found = build_signature_parameters(params, MockCallable.test)
-        self.assertDictEqual(found, expected)
-
-        expected = {'a': 1, 'b': 2}
-        params = {'a': 1, 'b': 2, 'd': 3}
-        found = build_signature_parameters(params, MockCallable.test)
-        self.assertDictEqual(found, expected)
-
-    def test_attribute_error(self):
-        """Test if it raises an exception for not found arguments"""
-
-        with self.assertRaises(AttributeError) as e:
-            params = {'a': 1, 'd': 3}
-            _ = build_signature_parameters(params, MockCallable.test)
-            self.assertEqual(e.exception.args[1], 'b')
-
-
-class TestInspectSignatureParameters(unittest.TestCase):
-    """Unit tests for inspect_signature_parameters"""
-
-    def test_inspect(self):
-        """Check the parameters from a callable"""
-
-        expected = ['args', 'kwargs']
-        params = inspect_signature_parameters(MockCallable)
-        params = [p.name for p in params]
-        self.assertListEqual(params, expected)
-
-        expected = ['args', 'kwargs']
-        params = inspect_signature_parameters(MockCallable.__init__)
-        params = [p.name for p in params]
-        self.assertListEqual(params, expected)
-
-        expected = ['a', 'b', 'c']
-        params = inspect_signature_parameters(MockCallable.test)
-        params = [p.name for p in params]
-        self.assertListEqual(params, expected)
-
-        expected = ['a', 'b']
-        params = inspect_signature_parameters(MockCallable.class_test)
-        params = [p.name for p in params]
-        self.assertListEqual(params, expected)
 
 
 if __name__ == "__main__":

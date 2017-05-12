@@ -49,12 +49,6 @@ class CacheError(BaseError):
     message = "%(cause)s"
 
 
-class InvalidDateError(BaseError):
-    """Exception raised when a date is invalid"""
-
-    message = "%(date)s is not a valid date"
-
-
 class RepositoryError(BaseError):
     """Generic error for repositories"""
 
