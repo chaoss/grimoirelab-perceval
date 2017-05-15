@@ -1,5 +1,29 @@
 # Releases
 
+## Perceval 0.8 - (2017-05-15)
+
+** New features and improvements: **
+
+ * Common functions used across GrimoireLab projects have been moved
+   to their own package. This package was named `grimoirelab-toolkit`.
+   From this version, Perceval depends on this package.
+
+** Backend improvements: **
+
+  * **askbot**
+    - support new URLs schema for comment queries
+  * **bugzilla**
+    - set `User-Agent` header in HTTP clients
+  * **confluence**
+    - add content URL to each item
+  * **gerrit**
+    - add option to disable SSH host keys checks
+  * **nntp**
+    - raise `ParseError` exceptions when an encoding error is found
+  * **rss**
+    - set `User-Agent` header in HTTP clients
+
+
 ## Perceval 0.7 - (2017-03-21)
 
 ** New features and improvements: **
