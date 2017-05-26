@@ -15,6 +15,7 @@ are:
     bugzillarest     Fetch bugs from a Bugzilla server (>=5.0) using its REST API
     confluence       Fetch contents from a Confluence server
     discourse        Fetch posts from Discourse site
+    dockerhub        Fetch repository data from Docker Hub site
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from Git
     github           Fetch issues from GitHub
@@ -126,6 +127,11 @@ $ perceval confluence 'https://wiki.opnfv.org/' --from-date '2016-01-01'
 ### Discourse
 ```
 $ perceval discourse 'https://foro.mozilla-hispano.org/' --from-date '2016-01-01'
+```
+
+### Docker Hub
+```
+$ perceval dockerhub grimoirelab perceval
 ```
 
 ### Gerrit
