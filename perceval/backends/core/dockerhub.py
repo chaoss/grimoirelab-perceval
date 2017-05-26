@@ -28,7 +28,10 @@ import requests
 from grimoirelab.toolkit.datetime import datetime_utcnow
 from grimoirelab.toolkit.uris import urijoin
 
-from ...backend import Backend, metadata
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser,
+                        metadata)
 from ...errors import CacheError
 
 
@@ -207,3 +210,23 @@ class DockerHubClient:
         r.raise_for_status()
 
         return r.text
+
+
+class DockerHubCommand(BackendCommand):
+    """Class to run DockerHub backend from the command line."""
+
+    BACKEND = DockerHub
+
+    @staticmethod
+    def setup_cmd_parser():
+        """Returns the DockerHub argument parser."""
+
+        parser = BackendCommandArgumentParser(cache=True)
+
+        # Required arguments
+        parser.parser.add_argument('owner',
+                                   help="Docker Hub owner")
+        parser.parser.add_argument('repository',
+                                   help="Docker Hub repository")
+
+        return parser

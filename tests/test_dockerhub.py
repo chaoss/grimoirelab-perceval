@@ -38,9 +38,12 @@ from grimoirelab.toolkit.uris import urijoin
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
 from perceval.errors import CacheError
-from perceval.backends.core.dockerhub import DockerHub, DockerHubClient
+from perceval.backends.core.dockerhub import (DockerHub,
+                                              DockerHubClient,
+                                              DockerHubCommand)
 
 
 def read_file(filename, mode='r'):
@@ -235,6 +238,27 @@ class TestDockerHubClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/v2/repositories/grimoirelab/perceval')
         self.assertDictEqual(req.querystring, {})
+
+
+class TestDockerHubCommand(unittest.TestCase):
+    """Tests for DockerHubCommand class"""
+
+    def test_backend_class(self):
+        """Test if the backend class is DockerHub"""
+
+        self.assertIs(DockerHubCommand.BACKEND, DockerHub)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = DockerHubCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
+
+        args = ['grimoirelab', 'perceval', '--no-cache']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.owner, 'grimoirelab')
+        self.assertEqual(parsed_args.repository, 'perceval')
 
 
 if __name__ == "__main__":
