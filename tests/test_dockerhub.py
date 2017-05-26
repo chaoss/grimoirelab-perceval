@@ -21,7 +21,9 @@
 #
 
 import datetime
+import shutil
 import sys
+import tempfile
 import unittest
 import unittest.mock
 
@@ -36,6 +38,8 @@ from grimoirelab.toolkit.uris import urijoin
 sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.cache import Cache
+from perceval.errors import CacheError
 from perceval.backends.core.dockerhub import DockerHub, DockerHubClient
 
 
@@ -87,9 +91,9 @@ class TestDockerHubBackend(unittest.TestCase):
         self.assertEqual(dockerhub.tag, expected_origin)
 
     def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
+        """Test if it returns True when has_caching is called"""
 
-        self.assertEqual(DockerHub.has_caching(), False)
+        self.assertEqual(DockerHub.has_caching(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -103,7 +107,7 @@ class TestDockerHubBackend(unittest.TestCase):
 
         mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
                                                      tzinfo=dateutil.tz.tzutc())
-        http_requests = setup_http_server()
+        setup_http_server()
 
         dockerhub = DockerHub('grimoirelab', 'perceval')
         items = [item for item in dockerhub.fetch()]
@@ -128,6 +132,83 @@ class TestDockerHubBackend(unittest.TestCase):
         item = DockerHub.parse_json(raw_json)
         self.assertEqual(item['user'], 'grimoirelab')
         self.assertEqual(item['name'], 'perceval')
+
+
+class TestDockerHubBackendCache(unittest.TestCase):
+    """DockerHub backend tests using a cache"""
+
+    def setUp(self):
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.dockerhub.datetime_utcnow')
+    def test_fetch_from_cache(self, mock_utcnow):
+        """Test whether the cache works"""
+
+        setup_http_server()
+
+        # First, we fetch the items from the server,
+        # storing them in a cache. We do it twice as each call
+        # to fetch only returns one item.
+        cache = Cache(self.tmp_path)
+        dockerhub = DockerHub('grimoirelab', 'perceval', cache=cache)
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+        items = [item for item in dockerhub.fetch()]
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 2,
+                                                     tzinfo=dateutil.tz.tzutc())
+        aux = [item for item in dockerhub.fetch()]
+        items.extend(aux)
+
+        self.assertEqual(len(httpretty.httpretty.latest_requests), 2)
+
+        # Now, we get the items from the cache.
+        # The items should be the same and there won't be
+        # any new request to the server
+        cached_items = [item for item in dockerhub.fetch_from_cache()]
+        self.assertEqual(len(cached_items), len(items))
+
+        expected = [(1483228800.0, '0fa16dc4edab9130a14914a8d797f634d13b4ff4', 1483228800.0),
+                    (1483315200.0, '0ce2bdf5ddeef42886d9ce4b573c98345e6f1b9a', 1483315200.0)]
+
+        self.assertEqual(len(cached_items), len(expected))
+
+        for x in range(len(cached_items)):
+            item = cached_items[x]
+            expc = expected[x]
+            self.assertEqual(item['data']['fetched_on'], expc[0])
+            self.assertEqual(item['uuid'], expc[1])
+            self.assertEqual(item['origin'], 'https://hub.docker.com/grimoirelab/perceval')
+            self.assertEqual(item['updated_on'], expc[2])
+            self.assertEqual(item['category'], 'dockerhub-data')
+            self.assertEqual(item['tag'], 'https://hub.docker.com/grimoirelab/perceval')
+
+            # Compare chached and fetched task
+            self.assertDictEqual(item['data'], items[x]['data'])
+
+        # No more requests were sent
+        self.assertEqual(len(httpretty.httpretty.latest_requests), 2)
+
+    def test_fetch_from_empty_cache(self):
+        """Test if there are not any event returned when the cache is empty"""
+
+        cache = Cache(self.tmp_path)
+        dockerhub = DockerHub('grimoirelab', 'perceval', cache=cache)
+        cached_items = [item for item in dockerhub.fetch_from_cache()]
+        self.assertEqual(len(cached_items), 0)
+
+    def test_fetch_from_non_set_cache(self):
+        """Test if a error is raised when the cache was not set"""
+
+        dockerhub = DockerHub('grimoirelab', 'perceval')
+
+        with self.assertRaises(CacheError):
+            _ = [item for item in dockerhub.fetch_from_cache()]
 
 
 class TestDockerHubClient(unittest.TestCase):

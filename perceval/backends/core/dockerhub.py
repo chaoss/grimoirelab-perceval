@@ -29,6 +29,7 @@ from grimoirelab.toolkit.datetime import datetime_utcnow
 from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import Backend, metadata
+from ...errors import CacheError
 
 
 logger = logging.getLogger(__name__)
@@ -75,21 +76,52 @@ class DockerHub(Backend):
         logger.info("Fetching data from %s' repository of '%s'",
                     self.repository, self.owner)
 
+        self._purge_cache_queue()
+
         raw_data = self.client.repository(self.owner, self.repository)
+        fetched_on = datetime_utcnow().timestamp()
+
+        self._push_cache_queue(
+            {
+                'fetched_on': fetched_on,
+                'data': raw_data
+            }
+        )
 
         data = self.parse_json(raw_data)
-        data['fetched_on'] = datetime_utcnow().timestamp()
+        data['fetched_on'] = fetched_on
         yield data
 
+        self._flush_cache_queue()
+
         logger.info("Fetch process completed")
+
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch items from the cache.
+
+        :returns: a generator of items
+
+        :raises CacheError: raised when an error occurs accessing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        cache_items = self.cache.retrieve()
+
+        for raw_item in cache_items:
+            item = self.parse_json(raw_item['data'])
+            item['fetched_on'] = raw_item['fetched_on']
+            yield item
 
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend does not support items cache
+        :returns: this backend supports items cache
         """
-        return False
+        return True
 
     @classmethod
     def has_resuming(cls):
