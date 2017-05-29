@@ -61,7 +61,7 @@ class DockerHub(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.1'
+    version = '0.1.2'
 
     def __init__(self, owner, repository,
                  tag=None, cache=None):
@@ -85,7 +85,7 @@ class DockerHub(Backend):
 
         :returns: a generator of data
         """
-        logger.info("Fetching data from %s' repository of '%s'",
+        logger.info("Fetching data from '%s' repository of '%s' owner",
                     self.repository, self.owner)
 
         self._purge_cache_queue()
