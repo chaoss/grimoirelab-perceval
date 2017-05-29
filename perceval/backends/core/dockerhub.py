@@ -41,6 +41,9 @@ logger = logging.getLogger(__name__)
 DOCKERHUB_URL = "https://hub.docker.com/"
 DOCKERHUB_API_URL = urijoin(DOCKERHUB_URL, 'v2')
 
+DOCKER_OWNER = 'library'
+DOCKER_SHORTCUT_OWNER = '_'
+
 
 class DockerHub(Backend):
     """DockerHub backend for Perceval.
@@ -50,15 +53,21 @@ class DockerHub(Backend):
     and repositories where data will be fetched must be provided.
     The origin of the data will be built with both parameters.
 
+    Shortcut `_` owner for official Docker repositories will
+    be replaced by its long name: `library`.
+
     :param owner: DockerHub owner
     :param repository: DockerHub repository owned by `owner`
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     def __init__(self, owner, repository,
                  tag=None, cache=None):
+        if owner == DOCKER_SHORTCUT_OWNER:
+            owner = DOCKER_OWNER
+
         origin = urijoin(DOCKERHUB_URL, owner, repository)
 
         super().__init__(origin, tag=tag, cache=cache)

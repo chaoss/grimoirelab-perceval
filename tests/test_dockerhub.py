@@ -93,6 +93,18 @@ class TestDockerHubBackend(unittest.TestCase):
         self.assertEqual(dockerhub.origin, expected_origin)
         self.assertEqual(dockerhub.tag, expected_origin)
 
+    def test_shortcut_official_owner(self):
+        """Test if the shortcut owner is replaced when it is given on init"""
+
+        # Value '_' should be replaced by 'library'
+        dockerhub = DockerHub('_', 'redis', tag='test')
+
+        expected_origin = urijoin(DOCKERHUB_URL, 'library', 'redis')
+
+        self.assertEqual(dockerhub.owner, 'library')
+        self.assertEqual(dockerhub.repository, 'redis')
+        self.assertEqual(dockerhub.origin, expected_origin)
+
     def test_has_caching(self):
         """Test if it returns True when has_caching is called"""
 
