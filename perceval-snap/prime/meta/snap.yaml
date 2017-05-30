@@ -1,0 +1,17 @@
+apps:
+  perceval:
+    command: command-perceval.wrapper
+    plugs:
+    - network
+architectures:
+- amd64
+confinement: strict
+description: "Package that gathers and retrieves data from known software repositories.\n\
+  Repository sources includes askbot, bugzilla, bugzillarest, confluence, \ndiscourse,\
+  \ dockerhub, gerrit, git, github, gname, hyperkitty, jenkins, jira, \nmbox, mediawiki,\
+  \ meetup, nntp, phabricator, pipermail, redmine, rss, slack, \nstackexchange, supybot,\
+  \ telegram.\n"
+grade: stable
+name: perceval
+summary: Retrieve and gather data from software repositories,
+version: 0.8.0
