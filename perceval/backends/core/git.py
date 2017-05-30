@@ -125,18 +125,21 @@ class Git(Backend):
 
     def __fetch_and_parse_log(self, from_date, branches):
         if os.path.isfile(self.gitpath):
+            logger.info("Fetching commits from the given log file %s", self.gitpath)
             return self.parse_git_log_from_file(self.gitpath)
         else:
+            logger.info("Log file not specified, retrieving from repository.")
             repo = self.__create_and_update_git_repository()
             gitlog = repo.log(from_date, branches)
             return self.parse_git_log_from_iter(gitlog)
 
     def __create_and_update_git_repository(self):
         if not os.path.exists(self.gitpath):
+            logger.info("Git repository not found in %s", self.gitpath)
             repo = GitRepository.clone(self.uri, self.gitpath)
         elif os.path.isdir(self.gitpath):
+            logger.info("Found Git repository in %s", self.gitpath)
             repo = GitRepository(self.uri, self.gitpath)
-
         try:
             repo.pull()
         except EmptyRepositoryError:
@@ -664,11 +667,11 @@ class GitRepository:
         :raises RepositoryError: when an error occurs cloning the given
             repository
         """
+        logger.info("Cloning repository %s", uri)
         cmd = ['git', 'clone', uri, dirpath]
         cls._exec(cmd, env={'LANG': 'C'})
-
-        logger.debug("Git %s repository cloned into %s",
-                     uri, dirpath)
+        logger.info("Git repository %s cloned into %s",
+                    uri, dirpath)
 
         return cls(uri, dirpath)
 
