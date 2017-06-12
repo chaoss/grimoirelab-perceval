@@ -639,6 +639,17 @@ class GitRepository:
     :param uri: URI of the repository
     :param dirpath: local directory where the repository is stored
     """
+    GIT_PRETTY_OUTPUT_OPTS = [
+        '--raw',  # show data in raw format
+        '--numstat',  # show added/deleted lines per file
+        '--pretty=fuller',  # pretty output
+        '--decorate=full',  # show full refs
+        '--parents',  # show parents information
+        '-M',  # detect and report renames
+        '-C',  # detect and report copies
+        '-c',  # show merge info
+    ]
+
     def __init__(self, uri, dirpath):
         gitdir = os.path.join(dirpath, '.git')
 
@@ -800,9 +811,8 @@ class GitRepository:
                            self.uri)
             raise EmptyRepositoryError(repository=self.uri)
 
-        cmd_log = ['git', 'log', '--raw', '--numstat', '--pretty=fuller',
-                   '--decorate=full', '--reverse', '--topo-order',
-                   '--parents', '-M', '-C', '-c']
+        cmd_log = ['git', 'log', '--reverse', '--topo-order']
+        cmd_log.extend(self.GIT_PRETTY_OUTPUT_OPTS)
 
         if from_date:
             dt = from_date.strftime("%Y-%m-%d %H:%M:%S %z")
@@ -818,16 +828,77 @@ class GitRepository:
 
         env = {'LANG': 'C', 'PAGER': ''}
 
+        for line in self._exec_nb(cmd_log, cwd=self.dirpath, env=env):
+            yield line
+
+        logger.debug("Git log fetched from %s repository (%s)",
+                     self.uri, self.dirpath)
+
+    def show(self, commits=None, encoding='utf-8'):
+        """Show the data of a set of commits.
+
+        The method returns the output of Git show command for a
+        set of commits using the following options:
+
+            git show --raw --numstat --pretty=fuller --decorate=full
+                --parents -M -C -c [<commit>...<commit>]
+
+        When the list of commits is empty, the command will return
+        data about the last commit, like the default behaviour of
+        `git show`.
+
+        :param commits: list of commits to show data
+        :param encoding: encode the output using this format
+
+        :returns: a generator where each item is a line from the show output
+
+        :raises EmptyRepositoryError: when the repository is empty and
+            the action cannot be performed
+        :raises RepositoryError: when an error occurs fetching the show output
+        """
+        if self.is_empty():
+            logger.warning("Git %s repository is empty; unable to run show",
+                           self.uri)
+            raise EmptyRepositoryError(repository=self.uri)
+
+        if commits is None:
+            commits = []
+
+        cmd_show = ['git', 'show']
+        cmd_show.extend(self.GIT_PRETTY_OUTPUT_OPTS)
+        cmd_show.extend(commits)
+
+        env = {'LANG': 'C', 'PAGER': ''}
+
+        for line in self._exec_nb(cmd_show, cwd=self.dirpath, env=env):
+            yield line
+
+        logger.debug("Git show fetched from %s repository (%s)",
+                     self.uri, self.dirpath)
+
+    def _exec_nb(self, cmd, cwd=None, env=None, encoding='utf-8'):
+        """Run a command with a non blocking call.
+
+        Execute `cmd` command with a non blocking call. The command will
+        be run in the directory set by `cwd`. Enviroment variables can be
+        set using the `env` dictionary. The output data is returned
+        as encoded bytes in an iterator. Each item will be a line of the
+        output.
+
+        :returns: an iterator with the output of the command as encoded bytes
+
+        :raises RepositoryError: when an error occurs running the command
+        """
         self.failed_message = None
 
         logger.debug("Running command %s (cwd: %s, env: %s)",
-                     ' '.join(cmd_log), self.dirpath, str(env))
+                     ' '.join(cmd), cwd, str(env))
 
         try:
-            self.proc = subprocess.Popen(cmd_log,
+            self.proc = subprocess.Popen(cmd,
                                          stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE,
-                                         cwd=self.dirpath,
+                                         cwd=cwd,
                                          env=env)
             err_thread = threading.Thread(target=self._read_stderr,
                                           kwargs={'encoding': encoding},
@@ -848,9 +919,6 @@ class GitRepository:
             cause = "git command - %s (return code: %d)" % \
                 (self.failed_message, self.proc.returncode)
             raise RepositoryError(cause=cause)
-
-        logger.debug("Git log fetched from %s repository (%s)",
-                     self.uri, self.dirpath)
 
     def _read_stderr(self, encoding='utf-8'):
         """Reads self.proc.stderr.

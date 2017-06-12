@@ -1100,6 +1100,54 @@ class TestGitRepository(unittest.TestCase):
 
         shutil.rmtree(new_path)
 
+    def test_git_show(self):
+        """Test show command"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        gitshow = repo.show()
+        gitshow = [line for line in gitshow]
+        self.assertEqual(len(gitshow), 14)
+        self.assertEqual(gitshow[0][:14], "commit 456a68e")
+
+        shutil.rmtree(new_path)
+
+    def test_show_commit_list(self):
+        """Test show command using a list of commits"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        commits = ['51a3b65', '8778312']
+        gitshow = repo.show(commits=commits)
+        gitshow = [line for line in gitshow]
+        self.assertEqual(len(gitshow), 21)
+        self.assertEqual(gitshow[0][:14], "commit 51a3b65")
+        self.assertEqual(gitshow[11][:14], "commit 8778312")
+
+        # When an empty list is given, the output is the
+        # data from the last commit
+        gitshow = repo.show(commits=[])
+        gitshow = [line for line in gitshow]
+        self.assertEqual(len(gitshow), 14)
+        self.assertEqual(gitshow[0][:14], "commit 456a68e")
+
+        shutil.rmtree(new_path)
+
+    def test_git_show_from_emtpy_repository(self):
+        """Test if an exception is raised when the repository is empty"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_empty_path, new_path)
+        gitshow = repo.show()
+
+        with self.assertRaises(EmptyRepositoryError):
+            _ = [line for line in gitshow]
+
+        shutil.rmtree(new_path)
+
 
 if __name__ == "__main__":
     unittest.main()
