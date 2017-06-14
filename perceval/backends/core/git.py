@@ -60,7 +60,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.7.4'
+    version = '0.8.0'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -70,30 +70,77 @@ class Git(Backend):
         self.gitpath = gitpath
 
     @metadata
-    def fetch(self, from_date=DEFAULT_DATETIME, branches=None):
+    def fetch(self, from_date=DEFAULT_DATETIME, branches=None,
+              latest_items=False):
         """Fetch commits.
 
         The method retrieves from a Git repository or a log file
-        a list of commits since the given date. Commits are returned
-        in the same order they were parsed.
+        a list of commits. Commits are returned in the same order
+        they were obtained.
 
-        Take into account that `from_date` is ignored when the commits
-        are fetched from a Git log file.
+        When `from_date` parameter is given it returns items commited
+        since the given date.
 
-        The list of branches is a list of strings, with the names of the
-        branches to fetch. If the list of branches is empty, no commit
-        is fetched. If the list of branches is None, all commits
+        The list of `branches` is a list of strings, with the names of
+        the branches to fetch. If the list of branches is empty, no
+        commit is fetched. If the list of branches is None, all commits
         for all branches will be fetched.
 
-        The class raises a `RepositoryError` exception when an error occurs
-        accessing the repository.
+        The parameter `latest_items` returns only those commits which
+        are new since the last time this method was called.
+
+        Take into account that `from_date` and `branches` are ignored
+        when the commits are fetched from a Git log file or when
+        `latest_items` flag is set.
+
+        The class raises a `RepositoryError` exception when an error
+        occurs accessing the repository.
 
         :param from_date: obtain commits newer than a specific date
             (inclusive)
         :param branches: names of branches to fetch from (default: None)
+        :param latest_items: sync with the repository to fetch only the
+            newest commits
 
         :returns: a generator of commits
         """
+        if os.path.isfile(self.gitpath):
+            commits = self.__fetch_from_log()
+        else:
+            commits = self.__fetch_from_repo(from_date, branches,
+                                             latest_items)
+
+        ncommits = 0
+        try:
+            for commit in commits:
+                yield commit
+                ncommits += 1
+        except EmptyRepositoryError:
+            pass
+
+        logger.info("Fetch process completed: %s commits fetched",
+                    ncommits)
+
+    def __fetch_from_log(self):
+        logger.info("Fetching commits: '%s' git repository from log file %s",
+                    self.uri, self.gitpath)
+        return self.parse_git_log_from_file(self.gitpath)
+
+    def __fetch_from_repo(self, from_date, branches, latest_items=False):
+        # When no latest items are set or the repository has not
+        # been cloned use the default mode
+        default_mode = not latest_items or not os.path.exists(self.gitpath)
+
+        repo = self.__create_git_repository()
+
+        if default_mode:
+            commits = self.__fetch_commits_from_repo(repo, from_date, branches)
+        else:
+            commits = self.__fetch_newest_commits_from_repo(repo)
+
+        return commits
+
+    def __fetch_commits_from_repo(self, repo, from_date, branches):
         if branches is None:
             branches_text = "all"
         elif len(branches) == 0:
@@ -111,38 +158,30 @@ class Git(Backend):
         else:
             from_date = datetime_to_utc(from_date)
 
-        ncommits = 0
-        commits = self.__fetch_and_parse_log(from_date, branches)
-
-        try:
-            for commit in commits:
-                yield commit
-                ncommits += 1
-        except EmptyRepositoryError:
-            pass
-
-        logger.info("Fetch process completed: %s commits fetched",
-                    ncommits)
-
-    def __fetch_and_parse_log(self, from_date, branches):
-        if os.path.isfile(self.gitpath):
-            return self.parse_git_log_from_file(self.gitpath)
-        else:
-            repo = self.__create_and_update_git_repository()
-            gitlog = repo.log(from_date, branches)
-            return self.parse_git_log_from_iter(gitlog)
-
-    def __create_and_update_git_repository(self):
-        if not os.path.exists(self.gitpath):
-            repo = GitRepository.clone(self.uri, self.gitpath)
-        elif os.path.isdir(self.gitpath):
-            repo = GitRepository(self.uri, self.gitpath)
-
         try:
             repo.pull()
         except EmptyRepositoryError:
             pass
 
+        gitlog = repo.log(from_date, branches)
+        return self.parse_git_log_from_iter(gitlog)
+
+    def __fetch_newest_commits_from_repo(self, repo):
+        logger.info("Fetching latest commits: '%s' git repository",
+                    self.uri)
+
+        hashes = repo.sync()
+        if not hashes:
+            return []
+
+        gitshow = repo.show(hashes)
+        return self.parse_git_log_from_iter(gitshow)
+
+    def __create_git_repository(self):
+        if not os.path.exists(self.gitpath):
+            repo = GitRepository.clone(self.uri, self.gitpath)
+        elif os.path.isdir(self.gitpath):
+            repo = GitRepository(self.uri, self.gitpath)
         return repo
 
     @classmethod
@@ -264,6 +303,9 @@ class GitCommand(BackendCommand):
         group.add_argument('--branches', dest='branches',
                            nargs='+', type=str, default=None,
                            help="Fetch commits only from these branches")
+        group.add_argument('--latest-items', dest='latest_items',
+                           action='store_true',
+                           help="Fetch latest commits added to the repository")
 
         # Mutual exclusive parameters
         exgroup = group.add_mutually_exclusive_group()
