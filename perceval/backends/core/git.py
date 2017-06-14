@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import collections
 import logging
 import os
 import re
@@ -628,6 +629,9 @@ class EmptyRepositoryError(RepositoryError):
     message = "%(repository)s is empty"
 
 
+GitRef = collections.namedtuple('GitRef', ['hash', 'refname'])
+
+
 class GitRepository:
     """Manage a Git repository.
 
@@ -751,8 +755,8 @@ class GitRepository:
         """Update repository from 'origin' remote.
 
         Calling this method, the repository will be synchronized with
-        'origin' repository. Any commit stored in the local copy will
-        be removed.
+        'origin' repository using the 'fetch' command. Any commit stored
+        in the local copy will be removed.
 
         :raises EmptyRepositoryError: when the repository is empty and
             the action cannot be performed
@@ -776,6 +780,38 @@ class GitRepository:
 
         logger.debug("Git %s repository pulled into %s",
                      self.uri, self.dirpath)
+
+    def sync(self):
+        """Keep the repository in sync.
+
+        This method will synchronize the repository with its 'origin',
+        fetching newest objects and updating references. It uses low
+        level commands which allow to keep track of which things
+        have changed in the repository.
+
+        The method also returns a list of hashes related to the new
+        commits fetched during the process.
+
+        :returns: list of new commits
+
+        :raises RepositoryError: when an error occurs synchronizing
+            the repository
+        """
+        pack_name, refs = self._fetch_pack()
+
+        if pack_name:
+            commits = self._read_commits_from_pack(pack_name)
+        else:
+            commits = []
+            logger.debug("Git repository %s (%s) does not have any new object",
+                         self.uri, self.dirpath)
+
+        self._update_references(refs)
+
+        logger.debug("Git repository %s (%s) is synced",
+                     self.uri, self.dirpath)
+
+        return commits
 
     def log(self, from_date=None, branches=None, encoding='utf-8'):
         """Read the commit log from the repository.
@@ -875,6 +911,145 @@ class GitRepository:
 
         logger.debug("Git show fetched from %s repository (%s)",
                      self.uri, self.dirpath)
+
+    def _fetch_pack(self):
+        """Fetch changes and store them in a pack."""
+
+        remote_refs = self._discover_refs(remote=True)
+        remote_refs = [ref.refname for ref in remote_refs
+                       if not ref.refname.endswith('^{}')]
+
+        repo = self.uri
+        for protocol in ['https://', 'http://']:
+            if repo.startswith(protocol):
+                repo = "git://" + repo[len(protocol):]
+                break
+
+        cmd_fetch_pack = ['git', 'fetch-pack', '--include-tag',
+                          '--keep', repo]
+        cmd_fetch_pack.extend(remote_refs)
+
+        outs = self._exec(cmd_fetch_pack, cwd=self.dirpath, env={'LANG': 'C'})
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+        pack, refs = self._read_fetch_pack(outs)
+
+        return (pack, refs)
+
+    def _read_fetch_pack(self, stream):
+        """Parse fetch-pack command output."""
+
+        PACK_REGEX = re.compile(r"^(pack|keep)\s+(?P<packet>[a-f0-9]{40})$",
+                                re.VERBOSE)
+        REFS_REGEX = re.compile(r"^(?P<hash>[a-f0-9]{40})\s+(?P<ref>.+)$",
+                                re.VERBOSE)
+
+        pack = None
+        refs = []
+
+        for line in stream.split('\n'):
+            m = PACK_REGEX.match(line)
+            if m:
+                pack = m.group('packet')
+                logger.debug("Packet %s found reading 'fetch-pack' output",
+                             pack)
+                continue
+
+            m = REFS_REGEX.match(line)
+            if m:
+                ref = GitRef(m.group('hash'), m.group('ref'))
+                refs.append(ref)
+                logger.debug("Ref %s - %s found reading 'fetch-pack' output",
+                             ref.hash, ref.refname)
+                continue
+
+        if not refs:
+            error = "unable to read 'fetch-pack' output; reason: no refs found"
+            raise RepositoryError(cause=error)
+
+        return (pack, refs)
+
+    def _read_commits_from_pack(self, packet_name):
+        """Read the commits of a pack."""
+
+        filepath = '.git/objects/pack/pack-' + packet_name
+
+        cmd_verify_pack = ['git', 'verify-pack', '-v', filepath]
+
+        outs = self._exec(cmd_verify_pack, cwd=self.dirpath, env={'LANG': 'C'})
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+
+        lines = [line.split(' ') for line in outs.split('\n')]
+        commits = [parts[0] for parts in lines if parts[1] == 'commit']
+
+        return commits
+
+    def _update_references(self, refs):
+        """Update references removing old ones."""
+
+        new_refs = [ref.refname for ref in refs]
+
+        # Delete old references
+        for old_ref in self._discover_refs():
+            if not old_ref.refname.startswith('refs/heads/'):
+                continue
+            if old_ref.refname in new_refs:
+                continue
+            self._update_ref(old_ref, delete=True)
+
+        # Update new references
+        for new_ref in refs:
+            if new_ref.refname.endswith('^{}'):
+                logger.debug("Annotated tag %s ignored for updating in sync process",
+                             new_ref.refname)
+                continue
+            self._update_ref(new_ref)
+
+        # Prune repository to remove old branches
+        cmd = ['git', 'remote', 'prune', 'origin']
+        self._exec(cmd, cwd=self.dirpath, env={'LANG': 'C'})
+
+    def _discover_refs(self, remote=False):
+        """Get the current list of local or remote refs."""
+
+        if remote:
+            cmd_refs = ['git', 'ls-remote', '-h', '-t', 'origin']
+            sep = '\t'
+        else:
+            cmd_refs = ['git', 'show-ref']
+            sep = ' '
+
+        outs = self._exec(cmd_refs, cwd=self.dirpath, env={'LANG': 'C'})
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+
+        refs = []
+
+        for line in outs.split('\n'):
+            data = line.split(sep)
+            ref = GitRef(data[0], data[1])
+            refs.append(ref)
+
+        return refs
+
+    def _update_ref(self, ref, delete=False):
+        """Update a reference."""
+
+        cmd = ['git', 'update-ref']
+
+        if delete:
+            cmd.extend(['-d', ref.refname])
+            action = 'deleted'
+        else:
+            cmd.extend([ref.refname, ref.hash])
+            action = 'updated to %s' % ref.hash
+
+        try:
+            self._exec(cmd, cwd=self.dirpath, env={'LANG': 'C'})
+        except RepositoryError as e:
+            logger.warning("Git %s ref could not be %s during sync process in %s (%s); skipped",
+                           ref.refname, action, self.uri, self.dirpath)
+        else:
+            logger.debug("Git %s ref %s in %s (%s)",
+                         ref.refname, action, self.uri, self.dirpath)
 
     def _exec_nb(self, cmd, cwd=None, env=None, encoding='utf-8'):
         """Run a command with a non blocking call.
