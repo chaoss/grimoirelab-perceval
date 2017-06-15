@@ -343,6 +343,85 @@ class TestGitBackend(unittest.TestCase):
 
         shutil.rmtree(new_path)
 
+    def test_fetch_latest_items(self):
+        """Test whether latest commits are fetched from a Git repository"""
+
+        editable_path = os.path.join(self.tmp_path, 'editgit')
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        new_file = os.path.join(editable_path, 'newfile')
+
+        shutil.copytree(self.git_path, editable_path)
+
+        git = Git(editable_path, new_path)
+        commits = [commit for commit in git.fetch(latest_items=True)]
+
+        # Count the number of commits before adding some new
+        expected = [('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0),
+                    ('87783129c3f00d2c81a3a8e585eb86a47e39891a', 1344965535.0),
+                    ('7debcf8a2f57f86663809c58b5c07a398be7674c', 1344965607.0),
+                    ('c0d66f92a95e31c77be08dc9d0f11a16715d1885', 1344965702.0),
+                    ('c6ba8f7a1058db3e6b4bc6f1090e932b107605fb', 1344966351.0),
+                    ('589bb080f059834829a2a5955bebfd7c2baa110a', 1344967441.0),
+                    ('ce8e0b86a1e9877f42fe9453ede418519115f367', 1392185269.0),
+                    ('51a3b654f252210572297f47597b31527c475fb8', 1392185366.0),
+                    ('456a68ee1407a77f3e804a30dff245bb6c6b872f', 1392185439.0)]
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(editable_path, expected[x][0])
+            commit = commits[x]
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+            self.assertEqual(commit['origin'], editable_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['updated_on'], expected[x][1])
+            self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], editable_path)
+
+        # Create some new commits
+        cmd = ['git', 'checkout', '-b', 'mybranch']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        with open(new_file, 'w') as f:
+            f.write("Testing sync method")
+
+        cmd = ['git', 'add', new_file]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', '-c', 'user.name="mock"',
+               '-c', 'user.email="mock@example.com"',
+               'commit', '-m', 'Testing sync']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', 'rm', new_file]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', '-c', 'user.name="mock"',
+               '-c', 'user.email="mock@example.com"',
+               'commit', '-m', 'Removing testing file for sync']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        # Two new commits should have been fetched
+        commits = [commit for commit in git.fetch(latest_items=True)]
+        self.assertEqual(len(commits), 2)
+
+        # Remove 'lzp' branch and check that the number of new commits is 0
+        cmd = ['git', 'branch', '-D', 'lzp']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        commits = [commit for commit in git.fetch(latest_items=True)]
+        self.assertEqual(len(commits), 0)
+
+        # Cleanup
+        shutil.rmtree(editable_path)
+        shutil.rmtree(new_path)
+
     def test_fetch_from_file(self):
         """Test whether commits are fetched from a Git log file"""
 
@@ -815,6 +894,17 @@ class TestEmptyRepositoryError(unittest.TestCase):
         self.assertEqual('gittest is empty', str(e))
 
 
+def count_commits(gitpath):
+    """Get the number of commits counting the entries on the log"""
+
+    cmd = ['git', 'log', '--oneline', '--all']
+    gitlog = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                     cwd=gitpath,
+                                     env={'LANG': 'C', 'PAGER': ''})
+    commits = gitlog.strip(b'\n').split(b'\n')
+    return len(commits)
+
+
 class TestGitRepository(unittest.TestCase):
     """GitRepository tests"""
 
@@ -982,23 +1072,13 @@ class TestGitRepository(unittest.TestCase):
     def test_pull(self):
         """Test if the repository is updated to 'origin' status"""
 
-        def count_commits():
-            """Get the number of commits counting the entries on the log"""
-
-            cmd = ['git', 'log', '--oneline']
-            gitlog = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                             cwd=new_path,
-                                             env={'LANG': 'C', 'PAGER': ''})
-            commits = gitlog.strip(b'\n').split(b'\n')
-            return len(commits)
-
         new_path = os.path.join(self.tmp_path, 'newgit')
         new_file = os.path.join(new_path, 'newfile')
 
         repo = GitRepository.clone(self.git_path, new_path)
 
         # Count the number of commits before adding a new one
-        ncommits = count_commits()
+        ncommits = count_commits(new_path)
         self.assertEqual(ncommits, 9)
 
         # Create a new file and commit it to the repository
@@ -1016,14 +1096,14 @@ class TestGitRepository(unittest.TestCase):
                                 cwd=new_path, env={'LANG': 'C'})
 
         # Count the number of commits after the adding a new one
-        ncommits = count_commits()
+        ncommits = count_commits(new_path)
         self.assertEqual(ncommits, 10)
 
         # Update the repository to its original status
         repo.pull()
 
         # The number of commits should be updated to its original value
-        ncommits = count_commits()
+        ncommits = count_commits(new_path)
         self.assertEqual(ncommits, 9)
 
         shutil.rmtree(new_path)
@@ -1037,6 +1117,91 @@ class TestGitRepository(unittest.TestCase):
         with self.assertRaises(EmptyRepositoryError):
             repo.pull()
 
+        shutil.rmtree(new_path)
+
+    def test_sync(self):
+        """Test if the repository is synchonized with its remote repo"""
+
+        editable_path = os.path.join(self.tmp_path, 'editgit')
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        new_file = os.path.join(editable_path, 'newfile')
+
+        shutil.copytree(self.git_path, editable_path)
+
+        repo = GitRepository.clone(editable_path, new_path)
+        repo.sync()
+
+        # Count the number of commits before adding some new
+        ncommits = count_commits(new_path)
+        self.assertEqual(ncommits, 9)
+
+        cmd = ['git', 'checkout', '-b', 'mybranch']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        # Create a new file and commit it to the repository
+        with open(new_file, 'w') as f:
+            f.write("Testing sync method")
+
+        cmd = ['git', 'add', new_file]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', '-c', 'user.name="mock"',
+               '-c', 'user.email="mock@example.com"',
+               'commit', '-m', 'Testing sync']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', 'rm', new_file]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', '-c', 'user.name="mock"',
+               '-c', 'user.email="mock@example.com"',
+               'commit', '-m', 'Removing testing file for sync']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        # Count the number of commits and refs after adding
+        # the branch and the file
+        new_commits = repo.sync()
+        ncommits = count_commits(new_path)
+        self.assertEqual(ncommits, 11)
+        self.assertEqual(len(new_commits), 2)
+
+        expected = [
+            'refs/heads/lzp',
+            'refs/heads/master',
+            'refs/heads/mybranch',
+            'refs/remotes/origin/HEAD',
+            'refs/remotes/origin/lzp',
+            'refs/remotes/origin/master'
+        ]
+        refs = [ref.refname for ref in repo._discover_refs()]
+        self.assertListEqual(refs, expected)
+
+        # Remove 'lzp' branch and check the number of commits and refs
+        cmd = ['git', 'branch', '-D', 'lzp']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        new_commits = repo.sync()
+        ncommits = count_commits(new_path)
+        self.assertEqual(ncommits, 11)
+        self.assertEqual(len(new_commits), 0)
+
+        expected = [
+            'refs/heads/master',
+            'refs/heads/mybranch',
+            'refs/remotes/origin/HEAD',
+            'refs/remotes/origin/master'
+        ]
+        refs = [ref.refname for ref in repo._discover_refs()]
+        self.assertListEqual(refs, expected)
+
+        # Cleanup
+        shutil.rmtree(editable_path)
         shutil.rmtree(new_path)
 
     def test_log(self):
@@ -1097,6 +1262,54 @@ class TestGitRepository(unittest.TestCase):
 
         with self.assertRaises(EmptyRepositoryError):
             _ = [line for line in gitlog]
+
+        shutil.rmtree(new_path)
+
+    def test_git_show(self):
+        """Test show command"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        gitshow = repo.show()
+        gitshow = [line for line in gitshow]
+        self.assertEqual(len(gitshow), 14)
+        self.assertEqual(gitshow[0][:14], "commit 456a68e")
+
+        shutil.rmtree(new_path)
+
+    def test_show_commit_list(self):
+        """Test show command using a list of commits"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        commits = ['51a3b65', '8778312']
+        gitshow = repo.show(commits=commits)
+        gitshow = [line for line in gitshow]
+        self.assertEqual(len(gitshow), 21)
+        self.assertEqual(gitshow[0][:14], "commit 51a3b65")
+        self.assertEqual(gitshow[11][:14], "commit 8778312")
+
+        # When an empty list is given, the output is the
+        # data from the last commit
+        gitshow = repo.show(commits=[])
+        gitshow = [line for line in gitshow]
+        self.assertEqual(len(gitshow), 14)
+        self.assertEqual(gitshow[0][:14], "commit 456a68e")
+
+        shutil.rmtree(new_path)
+
+    def test_git_show_from_emtpy_repository(self):
+        """Test if an exception is raised when the repository is empty"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_empty_path, new_path)
+        gitshow = repo.show()
+
+        with self.assertRaises(EmptyRepositoryError):
+            _ = [line for line in gitshow]
 
         shutil.rmtree(new_path)
 

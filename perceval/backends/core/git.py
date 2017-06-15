@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import collections
 import logging
 import os
 import re
@@ -59,7 +60,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.7.4'
+    version = '0.8.0'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -69,30 +70,77 @@ class Git(Backend):
         self.gitpath = gitpath
 
     @metadata
-    def fetch(self, from_date=DEFAULT_DATETIME, branches=None):
+    def fetch(self, from_date=DEFAULT_DATETIME, branches=None,
+              latest_items=False):
         """Fetch commits.
 
         The method retrieves from a Git repository or a log file
-        a list of commits since the given date. Commits are returned
-        in the same order they were parsed.
+        a list of commits. Commits are returned in the same order
+        they were obtained.
 
-        Take into account that `from_date` is ignored when the commits
-        are fetched from a Git log file.
+        When `from_date` parameter is given it returns items commited
+        since the given date.
 
-        The list of branches is a list of strings, with the names of the
-        branches to fetch. If the list of branches is empty, no commit
-        is fetched. If the list of branches is None, all commits
+        The list of `branches` is a list of strings, with the names of
+        the branches to fetch. If the list of branches is empty, no
+        commit is fetched. If the list of branches is None, all commits
         for all branches will be fetched.
 
-        The class raises a `RepositoryError` exception when an error occurs
-        accessing the repository.
+        The parameter `latest_items` returns only those commits which
+        are new since the last time this method was called.
+
+        Take into account that `from_date` and `branches` are ignored
+        when the commits are fetched from a Git log file or when
+        `latest_items` flag is set.
+
+        The class raises a `RepositoryError` exception when an error
+        occurs accessing the repository.
 
         :param from_date: obtain commits newer than a specific date
             (inclusive)
         :param branches: names of branches to fetch from (default: None)
+        :param latest_items: sync with the repository to fetch only the
+            newest commits
 
         :returns: a generator of commits
         """
+        if os.path.isfile(self.gitpath):
+            commits = self.__fetch_from_log()
+        else:
+            commits = self.__fetch_from_repo(from_date, branches,
+                                             latest_items)
+
+        ncommits = 0
+        try:
+            for commit in commits:
+                yield commit
+                ncommits += 1
+        except EmptyRepositoryError:
+            pass
+
+        logger.info("Fetch process completed: %s commits fetched",
+                    ncommits)
+
+    def __fetch_from_log(self):
+        logger.info("Fetching commits: '%s' git repository from log file %s",
+                    self.uri, self.gitpath)
+        return self.parse_git_log_from_file(self.gitpath)
+
+    def __fetch_from_repo(self, from_date, branches, latest_items=False):
+        # When no latest items are set or the repository has not
+        # been cloned use the default mode
+        default_mode = not latest_items or not os.path.exists(self.gitpath)
+
+        repo = self.__create_git_repository()
+
+        if default_mode:
+            commits = self.__fetch_commits_from_repo(repo, from_date, branches)
+        else:
+            commits = self.__fetch_newest_commits_from_repo(repo)
+
+        return commits
+
+    def __fetch_commits_from_repo(self, repo, from_date, branches):
         if branches is None:
             branches_text = "all"
         elif len(branches) == 0:
@@ -110,38 +158,30 @@ class Git(Backend):
         else:
             from_date = datetime_to_utc(from_date)
 
-        ncommits = 0
-        commits = self.__fetch_and_parse_log(from_date, branches)
-
-        try:
-            for commit in commits:
-                yield commit
-                ncommits += 1
-        except EmptyRepositoryError:
-            pass
-
-        logger.info("Fetch process completed: %s commits fetched",
-                    ncommits)
-
-    def __fetch_and_parse_log(self, from_date, branches):
-        if os.path.isfile(self.gitpath):
-            return self.parse_git_log_from_file(self.gitpath)
-        else:
-            repo = self.__create_and_update_git_repository()
-            gitlog = repo.log(from_date, branches)
-            return self.parse_git_log_from_iter(gitlog)
-
-    def __create_and_update_git_repository(self):
-        if not os.path.exists(self.gitpath):
-            repo = GitRepository.clone(self.uri, self.gitpath)
-        elif os.path.isdir(self.gitpath):
-            repo = GitRepository(self.uri, self.gitpath)
-
         try:
             repo.pull()
         except EmptyRepositoryError:
             pass
 
+        gitlog = repo.log(from_date, branches)
+        return self.parse_git_log_from_iter(gitlog)
+
+    def __fetch_newest_commits_from_repo(self, repo):
+        logger.info("Fetching latest commits: '%s' git repository",
+                    self.uri)
+
+        hashes = repo.sync()
+        if not hashes:
+            return []
+
+        gitshow = repo.show(hashes)
+        return self.parse_git_log_from_iter(gitshow)
+
+    def __create_git_repository(self):
+        if not os.path.exists(self.gitpath):
+            repo = GitRepository.clone(self.uri, self.gitpath)
+        elif os.path.isdir(self.gitpath):
+            repo = GitRepository(self.uri, self.gitpath)
         return repo
 
     @classmethod
@@ -263,6 +303,9 @@ class GitCommand(BackendCommand):
         group.add_argument('--branches', dest='branches',
                            nargs='+', type=str, default=None,
                            help="Fetch commits only from these branches")
+        group.add_argument('--latest-items', dest='latest_items',
+                           action='store_true',
+                           help="Fetch latest commits added to the repository")
 
         # Mutual exclusive parameters
         exgroup = group.add_mutually_exclusive_group()
@@ -628,6 +671,9 @@ class EmptyRepositoryError(RepositoryError):
     message = "%(repository)s is empty"
 
 
+GitRef = collections.namedtuple('GitRef', ['hash', 'refname'])
+
+
 class GitRepository:
     """Manage a Git repository.
 
@@ -639,6 +685,17 @@ class GitRepository:
     :param uri: URI of the repository
     :param dirpath: local directory where the repository is stored
     """
+    GIT_PRETTY_OUTPUT_OPTS = [
+        '--raw',  # show data in raw format
+        '--numstat',  # show added/deleted lines per file
+        '--pretty=fuller',  # pretty output
+        '--decorate=full',  # show full refs
+        '--parents',  # show parents information
+        '-M',  # detect and report renames
+        '-C',  # detect and report copies
+        '-c',  # show merge info
+    ]
+
     def __init__(self, uri, dirpath):
         gitdir = os.path.join(dirpath, '.git')
 
@@ -740,8 +797,8 @@ class GitRepository:
         """Update repository from 'origin' remote.
 
         Calling this method, the repository will be synchronized with
-        'origin' repository. Any commit stored in the local copy will
-        be removed.
+        'origin' repository using the 'fetch' command. Any commit stored
+        in the local copy will be removed.
 
         :raises EmptyRepositoryError: when the repository is empty and
             the action cannot be performed
@@ -765,6 +822,38 @@ class GitRepository:
 
         logger.debug("Git %s repository pulled into %s",
                      self.uri, self.dirpath)
+
+    def sync(self):
+        """Keep the repository in sync.
+
+        This method will synchronize the repository with its 'origin',
+        fetching newest objects and updating references. It uses low
+        level commands which allow to keep track of which things
+        have changed in the repository.
+
+        The method also returns a list of hashes related to the new
+        commits fetched during the process.
+
+        :returns: list of new commits
+
+        :raises RepositoryError: when an error occurs synchronizing
+            the repository
+        """
+        pack_name, refs = self._fetch_pack()
+
+        if pack_name:
+            commits = self._read_commits_from_pack(pack_name)
+        else:
+            commits = []
+            logger.debug("Git repository %s (%s) does not have any new object",
+                         self.uri, self.dirpath)
+
+        self._update_references(refs)
+
+        logger.debug("Git repository %s (%s) is synced",
+                     self.uri, self.dirpath)
+
+        return commits
 
     def log(self, from_date=None, branches=None, encoding='utf-8'):
         """Read the commit log from the repository.
@@ -800,9 +889,8 @@ class GitRepository:
                            self.uri)
             raise EmptyRepositoryError(repository=self.uri)
 
-        cmd_log = ['git', 'log', '--raw', '--numstat', '--pretty=fuller',
-                   '--decorate=full', '--reverse', '--topo-order',
-                   '--parents', '-M', '-C', '-c']
+        cmd_log = ['git', 'log', '--reverse', '--topo-order']
+        cmd_log.extend(self.GIT_PRETTY_OUTPUT_OPTS)
 
         if from_date:
             dt = from_date.strftime("%Y-%m-%d %H:%M:%S %z")
@@ -818,16 +906,216 @@ class GitRepository:
 
         env = {'LANG': 'C', 'PAGER': ''}
 
+        for line in self._exec_nb(cmd_log, cwd=self.dirpath, env=env):
+            yield line
+
+        logger.debug("Git log fetched from %s repository (%s)",
+                     self.uri, self.dirpath)
+
+    def show(self, commits=None, encoding='utf-8'):
+        """Show the data of a set of commits.
+
+        The method returns the output of Git show command for a
+        set of commits using the following options:
+
+            git show --raw --numstat --pretty=fuller --decorate=full
+                --parents -M -C -c [<commit>...<commit>]
+
+        When the list of commits is empty, the command will return
+        data about the last commit, like the default behaviour of
+        `git show`.
+
+        :param commits: list of commits to show data
+        :param encoding: encode the output using this format
+
+        :returns: a generator where each item is a line from the show output
+
+        :raises EmptyRepositoryError: when the repository is empty and
+            the action cannot be performed
+        :raises RepositoryError: when an error occurs fetching the show output
+        """
+        if self.is_empty():
+            logger.warning("Git %s repository is empty; unable to run show",
+                           self.uri)
+            raise EmptyRepositoryError(repository=self.uri)
+
+        if commits is None:
+            commits = []
+
+        cmd_show = ['git', 'show']
+        cmd_show.extend(self.GIT_PRETTY_OUTPUT_OPTS)
+        cmd_show.extend(commits)
+
+        env = {'LANG': 'C', 'PAGER': ''}
+
+        for line in self._exec_nb(cmd_show, cwd=self.dirpath, env=env):
+            yield line
+
+        logger.debug("Git show fetched from %s repository (%s)",
+                     self.uri, self.dirpath)
+
+    def _fetch_pack(self):
+        """Fetch changes and store them in a pack."""
+
+        remote_refs = self._discover_refs(remote=True)
+        remote_refs = [ref.refname for ref in remote_refs
+                       if not ref.refname.endswith('^{}')]
+
+        repo = self.uri
+        for protocol in ['https://', 'http://']:
+            if repo.startswith(protocol):
+                repo = "git://" + repo[len(protocol):]
+                break
+
+        cmd_fetch_pack = ['git', 'fetch-pack', '--include-tag',
+                          '--keep', repo]
+        cmd_fetch_pack.extend(remote_refs)
+
+        outs = self._exec(cmd_fetch_pack, cwd=self.dirpath, env={'LANG': 'C'})
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+        pack, refs = self._read_fetch_pack(outs)
+
+        return (pack, refs)
+
+    def _read_fetch_pack(self, stream):
+        """Parse fetch-pack command output."""
+
+        PACK_REGEX = re.compile(r"^(pack|keep)\s+(?P<packet>[a-f0-9]{40})$",
+                                re.VERBOSE)
+        REFS_REGEX = re.compile(r"^(?P<hash>[a-f0-9]{40})\s+(?P<ref>.+)$",
+                                re.VERBOSE)
+
+        pack = None
+        refs = []
+
+        for line in stream.split('\n'):
+            m = PACK_REGEX.match(line)
+            if m:
+                pack = m.group('packet')
+                logger.debug("Packet %s found reading 'fetch-pack' output",
+                             pack)
+                continue
+
+            m = REFS_REGEX.match(line)
+            if m:
+                ref = GitRef(m.group('hash'), m.group('ref'))
+                refs.append(ref)
+                logger.debug("Ref %s - %s found reading 'fetch-pack' output",
+                             ref.hash, ref.refname)
+                continue
+
+        if not refs:
+            error = "unable to read 'fetch-pack' output; reason: no refs found"
+            raise RepositoryError(cause=error)
+
+        return (pack, refs)
+
+    def _read_commits_from_pack(self, packet_name):
+        """Read the commits of a pack."""
+
+        filepath = '.git/objects/pack/pack-' + packet_name
+
+        cmd_verify_pack = ['git', 'verify-pack', '-v', filepath]
+
+        outs = self._exec(cmd_verify_pack, cwd=self.dirpath, env={'LANG': 'C'})
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+
+        lines = [line.split(' ') for line in outs.split('\n')]
+        commits = [parts[0] for parts in lines if parts[1] == 'commit']
+
+        return commits
+
+    def _update_references(self, refs):
+        """Update references removing old ones."""
+
+        new_refs = [ref.refname for ref in refs]
+
+        # Delete old references
+        for old_ref in self._discover_refs():
+            if not old_ref.refname.startswith('refs/heads/'):
+                continue
+            if old_ref.refname in new_refs:
+                continue
+            self._update_ref(old_ref, delete=True)
+
+        # Update new references
+        for new_ref in refs:
+            if new_ref.refname.endswith('^{}'):
+                logger.debug("Annotated tag %s ignored for updating in sync process",
+                             new_ref.refname)
+                continue
+            self._update_ref(new_ref)
+
+        # Prune repository to remove old branches
+        cmd = ['git', 'remote', 'prune', 'origin']
+        self._exec(cmd, cwd=self.dirpath, env={'LANG': 'C'})
+
+    def _discover_refs(self, remote=False):
+        """Get the current list of local or remote refs."""
+
+        if remote:
+            cmd_refs = ['git', 'ls-remote', '-h', '-t', 'origin']
+            sep = '\t'
+        else:
+            cmd_refs = ['git', 'show-ref']
+            sep = ' '
+
+        outs = self._exec(cmd_refs, cwd=self.dirpath, env={'LANG': 'C'})
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+
+        refs = []
+
+        for line in outs.split('\n'):
+            data = line.split(sep)
+            ref = GitRef(data[0], data[1])
+            refs.append(ref)
+
+        return refs
+
+    def _update_ref(self, ref, delete=False):
+        """Update a reference."""
+
+        cmd = ['git', 'update-ref']
+
+        if delete:
+            cmd.extend(['-d', ref.refname])
+            action = 'deleted'
+        else:
+            cmd.extend([ref.refname, ref.hash])
+            action = 'updated to %s' % ref.hash
+
+        try:
+            self._exec(cmd, cwd=self.dirpath, env={'LANG': 'C'})
+        except RepositoryError as e:
+            logger.warning("Git %s ref could not be %s during sync process in %s (%s); skipped",
+                           ref.refname, action, self.uri, self.dirpath)
+        else:
+            logger.debug("Git %s ref %s in %s (%s)",
+                         ref.refname, action, self.uri, self.dirpath)
+
+    def _exec_nb(self, cmd, cwd=None, env=None, encoding='utf-8'):
+        """Run a command with a non blocking call.
+
+        Execute `cmd` command with a non blocking call. The command will
+        be run in the directory set by `cwd`. Enviroment variables can be
+        set using the `env` dictionary. The output data is returned
+        as encoded bytes in an iterator. Each item will be a line of the
+        output.
+
+        :returns: an iterator with the output of the command as encoded bytes
+
+        :raises RepositoryError: when an error occurs running the command
+        """
         self.failed_message = None
 
         logger.debug("Running command %s (cwd: %s, env: %s)",
-                     ' '.join(cmd_log), self.dirpath, str(env))
+                     ' '.join(cmd), cwd, str(env))
 
         try:
-            self.proc = subprocess.Popen(cmd_log,
+            self.proc = subprocess.Popen(cmd,
                                          stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE,
-                                         cwd=self.dirpath,
+                                         cwd=cwd,
                                          env=env)
             err_thread = threading.Thread(target=self._read_stderr,
                                           kwargs={'encoding': encoding},
@@ -848,9 +1136,6 @@ class GitRepository:
             cause = "git command - %s (return code: %d)" % \
                 (self.failed_message, self.proc.returncode)
             raise RepositoryError(cause=cause)
-
-        logger.debug("Git log fetched from %s repository (%s)",
-                     self.uri, self.dirpath)
 
     def _read_stderr(self, encoding='utf-8'):
         """Reads self.proc.stderr.
