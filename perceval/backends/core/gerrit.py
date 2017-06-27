@@ -227,7 +227,7 @@ class Gerrit(Backend):
     def metadata_id(item):
         """Extracts the identifier from a Gerrit item."""
 
-        return item['number']
+        return str(item['number'])
 
     @staticmethod
     def metadata_updated_on(item):
