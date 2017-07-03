@@ -1,0 +1,22 @@
+name: perceval-snap 
+version: '0.8.0' 
+summary: Retrieve and gather data from software repositories, 
+description: |
+  Package that gathers and retrieves data from known software repositories.
+  Repository sources includes askbot, bugzilla, bugzillarest, confluence, 
+  discourse, dockerhub, gerrit, git, github, gname, hyperkitty, jenkins, jira, 
+  mbox, mediawiki, meetup, nntp, phabricator, pipermail, redmine, rss, slack, 
+  stackexchange, supybot, telegram.
+grade: stable 
+confinement: strict 
+
+parts:
+  perceval:
+    source: https://github.com/grimoirelab/perceval.git
+    source-tag: 0.8.0
+    plugin: python
+    requirements: requirements.txt
+apps:
+  perceval:
+    command: perceval
+    plugs: [network]
