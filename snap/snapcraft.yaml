@@ -1,4 +1,4 @@
-name: perceval-snap 
+name: perceval
 version: '0.8.0' 
 summary: Retrieve and gather data from software repositories, 
 description: |
@@ -13,7 +13,6 @@ confinement: strict
 parts:
   perceval:
     source: https://github.com/grimoirelab/perceval.git
-    source-tag: 0.8.0
     plugin: python
     requirements: requirements.txt
 apps:
