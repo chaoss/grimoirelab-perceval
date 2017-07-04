@@ -12,7 +12,7 @@ confinement: strict
 
 parts:
   perceval:
-    source: https://github.com/grimoirelab/perceval.git
+    source: .
     plugin: python
     requirements: requirements.txt
 apps:
