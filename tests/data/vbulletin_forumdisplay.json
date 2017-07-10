@@ -1,0 +1,274 @@
+{
+  "response": {
+    "daysprune": -1,
+    "daysprunesel": {
+      "all": "selected=\"selected\""
+    },
+    "forumbits": [
+      {
+        "forum": {
+          "forumid": "26",
+          "threadcount": "41",
+          "replycount": "47",
+          "title": "Forum 26",
+          "description": "Forum 26",
+          "title_clean": "Forum 26",
+          "description_clean": "Forum 26",
+          "lastpostinfo": {
+            "icon": {
+              "iconid": "14",
+              "title": "",
+              "iconpath": "http://www.example.org/images/icons/icon14.png",
+              "imagecategoryid": "2",
+              "displayorder": "1"
+            },
+            "lastpostinfo": {
+              "lastposter": "Person 26",
+              "lastposterid": "1041426",
+              "lastthread": "Person 26 thread",
+              "lastthreadid": "3594",
+              "lastpostdate": "01-04-2017",
+              "lastposttime": "10:33 PM",
+              "trimthread": "Person 26 thr...",
+              "prefix": ""
+            },
+            "show": {
+              "icon": true,
+              "lastpostinfo": true
+            }
+          },
+          "statusicon": "old",
+          "browsers": 0
+        },
+        "parent_is_category": false,
+        "show": {
+          "forumsubscription": false,
+          "forumdescription": true,
+          "subforums": false,
+          "browsers": false
+        }
+      }
+    ],
+    "foruminfo": {
+      "forumid": 15,
+      "title": "Forum 15",
+      "description": "Forum 15 description",
+      "title_clean": "Forum 15",
+      "description_clean": "Forum 15 description"
+    },
+    "forumrules": {
+      "bbcodeon": "On",
+      "can": {
+        "postnew": false,
+        "replyown": false,
+        "replyothers": false,
+        "reply": false,
+        "editpost": 0,
+        "postattachment": false,
+        "attachment": false
+      },
+      "htmlcodeon": "Off",
+      "imgcodeon": "On",
+      "videocodeon": "Off",
+      "smilieson": "On"
+    },
+    "limitlower": 1,
+    "limitupper": 20,
+    "order": {
+      "desc": "checked=\"checked\""
+    },
+    "pagenumber": 1,
+    "perpage": 20,
+    "prefix_options": {
+      "optionclass": "",
+      "optionselected": "",
+      "optiontitle": "[SOLVED]",
+      "optionvalue": "solvedthread_solved"
+    },
+    "prefix_selected": {
+      "0": "anythread",
+      "anythread": " selected=\"selected\"",
+      "none": ""
+    },
+    "sort": {
+      "lastpost": "selected=\"selected\""
+    },
+    "threadbits": [
+      {
+        "thread": {
+          "threadid": "3613",
+          "threadtitle": "Thread 3613",
+          "postusername": "Thread 3613 poster",
+          "postuserid": "860322",
+          "status": {
+            "hot": "hot"
+          },
+          "moderatedprefix": "",
+          "realthreadid": "3613",
+          "rating": 0,
+          "sticky": "0",
+          "preview": "thread 3613 preview",
+          "threadiconpath": "",
+          "threadicontitle": "",
+          "typeprefix": "",
+          "prefix_rich": "",
+          "startdate": "01-18-2017",
+          "starttime": "06:45 PM",
+          "forumid": "15",
+          "forumtitle": "Forum 15",
+          "attach": "0",
+          "replycount": 0,
+          "views": "338",
+          "lastpostdate": "01-20-2017",
+          "lastposttime": "03:25 AM",
+          "lastpostid": "8157"
+        },
+        "show": {
+          "moderated": false,
+          "deletedthread": false,
+          "rexpires": false,
+          "rmanage": false,
+          "threadmoved": false,
+          "paperclip": false,
+          "unsubscribe": false,
+          "sticky": false,
+          "threadicon": false,
+          "gotonewpost": false,
+          "subscribed": false,
+          "pagenav": false,
+          "guestuser": false,
+          "threadrating": false,
+          "threadcount": false,
+          "taglist": false
+        }
+      },
+      {
+        "thread": {
+          "threadid": "3569",
+          "threadtitle": "Thread 3569",
+          "postusername": "THread 2569 poster",
+          "postuserid": "1000182",
+          "status": {
+            "hot": "hot"
+          },
+          "moderatedprefix": "",
+          "realthreadid": "3569",
+          "rating": 0,
+          "sticky": "0",
+          "preview": "Thread 3659 preview...",
+          "threadiconpath": "",
+          "threadicontitle": "",
+          "typeprefix": "",
+          "prefix_rich": "",
+          "startdate": "12-18-2016",
+          "starttime": "01:29 PM",
+          "forumid": "15",
+          "forumtitle": "Forum 15",
+          "taglist": "tag1, tag2",
+          "attach": "0",
+          "replycount": 0,
+          "views": "422",
+          "lastpostdate": "12-18-2016",
+          "lastposttime": "01:29 PM",
+          "lastpostid": "8092"
+        },
+        "show": {
+          "moderated": false,
+          "deletedthread": false,
+          "rexpires": false,
+          "rmanage": false,
+          "threadmoved": false,
+          "paperclip": false,
+          "unsubscribe": false,
+          "sticky": false,
+          "threadicon": false,
+          "gotonewpost": false,
+          "subscribed": false,
+          "pagenav": false,
+          "guestuser": false,
+          "threadrating": false,
+          "threadcount": false,
+          "taglist": true
+        }
+      }
+    ],
+    "totalmods": 0,
+    "totalthreads": "42",
+    "pagenav": {
+      "lastnumbers": {
+        "first": "41",
+        "last": "42"
+      },
+      "nextnumbers": {
+        "first": "21",
+        "last": "40"
+      },
+      "nextpage": 2,
+      "pagenumber": 1,
+      "total": "42",
+      "totalpages": 3,
+      "show_prior_elipsis": 0,
+      "show_after_elipsis": 0,
+      "pagenav": [
+        {
+          "curpage": 1,
+          "numbers": {
+            "first": "1",
+            "last": "20"
+          },
+          "total": "42"
+        },
+        {
+          "curpage": 2,
+          "pagenumbers": {
+            "first": "21",
+            "last": "40"
+          },
+          "total": "42",
+          "show": {
+            "curpage": false
+          }
+        },
+        {
+          "curpage": 3,
+          "pagenumbers": {
+            "first": "41",
+            "last": "42"
+          },
+          "total": "42",
+          "show": {
+            "curpage": false
+          }
+        }
+      ]
+    }
+  },
+  "show": {
+    "foruminfo": true,
+    "newthreadlink": false,
+    "threadicons": true,
+    "threadratings": true,
+    "subscribed_to_forum": false,
+    "moderators": false,
+    "activeusers": false,
+    "post_queue": false,
+    "attachment_queue": false,
+    "mass_move": false,
+    "mass_prune": false,
+    "post_new_announcement": false,
+    "addmoderator": 0,
+    "adminoptions": false,
+    "movethread": false,
+    "deletethread": false,
+    "approvethread": false,
+    "openthread": false,
+    "inlinemod": false,
+    "spamctrls": false,
+    "noposts": true,
+    "dotthreads": false,
+    "threadslist": true,
+    "forumsearch": true,
+    "forumslist": true,
+    "stickies": false
+  }
+}

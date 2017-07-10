@@ -1,0 +1,285 @@
+{
+  "response": {
+    "header": {
+      "pmbox": "\n",
+      "notifications_menubits": "\n",
+      "notifications_total": "\n",
+      "notices": "\n"
+    },
+    "activemembers": "50",
+    "birthdays": [],
+    "forumbits": [
+      {
+        "childforumbits": [
+          {
+            "forum": {
+              "forumid": "9",
+              "threadcount": "587",
+              "replycount": "1794",
+              "title": "Child Forum 1",
+              "description": "Child Forum 1 description",
+              "title_clean": "Child Forum 1",
+              "description_clean": "Child Forum 1 description",
+              "lastpostinfo": {
+                "icon": false,
+                "lastpostinfo": {
+                  "lastposter": "person1",
+                  "lastposterid": "1032151",
+                  "lastthread": "person1 thread title",
+                  "lastthreadid": "3047",
+                  "lastpostdate": "03-24-2017",
+                  "lastposttime": "02:35 AM",
+                  "trimthread": "person1 thread...",
+                  "prefix": ""
+                },
+                "show": {
+                  "icon": false,
+                  "lastpostinfo": true
+                }
+              },
+              "statusicon": "old",
+              "browsers": 0
+            },
+            "parent_is_category": true,
+            "show": {
+              "forumsubscription": false,
+              "forumdescription": true,
+              "subforums": true,
+              "browsers": false
+            }
+          },
+          {
+            "forum": {
+              "forumid": "14",
+              "threadcount": "260",
+              "replycount": "871",
+              "title": "Forum 2",
+              "description": "Forum 2 description",
+              "title_clean": "Forum 2",
+              "description_clean": "Forum 2 description",
+              "lastpostinfo": {
+                "icon": {
+                  "iconid": "14",
+                  "title": "",
+                  "iconpath": "http://www.example.org/images/icons/icon14.png",
+                  "imagecategoryid": "2",
+                  "displayorder": "1"
+                },
+                "lastpostinfo": {
+                  "lastposter": "person2",
+                  "lastposterid": "1043545",
+                  "lastthread": "Person 2 thread",
+                  "lastthreadid": "3604",
+                  "lastpostdate": "02-20-2017",
+                  "lastposttime": "09:35 PM",
+                  "trimthread": "Person 2 th...",
+                  "prefix": "[SOLVED]"
+                },
+                "show": {
+                  "icon": true,
+                  "lastpostinfo": true
+                }
+              },
+              "statusicon": "old",
+              "browsers": 0
+            },
+            "parent_is_category": true,
+            "show": {
+              "forumsubscription": false,
+              "forumdescription": true,
+              "subforums": false,
+              "browsers": false
+            }
+          }
+        ],
+        "forum": {
+          "forumid": "6",
+          "threadcount": "1690",
+          "replycount": "4981",
+          "title": "Top Level Forum",
+          "description": "",
+          "title_clean": "Top Level Forum",
+          "description_clean": "",
+          "lastpostinfo": {
+            "icon": false,
+            "lastpostinfo": {
+              "lastposter": "person 1",
+              "lastposterid": "1032151",
+              "lastthread": "person 1 thread",
+              "lastthreadid": "3047",
+              "lastpostdate": "03-24-2017",
+              "lastposttime": "02:35 AM",
+              "trimthread": "person 1 thre...",
+              "prefix": ""
+            },
+            "show": {
+              "icon": false,
+              "lastpostinfo": true
+            }
+          },
+          "statusicon": "old",
+          "browsers": 0
+        },
+        "parent_is_category": false,
+        "show": {
+          "forumsubscription": false,
+          "forumdescription": false,
+          "subforums": false,
+          "browsers": false
+        }
+      },
+      {
+        "childforumbits": [
+          {
+            "forum": {
+              "forumid": "2",
+              "threadcount": "63",
+              "replycount": "375",
+              "title": "Suggestions &amp; Feedback",
+              "description": "One line\r\nThe next line",
+              "title_clean": "Suggestions &amp; Feedback",
+              "description_clean": "One line\r\nThe next line",
+              "lastpostinfo": {
+                "icon": false,
+                "lastpostinfo": {
+                  "lastposter": "person 3",
+                  "lastposterid": "1043642",
+                  "lastthread": "Welcome to the test fixture",
+                  "lastthreadid": "1",
+                  "lastpostdate": "02-22-2017",
+                  "lastposttime": "07:46 PM",
+                  "trimthread": "Welcome to...",
+                  "prefix": ""
+                },
+                "show": {
+                  "icon": false,
+                  "lastpostinfo": true
+                }
+              },
+              "statusicon": "old",
+              "browsers": 0
+            },
+            "parent_is_category": true,
+            "show": {
+              "forumsubscription": false,
+              "forumdescription": true,
+              "subforums": false,
+              "browsers": false
+            }
+          },
+          {
+            "forum": {
+              "forumid": "4",
+              "threadcount": "294",
+              "replycount": "340",
+              "title": "Forum 3",
+              "description": "Forum 3 description",
+              "title_clean": "Forum 3",
+              "description_clean": "Forum 3 description",
+              "lastpostinfo": {
+                "icon": false,
+                "lastpostinfo": {
+                  "lastposter": "person 4",
+                  "lastposterid": "1044314",
+                  "lastthread": "person 4 thread",
+                  "lastthreadid": "3379",
+                  "lastpostdate": "03-10-2017",
+                  "lastposttime": "08:16 AM",
+                  "trimthread": "person 4 thr...",
+                  "prefix": ""
+                },
+                "show": {
+                  "icon": false,
+                  "lastpostinfo": true
+                }
+              },
+              "statusicon": "old",
+              "browsers": 0
+            },
+            "parent_is_category": true,
+            "show": {
+              "forumsubscription": false,
+              "forumdescription": true,
+              "subforums": true,
+              "browsers": false
+            }
+          }
+        ],
+        "forum": {
+          "forumid": "15",
+          "threadcount": "509",
+          "replycount": "1022",
+          "title": "Forum 15",
+          "description": "",
+          "title_clean": "Forum 15",
+          "description_clean": "",
+          "lastpostinfo": {
+            "icon": false,
+            "lastpostinfo": {
+              "lastposter": "person 5",
+              "lastposterid": "1044498",
+              "lastthread": "hello",
+              "lastthreadid": "3640",
+              "lastpostdate": "03-14-2017",
+              "lastposttime": "05:56 PM",
+              "trimthread": "hello",
+              "prefix": ""
+            },
+            "show": {
+              "icon": false,
+              "lastpostinfo": true
+            }
+          },
+          "statusicon": "old",
+          "browsers": 0
+        },
+        "parent_is_category": false,
+        "show": {
+          "forumsubscription": false,
+          "forumdescription": false,
+          "subforums": false,
+          "browsers": false
+        }
+      }
+    ],
+    "newuserinfo": {
+      "userid": "1044891",
+      "username": "person 6"
+    },
+    "numbermembers": "14955",
+    "template_hook": {
+      "forumhome_wgo_stats": {
+        "blogstats": {
+          "total_blog_users": "18",
+          "total_blog_entries": "40",
+          "entries_in_24hours": 0
+        },
+        "latestentry": {
+          "username": "person 7",
+          "userid": "1010973",
+          "title": "person 7 blog post",
+          "blogid": "51",
+          "postedby_username": "person 7",
+          "postedby_userid": "1010973",
+          "blogtitle": ""
+        }
+      }
+    },
+    "today": "2017-03-25",
+    "totalposts": "6065",
+    "totalthreads": "2261"
+  },
+  "show": {
+    "birthdays": false,
+    "todaysevents": true,
+    "notices": true,
+    "dismiss_link": false,
+    "notifications": false,
+    "loggedinusers": false,
+    "pmlink": false,
+    "homepage": false,
+    "addfriend": false,
+    "emaillink": false,
+    "activemembers": false
+  }
+}
