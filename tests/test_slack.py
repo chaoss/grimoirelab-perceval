@@ -186,6 +186,9 @@ class TestSlackBackend(unittest.TestCase):
         messages = [msg for msg in slack.fetch()]
 
         expected = [
+            ("<@U0003|dizquierdo> commented on <@U0002|acs> file>: Thanks.",
+             'cc2338c23bf5293308d596629c598cd5ec37d14b',
+             1486999900.000000, 'dizquierdo@example.com', 'test channel'),
             ("There are no events this week.",
              'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
              1486969200.000136, 'B0001', 'test channel'),
@@ -224,8 +227,8 @@ class TestSlackBackend(unittest.TestCase):
             self.assertEqual(message['category'], 'message')
             self.assertEqual(message['tag'], 'https://slack.com/C011DUKE8')
 
-            # The first message was sent by a bot
-            if x == 0:
+            # The second message was sent by a bot
+            if x == 1:
                 self.assertEqual(message['data']['bot_id'], expc[3])
             else:
                 self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
@@ -406,13 +409,14 @@ class TestSlackBackend(unittest.TestCase):
         items, has_more = Slack.parse_history(raw_json)
         results = [item for item in items]
 
-        self.assertEqual(len(results), 6)
-        self.assertEqual(results[0]['ts'], '1486969200.000136')
-        self.assertEqual(results[1]['ts'], '1427799888.000000')
-        self.assertEqual(results[2]['ts'], '1427135890.000071')
-        self.assertEqual(results[3]['ts'], '1427135835.000070')
-        self.assertEqual(results[4]['ts'], '1427135740.000069')
-        self.assertEqual(results[5]['ts'], '1427135733.000068')
+        self.assertEqual(len(results), 7)
+        self.assertEqual(results[0]['ts'], '1486999900.000000')
+        self.assertEqual(results[1]['ts'], '1486969200.000136')
+        self.assertEqual(results[2]['ts'], '1427799888.000000')
+        self.assertEqual(results[3]['ts'], '1427135890.000071')
+        self.assertEqual(results[4]['ts'], '1427135835.000070')
+        self.assertEqual(results[5]['ts'], '1427135740.000069')
+        self.assertEqual(results[6]['ts'], '1427135733.000068')
         self.assertEqual(has_more, True)
 
         # Parse a file without results
@@ -470,6 +474,9 @@ class TestSlackBackendCache(unittest.TestCase):
         self.assertEqual(len(cached_messages), len(messages))
 
         expected = [
+            ("<@U0003|dizquierdo> commented on <@U0002|acs> file>: Thanks.",
+             'cc2338c23bf5293308d596629c598cd5ec37d14b',
+             1486999900.000000, 'dizquierdo@example.com', 'test channel'),
             ("There are no events this week.",
              'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
              1486969200.000136, 'B0001', 'test channel'),
@@ -508,8 +515,8 @@ class TestSlackBackendCache(unittest.TestCase):
             self.assertEqual(cmessage['category'], 'message')
             self.assertEqual(cmessage['tag'], 'https://slack.com/C011DUKE8')
 
-            # The first message was sent by a bot
-            if x == 0:
+            # The second message was sent by a bot
+            if x == 1:
                 self.assertEqual(cmessage['data']['bot_id'], expc[3])
             else:
                 self.assertEqual(cmessage['data']['user_data']['profile']['email'], expc[3])

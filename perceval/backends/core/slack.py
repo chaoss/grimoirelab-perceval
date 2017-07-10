@@ -58,7 +58,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.2.1'
+    version = '0.2.2'
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None):
@@ -115,8 +115,16 @@ class Slack(Backend):
             self._push_cache_queue(raw_history)
 
             for message in messages:
+                # Fetch user data
+                user_id = None
                 if 'user' in message:
-                    message['user_data'] = self.__get_or_fetch_user(message['user'])
+                    user_id = message['user']
+                elif 'comment' in message:
+                    user_id = message['comment']['user']
+
+                if user_id:
+                    message['user_data'] = self.__get_or_fetch_user(user_id)
+
                 message['channel_info'] = channel_info
                 yield message
 
@@ -192,8 +200,15 @@ class Slack(Backend):
                 messages, _ = self.parse_history(raw_history)
 
                 for message in messages:
+                    user_id = None
                     if 'user' in message:
-                        message['user_data'] = cached_users[message['user']]
+                        user_id = message['user']
+                    elif 'comment' in message:
+                        user_id = message['comment']['user']
+
+                    if user_id:
+                        message['user_data'] = cached_users[user_id]
+
                     message['channel_info'] = channel_info
                     yield message
                     nmsgs += 1
@@ -245,7 +260,12 @@ class Slack(Backend):
         are combined because there have been cases where two messages were sent
         by different users at the same time.
         """
-        nick = item['user'] if 'user' in item else item['bot_id']
+        if 'user' in item:
+            nick = item['user']
+        elif 'comment' in item:
+            nick = item['comment']['user']
+        else:
+            nick = item['bot_id']
 
         return item['ts'] + nick
 
