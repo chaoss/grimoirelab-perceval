@@ -1,5 +1,24 @@
 # Releases
 
+## Perceval 0.9 - (2017-07-17)
+
+** New features and improvements: **
+
+ * DockerHub added as new backend.
+ * Fetch the latest commits added in a Git repository using
+   the argument `latest-items`.
+
+** Bugs fixed: **
+
+ * In Slack, comment messages were not processed raising an error
+   when their UUIDs were computed. These messages do not include a
+   'user' field on the top layer, which made the backed to fail.
+   This field can be found inside 'comment' key.
+ * Some versions of gerrit return number review as an integer.
+   This value must be converted to string because UUIDs can only be
+   generated using string values. (#144)
+
+
 ## Perceval 0.8 - (2017-05-15)
 
 ** New features and improvements: **
