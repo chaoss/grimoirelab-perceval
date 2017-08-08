@@ -58,7 +58,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.2.2'
+    version = '0.2.3'
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None):
@@ -100,9 +100,10 @@ class Slack(Backend):
         # Slack does not include on its result the lower limit
         # of the search if it has the same date of 'oldest'. To get
         # this messages too, we substract a low value to be sure
-        # the dates are not the same
+        # the dates are not the same. To avoid precision problems
+        # it is substracted by five decimals and not by six.
         if oldest > 0.0:
-            oldest -= .000001
+            oldest -= .00001
 
         fetching = True
         nmsgs = 0
