@@ -510,7 +510,7 @@ class TestGitHubClient(unittest.TestCase):
                                })
 
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
-        raw_issues = [issues for issues in client.get_paginated_items("/issues", payload_type="issue")]
+        raw_issues = [issues for issues in client.get_issues()]
         self.assertEqual(len(raw_issues), 1)
         self.assertEqual(raw_issues[0], issue)
 
@@ -543,7 +543,7 @@ class TestGitHubClient(unittest.TestCase):
         from_date = datetime.datetime(2016, 3, 1)
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
 
-        raw_issues = [issues for issues in client.get_paginated_items("/issues", payload_type="issue", start=from_date)]
+        raw_issues = [issues for issues in client.get_issues(start=from_date)]
         self.assertEqual(len(raw_issues), 1)
         self.assertEqual(raw_issues[0], issue)
 
@@ -586,7 +586,7 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", "aaa")
 
-        issues = [issues for issues in client.get_paginated_items("/issues", payload_type="issue")]
+        issues = [issues for issues in client.get_issues()]
 
         self.assertEqual(len(issues), 2)
         self.assertEqual(issues[0], issue_1)
@@ -620,7 +620,7 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
 
-        raw_issues = [issues for issues in client.get_paginated_items("/issues", payload_type="issue")]
+        raw_issues = [issues for issues in client.get_issues()]
         self.assertEqual(raw_issues[0], issue)
 
         # Check requests
@@ -689,7 +689,7 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
 
         with self.assertRaises(requests.exceptions.HTTPError):
-            _ = [issues for issues in client.get_paginated_items("/issues", payload_type="issue")]
+            _ = [issues for issues in client.get_issues()]
 
         # Check requests
         expected = {
@@ -734,7 +734,7 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=True)
 
         before = int(time.time())
-        issues = [issues for issues in client.get_paginated_items("/issues", payload_type="issue")]
+        issues = [issues for issues in client.get_issues()]
         after = int(time.time())
         dif = after - before
 
@@ -775,7 +775,7 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=False)
 
         with self.assertRaises(RateLimitError):
-            _ = [issues for issues in client.get_paginated_items("/issues", payload_type="issue")]
+            _ = [issues for issues in client.get_issues()]
 
         # Check requests
         expected = {
