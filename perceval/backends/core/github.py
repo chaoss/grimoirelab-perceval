@@ -88,8 +88,10 @@ class GitHub(Backend):
 
     def __get_issue_comments(self, issue_number):
         """ Get issue comments """
+
         comments = []
-        group_comments = self.client.get_paginated_items("/issues/" + str(issue_number) + "/comments", "comment")
+        group_comments = self.client.get_issue_comments(issue_number)
+
         for raw_comments in group_comments:
             self._push_cache_queue('{COMMENTS}')
             self._push_cache_queue(raw_comments)
@@ -102,6 +104,7 @@ class GitHub(Backend):
 
     def __get_issue_assignees(self, raw_assignees):
         """ Get issue assignees """
+
         self._push_cache_queue('{ASSIGNEES}')
         self._push_cache_queue(raw_assignees)
         self._flush_cache_queue()
@@ -147,7 +150,7 @@ class GitHub(Backend):
 
         from_date = datetime_to_utc(from_date)
 
-        issues_groups = self.client.get_paginated_items("/issues", payload_type="issue", start=from_date)
+        issues_groups = self.client.get_issues(start=from_date)
 
         for raw_issues in issues_groups:
             self._push_cache_queue('{ISSUES}')
@@ -240,6 +243,7 @@ class GitHub(Backend):
 
     def __init_extra_issue_fields(self, issue):
         """Add fields to an issue"""
+
         issue["user_data"] = {}
         issue["assignees_data"] = {}
         issue["comments_data"] = {}
@@ -379,8 +383,15 @@ class GitHubClient:
         logger.debug("Rate limit: %s" % (self.rate_limit))
         return r
 
-    def get_paginated_items(self, path, payload_type, start=None):
+    def get_issue_comments(self, issue_number):
+        return self._fetch_items("/issues/" + str(issue_number) + "/comments", "comment")
+
+    def get_issues(self, start=None):
+        return self._fetch_items("/issues", payload_type="issue", start=start)
+
+    def _fetch_items(self, path, payload_type, start=None):
         """ Return the items from github API using links pagination """
+        
         page = 0  # current page
         last_page = None  # last page
         url_next = self.__get_url(path, start)
