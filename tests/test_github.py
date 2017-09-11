@@ -160,8 +160,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[0]['category'], 'issue')
         self.assertEqual(issues[0]['tag'], 'https://github.com/zhquan_example/repo')
 
-        self.assertEqual(len(issues[0]['data']['assignees_data']), len(expected['assignees_data']))
-        self.assertDictEqual(issues[0]['data']['assignees_data'][0], expected['assignees_data'][0])
+        self.assertDictEqual(issues[0]['data']['assignee_data'], expected['assignee_data'])
         self.assertEqual(len(issues[0]['data']['comments_data']), len(expected['comments_data']))
         self.assertDictEqual(issues[0]['data']['comments_data'][0], expected['comments_data'][0])
 
@@ -297,7 +296,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[0]['updated_on'], 1458054569.0)
         self.assertEqual(issues[0]['category'], 'issue')
         self.assertEqual(issues[0]['tag'], 'https://github.com/zhquan_example/repo')
-        self.assertDictEqual(issues[0]['data']['assignees_data'], expected['assignees_data'])
+        self.assertDictEqual(issues[0]['data']['assignee_data'], expected['assignee_data'])
         self.assertEqual(len(issues[0]['data']['comments_data']), len(expected['comments_data']))
 
         self.assertDictEqual(issues[0]['data']['comments_data'][0], expected['comments_data'][0])
@@ -471,6 +470,7 @@ class TestGitHubBackendCache(unittest.TestCase):
         del issues[0]['timestamp']
         del cache_issues[0]['timestamp']
         self.assertEqual(len(issues), len(cache_issues))
+
         self.assertDictEqual(issues[0], cache_issues[0])
 
     def test_fetch_from_empty_cache(self):
