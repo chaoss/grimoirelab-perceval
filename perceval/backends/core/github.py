@@ -172,6 +172,47 @@ class GitHub(Backend):
                 self._flush_cache_queue()
                 yield issue
 
+    def __fetch_issues_from_cache(self, cache_items):
+        """Fetch issues from cache"""
+
+        raw_content = next(cache_items)
+        issues = (i for i in json.loads(raw_content))
+        return issues
+
+    def __fetch_user_and_organization_from_cache(self, user_login, cache_items):
+        """Fetch user and organization from cache"""
+
+        raw_user = next(cache_items)
+        raw_org = next(cache_items)
+        return self.__get_user_and_organization(user_login, raw_user, raw_org)
+
+    def __fetch_assignees_from_cache(self, cache_items):
+        """Fetch issue assignees from cache"""
+
+        raw_assignees = next(cache_items)
+        assignees = []
+        for a in raw_assignees:
+            tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            a = self.__get_user_and_organization(a['login'], raw_user, raw_org)
+            assignees.append(a)
+
+        return assignees
+
+    def __fetch_comments_from_cache(self, cache_items):
+        """Fetch issue comments from cache"""
+
+        raw_content = next(cache_items)
+        comments = json.loads(raw_content)
+        for c in comments:
+            tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            c["user_data"] = self.__get_user_and_organization(c['user']['login'], raw_user, raw_org)
+
+        return comments
+
     @metadata
     def fetch_from_cache(self):
         """Fetch the issues from the cache.
@@ -195,40 +236,22 @@ class GitHub(Backend):
                 raw_item = next(cache_items)
 
                 if raw_item == '{ISSUES}':
-                    raw_content = next(cache_items)
-                    issues = (i for i in json.loads(raw_content))
+                    issues = self.__fetch_issues_from_cache(cache_items)
 
                     if issues:
                         current_issue = next(issues)
                         self.__init_extra_issue_fields(current_issue)
 
                 elif raw_item == '{USER}':
-                    raw_user = next(cache_items)
-                    raw_org = next(cache_items)
                     current_issue["user_data"] = \
-                        self.__get_user_and_organization(current_issue['user']['login'], raw_user, raw_org)
+                        self.__fetch_user_and_organization_from_cache(current_issue['user']['login'], cache_items)
 
                 elif raw_item == '{ASSIGNEES}':
-                    raw_assignees = next(cache_items)
-                    assignees = []
-                    for a in raw_assignees:
-                        tag = next(cache_items)
-                        raw_user = next(cache_items)
-                        raw_org = next(cache_items)
-                        a = self.__get_user_and_organization(a['login'], raw_user, raw_org)
-                        assignees.append(a)
-
+                    assignees = self.__fetch_assignees_from_cache(cache_items)
                     current_issue["assignees_data"] = assignees
 
                 elif raw_item == '{COMMENTS}':
-                    raw_content = next(cache_items)
-                    comments = json.loads(raw_content)
-                    for c in comments:
-                        tag = next(cache_items)
-                        raw_user = next(cache_items)
-                        raw_org = next(cache_items)
-                        c["user_data"] = self.__get_user_and_organization(c['user']['login'], raw_user, raw_org)
-
+                    comments = self.__fetch_comments_from_cache(cache_items)
                     current_issue["comments_data"] = comments
 
                 elif raw_item == '{}':
@@ -391,7 +414,7 @@ class GitHubClient:
 
     def _fetch_items(self, path, payload_type, start=None):
         """ Return the items from github API using links pagination """
-        
+
         page = 0  # current page
         last_page = None  # last page
         url_next = self.__get_url(path, start)
