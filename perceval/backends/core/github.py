@@ -113,13 +113,15 @@ class GitHub(Backend):
                 for field in TARGET_ISSUE_FIELDS:
                     issue[field + '_data'] = {}
 
-                    if issue[field]:
-                        if field == 'user':
-                            issue[field + '_data'] = self.__get_user(issue[field]['login'])
-                        elif field == 'assignee':
-                            issue[field + '_data'] = self.__get_issue_assignee(issue[field])
-                        elif field == 'comments':
-                            issue[field + '_data'] = self.__get_issue_comments(issue['number'])
+                    if not issue[field]:
+                        continue
+
+                    if field == 'user':
+                        issue[field + '_data'] = self.__get_user(issue[field]['login'])
+                    elif field == 'assignee':
+                        issue[field + '_data'] = self.__get_issue_assignee(issue[field])
+                    elif field == 'comments':
+                        issue[field + '_data'] = self.__get_issue_comments(issue['number'])
 
                 self._push_cache_queue('{}')
                 self._flush_cache_queue()
