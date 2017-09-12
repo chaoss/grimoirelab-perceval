@@ -86,6 +86,90 @@ class GitHub(Backend):
                                    sleep_for_rate, min_rate_to_sleep)
         self._users = {}  # internal users cache
 
+    @metadata
+    def fetch(self, from_date=DEFAULT_DATETIME):
+        """Fetch the issues from the repository.
+
+        The method retrieves, from a GitHub repository, the issues
+        updated since the given date.
+
+        :param from_date: obtain issues updated since this date
+
+        :returns: a generator of issues
+        """
+
+        self._purge_cache_queue()
+
+        from_date = datetime_to_utc(from_date)
+
+        issues_groups = self.client.get_issues(start=from_date)
+
+        for raw_issues in issues_groups:
+            self._push_cache_queue('{ISSUES}')
+            self._push_cache_queue(raw_issues)
+            self._flush_cache_queue()
+            issues = json.loads(raw_issues)
+            for issue in issues:
+                for field in TARGET_ISSUE_FIELDS:
+                    issue[field + '_data'] = {}
+
+                    if issue[field]:
+                        if field == 'user':
+                            issue[field + '_data'] = self.__get_user(issue[field]['login'])
+                        elif field == 'assignee':
+                            issue[field + '_data'] = self.__get_issue_assignee(issue[field])
+                        elif field == 'comments':
+                            issue[field + '_data'] = self.__get_issue_comments(issue['number'])
+
+                self._push_cache_queue('{}')
+                self._flush_cache_queue()
+                yield issue
+
+    @metadata
+    def fetch_from_cache(self):
+        """Fetch the issues from the cache.
+        It returns the issues stored in the cache object provided during
+        the initialization of the object. If this method is called but
+        no cache object was provided, the method will raise a `CacheError`
+        exception.
+        :returns: a generator of items
+        :raises CacheError: raised when an error occurs accessing the
+            cache
+        """
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        cache_items = self.cache.retrieve()
+        current_issue = None
+        issues = None
+
+        while True:
+            try:
+                raw_item = next(cache_items)
+
+                if raw_item == '{ISSUES}':
+                    issues = self.__fetch_issues_from_cache(cache_items)
+
+                    if issues:
+                        current_issue = next(issues)
+                        self.__init_extra_issue_fields(current_issue)
+                elif raw_item == '{USER}':
+                    current_issue['user_data'] = \
+                        self.__fetch_user_and_organization_from_cache(current_issue['user']['login'], cache_items)
+                elif raw_item == '{ASSIGNEE}':
+                    assignee = self.__fetch_assignee_from_cache(cache_items)
+                    current_issue['assignee_data'] = assignee
+                elif raw_item == '{COMMENTS}':
+                    comments = self.__fetch_comments_from_cache(cache_items)
+                    current_issue['comments_data'] = comments
+                elif raw_item == '{}':
+                    yield current_issue
+                    current_issue = next(issues)
+                    self.__init_extra_issue_fields(current_issue)
+
+            except StopIteration:
+                break
+
     def __get_issue_comments(self, issue_number):
         """ Get issue comments """
 
@@ -97,7 +181,7 @@ class GitHub(Backend):
             self._push_cache_queue(raw_comments)
             self._flush_cache_queue()
             for comment in json.loads(raw_comments):
-                comment["user_data"] = self.__get_user(comment['user']['login'])
+                comment['user_data'] = self.__get_user(comment['user']['login'])
                 comments.append(comment)
 
         return comments
@@ -132,60 +216,22 @@ class GitHub(Backend):
 
         return user
 
-    @metadata
-    def fetch(self, from_date=DEFAULT_DATETIME):
-        """Fetch the issues from the repository.
-
-        The method retrieves, from a GitHub repository, the issues
-        updated since the given date.
-
-        :param from_date: obtain issues updated since this date
-
-        :returns: a generator of issues
-        """
-
-        self._purge_cache_queue()
-
-        from_date = datetime_to_utc(from_date)
-
-        issues_groups = self.client.get_issues(start=from_date)
-
-        for raw_issues in issues_groups:
-            self._push_cache_queue('{ISSUES}')
-            self._push_cache_queue(raw_issues)
-            self._flush_cache_queue()
-            issues = json.loads(raw_issues)
-            for issue in issues:
-                for field in TARGET_ISSUE_FIELDS:
-                    issue[field + "_data"] = {}
-
-                    if issue[field]:
-                        if field == "user":
-                            issue[field + "_data"] = self.__get_user(issue[field]['login'])
-                        elif field == "assignee":
-                            issue[field + "_data"] = self.__get_issue_assignee(issue[field])
-                        elif field == "comments":
-                            issue[field + "_data"] = self.__get_issue_comments(issue["number"])
-                self._push_cache_queue('{}')
-                self._flush_cache_queue()
-                yield issue
-
     def __fetch_issues_from_cache(self, cache_items):
-        """Fetch issues from cache"""
+        """ Fetch issues from cache """
 
         raw_content = next(cache_items)
         issues = (i for i in json.loads(raw_content))
         return issues
 
     def __fetch_user_and_organization_from_cache(self, user_login, cache_items):
-        """Fetch user and organization from cache"""
+        """ Fetch user and organization from cache """
 
         raw_user = next(cache_items)
         raw_org = next(cache_items)
         return self.__get_user_and_organization(user_login, raw_user, raw_org)
 
     def __fetch_assignee_from_cache(self, cache_items):
-        """Fetch issue assignee from cache"""
+        """ Fetch issue assignee from cache """
 
         raw_assignee = next(cache_items)
         raw_user = next(cache_items)
@@ -195,7 +241,7 @@ class GitHub(Backend):
         return assignee
 
     def __fetch_comments_from_cache(self, cache_items):
-        """Fetch issue comments from cache"""
+        """ Fetch issue comments from cache """
 
         raw_content = next(cache_items)
         comments = json.loads(raw_content)
@@ -203,67 +249,16 @@ class GitHub(Backend):
             tag = next(cache_items)
             raw_user = next(cache_items)
             raw_org = next(cache_items)
-            c["user_data"] = self.__get_user_and_organization(c['user']['login'], raw_user, raw_org)
+            c['user_data'] = self.__get_user_and_organization(c['user']['login'], raw_user, raw_org)
 
         return comments
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the issues from the cache.
-        It returns the issues stored in the cache object provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
-        :returns: a generator of items
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        cache_items = self.cache.retrieve()
-        current_issue = None
-        issues = None
-
-        while True:
-            try:
-                raw_item = next(cache_items)
-
-                if raw_item == '{ISSUES}':
-                    issues = self.__fetch_issues_from_cache(cache_items)
-
-                    if issues:
-                        current_issue = next(issues)
-                        self.__init_extra_issue_fields(current_issue)
-
-                elif raw_item == '{USER}':
-                    current_issue["user_data"] = \
-                        self.__fetch_user_and_organization_from_cache(current_issue['user']['login'], cache_items)
-
-                elif raw_item == '{ASSIGNEE}':
-                    assignee = self.__fetch_assignee_from_cache(cache_items)
-                    current_issue["assignee_data"] = assignee
-
-                elif raw_item == '{COMMENTS}':
-                    comments = self.__fetch_comments_from_cache(cache_items)
-                    current_issue["comments_data"] = comments
-
-                elif raw_item == '{}':
-                    yield current_issue
-                    current_issue = next(issues)
-                    self.__init_extra_issue_fields(current_issue)
-
-            except StopIteration:
-                if issues:
-                    (i for i in issues)
-                break
-
     def __init_extra_issue_fields(self, issue):
-        """Add fields to an issue"""
+        """ Add fields to an issue """
 
-        issue["user_data"] = {}
-        issue["assignee_data"] = {}
-        issue["comments_data"] = {}
+        issue['user_data'] = {}
+        issue['assignee_data'] = {}
+        issue['comments_data'] = {}
 
     def __get_user_and_organization(self, login, raw_user, raw_org):
         found = self._users.get(login)
@@ -349,7 +344,58 @@ class GitHubClient:
 
         self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
 
+    def get_issue_comments(self, issue_number):
+        """ Get the issue comments from pagination """
+
+        return self._fetch_items("/issues/" + str(issue_number) + "/comments", "comment")
+
+    def get_issues(self, start=None):
+        """ Get the issues from pagination """
+
+        return self._fetch_items("/issues", payload_type="issue", start=start)
+
+    def get_user(self, login):
+        """ Get the user information and update the user cache """
+
+        user = None
+
+        if login in self._users:
+            return self._users[login]
+
+        url_user = GITHUB_API_URL + "/users/" + login
+
+        logging.info("Getting info for %s" % (url_user))
+        r = self.__send_request(url_user, headers=self.__get_headers())
+        user = r.text
+        self._users[login] = user
+
+        return user
+
+    def get_user_orgs(self, login):
+        """ Get the user public organizations """
+
+        if login in self._users_orgs:
+            return self._users_orgs[login]
+
+        url = GITHUB_API_URL + "/users/" + login + "/orgs"
+        try:
+            r = self.__send_request(url, headers=self.__get_headers())
+            orgs = r.text
+        except requests.exceptions.HTTPError as ex:
+            # 404 not found is wrongly received sometimes
+            if ex.response.status_code == 404:
+                logger.error("Can't get github login orgs: %s", ex)
+                orgs = '[]'
+            else:
+                raise ex
+
+        self._users_orgs[login] = orgs
+
+        return orgs
+
     def __get_url_repo(self):
+        """ Build URL repo """
+
         github_api = GITHUB_API_URL
         if self.base_url:
             github_api = self.base_url
@@ -358,17 +404,21 @@ class GitHubClient:
         return url_repo
 
     def __get_url(self, path, startdate=None):
+        """ Build repo-"related URL """
+
         url = self.__get_url_repo() + path
         return url
 
-    def __get_payload(self, payload_type="issue", startdate=None):
+    def __get_payload(self, payload_type='issue', startdate=None):
+        """ Build payload """
+
         # 100 in other items. 20 for pull requests. 30 issues
         payload = {'per_page': 30,
                    'direction': 'asc'}
-        if payload_type == "issue":
+        if payload_type == 'issue':
             payload['state'] = 'all'
             payload['sort'] = 'updated'
-        elif payload_type == "comment":
+        elif payload_type == 'comment':
             payload['sort'] = 'updated'
 
         if startdate:
@@ -377,6 +427,8 @@ class GitHubClient:
         return payload
 
     def __get_headers(self):
+        """ Set header for request """
+
         if self.token:
             headers = {'Authorization': 'token ' + self.token}
             return headers
@@ -399,12 +451,6 @@ class GitHubClient:
         self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
         logger.debug("Rate limit: %s" % (self.rate_limit))
         return r
-
-    def get_issue_comments(self, issue_number):
-        return self._fetch_items("/issues/" + str(issue_number) + "/comments", "comment")
-
-    def get_issues(self, start=None):
-        return self._fetch_items("/issues", payload_type="issue", start=start)
 
     def _fetch_items(self, path, payload_type, start=None):
         """ Return the items from github API using links pagination """
@@ -437,52 +483,15 @@ class GitHubClient:
                 items = r.text
                 logger.debug("Page: %i/%i" % (page, last_page))
 
-    def get_user(self, login):
-        user = None
-
-        if login in self._users:
-            return self._users[login]
-
-        url_user = GITHUB_API_URL + "/users/" + login
-
-        logging.info("Getting info for %s" % (url_user))
-        r = self.__send_request(url_user, headers=self.__get_headers())
-        user = r.text
-        self._users[login] = user
-
-        return user
-
-    def get_user_orgs(self, login):
-        # Get the public organizations also
-
-        if login in self._users_orgs:
-            return self._users_orgs[login]
-
-        url = GITHUB_API_URL + "/users/" + login + "/orgs"
-        try:
-            r = self.__send_request(url, headers=self.__get_headers())
-            orgs = r.text
-        except requests.exceptions.HTTPError as ex:
-            # 404 not found is wrongly received sometimes
-            if ex.response.status_code == 404:
-                logger.error("Can't get github login orgs: %s", ex)
-                orgs = '[]'
-            else:
-                raise ex
-
-        self._users_orgs[login] = orgs
-
-        return orgs
-
 
 class GitHubCommand(BackendCommand):
-    """Class to run GitHub backend from the command line."""
+    """ Class to run GitHub backend from the command line. """
 
     BACKEND = GitHub
 
     @staticmethod
     def setup_cmd_parser():
-        """Returns the GitHub argument parser."""
+        """ Returns the GitHub argument parser. """
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               token_auth=True,
