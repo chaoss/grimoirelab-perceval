@@ -173,7 +173,7 @@ class GitHub(Backend):
                 break
 
     def __get_issue_comments(self, issue_number):
-        """ Get issue comments """
+        """Get issue comments"""
 
         comments = []
         group_comments = self.client.get_issue_comments(issue_number)
@@ -189,7 +189,7 @@ class GitHub(Backend):
         return comments
 
     def __get_issue_assignee(self, raw_assignee):
-        """ Get issue assignee """
+        """Get issue assignee"""
 
         self._push_cache_queue('{ASSIGNEE}')
         self._push_cache_queue(raw_assignee)
@@ -199,7 +199,7 @@ class GitHub(Backend):
         return assignee
 
     def __get_user(self, login):
-        """ Get user and org data for the login """
+        """Get user and org data for the login"""
 
         user = {}
 
@@ -219,21 +219,21 @@ class GitHub(Backend):
         return user
 
     def __fetch_issues_from_cache(self, cache_items):
-        """ Fetch issues from cache """
+        """Fetch issues from cache"""
 
         raw_content = next(cache_items)
         issues = (i for i in json.loads(raw_content))
         return issues
 
     def __fetch_user_and_organization_from_cache(self, user_login, cache_items):
-        """ Fetch user and organization from cache """
+        """Fetch user and organization from cache"""
 
         raw_user = next(cache_items)
         raw_org = next(cache_items)
         return self.__get_user_and_organization(user_login, raw_user, raw_org)
 
     def __fetch_assignee_from_cache(self, cache_items):
-        """ Fetch issue assignee from cache """
+        """Fetch issue assignee from cache"""
 
         raw_assignee = next(cache_items)
         raw_user = next(cache_items)
@@ -243,7 +243,7 @@ class GitHub(Backend):
         return assignee
 
     def __fetch_comments_from_cache(self, cache_items):
-        """ Fetch issue comments from cache """
+        """Fetch issue comments from cache"""
 
         raw_content = next(cache_items)
         comments = json.loads(raw_content)
@@ -256,7 +256,7 @@ class GitHub(Backend):
         return comments
 
     def __init_extra_issue_fields(self, issue):
-        """ Add fields to an issue """
+        """Add fields to an issue"""
 
         issue['user_data'] = {}
         issue['assignee_data'] = {}
@@ -323,7 +323,7 @@ class GitHub(Backend):
 
 
 class GitHubClient:
-    """ Client for retieving information from GitHub API """
+    """Client for retieving information from GitHub API"""
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
@@ -347,17 +347,17 @@ class GitHubClient:
         self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
 
     def get_issue_comments(self, issue_number):
-        """ Get the issue comments from pagination """
+        """Get the issue comments from pagination"""
 
         return self._fetch_items("/issues/" + str(issue_number) + "/comments", "comment")
 
     def get_issues(self, start=None):
-        """ Get the issues from pagination """
+        """Get the issues from pagination"""
 
         return self._fetch_items("/issues", payload_type="issue", start=start)
 
     def get_user(self, login):
-        """ Get the user information and update the user cache """
+        """Get the user information and update the user cache"""
 
         user = None
 
@@ -374,7 +374,7 @@ class GitHubClient:
         return user
 
     def get_user_orgs(self, login):
-        """ Get the user public organizations """
+        """Get the user public organizations"""
 
         if login in self._users_orgs:
             return self._users_orgs[login]
@@ -396,7 +396,7 @@ class GitHubClient:
         return orgs
 
     def __get_url_repo(self):
-        """ Build URL repo """
+        """Build URL repo"""
 
         github_api = GITHUB_API_URL
         if self.base_url:
@@ -406,13 +406,13 @@ class GitHubClient:
         return url_repo
 
     def __get_url(self, path, startdate=None):
-        """ Build repo-"related URL """
+        """Build repo-"related URL"""
 
         url = self.__get_url_repo() + path
         return url
 
     def __get_payload(self, payload_type='issue', startdate=None):
-        """ Build payload """
+        """Build payload"""
 
         # 100 in other items. 20 for pull requests. 30 issues
         payload = {'per_page': 30,
@@ -429,14 +429,14 @@ class GitHubClient:
         return payload
 
     def __get_headers(self):
-        """ Set header for request """
+        """Set header for request"""
 
         if self.token:
             headers = {'Authorization': 'token ' + self.token}
             return headers
 
     def __send_request(self, url, params=None, headers=None):
-        """ GET HTTP caring of rate limit """
+        """GET HTTP caring of rate limit"""
 
         if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
             seconds_to_reset = self.rate_limit_reset_ts - int(time.time()) + 1
@@ -455,7 +455,7 @@ class GitHubClient:
         return r
 
     def _fetch_items(self, path, payload_type, start=None):
-        """ Return the items from github API using links pagination """
+        """Return the items from github API using links pagination"""
 
         page = 0  # current page
         last_page = None  # last page
@@ -487,13 +487,13 @@ class GitHubClient:
 
 
 class GitHubCommand(BackendCommand):
-    """ Class to run GitHub backend from the command line. """
+    """Class to run GitHub backend from the command line."""
 
     BACKEND = GitHub
 
     @staticmethod
     def setup_cmd_parser():
-        """ Returns the GitHub argument parser. """
+        """Returns the GitHub argument parser."""
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               token_auth=True,
