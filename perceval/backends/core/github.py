@@ -46,6 +46,7 @@ GITHUB_API_URL = "https://api.github.com"
 MIN_RATE_LIMIT = 10
 MAX_RATE_LIMIT = 500
 
+TARGET_ISSUE_FIELDS = ['user', 'assignee', 'comments']
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.6.3'
+    version = '0.7.0'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -84,25 +85,6 @@ class GitHub(Backend):
         self.client = GitHubClient(owner, repository, api_token, base_url,
                                    sleep_for_rate, min_rate_to_sleep)
         self._users = {}  # internal users cache
-
-    def __get_user(self, login):
-        """ Get user and org data for the login """
-
-        user = {}
-
-        if not login:
-            return user
-
-        user_raw = self.client.get_user(login)
-        user = json.loads(user_raw)
-        self._push_cache_queue(user_raw)
-        user_orgs_raw = \
-            self.client.get_user_orgs(login)
-        user['organizations'] = json.loads(user_orgs_raw)
-        self._push_cache_queue(user_orgs_raw)
-        self._flush_cache_queue()
-
-        return user
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -120,31 +102,39 @@ class GitHub(Backend):
 
         from_date = datetime_to_utc(from_date)
 
-        issues_groups = self.client.get_issues(from_date)
+        issues_groups = self.client.get_issues(start=from_date)
 
         for raw_issues in issues_groups:
+            self._push_cache_queue('{ISSUES}')
             self._push_cache_queue(raw_issues)
             self._flush_cache_queue()
             issues = json.loads(raw_issues)
             for issue in issues:
-                for field in ['user', 'assignee']:
-                    if issue[field]:
-                        issue[field + "_data"] = self.__get_user(issue[field]['login'])
-                    else:
-                        issue[field + "_data"] = {}
+                for field in TARGET_ISSUE_FIELDS:
+                    issue[field + '_data'] = {}
+
+                    if not issue[field]:
+                        continue
+
+                    if field == 'user':
+                        issue[field + '_data'] = self.__get_user(issue[field]['login'])
+                    elif field == 'assignee':
+                        issue[field + '_data'] = self.__get_issue_assignee(issue[field])
+                    elif field == 'comments':
+                        issue[field + '_data'] = self.__get_issue_comments(issue['number'])
+
+                self._push_cache_queue('{}')
+                self._flush_cache_queue()
                 yield issue
 
     @metadata
     def fetch_from_cache(self):
         """Fetch the issues from the cache.
-
         It returns the issues stored in the cache object provided during
         the initialization of the object. If this method is called but
         no cache object was provided, the method will raise a `CacheError`
         exception.
-
         :returns: a generator of items
-
         :raises CacheError: raised when an error occurs accessing the
             cache
         """
@@ -152,51 +142,136 @@ class GitHub(Backend):
             raise CacheError(cause="cache instance was not provided")
 
         cache_items = self.cache.retrieve()
-
+        current_issue = None
         issues = None
 
         while True:
             try:
                 raw_item = next(cache_items)
+
+                if raw_item == '{ISSUES}':
+                    issues = self.__fetch_issues_from_cache(cache_items)
+
+                    if issues:
+                        current_issue = next(issues)
+                        self.__init_extra_issue_fields(current_issue)
+                elif raw_item == '{USER}':
+                    current_issue['user_data'] = \
+                        self.__fetch_user_and_organization_from_cache(current_issue['user']['login'], cache_items)
+                elif raw_item == '{ASSIGNEE}':
+                    assignee = self.__fetch_assignee_from_cache(cache_items)
+                    current_issue['assignee_data'] = assignee
+                elif raw_item == '{COMMENTS}':
+                    comments = self.__fetch_comments_from_cache(cache_items)
+                    current_issue['comments_data'] = comments
+                elif raw_item == '{}':
+                    yield current_issue
+                    current_issue = next(issues)
+                    self.__init_extra_issue_fields(current_issue)
+
             except StopIteration:
-                if issues:
-                    for issue in self.__build_issues(issues):
-                        yield issue
                 break
 
-            item = json.loads(raw_item)
+    def __get_issue_comments(self, issue_number):
+        """Get issue comments"""
 
-            if 'login' in item:
-                try:
-                    raw_orgs = next(cache_items)
-                except StopIteration:
-                    # Fatal error. Cache should had stored an organizations item
-                    # per parsed user.
-                    cause = "cache is exhausted but more items were expected"
-                    raise CacheError(cause=cause)
+        comments = []
+        group_comments = self.client.get_issue_comments(issue_number)
 
-                item['organizations'] = json.loads(raw_orgs)
-                self._users[item['login']] = item
-                continue
+        for raw_comments in group_comments:
+            self._push_cache_queue('{COMMENTS}')
+            self._push_cache_queue(raw_comments)
+            self._flush_cache_queue()
+            for comment in json.loads(raw_comments):
+                comment['user_data'] = self.__get_user(comment['user']['login'])
+                comments.append(comment)
 
-            # A new set of issues has been read. It means we already
-            # have the enough information to build and return the
-            # previous set
-            if issues:
-                for issue in self.__build_issues(issues):
-                    yield issue
+        return comments
 
-            # Next issues to parse
-            issues = item
+    def __get_issue_assignee(self, raw_assignee):
+        """Get issue assignee"""
 
-    def __build_issues(self, issues):
-        for issue in issues:
-            for field in ['user', 'assignee']:
-                issue[field + '_data'] = {}
-                if issue[field]:
-                    issue[field + '_data'] = \
-                        self._users[issue[field]['login']]
-            yield issue
+        self._push_cache_queue('{ASSIGNEE}')
+        self._push_cache_queue(raw_assignee)
+        self._flush_cache_queue()
+        assignee = self.__get_user(raw_assignee['login'])
+
+        return assignee
+
+    def __get_user(self, login):
+        """Get user and org data for the login"""
+
+        user = {}
+
+        if not login:
+            return user
+
+        user_raw = self.client.get_user(login)
+        user = json.loads(user_raw)
+        self._push_cache_queue('{USER}')
+        self._push_cache_queue(user_raw)
+        user_orgs_raw = \
+            self.client.get_user_orgs(login)
+        user['organizations'] = json.loads(user_orgs_raw)
+        self._push_cache_queue(user_orgs_raw)
+        self._flush_cache_queue()
+
+        return user
+
+    def __fetch_issues_from_cache(self, cache_items):
+        """Fetch issues from cache"""
+
+        raw_content = next(cache_items)
+        issues = (i for i in json.loads(raw_content))
+        return issues
+
+    def __fetch_user_and_organization_from_cache(self, user_login, cache_items):
+        """Fetch user and organization from cache"""
+
+        raw_user = next(cache_items)
+        raw_org = next(cache_items)
+        return self.__get_user_and_organization(user_login, raw_user, raw_org)
+
+    def __fetch_assignee_from_cache(self, cache_items):
+        """Fetch issue assignee from cache"""
+
+        raw_assignee = next(cache_items)
+        raw_user = next(cache_items)
+        raw_org = next(cache_items)
+        assignee = self.__get_user_and_organization(raw_assignee['login'], raw_user, raw_org)
+
+        return assignee
+
+    def __fetch_comments_from_cache(self, cache_items):
+        """Fetch issue comments from cache"""
+
+        raw_content = next(cache_items)
+        comments = json.loads(raw_content)
+        for c in comments:
+            tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            c['user_data'] = self.__get_user_and_organization(c['user']['login'], raw_user, raw_org)
+
+        return comments
+
+    def __init_extra_issue_fields(self, issue):
+        """Add fields to an issue"""
+
+        issue['user_data'] = {}
+        issue['assignee_data'] = {}
+        issue['comments_data'] = {}
+
+    def __get_user_and_organization(self, login, raw_user, raw_org):
+        found = self._users.get(login)
+
+        if not found:
+            user = json.loads(raw_user)
+            user['organizations'] = json.loads(raw_org)
+            self._users.update({login: user})
+            found = self._users.get(login)
+
+        return found
 
     @classmethod
     def has_caching(cls):
@@ -248,7 +323,7 @@ class GitHub(Backend):
 
 
 class GitHubClient:
-    """ Client for retieving information from GitHub API """
+    """Client for retieving information from GitHub API"""
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
@@ -271,85 +346,19 @@ class GitHubClient:
 
         self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
 
-    def __get_url(self):
-        github_api = GITHUB_API_URL
-        if self.base_url:
-            github_api = self.base_url
-        github_api_repos = github_api + "/repos"
-        url_repo = github_api_repos + "/" + self.owner + "/" + self.repository
-        return url_repo
+    def get_issue_comments(self, issue_number):
+        """Get the issue comments from pagination"""
 
-    def __get_issues_url(self, startdate=None):
-        url_issues = self.__get_url() + "/issues"
-        return url_issues
-
-    def __get_payload(self, startdate=None):
-        # 100 in other items. 20 for pull requests. 30 issues
-        payload = {'per_page': 30,
-                   'state': 'all',
-                   'sort': 'updated',
-                   'direction': 'asc'}
-        if startdate:
-            startdate = startdate.isoformat()
-            payload['since'] = startdate
-        return payload
-
-    def __get_headers(self):
-        if self.token:
-            headers = {'Authorization': 'token ' + self.token}
-            return headers
-
-    def __send_request(self, url, params=None, headers=None):
-        """ GET HTTP caring of rate limit """
-
-        if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
-            seconds_to_reset = self.rate_limit_reset_ts - int(time.time()) + 1
-            cause = "GitHub rate limit exhausted."
-            if self.sleep_for_rate:
-                logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
-                time.sleep(seconds_to_reset)
-            else:
-                raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
-
-        r = requests.get(url, params=params, headers=headers)
-        r.raise_for_status()
-        self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
-        self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
-        logger.debug("Rate limit: %s" % (self.rate_limit))
-        return r
+        return self._fetch_items("/issues/" + str(issue_number) + "/comments", "comment")
 
     def get_issues(self, start=None):
-        """ Return the items from github API using links pagination """
+        """Get the issues from pagination"""
 
-        page = 0  # current page
-        last_page = None  # last page
-        url_next = self.__get_issues_url(start)
-
-        logger.debug("Get GitHub issues from " + url_next)
-        r = self.__send_request(url_next, self.__get_payload(start),
-                                self.__get_headers())
-        issues = r.text
-        page += 1
-
-        if 'last' in r.links:
-            last_url = r.links['last']['url']
-            last_page = last_url.split('&page=')[1].split('&')[0]
-            last_page = int(last_page)
-            logger.debug("Page: %i/%i" % (page, last_page))
-
-        while issues:
-            yield issues
-
-            issues = None
-
-            if 'next' in r.links:
-                url_next = r.links['next']['url']  # Loving requests :)
-                r = self.__send_request(url_next, self.__get_payload(start), self.__get_headers())
-                page += 1
-                issues = r.text
-                logger.debug("Page: %i/%i" % (page, last_page))
+        return self._fetch_items("/issues", payload_type="issue", start=start)
 
     def get_user(self, login):
+        """Get the user information and update the user cache"""
+
         user = None
 
         if login in self._users:
@@ -365,7 +374,7 @@ class GitHubClient:
         return user
 
     def get_user_orgs(self, login):
-        # Get the public organizations also
+        """Get the user public organizations"""
 
         if login in self._users_orgs:
             return self._users_orgs[login]
@@ -385,6 +394,96 @@ class GitHubClient:
         self._users_orgs[login] = orgs
 
         return orgs
+
+    def __get_url_repo(self):
+        """Build URL repo"""
+
+        github_api = GITHUB_API_URL
+        if self.base_url:
+            github_api = self.base_url
+        github_api_repos = github_api + "/repos"
+        url_repo = github_api_repos + "/" + self.owner + "/" + self.repository
+        return url_repo
+
+    def __get_url(self, path, startdate=None):
+        """Build repo-"related URL"""
+
+        url = self.__get_url_repo() + path
+        return url
+
+    def __get_payload(self, payload_type='issue', startdate=None):
+        """Build payload"""
+
+        # 100 in other items. 20 for pull requests. 30 issues
+        payload = {'per_page': 30,
+                   'direction': 'asc'}
+        if payload_type == 'issue':
+            payload['state'] = 'all'
+            payload['sort'] = 'updated'
+        elif payload_type == 'comment':
+            payload['sort'] = 'updated'
+
+        if startdate:
+            startdate = startdate.isoformat()
+            payload['since'] = startdate
+        return payload
+
+    def __get_headers(self):
+        """Set header for request"""
+
+        if self.token:
+            headers = {'Authorization': 'token ' + self.token}
+            return headers
+
+    def __send_request(self, url, params=None, headers=None):
+        """GET HTTP caring of rate limit"""
+
+        if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
+            seconds_to_reset = self.rate_limit_reset_ts - int(time.time()) + 1
+            cause = "GitHub rate limit exhausted."
+            if self.sleep_for_rate:
+                logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
+                time.sleep(seconds_to_reset)
+            else:
+                raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
+
+        r = requests.get(url, params=params, headers=headers)
+        r.raise_for_status()
+        self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
+        self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
+        logger.debug("Rate limit: %s" % (self.rate_limit))
+        return r
+
+    def _fetch_items(self, path, payload_type, start=None):
+        """Return the items from github API using links pagination"""
+
+        page = 0  # current page
+        last_page = None  # last page
+        url_next = self.__get_url(path, start)
+
+        logger.debug("Get GitHub paginated items from " + url_next)
+        payload = self.__get_payload(payload_type, start)
+        r = self.__send_request(url_next, payload, self.__get_headers())
+        items = r.text
+        page += 1
+
+        if 'last' in r.links:
+            last_url = r.links['last']['url']
+            last_page = last_url.split('&page=')[1].split('&')[0]
+            last_page = int(last_page)
+            logger.debug("Page: %i/%i" % (page, last_page))
+
+        while items:
+            yield items
+
+            items = None
+
+            if 'next' in r.links:
+                url_next = r.links['next']['url']  # Loving requests :)
+                r = self.__send_request(url_next, payload, self.__get_headers())
+                page += 1
+                items = r.text
+                logger.debug("Page: %i/%i" % (page, last_page))
 
 
 class GitHubCommand(BackendCommand):
