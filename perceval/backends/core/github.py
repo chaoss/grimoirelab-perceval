@@ -46,7 +46,7 @@ GITHUB_API_URL = "https://api.github.com"
 MIN_RATE_LIMIT = 10
 MAX_RATE_LIMIT = 500
 
-TARGET_ISSUE_FIELDS = ['user', 'assignee', 'comments']
+TARGET_ISSUE_FIELDS = ['user', 'assignee', 'assignees', 'comments']
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -120,6 +120,8 @@ class GitHub(Backend):
                         issue[field + '_data'] = self.__get_user(issue[field]['login'])
                     elif field == 'assignee':
                         issue[field + '_data'] = self.__get_issue_assignee(issue[field])
+                    elif field == 'assignees':
+                        issue[field + '_data'] = self.__get_issue_assignees(issue[field])
                     elif field == 'comments':
                         issue[field + '_data'] = self.__get_issue_comments(issue['number'])
 
@@ -161,6 +163,9 @@ class GitHub(Backend):
                 elif raw_item == '{ASSIGNEE}':
                     assignee = self.__fetch_assignee_from_cache(cache_items)
                     current_issue['assignee_data'] = assignee
+                elif raw_item == '{ASSIGNEES}':
+                    assignees = self.__fetch_assignees_from_cache(cache_items)
+                    current_issue['assignees_data'] = assignees
                 elif raw_item == '{COMMENTS}':
                     comments = self.__fetch_comments_from_cache(cache_items)
                     current_issue['comments_data'] = comments
@@ -197,6 +202,18 @@ class GitHub(Backend):
         assignee = self.__get_user(raw_assignee['login'])
 
         return assignee
+
+    def __get_issue_assignees(self, raw_assignees):
+        """Get issue assignees"""
+
+        self._push_cache_queue('{ASSIGNEES}')
+        self._push_cache_queue(raw_assignees)
+        self._flush_cache_queue()
+        assignees = []
+        for ra in raw_assignees:
+            assignees.append(self.__get_user(ra['login']))
+
+        return assignees
 
     def __get_user(self, login):
         """Get user and org data for the login"""
@@ -242,6 +259,20 @@ class GitHub(Backend):
 
         return assignee
 
+    def __fetch_assignees_from_cache(self, cache_items):
+        """Fetch issue assignees from cache"""
+
+        raw_assignees = next(cache_items)
+        assignees = []
+        for a in raw_assignees:
+            tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            a = self.__get_user_and_organization(a['login'], raw_user, raw_org)
+            assignees.append(a)
+
+        return assignees
+
     def __fetch_comments_from_cache(self, cache_items):
         """Fetch issue comments from cache"""
 
@@ -260,6 +291,7 @@ class GitHub(Backend):
 
         issue['user_data'] = {}
         issue['assignee_data'] = {}
+        issue['assignees_data'] = {}
         issue['comments_data'] = {}
 
     def __get_user_and_organization(self, login, raw_user, raw_org):
