@@ -3,6 +3,8 @@
     "repository_url": "https://api.github.com/repos/zhquan_example/repo",
     "labels_url": "https://api.github.com/repos/zhquan_example/repo/issues/1/labels{/name}",
     "comments_url": "https://api.github.com/repos/zhquan_example/repo/issues/1/comments",
+    "reactions": [],
+    "reactions_data":  {},
     "comments_data":  [
         {
             "user": {

@@ -8,6 +8,15 @@
     "html_url": "https://github.com/zhquan_example/repo/issues/2",
     "id": 2,
     "number": 2,
+    "reactions": {
+                    "total_count": 2,
+                    "confused": 0,
+                    "hooray": 0,
+                    "-1": 0,
+                    "heart": 0,
+                    "+1": 2,
+                    "laugh": 0,
+                    "url": "https://api.github.com/repos/zhquan_example/repo/issues/2/reactions"},
     "title": "title 2",
     "user": {
       "login": "zhquan_example",

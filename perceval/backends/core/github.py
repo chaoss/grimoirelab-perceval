@@ -46,7 +46,7 @@ GITHUB_API_URL = "https://api.github.com"
 MIN_RATE_LIMIT = 10
 MAX_RATE_LIMIT = 500
 
-TARGET_ISSUE_FIELDS = ['user', 'assignee', 'assignees', 'comments']
+TARGET_ISSUE_FIELDS = ['user', 'assignee', 'assignees', 'comments', 'reactions']
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.9.1'
+    version = '0.10.0'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -110,6 +110,7 @@ class GitHub(Backend):
             self._flush_cache_queue()
             issues = json.loads(raw_issues)
             for issue in issues:
+
                 for field in TARGET_ISSUE_FIELDS:
                     issue[field + '_data'] = {}
 
@@ -124,6 +125,8 @@ class GitHub(Backend):
                         issue[field + '_data'] = self.__get_issue_assignees(issue[field])
                     elif field == 'comments':
                         issue[field + '_data'] = self.__get_issue_comments(issue['number'])
+                    elif field == 'reactions':
+                        issue[field + '_data'] = self.__get_issue_reactions(issue['number'])
 
                 self._push_cache_queue('{}')
                 self._flush_cache_queue()
@@ -171,6 +174,9 @@ class GitHub(Backend):
                         elif raw_item == '{COMMENTS}':
                             comments = self.__fetch_comments_from_cache(cache_items)
                             issue['comments_data'] = comments
+                        elif raw_item == '{ISSUE-REACTIONS}':
+                            reactions = self.__fetch_issue_reactions_from_cache(cache_items)
+                            issue['reactions_data'] = reactions
 
                         raw_item = next(cache_items)
 
@@ -181,6 +187,23 @@ class GitHub(Backend):
 
                 raw_item = next(cache_items)
                 yield issue
+
+    def __get_issue_reactions(self, issue_number):
+        """Get issue reactions"""
+        reactions = []
+        group_reactions = self.client.get_issue_reactions(issue_number)
+        self._push_cache_queue('{ISSUE-REACTIONS}')
+        self._flush_cache_queue()
+
+        for raw_reactions in group_reactions:
+            self._push_cache_queue(raw_reactions)
+            self._flush_cache_queue()
+
+            for reaction in json.loads(raw_reactions):
+                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reactions.append(reaction)
+
+        return reactions
 
     def __get_issue_comments(self, issue_number):
         """Get issue comments"""
@@ -207,7 +230,7 @@ class GitHub(Backend):
 
         reactions = []
         group_reactions = self.client.get_issue_comment_reactions(comment_id)
-        self._push_cache_queue('{REACTIONS}')
+        self._push_cache_queue('{COMMENT-REACTIONS}')
         self._flush_cache_queue()
 
         for raw_reactions in group_reactions:
@@ -314,6 +337,19 @@ class GitHub(Backend):
 
         return reactions
 
+    def __fetch_issue_reactions_from_cache(self, cache_items):
+        """Fetch issue reactions from cache"""
+
+        raw_content = next(cache_items)
+        reactions = json.loads(raw_content)
+        for r in reactions:
+            user_tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            r['user_data'] = self.__get_user_and_organization(r['user']['login'], raw_user, raw_org)
+
+        return reactions
+
     def __fetch_comments_from_cache(self, cache_items):
         """Fetch issue comments from cache"""
 
@@ -338,6 +374,7 @@ class GitHub(Backend):
         issue['assignee_data'] = {}
         issue['assignees_data'] = {}
         issue['comments_data'] = {}
+        issue['reactions_data'] = {}
 
     def __get_user_and_organization(self, login, raw_user, raw_org):
         found = self._users.get(login)
@@ -423,8 +460,13 @@ class GitHubClient:
 
         self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
 
+    def get_issue_reactions(self, issue_number):
+        """Get reactions of an issue"""
+
+        return self._fetch_items("/issues/" + str(issue_number) + "/reactions", "comment")
+
     def get_issue_comment_reactions(self, comment_id):
-        """Get reactions of issue comments"""
+        """Get reactions of an issue comment"""
 
         return self._fetch_items("/issues/comments/" + str(comment_id) + "/reactions", "comment")
 
