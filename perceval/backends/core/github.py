@@ -69,7 +69,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -187,11 +187,31 @@ class GitHub(Backend):
             self._push_cache_queue('{COMMENTS}')
             self._push_cache_queue(raw_comments)
             self._flush_cache_queue()
+
             for comment in json.loads(raw_comments):
+                comment_id = comment.get('id')
                 comment['user_data'] = self.__get_user(comment['user']['login'])
+                comment['reactions_data'] = self.__get_issue_comment_reactions(comment_id)
                 comments.append(comment)
 
         return comments
+
+    def __get_issue_comment_reactions(self, comment_id):
+        """Get reactions on issue comments"""
+
+        reactions = []
+        group_reactions = self.client.get_issue_comment_reactions(comment_id)
+
+        for raw_reactions in group_reactions:
+            self._push_cache_queue('{REACTIONS}')
+            self._push_cache_queue(raw_reactions)
+            self._flush_cache_queue()
+
+            for reaction in json.loads(raw_reactions):
+                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reactions.append(reaction)
+
+        return reactions
 
     def __get_issue_assignee(self, raw_assignee):
         """Get issue assignee"""
@@ -253,6 +273,7 @@ class GitHub(Backend):
         """Fetch issue assignee from cache"""
 
         raw_assignee = next(cache_items)
+        user_tag = next(cache_items)
         raw_user = next(cache_items)
         raw_org = next(cache_items)
         assignee = self.__get_user_and_organization(raw_assignee['login'], raw_user, raw_org)
@@ -273,6 +294,19 @@ class GitHub(Backend):
 
         return assignees
 
+    def __fetch_issue_comment_reactions_from_cache(self, cache_items):
+        """Fetch issue comment reactions from cache"""
+
+        raw_content = next(cache_items)
+        reactions = json.loads(raw_content)
+        for reaction in reactions:
+            tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            reaction['user_data'] = self.__get_user_and_organization(reaction['user']['login'], raw_user, raw_org)
+
+        return reactions
+
     def __fetch_comments_from_cache(self, cache_items):
         """Fetch issue comments from cache"""
 
@@ -283,6 +317,10 @@ class GitHub(Backend):
             raw_user = next(cache_items)
             raw_org = next(cache_items)
             c['user_data'] = self.__get_user_and_organization(c['user']['login'], raw_user, raw_org)
+
+            tag = next(cache_items)
+            reactions = self.__fetch_issue_comment_reactions_from_cache(cache_items)
+            c['reactions_data'] = reactions
 
         return comments
 
@@ -378,6 +416,11 @@ class GitHubClient:
 
         self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
 
+    def get_issue_comment_reactions(self, comment_id):
+        """Get reactions of issue comments"""
+
+        return self._fetch_items("/issues/comments/" + str(comment_id) + "/reactions", "comment")
+
     def get_issue_comments(self, issue_number):
         """Get the issue comments from pagination"""
 
@@ -464,7 +507,8 @@ class GitHubClient:
         """Set header for request"""
 
         if self.token:
-            headers = {'Authorization': 'token ' + self.token}
+            headers = {'Authorization': 'token ' + self.token,
+                       'Accept': 'application/vnd.github.squirrel-girl-preview'}
             return headers
 
     def __send_request(self, url, params=None, headers=None):

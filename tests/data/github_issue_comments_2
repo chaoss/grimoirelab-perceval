@@ -6,6 +6,16 @@
     "author_association": "COLLABORATOR",
     "body": "My second comment",
     "issue_url": "https://api.github.com/repos/zhquan_example/repo/issues/2",
+    "reactions": {
+            "+1": 0,
+            "-1": 0,
+            "confused": 0,
+            "heart": 0,
+            "hooray": 0,
+            "laugh": 0,
+            "total_count": 0,
+            "url": "https://api.github.com/repos/zhquan_example/repo/issues/comments/2/reactions"
+    },
     "user": {
       "login": "zhquan_example",
       "id": 1,
