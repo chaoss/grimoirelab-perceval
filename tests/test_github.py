@@ -461,10 +461,13 @@ class TestGitHubBackendCache(unittest.TestCase):
         """ Test whether a list of issues is returned from cache """
 
         issue_1 = read_file('data/github_issue_1')
+        issue_2 = read_file('data/github_issue_2')
         login = read_file('data/github_login')
         orgs = read_file('data/github_orgs')
         issue_1_comments = read_file('data/github_issue_comments_1')
+        issue_2_comments = read_file('data/github_issue_comments_2')
         issue_comment_1_reactions = read_file('data/github_issue_comment_1_reactions')
+        issue_comment_2_reactions = read_file('data/github_issue_comment_2_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -472,9 +475,19 @@ class TestGitHubBackendCache(unittest.TestCase):
                                status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
-                                   'X-RateLimit-Reset': '5'
+                                   'X-RateLimit-Reset': '5',
+                                   'Link': '<' + GITHUB_ISSUES_URL + '/?&page=2>; rel="next", <' +
+                                           GITHUB_ISSUES_URL + '/?&page=3>; rel="last"'
                                })
 
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL + '/?&page=2',
+                               body=issue_2,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '5'
+                               })
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUE_COMMENT_1_REACTION_URL,
                                body=issue_comment_1_reactions, status=200,
@@ -483,8 +496,22 @@ class TestGitHubBackendCache(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
         httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_2_REACTION_URL,
+                               body=issue_comment_2_reactions, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUE_1_COMMENTS_URL,
                                body=issue_1_comments, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_COMMENTS_URL,
+                               body=issue_2_comments, status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
@@ -518,9 +545,12 @@ class TestGitHubBackendCache(unittest.TestCase):
 
         del issues[0]['timestamp']
         del cache_issues[0]['timestamp']
+        del issues[1]['timestamp']
+        del cache_issues[1]['timestamp']
 
         self.assertEqual(len(issues), len(cache_issues))
         self.assertDictEqual(issues[0], cache_issues[0])
+        self.assertDictEqual(issues[1], cache_issues[1])
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any issues returned when the cache is empty"""

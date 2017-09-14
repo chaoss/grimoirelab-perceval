@@ -69,7 +69,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.9.0'
+    version = '0.9.1'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -128,6 +128,8 @@ class GitHub(Backend):
                 self._push_cache_queue('{}')
                 self._flush_cache_queue()
                 yield issue
+        self._push_cache_queue('{}{}')
+        self._flush_cache_queue()
 
     @metadata
     def fetch_from_cache(self):
@@ -144,47 +146,51 @@ class GitHub(Backend):
             raise CacheError(cause="cache instance was not provided")
 
         cache_items = self.cache.retrieve()
-        current_issue = None
-        issues = None
+        raw_item = next(cache_items)
 
-        while True:
-            try:
+        while raw_item != '{}{}':
+
+            if raw_item == '{ISSUES}':
+                issues = self.__fetch_issues_from_cache(cache_items)
+
+            for issue in issues:
+                self.__init_extra_issue_fields(issue)
                 raw_item = next(cache_items)
 
-                if raw_item == '{ISSUES}':
-                    issues = self.__fetch_issues_from_cache(cache_items)
+                while raw_item != '{}':
+                    try:
+                        if raw_item == '{USER}':
+                            issue['user_data'] = \
+                                self.__fetch_user_and_organization_from_cache(issue['user']['login'], cache_items)
+                        elif raw_item == '{ASSIGNEE}':
+                            assignee = self.__fetch_assignee_from_cache(cache_items)
+                            issue['assignee_data'] = assignee
+                        elif raw_item == '{ASSIGNEES}':
+                            assignees = self.__fetch_assignees_from_cache(cache_items)
+                            issue['assignees_data'] = assignees
+                        elif raw_item == '{COMMENTS}':
+                            comments = self.__fetch_comments_from_cache(cache_items)
+                            issue['comments_data'] = comments
 
-                    if issues:
-                        current_issue = next(issues)
-                        self.__init_extra_issue_fields(current_issue)
-                elif raw_item == '{USER}':
-                    current_issue['user_data'] = \
-                        self.__fetch_user_and_organization_from_cache(current_issue['user']['login'], cache_items)
-                elif raw_item == '{ASSIGNEE}':
-                    assignee = self.__fetch_assignee_from_cache(cache_items)
-                    current_issue['assignee_data'] = assignee
-                elif raw_item == '{ASSIGNEES}':
-                    assignees = self.__fetch_assignees_from_cache(cache_items)
-                    current_issue['assignees_data'] = assignees
-                elif raw_item == '{COMMENTS}':
-                    comments = self.__fetch_comments_from_cache(cache_items)
-                    current_issue['comments_data'] = comments
-                elif raw_item == '{}':
-                    yield current_issue
-                    current_issue = next(issues)
-                    self.__init_extra_issue_fields(current_issue)
+                        raw_item = next(cache_items)
 
-            except StopIteration:
-                break
+                    except StopIteration:
+                        # this should be never executed, the while condition prevents
+                        # to trigger the StopIteration exception
+                        break
+
+                raw_item = next(cache_items)
+                yield issue
 
     def __get_issue_comments(self, issue_number):
         """Get issue comments"""
 
         comments = []
         group_comments = self.client.get_issue_comments(issue_number)
+        self._push_cache_queue('{COMMENTS}')
+        self._flush_cache_queue()
 
         for raw_comments in group_comments:
-            self._push_cache_queue('{COMMENTS}')
             self._push_cache_queue(raw_comments)
             self._flush_cache_queue()
 
@@ -201,9 +207,10 @@ class GitHub(Backend):
 
         reactions = []
         group_reactions = self.client.get_issue_comment_reactions(comment_id)
+        self._push_cache_queue('{REACTIONS}')
+        self._flush_cache_queue()
 
         for raw_reactions in group_reactions:
-            self._push_cache_queue('{REACTIONS}')
             self._push_cache_queue(raw_reactions)
             self._flush_cache_queue()
 
@@ -259,7 +266,7 @@ class GitHub(Backend):
         """Fetch issues from cache"""
 
         raw_content = next(cache_items)
-        issues = (i for i in json.loads(raw_content))
+        issues = json.loads(raw_content)
         return issues
 
     def __fetch_user_and_organization_from_cache(self, user_login, cache_items):
@@ -286,7 +293,7 @@ class GitHub(Backend):
         raw_assignees = next(cache_items)
         assignees = []
         for a in raw_assignees:
-            tag = next(cache_items)
+            user_tag = next(cache_items)
             raw_user = next(cache_items)
             raw_org = next(cache_items)
             a = self.__get_user_and_organization(a['login'], raw_user, raw_org)
@@ -300,7 +307,7 @@ class GitHub(Backend):
         raw_content = next(cache_items)
         reactions = json.loads(raw_content)
         for reaction in reactions:
-            tag = next(cache_items)
+            user_tag = next(cache_items)
             raw_user = next(cache_items)
             raw_org = next(cache_items)
             reaction['user_data'] = self.__get_user_and_organization(reaction['user']['login'], raw_user, raw_org)
@@ -313,12 +320,12 @@ class GitHub(Backend):
         raw_content = next(cache_items)
         comments = json.loads(raw_content)
         for c in comments:
-            tag = next(cache_items)
+            user_tag = next(cache_items)
             raw_user = next(cache_items)
             raw_org = next(cache_items)
             c['user_data'] = self.__get_user_and_organization(c['user']['login'], raw_user, raw_org)
 
-            tag = next(cache_items)
+            reactions_tag = next(cache_items)
             reactions = self.__fetch_issue_comment_reactions_from_cache(cache_items)
             c['reactions_data'] = reactions
 
