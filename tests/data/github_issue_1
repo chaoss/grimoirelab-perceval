@@ -8,6 +8,7 @@
     "html_url": "https://github.com/zhquan_example/repo/issues/1",
     "id": 1,
     "number": 1,
+    "reactions": [],
     "title": "title 1",
     "user": {
       "login": "zhquan_example",

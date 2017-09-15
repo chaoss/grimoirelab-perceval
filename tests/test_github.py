@@ -50,7 +50,10 @@ from perceval.backends.core.github import (GitHub,
 GITHUB_API_URL = "https://api.github.com"
 GITHUB_ISSUES_URL = GITHUB_API_URL + "/repos/zhquan_example/repo/issues"
 GITHUB_ISSUE_1_COMMENTS_URL = GITHUB_ISSUES_URL + "/1/comments"
+GITHUB_ISSUE_COMMENT_1_REACTION_URL = GITHUB_ISSUES_URL + "/comments/1/reactions"
+GITHUB_ISSUE_2_REACTION_URL = GITHUB_ISSUES_URL + "/2/reactions"
 GITHUB_ISSUE_2_COMMENTS_URL = GITHUB_ISSUES_URL + "/2/comments"
+GITHUB_ISSUE_COMMENT_2_REACTION_URL = GITHUB_ISSUES_URL + "/comments/2/reactions"
 GITHUB_USER_URL = GITHUB_API_URL + "/users/zhquan_example"
 GITHUB_ORGS_URL = GITHUB_API_URL + "/users/zhquan_example/orgs"
 GITHUB_COMMAND_URL = GITHUB_API_URL + "/command"
@@ -107,6 +110,7 @@ class TestGitHubBackend(unittest.TestCase):
         login = read_file('data/github_login')
         orgs = read_file('data/github_orgs')
         comments = read_file('data/github_issue_comments_1')
+        reactions = read_file('data/github_issue_comment_1_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -124,7 +128,13 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
-
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_1_REACTION_URL,
+                               body=reactions, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
         httpretty.register_uri(httpretty.GET,
                                GITHUB_USER_URL,
                                body=login, status=200,
@@ -132,14 +142,6 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
-        httpretty.register_uri(httpretty.GET,
-                               GITHUB_ORGS_URL,
-                               body=orgs, status=200,
-                               forcing_headers={
-                                   'X-RateLimit-Remaining': '20',
-                                   'X-RateLimit-Reset': '15'
-                               })
-
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ORGS_URL,
                                body=orgs, status=200,
@@ -164,6 +166,8 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertDictEqual(issues[0]['data']['assignees_data'][0], expected['assignees_data'][0])
         self.assertEqual(len(issues[0]['data']['comments_data']), len(expected['comments_data']))
         self.assertDictEqual(issues[0]['data']['comments_data'][0], expected['comments_data'][0])
+        self.assertDictEqual(issues[0]['data']['comments_data'][0]['reactions_data'][0],
+                             expected['comments_data'][0]['reactions_data'][0])
 
     @httpretty.activate
     def test_fetch_more_issues(self):
@@ -173,8 +177,11 @@ class TestGitHubBackend(unittest.TestCase):
         orgs = read_file('data/github_orgs')
         issue_1 = read_file('data/github_issue_1')
         issue_2 = read_file('data/github_issue_2')
+        issue_2_reactions = read_file('data/github_issue_2_reactions')
         issue_1_comments = read_file('data/github_issue_comments_1')
         issue_2_comments = read_file('data/github_issue_comments_2')
+        issue_comment_1_reactions = read_file('data/github_issue_comment_1_reactions')
+        issue_comment_2_reactions = read_file('data/github_issue_comment_2_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -194,6 +201,13 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
         httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_1_REACTION_URL,
+                               body=issue_comment_1_reactions, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL + '/?&page=2',
                                body=issue_2,
                                status=200,
@@ -202,8 +216,22 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '5'
                                })
         httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_REACTION_URL,
+                               body=issue_2_reactions, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUE_2_COMMENTS_URL,
                                body=issue_2_comments, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_2_REACTION_URL,
+                               body=issue_comment_2_reactions, status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
@@ -253,6 +281,8 @@ class TestGitHubBackend(unittest.TestCase):
         orgs = read_file('data/github_orgs')
         body = read_file('data/github_issue_2')
         comments = read_file('data/github_issue_comments_2')
+        issue_reactions = read_file('data/github_issue_2_reactions')
+        comment_reactions = read_file('data/github_issue_comment_2_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -265,6 +295,22 @@ class TestGitHubBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUE_2_COMMENTS_URL,
                                body=comments,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_REACTION_URL,
+                               body=issue_reactions,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_2_REACTION_URL,
+                               body=comment_reactions,
                                status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
@@ -301,8 +347,10 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertDictEqual(issues[0]['data']['assignee_data'], expected['assignee_data'])
         self.assertDictEqual(issues[0]['data']['assignees_data'], expected['assignees_data'])
         self.assertEqual(len(issues[0]['data']['comments_data']), len(expected['comments_data']))
-
         self.assertDictEqual(issues[0]['data']['comments_data'][0], expected['comments_data'][0])
+        self.assertListEqual(issues[0]['data']['comments_data'][0]['reactions_data'],
+                             expected['comments_data'][0]['reactions_data'])
+        self.assertListEqual(issues[0]['data']['reactions_data'], expected['reactions_data'])
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -348,6 +396,7 @@ class TestGitHubBackend(unittest.TestCase):
         login = read_file('data/github_login')
         orgs = read_file('data/github_orgs')
         comments = read_file('data/github_issue_comments_1')
+        reactions = read_file('data/github_issue_comment_1_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -365,7 +414,14 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
-
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_1_REACTION_URL,
+                               body=reactions,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
         httpretty.register_uri(httpretty.GET,
                                GITHUB_USER_URL,
                                body=login, status=200,
@@ -423,11 +479,56 @@ class TestGitHubBackendCache(unittest.TestCase):
     def test_fetch_from_cache(self):
         """ Test whether a list of issues is returned from cache """
 
-        body = read_file('data/github_request')
+        issue_1 = read_file('data/github_issue_1')
+        issue_2 = read_file('data/github_issue_2')
         login = read_file('data/github_login')
         orgs = read_file('data/github_orgs')
         issue_1_comments = read_file('data/github_issue_comments_1')
+        issue_2_comments = read_file('data/github_issue_comments_2')
+        issue_2_reactions = read_file('data/github_issue_2_reactions')
+        issue_comment_1_reactions = read_file('data/github_issue_comment_1_reactions')
+        issue_comment_2_reactions = read_file('data/github_issue_comment_2_reactions')
 
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=issue_1,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '5',
+                                   'Link': '<' + GITHUB_ISSUES_URL + '/?&page=2>; rel="next", <' +
+                                           GITHUB_ISSUES_URL + '/?&page=3>; rel="last"'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL + '/?&page=2',
+                               body=issue_2,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '5'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_1_REACTION_URL,
+                               body=issue_comment_1_reactions, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_2_REACTION_URL,
+                               body=issue_comment_2_reactions, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_REACTION_URL,
+                               body=issue_2_reactions, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUE_1_COMMENTS_URL,
                                body=issue_1_comments, status=200,
@@ -435,10 +536,9 @@ class TestGitHubBackendCache(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
-
         httpretty.register_uri(httpretty.GET,
-                               GITHUB_ISSUES_URL,
-                               body=body, status=200,
+                               GITHUB_ISSUE_2_COMMENTS_URL,
+                               body=issue_2_comments, status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
@@ -472,10 +572,12 @@ class TestGitHubBackendCache(unittest.TestCase):
 
         del issues[0]['timestamp']
         del cache_issues[0]['timestamp']
+        del issues[1]['timestamp']
+        del cache_issues[1]['timestamp']
 
         self.assertEqual(len(issues), len(cache_issues))
-
         self.assertDictEqual(issues[0], cache_issues[0])
+        self.assertDictEqual(issues[1], cache_issues[1])
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any issues returned when the cache is empty"""

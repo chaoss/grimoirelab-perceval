@@ -46,7 +46,7 @@ GITHUB_API_URL = "https://api.github.com"
 MIN_RATE_LIMIT = 10
 MAX_RATE_LIMIT = 500
 
-TARGET_ISSUE_FIELDS = ['user', 'assignee', 'assignees', 'comments']
+TARGET_ISSUE_FIELDS = ['user', 'assignee', 'assignees', 'comments', 'reactions']
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.8.0'
+    version = '0.10.0'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -110,6 +110,7 @@ class GitHub(Backend):
             self._flush_cache_queue()
             issues = json.loads(raw_issues)
             for issue in issues:
+
                 for field in TARGET_ISSUE_FIELDS:
                     issue[field + '_data'] = {}
 
@@ -124,10 +125,14 @@ class GitHub(Backend):
                         issue[field + '_data'] = self.__get_issue_assignees(issue[field])
                     elif field == 'comments':
                         issue[field + '_data'] = self.__get_issue_comments(issue['number'])
+                    elif field == 'reactions':
+                        issue[field + '_data'] = self.__get_issue_reactions(issue['number'])
 
                 self._push_cache_queue('{}')
                 self._flush_cache_queue()
                 yield issue
+        self._push_cache_queue('{}{}')
+        self._flush_cache_queue()
 
     @metadata
     def fetch_from_cache(self):
@@ -144,54 +149,99 @@ class GitHub(Backend):
             raise CacheError(cause="cache instance was not provided")
 
         cache_items = self.cache.retrieve()
-        current_issue = None
-        issues = None
+        raw_item = next(cache_items)
 
-        while True:
-            try:
+        while raw_item != '{}{}':
+
+            if raw_item == '{ISSUES}':
+                issues = self.__fetch_issues_from_cache(cache_items)
+
+            for issue in issues:
+                self.__init_extra_issue_fields(issue)
                 raw_item = next(cache_items)
 
-                if raw_item == '{ISSUES}':
-                    issues = self.__fetch_issues_from_cache(cache_items)
+                while raw_item != '{}':
+                    try:
+                        if raw_item == '{USER}':
+                            issue['user_data'] = \
+                                self.__fetch_user_and_organization_from_cache(issue['user']['login'], cache_items)
+                        elif raw_item == '{ASSIGNEE}':
+                            assignee = self.__fetch_assignee_from_cache(cache_items)
+                            issue['assignee_data'] = assignee
+                        elif raw_item == '{ASSIGNEES}':
+                            assignees = self.__fetch_assignees_from_cache(cache_items)
+                            issue['assignees_data'] = assignees
+                        elif raw_item == '{COMMENTS}':
+                            comments = self.__fetch_comments_from_cache(cache_items)
+                            issue['comments_data'] = comments
+                        elif raw_item == '{ISSUE-REACTIONS}':
+                            reactions = self.__fetch_issue_reactions_from_cache(cache_items)
+                            issue['reactions_data'] = reactions
 
-                    if issues:
-                        current_issue = next(issues)
-                        self.__init_extra_issue_fields(current_issue)
-                elif raw_item == '{USER}':
-                    current_issue['user_data'] = \
-                        self.__fetch_user_and_organization_from_cache(current_issue['user']['login'], cache_items)
-                elif raw_item == '{ASSIGNEE}':
-                    assignee = self.__fetch_assignee_from_cache(cache_items)
-                    current_issue['assignee_data'] = assignee
-                elif raw_item == '{ASSIGNEES}':
-                    assignees = self.__fetch_assignees_from_cache(cache_items)
-                    current_issue['assignees_data'] = assignees
-                elif raw_item == '{COMMENTS}':
-                    comments = self.__fetch_comments_from_cache(cache_items)
-                    current_issue['comments_data'] = comments
-                elif raw_item == '{}':
-                    yield current_issue
-                    current_issue = next(issues)
-                    self.__init_extra_issue_fields(current_issue)
+                        raw_item = next(cache_items)
 
-            except StopIteration:
-                break
+                    except StopIteration:
+                        # this should be never executed, the while condition prevents
+                        # to trigger the StopIteration exception
+                        break
+
+                raw_item = next(cache_items)
+                yield issue
+
+    def __get_issue_reactions(self, issue_number):
+        """Get issue reactions"""
+        reactions = []
+        group_reactions = self.client.get_issue_reactions(issue_number)
+        self._push_cache_queue('{ISSUE-REACTIONS}')
+        self._flush_cache_queue()
+
+        for raw_reactions in group_reactions:
+            self._push_cache_queue(raw_reactions)
+            self._flush_cache_queue()
+
+            for reaction in json.loads(raw_reactions):
+                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reactions.append(reaction)
+
+        return reactions
 
     def __get_issue_comments(self, issue_number):
         """Get issue comments"""
 
         comments = []
         group_comments = self.client.get_issue_comments(issue_number)
+        self._push_cache_queue('{COMMENTS}')
+        self._flush_cache_queue()
 
         for raw_comments in group_comments:
-            self._push_cache_queue('{COMMENTS}')
             self._push_cache_queue(raw_comments)
             self._flush_cache_queue()
+
             for comment in json.loads(raw_comments):
+                comment_id = comment.get('id')
                 comment['user_data'] = self.__get_user(comment['user']['login'])
+                comment['reactions_data'] = self.__get_issue_comment_reactions(comment_id)
                 comments.append(comment)
 
         return comments
+
+    def __get_issue_comment_reactions(self, comment_id):
+        """Get reactions on issue comments"""
+
+        reactions = []
+        group_reactions = self.client.get_issue_comment_reactions(comment_id)
+        self._push_cache_queue('{COMMENT-REACTIONS}')
+        self._flush_cache_queue()
+
+        for raw_reactions in group_reactions:
+            self._push_cache_queue(raw_reactions)
+            self._flush_cache_queue()
+
+            for reaction in json.loads(raw_reactions):
+                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reactions.append(reaction)
+
+        return reactions
 
     def __get_issue_assignee(self, raw_assignee):
         """Get issue assignee"""
@@ -239,7 +289,7 @@ class GitHub(Backend):
         """Fetch issues from cache"""
 
         raw_content = next(cache_items)
-        issues = (i for i in json.loads(raw_content))
+        issues = json.loads(raw_content)
         return issues
 
     def __fetch_user_and_organization_from_cache(self, user_login, cache_items):
@@ -253,6 +303,7 @@ class GitHub(Backend):
         """Fetch issue assignee from cache"""
 
         raw_assignee = next(cache_items)
+        user_tag = next(cache_items)
         raw_user = next(cache_items)
         raw_org = next(cache_items)
         assignee = self.__get_user_and_organization(raw_assignee['login'], raw_user, raw_org)
@@ -265,7 +316,7 @@ class GitHub(Backend):
         raw_assignees = next(cache_items)
         assignees = []
         for a in raw_assignees:
-            tag = next(cache_items)
+            user_tag = next(cache_items)
             raw_user = next(cache_items)
             raw_org = next(cache_items)
             a = self.__get_user_and_organization(a['login'], raw_user, raw_org)
@@ -273,16 +324,46 @@ class GitHub(Backend):
 
         return assignees
 
+    def __fetch_issue_comment_reactions_from_cache(self, cache_items):
+        """Fetch issue comment reactions from cache"""
+
+        raw_content = next(cache_items)
+        reactions = json.loads(raw_content)
+        for reaction in reactions:
+            user_tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            reaction['user_data'] = self.__get_user_and_organization(reaction['user']['login'], raw_user, raw_org)
+
+        return reactions
+
+    def __fetch_issue_reactions_from_cache(self, cache_items):
+        """Fetch issue reactions from cache"""
+
+        raw_content = next(cache_items)
+        reactions = json.loads(raw_content)
+        for r in reactions:
+            user_tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            r['user_data'] = self.__get_user_and_organization(r['user']['login'], raw_user, raw_org)
+
+        return reactions
+
     def __fetch_comments_from_cache(self, cache_items):
         """Fetch issue comments from cache"""
 
         raw_content = next(cache_items)
         comments = json.loads(raw_content)
         for c in comments:
-            tag = next(cache_items)
+            user_tag = next(cache_items)
             raw_user = next(cache_items)
             raw_org = next(cache_items)
             c['user_data'] = self.__get_user_and_organization(c['user']['login'], raw_user, raw_org)
+
+            reactions_tag = next(cache_items)
+            reactions = self.__fetch_issue_comment_reactions_from_cache(cache_items)
+            c['reactions_data'] = reactions
 
         return comments
 
@@ -293,6 +374,7 @@ class GitHub(Backend):
         issue['assignee_data'] = {}
         issue['assignees_data'] = {}
         issue['comments_data'] = {}
+        issue['reactions_data'] = {}
 
     def __get_user_and_organization(self, login, raw_user, raw_org):
         found = self._users.get(login)
@@ -377,6 +459,16 @@ class GitHubClient:
             logger.warning(msg, min_rate_to_sleep, MAX_RATE_LIMIT)
 
         self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
+
+    def get_issue_reactions(self, issue_number):
+        """Get reactions of an issue"""
+
+        return self._fetch_items("/issues/" + str(issue_number) + "/reactions", "comment")
+
+    def get_issue_comment_reactions(self, comment_id):
+        """Get reactions of an issue comment"""
+
+        return self._fetch_items("/issues/comments/" + str(comment_id) + "/reactions", "comment")
 
     def get_issue_comments(self, issue_number):
         """Get the issue comments from pagination"""
@@ -464,7 +556,8 @@ class GitHubClient:
         """Set header for request"""
 
         if self.token:
-            headers = {'Authorization': 'token ' + self.token}
+            headers = {'Authorization': 'token ' + self.token,
+                       'Accept': 'application/vnd.github.squirrel-girl-preview'}
             return headers
 
     def __send_request(self, url, params=None, headers=None):
