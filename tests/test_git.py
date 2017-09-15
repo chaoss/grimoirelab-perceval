@@ -48,7 +48,17 @@ from perceval.backends.core.git import (EmptyRepositoryError,
                                         GitRepository)
 
 
-class TestGitBackend(unittest.TestCase):
+class TestCaseGit(unittest.TestCase):
+    """Base case for Git tests"""
+
+    def setUp(self):
+        patcher = unittest.mock.patch('os.getenv')
+        self.addCleanup(patcher.stop)
+        self.mock_getenv = patcher.start()
+        self.mock_getenv.return_value = ''
+
+
+class TestGitBackend(TestCaseGit):
     """Git backend tests"""
 
     @classmethod
@@ -515,13 +525,15 @@ class TestGitBackend(unittest.TestCase):
         self.assertListEqual(result, expected)
 
 
-class TestGitCommand(unittest.TestCase):
+class TestGitCommand(TestCaseGit):
     """GitCommand tests"""
 
     def setUp(self):
+        super().setUp()
         self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
 
     def tearDown(self):
+        super().tearDown()
         shutil.rmtree(self.tmp_path)
 
     def test_backend_class(self):
@@ -581,7 +593,7 @@ class TestGitCommand(unittest.TestCase):
         self.assertEqual(parsed_args.branches, ['master', 'testing'])
 
 
-class TestGitParser(unittest.TestCase):
+class TestGitParser(TestCaseGit):
     """Git parser tests"""
 
     def test_parser(self):
@@ -884,7 +896,7 @@ class TestGitParser(unittest.TestCase):
         self.assertIsNotNone(m)
 
 
-class TestEmptyRepositoryError(unittest.TestCase):
+class TestEmptyRepositoryError(TestCaseGit):
     """EmptyRepositoryError tests"""
 
     def test_message(self):
@@ -905,7 +917,7 @@ def count_commits(gitpath):
     return len(commits)
 
 
-class TestGitRepository(unittest.TestCase):
+class TestGitRepository(TestCaseGit):
     """GitRepository tests"""
 
     @classmethod
@@ -934,6 +946,14 @@ class TestGitRepository(unittest.TestCase):
         self.assertIsInstance(repo, GitRepository)
         self.assertEqual(repo.uri, 'http://example.git')
         self.assertEqual(repo.dirpath, self.git_path)
+
+        # Check command environment variables
+        expected = {
+            'LANG': 'C',
+            'PAGER': '',
+            'HOME': ''
+        }
+        self.assertDictEqual(repo.gitenv, expected)
 
     def test_not_existing_repo_on_init(self):
         """Test if init fails when the repos does not exists"""
