@@ -60,7 +60,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.8.0'
+    version = '0.8.1'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -705,6 +705,11 @@ class GitRepository:
 
         self.uri = uri
         self.dirpath = dirpath
+        self.gitenv = {
+            'LANG': 'C',
+            'PAGER': '',
+            'HOME': os.getenv('HOME', '')
+        }
 
     @classmethod
     def clone(cls, uri, dirpath):
@@ -722,7 +727,12 @@ class GitRepository:
             repository
         """
         cmd = ['git', 'clone', uri, dirpath]
-        cls._exec(cmd, env={'LANG': 'C'})
+        env = {
+            'LANG': 'C',
+            'HOME': os.getenv('HOME', '')
+        }
+
+        cls._exec(cmd, env=env)
 
         logger.debug("Git %s repository cloned into %s",
                      uri, dirpath)
@@ -740,7 +750,7 @@ class GitRepository:
         """
         cmd_count = ['git', 'count-objects', '-v']
 
-        outs = self._exec(cmd_count, cwd=self.dirpath, env={'LANG': 'C'})
+        outs = self._exec(cmd_count, cwd=self.dirpath, env=self.gitenv)
         outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
 
         try:
@@ -773,7 +783,7 @@ class GitRepository:
         cmd_sym = ['git', 'symbolic-ref', 'HEAD']
 
         try:
-            self._exec(cmd_sym, cwd=self.dirpath, env={'LANG': 'C'})
+            self._exec(cmd_sym, cwd=self.dirpath, env=self.gitenv)
         except RepositoryError as e:
             if e.msg.find("ref HEAD is not a symbolic ref") == -1:
                 raise e
@@ -811,11 +821,11 @@ class GitRepository:
             raise EmptyRepositoryError(repository=self.uri)
 
         cmd_fetch = ['git', 'fetch', 'origin']
-        self._exec(cmd_fetch, cwd=self.dirpath, env={'LANG': 'C'})
+        self._exec(cmd_fetch, cwd=self.dirpath, env=self.gitenv)
 
         if not self.is_detached():
             cmd_reset = ['git', 'reset', '--hard', 'FETCH_HEAD']
-            self._exec(cmd_reset, cwd=self.dirpath, env={'LANG': 'C'})
+            self._exec(cmd_reset, cwd=self.dirpath, env=self.gitenv)
         else:
             logger.debug("Git %s repository is in detached state; skipping reset",
                          self.uri)
@@ -904,9 +914,7 @@ class GitRepository:
             branches = ['remotes/origin/' + branch for branch in branches]
             cmd_log.extend(branches)
 
-        env = {'LANG': 'C', 'PAGER': ''}
-
-        for line in self._exec_nb(cmd_log, cwd=self.dirpath, env=env):
+        for line in self._exec_nb(cmd_log, cwd=self.dirpath, env=self.gitenv):
             yield line
 
         logger.debug("Git log fetched from %s repository (%s)",
@@ -946,9 +954,7 @@ class GitRepository:
         cmd_show.extend(self.GIT_PRETTY_OUTPUT_OPTS)
         cmd_show.extend(commits)
 
-        env = {'LANG': 'C', 'PAGER': ''}
-
-        for line in self._exec_nb(cmd_show, cwd=self.dirpath, env=env):
+        for line in self._exec_nb(cmd_show, cwd=self.dirpath, env=self.gitenv):
             yield line
 
         logger.debug("Git show fetched from %s repository (%s)",
@@ -971,7 +977,8 @@ class GitRepository:
                           '--keep', repo]
         cmd_fetch_pack.extend(remote_refs)
 
-        outs = self._exec(cmd_fetch_pack, cwd=self.dirpath, env={'LANG': 'C'})
+        outs = self._exec(cmd_fetch_pack, cwd=self.dirpath,
+                          env=self.gitenv)
         outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
         pack, refs = self._read_fetch_pack(outs)
 
@@ -1017,7 +1024,7 @@ class GitRepository:
 
         cmd_verify_pack = ['git', 'verify-pack', '-v', filepath]
 
-        outs = self._exec(cmd_verify_pack, cwd=self.dirpath, env={'LANG': 'C'})
+        outs = self._exec(cmd_verify_pack, cwd=self.dirpath, env=self.gitenv)
         outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
 
         lines = [line.split(' ') for line in outs.split('\n')]
@@ -1048,7 +1055,7 @@ class GitRepository:
 
         # Prune repository to remove old branches
         cmd = ['git', 'remote', 'prune', 'origin']
-        self._exec(cmd, cwd=self.dirpath, env={'LANG': 'C'})
+        self._exec(cmd, cwd=self.dirpath, env=self.gitenv)
 
     def _discover_refs(self, remote=False):
         """Get the current list of local or remote refs."""
@@ -1060,7 +1067,8 @@ class GitRepository:
             cmd_refs = ['git', 'show-ref']
             sep = ' '
 
-        outs = self._exec(cmd_refs, cwd=self.dirpath, env={'LANG': 'C'})
+        outs = self._exec(cmd_refs, cwd=self.dirpath,
+                          env=self.gitenv)
         outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
 
         refs = []
@@ -1085,7 +1093,7 @@ class GitRepository:
             action = 'updated to %s' % ref.hash
 
         try:
-            self._exec(cmd, cwd=self.dirpath, env={'LANG': 'C'})
+            self._exec(cmd, cwd=self.dirpath, env=self.gitenv)
         except RepositoryError as e:
             logger.warning("Git %s ref could not be %s during sync process in %s (%s); skipped",
                            ref.refname, action, self.uri, self.dirpath)
