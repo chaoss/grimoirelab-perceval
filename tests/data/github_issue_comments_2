@@ -1,0 +1,41 @@
+[
+  {
+    "id": 2,
+    "url": "https://api.github.com/repos/zhquan_example/repo/issues/comments/2",
+    "html_url": "https://github.com/zhquan_example/repo/issues/2#issuecomment-2",
+    "author_association": "COLLABORATOR",
+    "body": "My second comment",
+    "issue_url": "https://api.github.com/repos/zhquan_example/repo/issues/2",
+    "reactions": {
+            "+1": 0,
+            "-1": 0,
+            "confused": 0,
+            "heart": 0,
+            "hooray": 0,
+            "laugh": 0,
+            "total_count": 0,
+            "url": "https://api.github.com/repos/zhquan_example/repo/issues/comments/2/reactions"
+    },
+    "user": {
+      "login": "zhquan_example",
+      "id": 1,
+      "avatar_url": "",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/zhquan_example",
+      "html_url": "https://github.com/zhquan_example",
+      "followers_url": "https://api.github.com/users/zhquan_example/followers",
+      "following_url": "https://api.github.com/users/zhquan_example/following{/other_user}",
+      "gists_url": "https://api.github.com/users/zhquan_example/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/zhquan_example/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/zhquan_example/subscriptions",
+      "organizations_url": "https://api.github.com/users/zhquan_example/orgs",
+      "repos_url": "https://api.github.com/users/zhquan_example/repos",
+      "events_url": "https://api.github.com/users/zhquan_example/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/zhquan_example/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "updated_at": "2015-11-26T11:34:39Z",
+    "created_at": "2015-11-26T11:34:39Z"
+  }
+]

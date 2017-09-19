@@ -95,10 +95,10 @@ def setup_http_server():
             elif (params['oldest'][0] == '0' and
                   params['latest'][0] == '1427135733.000068'):
                 body = channel_history_next
-            elif (params['oldest'][0] == '1427135740.000068' and
+            elif (params['oldest'][0] == '1427135740.000059' and
                   params['latest'][0] == '1483228800.0'):
                 body = channel_history_date
-            elif (params['oldest'][0] == '1451606399.999999' and
+            elif (params['oldest'][0] == '1451606399.99999' and
                   params['latest'][0] == '1483228800.0'):
                 body = channel_empty
         elif uri.startswith(SLACK_USER_INFO_URL):
@@ -333,7 +333,7 @@ class TestSlackBackend(unittest.TestCase):
             },
             {
                 'channel': ['C011DUKE8'],
-                'oldest': ['1427135740.000068'],
+                'oldest': ['1427135740.000059'],
                 'latest': ['1483228800.0'],
                 'token': ['aaaa'],
                 'count': ['5']
@@ -379,7 +379,7 @@ class TestSlackBackend(unittest.TestCase):
             },
             {
                 'channel': ['C011DUKE8'],
-                'oldest': ['1451606399.999999'],
+                'oldest': ['1451606399.99999'],
                 'latest': ['1483228800.0'],
                 'token': ['aaaa'],
                 'count': ['5']

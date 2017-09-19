@@ -378,6 +378,50 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(topics[1]['category'], 'topic')
         self.assertEqual(topics[0]['tag'], DISCOURSE_SERVER_URL)
 
+    @httpretty.activate
+    def test_fetch_topic_last_posted_at_null(self):
+        """Test whether list of topics is returned when a topic has last_posted_at null"""
+
+        bodies_topics = [read_file('data/discourse_topics_last_posted_at_null.json'),
+                         read_file('data/discourse_topics_empty.json')]
+        body_topic_1149 = read_file('data/discourse_topic_1149.json')
+
+        def request_callback(method, uri, headers):
+            if uri.startswith(DISCOURSE_TOPICS_URL):
+                body = bodies_topics.pop(0)
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
+                body = body_topic_1149
+            else:
+                raise
+            return (200, headers, body)
+
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPICS_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1149,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+
+        # On this tests two topics will be retrieved.
+        # One of them has last_posted_at with null
+        discourse = Discourse(DISCOURSE_SERVER_URL)
+        topics = [topic for topic in discourse.fetch()]
+
+        self.assertEqual(len(topics), 1)
+
+        self.assertEqual(topics[0]['data']['id'], 1149)
+        self.assertEqual(len(topics[0]['data']['post_stream']['posts']), 2)
+        self.assertEqual(topics[0]['origin'], DISCOURSE_SERVER_URL)
+        self.assertEqual(topics[0]['uuid'], '18068b95de1323a84c8e11dee8f46fd137f10c86')
+        self.assertEqual(topics[0]['updated_on'], 1464134770.909)
+        self.assertEqual(topics[0]['category'], 'topic')
+        self.assertEqual(topics[0]['tag'], DISCOURSE_SERVER_URL)
+
 
 class TestDiscourseBackendCache(unittest.TestCase):
     """Discourse backend tests using a cache"""
