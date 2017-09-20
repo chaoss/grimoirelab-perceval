@@ -25,6 +25,7 @@
 import json
 import logging
 import time
+import urllib.parse
 
 import requests
 
@@ -69,7 +70,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.10.0'
+    version = '0.10.1'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -447,10 +448,15 @@ class GitHubClient:
         self.owner = owner
         self.repository = repository
         self.token = token
-        self.base_url = base_url
         self.rate_limit = None
         self.rate_limit_reset_ts = None
         self.sleep_for_rate = sleep_for_rate
+
+        if base_url:
+            parts = urllib.parse.urlparse(base_url)
+            self.api_url = parts.scheme + '://' + 'api.' + parts.netloc
+        else:
+            self.api_url = GITHUB_API_URL
 
         if min_rate_to_sleep > MAX_RATE_LIMIT:
             msg = "Minimum rate to sleep value exceeded (%d)."
@@ -488,7 +494,7 @@ class GitHubClient:
         if login in self._users:
             return self._users[login]
 
-        url_user = GITHUB_API_URL + "/users/" + login
+        url_user = urijoin(self.api_url, 'users', login)
 
         logging.info("Getting info for %s" % (url_user))
         r = self.__send_request(url_user, headers=self.__get_headers())
@@ -503,7 +509,7 @@ class GitHubClient:
         if login in self._users_orgs:
             return self._users_orgs[login]
 
-        url = GITHUB_API_URL + "/users/" + login + "/orgs"
+        url = urijoin(self.api_url, 'users', login, 'orgs')
         try:
             r = self.__send_request(url, headers=self.__get_headers())
             orgs = r.text
@@ -522,11 +528,8 @@ class GitHubClient:
     def __get_url_repo(self):
         """Build URL repo"""
 
-        github_api = GITHUB_API_URL
-        if self.base_url:
-            github_api = self.base_url
-        github_api_repos = github_api + "/repos"
-        url_repo = github_api_repos + "/" + self.owner + "/" + self.repository
+        github_api_repos = urijoin(self.api_url, 'repos')
+        url_repo = urijoin(github_api_repos, self.owner, self.repository)
         return url_repo
 
     def __get_url(self, path, startdate=None):
@@ -574,9 +577,17 @@ class GitHubClient:
 
         r = requests.get(url, params=params, headers=headers)
         r.raise_for_status()
-        self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
-        self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
-        logger.debug("Rate limit: %s" % (self.rate_limit))
+
+        # GitHub service establishes API rate limits.
+        # Enterprise version might have them deactivated.
+        if 'X-RateLimit-Remaining' in r.headers:
+            self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
+            self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
+            logger.debug("Rate limit: %s", self.rate_limit)
+        else:
+            self.rate_limit = None
+            self.rate_limit_reset_ts = None
+
         return r
 
     def _fetch_items(self, path, payload_type, start=None):
@@ -626,6 +637,8 @@ class GitHubCommand(BackendCommand):
 
         # GitHub options
         group = parser.parser.add_argument_group('GitHub arguments')
+        group.add_argument('--enterprise-url', dest='base_url',
+                           help="Base URL for GitHub Enterprise instance")
         group.add_argument('--sleep-for-rate', dest='sleep_for_rate',
                            action='store_true',
                            help="sleep for getting more rate")

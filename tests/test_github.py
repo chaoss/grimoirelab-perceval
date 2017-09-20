@@ -58,6 +58,17 @@ GITHUB_USER_URL = GITHUB_API_URL + "/users/zhquan_example"
 GITHUB_ORGS_URL = GITHUB_API_URL + "/users/zhquan_example/orgs"
 GITHUB_COMMAND_URL = GITHUB_API_URL + "/command"
 
+GITHUB_ENTERPRISE_URL = "https://example.com"
+GITHUB_ENTERPRISE_API_URL = "https://api.example.com"
+GITHUB_ENTERPRISE_ISSUES_URL = GITHUB_ENTERPRISE_API_URL + "/repos/zhquan_example/repo/issues"
+GITHUB_ENTERPRISE_ISSUE_1_COMMENTS_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/1/comments"
+GITHUB_ENTERPRISE_ISSUE_COMMENT_1_REACTION_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/comments/1/reactions"
+GITHUB_ENTERPRISE_ISSUE_2_REACTION_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/2/reactions"
+GITHUB_ENTERPRISE_ISSUE_2_COMMENTS_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/2/comments"
+GITHUB_ENTERPRISE_ISSUE_COMMENT_2_REACTION_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/comments/2/reactions"
+GITHUB_ENTERPRISE_USER_URL = GITHUB_ENTERPRISE_API_URL + "/users/zhquan_example"
+GITHUB_ENTERPRISE_ORGS_URL = GITHUB_ENTERPRISE_API_URL + "/users/zhquan_example/orgs"
+
 
 def read_file(filename, mode='r'):
     with open(filename, mode) as f:
@@ -271,6 +282,75 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[1]['updated_on'], 1458054569.0)
         self.assertEqual(issues[1]['category'], 'issue')
         self.assertEqual(issues[1]['tag'], 'https://github.com/zhquan_example/repo')
+        self.assertDictEqual(issues[1]['data'], expected_2)
+
+    @httpretty.activate
+    def test_fetch_enterprise(self):
+        """Test if it fetches issues from a GitHub Enterprise server"""
+
+        login = read_file('data/github_login')
+        orgs = read_file('data/github_orgs')
+        issue_1 = read_file('data/github_issue_1')
+        issue_2 = read_file('data/github_issue_2')
+        issue_2_reactions = read_file('data/github_issue_2_reactions')
+        issue_1_comments = read_file('data/github_issue_comments_1')
+        issue_2_comments = read_file('data/github_issue_comments_2')
+        issue_comment_1_reactions = read_file('data/github_issue_comment_1_reactions')
+        issue_comment_2_reactions = read_file('data/github_issue_comment_2_reactions')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUES_URL,
+                               body=issue_1, status=200,
+                               forcing_headers={
+                                   'Link': '<' + GITHUB_ENTERPRISE_ISSUES_URL + '/?&page=2>; rel="next", <' +
+                                           GITHUB_ENTERPRISE_ISSUES_URL + '/?&page=2>; rel="last"'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUE_1_COMMENTS_URL,
+                               body=issue_1_comments, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUE_COMMENT_1_REACTION_URL,
+                               body=issue_comment_1_reactions, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUES_URL + '/?&page=2',
+                               body=issue_2, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUE_2_REACTION_URL,
+                               body=issue_2_reactions, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUE_2_COMMENTS_URL,
+                               body=issue_2_comments, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUE_COMMENT_2_REACTION_URL,
+                               body=issue_comment_2_reactions, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_USER_URL,
+                               body=login, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ORGS_URL,
+                               body=orgs, status=200)
+
+        github = GitHub("zhquan_example", "repo", "aaa",
+                        base_url=GITHUB_ENTERPRISE_URL)
+        issues = [issues for issues in github.fetch()]
+
+        self.assertEqual(len(issues), 2)
+
+        expected_1 = json.loads(read_file('data/github_issue_expected_1'))
+        self.assertEqual(issues[0]['origin'], 'https://example.com/zhquan_example/repo')
+        self.assertEqual(issues[0]['uuid'], 'c03eca84a7518f629a75bc0d0e24180030688c3b')
+        self.assertEqual(issues[0]['updated_on'], 1458035782.0)
+        self.assertEqual(issues[0]['category'], 'issue')
+        self.assertEqual(issues[0]['tag'], 'https://example.com/zhquan_example/repo')
+
+        self.assertDictEqual(issues[0]['data'], expected_1)
+
+        expected_2 = json.loads(read_file('data/github_issue_expected_2'))
+        self.assertEqual(issues[1]['origin'], 'https://example.com/zhquan_example/repo')
+        self.assertEqual(issues[1]['uuid'], 'c63bbfc15c0289abc8d9ade152ff1dbfcbb968fa')
+        self.assertEqual(issues[1]['updated_on'], 1458054569.0)
+        self.assertEqual(issues[1]['category'], 'issue')
+        self.assertEqual(issues[1]['tag'], 'https://example.com/zhquan_example/repo')
         self.assertDictEqual(issues[1]['data'], expected_2)
 
     @httpretty.activate
@@ -601,6 +681,16 @@ class TestGitHubBackendCache(unittest.TestCase):
 class TestGitHubClient(unittest.TestCase):
     """ GitHub API client tests """
 
+    def test_api_url_initialization(self):
+        """Test API URL initialization for both basic and enterprise servers"""
+
+        client = GitHubClient("zhquan_example", "repo", "aaa")
+        self.assertEqual(client.api_url, GITHUB_API_URL)
+
+        client = GitHubClient("zhquan_example", "repo", "aaa",
+                              base_url=GITHUB_ENTERPRISE_URL)
+        self.assertEqual(client.api_url, GITHUB_ENTERPRISE_API_URL)
+
     @httpretty.activate
     def test_get_issues(self):
         """ Test get_issues API call """
@@ -616,6 +706,34 @@ class TestGitHubClient(unittest.TestCase):
                                })
 
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
+        raw_issues = [issues for issues in client.get_issues()]
+        self.assertEqual(len(raw_issues), 1)
+        self.assertEqual(raw_issues[0], issue)
+
+        # Check requests
+        expected = {
+            'per_page': ['30'],
+            'state': ['all'],
+            'direction': ['asc'],
+            'sort': ['updated']
+        }
+
+        self.assertDictEqual(httpretty.last_request().querystring, expected)
+        self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
+
+    @httpretty.activate
+    def test_enterprise_issues(self):
+        """Test fetching issues from enterprise"""
+
+        issue = read_file('data/github_request')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUES_URL,
+                               body=issue, status=200)
+
+        client = GitHubClient("zhquan_example", "repo", "aaa",
+                              base_url=GITHUB_ENTERPRISE_URL)
+
         raw_issues = [issues for issues in client.get_issues()]
         self.assertEqual(len(raw_issues), 1)
         self.assertEqual(raw_issues[0], issue)
@@ -914,11 +1032,13 @@ class TestGitHubCommand(unittest.TestCase):
                 '--tag', 'test', '--no-cache',
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
+                '--enterprise-url', 'https://example.com',
                 'zhquan_example', 'repo']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.owner, 'zhquan_example')
         self.assertEqual(parsed_args.repository, 'repo')
+        self.assertEqual(parsed_args.base_url, 'https://example.com')
         self.assertEqual(parsed_args.sleep_for_rate, True)
         self.assertEqual(parsed_args.min_rate_to_sleep, 1)
         self.assertEqual(parsed_args.tag, 'test')
