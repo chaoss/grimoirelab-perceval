@@ -80,7 +80,7 @@ setup(name="perceval",
           'requests>=2.7.0',
           'beautifulsoup4>=4.3.2',
           'feedparser>=5.1.3',
-          'grimoirelab-toolkit>=0.1.0'
+          'grimoirelab-toolkit>=0.1.1'
       ],
       scripts=[
           'bin/perceval'
