@@ -70,7 +70,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.10.1'
+    version = '0.10.2'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -127,7 +127,8 @@ class GitHub(Backend):
                     elif field == 'comments':
                         issue[field + '_data'] = self.__get_issue_comments(issue['number'])
                     elif field == 'reactions':
-                        issue[field + '_data'] = self.__get_issue_reactions(issue['number'])
+                        issue[field + '_data'] = \
+                            self.__get_issue_reactions(issue['number'], issue['reactions']['total_count'])
 
                 self._push_cache_queue('{}')
                 self._flush_cache_queue()
@@ -189,12 +190,19 @@ class GitHub(Backend):
                 raw_item = next(cache_items)
                 yield issue
 
-    def __get_issue_reactions(self, issue_number):
+    def __get_issue_reactions(self, issue_number, total_count):
         """Get issue reactions"""
+
         reactions = []
-        group_reactions = self.client.get_issue_reactions(issue_number)
         self._push_cache_queue('{ISSUE-REACTIONS}')
         self._flush_cache_queue()
+
+        if total_count == 0:
+            self._push_cache_queue('[]')
+            self._flush_cache_queue()
+            return reactions
+
+        group_reactions = self.client.get_issue_reactions(issue_number)
 
         for raw_reactions in group_reactions:
             self._push_cache_queue(raw_reactions)
@@ -221,18 +229,25 @@ class GitHub(Backend):
             for comment in json.loads(raw_comments):
                 comment_id = comment.get('id')
                 comment['user_data'] = self.__get_user(comment['user']['login'])
-                comment['reactions_data'] = self.__get_issue_comment_reactions(comment_id)
+                comment['reactions_data'] = \
+                    self.__get_issue_comment_reactions(comment_id, comment['reactions']['total_count'])
                 comments.append(comment)
 
         return comments
 
-    def __get_issue_comment_reactions(self, comment_id):
+    def __get_issue_comment_reactions(self, comment_id, total_count):
         """Get reactions on issue comments"""
 
         reactions = []
-        group_reactions = self.client.get_issue_comment_reactions(comment_id)
         self._push_cache_queue('{COMMENT-REACTIONS}')
         self._flush_cache_queue()
+
+        if total_count == 0:
+            self._push_cache_queue('[]')
+            self._flush_cache_queue()
+            return reactions
+
+        group_reactions = self.client.get_issue_comment_reactions(comment_id)
 
         for raw_reactions in group_reactions:
             self._push_cache_queue(raw_reactions)
