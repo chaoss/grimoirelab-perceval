@@ -117,11 +117,11 @@ class TestGitHubBackend(unittest.TestCase):
     def test_fetch(self):
         """ Test whether a list of issues is returned """
 
-        body = read_file('data/github_request')
-        login = read_file('data/github_login')
-        orgs = read_file('data/github_orgs')
-        comments = read_file('data/github_issue_comments_1')
-        reactions = read_file('data/github_issue_comment_1_reactions')
+        body = read_file('data/github/github_request')
+        login = read_file('data/github/github_login')
+        orgs = read_file('data/github/github_orgs')
+        comments = read_file('data/github/github_issue_comments_1')
+        reactions = read_file('data/github/github_issue_comment_1_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -164,9 +164,9 @@ class TestGitHubBackend(unittest.TestCase):
         github = GitHub("zhquan_example", "repo", "aaa")
         issues = [issues for issues in github.fetch()]
 
-        self.assertEqual(len(issues), 1)
+        expected = json.loads(read_file('data/github/github_request_expected'))
 
-        expected = json.loads(read_file('data/github_request_expected'))
+        self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0]['origin'], 'https://github.com/zhquan_example/repo')
         self.assertEqual(issues[0]['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
         self.assertEqual(issues[0]['updated_on'], 1454328801.0)
@@ -184,15 +184,15 @@ class TestGitHubBackend(unittest.TestCase):
     def test_fetch_more_issues(self):
         """ Test when return two issues """
 
-        login = read_file('data/github_login')
-        orgs = read_file('data/github_orgs')
-        issue_1 = read_file('data/github_issue_1')
-        issue_2 = read_file('data/github_issue_2')
-        issue_2_reactions = read_file('data/github_issue_2_reactions')
-        issue_1_comments = read_file('data/github_issue_comments_1')
-        issue_2_comments = read_file('data/github_issue_comments_2')
-        issue_comment_1_reactions = read_file('data/github_issue_comment_1_reactions')
-        issue_comment_2_reactions = read_file('data/github_issue_comment_2_reactions')
+        login = read_file('data/github/github_login')
+        orgs = read_file('data/github/github_orgs')
+        issue_1 = read_file('data/github/github_issue_1')
+        issue_2 = read_file('data/github/github_issue_2')
+        issue_2_reactions = read_file('data/github/github_issue_2_reactions')
+        issue_1_comments = read_file('data/github/github_issue_comments_1')
+        issue_2_comments = read_file('data/github/github_issue_comments_2')
+        issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
+        issue_comment_2_reactions = read_file('data/github/github_issue_comment_2_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -267,16 +267,22 @@ class TestGitHubBackend(unittest.TestCase):
 
         self.assertEqual(len(issues), 2)
 
-        expected_1 = json.loads(read_file('data/github_issue_expected_1'))
+        expected_1 = json.loads(read_file('data/github/github_issue_expected_1'))
         self.assertEqual(issues[0]['origin'], 'https://github.com/zhquan_example/repo')
         self.assertEqual(issues[0]['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
         self.assertEqual(issues[0]['updated_on'], 1458035782.0)
         self.assertEqual(issues[0]['category'], 'issue')
         self.assertEqual(issues[0]['tag'], 'https://github.com/zhquan_example/repo')
 
+        with open('./original.txt', 'w+') as f:
+            f.write(json.dumps(issues[0]['data'], sort_keys=True, indent=4))
+
+        with open('./expected.txt', 'w+') as f:
+            f.write(json.dumps(expected_1, sort_keys=True, indent=4))
+
         self.assertDictEqual(issues[0]['data'], expected_1)
 
-        expected_2 = json.loads(read_file('data/github_issue_expected_2'))
+        expected_2 = json.loads(read_file('data/github/github_issue_expected_2'))
         self.assertEqual(issues[1]['origin'], 'https://github.com/zhquan_example/repo')
         self.assertEqual(issues[1]['uuid'], '4236619ac2073491640f1698b5c4e169895aaf69')
         self.assertEqual(issues[1]['updated_on'], 1458054569.0)
@@ -288,15 +294,15 @@ class TestGitHubBackend(unittest.TestCase):
     def test_fetch_enterprise(self):
         """Test if it fetches issues from a GitHub Enterprise server"""
 
-        login = read_file('data/github_login')
-        orgs = read_file('data/github_orgs')
-        issue_1 = read_file('data/github_issue_1')
-        issue_2 = read_file('data/github_issue_2')
-        issue_2_reactions = read_file('data/github_issue_2_reactions')
-        issue_1_comments = read_file('data/github_issue_comments_1')
-        issue_2_comments = read_file('data/github_issue_comments_2')
-        issue_comment_1_reactions = read_file('data/github_issue_comment_1_reactions')
-        issue_comment_2_reactions = read_file('data/github_issue_comment_2_reactions')
+        login = read_file('data/github/github_login')
+        orgs = read_file('data/github/github_orgs')
+        issue_1 = read_file('data/github/github_issue_1')
+        issue_2 = read_file('data/github/github_issue_2')
+        issue_2_reactions = read_file('data/github/github_issue_2_reactions')
+        issue_1_comments = read_file('data/github/github_issue_comments_1')
+        issue_2_comments = read_file('data/github/github_issue_comments_2')
+        issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
+        issue_comment_2_reactions = read_file('data/github/github_issue_comment_2_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTERPRISE_ISSUES_URL,
@@ -336,7 +342,7 @@ class TestGitHubBackend(unittest.TestCase):
 
         self.assertEqual(len(issues), 2)
 
-        expected_1 = json.loads(read_file('data/github_issue_expected_1'))
+        expected_1 = json.loads(read_file('data/github/github_issue_expected_1'))
         self.assertEqual(issues[0]['origin'], 'https://example.com/zhquan_example/repo')
         self.assertEqual(issues[0]['uuid'], 'c03eca84a7518f629a75bc0d0e24180030688c3b')
         self.assertEqual(issues[0]['updated_on'], 1458035782.0)
@@ -345,7 +351,7 @@ class TestGitHubBackend(unittest.TestCase):
 
         self.assertDictEqual(issues[0]['data'], expected_1)
 
-        expected_2 = json.loads(read_file('data/github_issue_expected_2'))
+        expected_2 = json.loads(read_file('data/github/github_issue_expected_2'))
         self.assertEqual(issues[1]['origin'], 'https://example.com/zhquan_example/repo')
         self.assertEqual(issues[1]['uuid'], 'c63bbfc15c0289abc8d9ade152ff1dbfcbb968fa')
         self.assertEqual(issues[1]['updated_on'], 1458054569.0)
@@ -357,12 +363,12 @@ class TestGitHubBackend(unittest.TestCase):
     def test_fetch_from_date(self):
         """ Test when return from date """
 
-        login = read_file('data/github_login')
-        orgs = read_file('data/github_orgs')
-        body = read_file('data/github_issue_2')
-        comments = read_file('data/github_issue_comments_2')
-        issue_reactions = read_file('data/github_issue_2_reactions')
-        comment_reactions = read_file('data/github_issue_comment_2_reactions')
+        login = read_file('data/github/github_login')
+        orgs = read_file('data/github/github_orgs')
+        body = read_file('data/github/github_issue_2')
+        comments = read_file('data/github/github_issue_comments_2')
+        issue_reactions = read_file('data/github/github_issue_2_reactions')
+        comment_reactions = read_file('data/github/github_issue_comment_2_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -417,7 +423,7 @@ class TestGitHubBackend(unittest.TestCase):
         issues = [issues for issues in github.fetch(from_date=from_date)]
         self.assertEqual(len(issues), 1)
 
-        expected = json.loads(read_file('data/github_issue_expected_2'))
+        expected = json.loads(read_file('data/github/github_issue_expected_2'))
         self.assertEqual(issues[0]['origin'], 'https://github.com/zhquan_example/repo')
         self.assertEqual(issues[0]['uuid'], '4236619ac2073491640f1698b5c4e169895aaf69')
         self.assertEqual(issues[0]['updated_on'], 1458054569.0)
@@ -437,7 +443,7 @@ class TestGitHubBackend(unittest.TestCase):
         """ Test when return empty """
 
         body = ""
-        login = read_file('data/github_login')
+        login = read_file('data/github/github_login')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -472,11 +478,11 @@ class TestGitHubBackend(unittest.TestCase):
     def test_user_orgs_not_found(self):
         """ Test whether 404 response when getting users orgs is managed """
 
-        body = read_file('data/github_request')
-        login = read_file('data/github_login')
-        orgs = read_file('data/github_orgs')
-        comments = read_file('data/github_issue_comments_1')
-        reactions = read_file('data/github_issue_comment_1_reactions')
+        body = read_file('data/github/github_request')
+        login = read_file('data/github/github_login')
+        orgs = read_file('data/github/github_orgs')
+        comments = read_file('data/github/github_issue_comments_1')
+        reactions = read_file('data/github/github_issue_comment_1_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -559,15 +565,15 @@ class TestGitHubBackendCache(unittest.TestCase):
     def test_fetch_from_cache(self):
         """ Test whether a list of issues is returned from cache """
 
-        issue_1 = read_file('data/github_issue_1')
-        issue_2 = read_file('data/github_issue_2')
-        login = read_file('data/github_login')
-        orgs = read_file('data/github_orgs')
-        issue_1_comments = read_file('data/github_issue_comments_1')
-        issue_2_comments = read_file('data/github_issue_comments_2')
-        issue_2_reactions = read_file('data/github_issue_2_reactions')
-        issue_comment_1_reactions = read_file('data/github_issue_comment_1_reactions')
-        issue_comment_2_reactions = read_file('data/github_issue_comment_2_reactions')
+        issue_1 = read_file('data/github/github_issue_1')
+        issue_2 = read_file('data/github/github_issue_2')
+        login = read_file('data/github/github_login')
+        orgs = read_file('data/github/github_orgs')
+        issue_1_comments = read_file('data/github/github_issue_comments_1')
+        issue_2_comments = read_file('data/github/github_issue_comments_2')
+        issue_2_reactions = read_file('data/github/github_issue_2_reactions')
+        issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
+        issue_comment_2_reactions = read_file('data/github/github_issue_comment_2_reactions')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -695,7 +701,7 @@ class TestGitHubClient(unittest.TestCase):
     def test_get_issues(self):
         """ Test get_issues API call """
 
-        issue = read_file('data/github_request')
+        issue = read_file('data/github/github_request')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -725,7 +731,7 @@ class TestGitHubClient(unittest.TestCase):
     def test_enterprise_issues(self):
         """Test fetching issues from enterprise"""
 
-        issue = read_file('data/github_request')
+        issue = read_file('data/github/github_request')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTERPRISE_ISSUES_URL,
@@ -753,7 +759,7 @@ class TestGitHubClient(unittest.TestCase):
     def test_get_from_date_issues(self):
         """ Test get_from_issues API call """
 
-        issue = read_file('data/github_request_from_2016_03_01')
+        issue = read_file('data/github/github_request_from_2016_03_01')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -786,8 +792,8 @@ class TestGitHubClient(unittest.TestCase):
     def test_get_page_issues(self):
         """ Test get_page_issue API call """
 
-        issue_1 = read_file('data/github_issue_1')
-        issue_2 = read_file('data/github_issue_2')
+        issue_1 = read_file('data/github/github_issue_1')
+        issue_2 = read_file('data/github/github_issue_2')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -832,7 +838,7 @@ class TestGitHubClient(unittest.TestCase):
     def test_get_empty_issues(self):
         """ Test when issue is empty API call """
 
-        issue = read_file('data/github_empty_request')
+        issue = read_file('data/github/github_empty_request')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -862,7 +868,7 @@ class TestGitHubClient(unittest.TestCase):
     def test_get_user(self):
         """ Test get_user API call """
 
-        login = read_file('data/github_login')
+        login = read_file('data/github/github_login')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_USER_URL,
@@ -880,7 +886,7 @@ class TestGitHubClient(unittest.TestCase):
     def test_get_user_orgs(self):
         """ Test get_user_orgs API call """
 
-        orgs = read_file('data/github_orgs')
+        orgs = read_file('data/github/github_orgs')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ORGS_URL,
@@ -930,8 +936,8 @@ class TestGitHubClient(unittest.TestCase):
     def test_sleep_for_rate(self):
         """ Test get_page_issue API call """
 
-        issue_1 = read_file('data/github_empty_request')
-        issue_2 = read_file('data/github_empty_request')
+        issue_1 = read_file('data/github/github_empty_request')
+        issue_2 = read_file('data/github/github_empty_request')
 
         wait = 1
         reset = int(time.time() + wait)
@@ -983,7 +989,7 @@ class TestGitHubClient(unittest.TestCase):
     def test_rate_limit_error(self):
         """ Test get_page_issue API call """
 
-        issue = read_file('data/github_empty_request')
+        issue = read_file('data/github/github_empty_request')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
