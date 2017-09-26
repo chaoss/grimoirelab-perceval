@@ -256,9 +256,6 @@ class Launchpad(Backend):
         messages_raw = next(cache_items)
         messages = json.loads(messages_raw)
 
-        if 'entries' not in messages:
-            return messages
-
         for msg in messages['entries']:
             tag = next(cache_items)
             msg['owner_link_data'] = self.__fetch_user_from_cache(cache_items)
@@ -271,9 +268,6 @@ class Launchpad(Backend):
         attachments_raw = next(cache_items)
         attachments = json.loads(attachments_raw)
 
-        if 'entries' not in attachments:
-            return attachments
-
         return attachments['entries']
 
     def __fetch_issue_activities_from_cache(self, cache_items):
@@ -281,9 +275,6 @@ class Launchpad(Backend):
 
         activities_raw = next(cache_items)
         activities = json.loads(activities_raw)
-
-        if 'entries' not in activities:
-            return activities
 
         for act in activities['entries']:
             person_tag = next(cache_items)
@@ -342,9 +333,6 @@ class Launchpad(Backend):
             self._push_cache_queue(attachments_raw)
             self._flush_cache_queue()
 
-            if 'entries' not in attachments:
-                continue
-
             attachments = json.loads(attachments_raw)['entries']
             yield attachments
 
@@ -356,9 +344,6 @@ class Launchpad(Backend):
             self._push_cache_queue('{MESSAGES}')
             self._push_cache_queue(messages_raw)
             self._flush_cache_queue()
-
-            if 'entries' not in messages:
-                continue
 
             for msg in messages['entries']:
                 msg['owner_link_data'] = self.__get_user_data('{OWNER}', msg['owner_link'])
@@ -373,9 +358,6 @@ class Launchpad(Backend):
             self._push_cache_queue('{ACTIVITIES}')
             self._push_cache_queue(activities_raw)
             activities = json.loads(activities_raw)
-
-            if 'entries' not in activities:
-                continue
 
             for act in activities['entries']:
                 act['person_link_data'] = self.__get_user_data('{PERSON}', act['person_link'])
