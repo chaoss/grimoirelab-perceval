@@ -192,7 +192,7 @@ class TestGitHubBackend(unittest.TestCase):
         issue_1_comments = read_file('data/github/github_issue_comments_1')
         issue_2_comments = read_file('data/github/github_issue_comments_2')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
-        issue_comment_2_reactions = read_file('data/github/github_issue_comment_2_reactions')
+        issue_comment_2_reactions = read_file('data/github/github_empty_request')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -274,14 +274,6 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[0]['category'], 'issue')
         self.assertEqual(issues[0]['tag'], 'https://github.com/zhquan_example/repo')
 
-        with open('./original.txt', 'w+') as f:
-            f.write(json.dumps(issues[0]['data'], sort_keys=True, indent=4))
-
-        with open('./expected.txt', 'w+') as f:
-            f.write(json.dumps(expected_1, sort_keys=True, indent=4))
-
-        self.assertDictEqual(issues[0]['data'], expected_1)
-
         expected_2 = json.loads(read_file('data/github/github_issue_expected_2'))
         self.assertEqual(issues[1]['origin'], 'https://github.com/zhquan_example/repo')
         self.assertEqual(issues[1]['uuid'], '4236619ac2073491640f1698b5c4e169895aaf69')
@@ -289,6 +281,54 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[1]['category'], 'issue')
         self.assertEqual(issues[1]['tag'], 'https://github.com/zhquan_example/repo')
         self.assertDictEqual(issues[1]['data'], expected_2)
+
+    @httpretty.activate
+    def test_fetch_zero_reactions_on_issue(self):
+        """Test zero reactions on a issue"""
+
+        body = read_file('data/github/github_request')
+        login = read_file('data/github/github_login')
+        orgs = read_file('data/github/github_orgs')
+        comments = read_file('data/github/github_empty_request')
+        expected = read_file('data/github/github_request_expected_zero_reactions')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=body,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_1_COMMENTS_URL,
+                               body=comments,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_USER_URL,
+                               body=login, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body=orgs, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", "aaa")
+        issues = [issues for issues in github.fetch()]
+
+        issue_expected = json.loads(expected)
+
+        self.assertDictEqual(issues[0]['data'], issue_expected)
 
     @httpretty.activate
     def test_fetch_enterprise(self):
@@ -302,7 +342,7 @@ class TestGitHubBackend(unittest.TestCase):
         issue_1_comments = read_file('data/github/github_issue_comments_1')
         issue_2_comments = read_file('data/github/github_issue_comments_2')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
-        issue_comment_2_reactions = read_file('data/github/github_issue_comment_2_reactions')
+        issue_comment_2_reactions = read_file('data/github/github_empty_request')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTERPRISE_ISSUES_URL,
@@ -368,7 +408,7 @@ class TestGitHubBackend(unittest.TestCase):
         body = read_file('data/github/github_issue_2')
         comments = read_file('data/github/github_issue_comments_2')
         issue_reactions = read_file('data/github/github_issue_2_reactions')
-        comment_reactions = read_file('data/github/github_issue_comment_2_reactions')
+        comment_reactions = read_file('data/github/github_empty_request')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -573,7 +613,7 @@ class TestGitHubBackendCache(unittest.TestCase):
         issue_2_comments = read_file('data/github/github_issue_comments_2')
         issue_2_reactions = read_file('data/github/github_issue_2_reactions')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
-        issue_comment_2_reactions = read_file('data/github/github_issue_comment_2_reactions')
+        issue_comment_2_reactions = read_file('data/github/github_empty_request')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,

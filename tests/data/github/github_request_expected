@@ -461,7 +461,7 @@
                 "total_count": 0,
                 "url": "https://api.github.com/repos/zhquan_example/repo/issues/1/reactions"
             },
-    "reactions_data": {},
+    "reactions_data": [],
     "repository_url": "https://api.github.com/repos/zhquan_example/repo",
     "state": "closed",
     "title": "Title 1",
