@@ -1,0 +1,31 @@
+{
+    "entries": [
+        {
+            "bug_attachments_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/2/bug_attachments",
+            "content": "Don't worry if plan A fails, there are 25 more letters in the alphabet",
+            "date_created": "2017-08-21T14:28:00.336698+00:00",
+            "http_etag": "4cd607bc687aeb4ff34adfda1e840e43c7a122f4-c607ca46c77b9673130a54553f81fd2595304c96",
+            "owner_link": "https://api.launchpad.net/1.0/~user",
+            "parent_link": null,
+            "resource_type_link": "https://api.launchpad.net/1.0/#message",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/2",
+            "subject": "Marriage: when dating goes to far",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/comments/2"
+        },
+        {
+            "bug_attachments_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/3/bug_attachments",
+            "content": "Don't worry if plan A fails, there are 25 more letters in the alphabet",
+            "date_created": "2017-08-21T14:28:00.336698+00:00",
+            "http_etag": "4cd607bc687aeb4ff34adfda1e840e43c7a122f4-c607ca46c77b9673130a54553f81fd2595304c96",
+            "owner_link": "https://api.launchpad.net/1.0/~user",
+            "parent_link": null,
+            "resource_type_link": "https://api.launchpad.net/1.0/#message",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/3",
+            "subject": "Marriage: when dating goes to far",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/comments/3"
+        }
+    ],
+    "resource_type_link": "https://api.launchpad.net/1.0/#message-page-resource",
+    "start": 2,
+    "total_size": 4
+}

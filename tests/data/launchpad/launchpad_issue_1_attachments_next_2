@@ -1,0 +1,29 @@
+{
+    "entries": [
+        {
+            "bug_link": "https://api.launchpad.net/1.0/bugs/1",
+            "data_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/2/data",
+            "http_etag": "ec6eeef89921f52ef8e495f6a292a024d8225242-b5e0c579b03187c416aa324a737a670471a1e640",
+            "message_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/1",
+            "resource_type_link": "https://api.launchpad.net/1.0/#bug_attachment",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/2",
+            "title": "DpkgHistoryLog.txt.txt",
+            "type": "Unspecified",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/+attachment/2"
+        },
+        {
+            "bug_link": "https://api.launchpad.net/1.0/bugs/1",
+            "data_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/2/data",
+            "http_etag": "ec6eeef89921f52ef8e495f6a292a024d8225242-b5e0c579b03187c416aa324a737a670471a1e640",
+            "message_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/1",
+            "resource_type_link": "https://api.launchpad.net/1.0/#bug_attachment",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/2",
+            "title": "DpkgHistoryLog2.txt.txt",
+            "type": "Unspecified",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/+attachment/2"
+        }
+    ],
+    "resource_type_link": "https://api.launchpad.net/1.0/#bug_attachment-page-resource",
+    "start": 0,
+    "total_size": 4
+}
