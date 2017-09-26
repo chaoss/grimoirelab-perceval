@@ -13,7 +13,7 @@
             "heart": 1,
             "hooray": 0,
             "laugh": 0,
-            "total_count": 0,
+            "total_count": 2,
             "url": "https://api.github.com/repos/zhquan_example/repo/issues/comments/1/reactions"
     },
     "user": {
