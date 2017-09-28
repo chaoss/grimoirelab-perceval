@@ -67,12 +67,18 @@ class TestGitBackend(TestCaseGit):
         cls.git_path = os.path.join(cls.tmp_path, 'gittest')
         cls.git_detached_path = os.path.join(cls.tmp_path, 'gitdetached')
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
+        cls.git_top_submodules_path = os.path.join(cls.tmp_path, 'gittest-top-sub')
+        cls.git_submodules_path = os.path.join(cls.tmp_path, 'gittest-sub')
 
         subprocess.check_call(['tar', '-xzf', 'data/git/gittest.tar.gz',
                                '-C', cls.tmp_path])
         subprocess.check_call(['tar', '-xzf', 'data/git/gitdetached.tar.gz',
                                '-C', cls.tmp_path])
         subprocess.check_call(['tar', '-xzf', 'data/git/gittestempty.tar.gz',
+                               '-C', cls.tmp_path])
+        subprocess.check_call(['tar', '-xzf', 'data/git/gittest-sub.tar.gz',
+                               '-C', cls.tmp_path])
+        subprocess.check_call(['tar', '-xzf', 'data/git/gittest-top-sub.tar.gz',
                                '-C', cls.tmp_path])
 
     @classmethod
@@ -108,6 +114,23 @@ class TestGitBackend(TestCaseGit):
         """Test if it returns True when has_resuming is called"""
 
         self.assertEqual(Git.has_resuming(), True)
+
+    def test_fetch_submodules(self):
+        """Test whether repositories with submodules are correctly fetched"""
+
+        new_path_top = os.path.join(self.tmp_path, 'topgit')
+        new_path_sub = os.path.join(self.tmp_path, 'subgit')
+        top = Git(self.git_top_submodules_path, new_path_top)
+        sub = Git(self.git_submodules_path, new_path_sub)
+
+        t_commits = [commit for commit in top.fetch()]
+        s_commits = [commit for commit in sub.fetch()]
+
+        self.assertEqual(len(t_commits), 9)
+        self.assertEqual(len(s_commits), 10)
+
+        shutil.rmtree(new_path_top)
+        shutil.rmtree(new_path_sub)
 
     def test_fetch(self):
         """Test whether commits are fetched from a Git repository"""
@@ -551,7 +574,7 @@ class TestGitCommand(TestCaseGit):
 
         cmd = GitCommand(*args)
         self.assertEqual(cmd.parsed_args.gitpath,
-                         os.path.join(self.tmp_path, 'testpath/http://example.com/'))
+                         os.path.join(self.tmp_path, 'testpath/http://example.com/' + '-git'))
 
         args = ['http://example.com/',
                 '--git-log', 'data/git/git_log.txt']
