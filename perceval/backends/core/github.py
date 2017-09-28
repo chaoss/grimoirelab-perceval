@@ -129,7 +129,7 @@ class GitHub(Backend):
                         issue[field + '_data'] = \
                             self.__get_issue_reactions(issue['number'], issue['reactions']['total_count'])
 
-                self._push_cache_queue('{}')
+                self._push_cache_queue('{ISSUE-END}')
                 self._flush_cache_queue()
                 yield issue
         self._push_cache_queue('{}{}')
@@ -161,7 +161,7 @@ class GitHub(Backend):
                 self.__init_extra_issue_fields(issue)
                 raw_item = next(cache_items)
 
-                while raw_item != '{}':
+                while raw_item != '{ISSUE-END}':
                     try:
                         if raw_item == '{USER}':
                             issue['user_data'] = \
