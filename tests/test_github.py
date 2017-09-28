@@ -471,7 +471,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[0]['tag'], 'https://github.com/zhquan_example/repo')
 
         self.assertDictEqual(issues[0]['data']['assignee_data'], expected['assignee_data'])
-        self.assertDictEqual(issues[0]['data']['assignees_data'], expected['assignees_data'])
+        self.assertListEqual(issues[0]['data']['assignees_data'], expected['assignees_data'])
         self.assertEqual(len(issues[0]['data']['comments_data']), len(expected['comments_data']))
         self.assertDictEqual(issues[0]['data']['comments_data'][0], expected['comments_data'][0])
         self.assertListEqual(issues[0]['data']['comments_data'][0]['reactions_data'],

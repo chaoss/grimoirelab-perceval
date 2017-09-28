@@ -111,9 +111,8 @@ class GitHub(Backend):
             self._flush_cache_queue()
             issues = json.loads(raw_issues)
             for issue in issues:
-
+                self.__init_extra_issue_fields(issue)
                 for field in TARGET_ISSUE_FIELDS:
-                    issue[field + '_data'] = {}
 
                     if not issue[field]:
                         continue
@@ -388,9 +387,9 @@ class GitHub(Backend):
 
         issue['user_data'] = {}
         issue['assignee_data'] = {}
-        issue['assignees_data'] = {}
-        issue['comments_data'] = {}
-        issue['reactions_data'] = {}
+        issue['assignees_data'] = []
+        issue['comments_data'] = []
+        issue['reactions_data'] = []
 
     def __get_user_and_organization(self, login, raw_user, raw_org):
         found = self._users.get(login)
