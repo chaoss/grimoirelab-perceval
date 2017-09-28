@@ -67,12 +67,18 @@ class TestGitBackend(TestCaseGit):
         cls.git_path = os.path.join(cls.tmp_path, 'gittest')
         cls.git_detached_path = os.path.join(cls.tmp_path, 'gitdetached')
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
+        cls.git_top_submodules_path = os.path.join(cls.tmp_path, 'gittest-top-sub')
+        cls.git_submodules_path = os.path.join(cls.tmp_path, 'gittest-sub')
 
         subprocess.check_call(['tar', '-xzf', 'data/git/gittest.tar.gz',
                                '-C', cls.tmp_path])
         subprocess.check_call(['tar', '-xzf', 'data/git/gitdetached.tar.gz',
                                '-C', cls.tmp_path])
         subprocess.check_call(['tar', '-xzf', 'data/git/gittestempty.tar.gz',
+                               '-C', cls.tmp_path])
+        subprocess.check_call(['tar', '-xzf', 'data/git/gittest-sub.tar.gz',
+                               '-C', cls.tmp_path])
+        subprocess.check_call(['tar', '-xzf', 'data/git/gittest-top-sub.tar.gz',
                                '-C', cls.tmp_path])
 
     @classmethod
@@ -85,7 +91,7 @@ class TestGitBackend(TestCaseGit):
         git = Git('http://example.com', self.git_path, tag='test')
 
         self.assertEqual(git.uri, 'http://example.com')
-        self.assertEqual(git.gitpath, self.git_path)
+        self.assertEqual(git.gitpath, self.git_path + '-git')
         self.assertEqual(git.origin, 'http://example.com')
         self.assertEqual(git.tag, 'test')
 
@@ -108,6 +114,23 @@ class TestGitBackend(TestCaseGit):
         """Test if it returns True when has_resuming is called"""
 
         self.assertEqual(Git.has_resuming(), True)
+
+    def test_git_submodules(self):
+        """Test whether repositories with submodules are correctly fetched"""
+
+        new_path_top = os.path.join(self.tmp_path, 'topgit')
+        new_path_sub = os.path.join(self.tmp_path, 'subgit')
+        top = Git(self.git_top_submodules_path, new_path_top)
+        sub = Git(self.git_submodules_path, new_path_sub)
+
+        t_commits = [commit for commit in top.fetch()]
+        s_commits = [commit for commit in sub.fetch()]
+
+        self.assertEqual(len(t_commits), 9)
+        self.assertEqual(len(s_commits), 10)
+
+        shutil.rmtree(new_path_top + '-git')
+        shutil.rmtree(new_path_sub + '-git')
 
     def test_fetch(self):
         """Test whether commits are fetched from a Git repository"""
@@ -139,7 +162,7 @@ class TestGitBackend(TestCaseGit):
             self.assertEqual(commit['category'], 'commit')
             self.assertEqual(commit['tag'], self.git_path)
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_fetch_since_date(self):
         """Test whether commits are fetched from a Git repository since the given date"""
@@ -184,7 +207,7 @@ class TestGitBackend(TestCaseGit):
             self.assertEqual(commit['category'], 'commit')
             self.assertEqual(commit['tag'], self.git_path)
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_fetch_branch(self):
         """Test whether commits are fetched from a Git repository for a given branch"""
@@ -294,7 +317,7 @@ class TestGitBackend(TestCaseGit):
 
         self.assertEqual(len(commits), len(expected))
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_fetch_empty_log(self):
         """Test whether it parsers an empty log"""
@@ -307,7 +330,7 @@ class TestGitBackend(TestCaseGit):
 
         self.assertListEqual(commits, [])
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_fetch_from_detached_repository(self):
         """Test whether commits are fetched from a repository in detached state"""
@@ -339,7 +362,7 @@ class TestGitBackend(TestCaseGit):
             self.assertEqual(commit['category'], 'commit')
             self.assertEqual(commit['tag'], self.git_detached_path)
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_fetch_from_empty_repository(self):
         """Test whether it parses from empty repository"""
@@ -351,7 +374,7 @@ class TestGitBackend(TestCaseGit):
 
         self.assertListEqual(commits, [])
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_fetch_latest_items(self):
         """Test whether latest commits are fetched from a Git repository"""
@@ -430,7 +453,7 @@ class TestGitBackend(TestCaseGit):
 
         # Cleanup
         shutil.rmtree(editable_path)
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_fetch_from_file(self):
         """Test whether commits are fetched from a Git log file"""
@@ -508,6 +531,8 @@ class TestGitBackend(TestCaseGit):
     def test_git_parser_from_iter(self):
         """Test if the static method parses a git log from a repository"""
 
+        GitRepository.clone(self.git_path, self.git_path + '-git')
+
         repo = GitRepository(self.git_path, self.git_path)
         commits = Git.parse_git_log_from_iter(repo.log())
         result = [commit['commit'] for commit in commits]
@@ -523,6 +548,7 @@ class TestGitBackend(TestCaseGit):
                     '456a68ee1407a77f3e804a30dff245bb6c6b872f']
 
         self.assertListEqual(result, expected)
+        shutil.rmtree(self.git_path + '-git')
 
 
 class TestGitCommand(TestCaseGit):
@@ -551,7 +577,7 @@ class TestGitCommand(TestCaseGit):
 
         cmd = GitCommand(*args)
         self.assertEqual(cmd.parsed_args.gitpath,
-                         os.path.join(self.tmp_path, 'testpath/http://example.com/'))
+                         os.path.join(self.tmp_path, 'testpath/.perceval/repositories/http://example.com/'))
 
         args = ['http://example.com/',
                 '--git-log', 'data/git/git_log.txt']
@@ -941,11 +967,13 @@ class TestGitRepository(TestCaseGit):
     def test_init(self):
         """Test initialization"""
 
+        GitRepository.clone(self.git_path, self.git_path)
+
         repo = GitRepository('http://example.git', self.git_path)
 
         self.assertIsInstance(repo, GitRepository)
         self.assertEqual(repo.uri, 'http://example.git')
-        self.assertEqual(repo.dirpath, self.git_path)
+        self.assertEqual(repo.dirpath, self.git_path + '-git')
 
         # Check command environment variables
         expected = {
@@ -958,7 +986,10 @@ class TestGitRepository(TestCaseGit):
     def test_not_existing_repo_on_init(self):
         """Test if init fails when the repos does not exists"""
 
-        expected = "git repository '%s' does not exist" % (self.tmp_path)
+        if os.path.exists(self.tmp_path + '-git'):
+            shutil.rmtree(self.tmp_path + '-git')
+
+        expected = "git repository '%s' does not exist" % (self.tmp_path + '-git')
 
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository('http://example.org', self.tmp_path)
@@ -966,7 +997,7 @@ class TestGitRepository(TestCaseGit):
     def test_clone(self):
         """Test if a git repository is cloned"""
 
-        new_path = os.path.join(self.tmp_path, 'newgit')
+        new_path = os.path.join(self.tmp_path, 'newgit-git')
 
         repo = GitRepository.clone(self.git_path, new_path)
 
@@ -974,7 +1005,6 @@ class TestGitRepository(TestCaseGit):
         self.assertEqual(repo.uri, self.git_path)
         self.assertEqual(repo.dirpath, new_path)
         self.assertTrue(os.path.exists(new_path))
-        self.assertTrue(os.path.exists(os.path.join(new_path, '.git')))
 
         shutil.rmtree(new_path)
 
@@ -985,7 +1015,7 @@ class TestGitRepository(TestCaseGit):
         if not os.path.isdir(new_path):
             os.makedirs(new_path)
 
-        expected = "git repository '%s' does not exist" % new_path
+        expected = "git repository '%s' does not exist" % (new_path + '-git')
 
         with self.assertRaisesRegex(RepositoryError, expected):
             repo = GitRepository(uri="", dirpath=new_path)
@@ -1008,10 +1038,14 @@ class TestGitRepository(TestCaseGit):
         """Test if it raises an exception when tries to clone an existing directory"""
 
         expected = "git command - fatal: destination path '%s' already exists" \
-            % (self.tmp_path)
+            % (self.tmp_path + '-git')
+
+        GitRepository.clone(self.git_path, self.tmp_path)
 
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository.clone(self.git_path, self.tmp_path)
+
+        shutil.rmtree(self.tmp_path + '-git')
 
     def test_count_objects(self):
         """Test if it gets the number of objects in a repository"""
@@ -1022,7 +1056,7 @@ class TestGitRepository(TestCaseGit):
         nobjs = repo.count_objects()
         self.assertEqual(nobjs, 42)
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_count_objects_invalid_output(self):
         """Test if an exception is raised when count_objects output is invalid"""
@@ -1049,7 +1083,7 @@ class TestGitRepository(TestCaseGit):
             with self.assertRaises(RepositoryError) as e:
                 _ = repo.count_objects()
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_is_detached(self):
         """Test if a repository is in detached state or not"""
@@ -1060,7 +1094,7 @@ class TestGitRepository(TestCaseGit):
         is_detached = repo.is_detached()
         self.assertEqual(is_detached, False)
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
         new_path = os.path.join(self.tmp_path, 'newgit')
         repo = GitRepository.clone(self.git_detached_path, new_path)
@@ -1068,7 +1102,7 @@ class TestGitRepository(TestCaseGit):
         is_detached = repo.is_detached()
         self.assertEqual(is_detached, True)
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_is_empty(self):
         """Test if a repository is empty or not"""
@@ -1079,7 +1113,7 @@ class TestGitRepository(TestCaseGit):
         is_empty = repo.is_empty()
         self.assertEqual(is_empty, False)
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
         new_path = os.path.join(self.tmp_path, 'newgit')
         repo = GitRepository.clone(self.git_empty_path, new_path)
@@ -1087,18 +1121,18 @@ class TestGitRepository(TestCaseGit):
         is_empty = repo.is_empty()
         self.assertEqual(is_empty, True)
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_pull(self):
         """Test if the repository is updated to 'origin' status"""
 
         new_path = os.path.join(self.tmp_path, 'newgit')
-        new_file = os.path.join(new_path, 'newfile')
+        new_file = os.path.join(new_path + '-git', 'newfile')
 
         repo = GitRepository.clone(self.git_path, new_path)
 
         # Count the number of commits before adding a new one
-        ncommits = count_commits(new_path)
+        ncommits = count_commits(new_path + '-git')
         self.assertEqual(ncommits, 9)
 
         # Create a new file and commit it to the repository
@@ -1107,26 +1141,26 @@ class TestGitRepository(TestCaseGit):
 
         cmd = ['git', 'add', new_file]
         subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=new_path, env={'LANG': 'C'})
+                                cwd=new_path + '-git', env={'LANG': 'C'})
 
         cmd = ['git', '-c', 'user.name="mock"',
                '-c', 'user.email="mock@example.com"',
                'commit', '-m', 'Testing pull']
         subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=new_path, env={'LANG': 'C'})
+                                cwd=new_path + '-git', env={'LANG': 'C'})
 
         # Count the number of commits after the adding a new one
-        ncommits = count_commits(new_path)
+        ncommits = count_commits(new_path + '-git')
         self.assertEqual(ncommits, 10)
 
         # Update the repository to its original status
         repo.pull()
 
         # The number of commits should be updated to its original value
-        ncommits = count_commits(new_path)
+        ncommits = count_commits(new_path + '-git')
         self.assertEqual(ncommits, 9)
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_pull_empty_repository(self):
         """Test if an exception is raised when the repository is empty"""
@@ -1137,7 +1171,7 @@ class TestGitRepository(TestCaseGit):
         with self.assertRaises(EmptyRepositoryError):
             repo.pull()
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_sync(self):
         """Test if the repository is synchonized with its remote repo"""
@@ -1152,7 +1186,7 @@ class TestGitRepository(TestCaseGit):
         repo.sync()
 
         # Count the number of commits before adding some new
-        ncommits = count_commits(new_path)
+        ncommits = count_commits(new_path + '-git')
         self.assertEqual(ncommits, 9)
 
         cmd = ['git', 'checkout', '-b', 'mybranch']
@@ -1186,7 +1220,7 @@ class TestGitRepository(TestCaseGit):
         # Count the number of commits and refs after adding
         # the branch and the file
         new_commits = repo.sync()
-        ncommits = count_commits(new_path)
+        ncommits = count_commits(new_path + '-git')
         self.assertEqual(ncommits, 11)
         self.assertEqual(len(new_commits), 2)
 
@@ -1207,7 +1241,7 @@ class TestGitRepository(TestCaseGit):
                                 cwd=editable_path, env={'LANG': 'C'})
 
         new_commits = repo.sync()
-        ncommits = count_commits(new_path)
+        ncommits = count_commits(new_path + '-git')
         self.assertEqual(ncommits, 11)
         self.assertEqual(len(new_commits), 0)
 
@@ -1222,7 +1256,7 @@ class TestGitRepository(TestCaseGit):
 
         # Cleanup
         shutil.rmtree(editable_path)
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_log(self):
         """Test log command"""
@@ -1235,7 +1269,7 @@ class TestGitRepository(TestCaseGit):
         self.assertEqual(len(gitlog), 108)
         self.assertEqual(gitlog[0][:14], "commit bc57a92")
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_log_from_date(self):
         """Test if commits are returned from the given date"""
@@ -1257,7 +1291,7 @@ class TestGitRepository(TestCaseGit):
 
         self.assertEqual(gitlog, [])
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_log_empty(self):
         """Test if no line is returned when the log is empty"""
@@ -1270,7 +1304,7 @@ class TestGitRepository(TestCaseGit):
 
         self.assertListEqual(gitlog, [])
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_log_from_empty_repository(self):
         """Test if an exception is raised when the repository is empty"""
@@ -1283,7 +1317,7 @@ class TestGitRepository(TestCaseGit):
         with self.assertRaises(EmptyRepositoryError):
             _ = [line for line in gitlog]
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_git_show(self):
         """Test show command"""
@@ -1296,7 +1330,7 @@ class TestGitRepository(TestCaseGit):
         self.assertEqual(len(gitshow), 14)
         self.assertEqual(gitshow[0][:14], "commit 456a68e")
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_show_commit_list(self):
         """Test show command using a list of commits"""
@@ -1318,7 +1352,7 @@ class TestGitRepository(TestCaseGit):
         self.assertEqual(len(gitshow), 14)
         self.assertEqual(gitshow[0][:14], "commit 456a68e")
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
     def test_git_show_from_emtpy_repository(self):
         """Test if an exception is raised when the repository is empty"""
@@ -1331,7 +1365,7 @@ class TestGitRepository(TestCaseGit):
         with self.assertRaises(EmptyRepositoryError):
             _ = [line for line in gitshow]
 
-        shutil.rmtree(new_path)
+        shutil.rmtree(new_path + '-git')
 
 
 if __name__ == "__main__":

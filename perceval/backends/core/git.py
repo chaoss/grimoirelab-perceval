@@ -60,14 +60,18 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.8.1'
+    version = '0.8.2'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
 
         super().__init__(origin, tag=tag, cache=cache)
         self.uri = uri
-        self.gitpath = gitpath
+
+        if not os.path.isfile(gitpath):
+            self.gitpath = gitpath + '-git'
+        else:
+            self.gitpath = gitpath
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME, branches=None,
@@ -285,7 +289,7 @@ class GitCommand(BackendCommand):
         if self.parsed_args.git_log:
             git_path = self.parsed_args.git_log
         elif not self.parsed_args.git_path:
-            base_path = os.path.expanduser('~/.perceval/repositories/')
+            base_path = os.path.join(os.path.expanduser('~'), '.perceval', 'repositories')
             git_path = os.path.join(base_path, self.parsed_args.uri)
         else:
             git_path = self.parsed_args.git_path
@@ -697,9 +701,11 @@ class GitRepository:
     ]
 
     def __init__(self, uri, dirpath):
-        gitdir = os.path.join(dirpath, '.git')
 
-        if not os.path.exists(gitdir):
+        if not dirpath.endswith('-git'):
+            dirpath = dirpath + '-git'
+
+        if not os.path.exists(dirpath):
             cause = "git repository '%s' does not exist" % dirpath
             raise RepositoryError(cause=cause)
 
@@ -726,6 +732,9 @@ class GitRepository:
         :raises RepositoryError: when an error occurs cloning the given
             repository
         """
+        if not dirpath.endswith('-git'):
+            dirpath = dirpath + '-git'
+
         cmd = ['git', 'clone', uri, dirpath]
         env = {
             'LANG': 'C',
