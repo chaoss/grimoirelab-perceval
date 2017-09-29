@@ -29,7 +29,6 @@ import sys
 import tempfile
 import unittest
 import unittest.mock
-import hashlib
 
 import dateutil.tz
 import pkg_resources
@@ -81,7 +80,6 @@ class TestGitBackend(TestCaseGit):
                                '-C', cls.tmp_path])
         subprocess.check_call(['tar', '-xzf', 'data/git/gittest-top-sub.tar.gz',
                                '-C', cls.tmp_path])
-
 
     @classmethod
     def tearDownClass(cls):
