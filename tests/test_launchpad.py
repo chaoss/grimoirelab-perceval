@@ -792,7 +792,7 @@ class TestLaunchpadClient(unittest.TestCase):
         client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage',
                               items_per_page=2)
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
-        issues = [issues for issues in client.get_issues(start=from_date)]
+        issues = [issues for issues in client.issues(start=from_date)]
 
         self.assertEqual(len(issues), 1)
 
@@ -825,7 +825,7 @@ class TestLaunchpadClient(unittest.TestCase):
 
         client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
                                  package="mypackage", items_per_page=2)
-        issues = [issues for issues in client.get_issues()]
+        issues = [issues for issues in client.issues()]
 
         self.assertEqual(len(issues), 3)
 
@@ -843,7 +843,7 @@ class TestLaunchpadClient(unittest.TestCase):
 
         client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
                                  package="mypackage")
-        issues = [issues for issues in client.get_issues()]
+        issues = [issues for issues in client.issues()]
 
         self.assertDictEqual(json.loads(issues[0]), json.loads(empty_issues))
 
@@ -859,7 +859,7 @@ class TestLaunchpadClient(unittest.TestCase):
 
         client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
                                  package="mypackage")
-        user_retrieved = client.get_user("user")
+        user_retrieved = client.user("user")
 
         self.assertDictEqual(json.loads(user_retrieved), json.loads(user))
 
@@ -869,7 +869,7 @@ class TestLaunchpadClient(unittest.TestCase):
 
         client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
                                  package="mypackage")
-        self.assertEqual(next(client.get_issue_collection("100", "attachments")), '{"total_size": 0, "start": 0, "entries": []}')
+        self.assertEqual(next(client.issue_collection("100", "attachments")), '{"total_size": 0, "start": 0, "entries": []}')
 
     @httpretty.activate
     def test_http_wrong_status_user(self):
@@ -877,7 +877,7 @@ class TestLaunchpadClient(unittest.TestCase):
 
         client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
                                  package="mypackage")
-        self.assertEqual(client.get_user("user1"), '{}')
+        self.assertEqual(client.user("user1"), '{}')
 
 
 class TestLaunchpadCommand(unittest.TestCase):

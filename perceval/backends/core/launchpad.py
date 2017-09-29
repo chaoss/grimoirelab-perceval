@@ -303,7 +303,7 @@ class Launchpad(Backend):
     def _fetch(self, from_date):
         """Fetch the issues from a project (distribution/package)"""
 
-        issues_groups = self.client.get_issues(start=from_date)
+        issues_groups = self.client.issues(start=from_date)
 
         for raw_issues in issues_groups:
             self._push_cache_queue('{ISSUES}')
@@ -343,7 +343,7 @@ class Launchpad(Backend):
     def __fetch_issue_data(self, issue_id):
         """Get data associated to an issue"""
 
-        raw_issue = self.client.get_issue(issue_id)
+        raw_issue = self.client.issue(issue_id)
         self._push_cache_queue(raw_issue)
         issue = json.loads(raw_issue)
 
@@ -352,7 +352,7 @@ class Launchpad(Backend):
     def __fetch_issue_attachments(self, issue_id):
         """Get attachments of an issue"""
 
-        for attachments_raw in self.client.get_issue_collection(issue_id, "attachments"):
+        for attachments_raw in self.client.issue_collection(issue_id, "attachments"):
             attachments = json.loads(attachments_raw)
             self._push_cache_queue('{ATTACHMENTS}')
             self._push_cache_queue(attachments_raw)
@@ -363,7 +363,7 @@ class Launchpad(Backend):
     def __fetch_issue_messages(self, issue_id):
         """Get messages of an issue"""
 
-        for messages_raw in self.client.get_issue_collection(issue_id, "messages"):
+        for messages_raw in self.client.issue_collection(issue_id, "messages"):
             messages = json.loads(messages_raw)
             self._push_cache_queue('{MESSAGES}')
             self._push_cache_queue(messages_raw)
@@ -375,7 +375,7 @@ class Launchpad(Backend):
     def __fetch_issue_activities(self, issue_id):
         """Get activities on an issue"""
 
-        for activities_raw in self.client.get_issue_collection(issue_id, "activity"):
+        for activities_raw in self.client.issue_collection(issue_id, "activity"):
             activities = json.loads(activities_raw)
             self._push_cache_queue('{ACTIVITIES}')
             self._push_cache_queue(activities_raw)
@@ -387,7 +387,7 @@ class Launchpad(Backend):
     def __fetch_user_data(self, tag_type, user_link):
         """Get data associated to an user"""
 
-        user_name = self.client.get_user_name(user_link)
+        user_name = self.client.user_name(user_link)
         self._push_cache_queue(tag_type)
         self._push_cache_queue('{USER}')
 
@@ -397,7 +397,7 @@ class Launchpad(Backend):
             self._push_cache_queue('{}')
             return user
 
-        user_raw = self.client.get_user(user_name)
+        user_raw = self.client.user(user_name)
         self._push_cache_queue(user_raw)
 
         user = json.loads(user_raw)
@@ -422,14 +422,14 @@ class LaunchpadClient:
         self.items_per_page = items_per_page
         self.sleep_time = sleep_time
 
-    def get_issues(self, start=None):
+    def issues(self, start=None):
         """Get the issues from pagination"""
 
         payload = self.__build_payload(size=self.items_per_page, operation=True, startdate=start)
         path = self.__get_url_project()
         return self.__fetch_items(path=path, payload=payload)
 
-    def get_user(self, user_name):
+    def user(self, user_name):
         """Get the user data by URL"""
 
         user = None
@@ -452,12 +452,12 @@ class LaunchpadClient:
 
         return user
 
-    def get_user_name(self, user_link):
+    def user_name(self, user_link):
         """Get user name from link"""
 
         return user_link.split('/')[-1][1:]
 
-    def get_issue(self, issue_id):
+    def issue(self, issue_id):
         """Get the issue data by its ID"""
 
         url_issue = self.__get_url("bugs/" + str(issue_id))
@@ -465,7 +465,7 @@ class LaunchpadClient:
 
         return raw_text
 
-    def get_issue_collection(self, issue_id, collection_name):
+    def issue_collection(self, issue_id, collection_name):
         """Get a collection list of a given issue"""
 
         url_collection = self.__get_url("bugs/" + str(issue_id) + "/" + collection_name)
