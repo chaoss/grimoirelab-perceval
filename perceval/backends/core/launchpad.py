@@ -65,7 +65,7 @@ class Launchpad(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
            it will be reset
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     def __init__(self, distribution, package=None,
                  consumer_key=None, api_token=None,
@@ -543,7 +543,7 @@ class LaunchpadClient:
         """Build payload"""
 
         payload = {
-            'orderby': '-datecreated',
+            'order_by': 'date_last_updated',
             'ws.size': size
         }
 
