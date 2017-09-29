@@ -73,7 +73,7 @@ class Launchpad(Backend):
                  tag=None, cache=None):
 
         if package:
-            origin = urijoin(LAUNCHPAD_URL, distribution,  '+source', package)
+            origin = urijoin(LAUNCHPAD_URL, distribution, '+source', package)
         else:
             origin = urijoin(LAUNCHPAD_URL, distribution)
 
@@ -165,7 +165,6 @@ class Launchpad(Backend):
 
                 raw_item = next(cache_items)
                 yield issue
-
 
     @classmethod
     def has_caching(cls):

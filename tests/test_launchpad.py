@@ -167,7 +167,8 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
+                              items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         self.assertEqual(len(issues), 1)
@@ -219,7 +220,8 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
+                              items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         issue_1_expected = json.loads(issue_1_expected)
@@ -333,7 +335,8 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
+                              items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         issue_1_expected = json.loads(issue_1_expected)
@@ -407,7 +410,8 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
+                              items_per_page=2)
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
         issues = [issues for issues in launchpad.fetch(from_date=from_date)]
         issue_1_expected = json.loads(issue_1_expected)
@@ -427,7 +431,8 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=empty_issues,
                                status=200)
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
+                              items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         self.assertListEqual(issues, [])
@@ -487,7 +492,8 @@ class TestLaunchpadBackend(unittest.TestCase):
 
         issue_1_expected = json.loads(issue_1_expected)
 
-        launchpad = Launchpad("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage', items_per_page=2)
+        launchpad = Launchpad("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage',
+                              items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         self.assertDictEqual(issues[0]['data'], issue_1_expected)
@@ -604,7 +610,8 @@ class TestLaunchpadBackendCache(unittest.TestCase):
 
         # First, we fetch the bugs from the server and store them in a cache
         cache = Cache(self.tmp_path)
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", cache=cache, items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
+                              cache=cache, items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         # Now, we get the bugs from the cache.
@@ -703,7 +710,8 @@ class TestLaunchpadBackendCache(unittest.TestCase):
                                status=200)
 
         cache = Cache(self.tmp_path)
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", cache=cache, items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
+                              cache=cache, items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         issues_cache = [issues for issues in launchpad.fetch_from_cache()]
@@ -714,7 +722,8 @@ class TestLaunchpadBackendCache(unittest.TestCase):
         """Test if there are not any issues returned when the cache is empty"""
 
         cache = Cache(self.tmp_path)
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", cache=cache)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
+                              cache=cache)
 
         cache_issues = [cache_issues for cache_issues in launchpad.fetch_from_cache()]
 
@@ -764,7 +773,8 @@ class TestLaunchpadBackendCache(unittest.TestCase):
                                status=400)
 
         cache = Cache(self.tmp_path)
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage', items_per_page=2, cache=cache)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage',
+                              items_per_page=2, cache=cache)
         issues = [issues for issues in launchpad.fetch()]
 
         issues_from_cache = [issues for issues in launchpad.fetch_from_cache()]
@@ -789,8 +799,8 @@ class TestLaunchpadClient(unittest.TestCase):
                                body=issues_page_1,
                                status=200)
 
-        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage',
-                              items_per_page=2)
+        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
+                                 package='mypackage', items_per_page=2)
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
         issues = [issues for issues in client.issues(start=from_date)]
 
