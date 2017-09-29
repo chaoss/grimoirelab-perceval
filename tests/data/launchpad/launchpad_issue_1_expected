@@ -1,6 +1,6 @@
 {
     "assignee_link": "https://api.launchpad.net/1.0/~user",
-    "assignee_link_data": {
+    "assignee_data": {
         "admins_collection_link": "https://api.launchpad.net/1.0/~user/admins",
         "archive_link": "https://api.launchpad.net/1.0/~user/+archive/ubuntu/ppa",
         "confirmed_email_addresses_collection_link": "https://api.launchpad.net/1.0/~user/confirmed_email_addresses",
@@ -50,10 +50,7 @@
         "web_link": "https://launchpad.net/~user",
         "wiki_names_collection_link": "https://api.launchpad.net/1.0/~user/wiki_names"
     },
-    "bug_link": "https://api.launchpad.net/1.0/bugs/1",
-    "bug_link_data": {
-        "activity_collection_link": "https://api.launchpad.net/1.0/bugs/1/activity",
-        "activity_collection_link_data": [
+    "activity_data": [
             {
                 "bug_link": "https://api.launchpad.net/1.0/bugs/1",
                 "datechanged": "2017-08-21T14:28:00.336698+00:00",
@@ -62,7 +59,7 @@
                 "newvalue": null,
                 "oldvalue": null,
                 "person_link": "https://api.launchpad.net/1.0/~user",
-                "person_link_data": {
+                "person_data": {
                     "admins_collection_link": "https://api.launchpad.net/1.0/~user/admins",
                     "archive_link": "https://api.launchpad.net/1.0/~user/+archive/ubuntu/ppa",
                     "confirmed_email_addresses_collection_link": "https://api.launchpad.net/1.0/~user/confirmed_email_addresses",
@@ -118,8 +115,7 @@
                 "whatchanged": "bug"
             }
         ],
-        "attachments_collection_link": "https://api.launchpad.net/1.0/bugs/1/attachments",
-        "attachments_collection_link_data": [
+    "attachments_data": [
             {
                 "bug_link": "https://api.launchpad.net/1.0/bugs/1",
                 "data_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/1/data",
@@ -154,33 +150,15 @@
                 "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/+attachment/3"
             }
         ],
-        "bug_tasks_collection_link": "https://api.launchpad.net/1.0/bugs/1/bug_tasks",
-        "bug_watches_collection_link": "https://api.launchpad.net/1.0/bugs/1/bug_watches",
-        "can_expire": false,
-        "cves_collection_link": "https://api.launchpad.net/1.0/bugs/1/cves",
-        "date_created": "2006-03-16T19:25:37.186986+00:00",
-        "date_last_message": "2010-11-01T00:30:05.169224+00:00",
-        "date_last_updated": "2011-10-17T21:12:59.354332+00:00",
-        "date_made_private": null,
-        "description": "When I start synaptic it doesn't eat so much memory: ",
-        "duplicate_of_link": null,
-        "duplicates_collection_link": "https://api.launchpad.net/1.0/bugs/1/duplicates",
-        "heat": 22,
-        "http_etag": "50cf21ccec32903e2181fb84eb36d5877faa8bbb-b20501270d534ead26bf2df9d89f32dfd64f98c3",
-        "id": 1,
-        "information_type": "Public",
-        "latest_patch_uploaded": null,
-        "linked_branches_collection_link": "https://api.launchpad.net/1.0/bugs/1/linked_branches",
-        "message_count": 2,
-        "messages_collection_link": "https://api.launchpad.net/1.0/bugs/1/messages",
-        "messages_collection_link_data": [
+    "bug_link": "https://api.launchpad.net/1.0/bugs/1",
+    "messages_data": [
             {
                 "bug_attachments_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/0/bug_attachments",
                 "content": "Silence is golden, unless you have kids then silence is just plain suspicious",
                 "date_created": "2017-08-21T14:28:00.336698+00:00",
                 "http_etag": "2c3d51064a30a45f94beb6bd97a796712e0edeed-79eba59b0bebf080830b35b4cc1b3bf2d32c00de",
                 "owner_link": "https://api.launchpad.net/1.0/~user",
-                "owner_link_data": {
+                "owner_data": {
                     "admins_collection_link": "https://api.launchpad.net/1.0/~user/admins",
                     "archive_link": "https://api.launchpad.net/1.0/~user/+archive/ubuntu/ppa",
                     "confirmed_email_addresses_collection_link": "https://api.launchpad.net/1.0/~user/confirmed_email_addresses",
@@ -242,7 +220,7 @@
                 "date_created": "2017-08-21T14:28:00.336698+00:00",
                 "http_etag": "4cd607bc687aeb4ff34adfda1e840e43c7a122f4-c607ca46c77b9673130a54553f81fd2595304c96",
                 "owner_link": "https://api.launchpad.net/1.0/~user",
-                "owner_link_data": {
+                "owner_data": {
                     "admins_collection_link": "https://api.launchpad.net/1.0/~user/admins",
                     "archive_link": "https://api.launchpad.net/1.0/~user/+archive/ubuntu/ppa",
                     "confirmed_email_addresses_collection_link": "https://api.launchpad.net/1.0/~user/confirmed_email_addresses",
@@ -299,6 +277,28 @@
                 "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/comments/1"
             }
         ],
+    "bug_data": {
+        "activity_collection_link": "https://api.launchpad.net/1.0/bugs/1/activity",
+        "attachments_collection_link": "https://api.launchpad.net/1.0/bugs/1/attachments",
+        "bug_tasks_collection_link": "https://api.launchpad.net/1.0/bugs/1/bug_tasks",
+        "bug_watches_collection_link": "https://api.launchpad.net/1.0/bugs/1/bug_watches",
+        "can_expire": false,
+        "cves_collection_link": "https://api.launchpad.net/1.0/bugs/1/cves",
+        "date_created": "2006-03-16T19:25:37.186986+00:00",
+        "date_last_message": "2010-11-01T00:30:05.169224+00:00",
+        "date_last_updated": "2011-10-17T21:12:59.354332+00:00",
+        "date_made_private": null,
+        "description": "When I start synaptic it doesn't eat so much memory: ",
+        "duplicate_of_link": null,
+        "duplicates_collection_link": "https://api.launchpad.net/1.0/bugs/1/duplicates",
+        "heat": 22,
+        "http_etag": "50cf21ccec32903e2181fb84eb36d5877faa8bbb-b20501270d534ead26bf2df9d89f32dfd64f98c3",
+        "id": 1,
+        "information_type": "Public",
+        "latest_patch_uploaded": null,
+        "linked_branches_collection_link": "https://api.launchpad.net/1.0/bugs/1/linked_branches",
+        "message_count": 2,
+        "messages_collection_link": "https://api.launchpad.net/1.0/bugs/1/messages",
         "name": null,
         "number_of_duplicates": 0,
         "other_users_affected_count_with_dupes": 3,
@@ -338,7 +338,7 @@
     "is_complete": false,
     "milestone_link": null,
     "owner_link": "https://api.launchpad.net/1.0/~user",
-    "owner_link_data": {
+    "owner_data": {
         "admins_collection_link": "https://api.launchpad.net/1.0/~user/admins",
         "archive_link": "https://api.launchpad.net/1.0/~user/+archive/ubuntu/ppa",
         "confirmed_email_addresses_collection_link": "https://api.launchpad.net/1.0/~user/confirmed_email_addresses",

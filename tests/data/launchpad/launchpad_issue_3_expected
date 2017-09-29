@@ -1,12 +1,13 @@
 {
     "assignee_link": null,
-    "assignee_link_data": {},
+    "assignee_data": {},
     "bug_link": "https://api.launchpad.net/1.0/bugs/3",
-    "bug_link_data": {
+    "activity_data": [],
+    "attachments_data": [],
+    "messages_data": [],
+    "bug_data": {
         "activity_collection_link": "https://api.launchpad.net/1.0/bugs/3/activity",
-        "activity_collection_link_data": [],
         "attachments_collection_link": "https://api.launchpad.net/1.0/bugs/3/attachments",
-        "attachments_collection_link_data": [],
         "bug_tasks_collection_link": "https://api.launchpad.net/1.0/bugs/3/bug_tasks",
         "bug_watches_collection_link": "https://api.launchpad.net/1.0/bugs/3/bug_watches",
         "can_expire": false,
@@ -26,7 +27,6 @@
         "linked_branches_collection_link": "https://api.launchpad.net/1.0/bugs/3/linked_branches",
         "message_count": 13,
         "messages_collection_link": "https://api.launchpad.net/1.0/bugs/3/messages",
-        "messages_collection_link_data": [],
         "name": null,
         "number_of_duplicates": 0,
         "other_users_affected_count_with_dupes": 3,
@@ -66,7 +66,7 @@
     "is_complete": false,
     "milestone_link": null,
     "owner_link": "https://api.launchpad.net/1.0/~user",
-    "owner_link_data": {
+    "owner_data": {
         "admins_collection_link": "https://api.launchpad.net/1.0/~user/admins",
         "archive_link": "https://api.launchpad.net/1.0/~user/+archive/ubuntu/ppa",
         "confirmed_email_addresses_collection_link": "https://api.launchpad.net/1.0/~user/confirmed_email_addresses",

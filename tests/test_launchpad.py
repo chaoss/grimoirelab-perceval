@@ -64,29 +64,29 @@ class TestLaunchpadBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        launchpad = Launchpad('mydistribution', CONSUMER_KEY, OAUTH_TOKEN, tag='test')
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, tag='test')
         self.assertEqual(launchpad.distribution, 'mydistribution')
         self.assertEqual(launchpad.package, None)
-        self.assertEqual(launchpad.origin, 'https://api.launchpad.net/1.0/')
+        self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
         self.assertEqual(launchpad.tag, 'test')
 
-        launchpad = Launchpad('mydistribution', CONSUMER_KEY, OAUTH_TOKEN, tag='test', package="mypackage")
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, tag='test', package="mypackage")
         self.assertEqual(launchpad.distribution, 'mydistribution')
         self.assertEqual(launchpad.package, 'mypackage')
-        self.assertEqual(launchpad.origin, 'https://api.launchpad.net/1.0/')
+        self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution/+source/mypackage')
         self.assertEqual(launchpad.tag, 'test')
 
         # When tag is empty or None it will be set to
         # the value in origin
-        launchpad = Launchpad('mydistribution', CONSUMER_KEY, OAUTH_TOKEN)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN)
         self.assertEqual(launchpad.distribution, 'mydistribution')
-        self.assertEqual(launchpad.origin, 'https://api.launchpad.net/1.0/')
-        self.assertEqual(launchpad.tag, 'https://api.launchpad.net/1.0/')
+        self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
+        self.assertEqual(launchpad.tag, 'https://launchpad.net/mydistribution')
 
-        launchpad = Launchpad('mydistribution', CONSUMER_KEY, OAUTH_TOKEN)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN)
         self.assertEqual(launchpad.distribution, 'mydistribution')
-        self.assertEqual(launchpad.origin, 'https://api.launchpad.net/1.0/')
-        self.assertEqual(launchpad.tag, 'https://api.launchpad.net/1.0/')
+        self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
+        self.assertEqual(launchpad.tag, 'https://launchpad.net/mydistribution')
 
     def test_has_caching(self):
         """Test if it returns True when has_caching is called"""
@@ -167,14 +167,14 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         self.assertEqual(len(issues), 1)
-        self.assertIsNotNone(issues[0]['data']['assignee_link_data'])
-        self.assertEqual(len(issues[0]['data']['bug_link_data']['activity_collection_link_data']), 4)
-        self.assertEqual(len(issues[0]['data']['bug_link_data']['messages_collection_link_data']), 4)
-        self.assertEqual(len(issues[0]['data']['bug_link_data']['attachments_collection_link_data']), 4)
+        self.assertIsNotNone(issues[0]['data']['assignee_data'])
+        self.assertEqual(len(issues[0]['data']['activity_data']), 4)
+        self.assertEqual(len(issues[0]['data']['messages_data']), 4)
+        self.assertEqual(len(issues[0]['data']['attachments_data']), 4)
 
     @httpretty.activate
     def test_fetch(self):
@@ -219,7 +219,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         issue_1_expected = json.loads(issue_1_expected)
@@ -333,7 +333,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         issue_1_expected = json.loads(issue_1_expected)
@@ -341,34 +341,28 @@ class TestLaunchpadBackend(unittest.TestCase):
         issue_3_expected = json.loads(issue_3_expected)
 
         self.assertEqual(len(issues), 3)
-        self.assertEqual(len(issues[0]['data']['bug_link_data']['activity_collection_link_data']), 1)
-        self.assertEqual(len(issues[0]['data']['bug_link_data']['messages_collection_link_data']), 2)
-        self.assertDictEqual(issues[0]['data']['assignee_link_data'], issue_1_expected['assignee_link_data'])
-        self.assertDictEqual(issues[0]['data']['owner_link_data'], issue_1_expected['owner_link_data'])
-        self.assertListEqual(issues[0]['data']['bug_link_data']['activity_collection_link_data'],
-                             issue_1_expected['bug_link_data']['activity_collection_link_data'])
-        self.assertListEqual(issues[0]['data']['bug_link_data']['messages_collection_link_data'],
-                             issue_1_expected['bug_link_data']['messages_collection_link_data'])
+        self.assertEqual(len(issues[0]['data']['activity_data']), 1)
+        self.assertEqual(len(issues[0]['data']['messages_data']), 2)
+        self.assertDictEqual(issues[0]['data']['assignee_data'], issue_1_expected['assignee_data'])
+        self.assertDictEqual(issues[0]['data']['owner_data'], issue_1_expected['owner_data'])
+        self.assertListEqual(issues[0]['data']['activity_data'], issue_1_expected['activity_data'])
+        self.assertListEqual(issues[0]['data']['messages_data'], issue_1_expected['messages_data'])
         self.assertDictEqual(issues[0]['data'], issue_1_expected)
 
-        self.assertDictEqual(issues[1]['data']['assignee_link_data'], issue_2_expected['assignee_link_data'])
-        self.assertDictEqual(issues[1]['data']['owner_link_data'], issue_2_expected['owner_link_data'])
-        self.assertEqual(len(issues[1]['data']['bug_link_data']['activity_collection_link_data']), 1)
-        self.assertEqual(len(issues[1]['data']['bug_link_data']['messages_collection_link_data']), 1)
-        self.assertListEqual(issues[1]['data']['bug_link_data']['activity_collection_link_data'],
-                             issue_2_expected['bug_link_data']['activity_collection_link_data'])
-        self.assertListEqual(issues[1]['data']['bug_link_data']['messages_collection_link_data'],
-                             issue_2_expected['bug_link_data']['messages_collection_link_data'])
+        self.assertDictEqual(issues[1]['data']['assignee_data'], issue_2_expected['assignee_data'])
+        self.assertDictEqual(issues[1]['data']['owner_data'], issue_2_expected['owner_data'])
+        self.assertEqual(len(issues[1]['data']['activity_data']), 1)
+        self.assertEqual(len(issues[1]['data']['messages_data']), 1)
+        self.assertListEqual(issues[1]['data']['activity_data'], issue_2_expected['activity_data'])
+        self.assertListEqual(issues[1]['data']['messages_data'], issue_2_expected['messages_data'])
         self.assertDictEqual(issues[1]['data'], issue_2_expected)
 
-        self.assertDictEqual(issues[2]['data']['assignee_link_data'], issue_3_expected['assignee_link_data'])
-        self.assertDictEqual(issues[2]['data']['owner_link_data'], issue_3_expected['owner_link_data'])
-        self.assertEqual(len(issues[2]['data']['bug_link_data']['activity_collection_link_data']), 0)
-        self.assertEqual(len(issues[2]['data']['bug_link_data']['messages_collection_link_data']), 0)
-        self.assertListEqual(issues[2]['data']['bug_link_data']['activity_collection_link_data'],
-                             issue_3_expected['bug_link_data']['activity_collection_link_data'])
-        self.assertListEqual(issues[2]['data']['bug_link_data']['messages_collection_link_data'],
-                             issue_3_expected['bug_link_data']['messages_collection_link_data'])
+        self.assertDictEqual(issues[2]['data']['assignee_data'], issue_3_expected['assignee_data'])
+        self.assertDictEqual(issues[2]['data']['owner_data'], issue_3_expected['owner_data'])
+        self.assertEqual(len(issues[2]['data']['activity_data']), 0)
+        self.assertEqual(len(issues[2]['data']['messages_data']), 0)
+        self.assertListEqual(issues[2]['data']['activity_data'], issue_3_expected['activity_data'])
+        self.assertListEqual(issues[2]['data']['messages_data'], issue_3_expected['messages_data'])
         self.assertDictEqual(issues[2]['data'], issue_3_expected)
 
     @httpretty.activate
@@ -413,7 +407,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", items_per_page=2)
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
         issues = [issues for issues in launchpad.fetch(from_date=from_date)]
         issue_1_expected = json.loads(issue_1_expected)
@@ -433,7 +427,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=empty_issues,
                                status=200)
 
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         self.assertListEqual(issues, [])
@@ -450,7 +444,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=empty_issues,
                                status=200)
 
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         self.assertListEqual(issues, [])
@@ -493,7 +487,7 @@ class TestLaunchpadBackend(unittest.TestCase):
 
         issue_1_expected = json.loads(issue_1_expected)
 
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package='mypackage', items_per_page=2)
+        launchpad = Launchpad("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage', items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         self.assertDictEqual(issues[0]['data'], issue_1_expected)
@@ -610,7 +604,7 @@ class TestLaunchpadBackendCache(unittest.TestCase):
 
         # First, we fetch the bugs from the server and store them in a cache
         cache = Cache(self.tmp_path)
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage", cache=cache, items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", cache=cache, items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         # Now, we get the bugs from the cache.
@@ -629,7 +623,7 @@ class TestLaunchpadBackendCache(unittest.TestCase):
         self.assertDictEqual(issues[2], cache_issues[2])
 
     @httpretty.activate
-    def test_fetch_multi_pages_cache(self):
+    def _pages_cache(self):
         """Test whether comments, attachments and activities are correctly returned from the cache"""
 
         issues_page_1 = read_file('data/launchpad/launchpad_issues_page_1_no_next')
@@ -709,7 +703,7 @@ class TestLaunchpadBackendCache(unittest.TestCase):
                                status=200)
 
         cache = Cache(self.tmp_path)
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage", cache=cache, items_per_page=2)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", cache=cache, items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         issues_cache = [issues for issues in launchpad.fetch_from_cache()]
@@ -720,7 +714,7 @@ class TestLaunchpadBackendCache(unittest.TestCase):
         """Test if there are not any issues returned when the cache is empty"""
 
         cache = Cache(self.tmp_path)
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage", cache=cache)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage", cache=cache)
 
         cache_issues = [cache_issues for cache_issues in launchpad.fetch_from_cache()]
 
@@ -729,7 +723,7 @@ class TestLaunchpadBackendCache(unittest.TestCase):
     def test_fetch_from_non_set_cache(self):
         """Test if a error is raised when the cache was not set"""
 
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage")
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage")
 
         with self.assertRaises(CacheError):
             _ = [cache_issues for cache_issues in launchpad.fetch_from_cache()]
@@ -770,7 +764,7 @@ class TestLaunchpadBackendCache(unittest.TestCase):
                                status=400)
 
         cache = Cache(self.tmp_path)
-        launchpad = Launchpad("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package='mypackage', items_per_page=2, cache=cache)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage', items_per_page=2, cache=cache)
         issues = [issues for issues in launchpad.fetch()]
 
         issues_from_cache = [issues for issues in launchpad.fetch_from_cache()]
@@ -795,7 +789,8 @@ class TestLaunchpadClient(unittest.TestCase):
                                body=issues_page_1,
                                status=200)
 
-        client = LaunchpadClient("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage',
+                              items_per_page=2)
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
         issues = [issues for issues in client.get_issues(start=from_date)]
 
@@ -828,7 +823,8 @@ class TestLaunchpadClient(unittest.TestCase):
                                body=issues_page_1,
                                status=200)
 
-        client = LaunchpadClient("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage", items_per_page=2)
+        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
+                                 package="mypackage", items_per_page=2)
         issues = [issues for issues in client.get_issues()]
 
         self.assertEqual(len(issues), 3)
@@ -845,7 +841,8 @@ class TestLaunchpadClient(unittest.TestCase):
                                body=empty_issues,
                                status=200)
 
-        client = LaunchpadClient("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage")
+        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
+                                 package="mypackage")
         issues = [issues for issues in client.get_issues()]
 
         self.assertDictEqual(json.loads(issues[0]), json.loads(empty_issues))
@@ -860,7 +857,8 @@ class TestLaunchpadClient(unittest.TestCase):
                                body=user,
                                status=200)
 
-        client = LaunchpadClient("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage")
+        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
+                                 package="mypackage")
         user_retrieved = client.get_user("user")
 
         self.assertDictEqual(json.loads(user_retrieved), json.loads(user))
@@ -869,14 +867,16 @@ class TestLaunchpadClient(unittest.TestCase):
     def test_http_wrong_status_issue_collection(self):
         """Test if an empty collection is returned when the http status is not 200"""
 
-        client = LaunchpadClient("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage")
+        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
+                                 package="mypackage")
         self.assertEqual(next(client.get_issue_collection("100", "attachments")), '{"total_size": 0, "start": 0, "entries": []}')
 
     @httpretty.activate
     def test_http_wrong_status_user(self):
         """Test if an empty user is returned when the http status is not 200"""
 
-        client = LaunchpadClient("mydistribution", CONSUMER_KEY, OAUTH_TOKEN, package="mypackage")
+        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
+                                 package="mypackage")
         self.assertEqual(client.get_user("user1"), '{}')
 
 

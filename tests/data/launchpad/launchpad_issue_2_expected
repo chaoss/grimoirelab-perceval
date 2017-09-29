@@ -1,10 +1,8 @@
 {
     "assignee_link": null,
-    "assignee_link_data": {},
-    "bug_link": "https://api.launchpad.net/1.0/bugs/2",
-    "bug_link_data": {
-        "activity_collection_link": "https://api.launchpad.net/1.0/bugs/2/activity",
-        "activity_collection_link_data": [
+    "assignee_data": {},
+    "attachments_data": [],
+    "activity_data": [
             {
                 "bug_link": "https://api.launchpad.net/1.0/bugs/2",
                 "datechanged": "2017-08-21T14:28:00.336698+00:00",
@@ -13,7 +11,7 @@
                 "newvalue": null,
                 "oldvalue": null,
                 "person_link": "https://api.launchpad.net/1.0/~user",
-                "person_link_data": {
+                "person_data": {
                     "admins_collection_link": "https://api.launchpad.net/1.0/~user/admins",
                     "archive_link": "https://api.launchpad.net/1.0/~user/+archive/ubuntu/ppa",
                     "confirmed_email_addresses_collection_link": "https://api.launchpad.net/1.0/~user/confirmed_email_addresses",
@@ -69,35 +67,14 @@
                 "whatchanged": "bug"
             }
         ],
-        "attachments_collection_link": "https://api.launchpad.net/1.0/bugs/2/attachments",
-        "attachments_collection_link_data": [],
-        "bug_tasks_collection_link": "https://api.launchpad.net/1.0/bugs/2/bug_tasks",
-        "bug_watches_collection_link": "https://api.launchpad.net/1.0/bugs/2/bug_watches",
-        "can_expire": false,
-        "cves_collection_link": "https://api.launchpad.net/1.0/bugs/2/cves",
-        "date_created": "2017-08-21T14:28:00.336698+00:00",
-        "date_last_message": "2017-09-16T01:57:39.298886+00:00",
-        "date_last_updated": "2017-09-16T01:57:40.183918+00:00",
-        "date_made_private": null,
-        "description": "Posting here what gnome says ",
-        "duplicate_of_link": null,
-        "duplicates_collection_link": "https://api.launchpad.net/1.0/bugs/2/duplicates",
-        "heat": 120,
-        "http_etag": "d80e36d419848d98af4eeecbab3b23b789e76b67-bf5db99a334833d9a76a9febdc912f7c6076a1b3",
-        "id": 2,
-        "information_type": "Public",
-        "latest_patch_uploaded": null,
-        "linked_branches_collection_link": "https://api.launchpad.net/1.0/bugs/2/linked_branches",
-        "message_count": 14,
-        "messages_collection_link": "https://api.launchpad.net/1.0/bugs/2/messages",
-        "messages_collection_link_data": [
+    "messages_data": [
             {
                 "bug_attachments_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/2/comments/0/bug_attachments",
                 "content": "The lion and the calf shall lie down together but the calf won't get much sleep",
                 "date_created": "2017-08-21T14:28:00.336698+00:00",
                 "http_etag": "2c3d51064a30a45f94beb6bd97a796712e0edeed-79eba59b0bebf080830b35b4cc1b3bf2d32c00de",
                 "owner_link": "https://api.launchpad.net/1.0/~user",
-                "owner_link_data": {
+                "owner_data": {
                     "admins_collection_link": "https://api.launchpad.net/1.0/~user/admins",
                     "archive_link": "https://api.launchpad.net/1.0/~user/+archive/ubuntu/ppa",
                     "confirmed_email_addresses_collection_link": "https://api.launchpad.net/1.0/~user/confirmed_email_addresses",
@@ -154,6 +131,29 @@
                 "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/2/comments/0"
             }
         ],
+    "bug_link": "https://api.launchpad.net/1.0/bugs/2",
+    "bug_data": {
+        "activity_collection_link": "https://api.launchpad.net/1.0/bugs/2/activity",
+        "attachments_collection_link": "https://api.launchpad.net/1.0/bugs/2/attachments",
+        "bug_tasks_collection_link": "https://api.launchpad.net/1.0/bugs/2/bug_tasks",
+        "bug_watches_collection_link": "https://api.launchpad.net/1.0/bugs/2/bug_watches",
+        "can_expire": false,
+        "cves_collection_link": "https://api.launchpad.net/1.0/bugs/2/cves",
+        "date_created": "2017-08-21T14:28:00.336698+00:00",
+        "date_last_message": "2017-09-16T01:57:39.298886+00:00",
+        "date_last_updated": "2017-09-16T01:57:40.183918+00:00",
+        "date_made_private": null,
+        "description": "Posting here what gnome says ",
+        "duplicate_of_link": null,
+        "duplicates_collection_link": "https://api.launchpad.net/1.0/bugs/2/duplicates",
+        "heat": 120,
+        "http_etag": "d80e36d419848d98af4eeecbab3b23b789e76b67-bf5db99a334833d9a76a9febdc912f7c6076a1b3",
+        "id": 2,
+        "information_type": "Public",
+        "latest_patch_uploaded": null,
+        "linked_branches_collection_link": "https://api.launchpad.net/1.0/bugs/2/linked_branches",
+        "message_count": 14,
+        "messages_collection_link": "https://api.launchpad.net/1.0/bugs/2/messages",
         "name": null,
         "number_of_duplicates": 9,
         "other_users_affected_count_with_dupes": 52,
@@ -199,7 +199,7 @@
     "is_complete": false,
     "milestone_link": null,
     "owner_link": "https://api.launchpad.net/1.0/~user",
-    "owner_link_data": {
+    "owner_data": {
         "admins_collection_link": "https://api.launchpad.net/1.0/~user/admins",
         "archive_link": "https://api.launchpad.net/1.0/~user/+archive/ubuntu/ppa",
         "confirmed_email_addresses_collection_link": "https://api.launchpad.net/1.0/~user/confirmed_email_addresses",

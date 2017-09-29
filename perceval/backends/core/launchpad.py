@@ -27,7 +27,10 @@ import hashlib
 import requests
 import time
 
-from grimoirelab.toolkit.datetime import datetime_utcnow, datetime_to_utc, str_to_datetime
+from grimoirelab.toolkit.datetime import (datetime_utcnow,
+                                          datetime_to_utc,
+                                          str_to_datetime)
+from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
@@ -64,19 +67,22 @@ class Launchpad(Backend):
     """
     version = '0.1.0'
 
-    def __init__(self, distribution=None, consumer_key=None, api_token=None,
-                 package=None, items_per_page=None, tag=None, cache=None,
-                 sleep_time=None):
+    def __init__(self, distribution, package=None,
+                 consumer_key=None, api_token=None,
+                 items_per_page=ITEMS_PER_PAGE, sleep_time=None,
+                 tag=None, cache=None):
 
-        super().__init__(LAUNCHPAD_API_URL, tag=tag, cache=cache)
-        self.consumer_key = consumer_key
+        if package:
+            origin = urijoin(LAUNCHPAD_URL, distribution,  '+source', package)
+        else:
+            origin = urijoin(LAUNCHPAD_URL, distribution)
+
+        super().__init__(origin, tag=tag, cache=cache)
         self.distribution = distribution
         self.package = package
-        self.api_token = api_token
-        self.items_per_page = items_per_page
-        self.sleep_time = sleep_time
-        self.client = LaunchpadClient(distribution, consumer_key, api_token,
-                                      package=package, items_per_page=items_per_page,
+        self.client = LaunchpadClient(distribution, package=package,
+                                      consumer_key=consumer_key, api_token=api_token,
+                                      items_per_page=items_per_page,
                                       sleep_time=sleep_time)
 
         self._users = {}  # internal users cache
@@ -92,50 +98,32 @@ class Launchpad(Backend):
 
         :returns: a generator of issues
         """
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        logger.info("Fetching issues of '%s' distribution from %s",
+                    self.distribution, str(from_date))
 
         self._purge_cache_queue()
 
         from_date = datetime_to_utc(from_date)
+        nissues = 0
 
-        issues_groups = self.client.get_issues(start=from_date)
+        for issue in self._fetch(from_date):
+            yield issue
+            nissues += 1
 
-        for raw_issues in issues_groups:
-            self._push_cache_queue('{ISSUES}')
-            self._push_cache_queue(raw_issues)
-            self._flush_cache_queue()
-            issues = json.loads(raw_issues)['entries']
-            for issue in issues:
-                issue_id = issue['bug_link'].split('/')[-1]
-
-                for field in TARGET_ISSUE_FIELDS:
-                    issue[field + '_data'] = {}
-
-                    if not issue[field]:
-                        continue
-
-                    if field == 'bug_link':
-                        issue[field + '_data'] = self.__get_issue_data(issue_id)
-
-                    if field == 'assignee_link':
-                        issue[field + '_data'] = self.__get_user_data('{ASSIGNEE}', issue[field])
-
-                    if field == 'owner_link':
-                        issue[field + '_data'] = self.__get_user_data('{OWNER}', issue[field])
-
-                self._push_cache_queue('{ISSUE-END}')
-                self._flush_cache_queue()
-
-                yield issue
-        self._push_cache_queue('{}{}')
-        self._flush_cache_queue()
+        logger.info("Fetch process completed: %s issues fetched", nissues)
 
     @metadata
     def fetch_from_cache(self):
         """Fetch the issues from the cache.
+
         It returns the issues stored in the cache object provided during
         the initialization of the object. If this method is called but
         no cache object was provided, the method will raise a `CacheError`
         exception.
+
         :returns: a generator of items
         :raises CacheError: raised when an error occurs accessing the
             cache
@@ -152,17 +140,21 @@ class Launchpad(Backend):
                 issues = self.__fetch_issues_from_cache(cache_items)
 
             for issue in issues:
-                self.__init_extra_issue_fields(issue)
+                issue = self.__init_extra_issue_fields(issue)
                 raw_item = next(cache_items)
 
                 while raw_item != '{ISSUE-END}':
                     try:
                         if raw_item == '{OWNER}':
-                            issue['owner_link_data'] = self.__fetch_user_from_cache(cache_items)
+                            issue['owner_data'] = self.__fetch_user_from_cache(cache_items)
                         elif raw_item == '{ASSIGNEE}':
-                            issue['assignee_link_data'] = self.__fetch_user_from_cache(cache_items)
+                            issue['assignee_data'] = self.__fetch_user_from_cache(cache_items)
                         elif raw_item == '{ISSUE-CORE-START}':
-                            issue['bug_link_data'] = self.__fetch_issue_content_from_cache(cache_items)
+                            data = self.__fetch_issue_content_from_cache(cache_items)
+                            issue['bug_data'] = data[0]
+                            issue['activity_data'] = data[1]
+                            issue['messages_data'] = data[2]
+                            issue['attachments_data'] = data[3]
 
                         raw_item = next(cache_items)
 
@@ -173,6 +165,7 @@ class Launchpad(Backend):
 
                 raw_item = next(cache_items)
                 yield issue
+
 
     @classmethod
     def has_caching(cls):
@@ -194,7 +187,7 @@ class Launchpad(Backend):
     def metadata_id(item):
         """Extracts the identifier from a Launchpad item."""
 
-        return str(item['bug_link_data']['id'])
+        return str(item['bug_data']['id'])
 
     @staticmethod
     def metadata_updated_on(item):
@@ -208,7 +201,7 @@ class Launchpad(Backend):
 
         :returns: a UNIX timestamp
         """
-        ts = item['bug_link_data']['date_last_updated']
+        ts = item['bug_data']['date_last_updated']
         ts = str_to_datetime(ts)
 
         return ts.timestamp()
@@ -234,7 +227,6 @@ class Launchpad(Backend):
         messages = []
         attachments = []
         while raw_data != '{ISSUE-CORE-END}':
-
             if raw_data == '{ACTIVITIES}':
                 activities.extend(self.__fetch_issue_activities_from_cache(cache_items))
             elif raw_data == '{MESSAGES}':
@@ -244,11 +236,7 @@ class Launchpad(Backend):
 
             raw_data = next(cache_items)
 
-        issue_content['activity_collection_link_data'] = activities
-        issue_content['messages_collection_link_data'] = messages
-        issue_content['attachments_collection_link_data'] = attachments
-
-        return issue_content
+        return issue_content, activities, messages, attachments
 
     def __fetch_issue_messages_from_cache(self, cache_items):
         """Fetch issue messages from cache"""
@@ -257,8 +245,8 @@ class Launchpad(Backend):
         messages = json.loads(messages_raw)
 
         for msg in messages['entries']:
-            tag = next(cache_items)
-            msg['owner_link_data'] = self.__fetch_user_from_cache(cache_items)
+            _ = next(cache_items)
+            msg['owner_data'] = self.__fetch_user_from_cache(cache_items)
 
         return messages['entries']
 
@@ -277,15 +265,15 @@ class Launchpad(Backend):
         activities = json.loads(activities_raw)
 
         for act in activities['entries']:
-            person_tag = next(cache_items)
-            act['person_link_data'] = self.__fetch_user_from_cache(cache_items)
+            _ = next(cache_items)
+            act['person_data'] = self.__fetch_user_from_cache(cache_items)
 
         return activities['entries']
 
     def __fetch_user_from_cache(self, cache_items):
         """Fetch user from cache"""
 
-        user_tag = next(cache_items)
+        _ = next(cache_items)
         raw_user = next(cache_items)
         user = json.loads(raw_user)
 
@@ -301,87 +289,116 @@ class Launchpad(Backend):
     def __init_extra_issue_fields(self, issue):
         """Add fields to an issue"""
 
-        issue['bug_link_data'] = {}
-        issue['owner_link_data'] = {}
-        issue['assignee_link_data'] = {}
-
-    def __get_issue_data(self, issue_id):
-        """Get data associated to an issue"""
-        raw_issue = self.client.get_issue(issue_id)
-
-        self._push_cache_queue('{ISSUE-CORE-START}')
-        self._push_cache_queue(raw_issue)
-        self._flush_cache_queue()
-
-        issue = json.loads(raw_issue)
-
-        issue['activity_collection_link_data'] = [issue for page in self.__get_issue_activities(issue['id']) for issue in page]
-        issue['messages_collection_link_data'] = [msg for page in self.__get_issue_messages(issue['id']) for msg in page]
-        issue['attachments_collection_link_data'] = [att for page in self.__get_issue_attachments(issue['id']) for att in page]
-
-        self._push_cache_queue('{ISSUE-CORE-END}')
-        self._flush_cache_queue()
+        issue['bug_data'] = {}
+        issue['owner_data'] = {}
+        issue['assignee_data'] = {}
 
         return issue
 
-    def __get_issue_attachments(self, issue_id):
+    def __extract_issue_id(self, bug_link):
+        """Extract issue id from bug link"""
+
+        return bug_link.split('/')[-1]
+
+    def _fetch(self, from_date):
+        """Fetch the issues from a project (distribution/package)"""
+
+        issues_groups = self.client.get_issues(start=from_date)
+
+        for raw_issues in issues_groups:
+            self._push_cache_queue('{ISSUES}')
+            self._push_cache_queue(raw_issues)
+
+            issues = json.loads(raw_issues)['entries']
+            for issue in issues:
+                issue = self.__init_extra_issue_fields(issue)
+                issue_id = self.__extract_issue_id(issue['bug_link'])
+
+                for field in TARGET_ISSUE_FIELDS:
+
+                    if not issue[field]:
+                        continue
+
+                    if field == 'bug_link':
+                        self._push_cache_queue('{ISSUE-CORE-START}')
+                        issue['bug_data'] = self.__fetch_issue_data(issue_id)
+                        issue['activity_data'] = [activity for activity in self.__fetch_issue_activities(issue_id)]
+                        issue['messages_data'] = [message for message in self.__fetch_issue_messages(issue_id)]
+                        issue['attachments_data'] = [attachment for attachment in self.__fetch_issue_attachments(issue_id)]
+                        self._push_cache_queue('{ISSUE-CORE-END}')
+                    elif field == 'assignee_link':
+                        issue['assignee_data'] = self.__fetch_user_data('{ASSIGNEE}', issue[field])
+                    elif field == 'owner_link':
+                        issue['owner_data'] = self.__fetch_user_data('{OWNER}', issue[field])
+
+                self._push_cache_queue('{ISSUE-END}')
+
+                yield issue
+
+            self._flush_cache_queue()
+
+        self._push_cache_queue('{}{}')
+        self._flush_cache_queue()
+
+    def __fetch_issue_data(self, issue_id):
+        """Get data associated to an issue"""
+
+        raw_issue = self.client.get_issue(issue_id)
+        self._push_cache_queue(raw_issue)
+        issue = json.loads(raw_issue)
+
+        return issue
+
+    def __fetch_issue_attachments(self, issue_id):
         """Get attachments of an issue"""
 
         for attachments_raw in self.client.get_issue_collection(issue_id, "attachments"):
             attachments = json.loads(attachments_raw)
             self._push_cache_queue('{ATTACHMENTS}')
             self._push_cache_queue(attachments_raw)
-            self._flush_cache_queue()
 
-            attachments = json.loads(attachments_raw)['entries']
-            yield attachments
+            for attachment in attachments['entries']:
+                yield attachment
 
-    def __get_issue_messages(self, issue_id):
+    def __fetch_issue_messages(self, issue_id):
         """Get messages of an issue"""
 
         for messages_raw in self.client.get_issue_collection(issue_id, "messages"):
             messages = json.loads(messages_raw)
             self._push_cache_queue('{MESSAGES}')
             self._push_cache_queue(messages_raw)
-            self._flush_cache_queue()
 
             for msg in messages['entries']:
-                msg['owner_link_data'] = self.__get_user_data('{OWNER}', msg['owner_link'])
-                self._flush_cache_queue()
+                msg['owner_data'] = self.__fetch_user_data('{OWNER}', msg['owner_link'])
+                yield msg
 
-            yield messages['entries']
-
-    def __get_issue_activities(self, issue_id):
+    def __fetch_issue_activities(self, issue_id):
         """Get activities on an issue"""
 
         for activities_raw in self.client.get_issue_collection(issue_id, "activity"):
+            activities = json.loads(activities_raw)
             self._push_cache_queue('{ACTIVITIES}')
             self._push_cache_queue(activities_raw)
-            activities = json.loads(activities_raw)
 
             for act in activities['entries']:
-                act['person_link_data'] = self.__get_user_data('{PERSON}', act['person_link'])
+                act['person_data'] = self.__fetch_user_data('{PERSON}', act['person_link'])
+                yield act
 
-            yield activities['entries']
-
-    def __get_user_data(self, tag_type, user_link):
+    def __fetch_user_data(self, tag_type, user_link):
         """Get data associated to an user"""
 
         user_name = self.client.get_user_name(user_link)
         self._push_cache_queue(tag_type)
-        self._flush_cache_queue()
         self._push_cache_queue('{USER}')
 
         user = {}
 
         if not user_name:
             self._push_cache_queue('{}')
-            self._flush_cache_queue()
             return user
 
         user_raw = self.client.get_user(user_name)
         self._push_cache_queue(user_raw)
-        self._flush_cache_queue()
 
         user = json.loads(user_raw)
 
@@ -391,26 +408,24 @@ class Launchpad(Backend):
 class LaunchpadClient:
     """Client for retrieving information from Launchpad API"""
 
+    # Max retries for handled HTTP errors
+    MAX_RETRIES = 5
     _users = {}
 
-    def __init__(self, distribution, consumer_key, token, package=None,
-                 items_per_page=None, sleep_time=None):
+    def __init__(self, distribution, package=None,
+                 consumer_key=None, api_token=None,
+                 items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME):
+        self.consumer_key = consumer_key
+        self.api_token = api_token
         self.distribution = distribution
         self.package = package
-        self.consumer_key = consumer_key
-        self.token = token
         self.items_per_page = items_per_page
         self.sleep_time = sleep_time
-
-        if not self.items_per_page:
-            self.items_per_page = ITEMS_PER_PAGE
-        if not self.sleep_time:
-            self.sleep_time = SLEEP_TIME
 
     def get_issues(self, start=None):
         """Get the issues from pagination"""
 
-        payload = self.__get_payload(size=self.items_per_page, operation=True, startdate=start)
+        payload = self.__build_payload(size=self.items_per_page, operation=True, startdate=start)
         path = self.__get_url_project()
         return self.__fetch_items(path=path, payload=payload)
 
@@ -427,8 +442,8 @@ class LaunchpadClient:
         logging.info("Getting info for %s" % (url_user))
 
         try:
-            r = self.__send_request(url_user, headers=self.__get_headers())
-            user = r.text
+            raw_user = self.__send_request(url_user, headers=self.__get_headers())
+            user = raw_user
         except requests.exceptions.HTTPError:
             logger.warning("Response from %s is not in JSON-like format, user data cannot be retrieved", url_user)
             user = '{}'
@@ -446,9 +461,9 @@ class LaunchpadClient:
         """Get the issue data by its ID"""
 
         url_issue = self.__get_url("bugs/" + str(issue_id))
-        r = self.__send_request(url_issue, headers=self.__get_headers())
+        raw_text = self.__send_request(url_issue, headers=self.__get_headers())
 
-        return r.text
+        return raw_text
 
     def get_issue_collection(self, issue_id, collection_name):
         """Get a collection list of a given issue"""
@@ -485,14 +500,13 @@ class LaunchpadClient:
 
         return LAUNCHPAD_API_URL + path
 
-    def __get_signature(self):
+    def _generate_signature(self):
         """Get HTTP request signature based on consumer_key and token"""
 
-        if self.consumer_key and self.token:
-            sign = hmac.new(bytes(self.consumer_key.encode('utf-8')),
-                            bytes(self.token.encode('utf-8')),
-                            hashlib.sha256).hexdigest()
-            return sign
+        sign = hmac.new(bytes(self.consumer_key.encode('utf-8')),
+                        bytes(self.api_token.encode('utf-8')),
+                        hashlib.sha256).hexdigest()
+        return sign
 
     def __get_headers(self):
         """Set header for request"""
@@ -505,33 +519,37 @@ class LaunchpadClient:
     def __send_request(self, url, params=None, headers=None):
         """Send request"""
 
-        while True:
+        if self.consumer_key and self.api_token:
+            headers['Sign'] = self._generate_signature()
+
+        retries = 0
+
+        while retries < self.MAX_RETRIES:
             try:
-                sign = self.__get_signature()
                 r = requests.get(url,
                                  params=params,
-                                 headers=headers.update({'Sign': sign}))
+                                 headers=headers)
                 break
             except requests.exceptions.ConnectionError:
-                time.sleep(self.sleep_time)
                 logger.warning("Connection was lost, the backend will sleep for " +
                                str(self.sleep_time) + "s before starting again")
-                continue
+                time.sleep(self.sleep_time * retries)
+                retries += 1
 
-        if r.status_code != 200:
-            logger.warning("Wrong request: %s", r.text)
-            raise requests.exceptions.HTTPError
+        r.raise_for_status()
 
-        return r
+        return r.text
 
-    def __get_payload(self, size, operation=False, startdate=None):
+    def __build_payload(self, size, operation=False, startdate=None):
         """Build payload"""
 
-        payload = {'orderby': '-datecreated', 'ws.size': size}
+        payload = {
+            'orderby': '-datecreated',
+            'ws.size': size
+        }
 
         if operation:
             payload['ws.op'] = 'searchTasks'
-
         if startdate:
             startdate = startdate.isoformat()
             payload['modified_since'] = startdate
@@ -543,46 +561,26 @@ class LaunchpadClient:
 
         page = 0  # current page
         url_next = path
-        page_size = payload['ws.size']
+        fetch_data = True
 
-        try:
-            r = self.__send_request(url_next, payload, self.__get_headers())
-            raw_content = r.text
-            content = json.loads(raw_content)
-        except requests.exceptions.HTTPError:
-            logger.warning("Response from %s is not in JSON-like format, data cannot be retrieved", url_next)
-            raw_content = '{"total_size": 0, "start": 0, "entries": []}'
-            content = json.loads(raw_content)
+        while fetch_data:
+            logger.debug("Fetching page: %i" % page)
 
-        page += 1
-
-        if content['total_size'] % page_size == 0:
-            last_page = (content['total_size']) // page_size
-        else:
-            last_page = (content['total_size']) // page_size + 1
-
-        logger.debug("Page: %i/%i" % (page, last_page))
-
-        while raw_content:
-            yield raw_content
-
-            raw_content = None
+            try:
+                raw_content = self.__send_request(url_next, payload, self.__get_headers())
+                content = json.loads(raw_content)
+            except requests.exceptions.HTTPError:
+                logger.warning("Response from %s is not in JSON-like format, data cannot be retrieved", url_next)
+                raw_content = '{"total_size": 0, "start": 0, "entries": []}'
+                content = json.loads(raw_content)
 
             if 'next_collection_link' in content:
                 url_next = content['next_collection_link']
+            else:
+                fetch_data = False
 
-                try:
-                    r = self.__send_request(url_next, headers=self.__get_headers())
-                    raw_content = r.text
-                    content = json.loads(raw_content)
-                except requests.exceptions.HTTPError:
-                    logger.warning("Response from %s is not in JSON-like format, data cannot be retrieved", url_next)
-                    raw_content = '{"total_size": 0, "start": 0, "entries": []}'
-                    content = json.loads(raw_content)
-
-                logger.debug("Page: %i/%i" % (page, last_page))
-
-                page += 1
+            yield raw_content
+            page += 1
 
 
 class LaunchpadCommand(BackendCommand):
