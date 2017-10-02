@@ -65,7 +65,7 @@ class Launchpad(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
            it will be reset
     """
-    version = '0.1.2'
+    version = '0.1.3'
 
     def __init__(self, distribution, package=None,
                  consumer_key=None, api_token=None,
@@ -139,9 +139,9 @@ class Launchpad(Backend):
             if raw_item == '{ISSUES}':
                 issues = self.__fetch_issues_from_cache(cache_items)
 
+            raw_item = next(cache_items)
             for issue in issues:
                 issue = self.__init_extra_issue_fields(issue)
-                raw_item = next(cache_items)
 
                 while raw_item != '{ISSUE-END}':
                     try:
@@ -192,7 +192,7 @@ class Launchpad(Backend):
     def metadata_updated_on(item):
         """Extracts the update time from a Launchpad item.
 
-        The timestamp used is extracted from 'updated_at' field.
+        The timestamp used is extracted from 'date_last_updated' field.
         This date is converted to UNIX timestamp format. As Launchpad
         dates are in UTC the conversion is straightforward.
 
