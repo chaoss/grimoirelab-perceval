@@ -65,7 +65,7 @@ class Launchpad(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
            it will be reset
     """
-    version = '0.1.1'
+    version = '0.1.2'
 
     def __init__(self, distribution, package=None,
                  consumer_key=None, api_token=None,
@@ -575,6 +575,7 @@ class LaunchpadClient:
 
             if 'next_collection_link' in content:
                 url_next = content['next_collection_link']
+                payload = None
             else:
                 fetch_data = False
 
