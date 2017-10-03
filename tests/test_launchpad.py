@@ -29,6 +29,7 @@ import tempfile
 import shutil
 import json
 import pkg_resources
+import requests
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
@@ -36,12 +37,12 @@ sys.path.insert(0, '..')
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
-from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.launchpad import (Launchpad,
                                               LaunchpadClient,
                                               LaunchpadCommand)
+from perceval.cache import Cache
+from perceval.errors import CacheError
+from perceval.utils import DEFAULT_DATETIME
 
 
 LAUNCHPAD_API_URL = "https://api.launchpad.net/1.0"
@@ -64,7 +65,7 @@ class TestLaunchpadBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, tag='test')
+        launchpad = Launchpad('mydistribution', tag='test')
         self.assertEqual(launchpad.distribution, 'mydistribution')
         self.assertEqual(launchpad.package, None)
         self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
@@ -73,17 +74,17 @@ class TestLaunchpadBackend(unittest.TestCase):
         launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, tag='test', package="mypackage")
         self.assertEqual(launchpad.distribution, 'mydistribution')
         self.assertEqual(launchpad.package, 'mypackage')
-        self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution/+source/mypackage')
+        self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
         self.assertEqual(launchpad.tag, 'test')
 
         # When tag is empty or None it will be set to
         # the value in origin
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, tag=None)
         self.assertEqual(launchpad.distribution, 'mydistribution')
         self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
         self.assertEqual(launchpad.tag, 'https://launchpad.net/mydistribution')
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN)
+        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, tag='')
         self.assertEqual(launchpad.distribution, 'mydistribution')
         self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
         self.assertEqual(launchpad.tag, 'https://launchpad.net/mydistribution')
@@ -99,139 +100,7 @@ class TestLaunchpadBackend(unittest.TestCase):
         self.assertEqual(Launchpad.has_resuming(), True)
 
     @httpretty.activate
-    def test_fetch_multi_pages(self):
-        """Test whether comments, attachments and activities are correctly returned"""
-
-        issues_page_1 = read_file('data/launchpad/launchpad_issues_page_1_no_next')
-        issue_1 = read_file('data/launchpad/launchpad_issue_1')
-        issue_1_activities_next_1 = read_file('data/launchpad/launchpad_issue_1_activities_next_1')
-        issue_1_activities_next_2 = read_file('data/launchpad/launchpad_issue_1_activities_next_2')
-
-        issue_1_comments_next_1 = read_file('data/launchpad/launchpad_issue_1_comments_next_1')
-        issue_1_comments_next_2 = read_file('data/launchpad/launchpad_issue_1_comments_next_2')
-
-        issue_1_attachments_next_1 = \
-            read_file('data/launchpad/launchpad_issue_1_attachments_next_1')
-        issue_1_attachments_next_2 = \
-            read_file('data/launchpad/launchpad_issue_1_attachments_next_2')
-
-        user_1 = read_file('data/launchpad/launchpad_user_1')
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_PACKAGE_PROJECT_URL +
-                               "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
-                               "&ws.size=2&orderby=-datecreated",
-                               body=issues_page_1,
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1",
-                               body=issue_1,
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments_next_2,
-                               params={'ws.size': 2, 'memo': 2, 'ws.start': 2},
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments_next_1,
-                               params={'ws.size': 2, 'orderby': '-datecreated', 'ws.start': 0},
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments_next_2,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'memo': 2, 'ws.start': 2},
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments_next_1,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'ws.start': 0},
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities_next_2,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'memo': 2, 'ws.start': 2},
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities_next_1,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'ws.start': 0},
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user",
-                               body=user_1,
-                               status=200)
-
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
-                              items_per_page=2)
-        issues = [issues for issues in launchpad.fetch()]
-
-        self.assertEqual(len(issues), 1)
-        self.assertIsNotNone(issues[0]['data']['assignee_data'])
-        self.assertEqual(len(issues[0]['data']['activity_data']), 4)
-        self.assertEqual(len(issues[0]['data']['messages_data']), 4)
-        self.assertEqual(len(issues[0]['data']['attachments_data']), 4)
-
-    @httpretty.activate
     def test_fetch(self):
-        """Test whether a list of issues is returned"""
-
-        issues_page_1 = read_file('data/launchpad/launchpad_issues_page_1_no_next')
-        issue_1 = read_file('data/launchpad/launchpad_issue_1')
-        issue_1_comments = read_file('data/launchpad/launchpad_issue_1_comments')
-        issue_1_attachments = read_file('data/launchpad/launchpad_issue_1_attachments')
-        issue_1_activities = read_file('data/launchpad/launchpad_issue_1_activities')
-        user_1 = read_file('data/launchpad/launchpad_user_1')
-
-        issue_1_expected = read_file('data/launchpad/launchpad_issue_1_expected')
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_PACKAGE_PROJECT_URL +
-                               "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
-                               "&ws.size=2&orderby=-datecreated",
-                               body=issues_page_1,
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1",
-                               body=issue_1,
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities,
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user",
-                               body=user_1,
-                               status=200)
-
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
-                              items_per_page=2)
-        issues = [issues for issues in launchpad.fetch()]
-
-        issue_1_expected = json.loads(issue_1_expected)
-
-        self.assertEqual(len(issues), 1)
-
-        self.assertDictEqual(issues[0]['data'], issue_1_expected)
-
-    @httpretty.activate
-    def test_fetch_more_issues(self):
         """Test whether a list of issues is returned"""
 
         issues_page_1 = read_file('data/launchpad/launchpad_issues_page_1')
@@ -262,19 +131,37 @@ class TestLaunchpadBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&memo=2&ws.start=2",
                                body=issues_page_3,
                                status=200)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&memo=1&ws.start=1",
                                body=issues_page_2,
                                status=200)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
-                               "&ws.size=1&orderby=-datecreated",
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
+                               "&ws.size=1",
                                body=issues_page_1,
                                status=200)
 
@@ -335,7 +222,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
+        launchpad = Launchpad('mydistribution', package="mypackage",
                               items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
@@ -383,7 +270,13 @@ class TestLaunchpadBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
-                               "&ws.size=1&orderby=-datecreated",
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
+                               "&ws.size=1",
                                body=issues_page_1,
                                status=200)
 
@@ -427,6 +320,12 @@ class TestLaunchpadBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&ws.start=0",
                                body=empty_issues,
                                status=200)
@@ -443,8 +342,14 @@ class TestLaunchpadBackend(unittest.TestCase):
 
         empty_issues = read_file('data/launchpad/launchpad_empty_issues')
         httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_PACKAGE_PROJECT_URL +
+                               LAUNCHPAD_DISTRIBUTION_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&ws.start=0",
                                body=empty_issues,
                                status=200)
@@ -468,7 +373,13 @@ class TestLaunchpadBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
-                               "&ws.size=1&orderby=-datecreated",
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
+                               "&ws.size=1",
                                body=issues_page_1,
                                status=200)
 
@@ -480,15 +391,15 @@ class TestLaunchpadBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/messages",
                                body=issue_1_comments,
-                               status=400)
+                               status=410)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/attachments",
                                body=issue_1_attachments,
-                               status=400)
+                               status=410)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/activity",
                                body=issue_1_activities,
-                               status=400)
+                               status=410)
 
         issue_1_expected = json.loads(issue_1_expected)
 
@@ -520,9 +431,16 @@ class TestLaunchpadBackendCache(unittest.TestCase):
         issue_2 = read_file('data/launchpad/launchpad_issue_2')
         issue_3 = read_file('data/launchpad/launchpad_issue_3')
 
-        issue_1_comments = read_file('data/launchpad/launchpad_issue_1_comments')
-        issue_1_attachments = read_file('data/launchpad/launchpad_issue_1_attachments')
-        issue_1_activities = read_file('data/launchpad/launchpad_issue_1_activities')
+        issue_1_activities_next_1 = read_file('data/launchpad/launchpad_issue_1_activities_next_1')
+        issue_1_activities_next_2 = read_file('data/launchpad/launchpad_issue_1_activities_next_2')
+
+        issue_1_comments_next_1 = read_file('data/launchpad/launchpad_issue_1_comments_next_1')
+        issue_1_comments_next_2 = read_file('data/launchpad/launchpad_issue_1_comments_next_2')
+
+        issue_1_attachments_next_1 = \
+            read_file('data/launchpad/launchpad_issue_1_attachments_next_1')
+        issue_1_attachments_next_2 = \
+            read_file('data/launchpad/launchpad_issue_1_attachments_next_2')
 
         issue_2_activities = read_file('data/launchpad/launchpad_issue_2_activities')
         issue_2_comments = read_file('data/launchpad/launchpad_issue_2_comments')
@@ -536,18 +454,36 @@ class TestLaunchpadBackendCache(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&memo=2&ws.start=2",
                                body=issues_page_3,
                                status=200)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&memo=1&ws.start=1",
                                body=issues_page_2,
                                status=200)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&ws.start=0",
                                body=issues_page_1,
                                status=200)
@@ -567,8 +503,15 @@ class TestLaunchpadBackendCache(unittest.TestCase):
 
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments,
+                               body=issue_1_comments_next_2,
+                               params={'ws.size': 2, 'memo': 2, 'ws.start': 2},
                                status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1/messages",
+                               body=issue_1_comments_next_1,
+                               params={'ws.size': 2, 'orderby': '-datecreated', 'ws.start': 0},
+                               status=200)
+
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/2/messages",
                                body=issue_2_comments,
@@ -579,7 +522,13 @@ class TestLaunchpadBackendCache(unittest.TestCase):
                                status=200)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments,
+                               body=issue_1_attachments_next_2,
+                               params={'orderby': '-datecreated', 'ws.size': 2, 'memo': 2, 'ws.start': 2},
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
+                               body=issue_1_attachments_next_1,
+                               params={'orderby': '-datecreated', 'ws.size': 2, 'ws.start': 0},
                                status=200)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/2/attachments",
@@ -592,8 +541,15 @@ class TestLaunchpadBackendCache(unittest.TestCase):
 
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities,
+                               body=issue_1_activities_next_2,
+                               params={'orderby': '-datecreated', 'ws.size': 2, 'memo': 2, 'ws.start': 2},
                                status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1/activity",
+                               body=issue_1_activities_next_1,
+                               params={'orderby': '-datecreated', 'ws.size': 2, 'ws.start': 0},
+                               status=200)
+
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/2/activity",
                                body=issue_2_activities,
@@ -629,95 +585,6 @@ class TestLaunchpadBackendCache(unittest.TestCase):
         self.assertDictEqual(issues[1], cache_issues[1])
         self.assertDictEqual(issues[2], cache_issues[2])
 
-    @httpretty.activate
-    def _pages_cache(self):
-        """Test whether comments, attachments and activities are correctly returned from the cache"""
-
-        issues_page_1 = read_file('data/launchpad/launchpad_issues_page_1_no_next')
-        issue_1 = read_file('data/launchpad/launchpad_issue_1')
-        issue_1_activities_next_1 = read_file('data/launchpad/launchpad_issue_1_activities_next_1')
-        issue_1_activities_next_2 = read_file('data/launchpad/launchpad_issue_1_activities_next_2')
-
-        issue_1_comments_next_1 = read_file('data/launchpad/launchpad_issue_1_comments_next_1')
-        issue_1_comments_next_2 = read_file('data/launchpad/launchpad_issue_1_comments_next_2')
-
-        empty_issue_attachments = read_file('data/launchpad/launchpad_empty_issue_attachments')
-        issue_1_attachments_next_1 = \
-            read_file('data/launchpad/launchpad_issue_1_attachments_next_1')
-        issue_1_attachments_next_2 = \
-            read_file('data/launchpad/launchpad_issue_1_attachments_next_2')
-
-        user_1 = read_file('data/launchpad/launchpad_user_1')
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_PACKAGE_PROJECT_URL +
-                               "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
-                               "&ws.size=2&orderby=-datecreated",
-                               body=issues_page_1,
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1",
-                               body=issue_1,
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments_next_2,
-                               params={'ws.size': 2, 'memo': 2, 'ws.start': 2},
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments_next_1,
-                               params={'ws.size': 2, 'orderby': '-datecreated', 'ws.start': 0},
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments_next_2,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'memo': 2, 'ws.start': 2},
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments_next_1,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'ws.start': 0},
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2/attachments",
-                               body=empty_issue_attachments,
-                               params={'ws.size': 2, 'orderby': '-datecreated', 'ws.start': 0},
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3/attachments",
-                               body=empty_issue_attachments,
-                               params={'ws.size': 2, 'orderby': '-datecreated', 'ws.start': 0},
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities_next_2,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'memo': 2, 'ws.start': 2},
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities_next_1,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'ws.start': 0},
-                               status=200)
-
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user",
-                               body=user_1,
-                               status=200)
-
-        cache = Cache(self.tmp_path)
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
-                              cache=cache, items_per_page=2)
-        issues = [issues for issues in launchpad.fetch()]
-
-        issues_cache = [issues for issues in launchpad.fetch_from_cache()]
-
-        self.assertDictEqual(issues[0]['data'], issues_cache[0]['data'])
-
     def test_fetch_from_empty_cache(self):
         """Test if there are not any issues returned when the cache is empty"""
 
@@ -750,7 +617,13 @@ class TestLaunchpadBackendCache(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
-                               "&ws.size=1&orderby=-datecreated",
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
+                               "&ws.size=1",
                                body=issues_page_1,
                                status=200)
 
@@ -762,15 +635,15 @@ class TestLaunchpadBackendCache(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/messages",
                                body=issue_1_comments,
-                               status=400)
+                               status=410)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/attachments",
                                body=issue_1_attachments,
-                               status=400)
+                               status=410)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/activity",
                                body=issue_1_activities,
-                               status=400)
+                               status=410)
 
         cache = Cache(self.tmp_path)
         launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage',
@@ -786,8 +659,8 @@ class TestLaunchpadClient(unittest.TestCase):
     """Launchpad API client tests"""
 
     @httpretty.activate
-    def test_get_from_date_issues(self):
-        """Test get_from_issues API call"""
+    def test_issues_from_date(self):
+        """Test issues from date API call"""
 
         # this method cannot be tested, because the next page is encoded
         # in the HTTP response (and not in the query string)
@@ -795,6 +668,12 @@ class TestLaunchpadClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=2017-08-21T16%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&ws.start=0",
                                body=issues_page_1,
                                status=200)
@@ -807,8 +686,8 @@ class TestLaunchpadClient(unittest.TestCase):
         self.assertEqual(len(issues), 1)
 
     @httpretty.activate
-    def test_get_page_issues(self):
-        """Test get_page_issue API call"""
+    def test_issues(self):
+        """Test issues API call"""
 
         issues_page_1 = read_file('data/launchpad/launchpad_issues_page_1')
         issues_page_2 = read_file('data/launchpad/launchpad_issues_page_2')
@@ -817,18 +696,36 @@ class TestLaunchpadClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&memo=2&ws.start=2",
                                body=issues_page_3,
                                status=200)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&memo=1&ws.start=1",
                                body=issues_page_2,
                                status=200)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&ws.start=0",
                                body=issues_page_1,
                                status=200)
@@ -840,13 +737,19 @@ class TestLaunchpadClient(unittest.TestCase):
         self.assertEqual(len(issues), 3)
 
     @httpretty.activate
-    def test_get_empty_issues(self):
+    def test_issues_empty(self):
         """Test when issue is empty API call"""
 
         empty_issues = read_file('data/launchpad/launchpad_empty_issues')
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
                                "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
                                "&ws.size=1&ws.start=0",
                                body=empty_issues,
                                status=200)
@@ -858,8 +761,8 @@ class TestLaunchpadClient(unittest.TestCase):
         self.assertDictEqual(json.loads(issues[0]), json.loads(empty_issues))
 
     @httpretty.activate
-    def test_get_user(self):
-        """Test get_user API call"""
+    def test_user(self):
+        """Test user API call"""
 
         user = read_file('data/launchpad/launchpad_user_1')
         httpretty.register_uri(httpretty.GET,
@@ -879,7 +782,8 @@ class TestLaunchpadClient(unittest.TestCase):
 
         client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
                                  package="mypackage")
-        self.assertEqual(next(client.issue_collection("100", "attachments")), '{"total_size": 0, "start": 0, "entries": []}')
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = next(client.issue_collection("100", "attachments"))
 
     @httpretty.activate
     def test_http_wrong_status_user(self):
@@ -887,7 +791,8 @@ class TestLaunchpadClient(unittest.TestCase):
 
         client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
                                  package="mypackage")
-        self.assertEqual(client.user("user1"), '{}')
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = client.user("user1")
 
 
 class TestLaunchpadCommand(unittest.TestCase):
@@ -906,15 +811,17 @@ class TestLaunchpadCommand(unittest.TestCase):
 
         args = ['--tag', 'test', '--no-cache',
                 '--from-date', '1970-01-01',
-                'mydistribution', 'myapp', 'mytoken']
+                '--items-per-page', '75',
+                '--sleep-time', '600',
+                'mydistribution']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.distribution, 'mydistribution')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.no_cache, True)
-        self.assertEqual(parsed_args.api_token, 'mytoken')
-        self.assertEqual(parsed_args.consumer_key, 'myapp')
+        self.assertEqual(parsed_args.items_per_page, '75')
+        self.assertEqual(parsed_args.sleep_time, '600')
 
 
 if __name__ == "__main__":

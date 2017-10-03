@@ -1,7 +1,8 @@
 {
   "total_size": 3,
   "start": 0,
-  "next_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks&ws.size=1&memo=1&ws.start=1&orderby=-datecreated",
+
+  "next_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks&ws.size=1&memo=1&ws.start=1&order_by=date_last_updated&omit_duplicates=false&status=Confirmed&status=Expired&status=Fix+Committed&status=Fix+Released&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29&status=Incomplete+%28without+response%29&status=Invalid&status=New&status=Opinion&status=Triaged&status=Won%27t+Fix",
   "entries": [
         {
         "assignee_link": "https://api.launchpad.net/1.0/~user",
