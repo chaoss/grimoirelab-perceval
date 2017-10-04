@@ -471,7 +471,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[0]['tag'], 'https://github.com/zhquan_example/repo')
 
         self.assertDictEqual(issues[0]['data']['assignee_data'], expected['assignee_data'])
-        self.assertDictEqual(issues[0]['data']['assignees_data'], expected['assignees_data'])
+        self.assertListEqual(issues[0]['data']['assignees_data'], expected['assignees_data'])
         self.assertEqual(len(issues[0]['data']['comments_data']), len(expected['comments_data']))
         self.assertDictEqual(issues[0]['data']['comments_data'][0], expected['comments_data'][0])
         self.assertListEqual(issues[0]['data']['comments_data'][0]['reactions_data'],
@@ -752,7 +752,7 @@ class TestGitHubClient(unittest.TestCase):
                                })
 
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
-        raw_issues = [issues for issues in client.get_issues()]
+        raw_issues = [issues for issues in client.issues()]
         self.assertEqual(len(raw_issues), 1)
         self.assertEqual(raw_issues[0], issue)
 
@@ -780,7 +780,7 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient("zhquan_example", "repo", "aaa",
                               base_url=GITHUB_ENTERPRISE_URL)
 
-        raw_issues = [issues for issues in client.get_issues()]
+        raw_issues = [issues for issues in client.issues()]
         self.assertEqual(len(raw_issues), 1)
         self.assertEqual(raw_issues[0], issue)
 
@@ -813,7 +813,7 @@ class TestGitHubClient(unittest.TestCase):
         from_date = datetime.datetime(2016, 3, 1)
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
 
-        raw_issues = [issues for issues in client.get_issues(start=from_date)]
+        raw_issues = [issues for issues in client.issues(start=from_date)]
         self.assertEqual(len(raw_issues), 1)
         self.assertEqual(raw_issues[0], issue)
 
@@ -856,7 +856,7 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", "aaa")
 
-        issues = [issues for issues in client.get_issues()]
+        issues = [issues for issues in client.issues()]
 
         self.assertEqual(len(issues), 2)
         self.assertEqual(issues[0], issue_1)
@@ -890,7 +890,7 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
 
-        raw_issues = [issues for issues in client.get_issues()]
+        raw_issues = [issues for issues in client.issues()]
         self.assertEqual(raw_issues[0], issue)
 
         # Check requests
@@ -919,7 +919,7 @@ class TestGitHubClient(unittest.TestCase):
                                })
 
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
-        response = client.get_user("zhquan_example")
+        response = client.user("zhquan_example")
         self.assertEqual(response, login)
 
     @httpretty.activate
@@ -937,7 +937,7 @@ class TestGitHubClient(unittest.TestCase):
                                })
 
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
-        response = client.get_user_orgs("zhquan_example")
+        response = client.user_orgs("zhquan_example")
 
         self.assertEqual(response, orgs)
 
@@ -959,7 +959,7 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
 
         with self.assertRaises(requests.exceptions.HTTPError):
-            _ = [issues for issues in client.get_issues()]
+            _ = [issues for issues in client.issues()]
 
         # Check requests
         expected = {
@@ -1004,7 +1004,7 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=True)
 
         before = int(time.time())
-        issues = [issues for issues in client.get_issues()]
+        issues = [issues for issues in client.issues()]
         after = int(time.time())
         dif = after - before
 
@@ -1045,7 +1045,7 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=False)
 
         with self.assertRaises(RateLimitError):
-            _ = [issues for issues in client.get_issues()]
+            _ = [issues for issues in client.issues()]
 
         # Check requests
         expected = {
