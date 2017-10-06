@@ -1,0 +1,19 @@
+{
+    "entries": [
+        {
+            "bug_attachments_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/2/comments/0/bug_attachments",
+            "content": "The lion and the calf shall lie down together but the calf won't get much sleep",
+            "date_created": "2017-08-21T14:28:00.336698+00:00",
+            "http_etag": "2c3d51064a30a45f94beb6bd97a796712e0edeed-79eba59b0bebf080830b35b4cc1b3bf2d32c00de",
+            "owner_link": "https://api.launchpad.net/1.0/~user",
+            "parent_link": null,
+            "resource_type_link": "https://api.launchpad.net/1.0/#message",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/2/comments/0",
+            "subject": "Never ask a starfish for directions",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/2/comments/0"
+        }
+    ],
+    "resource_type_link": "https://api.launchpad.net/1.0/#message-page-resource",
+    "start": 0,
+    "total_size": 1
+}

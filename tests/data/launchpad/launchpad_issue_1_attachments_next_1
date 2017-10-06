@@ -1,0 +1,30 @@
+{
+    "entries": [
+        {
+            "bug_link": "https://api.launchpad.net/1.0/bugs/1",
+            "data_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/1/data",
+            "http_etag": "80a87ce9fa2b2fc9325b1499e714fc636fb7c514-4aa1050640f37ce2d24d7c173f996002e866e887",
+            "message_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/1",
+            "resource_type_link": "https://api.launchpad.net/1.0/#bug_attachment",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/1",
+            "title": "Dependencies.txt",
+            "type": "Unspecified",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/+attachment/1"
+        },
+        {
+            "bug_link": "https://api.launchpad.net/1.0/bugs/1",
+            "data_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/1/data",
+            "http_etag": "80a87ce9fa2b2fc9325b1499e714fc636fb7c514-4aa1050640f37ce2d24d7c173f996002e866e887",
+            "message_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/1",
+            "resource_type_link": "https://api.launchpad.net/1.0/#bug_attachment",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/1",
+            "title": "Dependencies2.txt",
+            "type": "Unspecified",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/+attachment/1"
+        }
+    ],
+    "next_collection_link": "https://api.launchpad.net/1.0/bugs/1/attachments?ws.size=2&memo=2&ws.start=2",
+    "resource_type_link": "https://api.launchpad.net/1.0/#bug_attachment-page-resource",
+    "start": 0,
+    "total_size": 4
+}

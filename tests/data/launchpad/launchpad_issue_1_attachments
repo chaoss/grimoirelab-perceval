@@ -1,0 +1,40 @@
+{
+    "entries": [
+        {
+            "bug_link": "https://api.launchpad.net/1.0/bugs/1",
+            "data_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/1/data",
+            "http_etag": "80a87ce9fa2b2fc9325b1499e714fc636fb7c514-4aa1050640f37ce2d24d7c173f996002e866e887",
+            "message_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/1",
+            "resource_type_link": "https://api.launchpad.net/1.0/#bug_attachment",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/1",
+            "title": "Dependencies.txt",
+            "type": "Unspecified",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/+attachment/1"
+        },
+        {
+            "bug_link": "https://api.launchpad.net/1.0/bugs/1",
+            "data_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/2/data",
+            "http_etag": "ec6eeef89921f52ef8e495f6a292a024d8225242-b5e0c579b03187c416aa324a737a670471a1e640",
+            "message_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/1",
+            "resource_type_link": "https://api.launchpad.net/1.0/#bug_attachment",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/2",
+            "title": "DpkgHistoryLog.txt.txt",
+            "type": "Unspecified",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/+attachment/2"
+        },
+        {
+            "bug_link": "https://api.launchpad.net/1.0/bugs/1",
+            "data_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/3/data",
+            "http_etag": "3d166254a68674b43790c1bc7a11f778b08f6818-421df6fa82126b2c060e185f0361bc00c28839c2",
+            "message_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/1",
+            "resource_type_link": "https://api.launchpad.net/1.0/#bug_attachment",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/+attachment/3",
+            "title": "DpkgTerminalLog.txt.txt",
+            "type": "Unspecified",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/+attachment/3"
+        }
+    ],
+    "resource_type_link": "https://api.launchpad.net/1.0/#bug_attachment-page-resource",
+    "start": 0,
+    "total_size": 3
+}
