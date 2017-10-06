@@ -79,7 +79,7 @@ PERCEVAL_EPILOG_MSG = \
 """Run '%(prog)s <backend> --help' to get information about a specific backend."""
 
 PERCEVAL_VERSION_MSG = \
-"""%(prog)s """  + perceval.__version__
+"""%(prog)s """  + perceval._version.__version__
 
 
 # Logging formats
