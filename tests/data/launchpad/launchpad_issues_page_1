@@ -1,0 +1,38 @@
+{
+  "total_size": 3,
+  "start": 0,
+
+  "next_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks&ws.size=1&memo=1&ws.start=1&order_by=date_last_updated&omit_duplicates=false&status=Confirmed&status=Expired&status=Fix+Committed&status=Fix+Released&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29&status=Incomplete+%28without+response%29&status=Invalid&status=New&status=Opinion&status=Triaged&status=Won%27t+Fix",
+  "entries": [
+        {
+        "assignee_link": "https://api.launchpad.net/1.0/~user",
+        "bug_link": "https://api.launchpad.net/1.0/bugs/1",
+        "bug_target_display_name": "synaptic (Ubuntu)",
+        "bug_target_name": "synaptic (Ubuntu)",
+        "bug_watch_link": null,
+        "date_assigned": null,
+        "date_closed": null,
+        "date_confirmed": "2017-08-21T14:50:35.930044+00:00",
+        "date_created": "2017-08-21T14:28:00.336698+00:00",
+        "date_fix_committed": null,
+        "date_fix_released": null,
+        "date_in_progress": null,
+        "date_incomplete": null,
+        "date_left_closed": null,
+        "date_left_new": "2017-08-21T14:50:35.930044+00:00",
+        "date_triaged": "2017-08-21T14:50:35.930044+00:00",
+        "http_etag": "7a5f3d33cefa1c461a3f376c503b5aa3f50c7e98-225490be4eeb777a25cd2bb866475aaa38ab356e",
+        "importance": "High",
+        "is_complete": false,
+        "milestone_link": null,
+        "owner_link": "https://api.launchpad.net/1.0/~user",
+        "related_tasks_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/related_tasks",
+        "resource_type_link": "https://api.launchpad.net/1.0/#bug_task",
+        "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1",
+        "status": "Triaged",
+        "target_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage",
+        "title": "Bug #1 in synaptic (Ubuntu): Invalid MIT-MAGIC-COOKIE-1 keyUnable to init server: Could not connect: Connection refused",
+        "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1"
+    }
+  ]
+}

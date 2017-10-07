@@ -1,0 +1,37 @@
+{
+  "total_size": 3,
+  "start": 2,
+  "prev_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks&ws.size=1&direction=backwards&memo=2&ws.start=1&orderby=-datecreated",
+  "entries": [
+    {
+      "date_closed": null,
+      "date_assigned": null,
+      "title": "Bug #3 in synaptic (Ubuntu): Synaptic steals focus when minimized or when behind other windows",
+      "bug_link": "https://api.launchpad.net/1.0/bugs/3",
+      "bug_watch_link": null,
+      "milestone_link": null,
+      "http_etag": "78671881b85dec10ecc15339c299897f89d59f14-0a26e91561f6b6625bc35a6623065fb34b5033f9",
+      "date_left_closed": "2011-03-06T07:11:25.084091+00:00",
+      "date_fix_committed": null,
+      "date_fix_released": null,
+      "date_in_progress": null,
+      "resource_type_link": "https://api.launchpad.net/1.0/#bug_task",
+      "status": "Confirmed",
+      "bug_target_name": "synaptic (Ubuntu)",
+      "importance": "Medium",
+      "assignee_link": null,
+      "date_triaged": null,
+      "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/3",
+      "target_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage",
+      "bug_target_display_name": "synaptic (Ubuntu)",
+      "related_tasks_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/3/related_tasks",
+      "date_confirmed": "2011-03-06T07:11:25.084091+00:00",
+      "date_left_new": null,
+      "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/3",
+      "owner_link": "https://api.launchpad.net/1.0/~user",
+      "date_created": "2006-07-28T09:10:11.023558+00:00",
+      "date_incomplete": null,
+      "is_complete": false
+    }
+  ]
+}

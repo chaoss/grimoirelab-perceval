@@ -1,0 +1,31 @@
+{
+    "entries": [
+        {
+            "bug_attachments_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/0/bug_attachments",
+            "content": "Silence is golden, unless you have kids then silence is just plain suspicious",
+            "date_created": "2017-08-21T14:28:00.336698+00:00",
+            "http_etag": "2c3d51064a30a45f94beb6bd97a796712e0edeed-79eba59b0bebf080830b35b4cc1b3bf2d32c00de",
+            "owner_link": "https://api.launchpad.net/1.0/~user",
+            "parent_link": null,
+            "resource_type_link": "https://api.launchpad.net/1.0/#message",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/0",
+            "subject": "Never ask a starfish for directions",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/comments/0"
+        },
+        {
+            "bug_attachments_collection_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/1/bug_attachments",
+            "content": "Don't worry if plan A fails, there are 25 more letters in the alphabet",
+            "date_created": "2017-08-21T14:28:00.336698+00:00",
+            "http_etag": "4cd607bc687aeb4ff34adfda1e840e43c7a122f4-c607ca46c77b9673130a54553f81fd2595304c96",
+            "owner_link": "https://api.launchpad.net/1.0/~user",
+            "parent_link": null,
+            "resource_type_link": "https://api.launchpad.net/1.0/#message",
+            "self_link": "https://api.launchpad.net/1.0/mydistribution/+source/mypackage/+bug/1/comments/1",
+            "subject": "Marriage: when dating goes to far",
+            "web_link": "https://bugs.launchpad.net/mydistribution/+source/mypackage/+bug/1/comments/1"
+        }
+    ],
+    "resource_type_link": "https://api.launchpad.net/1.0/#message-page-resource",
+    "start": 0,
+    "total_size": 2
+}
