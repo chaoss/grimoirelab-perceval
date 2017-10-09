@@ -1,0 +1,4 @@
+{
+  "documentation_url": "https://developer.github.com/v3/#abuse-rate-limits",
+  "message": "You have triggered an abuse detection mechanism. Please wait a few minutes before you try again."
+}

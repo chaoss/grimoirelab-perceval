@@ -70,7 +70,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.11.0'
+    version = '0.11.1'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -454,6 +454,7 @@ class GitHub(Backend):
 class GitHubClient:
     """Client for retieving information from GitHub API"""
 
+    MAX_RETRIES = 5
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
@@ -580,27 +581,46 @@ class GitHubClient:
     def __send_request(self, url, params=None, headers=None):
         """GET HTTP caring of rate limit"""
 
-        if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
-            seconds_to_reset = self.rate_limit_reset_ts - int(time.time()) + 1
-            cause = "GitHub rate limit exhausted."
-            if self.sleep_for_rate:
-                logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
-                time.sleep(seconds_to_reset)
-            else:
-                raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
+        retries = 0
 
-        r = requests.get(url, params=params, headers=headers)
-        r.raise_for_status()
+        while retries < self.MAX_RETRIES:
+            try:
+                if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
+                    seconds_to_reset = self.rate_limit_reset_ts - int(time.time()) + 1
+                    cause = "GitHub rate limit exhausted."
+                    if self.sleep_for_rate:
+                        logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
+                        time.sleep(seconds_to_reset)
+                    else:
+                        raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
 
-        # GitHub service establishes API rate limits.
-        # Enterprise version might have them deactivated.
-        if 'X-RateLimit-Remaining' in r.headers:
-            self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
-            self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
-            logger.debug("Rate limit: %s", self.rate_limit)
-        else:
-            self.rate_limit = None
-            self.rate_limit_reset_ts = None
+                r = requests.get(url, params=params, headers=headers)
+                r.raise_for_status()
+
+                # GitHub service establishes API rate limits.
+                # Enterprise version might have them deactivated.
+                if 'X-RateLimit-Remaining' in r.headers:
+                    self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
+                    self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
+                    logger.debug("Rate limit: %s", self.rate_limit)
+                else:
+                    self.rate_limit = None
+                    self.rate_limit_reset_ts = None
+
+                break
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 403 \
+                        and "abuse detection mechanism" in json.loads(e.response.text)['message'].lower():
+                    retry_seconds = int(r.headers['Retry-After'])
+                    logger.warning("Abuse rate limit, the backend will sleep for %s seconds before starting again",
+                                   retry_seconds)
+                    time.sleep(retry_seconds)
+                    retries += 1
+                else:
+                    raise e
+
+        if retries == self.MAX_RETRIES:
+            r.raise_for_status()
 
         return r
 
