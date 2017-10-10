@@ -23,6 +23,7 @@ are:
     hyperkitty       Fetch messages from a HyperKitty archiver
     jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
+    launchpad        Fetch issues from Launchpad issue tracker
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
     meetup           Fetch events from a Meetup group
@@ -199,6 +200,11 @@ $ perceval jenkins 'http://jenkins.cyanogenmod.org/'
 ### JIRA
 ```
 $ perceval jira 'https://tickets.puppetlabs.com' --project PUP --from-date '2016-01-01'
+```
+
+### Launchpad
+```
+$ perceval launchpad ubuntu --from-date '2016-01-01'
 ```
 
 ### MBox
