@@ -54,6 +54,7 @@ are:
     hyperkitty       Fetch messages from a HyperKitty archiver
     jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
+    launchpad        Fetch issues from Launchpad issue tracker
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
     meetup           Fetch events from a Meetup group
