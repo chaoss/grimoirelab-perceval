@@ -285,8 +285,14 @@ class _MBox(mailbox.mbox):
 
         try:
             msg.set_from(from_line[5:].decode('ascii'))
+            return msg
         except UnicodeDecodeError:
+            pass
+
+        try:
             msg.set_from(from_line[5:].decode('utf-8'))
+        except UnicodeDecodeError:
+            msg.set_from(from_line[5:].decode('iso-8859-1'))
 
         return msg
 

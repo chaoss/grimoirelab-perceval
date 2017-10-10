@@ -68,12 +68,12 @@ class TestCheckCompressedFileType(unittest.TestCase):
             else:
                 mod = gzip
 
-            with open('data/mbox_single.mbox', 'rb') as f_in:
+            with open('data/mbox/mbox_single.mbox', 'rb') as f_in:
                 with mod.open(fname, 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
 
         # Copy a plain file
-        shutil.copy('data/mbox_single.mbox', cls.tmp_path)
+        shutil.copy('data/mbox/mbox_single.mbox', cls.tmp_path)
 
     @classmethod
     def tearDownClass(cls):

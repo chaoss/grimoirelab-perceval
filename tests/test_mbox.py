@@ -64,7 +64,7 @@ class TestBaseMBox(unittest.TestCase):
             else:
                 mod = gzip
 
-            with open('data/mbox_single.mbox', 'rb') as f_in:
+            with open('data/mbox/mbox_single.mbox', 'rb') as f_in:
                 with mod.open(fname, 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
 
@@ -74,14 +74,16 @@ class TestBaseMBox(unittest.TestCase):
             'complex': os.path.join(cls.tmp_path, 'mbox_complex.mbox'),
             'multipart': os.path.join(cls.tmp_path, 'mbox_multipart.mbox'),
             'unixfrom': os.path.join(cls.tmp_path, 'mbox_unixfrom_encoding.mbox'),
-            'unknown': os.path.join(cls.tmp_path, 'mbox_unknown_encoding.mbox')
+            'unknown': os.path.join(cls.tmp_path, 'mbox_unknown_encoding.mbox'),
+            'iso8859': os.path.join(cls.tmp_path, 'mbox_iso8859_encoding.mbox')
         }
 
-        shutil.copy('data/mbox_single.mbox', cls.tmp_path)
-        shutil.copy('data/mbox_complex.mbox', cls.tmp_path)
-        shutil.copy('data/mbox_multipart.mbox', cls.tmp_path)
-        shutil.copy('data/mbox_unixfrom_encoding.mbox', cls.tmp_path)
-        shutil.copy('data/mbox_unknown_encoding.mbox', cls.tmp_path)
+        shutil.copy('data/mbox/mbox_single.mbox', cls.tmp_path)
+        shutil.copy('data/mbox/mbox_complex.mbox', cls.tmp_path)
+        shutil.copy('data/mbox/mbox_multipart.mbox', cls.tmp_path)
+        shutil.copy('data/mbox/mbox_unixfrom_encoding.mbox', cls.tmp_path)
+        shutil.copy('data/mbox/mbox_unknown_encoding.mbox', cls.tmp_path)
+        shutil.copy('data/mbox/mbox_iso8859_encoding.mbox', cls.tmp_path)
 
     @classmethod
     def tearDownClass(cls):
@@ -152,14 +154,15 @@ class TestMailingList(TestBaseMBox):
         mls = MailingList('test', self.tmp_path)
 
         mboxes = mls.mboxes
-        self.assertEqual(len(mboxes), 7)
+        self.assertEqual(len(mboxes), 8)
         self.assertEqual(mboxes[0].filepath, self.cfiles['bz2'])
         self.assertEqual(mboxes[1].filepath, self.cfiles['gz'])
         self.assertEqual(mboxes[2].filepath, self.files['complex'])
-        self.assertEqual(mboxes[3].filepath, self.files['multipart'])
-        self.assertEqual(mboxes[4].filepath, self.files['single'])
-        self.assertEqual(mboxes[5].filepath, self.files['unixfrom'])
-        self.assertEqual(mboxes[6].filepath, self.files['unknown'])
+        self.assertEqual(mboxes[3].filepath, self.files['iso8859'])
+        self.assertEqual(mboxes[4].filepath, self.files['multipart'])
+        self.assertEqual(mboxes[5].filepath, self.files['single'])
+        self.assertEqual(mboxes[6].filepath, self.files['unixfrom'])
+        self.assertEqual(mboxes[7].filepath, self.files['unknown'])
 
 
 class TestMBoxBackend(TestBaseMBox):
@@ -167,7 +170,7 @@ class TestMBoxBackend(TestBaseMBox):
 
     def setUp(self):
         self.tmp_error_path = tempfile.mkdtemp(prefix='perceval_')
-        shutil.copy('data/mbox_no_fields.mbox', self.tmp_error_path)
+        shutil.copy('data/mbox/mbox_no_fields.mbox', self.tmp_error_path)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_error_path)
@@ -213,6 +216,7 @@ class TestMBoxBackend(TestBaseMBox):
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
             ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'bd0185317b013beb21ad3ea04635de3db72496ad', 1095843820.0),
             ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
+            ('<4fce8064d819e07fd80267aaecaf30ef@www.platvoet.de>', 'b25134a09996f33e94b2e191a2f9f379b11168ac', 1478544267.0),
             ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
             ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 'ddda42422c55d08d56c017a6f128fcd7447484ea', 1043881350.0),
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
@@ -243,6 +247,7 @@ class TestMBoxBackend(TestBaseMBox):
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
             ('<87iqzlofqu.fsf@avet.kvota.net>', '51535703010a3e63d5272202942c283394cdebca', 1205746505.0),
+            ('<4fce8064d819e07fd80267aaecaf30ef@www.platvoet.de>', 'b25134a09996f33e94b2e191a2f9f379b11168ac', 1478544267.0),
             ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
             ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0)
@@ -294,8 +299,8 @@ class TestMBoxBackend(TestBaseMBox):
 
         tmp_path_ign = tempfile.mkdtemp(prefix='perceval_')
 
-        shutil.copy('data/mbox_single.mbox', tmp_path_ign)
-        shutil.copy('data/mbox_multipart.mbox', tmp_path_ign)
+        shutil.copy('data/mbox/mbox_single.mbox', tmp_path_ign)
+        shutil.copy('data/mbox/mbox_multipart.mbox', tmp_path_ign)
 
         # Update file mode to make it unable to access
         os.chmod(os.path.join(tmp_path_ign, 'mbox_multipart.mbox'), 0o000)
@@ -439,6 +444,12 @@ class TestMBoxBackend(TestBaseMBox):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['From'],
                          '"\udcc3\udc94\udcc2\udcac\udcc2\udcb4\udcc3\udc8f" <yuancong@example.com>')
+
+    def test_parse_iso8859_encoding_mbox(self):
+        """Check whether no execption is raisen when parsing a mbox that contains a iso 8859 encoding"""
+
+        messages = MBox.parse_mbox(self.files['iso8859'])
+        _ = [msg for msg in messages]
 
 
 class TestMBoxCommand(unittest.TestCase):
