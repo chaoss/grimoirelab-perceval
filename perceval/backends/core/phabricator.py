@@ -51,7 +51,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.3'
+    version = '0.5.4'
 
     def __init__(self, url, api_token, tag=None, cache=None):
         origin = url
@@ -247,7 +247,12 @@ class Phabricator(Backend):
             return self._projects[project_id]
 
         logger.debug("Project %s not found on client cache; fetching it", project_id)
-        project = self.__fetch_and_parse_phids(project_id)[0]
+
+        phids = self.__fetch_and_parse_phids(project_id)
+        project = None
+        if phids:
+            project = phids[0]
+
         self._projects[project_id] = project
         return project
 
@@ -261,7 +266,8 @@ class Phabricator(Backend):
                 checkpoint = True
             elif raw_item == '{PHID}':
                 raw_item = next(cache_items)
-                phids = [phid for phid in self.parse_phids(raw_item)]
+                json_item = json.loads(raw_item)
+                phids = [phid for phid in self.parse_phids(json_item)]
                 yield phids[0]
             else:
                 users = [user for user in self.parse_users(raw_item)]
@@ -278,7 +284,8 @@ class Phabricator(Backend):
                 checkpoint = True
             else:
                 raw_item = next(cache_items)
-                phids = [phid for phid in self.parse_phids(raw_item)]
+                json_item = json.loads(raw_item)
+                phids = [phid for phid in self.parse_phids(json_item)]
                 yield phids[0]
 
     def __fetch_and_parse_tasks_transactions(self, *tasks_ids):
@@ -308,11 +315,17 @@ class Phabricator(Backend):
 
     def __fetch_and_parse_phids(self, *phids):
         logger.debug("Fetching and parsing phids data")
-        raw_json = self.client.phids(*phids)
-        # PHID checkpoint
+        raw_phids = self.client.phids(*phids)
+        phids = json.loads(raw_phids)
+
         self._push_cache_queue('{PHID}')
-        self._push_cache_queue(raw_json)
-        result = self.parse_phids(raw_json)
+        self._push_cache_queue(raw_phids)
+
+        result = []
+        if phids['result']:
+            # PHID checkpoint
+            result = self.parse_phids(phids)
+
         return [phid for phid in result]
 
     def __build_cached_tasks(self, tasks, transactions,
@@ -438,17 +451,17 @@ class Phabricator(Backend):
             yield u
 
     @staticmethod
-    def parse_phids(raw_json):
+    def parse_phids(results):
         """Parse a Phabicator PHIDs JSON stream.
 
         This method parses a JSON stream and returns a list iterator.
         Each item is a dictionary that contains the PHID parsed data.
 
-        :param raw_json: JSON string to parse
+        :param results: JSON to parse
 
         :returns: a generator of parsed PHIDs
         """
-        results = json.loads(raw_json)
+
         for phid in results['result'].values():
             yield phid
 

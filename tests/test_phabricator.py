@@ -197,6 +197,12 @@ class TestPhabricatorBackend(unittest.TestCase):
 
         self.assertEqual(Phabricator.has_resuming(), True)
 
+    # def test_fetch_live(self):
+    #     # 'api-j44b66jfmkw6k4zisartuokr3yrg'
+    #     # 'api-vwdm7sfkdrf7yknzetdqsizr4y54'
+    #     phab = Phabricator('https://phabricator.bitergia.net', 'api-vwdm7sfkdrf7yknzetdqsizr4y54')
+    #     tasks = [task for task in phab.fetch()]
+
     @httpretty.activate
     def test_fetch(self):
         """Test whether it fetches a set of tasks"""
@@ -544,8 +550,8 @@ class TestPhabricatorBackend(unittest.TestCase):
         """Test if it parses a phids stream"""
 
         raw_json = read_file('data/phabricator/phabricator_phids.json')
-
-        phids = Phabricator.parse_phids(raw_json)
+        json_content = json.loads(raw_json)
+        phids = Phabricator.parse_phids(json_content)
         results = [phid for phid in phids]
         results.sort(key=lambda x: x['fullName'])
 
