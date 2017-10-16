@@ -384,6 +384,44 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(ab.tag, ASKBOT_URL)
 
     @httpretty.activate
+    def test_too_many_redirects(self):
+        """Test whether a too many redirects error is properly handled"""
+
+        question_api_1 = read_file('data/askbot/askbot_api_questions.json')
+        question_api_2 = read_file('data/askbot/askbot_api_questions_2.json')
+        question_html_2 = read_file('data/askbot/askbot_question_multipage_1.html')
+        question_html_2_2 = read_file('data/askbot/askbot_question_multipage_2.html')
+        comments = read_file('data/askbot/askbot_2481_multicomments.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_1, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2481_URL,
+                               location=ASKBOT_QUESTION_2481_URL, status=301)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL,
+                               body=comments, status=200)
+
+        backend = Askbot(ASKBOT_URL)
+        questions = [question for question in backend.fetch(from_date=None)]
+
+        self.assertEqual(len(questions), 1)
+
+    @httpretty.activate
     def test_fetch(self):
         """Test whether a list of questions is returned"""
 
