@@ -51,7 +51,7 @@ class Askbot(Backend):
     :param url: Askbot site URL
     :param tag: label used to mark the data
     """
-    version = '0.2.3'
+    version = '0.2.4'
 
     def __init__(self, url, tag=None):
         origin = url
@@ -94,6 +94,9 @@ class Askbot(Backend):
                 updated_at = int(question['last_activity_at'])
                 if updated_at > from_date:
                     html_question = self.__fetch_question(question)
+                    if not html_question:
+                        continue
+
                     logger.debug("Fetching HTML question %s", question['id'])
                     comments = self.__fetch_comments(question)
                     question_obj = self.__build_question(html_question, question, comments)
@@ -122,14 +125,18 @@ class Askbot(Backend):
         next_request = True
 
         while next_request:
-            html_question = self.client.get_html_question(question['id'], npages)
-            html_question_items.append(html_question)
-            tpages = self.ab_parser.parse_number_of_html_pages(html_question)
+            try:
+                html_question = self.client.get_html_question(question['id'], npages)
+                html_question_items.append(html_question)
+                tpages = self.ab_parser.parse_number_of_html_pages(html_question)
 
-            if npages == tpages:
+                if npages == tpages:
+                    next_request = False
+
+                npages = npages + 1
+            except requests.exceptions.TooManyRedirects as e:
+                logger.warning("%s, data not retrieved for question %s", e, question['id'])
                 next_request = False
-
-            npages = npages + 1
 
         return html_question_items
 
@@ -275,6 +282,7 @@ class AskbotClient:
             'page': page,
             'sort': self.ORDER_HTML
         }
+
         response = self.__call(path, params)
         return response
 
