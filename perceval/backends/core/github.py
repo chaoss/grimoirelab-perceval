@@ -609,8 +609,7 @@ class GitHubClient:
 
                 break
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 403 \
-                        and "abuse detection mechanism" in json.loads(e.response.text)['message'].lower():
+                if e.response.status_code == 403 and 'Retry-After' in r.headers:
                     retry_seconds = int(r.headers['Retry-After'])
                     logger.warning("Abuse rate limit, the backend will sleep for %s seconds before starting again",
                                    retry_seconds)
