@@ -875,6 +875,26 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
 
     @httpretty.activate
+    def test_abuse_rate_limit(self):
+        """Test when Abuse Rate Limit exception is thrown"""
+
+        abuse_rate_limit = read_file('data/github/abuse_rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=abuse_rate_limit, status=403,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '5',
+                                   'X-RateLimit-Reset': '5',
+                                   'Retry-After': '1'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", "aaa", None)
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = [issues for issues in client.issues()]
+
+    @httpretty.activate
     def test_get_empty_issues(self):
         """ Test when issue is empty API call """
 
