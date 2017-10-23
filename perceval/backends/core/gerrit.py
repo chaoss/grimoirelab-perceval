@@ -182,7 +182,7 @@ class Gerrit(Backend):
             review = reviews.pop(0)
             try:
                 last_item += 1
-            except:
+            except Exception:
                 pass  # last_item is a string in old gerrits
             updated = review['lastUpdated']
             if updated <= from_ut:
@@ -350,7 +350,7 @@ class GerritClient():
         try:
             mayor = int(m.group(1))
             minor = int(m.group(2))
-        except:
+        except Exception:
             cause = "Gerrit client could not determine the server version."
             raise BackendError(cause=cause)
 
