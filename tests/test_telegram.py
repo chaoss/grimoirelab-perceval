@@ -58,9 +58,9 @@ def setup_http_server():
 
     http_requests = []
 
-    body_msgs = read_file('data/telegram_messages.json')
-    body_msgs_next = read_file('data/telegram_messages_next.json')
-    body_msgs_empty = read_file('data/telegram_messages_empty.json')
+    body_msgs = read_file('data/telegram/telegram_messages.json')
+    body_msgs_next = read_file('data/telegram/telegram_messages_next.json')
+    body_msgs_empty = read_file('data/telegram/telegram_messages_empty.json')
 
     def request_callback(method, uri, headers):
         params = urllib.parse.parse_qs(urllib.parse.urlparse(uri).query)
@@ -245,8 +245,8 @@ class TestTelegramBackend(unittest.TestCase):
     def test_parse_messages(self):
         """Test whether the method parses a raw file"""
 
-        body_msgs = read_file('data/telegram_messages.json')
-        body_msgs_empty = read_file('data/telegram_messages_empty.json')
+        body_msgs = read_file('data/telegram/telegram_messages.json')
+        body_msgs_empty = read_file('data/telegram/telegram_messages_empty.json')
 
         messages = Telegram.parse_messages(body_msgs)
         result = [msg for msg in messages]
