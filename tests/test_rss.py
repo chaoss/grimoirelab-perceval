@@ -53,7 +53,7 @@ def read_file(filename, mode='r'):
 
 
 def configure_http_server():
-    bodies_entries_job = read_file('data/rss_entries.xml')
+    bodies_entries_job = read_file('data/rss/rss_entries.xml')
 
     http_requests = []
 
@@ -167,7 +167,7 @@ class TestRSSBackend(unittest.TestCase):
     def test_parse(self):
         """Test whether the parser works """
 
-        xml_feed = read_file('data/rss_entries.xml')
+        xml_feed = read_file('data/rss/rss_entries.xml')
         json_feed = RSS.parse_feed(xml_feed)['entries']
         entry = json_feed[0]
 
@@ -279,7 +279,7 @@ class TestRSSClient(unittest.TestCase):
         """Test get_entries API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/rss_entries.xml')
+        body = read_file('data/rss/rss_entries.xml')
         httpretty.register_uri(httpretty.GET,
                                RSS_FEED_URL,
                                body=body, status=200)
