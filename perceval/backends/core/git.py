@@ -640,8 +640,8 @@ class GitParser:
 
     def __parse_data_list(self, data, sep=' '):
         if data:
-            l = data.strip().split(sep)
-            return [e.strip() for e in l]
+            lst = data.strip().split(sep)
+            return [e.strip() for e in lst]
         else:
             return []
 
