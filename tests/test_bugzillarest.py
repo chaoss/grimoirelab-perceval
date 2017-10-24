@@ -63,15 +63,15 @@ def read_file(filename, mode='r'):
 def setup_http_server():
     http_requests = []
 
-    bodies_bugs = [read_file('data/bugzilla_rest_bugs.json', mode='rb'),
-                   read_file('data/bugzilla_rest_bugs_next.json', mode='rb'),
-                   read_file('data/bugzilla_rest_bugs_empty.json', mode='rb')]
-    body_comments = [read_file('data/bugzilla_rest_bugs_comments.json', mode='rb'),
-                     read_file('data/bugzilla_rest_bugs_comments_empty.json', mode='rb')]
-    body_history = [read_file('data/bugzilla_rest_bugs_history.json', mode='rb'),
-                    read_file('data/bugzilla_rest_bugs_history_empty.json', mode='rb')]
-    body_attachments = [read_file('data/bugzilla_rest_bugs_attachments.json', mode='rb'),
-                        read_file('data/bugzilla_rest_bugs_attachments_empty.json', mode='rb')]
+    bodies_bugs = [read_file('data/bugzilla/bugzilla_rest_bugs.json', mode='rb'),
+                   read_file('data/bugzilla/bugzilla_rest_bugs_next.json', mode='rb'),
+                   read_file('data/bugzilla/bugzilla_rest_bugs_empty.json', mode='rb')]
+    body_comments = [read_file('data/bugzilla/bugzilla_rest_bugs_comments.json', mode='rb'),
+                     read_file('data/bugzilla/bugzilla_rest_bugs_comments_empty.json', mode='rb')]
+    body_history = [read_file('data/bugzilla/bugzilla_rest_bugs_history.json', mode='rb'),
+                    read_file('data/bugzilla/bugzilla_rest_bugs_history_empty.json', mode='rb')]
+    body_attachments = [read_file('data/bugzilla/bugzilla_rest_bugs_attachments.json', mode='rb'),
+                        read_file('data/bugzilla/bugzilla_rest_bugs_attachments_empty.json', mode='rb')]
 
     def request_callback(method, uri, headers):
         if uri.startswith(BUGZILLA_BUGS_COMMENTS_1273442_URL):
@@ -252,7 +252,7 @@ class TestBugzillaRESTBackend(unittest.TestCase):
     def test_fetch_empty(self):
         """Test whether it works when no bugs are fetched"""
 
-        body = read_file('data/bugzilla_rest_bugs_empty.json')
+        body = read_file('data/bugzilla/bugzilla_rest_bugs_empty.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_URL,
                                body=body, status=200)
@@ -409,7 +409,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
         """Test whether the API token is included on the calls when it was set"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_rest_bugs.json')
+        body = read_file('data/bugzilla/bugzilla_rest_bugs.json')
 
         # Set up a mock HTTP server
         httpretty.register_uri(httpretty.GET,
@@ -464,7 +464,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
         """Test bugs API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_rest_bugs.json')
+        body = read_file('data/bugzilla/bugzilla_rest_bugs.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_URL,
                                body=body, status=200)
@@ -516,7 +516,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
         """Test comments API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_rest_bugs_comments.json')
+        body = read_file('data/bugzilla/bugzilla_rest_bugs_comments.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_COMMENTS_1273442_URL,
                                body=body, status=200)
@@ -543,7 +543,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
         """Test history API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_rest_bugs_history.json')
+        body = read_file('data/bugzilla/bugzilla_rest_bugs_history.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_HISTORY_1273442_URL,
                                body=body, status=200)
@@ -570,7 +570,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
         """Test attachments API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_rest_bugs_attachments.json')
+        body = read_file('data/bugzilla/bugzilla_rest_bugs_attachments.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_ATTACHMENTS_1273442_URL,
                                body=body, status=200)
@@ -598,7 +598,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
         """Test if the User-Agent header is included on every API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_rest_bugs_history.json')
+        body = read_file('data/bugzilla/bugzilla_rest_bugs_history.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_HISTORY_1273442_URL,
                                body=body, status=200)
@@ -623,7 +623,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
         """Test if an exception is raised when the server returns an error"""
 
         # Set up a mock HTTP server
-        body = read_file('data/bugzilla_rest_error.json')
+        body = read_file('data/bugzilla/bugzilla_rest_error.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_URL,
                                body=body, status=200)
