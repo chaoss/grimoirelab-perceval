@@ -70,7 +70,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.11.1'
+    version = '0.11.2'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -573,10 +573,10 @@ class GitHubClient:
     def __build_headers(self):
         """Set header for request"""
 
+        headers = {'Accept': 'application/vnd.github.squirrel-girl-preview'}
         if self.token:
-            headers = {'Authorization': 'token ' + self.token,
-                       'Accept': 'application/vnd.github.squirrel-girl-preview'}
-            return headers
+            headers.update({'Authorization': 'token ' + self.token})
+        return headers
 
     def __send_request(self, url, params=None, headers=None):
         """GET HTTP caring of rate limit"""
