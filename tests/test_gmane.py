@@ -57,10 +57,10 @@ def read_file(filename, mode='r'):
 
 
 def setup_http_server():
-    bodies = [read_file('data/gmane_messages.mbox', 'rb'),
-              read_file('data/gmane_messages_2000.mbox', 'rb'),
-              read_file('data/gmane_messages_4000.mbox', 'rb'),
-              read_file('data/gmane_messages_empty.mbox', 'rb')]
+    bodies = [read_file('data/gmane/gmane_messages.mbox', 'rb'),
+              read_file('data/gmane/gmane_messages_2000.mbox', 'rb'),
+              read_file('data/gmane/gmane_messages_4000.mbox', 'rb'),
+              read_file('data/gmane/gmane_messages_empty.mbox', 'rb')]
 
     httpretty.register_uri(httpretty.GET, GMANE_LIST_URL,
                            status=301,
@@ -362,13 +362,13 @@ class TestGmaneMailingList(unittest.TestCase):
         setup_http_server()
 
         # Simulate the fetch process copying the files
-        shutil.copy('data/gmane_messages.mbox',
+        shutil.copy('data/gmane/gmane_messages.mbox',
                     os.path.join(self.tmp_path, '0'))
-        shutil.copy('data/gmane_messages_2000.mbox',
+        shutil.copy('data/gmane/gmane_messages_2000.mbox',
                     os.path.join(self.tmp_path, '2000'))
-        shutil.copy('data/gmane_messages_4000.mbox',
+        shutil.copy('data/gmane/gmane_messages_4000.mbox',
                     os.path.join(self.tmp_path, '4000'))
-        shutil.copy('data/gmane_messages_empty.mbox',
+        shutil.copy('data/gmane/gmane_messages_empty.mbox',
                     os.path.join(self.tmp_path, 'gmane_messages_empty.mbox'))
 
         gmls = GmaneMailingList('mylist@example.com', self.tmp_path)
@@ -386,7 +386,7 @@ class TestGmaneClient(unittest.TestCase):
     def test_messages(self):
         """Test if a set of messages is fetched"""
 
-        body = read_file('data/gmane_messages.mbox', 'rb')
+        body = read_file('data/gmane/gmane_messages.mbox', 'rb')
 
         url = GMAME_DOWNLOAD_LIST_URL + '/888/898'
 
