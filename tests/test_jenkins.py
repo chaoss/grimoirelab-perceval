@@ -101,8 +101,8 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(Jenkins.has_resuming(), False)
 
     def __configure_http_server(self):
-        bodies_jobs = read_file('data/jenkins_jobs.json', mode='rb')
-        bodies_builds_job = read_file('data/jenkins_job_builds.json')
+        bodies_jobs = read_file('data/jenkins/jenkins_jobs.json', mode='rb')
+        bodies_builds_job = read_file('data/jenkins/jenkins_job_builds.json')
 
         def request_callback(method, uri, headers):
             status = 200
@@ -162,7 +162,7 @@ class TestJenkinsBackend(unittest.TestCase):
         builds = [build for build in jenkins.fetch()]
         self.assertEqual(len(builds), 64)
 
-        with open("data/jenkins_build.json") as build_json:
+        with open("data/jenkins/jenkins_build.json") as build_json:
             first_build = json.load(build_json)
             self.assertDictEqual(builds[0]['data'], first_build['data'])
 
@@ -233,8 +233,8 @@ class TestJenkinsBackendCache(unittest.TestCase):
     def test_fetch_from_cache(self):
         """Test whether the cache works"""
 
-        bodies_jobs = read_file('data/jenkins_jobs.json', mode='rb')
-        bodies_builds_job = read_file('data/jenkins_job_builds.json')
+        bodies_jobs = read_file('data/jenkins/jenkins_jobs.json', mode='rb')
+        bodies_builds_job = read_file('data/jenkins/jenkins_job_builds.json')
 
         def request_callback(method, uri, headers):
             status = 200
@@ -294,7 +294,7 @@ class TestJenkinsBackendCache(unittest.TestCase):
         cached_builds = [build for build in jenkins.fetch_from_cache()]
         self.assertEqual(len(cached_builds), len(builds))
 
-        with open("data/jenkins_build.json") as build_json:
+        with open("data/jenkins/jenkins_build.json") as build_json:
             first_build = json.load(build_json)
             self.assertDictEqual(cached_builds[0]['data'], first_build['data'])
 
@@ -358,7 +358,7 @@ class TestJenkinsClient(unittest.TestCase):
         """Test get_jobs API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/jenkins_jobs.json')
+        body = read_file('data/jenkins/jenkins_jobs.json')
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOBS_URL,
                                body=body, status=200)
@@ -373,7 +373,7 @@ class TestJenkinsClient(unittest.TestCase):
         """Test get_builds API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/jenkins_job_builds.json')
+        body = read_file('data/jenkins/jenkins_job_builds.json')
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOB_BUILDS_URL_1,
                                body=body, status=200)
