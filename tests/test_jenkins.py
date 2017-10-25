@@ -23,6 +23,7 @@
 #
 
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -33,7 +34,7 @@ import pkg_resources
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -60,7 +61,7 @@ requests_http = []
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
@@ -162,7 +163,8 @@ class TestJenkinsBackend(unittest.TestCase):
         builds = [build for build in jenkins.fetch()]
         self.assertEqual(len(builds), 64)
 
-        with open("data/jenkins/jenkins_build.json") as build_json:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
+                as build_json:
             first_build = json.load(build_json)
             self.assertDictEqual(builds[0]['data'], first_build['data'])
 
@@ -294,7 +296,8 @@ class TestJenkinsBackendCache(unittest.TestCase):
         cached_builds = [build for build in jenkins.fetch_from_cache()]
         self.assertEqual(len(cached_builds), len(builds))
 
-        with open("data/jenkins/jenkins_build.json") as build_json:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
+                as build_json:
             first_build = json.load(build_json)
             self.assertDictEqual(cached_builds[0]['data'], first_build['data'])
 
