@@ -34,7 +34,7 @@ import pkg_resources
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -51,7 +51,7 @@ HYPERKITTY_APRIL_MBOX_URL = HYPERKITTY_URL + '/export/2016-04.mbox.gz'
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
@@ -137,9 +137,9 @@ class TestHyperKittyList(unittest.TestCase):
         """Test whether it returns the mboxes ordered by the date on their filenames"""
 
         # Simulate the fetch process copying the files
-        shutil.copy('data/hyperkitty/hyperkitty_2016_march.mbox',
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/hyperkitty/hyperkitty_2016_march.mbox'),
                     os.path.join(self.tmp_path, '2016-03.mbox.gz'))
-        shutil.copy('data/hyperkitty/hyperkitty_2016_april.mbox',
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/hyperkitty/hyperkitty_2016_april.mbox'),
                     os.path.join(self.tmp_path, '2016-04.mbox.gz'))
 
         hkls = HyperKittyList('http://example.com/archives/list/test@example.com/',
