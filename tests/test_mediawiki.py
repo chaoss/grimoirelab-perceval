@@ -23,21 +23,21 @@
 #
 
 import datetime
+import dateutil
+import httpretty
+import os
+import pkg_resources
 import shutil
 import sys
 import tempfile
 import unittest
 import urllib
 
-import dateutil
-import httpretty
-import pkg_resources
-
 from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -56,7 +56,7 @@ TESTED_VERSIONS = ['1.23', '1.28']
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
