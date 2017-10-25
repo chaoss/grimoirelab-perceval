@@ -23,17 +23,17 @@
 
 import collections
 import nntplib
+import os
+import pkg_resources
 import shutil
 import sys
 import tempfile
 import unittest
 import unittest.mock
 
-import pkg_resources
-
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -48,7 +48,7 @@ NNTP_GROUP = 'example.dev.project-link'
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
@@ -62,10 +62,13 @@ class MockNNTPLib:
 
     def __init__(self):
         self.__articles = {
-            1: ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 'data/nntp/nntp_1.txt'),
-            2: ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 'data/nntp/nntp_2.txt'),
+            1: ('<mailman.350.1458060579.14303.dev-project-link@example.com>',
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/nntp/nntp_1.txt')),
+            2: ('<mailman.361.1458076505.14303.dev-project-link@example.com>',
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/nntp/nntp_2.txt')),
             3: ('error', 'error'),
-            4: ('<mailman.5377.1312994002.4544.community-arab-world@lists.example.com>', 'data/nntp/nntp_parsing_error.txt')
+            4: ('<mailman.5377.1312994002.4544.community-arab-world@lists.example.com>',
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/nntp/nntp_parsing_error.txt'))
         }
 
     def __enter__(self):
