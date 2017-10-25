@@ -21,19 +21,17 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import bz2
 import datetime
 import email
-import os.path
+import gzip
+import os
 import shutil
 import sys
 import tempfile
 import unittest
 
-import bz2
-import gzip
-
-if '..' not in sys.path:
-    sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from perceval.errors import ParseError
 from perceval.utils import (check_compressed_file_type,
@@ -43,8 +41,8 @@ from perceval.utils import (check_compressed_file_type,
                             xml_to_dict)
 
 
-def read_file(filename):
-    with open(filename, 'r') as f:
+def read_file(filename, mode='r'):
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
@@ -68,12 +66,14 @@ class TestCheckCompressedFileType(unittest.TestCase):
             else:
                 mod = gzip
 
-            with open('data/utils/mbox_single.mbox', 'rb') as f_in:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   'data/utils/mbox_single.mbox'), 'rb') as f_in:
                 with mod.open(fname, 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
 
         # Copy a plain file
-        shutil.copy('data/utils/mbox_single.mbox', cls.tmp_path)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/utils/mbox_single.mbox'),
+                                 cls.tmp_path)
 
     @classmethod
     def tearDownClass(cls):
