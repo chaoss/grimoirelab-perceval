@@ -22,6 +22,7 @@
 #
 
 import datetime
+import os
 import shutil
 import sys
 import tempfile
@@ -32,7 +33,7 @@ import pkg_resources
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -55,7 +56,7 @@ BUGZILLA_BUG_947945_URL = BUGZILLA_SERVER_URL + '/rest/bug/947945/'
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
