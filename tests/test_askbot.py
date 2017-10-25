@@ -22,6 +22,7 @@
 
 import datetime
 import json
+import os
 import sys
 import unittest
 
@@ -32,9 +33,8 @@ import requests
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
-
 from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.askbot import (Askbot,
@@ -54,7 +54,7 @@ ASKBOT_COMMENTS_API_URL_OLD = ASKBOT_URL + '/post_comments'
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
