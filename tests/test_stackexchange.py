@@ -22,7 +22,10 @@
 #
 
 import datetime
+import httpretty
 import json
+import os
+import pkg_resources
 import shutil
 import sys
 import tempfile
@@ -30,12 +33,9 @@ import time
 import unittest
 import urllib
 
-import httpretty
-import pkg_resources
-
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -55,7 +55,7 @@ QUESTIONS_FILTER = 'Bf*y*ByQD_upZqozgU6lXL_62USGOoV3)MFNgiHqHpmO_Y-jHR'
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
@@ -101,7 +101,7 @@ class TestStackExchangeBackend(unittest.TestCase):
     def test_fetch(self):
         """Test whether a list of questions is returned"""
 
-        question = read_file('data/stackexchange_question')
+        question = read_file('data/stackexchange/stackexchange_question')
 
         httpretty.register_uri(httpretty.GET,
                                STACKEXCHANGE_QUESTIONS_URL,
@@ -140,7 +140,7 @@ class TestStackExchangeBackend(unittest.TestCase):
     def test_fetch_from_date(self):
         """Test whether a list of questions is returned"""
 
-        question = read_file('data/stackexchange_question')
+        question = read_file('data/stackexchange/stackexchange_question')
 
         httpretty.register_uri(httpretty.GET,
                                STACKEXCHANGE_QUESTIONS_URL,
@@ -177,7 +177,7 @@ class TestStackExchangeBackendCache(unittest.TestCase):
     def test_fetch_from_cache(self):
         """ Test whether a list of questions is returned from cache """
 
-        question = read_file('data/stackexchange_question')
+        question = read_file('data/stackexchange/stackexchange_question')
 
         httpretty.register_uri(httpretty.GET,
                                STACKEXCHANGE_QUESTIONS_URL,
@@ -227,8 +227,8 @@ class TestStackExchangeBackendParsers(unittest.TestCase):
     def test_parse_questions(self):
         """Test question parsing"""
 
-        raw_parse = read_file('data/stackexchange_question_page')
-        parse = read_file('data/stackexchange_question_parse')
+        raw_parse = read_file('data/stackexchange/stackexchange_question_page')
+        parse = read_file('data/stackexchange/stackexchange_question_parse')
         parse = json.loads(parse)
 
         questions = StackExchange.parse_questions(raw_parse)
@@ -246,7 +246,7 @@ class TestStackExchangeClient(unittest.TestCase):
     def test_get_questions(self):
         """Test question API call"""
 
-        question = read_file('data/stackexchange_question')
+        question = read_file('data/stackexchange/stackexchange_question')
 
         httpretty.register_uri(httpretty.GET,
                                STACKEXCHANGE_QUESTIONS_URL,
@@ -306,7 +306,7 @@ class TestStackExchangeClient(unittest.TestCase):
     def test_get_questions_from_date(self):
         """Test question is returned from a given date"""
 
-        question = read_file('data/stackexchange_question')
+        question = read_file('data/stackexchange/stackexchange_question')
 
         httpretty.register_uri(httpretty.GET,
                                STACKEXCHANGE_QUESTIONS_URL,
@@ -338,8 +338,8 @@ class TestStackExchangeClient(unittest.TestCase):
     def test_get_questions_pagination(self):
         """Test question API call"""
 
-        page_1 = read_file('data/stackexchange_question_page')
-        page_2 = read_file('data/stackexchange_question_page_2')
+        page_1 = read_file('data/stackexchange/stackexchange_question_page')
+        page_2 = read_file('data/stackexchange/stackexchange_question_page_2')
 
         http_requests = []
 
@@ -399,8 +399,8 @@ class TestStackExchangeClient(unittest.TestCase):
     def test_backoff_waiting(self):
         """Test if the clients waits some seconds when backoff field is received"""
 
-        backoff_page = read_file('data/stackexchange_question_backoff_page')
-        question_page = read_file('data/stackexchange_question_page_2')
+        backoff_page = read_file('data/stackexchange/stackexchange_question_backoff_page')
+        question_page = read_file('data/stackexchange/stackexchange_question_page_2')
 
         def request_callback(method, uri, headers):
             params = urllib.parse.parse_qs(urllib.parse.urlparse(uri).query)

@@ -22,16 +22,15 @@
 
 import datetime
 import os
+import pkg_resources
 import shutil
 import sys
 import tempfile
 import unittest
 
-import pkg_resources
-
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -48,9 +47,9 @@ class TestSupybotBackend(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-        shutil.copy('data/supybot_2012_10_17.log',
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/supybot/supybot_2012_10_17.log'),
                     os.path.join(cls.tmp_path, '#supybot_2012-10-17.log'))
-        shutil.copy('data/supybot_2012_10_18.log',
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/supybot/supybot_2012_10_18.log'),
                     os.path.join(cls.tmp_path, '#supybot_2012-10-18.log'))
 
     @classmethod
@@ -150,7 +149,8 @@ class TestSupybotBackend(unittest.TestCase):
         """Test whether it parses a log"""
 
         # Empty lines and empty comment lines are ignored
-        messages = Supybot.parse_supybot_log('data/supybot_valid.log')
+        messages = Supybot.parse_supybot_log(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                          'data/supybot/supybot_valid.log'))
         messages = [m for m in messages]
 
         self.assertEqual(len(messages), 97)
@@ -177,7 +177,8 @@ class TestSupybotBackend(unittest.TestCase):
         """Test whether it raises an exception when the log is invalid"""
 
         with self.assertRaises(ParseError):
-            messages = Supybot.parse_supybot_log('data/supybot_invalid_msg.log')
+            messages = Supybot.parse_supybot_log(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                              'data/supybot/supybot_invalid_msg.log'))
             _ = [message for message in messages]
 
 
@@ -212,7 +213,7 @@ class TestSupybotParser(unittest.TestCase):
     def test_parser(self):
         """Test whether it parses a valid Supybot IRC log stream"""
 
-        with open("data/supybot_valid.log", 'r') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/supybot/supybot_valid.log"), 'r') as f:
             parser = SupybotParser(f)
             items = [item for item in parser.parse()]
 
@@ -265,7 +266,8 @@ class TestSupybotParser(unittest.TestCase):
         """Test whether it raises an exception when a date is invalid"""
 
         with self.assertRaisesRegex(ParseError, "date expected on line 4"):
-            with open("data/supybot_invalid_date.log", 'r') as f:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   "data/supybot/supybot_invalid_date.log"), 'r') as f:
                 parser = SupybotParser(f)
                 _ = [item for item in parser.parse()]
 
@@ -273,7 +275,8 @@ class TestSupybotParser(unittest.TestCase):
         """Test whether it raises an exception when an invalid line is found"""
 
         with self.assertRaisesRegex(ParseError, "invalid message on line 9"):
-            with open("data/supybot_invalid_msg.log", 'r') as f:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   "data/supybot/supybot_invalid_msg.log"), 'r') as f:
                 parser = SupybotParser(f)
                 _ = [item for item in parser.parse()]
 

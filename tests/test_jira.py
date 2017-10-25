@@ -23,6 +23,7 @@
 #
 
 import json
+import os
 import unittest
 import shutil
 import sys
@@ -35,7 +36,7 @@ from grimoirelab.toolkit.datetime import str_to_datetime
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -55,7 +56,7 @@ JIRA_FIELDS_URL = JIRA_SERVER_URL + '/rest/api/2/field'
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 

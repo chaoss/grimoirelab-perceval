@@ -22,17 +22,17 @@
 #     Alvaro del Castillo <acs@bitergia.com>
 #
 
+import httpretty
+import os
+import pkg_resources
 import shutil
 import sys
 import tempfile
 import unittest
 
-import httpretty
-import pkg_resources
-
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -47,13 +47,13 @@ requests_http = []
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
 
 def configure_http_server():
-    bodies_entries_job = read_file('data/rss_entries.xml')
+    bodies_entries_job = read_file('data/rss/rss_entries.xml')
 
     http_requests = []
 
@@ -167,7 +167,7 @@ class TestRSSBackend(unittest.TestCase):
     def test_parse(self):
         """Test whether the parser works """
 
-        xml_feed = read_file('data/rss_entries.xml')
+        xml_feed = read_file('data/rss/rss_entries.xml')
         json_feed = RSS.parse_feed(xml_feed)['entries']
         entry = json_feed[0]
 
@@ -279,7 +279,7 @@ class TestRSSClient(unittest.TestCase):
         """Test get_entries API call"""
 
         # Set up a mock HTTP server
-        body = read_file('data/rss_entries.xml')
+        body = read_file('data/rss/rss_entries.xml')
         httpretty.register_uri(httpretty.GET,
                                RSS_FEED_URL,
                                body=body, status=200)

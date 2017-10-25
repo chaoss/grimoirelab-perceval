@@ -21,20 +21,19 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import bz2
 import datetime
-import os.path
+import gzip
+import os
+import pkg_resources
 import sys
 import shutil
 import tempfile
 import unittest
 
-import bz2
-import gzip
-import pkg_resources
-
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -64,7 +63,7 @@ class TestBaseMBox(unittest.TestCase):
             else:
                 mod = gzip
 
-            with open('data/mbox/mbox_single.mbox', 'rb') as f_in:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_single.mbox'), 'rb') as f_in:
                 with mod.open(fname, 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
 
@@ -78,12 +77,18 @@ class TestBaseMBox(unittest.TestCase):
             'iso8859': os.path.join(cls.tmp_path, 'mbox_iso8859_encoding.mbox')
         }
 
-        shutil.copy('data/mbox/mbox_single.mbox', cls.tmp_path)
-        shutil.copy('data/mbox/mbox_complex.mbox', cls.tmp_path)
-        shutil.copy('data/mbox/mbox_multipart.mbox', cls.tmp_path)
-        shutil.copy('data/mbox/mbox_unixfrom_encoding.mbox', cls.tmp_path)
-        shutil.copy('data/mbox/mbox_unknown_encoding.mbox', cls.tmp_path)
-        shutil.copy('data/mbox/mbox_iso8859_encoding.mbox', cls.tmp_path)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_single.mbox'),
+                    cls.tmp_path)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_complex.mbox'),
+                    cls.tmp_path)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_multipart.mbox'),
+                    cls.tmp_path)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_unixfrom_encoding.mbox'),
+                    cls.tmp_path)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_unknown_encoding.mbox'),
+                    cls.tmp_path)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_iso8859_encoding.mbox'),
+                    cls.tmp_path)
 
     @classmethod
     def tearDownClass(cls):
@@ -170,7 +175,8 @@ class TestMBoxBackend(TestBaseMBox):
 
     def setUp(self):
         self.tmp_error_path = tempfile.mkdtemp(prefix='perceval_')
-        shutil.copy('data/mbox/mbox_no_fields.mbox', self.tmp_error_path)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_no_fields.mbox'),
+                    self.tmp_error_path)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_error_path)
@@ -299,8 +305,10 @@ class TestMBoxBackend(TestBaseMBox):
 
         tmp_path_ign = tempfile.mkdtemp(prefix='perceval_')
 
-        shutil.copy('data/mbox/mbox_single.mbox', tmp_path_ign)
-        shutil.copy('data/mbox/mbox_multipart.mbox', tmp_path_ign)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_single.mbox'),
+                    tmp_path_ign)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_multipart.mbox'),
+                    tmp_path_ign)
 
         # Update file mode to make it unable to access
         os.chmod(os.path.join(tmp_path_ign, 'mbox_multipart.mbox'), 0o000)

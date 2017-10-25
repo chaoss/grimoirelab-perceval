@@ -21,6 +21,7 @@
 #
 
 import datetime
+import os
 import shutil
 import sys
 import tempfile
@@ -35,7 +36,7 @@ from grimoirelab.toolkit.uris import urijoin
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -45,16 +46,15 @@ from perceval.backends.core.dockerhub import (DockerHub,
                                               DockerHubClient,
                                               DockerHubCommand)
 
-
-def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
-        content = f.read()
-    return content
-
-
 DOCKERHUB_URL = "https://hub.docker.com/"
 DOCKERHUB_API_URL = DOCKERHUB_URL + 'v2'
 DOCKERHUB_RESPOSITORY_URL = DOCKERHUB_API_URL + '/repositories/grimoirelab/perceval'
+
+
+def read_file(filename, mode='r'):
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
+        content = f.read()
+    return content
 
 
 def setup_http_server():

@@ -23,21 +23,21 @@
 #
 
 import datetime
+import dateutil
+import httpretty
+import os
+import pkg_resources
 import shutil
 import sys
 import tempfile
 import unittest
 import urllib
 
-import dateutil
-import httpretty
-import pkg_resources
-
 from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -56,7 +56,7 @@ TESTED_VERSIONS = ['1.23', '1.28']
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
@@ -72,26 +72,26 @@ class HTTPServer():
         assert(version in TESTED_VERSIONS)
 
         if version == "1.28":
-            mediawiki_siteinfo = read_file('data/mediawiki_siteinfo_1.28.json')
+            mediawiki_siteinfo = read_file('data/mediawiki/mediawiki_siteinfo_1.28.json')
         elif version == "1.23":
-            mediawiki_siteinfo = read_file('data/mediawiki_siteinfo_1.23.json')
-        mediawiki_namespaces = read_file('data/mediawiki_namespaces.json')
+            mediawiki_siteinfo = read_file('data/mediawiki/mediawiki_siteinfo_1.23.json')
+        mediawiki_namespaces = read_file('data/mediawiki/mediawiki_namespaces.json')
         # For >= 1.27 in full and incremental mode, the same file
-        mediawiki_pages_allrevisions = read_file('data/mediawiki_pages_allrevisions.json')
+        mediawiki_pages_allrevisions = read_file('data/mediawiki/mediawiki_pages_allrevisions.json')
         if empty:
-            mediawiki_pages_allrevisions = read_file('data/mediawiki_pages_allrevisions_empty.json')
+            mediawiki_pages_allrevisions = read_file('data/mediawiki/mediawiki_pages_allrevisions_empty.json')
 
         # For < 1.27 in full download
-        mediawiki_pages_all = read_file('data/mediawiki_pages_all.json')
+        mediawiki_pages_all = read_file('data/mediawiki/mediawiki_pages_all.json')
         if empty:
-            mediawiki_pages_all = read_file('data/mediawiki_pages_all_empty.json')
+            mediawiki_pages_all = read_file('data/mediawiki/mediawiki_pages_all_empty.json')
 
         # For < 1.27 in incremental download
-        mediawiki_pages_recent_changes = read_file('data/mediawiki_pages_recent_changes.json')
+        mediawiki_pages_recent_changes = read_file('data/mediawiki/mediawiki_pages_recent_changes.json')
 
         # Pages with revisions
-        mediawiki_page_476583 = read_file('data/mediawiki_page_476583_revisions.json')
-        mediawiki_page_592384 = read_file('data/mediawiki_page_592384_revisions.json')
+        mediawiki_page_476583 = read_file('data/mediawiki/mediawiki_page_476583_revisions.json')
+        mediawiki_page_592384 = read_file('data/mediawiki/mediawiki_page_592384_revisions.json')
 
         def request_callback(method, uri, headers):
             params = urllib.parse.parse_qs(urllib.parse.urlparse(uri).query)
@@ -353,7 +353,7 @@ class TestMediaWikiClient(unittest.TestCase):
     @httpretty.activate
     def test_get_namespaces(self):
         HTTPServer.routes()
-        body = read_file('data/mediawiki_namespaces.json')
+        body = read_file('data/mediawiki/mediawiki_namespaces.json')
         client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
         response = client.get_namespaces()
         req = HTTPServer.requests_http[-1]
@@ -373,11 +373,11 @@ class TestMediaWikiClient(unittest.TestCase):
     def __test_get_version(self, version):
         if version == "1.23":
             HTTPServer.routes('1.23')
-            body = read_file('data/mediawiki_siteinfo_1.23.json')
+            body = read_file('data/mediawiki/mediawiki_siteinfo_1.23.json')
             response_ok = [1, 23]
         elif version == "1.28":
             HTTPServer.routes('1.28')
-            body = read_file('data/mediawiki_siteinfo_1.28.json')
+            body = read_file('data/mediawiki/mediawiki_siteinfo_1.28.json')
             response_ok = [1, 28]
         else:
             self.assertEqual(False)
@@ -406,7 +406,7 @@ class TestMediaWikiClient(unittest.TestCase):
     @httpretty.activate
     def test_get_pages(self):
         HTTPServer.routes()
-        body = read_file('data/mediawiki_pages_all.json')
+        body = read_file('data/mediawiki/mediawiki_pages_all.json')
         client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
         namespace = '0'
         response = client.get_pages(namespace)
@@ -427,7 +427,7 @@ class TestMediaWikiClient(unittest.TestCase):
     @httpretty.activate
     def test_get_recent_pages(self):
         HTTPServer.routes()
-        body = read_file('data/mediawiki_pages_recent_changes.json')
+        body = read_file('data/mediawiki/mediawiki_pages_recent_changes.json')
         client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
         namespaces = ['0']
         response = client.get_recent_pages(namespaces)
@@ -449,7 +449,7 @@ class TestMediaWikiClient(unittest.TestCase):
     @httpretty.activate
     def test_get_revisions(self):
         HTTPServer.routes()
-        body = read_file('data/mediawiki_page_476583_revisions.json')
+        body = read_file('data/mediawiki/mediawiki_page_476583_revisions.json')
         client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
         response = client.get_revisions('VisualEditor')
         req = HTTPServer.requests_http[-1]
@@ -470,7 +470,7 @@ class TestMediaWikiClient(unittest.TestCase):
     @httpretty.activate
     def test_get_pages_from_allrevisions(self):
         HTTPServer.routes()
-        body = read_file('data/mediawiki_pages_allrevisions.json')
+        body = read_file('data/mediawiki/mediawiki_pages_allrevisions.json')
         client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
         namespaces = ['0']
         response = client.get_pages_from_allrevisions(namespaces)
@@ -493,7 +493,7 @@ class TestMediaWikiClient(unittest.TestCase):
     @httpretty.activate
     def test_get_pages_from_allrevisions_from_date(self):
         HTTPServer.routes()
-        body = read_file('data/mediawiki_pages_allrevisions.json')
+        body = read_file('data/mediawiki/mediawiki_pages_allrevisions.json')
         client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
         namespaces = ['0']
         str_date = '2016-01-01 00:00'

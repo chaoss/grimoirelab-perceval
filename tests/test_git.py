@@ -35,7 +35,7 @@ import pkg_resources
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser, uuid
@@ -70,15 +70,20 @@ class TestGitBackend(TestCaseGit):
         cls.git_top_submodules_path = os.path.join(cls.tmp_path, 'gittest-top-sub')
         cls.git_submodules_path = os.path.join(cls.tmp_path, 'gittest-sub')
 
-        subprocess.check_call(['tar', '-xzf', 'data/git/gittest.tar.gz',
+        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           'data/git/gittest.tar.gz'),
                                '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', 'data/git/gitdetached.tar.gz',
+        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           'data/git/gitdetached.tar.gz'),
                                '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', 'data/git/gittestempty.tar.gz',
+        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           'data/git/gittestempty.tar.gz'),
                                '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', 'data/git/gittest-sub.tar.gz',
+        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           'data/git/gittest-sub.tar.gz'),
                                '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', 'data/git/gittest-top-sub.tar.gz',
+        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           'data/git/gittest-top-sub.tar.gz'),
                                '-C', cls.tmp_path])
 
     @classmethod
@@ -458,7 +463,7 @@ class TestGitBackend(TestCaseGit):
     def test_fetch_from_file(self):
         """Test whether commits are fetched from a Git log file"""
 
-        git = Git('http://example.com.git', 'data/git/git_log.txt')
+        git = Git('http://example.com.git', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/git/git_log.txt'))
         commits = [commit for commit in git.fetch()]
 
         expected = [('456a68ee1407a77f3e804a30dff245bb6c6b872f', 1392185439.0),
@@ -486,7 +491,8 @@ class TestGitBackend(TestCaseGit):
     def test_git_parser(self):
         """Test if the static method parses a git log file"""
 
-        commits = Git.parse_git_log_from_file("data/git/git_log.txt")
+        commits = Git.parse_git_log_from_file(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           "data/git/git_log.txt"))
         result = [commit['commit'] for commit in commits]
 
         expected = ['456a68ee1407a77f3e804a30dff245bb6c6b872f',
@@ -504,7 +510,8 @@ class TestGitBackend(TestCaseGit):
     def test_git_encoding_error(self):
         """Test if encoding errors are escaped when a git log is parsed"""
 
-        commits = Git.parse_git_log_from_file("data/git/git_bad_encoding.txt")
+        commits = Git.parse_git_log_from_file(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           "data/git/git_bad_encoding.txt"))
         result = [commit for commit in commits]
 
         self.assertEqual(len(result), 1)
@@ -524,7 +531,8 @@ class TestGitBackend(TestCaseGit):
         "perceval.errors.ParseError: commit expected on line 10"
 
         """
-        commits = Git.parse_git_log_from_file("data/git/git_bad_cr.txt")
+        commits = Git.parse_git_log_from_file(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           "data/git/git_bad_cr.txt"))
         result = [commit for commit in commits]
         self.assertEqual(len(result), 1)
 
@@ -577,10 +585,11 @@ class TestGitCommand(TestCaseGit):
                          os.path.join(self.tmp_path, 'testpath/http://example.com/' + '-git'))
 
         args = ['http://example.com/',
-                '--git-log', 'data/git/git_log.txt']
+                '--git-log', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/git/git_log.txt')]
 
         cmd = GitCommand(*args)
-        self.assertEqual(cmd.parsed_args.gitpath, 'data/git/git_log.txt')
+        self.assertEqual(cmd.parsed_args.gitpath, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                               'data/git/git_log.txt'))
 
         args = ['http://example.com/',
                 '--git-path', '/tmp/gitpath']
@@ -595,13 +604,14 @@ class TestGitCommand(TestCaseGit):
         self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['http://example.com/',
-                '--git-log', 'data/git/git_log.txt',
+                '--git-log', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/git/git_log.txt'),
                 '--tag', 'test',
                 '--from-date', '1970-01-01']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.uri, 'http://example.com/')
-        self.assertEqual(parsed_args.git_log, 'data/git/git_log.txt')
+        self.assertEqual(parsed_args.git_log, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           'data/git/git_log.txt'))
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.branches, None)
@@ -622,7 +632,7 @@ class TestGitParser(TestCaseGit):
     def test_parser(self):
         """Test if it parsers a git log stream"""
 
-        with open("data/git/git_log.txt", 'r') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/git/git_log.txt"), 'r') as f:
             parser = GitParser(f)
             commits = [commit for commit in parser.parse()]
 
@@ -687,7 +697,7 @@ class TestGitParser(TestCaseGit):
     def test_parser_merge_commit(self):
         """Test if it parses all the available data on a merge commit"""
 
-        with open("data/git/git_log_merge.txt", 'r') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/git/git_log_merge.txt"), 'r') as f:
             parser = GitParser(f)
             commits = [commit for commit in parser.parse()]
 
@@ -755,7 +765,7 @@ class TestGitParser(TestCaseGit):
     def test_parser_trailers_commit(self):
         """Test if it parses all the available data of commits with trailers"""
 
-        with open("data/git/git_log_trailers.txt", 'r') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/git/git_log_trailers.txt"), 'r') as f:
             parser = GitParser(f)
             commits = [commit for commit in parser.parse()]
 
@@ -795,7 +805,7 @@ class TestGitParser(TestCaseGit):
     def test_parser_empty_log(self):
         """Test if it parsers an empty git log stream"""
 
-        with open("data/git/git_log_empty.txt", 'r') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/git/git_log_empty.txt"), 'r') as f:
             parser = GitParser(f)
             commits = [commit for commit in parser.parse()]
 
@@ -950,11 +960,14 @@ class TestGitRepository(TestCaseGit):
         cls.git_detached_path = os.path.join(cls.tmp_path, 'gitdetached')
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
 
-        subprocess.check_call(['tar', '-xzf', 'data/git/gittest.tar.gz',
+        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           'data/git/gittest.tar.gz'),
                                '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', 'data/git/gitdetached.tar.gz',
+        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           'data/git/gitdetached.tar.gz'),
                                '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', 'data/git/gittestempty.tar.gz',
+        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           'data/git/gittestempty.tar.gz'),
                                '-C', cls.tmp_path])
 
     @classmethod

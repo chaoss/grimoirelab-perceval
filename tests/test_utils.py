@@ -21,19 +21,17 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import bz2
 import datetime
 import email
-import os.path
+import gzip
+import os
 import shutil
 import sys
 import tempfile
 import unittest
 
-import bz2
-import gzip
-
-if '..' not in sys.path:
-    sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from perceval.errors import ParseError
 from perceval.utils import (check_compressed_file_type,
@@ -43,8 +41,8 @@ from perceval.utils import (check_compressed_file_type,
                             xml_to_dict)
 
 
-def read_file(filename):
-    with open(filename, 'r') as f:
+def read_file(filename, mode='r'):
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
@@ -68,12 +66,14 @@ class TestCheckCompressedFileType(unittest.TestCase):
             else:
                 mod = gzip
 
-            with open('data/mbox/mbox_single.mbox', 'rb') as f_in:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   'data/utils/mbox_single.mbox'), 'rb') as f_in:
                 with mod.open(fname, 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
 
         # Copy a plain file
-        shutil.copy('data/mbox/mbox_single.mbox', cls.tmp_path)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 'data/utils/mbox_single.mbox'), cls.tmp_path)
 
     @classmethod
     def tearDownClass(cls):
@@ -142,7 +142,7 @@ class TestMessagetoDict(unittest.TestCase):
     def test_convert_message(self):
         """Test whether it converts an email message"""
 
-        raw_email = read_file('data/email_single.txt')
+        raw_email = read_file('data/utils/email_single.txt')
         msg = email.message_from_string(raw_email)
 
         message = message_to_dict(msg)
@@ -167,7 +167,7 @@ class TestMessagetoDict(unittest.TestCase):
         """Test if it converts email messages with multipart bodies"""
 
         # Multipart message with defined encoding
-        raw_email = read_file('data/email_multipart_encoding.txt')
+        raw_email = read_file('data/utils/email_multipart_encoding.txt')
         msg = email.message_from_string(raw_email)
 
         message = message_to_dict(msg)
@@ -189,7 +189,7 @@ class TestMessagetoDict(unittest.TestCase):
         self.assertEqual(len(html_body), 3103)
 
         # Multipart message without defined encoding
-        raw_email = read_file('data/email_multipart_no_encoding.txt')
+        raw_email = read_file('data/utils/email_multipart_no_encoding.txt')
         msg = email.message_from_string(raw_email)
 
         message = message_to_dict(msg)
@@ -216,7 +216,7 @@ class TestRemoveInvalidXMLChars(unittest.TestCase):
     """Unit tests for remove_invalid_xml_characters"""
 
     def test_remove_chars(self):
-        raw_xml = read_file('data/bugzilla_bugs_invalid_chars.xml')
+        raw_xml = read_file('data/utils/bugzilla_bugs_invalid_chars.xml')
         purged_xml = remove_invalid_xml_chars(raw_xml)
 
         self.assertNotEqual(purged_xml, raw_xml)
@@ -229,7 +229,7 @@ class TestXMLtoDict(unittest.TestCase):
     def test_xml_to_dict(self):
         """Check whether it converts a XML file to a dict"""
 
-        raw_xml = read_file('data/bugzilla_bug.xml')
+        raw_xml = read_file('data/utils/bugzilla_bug.xml')
         d = xml_to_dict(raw_xml)
 
         self.assertIsInstance(d, dict)
@@ -250,7 +250,7 @@ class TestXMLtoDict(unittest.TestCase):
     def test_remove_invalid_xml_chars(self):
         """Check whether it removes invalid characters and parses the stream"""
 
-        raw_xml = read_file('data/bugzilla_bugs_invalid_chars.xml')
+        raw_xml = read_file('data/utils/bugzilla_bugs_invalid_chars.xml')
         d = xml_to_dict(raw_xml)
 
         self.assertIsInstance(d, dict)
@@ -265,7 +265,7 @@ class TestXMLtoDict(unittest.TestCase):
     def test_invalid_xml(self):
         """Check whether it raises an exception when the XML is invalid"""
 
-        raw_xml = read_file('data/xml_invalid.xml')
+        raw_xml = read_file('data/utils/xml_invalid.xml')
 
         self.assertRaises(ParseError, xml_to_dict, raw_xml)
 

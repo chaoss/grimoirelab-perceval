@@ -36,9 +36,7 @@ import dateutil.tz
 
 from grimoirelab.toolkit.datetime import InvalidDateError
 
-if '..' not in sys.path:
-    sys.path.insert(0, '..')
-
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from perceval import __version__
 from perceval.backend import (Backend,
                               BackendCommandArgumentParser,

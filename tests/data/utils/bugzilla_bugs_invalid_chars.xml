@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE bugzilla SYSTEM "https://example.com/bugzilla.dtd">
+<bugzilla version="4.2.1" urlbase="https://example.com/" maintainer="pgarcia@example.com" exporter="sduenas@example.org">
+    <bug>
+          <bug_id>25299</bug_id>
+          
+          <creation_ts>2002-10-24 05:12:00 -0400</creation_ts>
+          <short_desc>negative getClientAreaHeight (ArrayIndexOutOfBoundsException in StyledText)</short_desc>
+          <delta_ts>2002-10-30 16:06:11 -0500</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>2</classification_id>
+          <classification>Eclipse</classification>
+          <product>Platform</product>
+          <component>SWT</component>
+          <version>2.1</version>
+          <rep_platform>Macintosh</rep_platform>
+          <op_sys>Mac OS X - Carbon (unsup.)</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc></bug_file_loc>
+          <status_whiteboard></status_whiteboard>
+          <keywords></keywords>
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1 M3</target_milestone>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andre Weinand">andre_weinand</reporter>
+          <assigned_to name="Andre Weinand">andre_weinand</assigned_to>
+          <cc>knut_radloff</cc>
+    
+    <cc>snorthov</cc>
+          
+          <votes>0</votes>
+
+      
+
+      
+
+      
+
+          <comment_sort_order>oldest_to_newest</comment_sort_order>  
+          <long_desc isprivate="0" >
+    <commentid>100379</commentid>
+    <comment_count>0</comment_count>
+    <who name="Andre Weinand">andre_weinand</who>
+    <bug_when>2002-10-24 05:12:34 -0400</bug_when>
+    <thetext>When switching between Java and Debug perspective I get the following walkback:
+
+!MESSAGE Unhandled exception caught in event loop.
+!ENTRY org.eclipse.ui 4 0 Oct 24, 2002 11:37:11.480
+!MESSAGE java.lang.ArrayIndexOutOfBoundsException
+!STACK 0
+java.lang.ArrayIndexOutOfBoundsException
+	at 
+org.eclipse.swt.custom.StyledText$ContentWidthCache.calculate(StyledText.java:1014)
+	at org.eclipse.swt.custom.StyledText.handleResize(StyledText.java:4891)
+	at org.eclipse.swt.custom.StyledText$14.handleEvent(StyledText.java:4592)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(EventTable.java:77)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:873)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:898)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:878)
+	at org.eclipse.swt.widgets.Control.setBounds(Control.java:1808)
+	at org.eclipse.swt.widgets.Composite.setBounds(Composite.java:589)
+	at org.eclipse.swt.widgets.Canvas.setBounds(Canvas.java:181)
+	at 
+org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor$AdaptedRulerLayout.layout(
+CompilationUnitEditor.java:163)
+	at org.eclipse.swt.widgets.Composite.layout(Composite.java:423)
+	at org.eclipse.swt.widgets.Composite.setBounds(Composite.java:590)
+	at org.eclipse.swt.widgets.Canvas.setBounds(Canvas.java:181)
+	at org.eclipse.swt.layout.FillLayout.layout(FillLayout.java:97)
+	at org.eclipse.swt.widgets.Composite.layout(Composite.java:423)
+	at org.eclipse.swt.widgets.Composite.setBounds(Composite.java:590)
+	at org.eclipse.swt.widgets.Control.setBounds(Control.java:1830)
+	at org.eclipse.swt.custom.StackLayout.layout(StackLayout.java:110)
+	at org.eclipse.swt.widgets.Composite.layout(Composite.java:423)
+	at org.eclipse.swt.widgets.Composite.setBounds(Composite.java:590)
+	at org.eclipse.swt.layout.FillLayout.layout(FillLayout.java:97)
+	at org.eclipse.swt.widgets.Composite.layout(Composite.java:423)
+	at org.eclipse.swt.widgets.Composite.setBounds(Composite.java:590)
+	at org.eclipse.swt.custom.ViewForm.layout(ViewForm.java:337)
+	at org.eclipse.swt.widgets.Composite.layout(Composite.java:399)
+	at org.eclipse.swt.custom.ViewForm.onResize(ViewForm.java:415)
+	at org.eclipse.swt.custom.ViewForm.access$1(ViewForm.java:414)
+	at org.eclipse.swt.custom.ViewForm$2.controlResized(ViewForm.java:131)
+	at org.eclipse.swt.widgets.TypedListener.handleEvent(TypedListener.java:142)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(EventTable.java:77)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:873)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:898)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:878)
+	at org.eclipse.swt.widgets.Control.setBounds(Control.java:1808)
+	at org.eclipse.swt.widgets.Composite.setBounds(Composite.java:589)
+	at org.eclipse.swt.widgets.Control.setBounds(Control.java:1830)
+	at org.eclipse.ui.internal.LayoutPart.setBounds(LayoutPart.java:202)
+	at org.eclipse.ui.internal.EditorWorkbook.setControlSize(EditorWorkbook.java:755)
+	at org.eclipse.ui.internal.EditorWorkbook.access$5(EditorWorkbook.java:751)
+	at org.eclipse.ui.internal.EditorWorkbook$3.handleEvent(EditorWorkbook.java:151)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(EventTable.java:77)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:873)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:898)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:878)
+	at org.eclipse.swt.widgets.Control.setBounds(Control.java:1808)
+	at org.eclipse.swt.widgets.Composite.setBounds(Composite.java:589)
+	at org.eclipse.swt.widgets.Control.setBounds(Control.java:1830)
+	at org.eclipse.ui.internal.EditorWorkbook.setBounds(EditorWorkbook.java:732)
+	at org.eclipse.ui.internal.LayoutTree.setBounds(LayoutTree.java:162)
+	at org.eclipse.ui.internal.PartSashContainer.resizeSashes(PartSashContainer.java:421)
+	at org.eclipse.ui.internal.PartSashContainer.access$0(PartSashContainer.java:419)
+	at 
+org.eclipse.ui.internal.PartSashContainer$1.controlResized(PartSashContainer.java:51)
+	at org.eclipse.swt.widgets.TypedListener.handleEvent(TypedListener.java:142)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(EventTable.java:77)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:873)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:898)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:878)
+	at org.eclipse.swt.widgets.Control.setBounds(Control.java:1808)
+	at org.eclipse.swt.widgets.Composite.setBounds(Composite.java:589)
+	at org.eclipse.swt.widgets.Control.setBounds(Control.java:1830)
+	at org.eclipse.ui.internal.PartSashContainer.setBounds(PartSashContainer.java:427)
+	at org.eclipse.ui.internal.LayoutTree.setBounds(LayoutTree.java:162)
+	at org.eclipse.ui.internal.LayoutTreeNode.setBounds(LayoutTreeNode.java:289)
+	at org.eclipse.ui.internal.LayoutTreeNode.setBounds(LayoutTreeNode.java:290)
+	at org.eclipse.ui.internal.PartSashContainer.resizeSashes(PartSashContainer.java:421)
+	at org.eclipse.ui.internal.PartSashContainer.createControl(PartSashContainer.java:185)
+	at 
+org.eclipse.ui.internal.PerspectivePresentation.activate(PerspectivePresentation.java:95
+)
+	at org.eclipse.ui.internal.Perspective.onActivate(Perspective.java:674)
+	at org.eclipse.ui.internal.WorkbenchPage.setPerspective(WorkbenchPage.java:2224)
+	at 
+org.eclipse.ui.internal.WorkbenchPage.busySetPerspective(WorkbenchPage.java:533)
+	at org.eclipse.ui.internal.WorkbenchPage.access$6(WorkbenchPage.java:521)
+	at org.eclipse.ui.internal.WorkbenchPage$11.run(WorkbenchPage.java:2286)
+	at org.eclipse.swt.custom.BusyIndicator.showWhile(BusyIndicator.java:66)
+	at org.eclipse.ui.internal.WorkbenchPage.setPerspective(WorkbenchPage.java:2284)
+	at 
+org.eclipse.ui.internal.SetPagePerspectiveAction.run(SetPagePerspectiveAction.java:66
+)
+	at org.eclipse.jface.action.Action.runWithEvent(Action.java:749)
+	at 
+org.eclipse.jface.action.ActionContributionItem.handleWidgetSelection(ActionContributio
+nItem.java:407)
+	at 
+org.eclipse.jface.action.ActionContributionItem.handleWidgetEvent(ActionContributionIte
+m.java:361)
+	at 
+org.eclipse.jface.action.ActionContributionItem.access$0(ActionContributionItem.java:35
+2)
+	at 
+org.eclipse.jface.action.ActionContributionItem$ActionListener.handleEvent(ActionContri
+butionItem.java:47)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(EventTable.java:77)
+	at org.eclipse.swt.widgets.Widget.notifyListeners(Widget.java:489)
+	at org.eclipse.swt.widgets.Display.runDeferredEvents(Display.java:1368)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Display.java:1188)
+	at org.eclipse.ui.internal.Workbench.runEventLoop(Workbench.java:1272)
+	at org.eclipse.ui.internal.Workbench.run(Workbench.java:1255)
+	at org.eclipse.core.internal.boot.InternalBootLoader.run(InternalBootLoader.java:775)
+	at org.eclipse.core.boot.BootLoader.run(BootLoader.java:432)
+	at EclipseRuntimeLauncher.main(EclipseRuntimeLauncher.java:24)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.apple.buckyball.app.LaunchRunner.run(LaunchRunner.java:82)
+	at com.apple.buckyball.app.LaunchRunner.callMain(LaunchRunner.java:44)
+	at com.apple.buckyball.app.CarbonLibApp.launch(CarbonLibApp.java:67)</thetext>
+  </long_desc><long_desc isprivate="0" >
+    <commentid>100393</commentid>
+    <comment_count>1</comment_count>
+    <who name="Steve Northover">snorthov</who>
+    <bug_when>2002-10-24 09:03:28 -0400</bug_when>
+    <thetext>LK to fix.</thetext>
+  </long_desc><long_desc isprivate="0" >
+    <commentid>100412</commentid>
+    <comment_count>2</comment_count>
+    <who name="Lynne Kues">lynne_kues</who>
+    <bug_when>2002-10-24 09:40:20 -0400</bug_when>
+    <thetext>Andre, what build and do you get the walkback consistently?</thetext>
+  </long_desc><long_desc isprivate="0" >
+    <commentid>100421</commentid>
+    <comment_count>3</comment_count>
+    <who name="Steve Northover">snorthov</who>
+    <bug_when>2002-10-24 09:56:40 -0400</bug_when>
+    <thetext>Can you prove that it is or is not Mac related?</thetext>
+  </long_desc><long_desc isprivate="0" >
+    <commentid>100426</commentid>
+    <comment_count>4</comment_count>
+    <who name="Andre Weinand">andre_weinand</who>
+    <bug_when>2002-10-24 10:02:57 -0400</bug_when>
+    <thetext>Lynne, I got the walkback both with the I20021009 and the M2 build (20021018) with 
+SWT from current HEAD (this morning). It probably happens only on the Mac, so I 
+suspect that some event order is different from the other platforms. The index out of range 
+is always -1. I patched the problem by doing an explicit check: 
+
+	public void calculate(int startLine, int lineCount) {
+		GC gc = null;
+		FontData currentFont = null;
+		int caretWidth = 0;
+		int stopLine = startLine + lineCount;
+			
+		for (int i = startLine; i &lt; stopLine; i++) {
+			if (i &lt; 0 || i &gt;= lineWidth.length) {
+				System.out.println(&quot;StyledText.calculate: &quot; + i + &quot; &quot; + lineWidth.length);
+				break;
+			}
+			if (lineWidth[i] == -1) {
+				String line = content.getLine(i);
+				int lineOffset = content.getOffsetAtLine(i);
+		
+				if (gc == null) {
+					gc = new GC(parent);
+					caretWidth = getCaretWidth();
+					if (isBidi() == false) {
+						currentFont = gc.getFont().getFontData()[0];
+					}
+				}		
+				lineWidth[i] = contentWidth(line, lineOffset, gc, currentFont) + caretWidth;
+			}
+			if (lineWidth[i] &gt; maxWidth) {
+				maxWidth = lineWidth[i];
+				maxWidthLineIndex = i;
+			}
+		}
+		if (gc != null) {
+			gc.dispose();	
+		}
+	}
+ </thetext>
+  </long_desc><long_desc isprivate="0" >
+    <commentid>100446</commentid>
+    <comment_count>5</comment_count>
+    <who name="Lynne Kues">lynne_kues</who>
+    <bug_when>2002-10-24 10:55:09 -0400</bug_when>
+    <thetext>It seems like it is Mac-related based on what Andre indicates.  Can the 
+clientAreaHeight ever be negative on the Mac?  Based on the value that Andre is 
+seeing and based on how that value is calculated, this is our best guess as to 
+why the problem is occurring. 
+
+Andre, in handleResize, could you put a println statement when oldHeight is &lt; 
+0?  If this occurs, then the clientAreaHeight is the problem.</thetext>
+  </long_desc><long_desc isprivate="0" >
+    <commentid>100466</commentid>
+    <comment_count>6</comment_count>
+    <who name="Andre Weinand">andre_weinand</who>
+    <bug_when>2002-10-24 11:48:18 -0400</bug_when>
+    <thetext>Yes, in StyledText.handleResize whenever oldHeight was &lt; 0, 
+ContentWidthCache.calculate  would throw the ArrayIndexOutOfBoundsException.
+The reason for oldHeight being &lt; 0 is that a native method in Scrollable.getClientArea 
+sometimes returns negative values. If I clamp these value to be &gt;= 0 StyledText no longer 
+produces the ArrayIndexOutOfBoundsException.
+
+Steve, is getClientArea allowed to return negative values?</thetext>
+  </long_desc><long_desc isprivate="0" >
+    <commentid>100483</commentid>
+    <comment_count>7</comment_count>
+    <who name="Knut Radloff">knut_radloff</who>
+    <bug_when>2002-10-24 12:31:58 -0400</bug_when>
+    <thetext>I&apos;m surprised StyledText doesn&apos;t crash in other places. We assumed that 
+getClientArea never returns negative values. Technically a bad assumption, 
+since getClientArea isn&apos;t spec&apos;d that way. I noticed that other widgets do test 
+for clientArea.height &lt;= 0 and not just 0.
+
+Either the spec needs to be updated if getClientArea really is not supposed to 
+return negative values or we need to review our code.</thetext>
+  </long_desc><long_desc isprivate="0" >
+    <commentid>100533</commentid>
+    <comment_count>8</comment_count>
+    <who name="Steve Northover">snorthov</who>
+    <bug_when>2002-10-24 15:42:11 -0400</bug_when>
+    <thetext>getClientArea() can never return a negative width or height.  It could in 
+theory return a negative x and y but this would mean that the origin was above 
+the top left corner of the control and this never happens.
+
+Fix the Mac to never return negative values?</thetext>
+  </long_desc><long_desc isprivate="0" >
+    <commentid>100558</commentid>
+    <comment_count>9</comment_count>
+    <who name="Lynne Kues">lynne_kues</who>
+    <bug_when>2002-10-24 18:00:19 -0400</bug_when>
+    <thetext>Reassigning to Andre.  If you need us to do something, let us know.</thetext>
+  </long_desc><long_desc isprivate="0" >
+    <commentid>100568</commentid>
+    <comment_count>10</comment_count>
+    <who name="Andre Weinand">andre_weinand</who>
+    <bug_when>2002-10-24 18:25:38 -0400</bug_when>
+    <thetext>Fixed and released.</thetext>
+  </long_desc>
+      
+      
+
+    </bug>
+</bugzilla>
