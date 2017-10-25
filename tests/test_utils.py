@@ -72,8 +72,8 @@ class TestCheckCompressedFileType(unittest.TestCase):
                     shutil.copyfileobj(f_in, f_out)
 
         # Copy a plain file
-        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/utils/mbox_single.mbox'),
-                                 cls.tmp_path)
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 'data/utils/mbox_single.mbox'), cls.tmp_path)
 
     @classmethod
     def tearDownClass(cls):
