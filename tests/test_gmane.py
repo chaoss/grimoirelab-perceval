@@ -32,7 +32,7 @@ import pkg_resources
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -51,7 +51,7 @@ GMAME_DOWNLOAD_LIST_URL = 'http://download.gmane.org/gmane.comp.example.mylist'
 
 
 def read_file(filename, mode='r'):
-    with open(filename, mode) as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
 
@@ -362,13 +362,13 @@ class TestGmaneMailingList(unittest.TestCase):
         setup_http_server()
 
         # Simulate the fetch process copying the files
-        shutil.copy('data/gmane/gmane_messages.mbox',
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/gmane/gmane_messages.mbox'),
                     os.path.join(self.tmp_path, '0'))
-        shutil.copy('data/gmane/gmane_messages_2000.mbox',
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/gmane/gmane_messages_2000.mbox'),
                     os.path.join(self.tmp_path, '2000'))
-        shutil.copy('data/gmane/gmane_messages_4000.mbox',
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/gmane/gmane_messages_4000.mbox'),
                     os.path.join(self.tmp_path, '4000'))
-        shutil.copy('data/gmane/gmane_messages_empty.mbox',
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/gmane/gmane_messages_empty.mbox'),
                     os.path.join(self.tmp_path, 'gmane_messages_empty.mbox'))
 
         gmls = GmaneMailingList('mylist@example.com', self.tmp_path)
