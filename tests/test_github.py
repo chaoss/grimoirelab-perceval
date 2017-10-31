@@ -41,6 +41,7 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
+from perceval.archive import Archive
 from perceval.errors import CacheError, RateLimitError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.github import (GitHub,
@@ -103,6 +104,35 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.repository, 'repo')
         self.assertEqual(github.origin, 'https://github.com/zhquan_example/repo')
         self.assertEqual(github.tag, 'https://github.com/zhquan_example/repo')
+
+    def test_fetch_live(self):
+        github = GitHub("gabrielecirulli", "2048", "2b379b5444cc4a819b640ce08c5dafcfd6c4278a")
+        i = 0
+        for issue in github.fetch():
+            print(str(i))
+            i += 1
+
+            if i > 5:
+                break
+
+    def test_delete_all(self):
+        archive = Archive("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+        archive.delete_all()
+
+    def test_delete(self):
+        archive = Archive("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+        archive.delete("2017-10-31--16-35-05.sqlite3")
+
+    def test_archives(self):
+        archive = Archive("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+        archive.archives()
+
+    def test_fetch_from_archive(self):
+        archive = Archive("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+        archive.set_storage(fetched_at="2017-10-31--14-07-02")
+        github = GitHub("gabrielecirulli", "2048", "2b379b5444cc4a819b640ce08c5dafcfd6c4278a", archive=archive)
+        for issue in github.fetch():
+            print(json.dumps(issue, sort_keys=True, indent=4))
 
     def test_has_caching(self):
         """Test if it returns True when has_caching is called"""
