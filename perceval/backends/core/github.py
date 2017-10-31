@@ -20,6 +20,7 @@
 #     Alvaro del Castillo San Felix <acs@bitergia.com>
 #     Santiago Dueñas <sduenas@bitergia.com>
 #     Alberto Martín <alberto.martin@bitergia.com>
+#     David Pose Fernández <dpose@bitergia.com>
 #
 
 import json
@@ -73,7 +74,7 @@ class GitHub(Backend):
     version = '0.11.2'
 
     def __init__(self, owner=None, repository=None,
-                 api_token=None, base_url=None,
+                 api_token=None, base_url=None, api_url=None,
                  tag=None, cache=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
         origin = base_url if base_url else GITHUB_URL
@@ -84,7 +85,7 @@ class GitHub(Backend):
         self.repository = repository
         self.api_token = api_token
         self.client = GitHubClient(owner, repository, api_token, base_url,
-                                   sleep_for_rate, min_rate_to_sleep)
+                                   api_url, sleep_for_rate, min_rate_to_sleep)
         self._users = {}  # internal users cache
 
     @classmethod
@@ -458,7 +459,7 @@ class GitHubClient:
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
-    def __init__(self, owner, repository, token, base_url=None,
+    def __init__(self, owner, repository, token, base_url=None, api_url=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
         self.owner = owner
         self.repository = repository
@@ -466,11 +467,15 @@ class GitHubClient:
         self.rate_limit = None
         self.rate_limit_reset_ts = None
         self.sleep_for_rate = sleep_for_rate
+        self.base_url = base_url
 
-        if base_url:
+        if base_url and api_url:
+            self.api_url = api_url
+        elif base_url and not api_url:
             parts = urllib.parse.urlparse(base_url)
             self.api_url = parts.scheme + '://' + 'api.' + parts.netloc
         else:
+            self.base_url = GITHUB_URL
             self.api_url = GITHUB_API_URL
 
         if min_rate_to_sleep > MAX_RATE_LIMIT:
@@ -672,6 +677,8 @@ class GitHubCommand(BackendCommand):
         group = parser.parser.add_argument_group('GitHub arguments')
         group.add_argument('--enterprise-url', dest='base_url',
                            help="Base URL for GitHub Enterprise instance")
+        group.add_argument('--enterprise-api_url', dest='api_url',
+                           help="API URL for GitHub Enterprise instance")
         group.add_argument('--sleep-for-rate', dest='sleep_for_rate',
                            action='store_true',
                            help="sleep for getting more rate")
