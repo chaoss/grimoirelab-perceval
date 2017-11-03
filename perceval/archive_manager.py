@@ -92,7 +92,8 @@ class ArchiveManager:
         """delete all archives in folder path"""
 
         path = self.archive_folder_path
-        [os.remove(os.path.join(path, f)) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(STORAGE_EXT)]
+        [os.remove(os.path.join(path, f)) for f in os.listdir(path)
+         if os.path.isfile(os.path.join(path, f)) and f.endswith(STORAGE_EXT)]
 
     def archives(self, from_date=DEFAULT_DATETIME):
         """list archives in folder path"""

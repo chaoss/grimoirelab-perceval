@@ -26,7 +26,6 @@ import pickle
 import sqlite3
 
 
-
 ARCHIVE_DEFAULT_PATH = '~/.perceval/archive/'
 STORAGE_EXT = ".sqlite3"
 
