@@ -25,7 +25,6 @@
 import json
 import logging
 import time
-import urllib.parse
 
 import requests
 
@@ -468,8 +467,7 @@ class GitHubClient:
         self.sleep_for_rate = sleep_for_rate
 
         if base_url:
-            parts = urllib.parse.urlparse(base_url)
-            self.api_url = parts.scheme + '://' + 'api.' + parts.netloc
+            self.api_url = urijoin(base_url, 'api', 'v3')
         else:
             self.api_url = GITHUB_API_URL
 
