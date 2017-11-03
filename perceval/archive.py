@@ -63,7 +63,7 @@ class Archive:
                           "backend_version TEXT, " \
                           "command TEXT, " \
                           "params TEXT, " \
-                          "hash VARCHAR(256) UNIQUE NOT NULL , " \
+                          "hashed VARCHAR(256) UNIQUE NOT NULL , " \
                           "response BLOB)"
 
             cursor.execute(create_stmt)
@@ -85,7 +85,7 @@ class Archive:
         response = pickle.dumps(data, 0)
 
         insert_stmt = "INSERT OR IGNORE INTO archive(" \
-                      "id, backend_type, backend_version, command, params, hash, response) " \
+                      "id, backend_type, backend_version, command, params, hashed, response) " \
                       "VALUES(?,?,?,?,?,?,?)"
         cursor.execute(insert_stmt, (None, backend_name, backend_version,
                                      command, params, hash_request, response))
@@ -105,7 +105,7 @@ class Archive:
         cursor = self.db.cursor()
         params = dict_to_string(params)
         hash_request = self.make_digest(command, params)
-        select_stmt = "SELECT response FROM archive WHERE hash_request = ?"
+        select_stmt = "SELECT response FROM archive WHERE hashed = ?"
         args = (hash_request,)
         cursor.execute(select_stmt, args)
 

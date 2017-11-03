@@ -106,7 +106,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.tag, 'https://github.com/zhquan_example/repo')
 
     def test_fetch_live(self):
-        github = GitHub("gabrielecirulli", "2048", "e4be8181448004f8425387de2ac7f45ea9c8a7fd")
+        github = GitHub("gabrielecirulli", "2048", "efb143fcf323bf28a90617588b287e6d8d91aca8")
         issues = []
         for issue in github.fetch():
             issues.append(issue)
@@ -141,7 +141,7 @@ class TestGitHubBackend(unittest.TestCase):
         manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
         archives = manager.archives()
         manager.load(archives[0])
-        github = GitHub("gabrielecirulli", "2048", "e4be8181448004f8425387de2ac7f45ea9c8a7fd", archive=manager)
+        github = GitHub("gabrielecirulli", "2048", "efb143fcf323bf28a90617588b287e6d8d91aca8", archive=manager)
 
         try:
             issues = []
