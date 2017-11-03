@@ -35,7 +35,6 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...archive import Archive
 from ...errors import ArchiveError, CacheError, RateLimitError
 from ...utils import DEFAULT_DATETIME
 
@@ -79,19 +78,13 @@ class GitHub(Backend):
         origin = base_url if base_url else GITHUB_URL
         origin = urijoin(origin, owner, repository)
 
-        super().__init__(origin, tag=tag, cache=cache)
-
-        from_archive = True
-        if not archive:
-            from_archive = False
-            archive = Archive(origin, self.__class__.__name__, GitHub.version)
-            archive.set_storage()
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
 
         self.owner = owner
         self.repository = repository
         self.api_token = api_token
-        self.client = GitHubClient(owner, repository, api_token, archive, from_archive,
-                                   base_url, sleep_for_rate, min_rate_to_sleep)
+        self.client = GitHubClient(owner, repository, api_token, base_url, sleep_for_rate, min_rate_to_sleep,
+                                   self.archive, self.from_archive)
         self._users = {}  # internal users cache
 
     @classmethod
@@ -161,6 +154,9 @@ class GitHub(Backend):
         issues_groups = self.client.issues(start=from_date)
 
         for raw_issues in issues_groups:
+            self._push_cache_queue('{ISSUES}')
+            self._push_cache_queue(raw_issues)
+            self._flush_cache_queue()
             issues = json.loads(raw_issues)
             for issue in issues:
                 self.__init_extra_issue_fields(issue)
@@ -181,7 +177,11 @@ class GitHub(Backend):
                         issue[field + '_data'] = \
                             self.__get_issue_reactions(issue['number'], issue['reactions']['total_count'])
 
+                self._push_cache_queue('{ISSUE-END}')
+                self._flush_cache_queue()
                 yield issue
+        self._push_cache_queue('{}{}')
+        self._flush_cache_queue()
 
     @metadata
     def fetch_from_cache(self):
@@ -194,12 +194,55 @@ class GitHub(Backend):
         :raises CacheError: raised when an error occurs accessing the
             cache
         """
-        print("ah-ah")
+        if not self.cache:
+            raise CacheError(cause="cache instance was not provided")
+
+        cache_items = self.cache.retrieve()
+        raw_item = next(cache_items)
+
+        while raw_item != '{}{}':
+
+            if raw_item == '{ISSUES}':
+                issues = self.__fetch_issues_from_cache(cache_items)
+
+            for issue in issues:
+                self.__init_extra_issue_fields(issue)
+                raw_item = next(cache_items)
+
+                while raw_item != '{ISSUE-END}':
+                    try:
+                        if raw_item == '{USER}':
+                            issue['user_data'] = \
+                                self.__fetch_user_and_organization_from_cache(issue['user']['login'], cache_items)
+                        elif raw_item == '{ASSIGNEE}':
+                            assignee = self.__fetch_assignee_from_cache(cache_items)
+                            issue['assignee_data'] = assignee
+                        elif raw_item == '{ASSIGNEES}':
+                            assignees = self.__fetch_assignees_from_cache(cache_items)
+                            issue['assignees_data'] = assignees
+                        elif raw_item == '{COMMENTS}':
+                            comments = self.__fetch_comments_from_cache(cache_items)
+                            issue['comments_data'] = comments
+                        elif raw_item == '{ISSUE-REACTIONS}':
+                            reactions = self.__fetch_issue_reactions_from_cache(cache_items)
+                            issue['reactions_data'] = reactions
+
+                        raw_item = next(cache_items)
+
+                    except StopIteration:
+                        # this should be never executed, the while condition prevents
+                        # to trigger the StopIteration exception
+                        break
+
+                raw_item = next(cache_items)
+                yield issue
 
     def __get_issue_reactions(self, issue_number, total_count):
         """Get issue reactions"""
 
         reactions = []
+        self._push_cache_queue('{ISSUE-REACTIONS}')
+        self._flush_cache_queue()
 
         if total_count == 0:
             self._push_cache_queue('[]')
@@ -223,6 +266,8 @@ class GitHub(Backend):
 
         comments = []
         group_comments = self.client.issue_comments(issue_number)
+        self._push_cache_queue('{COMMENTS}')
+        self._flush_cache_queue()
 
         for raw_comments in group_comments:
             self._push_cache_queue(raw_comments)
@@ -241,13 +286,19 @@ class GitHub(Backend):
         """Get reactions on issue comments"""
 
         reactions = []
+        self._push_cache_queue('{COMMENT-REACTIONS}')
+        self._flush_cache_queue()
 
         if total_count == 0:
+            self._push_cache_queue('[]')
+            self._flush_cache_queue()
             return reactions
 
         group_reactions = self.client.issue_comment_reactions(comment_id)
 
         for raw_reactions in group_reactions:
+            self._push_cache_queue(raw_reactions)
+            self._flush_cache_queue()
 
             for reaction in json.loads(raw_reactions):
                 reaction['user_data'] = self.__get_user(reaction['user']['login'])
@@ -258,6 +309,9 @@ class GitHub(Backend):
     def __get_issue_assignee(self, raw_assignee):
         """Get issue assignee"""
 
+        self._push_cache_queue('{ASSIGNEE}')
+        self._push_cache_queue(raw_assignee)
+        self._flush_cache_queue()
         assignee = self.__get_user(raw_assignee['login'])
 
         return assignee
@@ -265,6 +319,9 @@ class GitHub(Backend):
     def __get_issue_assignees(self, raw_assignees):
         """Get issue assignees"""
 
+        self._push_cache_queue('{ASSIGNEES}')
+        self._push_cache_queue(raw_assignees)
+        self._flush_cache_queue()
         assignees = []
         for ra in raw_assignees:
             assignees.append(self.__get_user(ra['login']))
@@ -281,11 +338,97 @@ class GitHub(Backend):
 
         user_raw = self.client.user(login)
         user = json.loads(user_raw)
+        self._push_cache_queue('{USER}')
+        self._push_cache_queue(user_raw)
         user_orgs_raw = \
             self.client.user_orgs(login)
         user['organizations'] = json.loads(user_orgs_raw)
+        self._push_cache_queue(user_orgs_raw)
+        self._flush_cache_queue()
 
         return user
+
+    def __fetch_issues_from_cache(self, cache_items):
+        """Fetch issues from cache"""
+
+        raw_content = next(cache_items)
+        issues = json.loads(raw_content)
+        return issues
+
+    def __fetch_user_and_organization_from_cache(self, user_login, cache_items):
+        """Fetch user and organization from cache"""
+
+        raw_user = next(cache_items)
+        raw_org = next(cache_items)
+        return self.__get_user_and_organization(user_login, raw_user, raw_org)
+
+    def __fetch_assignee_from_cache(self, cache_items):
+        """Fetch issue assignee from cache"""
+
+        raw_assignee = next(cache_items)
+        user_tag = next(cache_items)
+        raw_user = next(cache_items)
+        raw_org = next(cache_items)
+        assignee = self.__get_user_and_organization(raw_assignee['login'], raw_user, raw_org)
+
+        return assignee
+
+    def __fetch_assignees_from_cache(self, cache_items):
+        """Fetch issue assignees from cache"""
+
+        raw_assignees = next(cache_items)
+        assignees = []
+        for a in raw_assignees:
+            user_tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            a = self.__get_user_and_organization(a['login'], raw_user, raw_org)
+            assignees.append(a)
+
+        return assignees
+
+    def __fetch_issue_comment_reactions_from_cache(self, cache_items):
+        """Fetch issue comment reactions from cache"""
+
+        raw_content = next(cache_items)
+        reactions = json.loads(raw_content)
+        for reaction in reactions:
+            user_tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            reaction['user_data'] = self.__get_user_and_organization(reaction['user']['login'], raw_user, raw_org)
+
+        return reactions
+
+    def __fetch_issue_reactions_from_cache(self, cache_items):
+        """Fetch issue reactions from cache"""
+
+        raw_content = next(cache_items)
+        reactions = json.loads(raw_content)
+        for r in reactions:
+            user_tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            r['user_data'] = self.__get_user_and_organization(r['user']['login'], raw_user, raw_org)
+
+        return reactions
+
+    def __fetch_comments_from_cache(self, cache_items):
+        """Fetch issue comments from cache"""
+
+        raw_content = next(cache_items)
+        comments = json.loads(raw_content)
+        for c in comments:
+            user_tag = next(cache_items)
+            raw_user = next(cache_items)
+            raw_org = next(cache_items)
+            c['user_data'] = self.__get_user_and_organization(c['user']['login'], raw_user, raw_org)
+
+            reactions_tag = next(cache_items)
+            reactions = self.__fetch_issue_comment_reactions_from_cache(cache_items)
+            c['reactions_data'] = reactions
+
+        return comments
 
     def __init_extra_issue_fields(self, issue):
         """Add fields to an issue"""
@@ -315,8 +458,9 @@ class GitHubClient:
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
-    def __init__(self, owner, repository, token, archive, from_archive,
-                 base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
+    def __init__(self, owner, repository, token,
+                 base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
+                 archive=None, from_archive=False):
         self.owner = owner
         self.repository = repository
         self.token = token
@@ -437,13 +581,17 @@ class GitHubClient:
         return headers
 
     def __send_request_to_archive(self, url, params=None):
-        r = self.archive.retrieve(url, params)
+        """GET data from archive"""
+
+        r = self.archive.retrieve(url, params=params)
         if r:
             return r
         else:
             raise ArchiveError(cause="archive is exhausted!")
 
     def __send_request_to_data_source(self, url, params=None, headers=None):
+        """GET HTTP caring of rate limit"""
+
         retries = 0
 
         while retries < self.MAX_RETRIES:
@@ -484,11 +632,11 @@ class GitHubClient:
         if retries == self.MAX_RETRIES:
             r.raise_for_status()
 
-        self.archive.store(url, params, r)
+        self.archive.store(url, r, params=params)
         return r
 
     def __send_request(self, url, params=None, headers=None):
-        """GET HTTP caring of rate limit"""
+        """Dispatcher"""
 
         if self.from_archive:
             return self.__send_request_to_archive(url, params)

@@ -41,8 +41,8 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
-from perceval.archive import Archive
-from perceval.errors import CacheError, RateLimitError
+from perceval.archive_manager import ArchiveManager
+from perceval.errors import ArchiveError, CacheError, RateLimitError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.github import (GitHub,
                                            GitHubCommand,
@@ -106,33 +106,51 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.tag, 'https://github.com/zhquan_example/repo')
 
     def test_fetch_live(self):
-        github = GitHub("gabrielecirulli", "2048", "2b379b5444cc4a819b640ce08c5dafcfd6c4278a")
-        i = 0
+        github = GitHub("gabrielecirulli", "2048", "e4be8181448004f8425387de2ac7f45ea9c8a7fd")
+        issues = []
         for issue in github.fetch():
-            print(str(i))
-            i += 1
+            issues.append(issue)
 
-            if i > 5:
+            if len(issues) == 3:
                 break
 
+        self.assertEqual(len(issues), 3)
+
     def test_delete_all(self):
-        archive = Archive("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
-        archive.delete_all()
+        manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+        manager.delete_all()
+        current_archives = len(manager.archives())
+
+        self.assertEqual(current_archives, 0)
 
     def test_delete(self):
-        archive = Archive("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
-        archive.delete("2017-10-31--16-35-05.sqlite3")
+        manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+        archives = manager.archives()
+        previous_archives = len(archives)
+        manager.delete(archives[0])
+        current_archives = len(manager.archives())
+
+        self.assertEqual(current_archives, previous_archives - 1)
 
     def test_archives(self):
-        archive = Archive("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
-        archive.archives()
+        manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+        archives = manager.archives()
+        [print(a) for a in archives]
 
     def test_fetch_from_archive(self):
-        archive = Archive("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
-        archive.set_storage(fetched_at="2017-10-31--14-07-02")
-        github = GitHub("gabrielecirulli", "2048", "2b379b5444cc4a819b640ce08c5dafcfd6c4278a", archive=archive)
-        for issue in github.fetch():
-            print(json.dumps(issue, sort_keys=True, indent=4))
+        manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+        archives = manager.archives()
+        manager.load(archives[0])
+        github = GitHub("gabrielecirulli", "2048", "e4be8181448004f8425387de2ac7f45ea9c8a7fd", archive=manager)
+
+        try:
+            issues = []
+            for issue in github.fetch():
+                issues.append(issue)
+        except ArchiveError:
+            print("fetched: " + str(len(issues)))
+
+        self.assertEqual(len(issues), 3)
 
     def test_has_caching(self):
         """Test if it returns True when has_caching is called"""
