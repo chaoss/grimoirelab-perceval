@@ -20,27 +20,25 @@
 #     Valerio Cosentino <valcos@bitergia.com>
 #
 
-import datetime
 import hashlib
 import json
-import os
 import pickle
 import sqlite3
+
 
 
 ARCHIVE_DEFAULT_PATH = '~/.perceval/archive/'
 STORAGE_EXT = ".sqlite3"
 
 
-def now_to_str():
-    """return a str value of the current time"""
+def dict_to_string(json_data):
+    """convert a dict to str"""
 
-    now = datetime.datetime.now()
-    return now.strftime("%Y-%m-%d--%H-%M")
+    return json.dumps(json_data, sort_keys=True)
 
 
 class Archive:
-    """Basic cache for Perceval.
+    """Basic storage for Perceval.
 
     This class allows to archive items for a
     further recovery. Items are stored in a Sqlite db.
@@ -49,88 +47,65 @@ class Archive:
     prevents from possible failures.
     """
 
-    def __init__(self, origin, backend_name, backend_version, archive_root_path=ARCHIVE_DEFAULT_PATH):
+    def __init__(self, archive_path, new=False):
 
-        self.archive_folder_path = os.path.join(archive_root_path, origin, backend_name, backend_version)
-
-        if not os.path.exists(self.archive_folder_path):
-            os.makedirs(self.archive_folder_path)
-
-        self.backend_name = backend_name
-        self.backend_version = backend_version
-
-    def set_storage(self, fetched_at=now_to_str()):
-        """set storage (init or load storage)"""
-
-        self.fetched_at = fetched_at
-        self.archive_path = os.path.join(self.archive_folder_path, fetched_at + STORAGE_EXT)
+        self.archive_path = archive_path
         self.db = sqlite3.connect(self.archive_path)
 
-        cursor = self.db.cursor()
-        create_stmt = "CREATE TABLE IF NOT EXISTS storage(" \
-                      "id INTEGER PRIMARY KEY AUTOINCREMENT, " \
-                      "backend_type TEXT, " \
-                      "backend_version TEXT, " \
-                      "url TEXT, " \
-                      "payload TEXT, " \
-                      "hash_request VARCHAR(256) UNIQUE NOT NULL , " \
-                      "response BLOB, " \
-                      "fetched_at TIMESTAMP)"
+        if new:
+            cursor = self.db.cursor()
+            cursor.execute("DROP TABLE IF EXISTS archive")
+            self.db.commit()
 
-        cursor.execute(create_stmt)
-        self.db.commit()
+            create_stmt = "CREATE TABLE archive(" \
+                          "id INTEGER PRIMARY KEY AUTOINCREMENT, " \
+                          "backend_type TEXT, " \
+                          "backend_version TEXT, " \
+                          "command TEXT, " \
+                          "params TEXT, " \
+                          "hash VARCHAR(256) UNIQUE NOT NULL , " \
+                          "response BLOB)"
 
-    def delete(self, target_name):
-        """delete an archive in folder path"""
+            cursor.execute(create_stmt)
+            self.db.commit()
 
-        path = self.archive_folder_path
-        [os.remove(os.path.join(path, f)) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))
-         and f.startswith(target_name)
-         and f.endswith(STORAGE_EXT)]
+            cursor.close()
 
-    def delete_all(self):
-        """delete all archives in folder path"""
-
-        path = self.archive_folder_path
-        [os.remove(os.path.join(path, f)) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(STORAGE_EXT)]
-
-    def archives(self):
-        """list archives in folder path"""
-
-        path = self.archive_folder_path
-        [print(f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(STORAGE_EXT)]
-
-    def store(self, url, payload, data):
+    def store(self, command, params, data, backend_name, backend_version):
         """Store data source information.
 
-        :url: url request
-        :payload: payload request
+        :command: data source command
+        :params: command params
         :data: response data
         """
         cursor = self.db.cursor()
-        hash_request = self.make_digest(url, payload)
+
+        params = dict_to_string(params)
+        hash_request = self.make_digest(command, params)
         response = pickle.dumps(data, 0)
 
-        insert_stmt = "INSERT OR IGNORE INTO storage(" \
-                      "id, backend_type, backend_version, url, payload, hash_request, response, fetched_at) " \
-                      "VALUES(?,?,?,?,?,?,?,?)"
-        cursor.execute(insert_stmt, (None, self.backend_name, self.backend_version,
-                                     url, json.dumps(payload, sort_keys=True), hash_request, response, self.fetched_at))
+        insert_stmt = "INSERT OR IGNORE INTO archive(" \
+                      "id, backend_type, backend_version, command, params, hash, response) " \
+                      "VALUES(?,?,?,?,?,?,?)"
+        cursor.execute(insert_stmt, (None, backend_name, backend_version,
+                                     command, params, hash_request, response))
         self.db.commit()
+        cursor.close()
 
-    def retrieve(self, url, payload):
+    def retrieve(self, command, params):
         """Retrieve the data stored in the database.
 
-        This method returns the api content corresponding to the hash_request derived from the url and payload
+        This method returns the data source content corresponding to the hash_request derived from the command and params
 
-        :returns: the data that corresponds to the url and payload
+        :returns: the data that corresponds to the command and params
         """
 
         found = None
         self.db.row_factory = sqlite3.Row
         cursor = self.db.cursor()
-        hash_request = self.make_digest(url, payload)
-        select_stmt = "SELECT response FROM storage WHERE hash_request = ?"
+        params = dict_to_string(params)
+        hash_request = self.make_digest(command, params)
+        select_stmt = "SELECT response FROM archive WHERE hash_request = ?"
         args = (hash_request,)
         cursor.execute(select_stmt, args)
 
@@ -142,10 +117,9 @@ class Archive:
 
         return found
 
-    def make_digest(self, url, payload):
-        """return a unique sha for a given url and payload"""
+    def make_digest(self, command, params):
+        """return a unique sha for a given command and params"""
 
-        payload_str = json.dumps(payload, sort_keys=True)
-        content = str(url + "@" + payload_str).encode('utf-8')
+        content = str(command + "@" + params).encode('utf-8')
         h = hashlib.md5(content)
         return h.hexdigest()
