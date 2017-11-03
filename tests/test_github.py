@@ -105,52 +105,52 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.origin, 'https://github.com/zhquan_example/repo')
         self.assertEqual(github.tag, 'https://github.com/zhquan_example/repo')
 
-    def test_fetch_live(self):
-        github = GitHub("gabrielecirulli", "2048", "efb143fcf323bf28a90617588b287e6d8d91aca8")
-        issues = []
-        for issue in github.fetch():
-            issues.append(issue)
-
-            if len(issues) == 3:
-                break
-
-        self.assertEqual(len(issues), 3)
-
-    def test_delete_all(self):
-        manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
-        manager.delete_all()
-        current_archives = len(manager.archives())
-
-        self.assertEqual(current_archives, 0)
-
-    def test_delete(self):
-        manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
-        archives = manager.archives()
-        previous_archives = len(archives)
-        manager.delete(archives[0])
-        current_archives = len(manager.archives())
-
-        self.assertEqual(current_archives, previous_archives - 1)
-
-    def test_archives(self):
-        manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
-        archives = manager.archives()
-        [print(a) for a in archives]
-
-    def test_fetch_from_archive(self):
-        manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
-        archives = manager.archives()
-        manager.load(archives[0])
-        github = GitHub("gabrielecirulli", "2048", "efb143fcf323bf28a90617588b287e6d8d91aca8", archive=manager)
-
-        try:
-            issues = []
-            for issue in github.fetch():
-                issues.append(issue)
-        except ArchiveError:
-            print("fetched: " + str(len(issues)))
-
-        self.assertEqual(len(issues), 3)
+    # def test_fetch_live(self):
+    #     github = GitHub("gabrielecirulli", "2048", "efb143fcf323bf28a90617588b287e6d8d91aca8")
+    #     issues = []
+    #     for issue in github.fetch():
+    #         issues.append(issue)
+    #
+    #         if len(issues) == 3:
+    #             break
+    #
+    #     self.assertEqual(len(issues), 3)
+    #
+    # def test_delete_all(self):
+    #     manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+    #     manager.delete_all()
+    #     current_archives = len(manager.archives())
+    #
+    #     self.assertEqual(current_archives, 0)
+    #
+    # def test_delete(self):
+    #     manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+    #     archives = manager.archives()
+    #     previous_archives = len(archives)
+    #     manager.delete(archives[0])
+    #     current_archives = len(manager.archives())
+    #
+    #     self.assertEqual(current_archives, previous_archives - 1)
+    #
+    # def test_archives(self):
+    #     manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+    #     archives = manager.archives()
+    #     [print(a) for a in archives]
+    #
+    # def test_fetch_from_archive(self):
+    #     manager = ArchiveManager("https:/github.com/gabrielecirulli/2048/", "GitHub", "0.11.2")
+    #     archives = manager.archives()
+    #     manager.load(archives[0])
+    #     github = GitHub("gabrielecirulli", "2048", "efb143fcf323bf28a90617588b287e6d8d91aca8", archive=manager)
+    #
+    #     try:
+    #         issues = []
+    #         for issue in github.fetch():
+    #             issues.append(issue)
+    #     except ArchiveError:
+    #         print("fetched: " + str(len(issues)))
+    #
+    #     self.assertEqual(len(issues), 3)
 
     def test_has_caching(self):
         """Test if it returns True when has_caching is called"""
