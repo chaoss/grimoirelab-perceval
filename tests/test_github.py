@@ -41,8 +41,7 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
-from perceval.archive_manager import ArchiveManager
-from perceval.errors import ArchiveError, CacheError, RateLimitError
+from perceval.errors import CacheError, RateLimitError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.github import (GitHub,
                                            GitHubCommand,

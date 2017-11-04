@@ -632,7 +632,8 @@ class GitHubClient:
         if retries == self.MAX_RETRIES:
             r.raise_for_status()
 
-        self.archive.store(url, r, params=params)
+        if self.archive:
+            self.archive.store(url, r, params=params)
         return r
 
     def __send_request(self, url, params=None, headers=None):
