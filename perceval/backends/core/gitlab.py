@@ -44,7 +44,8 @@ from ...utils import DEFAULT_DATETIME
 MIN_RATE_LIMIT = 10
 MAX_RATE_LIMIT = 500
 
-TARGET_ISSUE_FIELDS = ['author', 'assignee', 'assignees', 'comments', 'reactions']
+TARGET_ISSUE_FIELDS = ['author', 'assignee', 'assignees', 'comments',
+                       'reactions']
 
 logger = logging.getLogger(__name__)
 
@@ -158,22 +159,25 @@ class GitLab(Backend):
             for issue in issues:
                 self.__init_extra_issue_fields(issue)
                 for field in TARGET_ISSUE_FIELDS:
-                    
-                    if not field in issue.keys() or not issue[field]: 
+                    if field not in issue.keys() or not issue[field]:
                         continue
-                     
                     if field == 'author':
-                        issue[field + '_data'] = self.__get_user(issue[field]['username'])
+                        issue[field + '_data'] = \
+                            self.__get_user(issue[field]['username'])
                     elif field == 'assignee':
-                        issue[field + '_data'] = self.__get_issue_assignee(issue[field])
+                        issue[field + '_data'] = \
+                            self.__get_issue_assignee(issue[field])
                     elif field == 'assignees':
-                        issue[field + '_data'] = self.__get_issue_assignees(issue[field])
+                        issue[field + '_data'] = \
+                            self.__get_issue_assignees(issue[field])
                     elif field == 'comments':
-                        issue[field + '_data'] = self.__get_issue_comments(issue['number'])
+                        issue[field + '_data'] = \
+                            self.__get_issue_comments(issue['number'])
                     elif field == 'reactions':
                         issue[field + '_data'] = \
-                            self.__get_issue_reactions(issue['number'], issue['reactions']['total_count'])
-                            
+                            self.__get_issue_reactions(
+                                issue['number'],
+                                issue['reactions']['total_count'])
                 self._push_cache_queue('{ISSUE-END}')
                 self._flush_cache_queue()
                 yield issue
@@ -210,24 +214,31 @@ class GitLab(Backend):
                     try:
                         if raw_item == '{USER}':
                             issue['user_data'] = \
-                                self.__fetch_user_and_organization_from_cache(issue['user']['login'], cache_items)
+                                self.__fetch_user_and_organization_from_cache(
+                                    issue['user']['login'], cache_items)
                         elif raw_item == '{ASSIGNEE}':
-                            assignee = self.__fetch_assignee_from_cache(cache_items)
+                            assignee = \
+                                self.__fetch_assignee_from_cache(cache_items)
                             issue['assignee_data'] = assignee
                         elif raw_item == '{ASSIGNEES}':
-                            assignees = self.__fetch_assignees_from_cache(cache_items)
+                            assignees = \
+                                self.__fetch_assignees_from_cache(cache_items)
                             issue['assignees_data'] = assignees
                         elif raw_item == '{COMMENTS}':
-                            comments = self.__fetch_comments_from_cache(cache_items)
+                            comments = \
+                                self.__fetch_comments_from_cache(cache_items)
                             issue['comments_data'] = comments
                         elif raw_item == '{ISSUE-REACTIONS}':
-                            reactions = self.__fetch_issue_reactions_from_cache(cache_items)
+                            reactions = \
+                                self.__fetch_issue_reactions_from_cache(
+                                    cache_items)
                             issue['reactions_data'] = reactions
 
                         raw_item = next(cache_items)
 
                     except StopIteration:
-                        # this should be never executed, the while condition prevents
+                        # this should be never executed,
+                        # the while condition prevents
                         # to trigger the StopIteration exception
                         break
 
@@ -253,7 +264,8 @@ class GitLab(Backend):
             self._flush_cache_queue()
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reaction['user_data'] = \
+                    self.__get_user(reaction['user']['login'])
                 reactions.append(reaction)
 
         return reactions
@@ -272,9 +284,11 @@ class GitLab(Backend):
 
             for comment in json.loads(raw_comments):
                 comment_id = comment.get('id')
-                comment['user_data'] = self.__get_user(comment['user']['login'])
+                comment['user_data'] = \
+                    self.__get_user(comment['user']['login'])
                 comment['reactions_data'] = \
-                    self.__get_issue_comment_reactions(comment_id, comment['reactions']['total_count'])
+                    self.__get_issue_comment_reactions(
+                        comment_id, comment['reactions']['total_count'])
                 comments.append(comment)
 
         return comments
@@ -298,7 +312,8 @@ class GitLab(Backend):
             self._flush_cache_queue()
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reaction['user_data'] = \
+                    self.__get_user(reaction['user']['login'])
                 reactions.append(reaction)
 
         return reactions
@@ -310,7 +325,7 @@ class GitLab(Backend):
         self._push_cache_queue(raw_assignee)
         self._flush_cache_queue()
         if 'username' in raw_assignee.keys():
-             assignee = self.__get_user(raw_assignee['username'])
+            assignee = self.__get_user(raw_assignee['username'])
 
         return assignee
 
@@ -320,11 +335,9 @@ class GitLab(Backend):
         self._push_cache_queue('{ASSIGNEES}')
         self._push_cache_queue(raw_assignees)
         self._flush_cache_queue()
-        assignees = []        
+        assignees = []
         for ra in raw_assignees:
-            if 'login' in ra.keys():
-                assignees.append(self.__get_user(ra['login']))
-            elif 'username' in ra.keys():
+            if 'username' in ra.keys():
                 assignees.append(self.__get_user(ra['username']))
 
         return assignees
@@ -357,7 +370,8 @@ class GitLab(Backend):
         issues = json.loads(raw_content)
         return issues
 
-    def __fetch_user_and_organization_from_cache(self, user_login, cache_items):
+    def __fetch_user_and_organization_from_cache(
+            self, user_login, cache_items):
         """Fetch user and organization from cache"""
 
         raw_user = next(cache_items)
@@ -368,10 +382,10 @@ class GitLab(Backend):
         """Fetch issue assignee from cache"""
 
         raw_assignee = next(cache_items)
-        user_tag = next(cache_items)
         raw_user = next(cache_items)
         raw_org = next(cache_items)
-        assignee = self.__get_user_and_organization(raw_assignee['login'], raw_user, raw_org)
+        assignee = self.__get_user_and_organization(
+            raw_assignee['login'], raw_user, raw_org)
 
         return assignee
 
@@ -381,7 +395,6 @@ class GitLab(Backend):
         raw_assignees = next(cache_items)
         assignees = []
         for a in raw_assignees:
-            user_tag = next(cache_items)
             raw_user = next(cache_items)
             raw_org = next(cache_items)
             a = self.__get_user_and_organization(a['login'], raw_user, raw_org)
@@ -395,10 +408,11 @@ class GitLab(Backend):
         raw_content = next(cache_items)
         reactions = json.loads(raw_content)
         for reaction in reactions:
-            user_tag = next(cache_items)
             raw_user = next(cache_items)
             raw_org = next(cache_items)
-            reaction['user_data'] = self.__get_user_and_organization(reaction['user']['login'], raw_user, raw_org)
+            reaction['user_data'] = \
+                self.__get_user_and_organization(
+                    reaction['user']['login'], raw_user, raw_org)
 
         return reactions
 
@@ -408,10 +422,11 @@ class GitLab(Backend):
         raw_content = next(cache_items)
         reactions = json.loads(raw_content)
         for r in reactions:
-            user_tag = next(cache_items)
             raw_user = next(cache_items)
             raw_org = next(cache_items)
-            r['user_data'] = self.__get_user_and_organization(r['user']['login'], raw_user, raw_org)
+            r['user_data'] = \
+                self.__get_user_and_organization(
+                    r['user']['login'], raw_user, raw_org)
 
         return reactions
 
@@ -421,13 +436,14 @@ class GitLab(Backend):
         raw_content = next(cache_items)
         comments = json.loads(raw_content)
         for c in comments:
-            user_tag = next(cache_items)
             raw_user = next(cache_items)
             raw_org = next(cache_items)
-            c['user_data'] = self.__get_user_and_organization(c['user']['login'], raw_user, raw_org)
+            c['user_data'] = \
+                self.__get_user_and_organization(
+                    c['user']['login'], raw_user, raw_org)
 
-            reactions_tag = next(cache_items)
-            reactions = self.__fetch_issue_comment_reactions_from_cache(cache_items)
+            reactions = \
+                self.__fetch_issue_comment_reactions_from_cache(cache_items)
             c['reactions_data'] = reactions
 
         return comments
@@ -485,17 +501,20 @@ class GitLabClient:
     def issue_reactions(self, issue_number):
         """Get reactions of an issue"""
 
-        return self._fetch_items("/issues/" + str(issue_number) + "/reactions", "comment")
+        return self._fetch_items(
+            "/issues/" + str(issue_number) + "/reactions", "comment")
 
     def issue_comment_reactions(self, comment_id):
         """Get reactions of an issue comment"""
 
-        return self._fetch_items("/issues/comments/" + str(comment_id) + "/reactions", "comment")
+        return self._fetch_items(
+            "/issues/comments/" + str(comment_id) + "/reactions", "comment")
 
     def issue_comments(self, issue_number):
         """Get the issue comments from pagination"""
 
-        return self._fetch_items("/issues/" + str(issue_number) + "/comments", "comment")
+        return self._fetch_items(
+            "/issues/" + str(issue_number) + "/comments", "comment")
 
     def issues(self, start=None):
         """Get the issues from pagination"""
@@ -505,13 +524,10 @@ class GitLabClient:
     def user(self, login):
         """Get the user information and update the user cache"""
 
-        user = None
-
         if login in self._users:
             return self._users[login]
-        
+
         url_user = urijoin(self.api_url, 'users?username=' + login)
-        
 
         logging.info("Getting info for %s" % (url_user))
         r = self.__send_request(url_user, headers=self.__build_headers())
@@ -545,7 +561,9 @@ class GitLabClient:
     def __get_url_repo(self):
         """Build URL repo"""
 
-        url_repo = urijoin(self.api_url, 'projects', self.owner + '%2F'+  self.repository)           
+        url_repo = \
+            urijoin(
+                self.api_url, 'projects', self.owner + '%2F' + self.repository)
 
         return url_repo
 
@@ -558,24 +576,24 @@ class GitLabClient:
     def __build_payload(self, payload_type='issue', startdate=None):
         """Build payload"""
 
-        #Gitlab sort arguments
+# Gitlab sort arguments
         payload = {'sort': 'asc'}
         if payload_type == 'issue':
             payload['state'] = 'all'
             payload['order_by'] = 'updated_at'
         elif payload_type == 'comment':
             payload['order_by'] = 'updated_at'
-            
+
         if startdate:
             startdate = startdate.isoformat()
             payload['created_after'] = startdate
-            
+
         return payload
 
     def __build_headers(self):
         """Set header for request"""
         if self.token:
-            headers = {'PRIVATE-TOKEN': self.token}            
+            headers = {'PRIVATE-TOKEN': self.token}
 
             return headers
 
@@ -586,14 +604,19 @@ class GitLabClient:
 
         while retries < self.MAX_RETRIES:
             try:
-                if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
-                    seconds_to_reset = self.rate_limit_reset_ts - int(time.time()) + 1
+                if self.rate_limit is not None \
+                        and self.rate_limit <= self.min_rate_to_sleep:
+
+                    seconds_to_reset = \
+                        self.rate_limit_reset_ts - int(time.time()) + 1
                     cause = "GitLab rate limit exhausted."
                     if self.sleep_for_rate:
-                        logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
+                        logger.info("%s Waiting %i secs for rate limit reset.",
+                                    cause, seconds_to_reset)
                         time.sleep(seconds_to_reset)
                     else:
-                        raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
+                        raise RateLimitError(
+                            cause=cause, seconds_to_reset=seconds_to_reset)
 
                 r = requests.get(url, params=params, headers=headers)
                 r.raise_for_status()
@@ -602,7 +625,8 @@ class GitLabClient:
                 # Enterprise version might have them deactivated.
                 if 'X-RateLimit-Remaining' in r.headers:
                     self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
-                    self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
+                    self.rate_limit_reset_ts = \
+                        int(r.headers['X-RateLimit-Reset'])
                     logger.debug("Rate limit: %s", self.rate_limit)
                 else:
                     self.rate_limit = None
@@ -610,10 +634,13 @@ class GitLabClient:
 
                 break
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 403 and 'Retry-After' in r.headers:
+                if e.response.status_code == 403 and \
+                        'Retry-After' in r.headers:
                     retry_seconds = int(r.headers['Retry-After'])
-                    logger.warning("Abuse rate limit, the backend will sleep for %s seconds before starting again",
-                                   retry_seconds)
+                    logger.warning(
+                        "Abuse rate limit, the backend will sleep for %s seconds \
+                            before starting again",
+                        retry_seconds)
                     time.sleep(retry_seconds)
                     retries += 1
                 else:
@@ -650,7 +677,8 @@ class GitLabClient:
 
             if 'next' in r.links:
                 url_next = r.links['next']['url']  # Loving requests :)
-                r = self.__send_request(url_next, payload, self.__build_headers())
+                r = self.__send_request(
+                    url_next, payload, self.__build_headers())
                 page += 1
                 items = r.text
                 logger.debug("Page: %i/%i" % (page, last_page))
@@ -678,7 +706,8 @@ class GitLabCommand(BackendCommand):
                            help="sleep for getting more rate")
         group.add_argument('--min-rate-to-sleep', dest='min_rate_to_sleep',
                            default=MIN_RATE_LIMIT, type=int,
-                           help="sleep until reset when the rate limit reaches this value")
+                           help="sleep until reset when the rate limit \
+                               reaches this value")
 
         # Positional arguments
         parser.parser.add_argument('owner',
