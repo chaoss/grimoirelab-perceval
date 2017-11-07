@@ -22,6 +22,7 @@
 
 import json
 import logging
+import time
 
 import requests
 
@@ -37,6 +38,9 @@ from ...errors import CacheError
 logger = logging.getLogger(__name__)
 
 
+SLEEP_TIME = 10
+
+
 class Jenkins(Backend):
     """Jenkins backend for Perceval.
 
@@ -48,15 +52,16 @@ class Jenkins(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     :param blacklist_jobs: exclude the jobs of this list while fetching
+    :param sleep_time: minimun waiting time due to a timeout connection exception
     """
     version = '0.5.3'
 
-    def __init__(self, url, tag=None, cache=None, blacklist_jobs=None):
+    def __init__(self, url, tag=None, cache=None, blacklist_jobs=None, sleep_time=SLEEP_TIME):
         origin = url
 
         super().__init__(origin, tag=tag, cache=cache)
         self.url = url
-        self.client = JenkinsClient(url, blacklist_jobs)
+        self.client = JenkinsClient(url, blacklist_jobs, sleep_time)
         self.blacklist_jobs = blacklist_jobs
 
     @metadata
@@ -189,19 +194,19 @@ class JenkinsClient:
 
     :raises HTTPError: when an error occurs doing the request
     """
+    MAX_RETRIES = 5
 
-    def __init__(self, url, blacklist_jobs=None):
+    def __init__(self, url, blacklist_jobs=None, sleep_time=SLEEP_TIME):
         self.url = url
         self.blacklist_jobs = blacklist_jobs
+        self.sleep_time = sleep_time
 
     def get_jobs(self):
         """ Retrieve all jobs
         """
         url_jenkins = urijoin(self.url, "/api/json")
 
-        req = requests.get(url_jenkins)
-        req.raise_for_status()
-        return req.text
+        return self.__send_request(url_jenkins)
 
     def get_builds(self, job_name):
         """ Retrieve all builds from a job
@@ -215,8 +220,29 @@ class JenkinsClient:
         job_url = self.url + "/job/%s/" % (job_name)
         url_jenkins = job_url + "api/json?depth=2"
 
-        req = requests.get(url_jenkins)
-        req.raise_for_status()
+        return self.__send_request(url_jenkins)
+
+    def __send_request(self, url):
+        """send HTTP requests to the server"""
+
+        retries = 0
+
+        while retries < self.MAX_RETRIES:
+
+            try:
+                req = requests.get(url)
+                req.raise_for_status()
+                break
+            except requests.exceptions.RequestException as e:
+                if e.response.status_code in [408, 410, 502, 503, 504]:
+                    retries += 1
+                    time.sleep(self.sleep_time * retries)
+                else:
+                    raise e
+
+        if retries == self.MAX_RETRIES:
+            req.raise_for_status()
+
         return req.text
 
 
@@ -236,6 +262,10 @@ class JenkinsCommand(BackendCommand):
         group.add_argument('--blacklist-jobs', dest='blacklist_jobs',
                            nargs='*',
                            help="Wrong jobs that must not be retrieved.")
+
+        group.add_argument('--sleep-time', dest='sleep_time',
+                           type=int,
+                           help="Minimun time to wait after a Timeout connection error.")
 
         # Required arguments
         parser.parser.add_argument('url',
