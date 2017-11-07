@@ -64,27 +64,35 @@ class TestGitBackend(TestCaseGit):
     @classmethod
     def setUpClass(cls):
         cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+        cls.tmp_repo_path = os.path.join(cls.tmp_path, 'repos')
+        os.mkdir(cls.tmp_repo_path)
+
         cls.git_path = os.path.join(cls.tmp_path, 'gittest')
         cls.git_detached_path = os.path.join(cls.tmp_path, 'gitdetached')
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
-        cls.git_top_submodules_path = os.path.join(cls.tmp_path, 'gittest-top-sub')
         cls.git_submodules_path = os.path.join(cls.tmp_path, 'gittest-sub')
+        cls.git_top_submodules_path = os.path.join(cls.tmp_path, 'gittest-top-sub')
 
-        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                           'data/git/gittest.tar.gz'),
-                               '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                           'data/git/gitdetached.tar.gz'),
-                               '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                           'data/git/gittestempty.tar.gz'),
-                               '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                           'data/git/gittest-sub.tar.gz'),
-                               '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                           'data/git/gittest-top-sub.tar.gz'),
-                               '-C', cls.tmp_path])
+        data_path = os.path.dirname(os.path.abspath(__file__))
+        data_path = os.path.join(data_path, 'data/git')
+
+        repos = [
+            ('gittest', cls.git_path),
+            ('gitdetached', cls.git_detached_path),
+            ('gittestempty', cls.git_empty_path),
+            ('gittest-sub', cls.git_submodules_path),
+            ('gittest-top-sub', cls.git_top_submodules_path)
+        ]
+
+        fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
+
+        for repo_name, repo_path in repos:
+            tar_path = os.path.join(data_path, repo_name + '.tar.gz')
+            subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_repo_path])
+
+            origin_path = os.path.join(cls.tmp_repo_path, repo_name)
+            subprocess.check_call(['git', 'clone', '-q', '--mirror', origin_path, repo_path],
+                                  stderr=fdout)
 
     @classmethod
     def tearDownClass(cls):
@@ -384,11 +392,12 @@ class TestGitBackend(TestCaseGit):
     def test_fetch_latest_items(self):
         """Test whether latest commits are fetched from a Git repository"""
 
+        origin_path = os.path.join(self.tmp_repo_path, 'gittest')
         editable_path = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
         new_file = os.path.join(editable_path, 'newfile')
 
-        shutil.copytree(self.git_path, editable_path)
+        shutil.copytree(origin_path, editable_path)
 
         git = Git(editable_path, new_path)
         commits = [commit for commit in git.fetch(latest_items=True)]
@@ -950,25 +959,54 @@ def count_commits(gitpath):
     return len(commits)
 
 
+def discover_refs(gitpath):
+    """Get the references of local repository"""
+
+    cmd = ['git', 'show-ref']
+    gitrefs = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                      cwd=gitpath,
+                                      env={'LANG': 'C', 'PAGER': ''})
+    outs = gitrefs.decode('utf-8', errors='surrogateescape').rstrip()
+
+    refs = {}
+
+    for line in outs.split('\n'):
+        data = line.split(' ')
+        refs[data[1]] = data[0]
+    return refs
+
+
 class TestGitRepository(TestCaseGit):
     """GitRepository tests"""
 
     @classmethod
     def setUpClass(cls):
         cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+        cls.tmp_repo_path = os.path.join(cls.tmp_path, 'repos')
+        os.mkdir(cls.tmp_repo_path)
+
         cls.git_path = os.path.join(cls.tmp_path, 'gittest')
         cls.git_detached_path = os.path.join(cls.tmp_path, 'gitdetached')
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
 
-        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                           'data/git/gittest.tar.gz'),
-                               '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                           'data/git/gitdetached.tar.gz'),
-                               '-C', cls.tmp_path])
-        subprocess.check_call(['tar', '-xzf', os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                           'data/git/gittestempty.tar.gz'),
-                               '-C', cls.tmp_path])
+        data_path = os.path.dirname(os.path.abspath(__file__))
+        data_path = os.path.join(data_path, 'data/git')
+
+        repos = [
+            ('gittest', cls.git_path),
+            ('gitdetached', cls.git_detached_path),
+            ('gittestempty', cls.git_empty_path)
+        ]
+
+        fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
+
+        for repo_name, repo_path in repos:
+            tar_path = os.path.join(data_path, repo_name + '.tar.gz')
+            subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_repo_path])
+
+            origin_path = os.path.join(cls.tmp_repo_path, repo_name)
+            subprocess.check_call(['git', 'clone', '-q', '--mirror', origin_path, repo_path],
+                                  stderr=fdout)
 
     @classmethod
     def tearDownClass(cls):
@@ -994,7 +1032,8 @@ class TestGitRepository(TestCaseGit):
     def test_not_existing_repo_on_init(self):
         """Test if init fails when the repos does not exists"""
 
-        expected = "git repository '%s' does not exist" % (self.tmp_path)
+        expected = "directory '%s' is not a Git mirror of repository '%s'" \
+            % (self.tmp_path, 'http://example.org')
 
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository('http://example.org', self.tmp_path)
@@ -1010,7 +1049,7 @@ class TestGitRepository(TestCaseGit):
         self.assertEqual(repo.uri, self.git_path)
         self.assertEqual(repo.dirpath, new_path)
         self.assertTrue(os.path.exists(new_path))
-        self.assertTrue(os.path.exists(os.path.join(new_path, '.git')))
+        self.assertTrue(os.path.exists(os.path.join(new_path, 'HEAD')))
 
         shutil.rmtree(new_path)
 
@@ -1018,13 +1057,21 @@ class TestGitRepository(TestCaseGit):
         """Test if a supposed git repo is not a git repo"""
 
         new_path = os.path.join(self.tmp_path, 'falsegit')
+
+        expected = "directory '%s' for Git repository '%s' does not exist" \
+            % (new_path, '')
+
+        with self.assertRaisesRegex(RepositoryError, expected):
+            _ = GitRepository(uri="", dirpath=new_path)
+
         if not os.path.isdir(new_path):
             os.makedirs(new_path)
 
-        expected = "git repository '%s' does not exist" % new_path
+        expected = "directory '%s' is not a Git mirror of repository '%s'" \
+            % (new_path, '')
 
         with self.assertRaisesRegex(RepositoryError, expected):
-            repo = GitRepository(uri="", dirpath=new_path)
+            _ = GitRepository(uri="", dirpath=new_path)
 
         shutil.rmtree(new_path)
 
@@ -1125,64 +1172,56 @@ class TestGitRepository(TestCaseGit):
 
         shutil.rmtree(new_path)
 
-    def test_pull(self):
+    def test_update(self):
         """Test if the repository is updated to 'origin' status"""
 
         new_path = os.path.join(self.tmp_path, 'newgit')
-        new_file = os.path.join(new_path, 'newfile')
-
         repo = GitRepository.clone(self.git_path, new_path)
 
-        # Count the number of commits before adding a new one
-        ncommits = count_commits(new_path)
-        self.assertEqual(ncommits, 9)
+        # Check the reference of 'refs/heads/master'
+        refs = discover_refs(new_path)
+        self.assertEqual(refs['refs/heads/master'],
+                         '456a68ee1407a77f3e804a30dff245bb6c6b872f')
 
-        # Create a new file and commit it to the repository
-        with open(new_file, 'w') as f:
-            f.write("Testing pull method")
-
-        cmd = ['git', 'add', new_file]
+        cmd = ['git', 'update-ref',
+               'refs/heads/master',
+               '589bb080f059834829a2a5955bebfd7c2baa110a']
         subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                 cwd=new_path, env={'LANG': 'C'})
 
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Testing pull']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=new_path, env={'LANG': 'C'})
-
-        # Count the number of commits after the adding a new one
-        ncommits = count_commits(new_path)
-        self.assertEqual(ncommits, 10)
+        # Check the new reference of 'refs/heads/master'
+        refs = discover_refs(new_path)
+        self.assertEqual(refs['refs/heads/master'],
+                         '589bb080f059834829a2a5955bebfd7c2baa110a')
 
         # Update the repository to its original status
-        repo.pull()
+        repo.update()
 
-        # The number of commits should be updated to its original value
-        ncommits = count_commits(new_path)
-        self.assertEqual(ncommits, 9)
+        # The reference should be updated to its original value
+        refs = discover_refs(new_path)
+        self.assertEqual(refs['refs/heads/master'],
+                         '456a68ee1407a77f3e804a30dff245bb6c6b872f')
 
         shutil.rmtree(new_path)
 
-    def test_pull_empty_repository(self):
-        """Test if an exception is raised when the repository is empty"""
+    def test_update_empty_repository(self):
+        """Test if no exception is raised when the repository is empty"""
 
         new_path = os.path.join(self.tmp_path, 'newgit')
         repo = GitRepository.clone(self.git_empty_path, new_path)
-
-        with self.assertRaises(EmptyRepositoryError):
-            repo.pull()
+        repo.update()
 
         shutil.rmtree(new_path)
 
     def test_sync(self):
         """Test if the repository is synchonized with its remote repo"""
 
+        origin_path = os.path.join(self.tmp_repo_path, 'gittest')
         editable_path = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
         new_file = os.path.join(editable_path, 'newfile')
 
-        shutil.copytree(self.git_path, editable_path)
+        shutil.copytree(origin_path, editable_path)
 
         repo = GitRepository.clone(editable_path, new_path)
         repo.sync()
@@ -1231,10 +1270,10 @@ class TestGitRepository(TestCaseGit):
             'refs/heads/master',
             'refs/heads/mybranch',
             'refs/remotes/origin/HEAD',
-            'refs/remotes/origin/lzp',
             'refs/remotes/origin/master'
         ]
-        refs = [ref.refname for ref in repo._discover_refs()]
+        refs = [ref for ref in discover_refs(new_path).keys()]
+        refs.sort()
         self.assertListEqual(refs, expected)
 
         # Remove 'lzp' branch and check the number of commits and refs
@@ -1253,7 +1292,8 @@ class TestGitRepository(TestCaseGit):
             'refs/remotes/origin/HEAD',
             'refs/remotes/origin/master'
         ]
-        refs = [ref.refname for ref in repo._discover_refs()]
+        refs = [ref for ref in discover_refs(new_path).keys()]
+        refs.sort()
         self.assertListEqual(refs, expected)
 
         # Cleanup
