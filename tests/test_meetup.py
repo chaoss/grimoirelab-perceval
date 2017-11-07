@@ -31,6 +31,8 @@ import tempfile
 import time
 import unittest
 
+import requests
+
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -92,7 +94,7 @@ def setup_http_server(rate_limit=-1, reset_rate_limit=-1):
     event_comments_body = read_file('data/meetup/meetup_comments.json', 'rb')
     event_rsvps_body = read_file('data/meetup/meetup_rsvps.json', 'rb')
 
-    def request_callback(method, uri, headers):
+    def request_callback(method, uri, headers, too_many_requests=False):
         last_request = httpretty.last_request()
 
         if uri.startswith(MEETUP_EVENT_1_COMMENTS_URL):
@@ -147,7 +149,6 @@ def setup_http_server(rate_limit=-1, reset_rate_limit=-1):
                                httpretty.Response(body=request_callback)
                                for _ in range(2)
                            ])
-
     for url in MEETUP_COMMENTS_URL:
         httpretty.register_uri(httpretty.GET,
                                url,
@@ -171,7 +172,7 @@ class TestMeetupBackend(unittest.TestCase):
         """Test whether attributes are initializated"""
 
         meetup = Meetup('mygroup', 'aaaa', max_items=5, tag='test',
-                        sleep_for_rate=True, min_rate_to_sleep=10)
+                        sleep_for_rate=True, min_rate_to_sleep=10, sleep_time=60)
 
         self.assertEqual(meetup.origin, 'https://meetup.com/')
         self.assertEqual(meetup.tag, 'test')
@@ -181,6 +182,7 @@ class TestMeetupBackend(unittest.TestCase):
         self.assertEqual(meetup.client.api_key, 'aaaa')
         self.assertEqual(meetup.client.sleep_for_rate, True)
         self.assertEqual(meetup.client.min_rate_to_sleep, 10)
+        self.assertEqual(meetup.client.sleep_time, 60)
 
         # When tag is empty or None it will be set to
         # the value in URL
@@ -625,7 +627,8 @@ class TestMeetupCommand(unittest.TestCase):
                 '--from-date', '1970-01-01',
                 '--to-date', '2016-01-01',
                 '--sleep-for-rate',
-                '--min-rate-to-sleep', '10']
+                '--min-rate-to-sleep', '10',
+                '--sleep-time', '10']
 
         expected_ts = datetime.datetime(2016, 1, 1, 0, 0, 0,
                                         tzinfo=dateutil.tz.tzutc())
@@ -640,6 +643,7 @@ class TestMeetupCommand(unittest.TestCase):
         self.assertEqual(parsed_args.to_date, expected_ts)
         self.assertEqual(parsed_args.sleep_for_rate, True)
         self.assertEqual(parsed_args.min_rate_to_sleep, 10)
+        self.assertEqual(parsed_args.sleep_time, 10)
 
 
 class TestMeetupClient(unittest.TestCase):
@@ -847,6 +851,25 @@ class TestMeetupClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/sqlpass-es/events')
         self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_too_many_requests(self):
+        """Test if a too many requests error is raised"""
+
+        httpretty.register_uri(httpretty.GET,
+                               MEETUP_EVENTS_URL,
+                               status=429)
+
+        client = MeetupClient('aaaa', max_items=2, sleep_time=0.1)
+        start = float(time.time())
+        expected = start + (sum([i * client.sleep_time for i in range(client.MAX_RETRIES)]))
+
+        events = client.events('sqlpass-es')
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = [event for event in events]
+
+        end = float(time.time())
+        self.assertGreater(end, expected)
 
 
 if __name__ == "__main__":

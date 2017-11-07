@@ -49,6 +49,9 @@ MAX_ITEMS = 200
 MIN_RATE_LIMIT = 1
 MAX_RATE_LIMIT = 30
 
+# Time to avoid too many request exception
+SLEEP_TIME = 30
+
 
 class Meetup(Backend):
     """Meetup backend.
@@ -65,12 +68,15 @@ class Meetup(Backend):
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
+    :param sleep_time: minimun waiting time to avoid too many request
+         exception
     """
-    version = '0.5.1'
+    version = '0.5.2'
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None,
-                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
+                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
+                 sleep_time=SLEEP_TIME):
         origin = MEETUP_URL
 
         super().__init__(origin, tag=tag, cache=cache)
@@ -78,7 +84,8 @@ class Meetup(Backend):
         self.max_items = max_items
         self.client = MeetupClient(api_token, max_items=max_items,
                                    sleep_for_rate=sleep_for_rate,
-                                   min_rate_to_sleep=min_rate_to_sleep)
+                                   min_rate_to_sleep=min_rate_to_sleep,
+                                   sleep_time=sleep_time)
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME, to_date=None):
@@ -318,6 +325,9 @@ class MeetupCommand(BackendCommand):
         group.add_argument('--min-rate-to-sleep', dest='min_rate_to_sleep',
                            default=MIN_RATE_LIMIT, type=int,
                            help="sleep until reset when the rate limit reaches this value")
+        group.add_argument('--sleep-time', dest='sleep_time',
+                           default=SLEEP_TIME, type=int,
+                           help="minimun sleeping time to avoid too many request exception")
 
         # Required arguments
         parser.parser.add_argument('group',
@@ -356,13 +366,16 @@ class MeetupClient:
                'suggested', 'draft']
     VUPDATED = 'updated'
 
+    MAX_RETRIES = 5
+
     def __init__(self, api_key, max_items=MAX_ITEMS,
-                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
+                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT, sleep_time=SLEEP_TIME):
         self.api_key = api_key
         self.max_items = max_items
         self.rate_limit = None
         self.rate_limit_reset_ts = None
         self.sleep_for_rate = sleep_for_rate
+        self.sleep_time = sleep_time
 
         if min_rate_to_sleep > MAX_RATE_LIMIT:
             msg = "Minimum rate to sleep value exceeded (%d)."
@@ -447,6 +460,9 @@ class MeetupClient:
 
         do_fetch = True
 
+        retry_time = 0
+        retries = 0
+
         while do_fetch:
             logger.debug("Meetup client calls resource: %s params: %s",
                          resource, str(params))
@@ -463,7 +479,17 @@ class MeetupClient:
                                          seconds_to_reset=self.rate_limit_reset_ts)
 
             r = requests.get(url, params=params)
-            r.raise_for_status()
+            time.sleep(retry_time)
+            try:
+                r.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 429 and retries < self.MAX_RETRIES:
+                    retries += 1
+                    retry_time = retries * self.sleep_time
+                    continue
+                else:
+                    raise e
+
             self.rate_limit = float(r.headers['X-RateLimit-Remaining'])
             self.rate_limit_reset_ts = float(r.headers['X-RateLimit-Reset'])
             yield r.text
