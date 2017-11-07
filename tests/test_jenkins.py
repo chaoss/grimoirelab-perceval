@@ -24,9 +24,11 @@
 
 import json
 import os
+import requests
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 
 import httpretty
@@ -72,12 +74,13 @@ class TestJenkinsBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        jenkins = Jenkins(JENKINS_SERVER_URL, tag='test')
+        jenkins = Jenkins(JENKINS_SERVER_URL, tag='test', sleep_time=60)
 
         self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.tag, 'test')
         self.assertIsInstance(jenkins.client, JenkinsClient)
+        self.assertEqual(jenkins.client.sleep_time, 60)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -332,13 +335,14 @@ class TestJenkinsCommand(unittest.TestCase):
         parser = JenkinsCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
 
-        args = ['--tag', 'test', '--no-cache',
+        args = ['--tag', 'test', '--no-cache', '--sleep-time', '60',
                 '--blacklist-jobs', '1', '2', '3', '4', '--',
                 JENKINS_SERVER_URL]
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, JENKINS_SERVER_URL)
         self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.sleep_time, 60)
         self.assertEqual(parsed_args.no_cache, True)
         self.assertListEqual(parsed_args.blacklist_jobs, ['1', '2', '3', '4'])
 
@@ -354,7 +358,7 @@ class TestJenkinsClient(unittest.TestCase):
     @httpretty.activate
     def test_init(self):
         """Test initialization"""
-        client = JenkinsClient(JENKINS_SERVER_URL)
+        client = JenkinsClient(JENKINS_SERVER_URL, sleep_time=0.1)
 
     @httpretty.activate
     def test_get_jobs(self):
@@ -385,6 +389,27 @@ class TestJenkinsClient(unittest.TestCase):
         response = client.get_builds(JENKINS_JOB_BUILDS_1)
 
         self.assertEqual(response, body)
+
+    @httpretty.activate
+    def test_connection_error(self):
+        """Test that HTTP connection error is correctly handled"""
+
+        # Set up a mock HTTP server
+        body = read_file('data/jenkins/jenkins_job_builds.json')
+        httpretty.register_uri(httpretty.GET,
+                               JENKINS_JOB_BUILDS_URL_1,
+                               body=body, status=408)
+
+        client = JenkinsClient(JENKINS_SERVER_URL, sleep_time=0.1)
+
+        start = float(time.time())
+        expected = start + (sum([i * client.sleep_time for i in range(client.MAX_RETRIES)]))
+
+        with self.assertRaises(requests.exceptions.RequestException):
+            _ = client.get_builds(JENKINS_JOB_BUILDS_1)
+
+        end = float(time.time())
+        self.assertGreater(end, expected)
 
 
 if __name__ == "__main__":
