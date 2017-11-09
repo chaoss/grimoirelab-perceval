@@ -71,8 +71,8 @@ class GitLab(Backend):
 
     def __init__(self, owner=None, repository=None,
                  api_token=None,
-                 tag=None,
                  base_url=None,
+                 tag=None,                 
                  cache=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
 
