@@ -17,17 +17,15 @@
 # Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA.
 #
 # Authors:
-#     Alvaro del Castillo San Felix <acs@bitergia.com>
-#     Santiago Dueñas <sduenas@bitergia.com>
-#     Alberto Martín <alberto.martin@bitergia.com>
+#     ...
 #
 
 import json
 import logging
 import time
-import urllib.parse
 
 import requests
+import urllib.parse
 
 from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 from grimoirelab.toolkit.uris import urijoin
@@ -39,13 +37,14 @@ from ...backend import (Backend,
 from ...errors import CacheError, RateLimitError
 from ...utils import DEFAULT_DATETIME
 
+GITLAB_URL = "https://gitlab.com/"
+GITLAB_API_URL = "https://gitlab.com/api/v4"
 
 # Range before sleeping until rate limit reset
 MIN_RATE_LIMIT = 10
 MAX_RATE_LIMIT = 500
 
-TARGET_ISSUE_FIELDS = ['author', 'assignee', 'assignees', 'comments',
-                       'reactions']
+TARGET_ISSUE_FIELDS = ['user_notes_count', 'award_emoji']
 
 logger = logging.getLogger(__name__)
 
@@ -59,22 +58,25 @@ class GitLab(Backend):
     :param owner: GitLab owner
     :param repository: GitLab repository from the owner
     :param api_token: GitLab auth token to access the API
+    :param tag: label used to mark the data
     :param base_url: GitLab URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitLab public site.
-    :param tag: label used to mark the data
     :param cache: use issues already retrieved in cache
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.11.1'
+    version = '0.1.0'
 
     def __init__(self, owner=None, repository=None,
-                 api_token=None, base_url=None,
-                 tag=None, cache=None,
+                 api_token=None,
+                 tag=None,
+                 base_url=None,
+                 cache=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
-        origin = base_url
+
+        origin = base_url if base_url else GITLAB_URL
         origin = urijoin(origin, owner, repository)
 
         super().__init__(origin, tag=tag, cache=cache)
@@ -158,28 +160,15 @@ class GitLab(Backend):
             issues = json.loads(raw_issues)
             for issue in issues:
                 self.__init_extra_issue_fields(issue)
-                for field in TARGET_ISSUE_FIELDS:
-                    if field not in issue.keys() or not issue[field]:
-                        continue
-                    if field == 'author':
-                        issue[field + '_data'] = \
-                            self.__get_user(issue[field]['username'])
-                    elif field == 'assignee':
-                        issue[field + '_data'] = \
-                            self.__get_issue_assignee(issue[field])
-                    elif field == 'assignees':
-                        issue[field + '_data'] = \
-                            self.__get_issue_assignees(issue[field])
-                    elif field == 'comments':
-                        issue[field + '_data'] = \
-                            self.__get_issue_comments(issue['number'])
-                    elif field == 'reactions':
-                        issue[field + '_data'] = \
-                            self.__get_issue_reactions(
-                                issue['number'],
-                                issue['reactions']['total_count'])
+
+                issue['user_notes_data'] = \
+                    self.__get_issue_notes(issue['iid'])
+                issue['award_emoji_data'] = \
+                    self.__get_issue_award_emoji(issue['iid'])
+
                 self._push_cache_queue('{ISSUE-END}')
                 self._flush_cache_queue()
+
                 yield issue
         self._push_cache_queue('{}{}')
         self._flush_cache_queue()
@@ -212,28 +201,14 @@ class GitLab(Backend):
 
                 while raw_item != '{ISSUE-END}':
                     try:
-                        if raw_item == '{USER}':
-                            issue['user_data'] = \
-                                self.__fetch_user_and_organization_from_cache(
-                                    issue['user']['login'], cache_items)
-                        elif raw_item == '{ASSIGNEE}':
-                            assignee = \
-                                self.__fetch_assignee_from_cache(cache_items)
-                            issue['assignee_data'] = assignee
-                        elif raw_item == '{ASSIGNEES}':
-                            assignees = \
-                                self.__fetch_assignees_from_cache(cache_items)
-                            issue['assignees_data'] = assignees
-                        elif raw_item == '{COMMENTS}':
-                            comments = \
-                                self.__fetch_comments_from_cache(cache_items)
-                            issue['comments_data'] = comments
-                        elif raw_item == '{ISSUE-REACTIONS}':
-                            reactions = \
-                                self.__fetch_issue_reactions_from_cache(
+                        if raw_item == '{NOTES}':
+                            notes = self.__fetch_notes_from_cache(cache_items)
+                            issue['user_notes_data'] = notes
+                        elif raw_item == '{ISSUE-EMOJIS}':
+                            emoji = \
+                                self.__fetch_issue_emoji_from_cache(
                                     cache_items)
-                            issue['reactions_data'] = reactions
-
+                            issue['award_emoji_data'] = emoji
                         raw_item = next(cache_items)
 
                     except StopIteration:
@@ -245,123 +220,60 @@ class GitLab(Backend):
                 raw_item = next(cache_items)
                 yield issue
 
-    def __get_issue_reactions(self, issue_number, total_count):
-        """Get issue reactions"""
+    def __get_issue_notes(self, issue_id):
+        """Get issue notes"""
 
-        reactions = []
-        self._push_cache_queue('{ISSUE-REACTIONS}')
+        notes = []
+
+        group_notes = self.client.issue_notes(issue_id)
+        self._push_cache_queue('{NOTES}')
         self._flush_cache_queue()
 
-        if total_count == 0:
-            self._push_cache_queue('[]')
-            self._flush_cache_queue()
-            return reactions
-
-        group_reactions = self.client.issue_reactions(issue_number)
-
-        for raw_reactions in group_reactions:
-            self._push_cache_queue(raw_reactions)
+        for raw_notes in group_notes:
+            self._push_cache_queue(raw_notes)
             self._flush_cache_queue()
 
-            for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = \
-                    self.__get_user(reaction['user']['login'])
-                reactions.append(reaction)
+            for note in json.loads(raw_notes):
+                note_id = note['id']
+                note['award_emoji_data'] = \
+                    self.__get_note_award_emoji(issue_id, note_id)
+                notes.append(note)
 
-        return reactions
+        return notes
 
-    def __get_issue_comments(self, issue_number):
-        """Get issue comments"""
+    def __get_issue_award_emoji(self, issue_id):
+        """Get award emojis for issue"""
 
-        comments = []
-        group_comments = self.client.issue_comments(issue_number)
-        self._push_cache_queue('{COMMENTS}')
+        emojis = []
+        self._push_cache_queue('{ISSUE-EMOJIS}')
         self._flush_cache_queue()
 
-        for raw_comments in group_comments:
-            self._push_cache_queue(raw_comments)
+        group_emojis = self.client.issue_emojis(issue_id)
+        for raw_emojis in group_emojis:
+            self._push_cache_queue(raw_emojis)
             self._flush_cache_queue()
 
-            for comment in json.loads(raw_comments):
-                comment_id = comment.get('id')
-                comment['user_data'] = \
-                    self.__get_user(comment['user']['login'])
-                comment['reactions_data'] = \
-                    self.__get_issue_comment_reactions(
-                        comment_id, comment['reactions']['total_count'])
-                comments.append(comment)
+            for emoji in json.loads(raw_emojis):
+                emojis.append(emoji)
 
-        return comments
+        return emojis
 
-    def __get_issue_comment_reactions(self, comment_id, total_count):
-        """Get reactions on issue comments"""
+    def __get_note_award_emoji(self, issue_id, note_id):
+        """Fetch emojis for note"""
 
-        reactions = []
-        self._push_cache_queue('{COMMENT-REACTIONS}')
+        emojis = []
+        self._push_cache_queue('{NOTE-EMOJIS}')
         self._flush_cache_queue()
 
-        if total_count == 0:
-            self._push_cache_queue('[]')
-            self._flush_cache_queue()
-            return reactions
-
-        group_reactions = self.client.issue_comment_reactions(comment_id)
-
-        for raw_reactions in group_reactions:
-            self._push_cache_queue(raw_reactions)
+        group_emojis = self.client.note_emojis(issue_id, note_id)
+        for raw_emojis in group_emojis:
+            self._push_cache_queue(raw_emojis)
             self._flush_cache_queue()
 
-            for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = \
-                    self.__get_user(reaction['user']['login'])
-                reactions.append(reaction)
+            for emoji in json.loads(raw_emojis):
+                emojis.append(emoji)
 
-        return reactions
-
-    def __get_issue_assignee(self, raw_assignee):
-        """Get issue assignee"""
-
-        self._push_cache_queue('{ASSIGNEE}')
-        self._push_cache_queue(raw_assignee)
-        self._flush_cache_queue()
-        if 'username' in raw_assignee.keys():
-            assignee = self.__get_user(raw_assignee['username'])
-
-        return assignee
-
-    def __get_issue_assignees(self, raw_assignees):
-        """Get issue assignees"""
-
-        self._push_cache_queue('{ASSIGNEES}')
-        self._push_cache_queue(raw_assignees)
-        self._flush_cache_queue()
-        assignees = []
-        for ra in raw_assignees:
-            if 'username' in ra.keys():
-                assignees.append(self.__get_user(ra['username']))
-
-        return assignees
-
-    def __get_user(self, login):
-        """Get user and org data for the login"""
-
-        user = {}
-
-        if not login:
-            return user
-
-        user_raw = self.client.user(login)
-        user = json.loads(user_raw)
-        self._push_cache_queue('{USER}')
-        self._push_cache_queue(user_raw)
-        user_orgs_raw = \
-            self.client.user_orgs(login)
-        if 'organization' in user:
-            user['organization'] = json.loads(user_orgs_raw)
-        self._push_cache_queue(user_orgs_raw)
-        self._flush_cache_queue()
-
-        return user
+        return emojis
 
     def __fetch_issues_from_cache(self, cache_items):
         """Fetch issues from cache"""
@@ -370,103 +282,31 @@ class GitLab(Backend):
         issues = json.loads(raw_content)
         return issues
 
-    def __fetch_user_and_organization_from_cache(
-            self, user_login, cache_items):
-        """Fetch user and organization from cache"""
-
-        raw_user = next(cache_items)
-        raw_org = next(cache_items)
-        return self.__get_user_and_organization(user_login, raw_user, raw_org)
-
-    def __fetch_assignee_from_cache(self, cache_items):
-        """Fetch issue assignee from cache"""
-
-        raw_assignee = next(cache_items)
-        raw_user = next(cache_items)
-        raw_org = next(cache_items)
-        assignee = self.__get_user_and_organization(
-            raw_assignee['login'], raw_user, raw_org)
-
-        return assignee
-
-    def __fetch_assignees_from_cache(self, cache_items):
-        """Fetch issue assignees from cache"""
-
-        raw_assignees = next(cache_items)
-        assignees = []
-        for a in raw_assignees:
-            raw_user = next(cache_items)
-            raw_org = next(cache_items)
-            a = self.__get_user_and_organization(a['login'], raw_user, raw_org)
-            assignees.append(a)
-
-        return assignees
-
-    def __fetch_issue_comment_reactions_from_cache(self, cache_items):
-        """Fetch issue comment reactions from cache"""
+    def __fetch_issue_emoji_from_cache(self, cache_items):
+        """Fetch issue emoji from cache"""
 
         raw_content = next(cache_items)
-        reactions = json.loads(raw_content)
-        for reaction in reactions:
-            raw_user = next(cache_items)
-            raw_org = next(cache_items)
-            reaction['user_data'] = \
-                self.__get_user_and_organization(
-                    reaction['user']['login'], raw_user, raw_org)
+        emoji = json.loads(raw_content)
+        return emoji
 
-        return reactions
-
-    def __fetch_issue_reactions_from_cache(self, cache_items):
-        """Fetch issue reactions from cache"""
+    def __fetch_notes_from_cache(self, cache_items):
+        """Fetch issue notes from cache"""
 
         raw_content = next(cache_items)
-        reactions = json.loads(raw_content)
-        for r in reactions:
-            raw_user = next(cache_items)
-            raw_org = next(cache_items)
-            r['user_data'] = \
-                self.__get_user_and_organization(
-                    r['user']['login'], raw_user, raw_org)
+        notes = json.loads(raw_content)
 
-        return reactions
+        for note in notes:
+            _ = next(cache_items)
+            raw_emoji = next(cache_items)
+            note['award_emoji_data'] = json.loads(raw_emoji)
 
-    def __fetch_comments_from_cache(self, cache_items):
-        """Fetch issue comments from cache"""
-
-        raw_content = next(cache_items)
-        comments = json.loads(raw_content)
-        for c in comments:
-            raw_user = next(cache_items)
-            raw_org = next(cache_items)
-            c['user_data'] = \
-                self.__get_user_and_organization(
-                    c['user']['login'], raw_user, raw_org)
-
-            reactions = \
-                self.__fetch_issue_comment_reactions_from_cache(cache_items)
-            c['reactions_data'] = reactions
-
-        return comments
+        return notes
 
     def __init_extra_issue_fields(self, issue):
         """Add fields to an issue"""
 
-        issue['user_data'] = {}
-        issue['assignee_data'] = {}
-        issue['assignees_data'] = []
-        issue['comments_data'] = []
-        issue['reactions_data'] = []
-
-    def __get_user_and_organization(self, login, raw_user, raw_org):
-        found = self._users.get(login)
-
-        if not found:
-            user = json.loads(raw_user)
-            user['organizations'] = json.loads(raw_org)
-            self._users.update({login: user})
-            found = self._users.get(login)
-
-        return found
+        issue['user_notes_data'] = []
+        issue['award_emoji_data'] = []
 
 
 class GitLabClient:
@@ -482,13 +322,13 @@ class GitLabClient:
         self.repository = repository
         self.token = token
         self.rate_limit = None
-        self.rate_limit_reset_ts = None
         self.sleep_for_rate = sleep_for_rate
 
         if base_url:
             parts = urllib.parse.urlparse(base_url)
-
             self.api_url = parts.scheme + '://' + parts.netloc + '/api/v4'
+        else:
+            self.api_url = GITLAB_API_URL
 
         if min_rate_to_sleep > MAX_RATE_LIMIT:
             msg = "Minimum rate to sleep value exceeded (%d)."
@@ -498,65 +338,44 @@ class GitLabClient:
 
         self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
 
-    def issue_reactions(self, issue_number):
-        """Get reactions of an issue"""
+    def issue_notes(self, issue_id):
+        """Get the issue notes from pagination"""
 
         return self._fetch_items(
-            "/issues/" + str(issue_number) + "/reactions", "comment")
-
-    def issue_comment_reactions(self, comment_id):
-        """Get reactions of an issue comment"""
-
-        return self._fetch_items(
-            "/issues/comments/" + str(comment_id) + "/reactions", "comment")
-
-    def issue_comments(self, issue_number):
-        """Get the issue comments from pagination"""
-
-        return self._fetch_items(
-            "/issues/" + str(issue_number) + "/comments", "comment")
+            urijoin("issues", str(issue_id), "notes"), "note")
 
     def issues(self, start=None):
         """Get the issues from pagination"""
 
-        return self._fetch_items("/issues", payload_type="issue", start=start)
+        return self._fetch_items("issues", payload_type="issue", start=start)
 
-    def user(self, login):
+    def issue_emojis(self, issue_id):
+        """Get emojis of an issue"""
+
+        return self._fetch_items(
+            urijoin("issues", str(issue_id), "award_emoji"), "emoji")
+
+    def note_emojis(self, issue_id, note_id):
+        """Get emojis of a note"""
+
+        return self._fetch_items(
+            urijoin("issues", str(issue_id), "notes",
+                    str(note_id), "award_emoji"), "emoji")
+
+    def user(self, username):
         """Get the user information and update the user cache"""
 
-        if login in self._users:
-            return self._users[login]
+        if username in self._users:
+            return self._users[username]
 
-        url_user = urijoin(self.api_url, 'users?username=' + login)
+        url_user = urijoin(self.api_url, 'users?username=' + username)
 
         logging.info("Getting info for %s" % (url_user))
         r = self.__send_request(url_user, headers=self.__build_headers())
         user = r.text
-        self._users[login] = user
+        self._users[username] = user
 
         return user
-
-    def user_orgs(self, login):
-        """Get the user public organizations"""
-
-        if login in self._users_orgs:
-            return self._users_orgs[login]
-
-        url = urijoin(self.api_url, 'users?username=' + login, 'orgs')
-        try:
-            r = self.__send_request(url, headers=self.__build_headers())
-            orgs = r.text
-        except requests.exceptions.HTTPError as ex:
-            # 404 not found is wrongly received sometimes
-            if ex.response.status_code == 404:
-                logger.error("Can't get gitlab login orgs: %s", ex)
-                orgs = '[]'
-            else:
-                raise ex
-
-        self._users_orgs[login] = orgs
-
-        return orgs
 
     def __get_url_repo(self):
         """Build URL repo"""
@@ -570,18 +389,18 @@ class GitLabClient:
     def __get_url(self, path, startdate=None):
         """Build repo-"related URL"""
 
-        url = self.__get_url_repo() + path
+        url = urijoin(self.__get_url_repo(), path)
         return url
 
     def __build_payload(self, payload_type='issue', startdate=None):
         """Build payload"""
 
-# Gitlab sort arguments
+        # Gitlab sort arguments
         payload = {'sort': 'asc'}
         if payload_type == 'issue':
             payload['state'] = 'all'
             payload['order_by'] = 'updated_at'
-        elif payload_type == 'comment':
+        elif payload_type in ['note', 'emoji']:
             payload['order_by'] = 'updated_at'
 
         if startdate:
@@ -607,8 +426,7 @@ class GitLabClient:
                 if self.rate_limit is not None \
                         and self.rate_limit <= self.min_rate_to_sleep:
 
-                    seconds_to_reset = \
-                        self.rate_limit_reset_ts - int(time.time()) + 1
+                    seconds_to_reset = 3600
                     cause = "GitLab rate limit exhausted."
                     if self.sleep_for_rate:
                         logger.info("%s Waiting %i secs for rate limit reset.",
@@ -622,21 +440,16 @@ class GitLabClient:
                 r.raise_for_status()
 
                 # GitLab service establishes API rate limits.
-                # Enterprise version might have them deactivated.
-                if 'X-RateLimit-Remaining' in r.headers:
-                    self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
-                    self.rate_limit_reset_ts = \
-                        int(r.headers['X-RateLimit-Reset'])
+                if 'RateLimit-Remaining' in r.headers:
+                    self.rate_limit = int(r.headers['RateLimit-Remaining'])
                     logger.debug("Rate limit: %s", self.rate_limit)
                 else:
                     self.rate_limit = None
-                    self.rate_limit_reset_ts = None
 
                 break
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 403 and \
-                        'Retry-After' in r.headers:
-                    retry_seconds = int(r.headers['Retry-After'])
+                if e.response.status_code == 403:
+                    retry_seconds = int(10)
                     logger.warning(
                         "Abuse rate limit, the backend will sleep for %s seconds \
                             before starting again",
