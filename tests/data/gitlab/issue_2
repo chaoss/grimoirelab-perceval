@@ -1,0 +1,37 @@
+{
+        "assignee": null,
+        "assignees": [],
+        "author": {
+            "avatar_url": "https://secure.gravatar.com/avatar/b8c8a858811dfece044c3818e21bf4f3?s=80&d=identicon",
+            "id": 1,
+            "name": "Timothy Engler",
+            "state": "active",
+            "username": "redfish64",
+            "web_url": "https://gitlab.com/redfish64"
+        },
+        "closed_at": null,
+        "confidential": false,
+        "created_at": "2017-03-18T09:52:55.303Z",
+        "description": "Feeder (com.nononsenseapps.feeder) unnecessary require Android 7.0\n\nPlease compile it with lower minSDK.",
+        "discussion_locked": null,
+        "downvotes": 0,
+        "due_date": null,
+        "id": 2,
+        "iid": 2,
+        "labels": [],
+        "milestone": null,
+        "project_id": 1,
+        "state": "closed",
+        "time_stats": {
+            "human_time_estimate": null,
+            "human_total_time_spent": null,
+            "time_estimate": 0,
+            "total_time_spent": 0
+        },
+        "title": "Feeder (com.nononsenseapps.feeder) unnecessary require Android 7.0",
+        "updated_at": "2017-03-18T18:36:39.764Z",
+        "upvotes": 0,
+        "user_notes_count": 2,
+        "web_url": "https://gitlab.com/fdroid/fdroiddata/issues/641",
+        "weight": null
+}
