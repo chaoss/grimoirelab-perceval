@@ -469,6 +469,24 @@ class TestGitBackend(TestCaseGit):
         shutil.rmtree(editable_path)
         shutil.rmtree(new_path)
 
+    def test_fetch_latest_items_from_empty_repository(self):
+        """Test whether it fetches no items from an empty repository"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        git = Git(self.git_empty_path, new_path)
+
+        # First time, latest items are fetched using 'git log'
+        commits = [commit for commit in git.fetch(latest_items=True)]
+        self.assertListEqual(commits, [])
+
+        # Further times, latest items are fetched using 'git fetch-pack'
+        # and 'git show'
+        commits = [commit for commit in git.fetch(latest_items=True)]
+        self.assertListEqual(commits, [])
+
+        shutil.rmtree(new_path)
+
     def test_fetch_from_file(self):
         """Test whether commits are fetched from a Git log file"""
 
@@ -1294,6 +1312,18 @@ class TestGitRepository(TestCaseGit):
 
         # Cleanup
         shutil.rmtree(editable_path)
+        shutil.rmtree(new_path)
+
+    def test_sync_from_empty_repos(self):
+        """Test sync process on empty repositories"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_empty_path, new_path)
+
+        with self.assertRaises(EmptyRepositoryError):
+            repo.sync()
+
         shutil.rmtree(new_path)
 
     def test_log(self):
