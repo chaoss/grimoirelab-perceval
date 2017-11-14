@@ -91,7 +91,7 @@ class TestGitBackend(TestCaseGit):
             subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_repo_path])
 
             origin_path = os.path.join(cls.tmp_repo_path, repo_name)
-            subprocess.check_call(['git', 'clone', '-q', '--mirror', origin_path, repo_path],
+            subprocess.check_call(['git', 'clone', '-q', '--bare', origin_path, repo_path],
                                   stderr=fdout)
 
     @classmethod
@@ -1005,7 +1005,7 @@ class TestGitRepository(TestCaseGit):
             subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_repo_path])
 
             origin_path = os.path.join(cls.tmp_repo_path, repo_name)
-            subprocess.check_call(['git', 'clone', '-q', '--mirror', origin_path, repo_path],
+            subprocess.check_call(['git', 'clone', '-q', '--bare', origin_path, repo_path],
                                   stderr=fdout)
 
     @classmethod
@@ -1268,9 +1268,7 @@ class TestGitRepository(TestCaseGit):
         expected = [
             'refs/heads/lzp',
             'refs/heads/master',
-            'refs/heads/mybranch',
-            'refs/remotes/origin/HEAD',
-            'refs/remotes/origin/master'
+            'refs/heads/mybranch'
         ]
         refs = [ref for ref in discover_refs(new_path).keys()]
         refs.sort()
@@ -1288,9 +1286,7 @@ class TestGitRepository(TestCaseGit):
 
         expected = [
             'refs/heads/master',
-            'refs/heads/mybranch',
-            'refs/remotes/origin/HEAD',
-            'refs/remotes/origin/master'
+            'refs/heads/mybranch'
         ]
         refs = [ref for ref in discover_refs(new_path).keys()]
         refs.sort()

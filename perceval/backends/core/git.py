@@ -66,7 +66,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.8.4'
+    version = '0.8.5'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -674,6 +674,24 @@ class EmptyRepositoryError(RepositoryError):
     message = "%(repository)s is empty"
 
 
+class _GraphWalker:
+    """Commit walker needed by fetch_pack"""
+
+    def __init__(self, local_heads):
+        self.heads = set(local_heads)
+
+    def ack(self, sha):
+        pass
+
+    def next(self):
+        if self.heads:
+            ret = self.heads.pop()
+            return ret
+        return None
+
+    __next__ = next
+
+
 GitRef = collections.namedtuple('GitRef', ['hash', 'refname'])
 
 
@@ -983,9 +1001,13 @@ class GitRepository:
         repo = dulwich.repo.Repo(self.dirpath)
         fd = io.BytesIO()
 
+        local_refs = [ref.hash.encode('utf-8') for ref in self._discover_refs()
+                      if not ref.refname.endswith('^{}')]
+        graph_walker = _GraphWalker(local_refs)
+
         result = client.fetch_pack(repo_path,
                                    determine_wants,
-                                   repo.get_graph_walker(),
+                                   graph_walker,
                                    fd.write)
         refs = [GitRef(ref_hash.decode('utf-8'), ref_name.decode('utf-8'))
                 for ref_name, ref_hash in result.refs.items()]
@@ -1032,11 +1054,18 @@ class GitRepository:
 
         # Update new references
         for new_ref in refs:
-            if new_ref.refname.endswith('^{}'):
+            refname = new_ref.refname
+
+            if refname.endswith('^{}'):
                 logger.debug("Annotated tag %s ignored for updating in sync process",
-                             new_ref.refname)
+                             refname)
                 continue
-            self._update_ref(new_ref)
+            elif not refname.startswith('refs/heads/') and not refname.startswith('refs/tags/'):
+                logger.debug("Reference %s not needed; ignored for updating in sync process",
+                             refname)
+                continue
+            else:
+                self._update_ref(new_ref)
 
         # Prune repository to remove old branches
         cmd = ['git', 'remote', 'prune', 'origin']
@@ -1049,7 +1078,7 @@ class GitRepository:
             cmd_refs = ['git', 'ls-remote', '-h', '-t', 'origin']
             sep = '\t'
         else:
-            cmd_refs = ['git', 'show-ref']
+            cmd_refs = ['git', 'show-ref', '--heads', '--tags']
             sep = ' '
 
         outs = self._exec(cmd_refs, cwd=self.dirpath,
