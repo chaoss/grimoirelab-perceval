@@ -66,7 +66,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.8.3'
+    version = '0.8.4'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -724,7 +724,7 @@ class GitRepository:
     def clone(cls, uri, dirpath):
         """Clone a Git repository.
 
-        Make a mirror of the repository stored in `uri` into `dirpath`.
+        Make a bare copy of the repository stored in `uri` into `dirpath`.
         The repository would be either local or remote.
 
         :param uri: URI of the repository
@@ -735,7 +735,7 @@ class GitRepository:
         :raises RepositoryError: when an error occurs cloning the given
             repository
         """
-        cmd = ['git', 'clone', '--mirror', uri, dirpath]
+        cmd = ['git', 'clone', '--bare', uri, dirpath]
         env = {
             'LANG': 'C',
             'HOME': os.getenv('HOME', '')
@@ -816,14 +816,14 @@ class GitRepository:
         """Update repository from its remote.
 
         Calling this method, the repository will be synchronized with
-        the remote repository using the 'remote update' command.
+        the remote repository using 'fetch' command for 'heads' refs.
         Any commit stored in the local copy will be removed; refs
         will be overwritten.
 
         :raises RepositoryError: when an error occurs updating the
             repository
         """
-        cmd_update = ['git', 'remote', 'update']
+        cmd_update = ['git', 'fetch', 'origin', '+refs/heads/*:refs/heads/*', '--prune']
         self._exec(cmd_update, cwd=self.dirpath, env=self.gitenv)
 
         logger.debug("Git %s repository updated into %s",
@@ -903,7 +903,7 @@ class GitRepository:
             cmd_log.append('--since=' + dt)
 
         if branches is None:
-            cmd_log.extend(['--all', '--remotes=origin'])
+            cmd_log.extend(['--branches', '--tags', '--remotes=origin'])
         elif len(branches) == 0:
             cmd_log.append('--max-count=0')
         else:
