@@ -66,7 +66,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.8.5'
+    version = '0.8.6'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -110,14 +110,15 @@ class Git(Backend):
 
         :returns: a generator of commits
         """
-        if os.path.isfile(self.gitpath):
-            commits = self.__fetch_from_log()
-        else:
-            commits = self.__fetch_from_repo(from_date, branches,
-                                             latest_items)
-
         ncommits = 0
+
         try:
+            if os.path.isfile(self.gitpath):
+                commits = self.__fetch_from_log()
+            else:
+                commits = self.__fetch_from_repo(from_date, branches,
+                                                 latest_items)
+
             for commit in commits:
                 yield commit
                 ncommits += 1
@@ -1078,6 +1079,11 @@ class GitRepository:
             cmd_refs = ['git', 'ls-remote', '-h', '-t', 'origin']
             sep = '\t'
         else:
+            # Check first whether the local repo is empty;
+            # Running 'show-ref' in empty repos gives an error
+            if self.is_empty():
+                raise EmptyRepositoryError(repository=self.uri)
+
             cmd_refs = ['git', 'show-ref', '--heads', '--tags']
             sep = ' '
 
