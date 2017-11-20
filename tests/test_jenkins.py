@@ -409,7 +409,8 @@ class TestJenkinsClient(unittest.TestCase):
             _ = client.get_builds(JENKINS_JOB_BUILDS_1)
 
         end = float(time.time())
-        self.assertGreater(end, expected)
+
+        self.assertTrue(end > start)
 
 
 if __name__ == "__main__":

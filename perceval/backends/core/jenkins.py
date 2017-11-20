@@ -22,9 +22,6 @@
 
 import json
 import logging
-import time
-
-import requests
 
 from grimoirelab.toolkit.uris import urijoin
 
@@ -32,6 +29,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import CacheError
 
 
@@ -54,7 +52,7 @@ class Jenkins(Backend):
     :param blacklist_jobs: exclude the jobs of this list while fetching
     :param sleep_time: minimun waiting time due to a timeout connection exception
     """
-    version = '0.5.3'
+    version = '0.6.0'
 
     def __init__(self, url, tag=None, cache=None, blacklist_jobs=None, sleep_time=SLEEP_TIME):
         origin = url
@@ -87,16 +85,14 @@ class Jenkins(Backend):
             logger.debug("Adding builds from %s (%i/%i)",
                          job['url'], njobs, len(jobs))
 
-            try:
-                raw_builds = self.client.get_builds(job['name'])
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 500:
-                    logger.warning(e)
-                    logger.warning("Unable to fetch builds from job %s; skipping",
-                                   job['url'])
-                    continue
-                else:
-                    raise e
+            response = self.client.get_builds(job['name'])
+
+            if response == self.client.STOP:
+                logger.warning("Unable to fetch builds from job %s; skipping",
+                               job['url'])
+                continue
+
+            raw_builds = response
 
             if not raw_builds:
                 continue
@@ -184,7 +180,7 @@ class Jenkins(Backend):
         return 'build'
 
 
-class JenkinsClient:
+class JenkinsClient(HttpClient):
     """Jenkins API client.
 
     This class implements a simple client to retrieve builds from
@@ -197,16 +193,21 @@ class JenkinsClient:
     MAX_RETRIES = 5
 
     def __init__(self, url, blacklist_jobs=None, sleep_time=SLEEP_TIME):
+
         self.url = url
         self.blacklist_jobs = blacklist_jobs
         self.sleep_time = sleep_time
+        super().__init__(url, default_sleep_time=SLEEP_TIME)
 
     def get_jobs(self):
         """ Retrieve all jobs
         """
         url_jenkins = urijoin(self.url, "/api/json")
 
-        return self.__send_request(url_jenkins)
+        response = next(self.fetch(url_jenkins))
+
+        if HttpClient.is_response(response):
+            return response.text
 
     def get_builds(self, job_name):
         """ Retrieve all builds from a job
@@ -220,30 +221,26 @@ class JenkinsClient:
         job_url = self.url + "/job/%s/" % (job_name)
         url_jenkins = job_url + "api/json?depth=2"
 
-        return self.__send_request(url_jenkins)
+        response = next(self.fetch(url_jenkins))
 
-    def __send_request(self, url):
-        """send HTTP requests to the server"""
+        if HttpClient.is_response(response):
+            return response.text
 
-        retries = 0
+    def handle_http_500_errors(self, error, retries=0, url=None, payload=None, headers=None):
+        if error.response.status_code in [502, 503, 504]:
+            return self.RETRY
+        elif error.response.status_code == 500:
+            logger.warning(error)
+            logger.warning("Unable to fetch builds from job %s; skipping", url)
+            return self.STOP
+        else:
+            raise error
 
-        while retries < self.MAX_RETRIES:
-
-            try:
-                req = requests.get(url)
-                req.raise_for_status()
-                break
-            except requests.exceptions.RequestException as e:
-                if e.response.status_code in [408, 410, 502, 503, 504]:
-                    retries += 1
-                    time.sleep(self.sleep_time * retries)
-                else:
-                    raise e
-
-        if retries == self.MAX_RETRIES:
-            req.raise_for_status()
-
-        return req.text
+    def handle_http_400_errors(self, error, retries=0, url=None, payload=None, headers=None):
+        if error.response.status_code in [408, 410, 502, 503, 504]:
+            return self.RETRY
+        else:
+            raise error
 
 
 class JenkinsCommand(BackendCommand):
