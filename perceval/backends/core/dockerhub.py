@@ -23,8 +23,6 @@
 import json
 import logging
 
-import requests
-
 from grimoirelab.toolkit.datetime import datetime_utcnow
 from grimoirelab.toolkit.uris import urijoin
 
@@ -32,7 +30,8 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError
+from ...client import HttpClient
+from ...errors import CacheError, HttpClientError
 
 
 logger = logging.getLogger(__name__)
@@ -61,7 +60,7 @@ class DockerHub(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.2'
+    version = '0.2.0'
 
     def __init__(self, owner, repository,
                  tag=None, cache=None):
@@ -187,7 +186,7 @@ class DockerHub(Backend):
         return result
 
 
-class DockerHubClient:
+class DockerHubClient(HttpClient):
     """DockerHub API client.
 
     Client for fetching information from the DockerHub server
@@ -195,30 +194,21 @@ class DockerHubClient:
     """
     RREPOSITORY = 'repositories'
 
+    def __init__(self):
+        super().__init__(DOCKERHUB_API_URL)
+
     def repository(self, owner, repository):
         """Fetch information about a repository."""
 
         resource = urijoin(self.RREPOSITORY, owner, repository)
-        response = self._fetch(resource, {})
-
-        return response
-
-    def _fetch(self, resource, params):
-        """Fetch a resource.
-
-        :param resource: resource to fetch
-        :param params: dict with the HTTP parameters needed to call
-            the given method
-        """
         url = urijoin(DOCKERHUB_API_URL, resource)
+        response = next(self.fetch(url))
 
-        logger.debug("DockerHub client requests: %s params: %s",
-                     resource, str(params))
-
-        r = requests.get(url, params=params)
-        r.raise_for_status()
-
-        return r.text
+        if HttpClient.is_response(response):
+            return response.text
+        else:
+            cause = "Error during fetching repository not treated."
+            raise HttpClientError(cause=cause)
 
 
 class DockerHubCommand(BackendCommand):
