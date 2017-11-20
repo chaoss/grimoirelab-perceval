@@ -49,6 +49,7 @@ from perceval.backends.core.github import (GitHub,
 
 
 GITHUB_API_URL = "https://api.github.com"
+GITHUB_RATE_LIMIT = GITHUB_API_URL + "/rate_limit"
 GITHUB_ISSUES_URL = GITHUB_API_URL + "/repos/zhquan_example/repo/issues"
 GITHUB_ISSUE_1_COMMENTS_URL = GITHUB_ISSUES_URL + "/1/comments"
 GITHUB_ISSUE_COMMENT_1_REACTION_URL = GITHUB_ISSUES_URL + "/comments/1/reactions"
@@ -61,6 +62,7 @@ GITHUB_COMMAND_URL = GITHUB_API_URL + "/command"
 
 GITHUB_ENTERPRISE_URL = "https://example.com"
 GITHUB_ENTERPRISE_API_URL = "https://example.com/api/v3"
+GITHUB_ENTREPRISE_RATE_LIMIT = GITHUB_ENTERPRISE_API_URL + "/rate_limit"
 GITHUB_ENTERPRISE_ISSUES_URL = GITHUB_ENTERPRISE_API_URL + "/repos/zhquan_example/repo/issues"
 GITHUB_ENTERPRISE_ISSUE_1_COMMENTS_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/1/comments"
 GITHUB_ENTERPRISE_ISSUE_COMMENT_1_REACTION_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/comments/1/reactions"
@@ -80,8 +82,19 @@ def read_file(filename, mode='r'):
 class TestGitHubBackend(unittest.TestCase):
     """ GitHub backend tests """
 
+    @httpretty.activate
     def test_initialization(self):
         """Test whether attributes are initializated"""
+
+        rate_limit = read_file('data/github/rate_limit')
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         github = GitHub('zhquan_example', 'repo', 'aaa', tag='test')
 
@@ -123,6 +136,16 @@ class TestGitHubBackend(unittest.TestCase):
         orgs = read_file('data/github/github_orgs')
         comments = read_file('data/github/github_issue_comments_1')
         reactions = read_file('data/github/github_issue_comment_1_reactions')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -194,6 +217,16 @@ class TestGitHubBackend(unittest.TestCase):
         issue_2_comments = read_file('data/github/github_issue_comments_2')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
         issue_comment_2_reactions = read_file('data/github/github_empty_request')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -292,6 +325,16 @@ class TestGitHubBackend(unittest.TestCase):
         orgs = read_file('data/github/github_orgs')
         comments = read_file('data/github/github_empty_request')
         expected = read_file('data/github/github_request_expected_zero_reactions')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -344,6 +387,16 @@ class TestGitHubBackend(unittest.TestCase):
         issue_2_comments = read_file('data/github/github_issue_comments_2')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
         issue_comment_2_reactions = read_file('data/github/github_empty_request')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTREPRISE_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTERPRISE_ISSUES_URL,
@@ -410,6 +463,16 @@ class TestGitHubBackend(unittest.TestCase):
         comments = read_file('data/github/github_issue_comments_2')
         issue_reactions = read_file('data/github/github_issue_2_reactions')
         comment_reactions = read_file('data/github/github_empty_request')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -485,6 +548,16 @@ class TestGitHubBackend(unittest.TestCase):
 
         body = ""
         login = read_file('data/github/github_login')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -524,6 +597,16 @@ class TestGitHubBackend(unittest.TestCase):
         orgs = read_file('data/github/github_orgs')
         comments = read_file('data/github/github_issue_comments_1')
         reactions = read_file('data/github/github_issue_comment_1_reactions')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -587,8 +670,8 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
         github = GitHub("zhquan_example", "repo", "aaa")
-        with self.assertRaises(requests.exceptions.HTTPError) as e:
-            issues = [issues for issues in github.fetch()]
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = [issues for issues in github.fetch()]
 
         GitHubClient._users_orgs = users_orgs  # restore the cache
 
@@ -615,6 +698,16 @@ class TestGitHubBackendCache(unittest.TestCase):
         issue_2_reactions = read_file('data/github/github_issue_2_reactions')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
         issue_comment_2_reactions = read_file('data/github/github_empty_request')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -706,21 +799,44 @@ class TestGitHubBackendCache(unittest.TestCase):
         self.assertDictEqual(issues[0], cache_issues[0])
         self.assertDictEqual(issues[1], cache_issues[1])
 
+    @httpretty.activate
     def test_fetch_from_empty_cache(self):
         """Test if there are not any issues returned when the cache is empty"""
 
         cache = Cache(self.tmp_path)
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
         github = GitHub("zhquan_example", "repo", "aaa", cache=cache)
 
         cache_issues = [cache_issues for cache_issues in github.fetch_from_cache()]
 
         self.assertEqual(len(cache_issues), 0)
 
+    @httpretty.activate
     def test_fetch_from_non_set_cache(self):
         """Test if a error is raised when the cache was not set"""
 
-        github = GitHub("zhquan_example", "repo", "aaa")
+        rate_limit = read_file('data/github/rate_limit')
 
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", "aaa")
         with self.assertRaises(CacheError):
             _ = [cache_issues for cache_issues in github.fetch_from_cache()]
 
@@ -728,8 +844,28 @@ class TestGitHubBackendCache(unittest.TestCase):
 class TestGitHubClient(unittest.TestCase):
     """ GitHub API client tests """
 
+    @httpretty.activate
     def test_api_url_initialization(self):
         """Test API URL initialization for both basic and enterprise servers"""
+
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTREPRISE_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         client = GitHubClient("zhquan_example", "repo", "aaa")
         self.assertEqual(client.api_url, GITHUB_API_URL)
@@ -743,6 +879,16 @@ class TestGitHubClient(unittest.TestCase):
         """ Test get_issues API call """
 
         issue = read_file('data/github/github_request')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -773,6 +919,16 @@ class TestGitHubClient(unittest.TestCase):
         """Test fetching issues from enterprise"""
 
         issue = read_file('data/github/github_request')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTREPRISE_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTERPRISE_ISSUES_URL,
@@ -801,6 +957,16 @@ class TestGitHubClient(unittest.TestCase):
         """ Test get_from_issues API call """
 
         issue = read_file('data/github/github_request_from_2016_03_01')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -814,7 +980,7 @@ class TestGitHubClient(unittest.TestCase):
         from_date = datetime.datetime(2016, 3, 1)
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
 
-        raw_issues = [issues for issues in client.issues(start=from_date)]
+        raw_issues = [issues for issues in client.issues(from_date=from_date)]
         self.assertEqual(len(raw_issues), 1)
         self.assertEqual(raw_issues[0], issue)
 
@@ -835,6 +1001,16 @@ class TestGitHubClient(unittest.TestCase):
 
         issue_1 = read_file('data/github/github_issue_1')
         issue_2 = read_file('data/github/github_issue_2')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -880,14 +1056,23 @@ class TestGitHubClient(unittest.TestCase):
         """Test when Abuse Rate Limit exception is thrown"""
 
         abuse_rate_limit = read_file('data/github/abuse_rate_limit')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
                                body=abuse_rate_limit, status=403,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '5',
-                                   'X-RateLimit-Reset': '5',
-                                   'Retry-After': '1'
+                                   'X-RateLimit-Reset': '5'
                                })
 
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
@@ -900,6 +1085,16 @@ class TestGitHubClient(unittest.TestCase):
         """ Test when issue is empty API call """
 
         issue = read_file('data/github/github_empty_request')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -930,6 +1125,16 @@ class TestGitHubClient(unittest.TestCase):
         """ Test get_user API call """
 
         login = read_file('data/github/github_login')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_USER_URL,
@@ -948,6 +1153,16 @@ class TestGitHubClient(unittest.TestCase):
         """ Test get_user_orgs API call """
 
         orgs = read_file('data/github/github_orgs')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ORGS_URL,
@@ -967,6 +1182,16 @@ class TestGitHubClient(unittest.TestCase):
         """Test if a error is raised when the http status was not 200"""
 
         issue = ""
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -977,7 +1202,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", None)
+        client = GitHubClient("zhquan_example", "repo", "aaa", default_sleep_time=1, max_retries=1)
 
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = [issues for issues in client.issues()]
@@ -999,6 +1224,16 @@ class TestGitHubClient(unittest.TestCase):
 
         issue_1 = read_file('data/github/github_empty_request')
         issue_2 = read_file('data/github/github_empty_request')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         wait = 1
         reset = int(time.time() + wait)
@@ -1051,6 +1286,16 @@ class TestGitHubClient(unittest.TestCase):
         """ Test get_page_issue API call """
 
         issue = read_file('data/github/github_empty_request')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -1096,6 +1341,8 @@ class TestGitHubCommand(unittest.TestCase):
 
         args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',
+                '--max-retries', '5',
+                '--default-sleep-time', '10',
                 '--tag', 'test', '--no-cache',
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
@@ -1107,7 +1354,8 @@ class TestGitHubCommand(unittest.TestCase):
         self.assertEqual(parsed_args.repository, 'repo')
         self.assertEqual(parsed_args.base_url, 'https://example.com')
         self.assertEqual(parsed_args.sleep_for_rate, True)
-        self.assertEqual(parsed_args.min_rate_to_sleep, 1)
+        self.assertEqual(parsed_args.max_retries, 5)
+        self.assertEqual(parsed_args.default_sleep_time, 10)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.no_cache, True)
