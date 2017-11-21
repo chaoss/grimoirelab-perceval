@@ -93,10 +93,10 @@ class HttpClient:
         self.rate_limit = int(response.headers[self.RATE_LIMIT_HEADER])
         self.rate_limit_reset_ts = int(response.headers[self.RATE_LIMIT_RESET_HEADER])
 
-    def fetch(self, url, payload=None, headers=None, use_session=False, method=GET):
-        yield self._fetch(url, payload, headers, use_session, method)
+    def fetch(self, url, payload=None, headers=None, use_session=False, method=GET, stream=False):
+        yield self._fetch(url, payload, headers, use_session, method, stream)
 
-    def _fetch(self, url, payload=None, headers=None, use_session=False, method=GET):
+    def _fetch(self, url, payload=None, headers=None, use_session=False, method=GET, stream=False):
         retries = 0
 
         response = None
@@ -107,7 +107,7 @@ class HttpClient:
 
             try:
                 self.sleep_for_rate_limit()
-                response = self.send_request(url, payload, headers, use_session, method)
+                response = self.send_request(url, payload, headers, use_session, method, stream)
                 self.update_rate_limit(response)
                 break
             except requests.exceptions.ConnectTimeout as e:
@@ -159,28 +159,28 @@ class HttpClient:
             self.rate_limit = None
             self.rate_limit_reset_ts = None
 
-    def send_request(self, url, payload=None, headers=None, use_session=False, method=GET):
+    def send_request(self, url, payload=None, headers=None, use_session=False, method=GET, stream=False):
         if method == self.GET:
-            response = self.__send_get_request(url, payload, headers, use_session)
+            response = self.__send_get_request(url, payload, headers, use_session, stream)
         else:
-            response = self.__send_post_request(url, payload, headers, use_session)
+            response = self.__send_post_request(url, payload, headers, use_session, stream)
 
         response.raise_for_status()
 
         return response
 
-    def __send_get_request(self, url, payload=None, headers=None, use_session=False):
+    def __send_get_request(self, url, payload=None, headers=None, use_session=False, stream=False):
         if not use_session:
-            response = requests.get(url, params=payload, headers=headers)
+            response = requests.get(url, params=payload, headers=headers, stream=stream)
         else:
-            response = self.session.get(url, params=payload, headers=headers)
+            response = self.session.get(url, params=payload, headers=headers, stream=stream)
 
         return response
 
-    def __send_post_request(self, url, payload=None, headers=None, use_session=False):
+    def __send_post_request(self, url, payload=None, headers=None, use_session=False, stream=False):
         if not use_session:
-            response = requests.post(url, data=payload, headers=headers)
+            response = requests.post(url, data=payload, headers=headers, stream=stream)
         else:
-            response = self.session.post(url, data=payload, headers=headers)
+            response = self.session.post(url, data=payload, headers=headers, stream=stream)
 
         return response
