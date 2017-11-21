@@ -27,7 +27,6 @@ import os
 import dateutil.parser
 import dateutil.relativedelta
 import dateutil.tz
-import requests
 
 from grimoirelab.toolkit.datetime import datetime_to_utc, datetime_utcnow
 from grimoirelab.toolkit.uris import urijoin
@@ -36,6 +35,8 @@ from .mbox import MBox, MailingList
 from ...backend import (BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
+from ...errors import HttpClientError
 from ...utils import (DEFAULT_DATETIME,
                       months_range)
 
@@ -125,7 +126,7 @@ class HyperKittyList(MailingList):
     """
     def __init__(self, url, dirpath):
         super().__init__(url, dirpath)
-        self.url = url
+        self.client = HyperKittyClient(url)
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the mbox files from the remote archiver.
@@ -144,13 +145,7 @@ class HyperKittyList(MailingList):
         :returns: a list of tuples, storing the links and paths of the
             fetched archives
         """
-        logger.info("Downloading mboxes from '%s' to since %s",
-                    self.url, str(from_date))
-        logger.debug("Storing mboxes in '%s'", self.dirpath)
-
-        # Check mailing list URL
-        r = requests.get(self.url)
-        r.raise_for_status()
+        self.client.check_mailing_list(from_date, self.dirpath)
 
         from_date = datetime_to_utc(from_date)
         to_end = datetime_utcnow()
@@ -171,14 +166,20 @@ class HyperKittyList(MailingList):
             filename = start.strftime("%Y-%m.mbox.gz")
             filepath = os.path.join(self.dirpath, filename)
 
-            url = urijoin(self.url, 'export', filename)
+            url = urijoin(self.client.base_url, 'export', filename)
 
             params = {
                 'start': start.strftime("%Y-%m-%d"),
                 'end': end.strftime("%Y-%m-%d")
             }
 
-            success = self._download_archive(url, params, filepath)
+            response = next(self.client.fetch(url, payload=params, stream=True))
+
+            if not self.client.is_response(response):
+                cause = "Error during fetching not treated."
+                raise HttpClientError(cause=cause)
+
+            success = self._read_archive(response.raw, url, filepath)
 
             if success:
                 fetched.append((url, filepath))
@@ -221,13 +222,10 @@ class HyperKittyList(MailingList):
 
         return dt
 
-    def _download_archive(self, url, params, filepath):
-        r = requests.get(url, params=params, stream=True)
-        r.raise_for_status()
-
+    def _read_archive(self, raw_content, url, filepath):
         try:
             with open(filepath, 'wb') as fd:
-                fd.write(r.raw.read())
+                fd.write(raw_content.read())
         except OSError as e:
             logger.warning("Ignoring %s archive due to: %s", url, str(e))
             return False
@@ -235,6 +233,28 @@ class HyperKittyList(MailingList):
         logger.debug("%s archive downloaded and stored in %s", url, filepath)
 
         return True
+
+
+class HyperKittyClient(HttpClient):
+    """HyperKitty client.
+
+    This class implements a simple client to access mailing lists
+    stored in HyperKitty.
+    """
+
+    def __init__(self, url):
+        super().__init__(url)
+
+    def check_mailing_list(self, from_date, dirpath):
+        logger.info("Downloading mboxes from '%s' to since %s",
+                    self.base_url, str(from_date))
+        logger.debug("Storing mboxes in '%s'", dirpath)
+
+        response = next(self.fetch(self.base_url))
+
+        if not self.is_response(response):
+            cause = "Error during checking mailing list not treated."
+            raise HttpClientError(cause=cause)
 
 
 class HyperKittyCommand(BackendCommand):

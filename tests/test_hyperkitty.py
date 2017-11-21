@@ -73,7 +73,7 @@ class TestHyperKittyList(unittest.TestCase):
         self.assertIsInstance(hkls, MailingList)
         self.assertEqual(hkls.uri, HYPERKITTY_URL)
         self.assertEqual(hkls.dirpath, self.tmp_path)
-        self.assertEqual(hkls.url, HYPERKITTY_URL)
+        self.assertEqual(hkls.uri, HYPERKITTY_URL)
 
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.hyperkitty.datetime_utcnow')
