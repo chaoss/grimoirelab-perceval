@@ -28,7 +28,6 @@ import re
 
 import bs4
 import dateutil.tz
-import requests
 
 from grimoirelab.toolkit.datetime import str_to_datetime
 
@@ -36,7 +35,8 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import BackendError, CacheError, ParseError
+from ...client import HttpClient
+from ...errors import BackendError, CacheError, HttpClientError, ParseError
 from ...utils import DEFAULT_DATETIME, xml_to_dict
 from ..._version import __version__
 
@@ -400,7 +400,7 @@ class BugzillaCommand(BackendCommand):
         return parser
 
 
-class BugzillaClient:
+class BugzillaClient(HttpClient):
     """Bugzilla API client.
 
     This class implements a simple client to retrieve distinct
@@ -452,9 +452,9 @@ class BugzillaClient:
 
     def __init__(self, base_url, user=None, password=None,
                  max_bugs_csv=MAX_BUGS_CSV):
-        self.base_url = base_url
+        super().__init__(base_url)
+        self.create_http_session(self.HEADERS)
         self.version = None
-        self._session = self.__create_http_session()
 
         if user is not None and password is not None:
             self.login(user, password)
@@ -477,12 +477,15 @@ class BugzillaClient:
 
         headers = {'Referer': self.base_url}
 
-        req = self._session.post(url, data=payload, headers=headers)
-        req.raise_for_status()
+        response = next(self.fetch(url, payload=payload, headers=headers, use_session=True, method=HttpClient.POST))
+
+        if not self.is_response(response):
+            cause = "Error during fetching html question not treated."
+            raise HttpClientError(cause=cause)
 
         # Check if the authentication went OK. When this string
         # is found means that the authentication was successful
-        if req.text.find("index.cgi?logout=1") < 0:
+        if response.text.find("index.cgi?logout=1") < 0:
             cause = ("Bugzilla client could not authenticate user %s. "
                      "Please check user and password parameters. "
                      "URLs may also need a trailing '/'.") % user
@@ -499,7 +502,7 @@ class BugzillaClient:
         }
 
         self.call(self.CGI_LOGIN, params)
-        self._session = self.__create_http_session()
+        self.create_http_session(self.HEADERS)
 
         logger.debug("Bugzilla user logged out from %s",
                      self.base_url)
@@ -571,7 +574,6 @@ class BugzillaClient:
 
     def call(self, cgi, params):
         """Run an API command.
-
         :param cgi: cgi command to run on the server
         :param params: dict with the HTTP parameters needed to run
             the given command
@@ -581,15 +583,13 @@ class BugzillaClient:
         logger.debug("Bugzilla client calls command: %s params: %s",
                      cgi, str(params))
 
-        req = self._session.get(url, params=params)
-        req.raise_for_status()
+        response = next(self.fetch(url, payload=params, use_session=True))
 
-        return req.text
+        if not self.is_response(response):
+            cause = "Error during fetching bug activity not treated."
+            raise HttpClientError(cause=cause)
 
-    def __create_http_session(self):
-        session = requests.Session()
-        session.headers.update(self.HEADERS)
-        return session
+        return response.text
 
     def __fetch_version(self):
         response = self.metadata()
