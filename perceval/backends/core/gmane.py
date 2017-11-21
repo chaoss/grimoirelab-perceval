@@ -28,13 +28,12 @@ import logging
 import os
 import posixpath
 
-import requests
-
 from grimoirelab.toolkit.uris import urijoin
 
 from .mbox import MailingList, MBox
 from ...backend import BackendCommand, BackendCommandArgumentParser, metadata
-from ...errors import RepositoryError
+from ...client import HttpClient
+from ...errors import HttpClientError, RepositoryError
 
 
 logger = logging.getLogger(__name__)
@@ -320,7 +319,7 @@ class GmaneMailingList(MailingList):
         return True
 
 
-class GmaneClient:
+class GmaneClient(HttpClient):
     """Gmane client.
 
     This class implements a simple client to access mailing lists
@@ -331,6 +330,9 @@ class GmaneClient:
     GMANE_LISTID_RTYPE = 'list'
 
     URL = "http://%(prefix)s.%(domain)s/%(resource)s"
+
+    def __init__(self):
+        super().__init__(self.URL)
 
     def messages(self, mailing_list, offset, max_messages=MAX_MESSAGES):
         """Fetch a set of messages from the given mailing list.
@@ -345,7 +347,7 @@ class GmaneClient:
         end_offset = offset + max_messages
         resource = urijoin(mailing_list, offset, end_offset)
 
-        r = self.fetch(self.GMANE_DOWNLOAD_RTYPE, resource)
+        r = self.call(self.GMANE_DOWNLOAD_RTYPE, resource)
 
         return r.content
 
@@ -358,7 +360,7 @@ class GmaneClient:
         :raises RepositoryError: when the given mailing list repository
             is not stored by Gmane
         """
-        r = self.fetch(self.GMANE_LISTID_RTYPE, mailing_list_address)
+        r = self.call(self.GMANE_LISTID_RTYPE, mailing_list_address)
 
         if len(r.history) == 0:
             cause = "%s mailing list not found in Gmane"
@@ -366,7 +368,7 @@ class GmaneClient:
 
         return r.url
 
-    def fetch(self, rtype, resource):
+    def call(self, rtype, resource):
         """Fetch the given resource.
 
         :param rtype: type of the resource
@@ -381,7 +383,10 @@ class GmaneClient:
         logger.debug("Gmane client requests: %s, rtype: %s resource: %s",
                      url, rtype, resource)
 
-        r = requests.get(url)
-        r.raise_for_status()
+        response = next(self.fetch(url))
 
-        return r
+        if not self.is_response(response):
+            cause = "Error during calling not treated."
+            raise HttpClientError(cause=cause)
+
+        return response
