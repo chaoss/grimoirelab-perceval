@@ -25,8 +25,6 @@
 import json
 import logging
 
-import requests
-
 from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 from grimoirelab.toolkit.uris import urijoin
 
@@ -34,7 +32,8 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError
+from ...client import HttpClient
+from ...errors import CacheError, HttpClientError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -292,7 +291,7 @@ class Discourse(Backend):
         return 'topic'
 
 
-class DiscourseClient:
+class DiscourseClient(HttpClient):
     """Discourse API client.
 
     This class implements a simple client to retrieve topics from
@@ -317,7 +316,7 @@ class DiscourseClient:
     TJSON = '.json'
 
     def __init__(self, url, api_key=None):
-        self.url = url
+        super().__init__(url)
         self.api_key = api_key
 
     def topics_page(self, page=None):
@@ -375,18 +374,21 @@ class DiscourseClient:
             the given command
         """
         if res:
-            url = urijoin(self.url, res, res_id)
+            url = urijoin(self.base_url, res, res_id)
         else:
-            url = urijoin(self.url, res_id)
+            url = urijoin(self.base_url, res_id)
         url += self.TJSON
 
         logger.debug("Discourse client calls resource: %s %s params: %s",
                      res, res_id, str(params))
 
-        r = requests.get(url, params=params)
-        r.raise_for_status()
+        response = next(self.fetch(url, payload=params))
 
-        return r.text
+        if not self.is_response(response):
+            cause = "Error during calling treated."
+            raise HttpClientError(cause=cause)
+
+        return response.text
 
 
 class DiscourseCommand(BackendCommand):
