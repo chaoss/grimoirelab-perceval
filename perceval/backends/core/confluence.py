@@ -23,8 +23,6 @@
 import logging
 import json
 
-import requests
-
 from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 from grimoirelab.toolkit.uris import urijoin
 
@@ -32,7 +30,8 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError
+from ...client import HttpClient
+from ...errors import CacheError, HttpClientError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -170,16 +169,7 @@ class Confluence(Backend):
 
             try:
                 raw_hc = self.client.historical_content(cid, version)
-            except requests.exceptions.HTTPError as e:
-                code = e.response.status_code
-
-                # Common problems found: removed and privated contents
-                if code not in (404, 500):
-                    raise e
-
-                logger.warning("Error retrieving content %s v#%s; skipping",
-                               cid, version)
-                logger.warning("Exception: %s", str(e))
+            except HttpClientError:
                 break
 
             hc = self.parse_historical_content(raw_hc)
@@ -306,7 +296,7 @@ class ConfluenceCommand(BackendCommand):
         return parser
 
 
-class ConfluenceClient:
+class ConfluenceClient(HttpClient):
     """Confluence REST API client.
 
     This class implements a client to retrieve contents from a
@@ -338,7 +328,7 @@ class ConfluenceClient:
     VHISTORICAL = 'historical'
 
     def __init__(self, base_url):
-        self.base_url = base_url.rstrip('/')
+        super().__init__(base_url.rstrip('/'))
 
     def contents(self, from_date=DEFAULT_DATETIME,
                  offset=None, max_contents=MAX_CONTENTS):
@@ -371,6 +361,18 @@ class ConfluenceClient:
         for response in self._call(resource, params):
             yield response
 
+    def handle_http_500_errors(self, error, retries=0, url=None, payload=None, headers=None):
+        if error.response.status_code == 500:
+            return self.STOP
+        else:
+            raise error
+
+    def handle_http_400_errors(self, error, retries=0, url=None, payload=None, headers=None):
+        if error.response.status_code == 404:
+            return self.STOP
+        else:
+            raise error
+
     def historical_content(self, content_id, version):
         """Get the snapshot of a content for the given version.
 
@@ -385,9 +387,15 @@ class ConfluenceClient:
             self.PEXPAND: ','.join(self.VEXPAND)
         }
 
-        # Only one item is returned
-        response = [response for response in self._call(resource, params)]
-        return response[0]
+        try:
+            # Only one item is returned
+            response = [response for response in self._call(resource, params)]
+            return response[0]
+        except HttpClientError as error:
+            logger.warning("Error retrieving content %s v#%s; skipping",
+                           content_id, version)
+            logger.warning("Exception: %s", str(error))
+            raise error
 
     def _call(self, resource, params):
         """Retrive the given resource.
@@ -402,8 +410,12 @@ class ConfluenceClient:
                      resource, str(params))
 
         while True:
-            r = requests.get(url, params=params)
-            r.raise_for_status()
+            r = next(self.fetch(url, payload=params))
+
+            if not self.is_response(r):
+                cause = "Error during calling not treated."
+                raise HttpClientError(cause=cause)
+
             yield r.text
 
             # Pagination is available when 'next' link exists
