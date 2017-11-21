@@ -35,7 +35,8 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError
+from ...client import HttpClient
+from ...errors import CacheError, HttpClientError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -235,7 +236,7 @@ class Jira(Backend):
             yield issue
 
 
-class JiraClient:
+class JiraClient(HttpClient):
     """JIRA API client.
 
     This class implements a simple client to retrieve issues from
@@ -257,7 +258,7 @@ class JiraClient:
     RESOURCE = 'rest/api'
 
     def __init__(self, url, project, user, password, verify, cert, max_issues):
-        self.url = url
+        super().__init__(url)
         self.project = project
         self.user = user
         self.password = password
@@ -266,7 +267,7 @@ class JiraClient:
         self.max_issues = max_issues
 
     def __build_base_url(self, type='search'):
-        base_api_url = self.url
+        base_api_url = self.base_url
         base_api_url = urijoin(base_api_url, self.RESOURCE, self.VERSION_API, type)
         return base_api_url
 
@@ -309,34 +310,38 @@ class JiraClient:
             logger.info("No issues were found.")
 
     def __init_session(self):
-        session = requests.Session()
+        self.create_http_session()
 
         if (self.user and self.password) is not None:
-            session.auth = (self.user, self.password)
+            self.session.auth = (self.user, self.password)
 
         if self.cert:
-            session.cert = self.cert
+            self.session.cert = self.cert
 
         if self.verify is not True:
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-            session.verify = False
-
-        return session
+            self.session.verify = False
 
     def get_issues(self, from_date):
         """Retrieve all the issues from a given date.
 
         :param from_date: obtain issues updated since this date
         """
-        session = self.__init_session()
+        self.__init_session()
 
         start_at = 0
-        req = session.get(self.__build_base_url(),
-                          params=self.__build_payload(start_at, from_date))
-        req.raise_for_status()
-        issues = req.text
 
-        data = req.json()
+        response = next(self.fetch(self.__build_base_url(),
+                                   payload=self.__build_payload(start_at, from_date),
+                                   use_session=True))
+
+        if not self.is_response(response):
+            cause = "HttpError during getting issues not treated."
+            raise HttpClientError(cause=cause)
+
+        issues = response.text
+
+        data = response.json()
         tissues = data['total']
         nissues = data['maxResults']
 
@@ -348,21 +353,31 @@ class JiraClient:
             issues = None
 
             if data['startAt'] + nissues < tissues:
-                req = session.get(self.__build_base_url(),
-                                  params=self.__build_payload(start_at, from_date))
-                req.raise_for_status()
-                data = req.json()
+
+                response = next(self.fetch(self.__build_base_url(),
+                                           payload=self.__build_payload(start_at, from_date),
+                                           use_session=True))
+
+                if not self.is_response(response):
+                    cause = "HttpError during getting issues not treated."
+                    raise HttpClientError(cause=cause)
+
+                data = response.json()
                 start_at += nissues
-                issues = req.text
+                issues = response.text
                 self.__log_status(start_at, tissues)
 
     def get_fields(self):
         """Retrieve all the fields available.  """
-        session = self.__init_session()
+        self.__init_session()
 
-        req = session.get(self.__build_base_url('field'))
-        req.raise_for_status()
-        return req.text
+        response = next(self.fetch(self.__build_base_url('field'), use_session=True))
+
+        if not self.is_response(response):
+            cause = "HttpError during getting fields not treated."
+            raise HttpClientError(cause=cause)
+
+        return response.text
 
 
 class JiraCommand(BackendCommand):
