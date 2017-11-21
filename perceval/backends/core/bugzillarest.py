@@ -24,8 +24,6 @@
 import json
 import logging
 
-import requests
-
 from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 from grimoirelab.toolkit.uris import urijoin
 
@@ -33,7 +31,8 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import BaseError, BackendError, CacheError
+from ...client import HttpClient
+from ...errors import BaseError, BackendError, CacheError, HttpClientError
 from ...utils import DEFAULT_DATETIME
 from ..._version import __version__
 
@@ -295,7 +294,7 @@ class BugzillaRESTError(BaseError):
     message = "%(error)s (code: %(code)s)"
 
 
-class BugzillaRESTClient:
+class BugzillaRESTClient(HttpClient):
     """Bugzilla REST API client.
 
     This class implements a simple client to retrieve distinct
@@ -343,7 +342,7 @@ class BugzillaRESTClient:
     VEXCLUDE_ATTCH_DATA = 'data'
 
     def __init__(self, base_url, user=None, password=None, api_token=None):
-        self.base_url = base_url
+        super().__init__(base_url)
         self.api_token = api_token if api_token else None
 
         if user is not None and password is not None:
@@ -360,15 +359,18 @@ class BugzillaRESTClient:
             self.PBUGZILLA_PASSWORD: password
         }
 
-        try:
-            r = self.call(self.RLOGIN, params)
-        except requests.exceptions.HTTPError as e:
-            cause = ("Bugzilla REST client could not authenticate user %s. "
-                     "See exception: %s") % (user, str(e))
-            raise BackendError(cause=cause)
+        response = self.call(self.RLOGIN, params)
 
-        data = json.loads(r)
+        data = json.loads(response)
         self.api_token = data['token']
+
+    def handle_http_400_errors(self, error, retries=0, url=None, payload=None, headers=None):
+        if self.RLOGIN in url:
+            cause = ("Bugzilla REST client could not authenticate user %s. "
+                     "See exception: %s") % (payload[self.PBUGZILLA_LOGIN], str(error))
+            raise BackendError(cause=cause)
+        else:
+            return self.STOP
 
     def bugs(self, from_date=DEFAULT_DATETIME, offset=None, max_bugs=MAX_BUGS):
         """Get the information of a list of bugs.
@@ -462,17 +464,20 @@ class BugzillaRESTClient:
                      resource, str(params))
 
         headers = self.HEADERS
-        r = requests.get(url, headers=headers, params=params)
-        r.raise_for_status()
+        response = next(self.fetch(url, headers=headers, payload=params))
+
+        if not self.is_response(response):
+            cause = "Error when calling not treated."
+            raise HttpClientError(cause=cause)
 
         # Check for possible Bugzilla API errors
-        result = r.json()
+        result = response.json()
 
         if result.get('error', False):
             raise BugzillaRESTError(error=result['message'],
                                     code=result['code'])
 
-        return r.text
+        return response.text
 
 
 class BugzillaRESTCommand(BackendCommand):
