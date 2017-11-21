@@ -74,8 +74,8 @@ class HttpClient:
     def is_response(obj):
         return type(obj) == requests.Response
 
-    def init_api_token(self, path, params=None, headers=None):
-        response = self.__send_request(path, params, headers)
+    def init_api_token(self, path, params=None, headers=None, use_session=False, method=GET):
+        response = self.send_request(path, params, headers, use_session, method)
 
         self.rate_limit = int(response.headers[self.RATE_LIMIT_HEADER])
         self.rate_limit_reset_ts = int(response.headers[self.RATE_LIMIT_RESET_HEADER])
