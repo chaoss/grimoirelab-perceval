@@ -59,6 +59,9 @@ class HttpClient:
     RETRY = "retry"
     STOP = "stop"
 
+    GET = "GET"
+    POST = "POST"
+
     def __init__(self, base_url, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, default_sleep_time=DEFAULT_SLEEP_TIME):
         self.base_url = base_url
@@ -84,16 +87,16 @@ class HttpClient:
     def close_http_session(self):
         self.session.close()
 
-    def init_api_token(self, path, params=None, headers=None, use_session=False, method=GET):
-        response = self.send_request(path, params, headers, use_session, method)
+    def init_api_token(self, path, payload=None, headers=None, use_session=False, method=GET):
+        response = self.send_request(path, payload, headers, use_session, method)
 
         self.rate_limit = int(response.headers[self.RATE_LIMIT_HEADER])
         self.rate_limit_reset_ts = int(response.headers[self.RATE_LIMIT_RESET_HEADER])
 
-    def fetch(self, url, params=None, headers=None):
-        yield self._fetch(url, params, headers)
+    def fetch(self, url, payload=None, headers=None, use_session=False, method=GET):
+        yield self._fetch(url, payload, headers, use_session, method)
 
-    def _fetch(self, url, params=None, headers=None):
+    def _fetch(self, url, payload=None, headers=None, use_session=False, method=GET):
         retries = 0
 
         response = None
@@ -104,7 +107,7 @@ class HttpClient:
 
             try:
                 self.sleep_for_rate_limit()
-                response = self.__send_request(url, params, headers)
+                response = self.send_request(url, payload, headers, use_session, method)
                 self.update_rate_limit(response)
                 break
             except requests.exceptions.ConnectTimeout as e:
@@ -112,12 +115,12 @@ class HttpClient:
                 time.sleep(self.default_sleep_time * retries)
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code >= 500:
-                    if self.STOP == self.handle_http_500_errors(e, retries, url, params, headers):
+                    if self.STOP == self.handle_http_500_errors(e, retries, url, payload, headers):
                         response = self.STOP
                         break
                     error = e
                 if e.response.status_code >= 400:
-                    if self.STOP == self.handle_http_400_errors(e, retries, url, params, headers):
+                    if self.STOP == self.handle_http_400_errors(e, retries, url, payload, headers):
                         response = self.STOP
                         break
                     error = e
@@ -130,11 +133,11 @@ class HttpClient:
 
         return response
 
-    def handle_http_500_errors(self, error, retries=0, url=None, params=None, headers=None):
+    def handle_http_500_errors(self, error, retries=0, url=None, payload=None, headers=None):
         time.sleep(self.default_sleep_time * retries)
         return self.RETRY
 
-    def handle_http_400_errors(self, error, retries=0, url=None, params=None, headers=None):
+    def handle_http_400_errors(self, error, retries=0, url=None, payload=None, headers=None):
         return self.STOP
 
     def sleep_for_rate_limit(self):
@@ -156,8 +159,28 @@ class HttpClient:
             self.rate_limit = None
             self.rate_limit_reset_ts = None
 
-    def __send_request(self, url, params=None, headers=None):
-        response = requests.get(url, params=params, headers=headers)
+    def send_request(self, url, payload=None, headers=None, use_session=False, method=GET):
+        if method == self.GET:
+            response = self.__send_get_request(url, payload, headers, use_session)
+        else:
+            response = self.__send_post_request(url, payload, headers, use_session)
+
         response.raise_for_status()
+
+        return response
+
+    def __send_get_request(self, url, payload=None, headers=None, use_session=False):
+        if not use_session:
+            response = requests.get(url, params=payload, headers=headers)
+        else:
+            response = self.session.get(url, params=payload, headers=headers)
+
+        return response
+
+    def __send_post_request(self, url, payload=None, headers=None, use_session=False):
+        if not use_session:
+            response = requests.post(url, data=payload, headers=headers)
+        else:
+            response = self.session.post(url, data=payload, headers=headers)
 
         return response
