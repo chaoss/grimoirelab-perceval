@@ -682,7 +682,7 @@ class TestLaunchpadClient(unittest.TestCase):
         client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
                                  package='mypackage', items_per_page=2)
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
-        issues = [issues for issues in client.issues(start=from_date)]
+        issues = [issues for issues in client.issues(from_date=from_date)]
 
         self.assertEqual(len(issues), 1)
 
