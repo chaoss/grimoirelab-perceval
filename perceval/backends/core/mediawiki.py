@@ -25,7 +25,6 @@ import json
 import logging
 
 import dateutil
-import requests
 
 from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 from grimoirelab.toolkit.uris import urijoin
@@ -34,7 +33,8 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import BackendError, CacheError
+from ...client import HttpClient
+from ...errors import BackendError, CacheError, HttpClientError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -377,7 +377,7 @@ class MediaWiki(Backend):
         return page
 
 
-class MediaWikiClient:
+class MediaWikiClient(HttpClient):
     """MediaWiki API client.
 
     This class implements a simple client to retrieve pages from
@@ -389,8 +389,9 @@ class MediaWikiClient:
     """
 
     def __init__(self, url):
+
         self.url = url
-        self.api_url = urijoin(self.url, "api.php")
+        super().__init__(urijoin(self.url, "api.php"))
         self.limit = "max"  # Always get the max number of items
 
     def call(self, params):
@@ -400,12 +401,15 @@ class MediaWikiClient:
             the given command
         """
         logger.debug("MediaWiki client calls API: %s params: %s",
-                     self.api_url, str(params))
+                     self.base_url, str(params))
 
-        req = requests.get(self.api_url, params=params)
-        req.raise_for_status()
+        response = next(self.fetch(self.base_url, payload=params))
 
-        return req.text
+        if not self.is_response(response):
+            cause = "HttpError during calling not treated."
+            raise HttpClientError(cause=cause)
+
+        return response.text
 
     def get_namespaces(self):
         """ Retrieve all contents namespaces."""
