@@ -64,6 +64,7 @@ class HttpClient:
         self.base_url = base_url
         self.rate_limit = None
         self.rate_limit_reset_ts = None
+        self.session = None
         self.sleep_for_rate = sleep_for_rate
         self.min_rate_to_sleep = min_rate_to_sleep
 
@@ -73,6 +74,15 @@ class HttpClient:
     @staticmethod
     def is_response(obj):
         return type(obj) == requests.Response
+
+    def create_http_session(self, headers=None):
+        self.session = requests.Session()
+
+        if headers:
+            self.session.headers.update(headers)
+
+    def close_http_session(self):
+        self.session.close()
 
     def init_api_token(self, path, params=None, headers=None, use_session=False, method=GET):
         response = self.send_request(path, params, headers, use_session, method)
