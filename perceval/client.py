@@ -113,6 +113,9 @@ class HttpClient:
             except requests.exceptions.ConnectTimeout as e:
                 error = e
                 time.sleep(self.default_sleep_time * retries)
+            except requests.exceptions.ConnectionError as e:
+                error = e
+                time.sleep(self.default_sleep_time * retries)
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code >= 500:
                     if self.STOP == self.handle_http_500_errors(e, retries, url, payload, headers):
