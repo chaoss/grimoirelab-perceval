@@ -35,7 +35,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError, RateLimitError
+from ...errors import ArchiveError, CacheError, RateLimitError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -73,17 +73,18 @@ class GitHub(Backend):
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
-                 tag=None, cache=None,
+                 tag=None, cache=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
         origin = base_url if base_url else GITHUB_URL
         origin = urijoin(origin, owner, repository)
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+
         self.owner = owner
         self.repository = repository
         self.api_token = api_token
-        self.client = GitHubClient(owner, repository, api_token, base_url,
-                                   sleep_for_rate, min_rate_to_sleep)
+        self.client = GitHubClient(owner, repository, api_token, base_url, sleep_for_rate, min_rate_to_sleep,
+                                   self.archive, self.from_archive)
         self._users = {}  # internal users cache
 
     @classmethod
@@ -457,11 +458,14 @@ class GitHubClient:
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
-    def __init__(self, owner, repository, token, base_url=None,
-                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
+    def __init__(self, owner, repository, token,
+                 base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
+                 archive=None, from_archive=False):
         self.owner = owner
         self.repository = repository
         self.token = token
+        self.archive = archive
+        self.from_archive = from_archive
         self.rate_limit = None
         self.rate_limit_reset_ts = None
         self.sleep_for_rate = sleep_for_rate
@@ -576,7 +580,16 @@ class GitHubClient:
             headers.update({'Authorization': 'token ' + self.token})
         return headers
 
-    def __send_request(self, url, params=None, headers=None):
+    def __send_request_to_archive(self, url, params=None):
+        """GET data from archive"""
+
+        r = self.archive.retrieve(url, params=params)
+        if r:
+            return r
+        else:
+            raise ArchiveError(cause="archive is exhausted!")
+
+    def __send_request_to_data_source(self, url, params=None, headers=None):
         """GET HTTP caring of rate limit"""
 
         retries = 0
@@ -619,7 +632,17 @@ class GitHubClient:
         if retries == self.MAX_RETRIES:
             r.raise_for_status()
 
+        if self.archive:
+            self.archive.store(url, r, params=params)
         return r
+
+    def __send_request(self, url, params=None, headers=None):
+        """Dispatcher"""
+
+        if self.from_archive:
+            return self.__send_request_to_archive(url, params)
+        else:
+            return self.__send_request_to_data_source(url, params, headers)
 
     def _fetch_items(self, path, payload_type, start=None):
         """Return the items from github API using links pagination"""

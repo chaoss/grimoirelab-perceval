@@ -43,6 +43,12 @@ class BackendError(BaseError):
     message = "%(cause)s"
 
 
+class ArchiveError(BaseError):
+    """Generic error for cache objects"""
+
+    message = "%(cause)s"
+
+
 class CacheError(BaseError):
     """Generic error for cache objects"""
 

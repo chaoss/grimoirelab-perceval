@@ -33,9 +33,10 @@ from datetime import datetime as dt
 from grimoirelab.toolkit.introspect import find_signature_parameters
 from grimoirelab.toolkit.datetime import str_to_datetime
 
-from ._version import __version__
+from .archive_manager import ArchiveManager
 from .cache import Cache, setup_cache
 from .utils import DEFAULT_DATETIME
+from ._version import __version__
 
 
 class Backend:
@@ -68,11 +69,18 @@ class Backend:
     """
     version = '0.5'
 
-    def __init__(self, origin, tag=None, cache=None):
+    def __init__(self, origin, tag=None, cache=None, archive=None):
         self._origin = origin
         self.tag = tag if tag else origin
         self.cache = cache or None
         self.cache_queue = []
+
+        self.from_archive = True
+        self.archive = archive
+        if not archive:
+            self.from_archive = False
+            self.archive = ArchiveManager(origin, self.__class__.__name__, self.__class__.version)
+            self.archive.new()
 
     @property
     def origin(self):
@@ -90,6 +98,19 @@ class Backend:
             raise ValueError(msg)
 
         self._cache = obj
+
+    @property
+    def archive(self):
+        return self._archive
+
+    @archive.setter
+    def archive(self, obj):
+        if obj and not isinstance(obj, ArchiveManager):
+            msg = "obj is not an instance of ArchiveManager. %s object given" \
+                  % (str(type(obj)))
+            raise ValueError(msg)
+
+        self._archive = obj
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         raise NotImplementedError

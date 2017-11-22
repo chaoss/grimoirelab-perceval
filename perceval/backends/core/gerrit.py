@@ -33,7 +33,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import BackendError, CacheError
+from ...errors import ArchiveError, BackendError, CacheError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -62,15 +62,16 @@ class Gerrit(Backend):
                  user=None, max_reviews=MAX_REVIEWS,
                  blacklist_reviews=None,
                  disable_host_key_check=False,
-                 tag=None, cache=None):
+                 tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
         self.max_reviews = max(1, max_reviews)
         self.blacklist_reviews = blacklist_reviews
         self.client = GerritClient(self.url, user, max_reviews,
-                                   blacklist_reviews, disable_host_key_check)
+                                   blacklist_reviews, disable_host_key_check,
+                                   archive=None, from_archive=False)
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -290,8 +291,11 @@ class GerritClient():
     RETRY_WAIT = 60  # number of seconds when retrying a ssh command
 
     def __init__(self, repository, user, max_reviews, blacklist_reviews=[],
-                 disable_host_key_check=False):
+                 disable_host_key_check=False,
+                 archive=None, from_archive=False):
         self.gerrit_user = user
+        self.archive = archive
+        self.from_archive = from_archive
         self.max_reviews = max_reviews
         self.blacklist_reviews = blacklist_reviews
         self.repository = repository
@@ -305,7 +309,16 @@ class GerritClient():
                                                   self.gerrit_user, self.repository)
         self.gerrit_cmd += " %s " % (GerritClient.CMD_GERRIT)
 
-    def __execute(self, cmd):
+    def __execute_on_archive(self, cmd):
+        """GET data from archive"""
+
+        r = self.archive.retrieve(cmd)
+        if r:
+            return r
+        else:
+            raise ArchiveError(cause="archive is exhausted!")
+
+    def __execute_on_data_source(self, cmd):
         """ Execute gerrit command with retry if it fails """
 
         data = None  # data result from the cmd execution
@@ -324,7 +337,16 @@ class GerritClient():
         if data is None:
             raise RuntimeError(cmd + " failed " + str(self.MAX_RETRIES) + " times. Giving up!")
 
+        self.archive.store(cmd, data)
         return data
+
+    def __execute(self, cmd):
+        """Dispatcher"""
+
+        if self.from_archive:
+            return self.__execute_on_archive(cmd)
+        else:
+            return self.__execute_on_data_source(cmd)
 
     @property
     def version(self):
