@@ -28,8 +28,6 @@ import re
 import subprocess
 import threading
 
-import urllib.parse
-
 import dulwich.client
 import dulwich.repo
 
@@ -66,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.8.6'
+    version = '0.8.7'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -984,21 +982,7 @@ class GitRepository:
                            if not ref.refname.endswith('^{}')]
             return remote_refs
 
-        uri_parts = urllib.parse.urlparse(self.uri)
-        protocol = uri_parts.scheme
-
-        if protocol in ['git', 'http', 'https']:
-            repo_path = os.path.basename(self.uri)
-            server_url = os.path.dirname(self.uri)
-
-            if protocol == 'git':
-                client = dulwich.client.TCPGitClient(server_url)
-            else:
-                client = dulwich.client.HttpGitClient(server_url)
-        else:
-            repo_path = self.uri
-            client = dulwich.client.LocalGitClient()
-
+        client, repo_path = dulwich.client.get_transport_and_path(self.uri)
         repo = dulwich.repo.Repo(self.dirpath)
         fd = io.BytesIO()
 
