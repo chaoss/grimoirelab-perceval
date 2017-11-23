@@ -41,6 +41,7 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
+from perceval.client import RateLimitHandler
 from perceval.errors import CacheError, RateLimitError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.github import (GitHub,
@@ -91,8 +92,10 @@ class TestGitHubBackend(unittest.TestCase):
                                GITHUB_RATE_LIMIT,
                                body=rate_limit,
                                status=200,
-                               forcing_headers={'X-RateLimit-Remaining': '20',
-                                                'X-RateLimit-Reset': '15'})
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         github = GitHub('zhquan_example', 'repo', 'aaa', tag='test')
 
@@ -669,8 +672,8 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
         github = GitHub("zhquan_example", "repo", "aaa")
-        with self.assertRaises(requests.exceptions.HTTPError) as e:
-            issues = [issues for issues in github.fetch()]
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = [issues for issues in github.fetch()]
 
         GitHubClient._users_orgs = users_orgs  # restore the cache
 
@@ -814,6 +817,17 @@ class TestGitHubBackendCache(unittest.TestCase):
                                })
 
         cache = Cache(self.tmp_path)
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
         github = GitHub("zhquan_example", "repo", "aaa", cache=cache)
 
         cache_issues = [cache_issues for cache_issues in github.fetch_from_cache()]
@@ -836,13 +850,39 @@ class TestGitHubBackendCache(unittest.TestCase):
                                })
 
         github = GitHub("zhquan_example", "repo", "aaa")
-
         with self.assertRaises(CacheError):
             _ = [cache_issues for cache_issues in github.fetch_from_cache()]
 
 
 class TestGitHubClient(unittest.TestCase):
     """ GitHub API client tests """
+
+    @httpretty.activate
+    def test_init(self):
+        rate_limit = read_file('data/github/rate_limit')
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        client = GitHubClient('zhquan_example', 'repo', 'aaa')
+
+        self.assertEqual(client.owner, 'zhquan_example')
+        self.assertEqual(client.repository, 'repo')
+        self.assertEqual(client.max_retries, GitHubClient.MAX_RETRIES)
+        self.assertEqual(client.default_sleep_time, GitHubClient.DEFAULT_SLEEP_TIME)
+        self.assertEqual(client.max_retries, GitHubClient.MAX_RETRIES)
+        self.assertEqual(client.base_url, 'https://api.github.com')
+
+        client = GitHubClient('zhquan_example', 'repo', 'aaa', min_rate_to_sleep=RateLimitHandler.MAX_RATE_LIMIT + 1)
+        self.assertEqual(client.min_rate_to_sleep, RateLimitHandler.MAX_RATE_LIMIT)
+
+        client = GitHubClient('zhquan_example', 'repo', 'aaa', min_rate_to_sleep=RateLimitHandler.MAX_RATE_LIMIT - 1)
+        self.assertEqual(client.min_rate_to_sleep, RateLimitHandler.MAX_RATE_LIMIT - 1)
 
     @httpretty.activate
     def test_api_url_initialization(self):
@@ -869,11 +909,11 @@ class TestGitHubClient(unittest.TestCase):
                                })
 
         client = GitHubClient("zhquan_example", "repo", "aaa")
-        self.assertEqual(client.api_url, GITHUB_API_URL)
+        self.assertEqual(client.base_url, GITHUB_API_URL)
 
         client = GitHubClient("zhquan_example", "repo", "aaa",
                               base_url=GITHUB_ENTERPRISE_URL)
-        self.assertEqual(client.api_url, GITHUB_ENTERPRISE_API_URL)
+        self.assertEqual(client.base_url, GITHUB_ENTERPRISE_API_URL)
 
     @httpretty.activate
     def test_get_issues(self):
@@ -981,7 +1021,7 @@ class TestGitHubClient(unittest.TestCase):
         from_date = datetime.datetime(2016, 3, 1)
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
 
-        raw_issues = [issues for issues in client.issues(start=from_date)]
+        raw_issues = [issues for issues in client.issues(from_date=from_date)]
         self.assertEqual(len(raw_issues), 1)
         self.assertEqual(raw_issues[0], issue)
 
@@ -1072,17 +1112,18 @@ class TestGitHubClient(unittest.TestCase):
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
-                               body=abuse_rate_limit, status=403,
+                               body=abuse_rate_limit, status=429,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '5',
                                    'X-RateLimit-Reset': '5',
                                    'Retry-After': str(retry_after_value)
                                })
 
+        GitHubClient.MAX_RETRIES_ON_READ = 2
         client = GitHubClient("zhquan_example", "repo", "aaa", None)
 
         before = int(time.time())
-        expected = before + (retry_after_value * GitHubClient.MAX_RETRIES)
+        expected = before + (retry_after_value * client.max_retries_on_status)
 
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = [issues for issues in client.issues()]
@@ -1212,7 +1253,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", None)
+        client = GitHubClient("zhquan_example", "repo", "aaa", default_sleep_time=1, max_retries=1)
 
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = [issues for issues in client.issues()]
@@ -1351,6 +1392,8 @@ class TestGitHubCommand(unittest.TestCase):
 
         args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',
+                '--max-retries', '5',
+                '--default-sleep-time', '10',
                 '--tag', 'test', '--no-cache',
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
@@ -1362,7 +1405,8 @@ class TestGitHubCommand(unittest.TestCase):
         self.assertEqual(parsed_args.repository, 'repo')
         self.assertEqual(parsed_args.base_url, 'https://example.com')
         self.assertEqual(parsed_args.sleep_for_rate, True)
-        self.assertEqual(parsed_args.min_rate_to_sleep, 1)
+        self.assertEqual(parsed_args.max_retries, 5)
+        self.assertEqual(parsed_args.default_sleep_time, 10)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.no_cache, True)
