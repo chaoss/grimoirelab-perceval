@@ -49,6 +49,12 @@ class CacheError(BaseError):
     message = "%(cause)s"
 
 
+class HttpClientError(BaseError):
+    """Generic error for HTTP Cient"""
+
+    message = "%(cause)s"
+
+
 class RepositoryError(BaseError):
     """Generic error for repositories"""
 
