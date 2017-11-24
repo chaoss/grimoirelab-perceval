@@ -563,7 +563,7 @@ class TestDiscourseClient(unittest.TestCase):
         client = DiscourseClient(DISCOURSE_SERVER_URL,
                                  api_key='aaaa')
 
-        self.assertEqual(client.url, DISCOURSE_SERVER_URL)
+        self.assertEqual(client.base_url, DISCOURSE_SERVER_URL)
         self.assertEqual(client.api_key, 'aaaa')
 
     @httpretty.activate

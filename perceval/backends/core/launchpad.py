@@ -24,8 +24,6 @@ import hmac
 import hashlib
 import json
 import logging
-import requests
-import time
 
 from grimoirelab.toolkit.datetime import (datetime_utcnow,
                                           datetime_to_utc,
@@ -36,6 +34,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
@@ -300,7 +299,7 @@ class Launchpad(Backend):
     def _fetch(self, from_date):
         """Fetch the issues from a project (distribution/package)"""
 
-        issues_groups = self.client.issues(start=from_date)
+        issues_groups = self.client.issues(from_date=from_date)
 
         for raw_issues in issues_groups:
             self._push_cache_queue('{ISSUES}')
@@ -402,7 +401,7 @@ class Launchpad(Backend):
         return user
 
 
-class LaunchpadClient:
+class LaunchpadClient(HttpClient):
     """Client for retrieving information from Launchpad API"""
 
     # Max retries for handled HTTP errors
@@ -412,6 +411,7 @@ class LaunchpadClient:
     def __init__(self, distribution, package=None,
                  consumer_key=None, api_token=None,
                  items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME):
+        super().__init__(distribution)
         self.consumer_key = consumer_key
         self.api_token = api_token
         self.distribution = distribution
@@ -419,10 +419,24 @@ class LaunchpadClient:
         self.items_per_page = items_per_page
         self.sleep_time = sleep_time
 
-    def issues(self, start=None):
+    def issues(self, from_date=None):
         """Get the issues from pagination"""
 
-        payload = self.__build_payload(size=self.items_per_page, operation=True, startdate=start)
+        payload = {
+            'ws.size': self.items_per_page,
+            'order_by': 'date_last_updated',
+            'omit_duplicates': 'false',
+            'status': ["New", "Incomplete", "Opinion", "Invalid", "Won't Fix",
+                       "Expired", "Confirmed", "Triaged", "In Progress",
+                       "Fix Committed", "Fix Released",
+                       "Incomplete (with response)",
+                       "Incomplete (without response)"],
+            'ws.op': 'searchTasks'
+        }
+
+        if from_date:
+            payload['modified_since'] = from_date.isoformat()
+
         path = self.__get_url_project()
         return self.__fetch_items(path=path, payload=payload)
 
@@ -437,20 +451,23 @@ class LaunchpadClient:
         url_user = self.__get_url("~" + user_name)
 
         logger.info("Getting info for %s" % (url_user))
+        raw_user = self.__send_request(url_user, headers=self.__get_headers())
 
-        try:
-            raw_user = self.__send_request(url_user, headers=self.__get_headers())
+        if raw_user:
             user = raw_user
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 410:
-                logger.warning("Data is not available due to HTTP 410 Gone - %s", url_user)
-                user = '{}'
-            else:
-                raise e
+        else:
+            logger.warning("Data is not available due to HTTP 410 Gone - %s", url_user)
+            user = '{}'
 
         self._users[user_name] = user
 
         return user
+
+    def handle_http_400_errors(self, error, retries=0, url=None, payload=None, headers=None):
+        if error.response.status_code == 410:
+            return self.STOP
+        else:
+            raise error
 
     def user_name(self, user_link):
         """Get user name from link"""
@@ -524,45 +541,10 @@ class LaunchpadClient:
         if self.consumer_key and self.api_token:
             headers['Sign'] = self._generate_signature()
 
-        retries = 0
+        response = next(self.fetch(url, payload=params, headers=headers))
 
-        while retries < self.MAX_RETRIES:
-            try:
-                r = requests.get(url,
-                                 params=params,
-                                 headers=headers)
-                break
-            except requests.exceptions.ConnectionError:
-                logger.warning("Connection was lost, the backend will sleep for " +
-                               str(self.sleep_time) + "s before starting again")
-                time.sleep(self.sleep_time * retries)
-                retries += 1
-
-        r.raise_for_status()
-
-        return r.text
-
-    def __build_payload(self, size, operation=False, startdate=None):
-        """Build payload"""
-
-        payload = {
-            'ws.size': size,
-            'order_by': 'date_last_updated',
-            'omit_duplicates': 'false',
-            'status': ["New", "Incomplete", "Opinion", "Invalid", "Won't Fix",
-                       "Expired", "Confirmed", "Triaged", "In Progress",
-                       "Fix Committed", "Fix Released",
-                       "Incomplete (with response)",
-                       "Incomplete (without response)"]
-        }
-
-        if operation:
-            payload['ws.op'] = 'searchTasks'
-        if startdate:
-            startdate = startdate.isoformat()
-            payload['modified_since'] = startdate
-
-        return payload
+        if self.is_response(response):
+            return response.text
 
     def __fetch_items(self, path, payload):
         """Return the items from Launchpad API using pagination"""
@@ -574,16 +556,14 @@ class LaunchpadClient:
         while fetch_data:
             logger.debug("Fetching page: %i", page)
 
-            try:
-                raw_content = self.__send_request(url_next, payload, self.__get_headers())
+            raw_content = self.__send_request(url_next, payload, self.__get_headers())
+
+            if raw_content:
                 content = json.loads(raw_content)
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 410:
-                    logger.warning("Data is not available due to HTTP 410 Gone - %s", url_next)
-                    raw_content = '{"total_size": 0, "start": 0, "entries": []}'
-                    content = json.loads(raw_content)
-                else:
-                    raise e
+            else:
+                logger.warning("Data is not available due to HTTP 410 Gone - %s", url_next)
+                raw_content = '{"total_size": 0, "start": 0, "entries": []}'
+                content = json.loads(raw_content)
 
             if 'next_collection_link' in content:
                 url_next = content['next_collection_link']

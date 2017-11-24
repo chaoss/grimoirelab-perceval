@@ -26,8 +26,6 @@ import json
 import logging
 import time
 
-import requests
-
 from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 from grimoirelab.toolkit.uris import urijoin
 
@@ -35,7 +33,8 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError, RateLimitError
+from ...client import HttpClient
+from ...errors import CacheError, HttpClientError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -45,6 +44,10 @@ GITHUB_API_URL = "https://api.github.com"
 # Range before sleeping until rate limit reset
 MIN_RATE_LIMIT = 10
 MAX_RATE_LIMIT = 500
+
+# Default sleep time and retries to deal with connection/server problems
+DEFAULT_SLEEP_TIME = 1
+MAX_RETRIES = 5
 
 TARGET_ISSUE_FIELDS = ['user', 'assignee', 'assignees', 'comments', 'reactions']
 
@@ -74,7 +77,8 @@ class GitHub(Backend):
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
                  tag=None, cache=None,
-                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
+                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
+                 max_retries=MAX_RETRIES, default_sleep_time=DEFAULT_SLEEP_TIME):
         origin = base_url if base_url else GITHUB_URL
         origin = urijoin(origin, owner, repository)
 
@@ -83,7 +87,8 @@ class GitHub(Backend):
         self.repository = repository
         self.api_token = api_token
         self.client = GitHubClient(owner, repository, api_token, base_url,
-                                   sleep_for_rate, min_rate_to_sleep)
+                                   sleep_for_rate, min_rate_to_sleep,
+                                   max_retries, default_sleep_time)
         self._users = {}  # internal users cache
 
     @classmethod
@@ -150,7 +155,7 @@ class GitHub(Backend):
 
         from_date = datetime_to_utc(from_date)
 
-        issues_groups = self.client.issues(start=from_date)
+        issues_groups = self.client.issues(from_date=from_date)
 
         for raw_issues in issues_groups:
             self._push_cache_queue('{ISSUES}')
@@ -450,21 +455,20 @@ class GitHub(Backend):
         return found
 
 
-class GitHubClient:
+class GitHubClient(HttpClient):
     """Client for retieving information from GitHub API"""
 
-    MAX_RETRIES = 5
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
     def __init__(self, owner, repository, token, base_url=None,
-                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
+                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
+                 default_sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES):
         self.owner = owner
         self.repository = repository
         self.token = token
-        self.rate_limit = None
-        self.rate_limit_reset_ts = None
-        self.sleep_for_rate = sleep_for_rate
+        self.default_sleep_time = default_sleep_time
+        self.max_retries = max_retries
 
         if base_url:
             self.api_url = urijoin(base_url, 'api', 'v3')
@@ -477,27 +481,62 @@ class GitHubClient:
             msg += "Reset to %d."
             logger.warning(msg, min_rate_to_sleep, MAX_RATE_LIMIT)
 
-        self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
+        super().__init__(self.api_url, sleep_for_rate, min(min_rate_to_sleep, MAX_RATE_LIMIT),
+                         default_sleep_time=default_sleep_time, max_retries=max_retries)
+        GitHubClient.RATE_LIMIT_HEADER = "X-RateLimit-Remaining"
+        GitHubClient.RATE_LIMIT_RESET_HEADER = "X-RateLimit-Reset"
+        self.init_api_token(urijoin(self.api_url, "rate_limit"), headers=self.__build_headers())
 
     def issue_reactions(self, issue_number):
         """Get reactions of an issue"""
 
-        return self._fetch_items("/issues/" + str(issue_number) + "/reactions", "comment")
+        payload = {
+            'per_page': 30,
+            'direction': 'asc',
+            'sort': 'updated'
+        }
+
+        path = urijoin("issues", str(issue_number), "reactions")
+        return self.fetch_items(path, payload)
 
     def issue_comment_reactions(self, comment_id):
         """Get reactions of an issue comment"""
 
-        return self._fetch_items("/issues/comments/" + str(comment_id) + "/reactions", "comment")
+        payload = {
+            'per_page': 30,
+            'direction': 'asc',
+            'sort': 'updated'
+        }
+
+        path = urijoin("issues", "comments", str(comment_id), "reactions")
+        return self.fetch_items(path, payload)
 
     def issue_comments(self, issue_number):
         """Get the issue comments from pagination"""
 
-        return self._fetch_items("/issues/" + str(issue_number) + "/comments", "comment")
+        payload = {
+            'per_page': 30,
+            'direction': 'asc',
+            'sort': 'updated'
+        }
 
-    def issues(self, start=None):
+        path = urijoin("issues", str(issue_number), "comments")
+        return self.fetch_items(path, payload)
+
+    def issues(self, from_date=None):
         """Get the issues from pagination"""
 
-        return self._fetch_items("/issues", payload_type="issue", start=start)
+        payload = {
+            'state': 'all',
+            'per_page': 30,
+            'direction': 'asc',
+            'sort': 'updated'}
+
+        if from_date:
+            payload['since'] = from_date.isoformat()
+
+        path = urijoin("issues")
+        return self.fetch_items(path, payload)
 
     def user(self, login):
         """Get the user information and update the user cache"""
@@ -510,7 +549,7 @@ class GitHubClient:
         url_user = urijoin(self.api_url, 'users', login)
 
         logging.info("Getting info for %s" % (url_user))
-        r = self.__send_request(url_user, headers=self.__build_headers())
+        r = next(self.fetch(url_user, headers=self.__build_headers()))
         user = r.text
         self._users[login] = user
 
@@ -523,20 +562,27 @@ class GitHubClient:
             return self._users_orgs[login]
 
         url = urijoin(self.api_url, 'users', login, 'orgs')
-        try:
-            r = self.__send_request(url, headers=self.__build_headers())
-            orgs = r.text
-        except requests.exceptions.HTTPError as ex:
-            # 404 not found is wrongly received sometimes
-            if ex.response.status_code == 404:
-                logger.error("Can't get github login orgs: %s", ex)
-                orgs = '[]'
-            else:
-                raise ex
+        response = next(self.fetch(url, headers=self.__build_headers()))
+
+        if HttpClient.is_response(response):
+            orgs = response.text
+        else:
+            orgs = '[]'
 
         self._users_orgs[login] = orgs
 
         return orgs
+
+    def handle_http_400_errors(self, error, retries=0, url=None, payload=None, headers=None):
+        if error.response.status_code == 404:
+            logger.error("Can't get github login orgs: %s", error)
+            return self.STOP
+        elif 'Retry-After' in error.response.headers:
+            sleep_time = int(error.response.headers['Retry-After'])
+            time.sleep(sleep_time)
+            return self.STOP
+        else:
+            raise error
 
     def __get_url_repo(self):
         """Build URL repo"""
@@ -545,28 +591,11 @@ class GitHubClient:
         url_repo = urijoin(github_api_repos, self.owner, self.repository)
         return url_repo
 
-    def __get_url(self, path, startdate=None):
+    def __get_url(self, path):
         """Build repo-"related URL"""
 
-        url = self.__get_url_repo() + path
+        url = urijoin(self.__get_url_repo(), path)
         return url
-
-    def __build_payload(self, payload_type='issue', startdate=None):
-        """Build payload"""
-
-        # 100 in other items. 20 for pull requests. 30 issues
-        payload = {'per_page': 30,
-                   'direction': 'asc'}
-        if payload_type == 'issue':
-            payload['state'] = 'all'
-            payload['sort'] = 'updated'
-        elif payload_type == 'comment':
-            payload['sort'] = 'updated'
-
-        if startdate:
-            startdate = startdate.isoformat()
-            payload['since'] = startdate
-        return payload
 
     def __build_headers(self):
         """Set header for request"""
@@ -576,66 +605,25 @@ class GitHubClient:
             headers.update({'Authorization': 'token ' + self.token})
         return headers
 
-    def __send_request(self, url, params=None, headers=None):
-        """GET HTTP caring of rate limit"""
-
-        retries = 0
-
-        while retries < self.MAX_RETRIES:
-            try:
-                if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
-                    seconds_to_reset = self.rate_limit_reset_ts - int(time.time()) + 1
-                    cause = "GitHub rate limit exhausted."
-                    if self.sleep_for_rate:
-                        logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
-                        time.sleep(seconds_to_reset)
-                    else:
-                        raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
-
-                r = requests.get(url, params=params, headers=headers)
-                r.raise_for_status()
-
-                # GitHub service establishes API rate limits.
-                # Enterprise version might have them deactivated.
-                if 'X-RateLimit-Remaining' in r.headers:
-                    self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
-                    self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
-                    logger.debug("Rate limit: %s", self.rate_limit)
-                else:
-                    self.rate_limit = None
-                    self.rate_limit_reset_ts = None
-
-                break
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 403 and 'Retry-After' in r.headers:
-                    retry_seconds = int(r.headers['Retry-After'])
-                    logger.warning("Abuse rate limit, the backend will sleep for %s seconds before starting again",
-                                   retry_seconds)
-                    time.sleep(retry_seconds)
-                    retries += 1
-                else:
-                    raise e
-
-        if retries == self.MAX_RETRIES:
-            r.raise_for_status()
-
-        return r
-
-    def _fetch_items(self, path, payload_type, start=None):
+    def fetch_items(self, path, payload):
         """Return the items from github API using links pagination"""
 
         page = 0  # current page
         last_page = None  # last page
-        url_next = self.__get_url(path, start)
+        url_next = self.__get_url(path)
 
         logger.debug("Get GitHub paginated items from " + url_next)
-        payload = self.__build_payload(payload_type, start)
-        r = self.__send_request(url_next, payload, self.__build_headers())
-        items = r.text
+        response = next(self.fetch(url_next, payload=payload, headers=self.__build_headers()))
+
+        if not HttpClient.is_response(response):
+            cause = "HttpError during fetching items not treated."
+            raise HttpClientError(cause=cause)
+
+        items = response.text
         page += 1
 
-        if 'last' in r.links:
-            last_url = r.links['last']['url']
+        if 'last' in response.links:
+            last_url = response.links['last']['url']
             last_page = last_url.split('&page=')[1].split('&')[0]
             last_page = int(last_page)
             logger.debug("Page: %i/%i" % (page, last_page))
@@ -645,11 +633,16 @@ class GitHubClient:
 
             items = None
 
-            if 'next' in r.links:
-                url_next = r.links['next']['url']  # Loving requests :)
-                r = self.__send_request(url_next, payload, self.__build_headers())
+            if 'next' in response.links:
+                url_next = response.links['next']['url']  # Loving requests :)
+                response = next(self.fetch(url_next, payload=payload, headers=self.__build_headers()))
                 page += 1
-                items = r.text
+
+                if not HttpClient.is_response(response):
+                    cause = "HttpError during fetching items not treated."
+                    raise HttpClientError(cause=cause)
+
+                items = response.text
                 logger.debug("Page: %i/%i" % (page, last_page))
 
 
@@ -676,6 +669,14 @@ class GitHubCommand(BackendCommand):
         group.add_argument('--min-rate-to-sleep', dest='min_rate_to_sleep',
                            default=MIN_RATE_LIMIT, type=int,
                            help="sleep until reset when the rate limit reaches this value")
+
+        # Generic client options
+        group.add_argument('--max-retries', dest='max_retries',
+                           default=MAX_RETRIES, type=int,
+                           help="number of API call retries")
+        group.add_argument('--default-sleep-time', dest='default_sleep_time',
+                           default=DEFAULT_SLEEP_TIME, type=int,
+                           help="sleeping time between API call retries")
 
         # Positional arguments
         parser.parser.add_argument('owner',

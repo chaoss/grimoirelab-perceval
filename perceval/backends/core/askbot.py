@@ -35,10 +35,16 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
+from ...errors import HttpClientError
 from ...utils import DEFAULT_DATETIME
 
 
 logger = logging.getLogger(__name__)
+
+
+API_QUESTIONS = 'api/v1/questions/'
+HTML_QUESTION = 'question/'
 
 
 class Askbot(Backend):
@@ -51,7 +57,7 @@ class Askbot(Backend):
     :param url: Askbot site URL
     :param tag: label used to mark the data
     """
-    version = '0.2.4'
+    version = '0.3.0'
 
     def __init__(self, url, tag=None):
         origin = url
@@ -78,19 +84,10 @@ class Askbot(Backend):
 
         from_date = datetime_to_utc(from_date).timestamp()
 
-        npages = 1
-        next_request = True
+        questions_groups = self.client.get_api_questions(API_QUESTIONS)
+        for questions in questions_groups:
 
-        while next_request:
-            whole_page = self.client.get_api_questions(npages)
-            raw_questions = json.loads(whole_page)
-            questions = raw_questions['questions']
-            tpages = raw_questions['pages']
-
-            logger.debug("Fetching questions from '%s': page %s/%s",
-                         self.url, npages, tpages)
-
-            for question in questions:
+            for question in questions['questions']:
                 updated_at = int(question['last_activity_at'])
                 if updated_at > from_date:
                     html_question = self.__fetch_question(question)
@@ -103,19 +100,11 @@ class Askbot(Backend):
                     question.update(question_obj)
                     yield question
 
-            if npages == tpages:
-                next_request = False
-
-            npages = npages + 1
-
     def __fetch_question(self, question):
         """Fetch an Askbot HTML question body.
-
         The method fetchs the HTML question retrieving the
         question body of the item question received
-
         :param question: item with the question itself
-
         :returns: a list of HTML page/s for the question
         """
 
@@ -236,7 +225,7 @@ class Askbot(Backend):
         return question_object
 
 
-class AskbotClient:
+class AskbotClient(HttpClient):
     """Askbot client.
 
     This class implements a simple client to retrieve distinct
@@ -247,8 +236,6 @@ class AskbotClient:
     :raises HTTPError: when an error occurs doing the request
     """
 
-    API_QUESTIONS = 'api/v1/questions/'
-    HTML_QUESTION = 'question/'
     ORDER_API = 'activity-asc'
     ORDER_HTML = 'votes'
     COMMENTS = 's/post_comments'
@@ -257,76 +244,97 @@ class AskbotClient:
     def __init__(self, base_url):
         self.base_url = base_url
         self._use_new_urls = True
+        super().__init__(self.base_url)
 
-    def get_api_questions(self, page=1):
-        """Retrieve a question page using the API.
+    def get_api_questions(self, path):
 
-        :param page: page to retrieve
-        """
-        path = self.API_QUESTIONS
-        params = {
-            'page': page,
-            'sort': self.ORDER_API
-        }
-        response = self.__call(path, params)
-        return response
+        npages = 1
+        next_request = True
+
+        path = urijoin(self.base_url, path)
+        while next_request:
+            try:
+                params = {
+                    'page': npages,
+                    'sort': self.ORDER_API
+                }
+
+                response = next(self.fetch(path, payload=params))
+
+                whole_page = response.text
+
+                raw_questions = json.loads(whole_page)
+                tpages = raw_questions['pages']
+
+                logger.debug("Fetching questions from '%s': page %s/%s",
+                             self.base_url, npages, tpages)
+
+                if npages == tpages:
+                    next_request = False
+
+                npages = npages + 1
+                yield raw_questions
+
+            except requests.exceptions.TooManyRedirects as e:
+                logger.warning("%s, data not retrieved for resource %s", e, path)
+                next_request = False
 
     def get_html_question(self, question_id, page=1):
         """Retrieve a raw HTML question and all it's information.
-
         :param question_id: question identifier
         :param page: page to retrieve
         """
-        path = urijoin(self.HTML_QUESTION, question_id)
+
+        path = urijoin(self.base_url, HTML_QUESTION, question_id)
+
         params = {
             'page': page,
             'sort': self.ORDER_HTML
         }
 
-        response = self.__call(path, params)
-        return response
+        response = next(self.fetch(path, payload=params))
+
+        if HttpClient.is_response(response):
+            return response.text
+        else:
+            cause = "Error during fetching html question not treated."
+            raise HttpClientError(cause=cause)
 
     def get_comments(self, post_id):
         """Retrieve a list of comments by a given id.
 
         :param object_id: object identifiere
         """
-        path = self.COMMENTS if self._use_new_urls else self.COMMENTS_OLD
+        path = urijoin(self.base_url, self.COMMENTS if self._use_new_urls else self.COMMENTS_OLD)
+
         params = {
             'post_id': post_id,
             'post_type': 'answer',
             'avatar_size': 0
         }
-        headers = {'X-Requested-With': 'XMLHttpRequest'}
 
-        try:
-            response = self.__call(path, params, headers)
-        except requests.exceptions.HTTPError as ex:
-            if ex.response.status_code == 404:
-                logger.debug("Comments URL did not work. Using old URL schema.")
-                self._use_new_urls = False
-                path = self.COMMENTS_OLD
-                response = self.__call(path, params, headers)
-            else:
-                raise ex
+        response = next(self.fetch(path, payload=params, headers=self.__build_headers()))
 
-        return response
+        if response == self.STOP:
+            self._use_new_urls = False
+            path = urijoin(self.base_url, self.COMMENTS_OLD)
+            response = next(self.fetch(path, payload=params, headers=self.__build_headers()))
 
-    def __call(self, path, params=None, headers=None):
-        """Retrieve all the questions.
+        if HttpClient.is_response(response):
+            return response.text
+        else:
+            cause = "Error during fetching comment not treated."
+            raise HttpClientError(cause=cause)
 
-        :param path: path of the url
-        :param params: dict with the HTTP parameters needed to run
-            the given command
-        :param headers: headers to use in the request
-        """
+    def __build_headers(self):
+        return {'X-Requested-With': 'XMLHttpRequest'}
 
-        url = urijoin(self.base_url, path)
-
-        req = requests.get(url, params=params, headers=headers)
-        req.raise_for_status()
-
-        return req.text
+    def handle_http_400_errors(self, error, retries=0, url=None, payload=None, headers=None):
+        if error.response.status_code == 404 and urijoin(self.base_url, self.COMMENTS) in url:
+            logger.debug("Comments URL did not work. Using old URL schema.")
+            return self.STOP
+        else:
+            raise error
 
 
 class AskbotParser:

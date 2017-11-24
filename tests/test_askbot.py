@@ -215,9 +215,8 @@ class TestAskbotClient(unittest.TestCase):
 
         client = AskbotClient(ASKBOT_URL)
 
-        result = client.get_api_questions(1)
-
-        self.assertEqual(result, body)
+        result = next(client.get_api_questions('api/v1/questions'))
+        self.assertEqual(result, json.loads(body))
 
         expected = {
             'page': ['1'],
