@@ -33,6 +33,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import BaseError, BackendError, CacheError
 from ...utils import DEFAULT_DATETIME
 from ..._version import __version__
@@ -295,7 +296,7 @@ class BugzillaRESTError(BaseError):
     message = "%(error)s (code: %(code)s)"
 
 
-class BugzillaRESTClient:
+class BugzillaRESTClient(HttpClient):
     """Bugzilla REST API client.
 
     This class implements a simple client to retrieve distinct
@@ -343,7 +344,7 @@ class BugzillaRESTClient:
     VEXCLUDE_ATTCH_DATA = 'data'
 
     def __init__(self, base_url, user=None, password=None, api_token=None):
-        self.base_url = base_url
+        super().__init__(base_url)
         self.api_token = api_token if api_token else None
 
         if user is not None and password is not None:
@@ -462,8 +463,7 @@ class BugzillaRESTClient:
                      resource, str(params))
 
         headers = self.HEADERS
-        r = requests.get(url, headers=headers, params=params)
-        r.raise_for_status()
+        r = self.fetch(url, payload=params, headers=headers)
 
         # Check for possible Bugzilla API errors
         result = r.json()
