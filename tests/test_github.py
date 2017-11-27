@@ -386,16 +386,11 @@ class TestGitHubBackend(unittest.TestCase):
         issue_2_comments = read_file('data/github/github_issue_comments_2')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
         issue_comment_2_reactions = read_file('data/github/github_empty_request')
-        rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTREPRISE_RATE_LIMIT,
-                               body=rate_limit,
-                               status=200,
-                               forcing_headers={
-                                   'X-RateLimit-Remaining': '20',
-                                   'X-RateLimit-Reset': '15'
-                               })
+                               body="",
+                               status=404)
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTERPRISE_ISSUES_URL,
@@ -861,19 +856,19 @@ class TestGitHubClient(unittest.TestCase):
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTREPRISE_RATE_LIMIT,
-                               body=rate_limit,
-                               status=200,
-                               forcing_headers={
-                                   'X-RateLimit-Remaining': '20',
-                                   'X-RateLimit-Reset': '15'
-                               })
+                               body="",
+                               status=404)
 
         client = GitHubClient("zhquan_example", "repo", "aaa")
         self.assertEqual(client.api_url, GITHUB_API_URL)
+        self.assertEqual(client.rate_limit, 20)
+        self.assertEqual(client.rate_limit_reset_ts, 15)
 
         client = GitHubClient("zhquan_example", "repo", "aaa",
                               base_url=GITHUB_ENTERPRISE_URL)
         self.assertEqual(client.api_url, GITHUB_ENTERPRISE_API_URL)
+        self.assertEqual(client.rate_limit, None)
+        self.assertEqual(client.rate_limit_reset_ts, None)
 
     @httpretty.activate
     def test_get_issues(self):
@@ -920,16 +915,11 @@ class TestGitHubClient(unittest.TestCase):
         """Test fetching issues from enterprise"""
 
         issue = read_file('data/github/github_request')
-        rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTREPRISE_RATE_LIMIT,
-                               body=rate_limit,
-                               status=200,
-                               forcing_headers={
-                                   'X-RateLimit-Remaining': '20',
-                                   'X-RateLimit-Reset': '15'
-                               })
+                               body="",
+                               status=404)
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTERPRISE_ISSUES_URL,

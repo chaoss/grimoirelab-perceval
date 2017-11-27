@@ -69,7 +69,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.11.3'
+    version = '0.11.4'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -474,7 +474,7 @@ class GitHubClient:
         else:
             self.api_url = GITHUB_API_URL
 
-        self.init_rate_limit(self.get_rate_limit())
+        self.init_rate_limit()
 
         if min_rate_to_sleep > MAX_RATE_LIMIT:
             msg = "Minimum rate to sleep value exceeded (%d)."
@@ -484,17 +484,17 @@ class GitHubClient:
 
         self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
 
-    def get_rate_limit(self):
-        """Get rate limit"""
+    def init_rate_limit(self):
+        """initialize rate_limit and rate_limit_reset_ts """
 
         url = urijoin(self.api_url, "rate_limit")
-        response = requests.get(url, headers=self.__build_headers())
-        response.raise_for_status()
-
-        return response
-
-    def init_rate_limit(self, response):
-        """initialize rate_limit and rate_limit_reset_ts """
+        try:
+            response = requests.get(url, headers=self.__build_headers())
+            response.raise_for_status()
+        except requests.exceptions.HTTPError:
+            self.rate_limit = None
+            self.rate_limit_reset_ts = None
+            return
 
         self.rate_limit = int(response.headers[self.RATE_LIMIT_HEADER])
         self.rate_limit_reset_ts = int(response.headers[self.RATE_LIMIT_RESET_HEADER])
