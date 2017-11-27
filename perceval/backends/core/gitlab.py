@@ -72,7 +72,7 @@ class GitLab(Backend):
     def __init__(self, owner=None, repository=None,
                  api_token=None,
                  base_url=None,
-                 tag=None,                 
+                 tag=None,
                  cache=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
 
@@ -161,6 +161,11 @@ class GitLab(Backend):
             for issue in issues:
                 self.__init_extra_issue_fields(issue)
 
+                #===============================================================
+                # if str_to_datetime(issue['updated_at']) < from_date:
+                #     continue
+                #===============================================================
+
                 issue['user_notes_data'] = \
                     self.__get_issue_notes(issue['iid'])
                 issue['award_emoji_data'] = \
@@ -195,9 +200,9 @@ class GitLab(Backend):
             if raw_item == '{ISSUES}':
                 issues = self.__fetch_issues_from_cache(cache_items)
 
+            raw_item = next(cache_items)
             for issue in issues:
                 self.__init_extra_issue_fields(issue)
-                raw_item = next(cache_items)
 
                 while raw_item != '{ISSUE-END}':
                     try:
@@ -285,9 +290,14 @@ class GitLab(Backend):
     def __fetch_issue_emoji_from_cache(self, cache_items):
         """Fetch issue emoji from cache"""
 
+        emojis = []
+
         raw_content = next(cache_items)
-        emoji = json.loads(raw_content)
-        return emoji
+        group_emojis = json.loads(raw_content)
+        for emoji in group_emojis:
+            emojis.append(emoji)
+
+        return emojis
 
     def __fetch_notes_from_cache(self, cache_items):
         """Fetch issue notes from cache"""
