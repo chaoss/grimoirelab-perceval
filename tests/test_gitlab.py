@@ -42,6 +42,8 @@ from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.gitlab import (GitLab,
                                            GitLabCommand,
                                            GitLabClient, GITLAB_URL)
+from perceval.backends.core import gitlab
+from plainbox.impl.validation import Issue
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
@@ -302,30 +304,55 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(
             issues[0]['data']['author']['username'], 'redfish64')
 
-    @httpretty.activate
+
+#     @httpretty.activate
     def test_fetch_from_date(self):
         """ Test when return from date """
-
-        print("TODO")
+ 
+#         setup_http_server()
+ 
+        from_date = datetime.datetime(2020, 11, 1)
+ 
+ #       gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+  
+        gitlab = GitLab("sat4j", "sat4j",
+                        "xxxxxxxx", GITLAB_ENTERPRISE_URL)
+ 
+#        gitlab = GitLab("lafricain79", "LinVB", "xxxxx")
+ 
+        issues = [issues for issues in gitlab.fetch(from_date=from_date)]
+ 
+        self.assertEqual(len(issues), 1)
 
     @httpretty.activate
     def test_fetch_empty(self):
         """ Test when return empty """
 
-        print("TODO")
+        page_1 = ''
 
-#===============================================================================
-#     def test_live(self):
-#         from_date = datetime.datetime(2017, 4, 10)
-# #        backend = GitLab("fdroid", "fdroiddata", "5pJ4_4dxuNA7iXZsEqK8")
-#         backend = GitLab("sat4j", "sat4j",
-#                          "xxxxxxxxxxxx", GITLAB_ENTERPRISE_URL)
-#         issues = [issues for issues in backend.fetch(from_date=from_date)]
-#===============================================================================
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_ISSUES_URL,
+                               body=page_1,
+                               status=200
+                               )
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        issues = [issues for issues in gitlab.fetch()]
+
+        self.assertEqual(len(issues), 0)
+
+    #===========================================================================
+    # def test_live(self):
+    #     from_date = datetime.datetime(2017, 4, 10)
+    #     backend = GitLab("sat4j", "sat4j",
+    #                      "xxxxxxxxxxxxxxx", GITLAB_ENTERPRISE_URL)
+    #     issues = [issues for issues in backend.fetch(from_date=from_date)]
+    #===========================================================================
 
 
-class TestGitHubBackendCache(unittest.TestCase):
-    """GitHub backend tests using a cache"""
+class TestGitLabBackendCache(unittest.TestCase):
+    """GitLab backend tests using a cache"""
 
     def setUp(self):
         self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
@@ -337,86 +364,191 @@ class TestGitHubBackendCache(unittest.TestCase):
     def test_fetch_from_cache(self):
         """ Test whether a list of issues is returned from cache """
 
-        print("TODO")
+        setup_http_server()
+
+        # First, we fetch the bugs from the server, storing them
+        # in a cache
+        cache = Cache(self.tmp_path)
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token", cache=cache)
+
+        issues = [issues for issues in gitlab.fetch()]
+
+        # Now, we get the bugs from the cache.
+        # The contents should be the same and there won't be
+        # any new request to the server
+        cache_issues = \
+            [cache_issues for cache_issues in gitlab.fetch_from_cache()]
+
+        del issues[0]['timestamp']
+        del cache_issues[0]['timestamp']
+        del issues[1]['timestamp']
+        del cache_issues[1]['timestamp']
+
+        self.assertEqual(len(issues), len(cache_issues))
+        self.assertDictEqual(issues[0], cache_issues[0])
+        self.assertDictEqual(issues[1], cache_issues[1])
 
     def test_fetch_from_empty_cache(self):
         """Test if there are not any issues returned when the cache is empty"""
 
-        print("TODO")
+        cache = Cache(self.tmp_path)
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token", cache=cache)
+
+        cache_issues = \
+            [cache_issues for cache_issues in gitlab.fetch_from_cache()]
+
+        self.assertEqual(len(cache_issues), 0)
 
     def test_fetch_from_non_set_cache(self):
         """Test if a error is raised when the cache was not set"""
 
-        print("TODO")
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        with self.assertRaises(CacheError):
+            _ = [cache_issues for cache_issues in gitlab.fetch_from_cache()]
 
 
-class TestGitHubClient(unittest.TestCase):
-    """ GitHub API client tests """
+class TestGitLabClient(unittest.TestCase):
+    """ GitLab API client tests """
 
     def test_api_url_initialization(self):
         """Test API URL initialization for both basic and enterprise servers"""
 
-        print("TODO")
+        client = GitLabClient("zhquan_example", "repo", "aaa")
+        self.assertEqual(client.api_url, GITLAB_API_URL)
+
+        client = GitLabClient("zhquan_example",
+                              "repo", "aaa", GITLAB_ENTERPRISE_URL)
+        self.assertEqual(client.api_url, GITLAB_ENTERPRISE_API_URL)
 
     @httpretty.activate
     def test_issues(self):
         """ Test issues API call """
 
-        print("TODO")
+        page_1 = read_file('data/gitlab/issue_page_1')
+        page_2 = read_file('data/gitlab/issue_page_2')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_ISSUES_URL,
+                               body=page_1,
+                               status=200,
+                               forcing_headers={
+                                   'RateLimit-Remaining': '20',
+                                   'Link': '<' + GITLAB_ISSUES_URL +
+                                   '/?&page=2>; rel="next", <' +
+                                   GITLAB_ISSUES_URL +
+                                   '/?&page=3>; rel="last"'
+                                })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_ISSUES_URL + '/?&page=2',
+                               body=page_2,
+                               status=200,
+                               forcing_headers={
+                                   'RateLimit-Remaining': '20'
+                                })
+
+        client = GitLabClient("fdroid", "fdroiddata", "aaa")
+
+        raw_issues = [issues for issues in client.issues()]
+        self.assertEqual(len(raw_issues), 2)
+        self.assertEqual(raw_issues[0], page_1)
+        self.assertEqual(raw_issues[1], page_2)
+
+        # Check requests
+        expected = {
+            'state': ['all'],
+            'sort': ['asc'],
+            'order_by': ['updated_at'],
+            'page': ['2']
+        }
+
+        self.assertDictEqual(httpretty.last_request().querystring, expected)
+        self.assertEqual(
+            httpretty.last_request().headers["PRIVATE-TOKEN"], "aaa")
 
     @httpretty.activate
     def test_issues_from_date(self):
         """ Test issue from date param API call """
 
-        print("TODO")
+        print("TODO test_issues_from_date")
 
     @httpretty.activate
     def test_issues_empty(self):
         """ Test when issue is empty API call """
 
-        print("TODO")
+        empty = read_file('data/gitlab/empty_request')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_ISSUES_URL,
+                               body=empty,
+                               status=200
+                               )
+
+        client = GitLabClient("fdroid", "fdroiddata", "aaa")
+
+        raw_issues = [issues for issues in client.issues()]
+
+        self.assertEqual(raw_issues[0], empty)
+
+        self.assertEqual(
+            httpretty.last_request().headers["PRIVATE-TOKEN"], "aaa")
 
     @httpretty.activate
     def test_issue_notes(self):
         """ Test issue_notes API call """
 
-        print("TODO")
+#===============================================================================
+#         setup_http_server()
+# 
+#         client = GitLabClient("fdroid", "fdroiddata", "aaa")
+# 
+#         raw_issues = [issues for issues in client.issues()]
+# 
+#         print(raw_issues)
+# 
+#         self.assertEqual(raw_issues[0]["attachment"], "test1")
+# 
+#         self.assertEqual(
+#             httpretty.last_request().headers["PRIVATE-TOKEN"], "aaa")
+#===============================================================================
+
 
     @httpretty.activate
     def test_issue_emoji(self):
         """ Test issue_emoji API call """
 
-        print("TODO")
+        print("TODO test_issue_emoji")
 
     @httpretty.activate
     def test_note_emojis(self):
         """ Test note_emoji API call """
 
-        print("TODO")
+        print("TODO test_note_emojis")
 
     @httpretty.activate
     def test_user(self):
         """Test user API call"""
 
-        print("TODO")
+        print("TODO test_user")
 
     @httpretty.activate
     def test_http_wrong_status(self):
         """Test if a error is raised when the http status was not 200"""
 
-        print("TODO")
+        print("TODO test_http_wrong_status")
 
     @httpretty.activate
     def test_sleep_for_rate(self):
         """ Test get_page_issue API call """
 
-        print("TODO")
+        print("TODO test_sleep_for_rate")
 
     @httpretty.activate
     def test_rate_limit_error(self):
         """ Test get_page_issue API call """
 
-        print("TODO")
+        print("TODO test_rate_limit_error")
 
 
 class TestGitLabCommand(unittest.TestCase):
