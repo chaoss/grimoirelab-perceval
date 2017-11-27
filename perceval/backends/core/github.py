@@ -69,7 +69,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.11.2'
+    version = '0.11.3'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -457,6 +457,9 @@ class GitHubClient:
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
+    RATE_LIMIT_HEADER = "X-RateLimit-Remaining"
+    RATE_LIMIT_RESET_HEADER = "X-RateLimit-Reset"
+
     def __init__(self, owner, repository, token, base_url=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
         self.owner = owner
@@ -471,6 +474,8 @@ class GitHubClient:
         else:
             self.api_url = GITHUB_API_URL
 
+        self.init_rate_limit(self.get_rate_limit())
+
         if min_rate_to_sleep > MAX_RATE_LIMIT:
             msg = "Minimum rate to sleep value exceeded (%d)."
             msg += "High values might cause the client to sleep forever."
@@ -478,6 +483,21 @@ class GitHubClient:
             logger.warning(msg, min_rate_to_sleep, MAX_RATE_LIMIT)
 
         self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
+
+    def get_rate_limit(self):
+        """Get rate limit"""
+
+        url = urijoin(self.api_url, "rate_limit")
+        response = requests.get(url, headers=self.__build_headers())
+        response.raise_for_status()
+
+        return response
+
+    def init_rate_limit(self, response):
+        """initialize rate_limit and rate_limit_reset_ts """
+
+        self.rate_limit = int(response.headers[self.RATE_LIMIT_HEADER])
+        self.rate_limit_reset_ts = int(response.headers[self.RATE_LIMIT_RESET_HEADER])
 
     def issue_reactions(self, issue_number):
         """Get reactions of an issue"""
@@ -597,9 +617,9 @@ class GitHubClient:
 
                 # GitHub service establishes API rate limits.
                 # Enterprise version might have them deactivated.
-                if 'X-RateLimit-Remaining' in r.headers:
-                    self.rate_limit = int(r.headers['X-RateLimit-Remaining'])
-                    self.rate_limit_reset_ts = int(r.headers['X-RateLimit-Reset'])
+                if self.RATE_LIMIT_HEADER in r.headers:
+                    self.rate_limit = int(r.headers[self.RATE_LIMIT_HEADER])
+                    self.rate_limit_reset_ts = int(r.headers[self.RATE_LIMIT_RESET_HEADER])
                     logger.debug("Rate limit: %s", self.rate_limit)
                 else:
                     self.rate_limit = None
