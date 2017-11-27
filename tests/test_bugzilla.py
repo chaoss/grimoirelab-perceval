@@ -728,7 +728,7 @@ class TestBugzillaClient(unittest.TestCase):
 
         client = BugzillaClient(BUGZILLA_SERVER_URL)
         self.assertEqual(client.version, None)
-        self.assertIsInstance(client._session, requests.Session)
+        self.assertIsInstance(client.session, requests.Session)
 
     @httpretty.activate
     def test_init_auth(self):

@@ -28,7 +28,6 @@ import re
 
 import bs4
 import dateutil.tz
-import requests
 
 from grimoirelab.toolkit.datetime import str_to_datetime
 
@@ -36,6 +35,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import BackendError, CacheError, ParseError
 from ...utils import DEFAULT_DATETIME, xml_to_dict
 from ..._version import __version__
@@ -400,7 +400,7 @@ class BugzillaCommand(BackendCommand):
         return parser
 
 
-class BugzillaClient:
+class BugzillaClient(HttpClient):
     """Bugzilla API client.
 
     This class implements a simple client to retrieve distinct
@@ -452,9 +452,8 @@ class BugzillaClient:
 
     def __init__(self, base_url, user=None, password=None,
                  max_bugs_csv=MAX_BUGS_CSV):
-        self.base_url = base_url
         self.version = None
-        self._session = self.__create_http_session()
+        super().__init__(base_url, headers=self.HEADERS)
 
         if user is not None and password is not None:
             self.login(user, password)
@@ -477,8 +476,7 @@ class BugzillaClient:
 
         headers = {'Referer': self.base_url}
 
-        req = self._session.post(url, data=payload, headers=headers)
-        req.raise_for_status()
+        req = self.fetch(url, payload=payload, headers=headers, method=HttpClient.POST)
 
         # Check if the authentication went OK. When this string
         # is found means that the authentication was successful
@@ -499,7 +497,7 @@ class BugzillaClient:
         }
 
         self.call(self.CGI_LOGIN, params)
-        self._session = self.__create_http_session()
+        self._close_http_session()
 
         logger.debug("Bugzilla user logged out from %s",
                      self.base_url)
@@ -581,15 +579,9 @@ class BugzillaClient:
         logger.debug("Bugzilla client calls command: %s params: %s",
                      cgi, str(params))
 
-        req = self._session.get(url, params=params)
-        req.raise_for_status()
+        req = self.fetch(url, payload=params)
 
         return req.text
-
-    def __create_http_session(self):
-        session = requests.Session()
-        session.headers.update(self.HEADERS)
-        return session
 
     def __fetch_version(self):
         response = self.metadata()
