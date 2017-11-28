@@ -38,6 +38,7 @@ from ...utils import DEFAULT_DATETIME
 
 
 MAX_REVIEWS = 500  # Maximum number of reviews per query
+PORT = '29418'
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +57,10 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.7.3'
+    version = '0.7.4'
 
     def __init__(self, url,
-                 user=None, max_reviews=MAX_REVIEWS,
+                 user=None, port=PORT, max_reviews=MAX_REVIEWS,
                  blacklist_reviews=None,
                  disable_host_key_check=False,
                  tag=None, cache=None):
@@ -70,7 +71,7 @@ class Gerrit(Backend):
         self.max_reviews = max(1, max_reviews)
         self.blacklist_reviews = blacklist_reviews
         self.client = GerritClient(self.url, user, max_reviews,
-                                   blacklist_reviews, disable_host_key_check)
+                                   blacklist_reviews, disable_host_key_check, port=port)
 
     @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -285,24 +286,28 @@ class GerritClient():
     VERSION_REGEX = re.compile(r'gerrit version (\d+)\.(\d+).*')
     CMD_GERRIT = 'gerrit'
     CMD_VERSION = 'version'
-    PORT = '29418'
     MAX_RETRIES = 3  # max number of retries when a command fails
     RETRY_WAIT = 60  # number of seconds when retrying a ssh command
 
     def __init__(self, repository, user, max_reviews, blacklist_reviews=[],
-                 disable_host_key_check=False):
+                 disable_host_key_check=False, port=PORT):
         self.gerrit_user = user
         self.max_reviews = max_reviews
         self.blacklist_reviews = blacklist_reviews
         self.repository = repository
         self.project = None
         self._version = None
+        self.port = port
         ssh_opts = ''
         if disable_host_key_check:
             ssh_opts += "-o StrictHostKeyChecking=no "
 
-        self.gerrit_cmd = "ssh %s -p %s %s@%s" % (ssh_opts, GerritClient.PORT,
-                                                  self.gerrit_user, self.repository)
+        if self.port:
+            self.gerrit_cmd = "ssh %s -p %s %s@%s" % (ssh_opts, self.port,
+                                                      self.gerrit_user, self.repository)
+        else:
+            self.gerrit_cmd = "ssh %s %s@%s" % (ssh_opts, self.gerrit_user, self.repository)
+
         self.gerrit_cmd += " %s " % (GerritClient.CMD_GERRIT)
 
     def __execute(self, cmd):
@@ -452,6 +457,9 @@ class GerritCommand(BackendCommand):
                            help="Wrong reviews that must not be retrieved.")
         group.add_argument('--disable-host-key-check', dest='disable_host_key_check', action='store_true',
                            help="Don't check remote host identity")
+        group.add_argument('--ssh-port', dest='port',
+                           default=PORT,
+                           help="Set SSH port of the Gerrit server")
 
         # Required arguments
         parser.parser.add_argument('url',
