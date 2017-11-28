@@ -358,7 +358,33 @@ class TestJenkinsClient(unittest.TestCase):
     @httpretty.activate
     def test_init(self):
         """Test initialization"""
+
+        target_sleep_time = 0.1
+
+        client = JenkinsClient(JENKINS_SERVER_URL, sleep_time=target_sleep_time)
+
+        self.assertEqual(client.url, JENKINS_SERVER_URL)
+        self.assertEqual(client.blacklist_jobs, None)
+        self.assertEqual(client.sleep_time, target_sleep_time)
+
+    @httpretty.activate
+    def test_http_retry_requests(self):
+        """Test whether failed requests are properly handled"""
+
+        httpretty.register_uri(httpretty.GET,
+                               JENKINS_JOBS_URL,
+                               body="", status=408)
+
         client = JenkinsClient(JENKINS_SERVER_URL, sleep_time=0.1)
+
+        before = float(time.time())
+        expected = before + (client.sleep_time * JenkinsClient.MAX_RETRIES)
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = client.get_jobs()
+
+        after = float(time.time())
+        self.assertTrue(expected <= after)
 
     @httpretty.activate
     def test_get_jobs(self):

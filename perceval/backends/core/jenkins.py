@@ -233,7 +233,7 @@ class JenkinsClient:
                 req = requests.get(url)
                 req.raise_for_status()
                 break
-            except requests.exceptions.RequestException as e:
+            except requests.exceptions.HTTPError as e:
                 if e.response.status_code in [408, 410, 502, 503, 504]:
                     retries += 1
                     time.sleep(self.sleep_time * retries)
