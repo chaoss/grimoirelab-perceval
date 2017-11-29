@@ -81,6 +81,7 @@ setup(name="perceval",
           'beautifulsoup4>=4.3.2',
           'feedparser>=5.1.3',
           'dulwich>=0.18.5',
+          'urllib3>=1.22',
           'grimoirelab-toolkit>=0.1.1'
       ],
       scripts=[
