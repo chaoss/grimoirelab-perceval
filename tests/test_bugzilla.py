@@ -728,7 +728,7 @@ class TestBugzillaClient(unittest.TestCase):
 
         client = BugzillaClient(BUGZILLA_SERVER_URL)
         self.assertEqual(client.version, None)
-        self.assertIsInstance(client._session, requests.Session)
+        self.assertIsInstance(client.session, requests.Session)
 
     @httpretty.activate
     def test_init_auth(self):
@@ -756,6 +756,22 @@ class TestBugzillaClient(unittest.TestCase):
         self.assertEqual(req.method, 'POST')
         self.assertRegex(req.path, '/index.cgi')
         self.assertEqual(req.parsed_body, expected)
+
+    @httpretty.activate
+    def test_logout(self):
+        """Test whether the logout is properly completed"""
+
+        # Set up a mock HTTP server
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_LOGIN_URL,
+                               body="index.cgi?logout=1",
+                               status=200)
+
+        client = BugzillaClient(BUGZILLA_SERVER_URL)
+        client.logout()
+
+        req = httpretty.last_request()
+        self.assertEqual(req.close_connection, True)
 
     @httpretty.activate
     def test_invalid_auth(self):
