@@ -27,7 +27,6 @@ import os
 import dateutil.parser
 import dateutil.relativedelta
 import dateutil.tz
-import requests
 
 from grimoirelab.toolkit.datetime import datetime_to_utc, datetime_utcnow
 from grimoirelab.toolkit.uris import urijoin
@@ -36,6 +35,7 @@ from .mbox import MBox, MailingList
 from ...backend import (BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...utils import (DEFAULT_DATETIME,
                       months_range)
 
@@ -56,7 +56,7 @@ class HyperKitty(MBox):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.1'
+    version = '0.2.0'
 
     def __init__(self, url, dirpath, tag=None, cache=None):
         super().__init__(url, dirpath, tag=tag, cache=cache)
@@ -125,7 +125,7 @@ class HyperKittyList(MailingList):
     """
     def __init__(self, url, dirpath):
         super().__init__(url, dirpath)
-        self.url = url
+        self.client = HttpClient(url)
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the mbox files from the remote archiver.
@@ -145,12 +145,10 @@ class HyperKittyList(MailingList):
             fetched archives
         """
         logger.info("Downloading mboxes from '%s' to since %s",
-                    self.url, str(from_date))
+                    self.client.base_url, str(from_date))
         logger.debug("Storing mboxes in '%s'", self.dirpath)
 
-        # Check mailing list URL
-        r = requests.get(self.url)
-        r.raise_for_status()
+        self.client.fetch(self.client.base_url)
 
         from_date = datetime_to_utc(from_date)
         to_end = datetime_utcnow()
@@ -171,7 +169,7 @@ class HyperKittyList(MailingList):
             filename = start.strftime("%Y-%m.mbox.gz")
             filepath = os.path.join(self.dirpath, filename)
 
-            url = urijoin(self.url, 'export', filename)
+            url = urijoin(self.client.base_url, 'export', filename)
 
             params = {
                 'start': start.strftime("%Y-%m-%d"),
@@ -222,8 +220,7 @@ class HyperKittyList(MailingList):
         return dt
 
     def _download_archive(self, url, params, filepath):
-        r = requests.get(url, params=params, stream=True)
-        r.raise_for_status()
+        r = self.client.fetch(url, payload=params, stream=True)
 
         try:
             with open(filepath, 'wb') as fd:
