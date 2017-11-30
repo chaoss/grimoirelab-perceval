@@ -215,9 +215,9 @@ class TestAskbotClient(unittest.TestCase):
 
         client = AskbotClient(ASKBOT_URL)
 
-        result = client.get_api_questions(1)
+        result = next(client.get_api_questions('api/v1/questions'))
 
-        self.assertEqual(result, body)
+        self.assertEqual(result, json.loads(body))
 
         expected = {
             'page': ['1'],
@@ -296,6 +296,19 @@ class TestAskbotClient(unittest.TestCase):
 
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/question/0')
+
+    @httpretty.activate
+    def test_wrong_status_get_comments(self):
+        """Test whether, when fetching comments, an exception is thrown if HTTPError is not 404"""
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL,
+                               body="", status=403)
+
+        client = AskbotClient(ASKBOT_URL)
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = client.get_comments(5)
 
     @httpretty.activate
     def test_get_comments(self):
