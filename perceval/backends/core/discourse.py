@@ -25,8 +25,6 @@
 import json
 import logging
 
-import requests
-
 from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 from grimoirelab.toolkit.uris import urijoin
 
@@ -34,6 +32,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
@@ -53,7 +52,7 @@ class Discourse(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.1'
+    version = '0.6.0'
 
     def __init__(self, url, api_token=None,
                  tag=None, cache=None):
@@ -292,7 +291,7 @@ class Discourse(Backend):
         return 'topic'
 
 
-class DiscourseClient:
+class DiscourseClient(HttpClient):
     """Discourse API client.
 
     This class implements a simple client to retrieve topics from
@@ -316,8 +315,8 @@ class DiscourseClient:
     # Data type
     TJSON = '.json'
 
-    def __init__(self, url, api_key=None):
-        self.url = url
+    def __init__(self, base_url, api_key=None):
+        super().__init__(base_url)
         self.api_key = api_key
 
     def topics_page(self, page=None):
@@ -375,16 +374,15 @@ class DiscourseClient:
             the given command
         """
         if res:
-            url = urijoin(self.url, res, res_id)
+            url = urijoin(self.base_url, res, res_id)
         else:
-            url = urijoin(self.url, res_id)
+            url = urijoin(self.base_url, res_id)
         url += self.TJSON
 
         logger.debug("Discourse client calls resource: %s %s params: %s",
                      res, res_id, str(params))
 
-        r = requests.get(url, params=params)
-        r.raise_for_status()
+        r = self.fetch(url, payload=params)
 
         return r.text
 
