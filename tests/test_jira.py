@@ -524,7 +524,7 @@ class TestJiraClient(unittest.TestCase):
                             user='user', password='password',
                             verify=False, cert=None, max_issues=100)
 
-        self.assertEqual(client.url, 'http://example.com')
+        self.assertEqual(client.base_url, 'http://example.com')
         self.assertEqual(client.project, 'perceval')
         self.assertEqual(client.user, 'user')
         self.assertEqual(client.password, 'password')
