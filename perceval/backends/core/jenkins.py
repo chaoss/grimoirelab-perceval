@@ -22,7 +22,6 @@
 
 import json
 import logging
-import time
 
 import requests
 
@@ -32,6 +31,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import CacheError
 
 
@@ -54,7 +54,7 @@ class Jenkins(Backend):
     :param blacklist_jobs: exclude the jobs of this list while fetching
     :param sleep_time: minimun waiting time due to a timeout connection exception
     """
-    version = '0.5.3'
+    version = '0.6.0'
 
     def __init__(self, url, tag=None, cache=None, blacklist_jobs=None, sleep_time=SLEEP_TIME):
         origin = url
@@ -184,7 +184,7 @@ class Jenkins(Backend):
         return 'build'
 
 
-class JenkinsClient:
+class JenkinsClient(HttpClient):
     """Jenkins API client.
 
     This class implements a simple client to retrieve builds from
@@ -197,16 +197,18 @@ class JenkinsClient:
     MAX_RETRIES = 5
 
     def __init__(self, url, blacklist_jobs=None, sleep_time=SLEEP_TIME):
-        self.url = url
+        status_codes = HttpClient.DEFAULT_STATUS_FORCE_LIST
+        status_codes.extend([410, 502, 503])
+        super().__init__(url, default_sleep_time=sleep_time, status_forcelist=status_codes)
         self.blacklist_jobs = blacklist_jobs
-        self.sleep_time = sleep_time
 
     def get_jobs(self):
         """ Retrieve all jobs
         """
-        url_jenkins = urijoin(self.url, "/api/json")
+        url_jenkins = urijoin(self.base_url, "api", "json")
 
-        return self.__send_request(url_jenkins)
+        response = self.fetch(url_jenkins)
+        return response.text
 
     def get_builds(self, job_name):
         """ Retrieve all builds from a job
@@ -217,33 +219,10 @@ class JenkinsClient:
             return
 
         # depth=2 to get builds details
-        job_url = self.url + "/job/%s/" % (job_name)
-        url_jenkins = job_url + "api/json?depth=2"
+        url_build = urijoin(self.base_url, "job", job_name, "api", "json?depth=2")
 
-        return self.__send_request(url_jenkins)
-
-    def __send_request(self, url):
-        """send HTTP requests to the server"""
-
-        retries = 0
-
-        while retries < self.MAX_RETRIES:
-
-            try:
-                req = requests.get(url)
-                req.raise_for_status()
-                break
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code in [408, 410, 502, 503, 504]:
-                    retries += 1
-                    time.sleep(self.sleep_time * retries)
-                else:
-                    raise e
-
-        if retries == self.MAX_RETRIES:
-            req.raise_for_status()
-
-        return req.text
+        response = self.fetch(url_build)
+        return response.text
 
 
 class JenkinsCommand(BackendCommand):

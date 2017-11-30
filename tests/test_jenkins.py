@@ -80,7 +80,7 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.tag, 'test')
         self.assertIsInstance(jenkins.client, JenkinsClient)
-        self.assertEqual(jenkins.client.sleep_time, 60)
+        self.assertEqual(jenkins.client.default_sleep_time, 60)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -363,9 +363,9 @@ class TestJenkinsClient(unittest.TestCase):
 
         client = JenkinsClient(JENKINS_SERVER_URL, sleep_time=target_sleep_time)
 
-        self.assertEqual(client.url, JENKINS_SERVER_URL)
+        self.assertEqual(client.base_url, JENKINS_SERVER_URL)
         self.assertEqual(client.blacklist_jobs, None)
-        self.assertEqual(client.sleep_time, target_sleep_time)
+        self.assertEqual(client.default_sleep_time, target_sleep_time)
 
     @httpretty.activate
     def test_http_retry_requests(self):
@@ -378,9 +378,9 @@ class TestJenkinsClient(unittest.TestCase):
         client = JenkinsClient(JENKINS_SERVER_URL, sleep_time=0.1)
 
         before = float(time.time())
-        expected = before + (client.sleep_time * JenkinsClient.MAX_RETRIES)
+        expected = before + (client.default_sleep_time * JenkinsClient.MAX_RETRIES)
 
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with self.assertRaises(requests.exceptions.RetryError):
             _ = client.get_jobs()
 
         after = float(time.time())
@@ -429,7 +429,7 @@ class TestJenkinsClient(unittest.TestCase):
         client = JenkinsClient(JENKINS_SERVER_URL, sleep_time=0.1)
 
         start = float(time.time())
-        expected = start + (sum([i * client.sleep_time for i in range(client.MAX_RETRIES)]))
+        expected = start + (sum([i * client.default_sleep_time for i in range(client.MAX_RETRIES)]))
 
         with self.assertRaises(requests.exceptions.RequestException):
             _ = client.get_builds(JENKINS_JOB_BUILDS_1)
