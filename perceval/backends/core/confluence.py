@@ -32,6 +32,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
@@ -54,7 +55,7 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.1'
+    version = '0.6.0'
 
     def __init__(self, url, tag=None, cache=None):
         origin = url
@@ -306,7 +307,7 @@ class ConfluenceCommand(BackendCommand):
         return parser
 
 
-class ConfluenceClient:
+class ConfluenceClient(HttpClient):
     """Confluence REST API client.
 
     This class implements a client to retrieve contents from a
@@ -338,7 +339,7 @@ class ConfluenceClient:
     VHISTORICAL = 'historical'
 
     def __init__(self, base_url):
-        self.base_url = base_url.rstrip('/')
+        super().__init__(base_url.rstrip('/'))
 
     def contents(self, from_date=DEFAULT_DATETIME,
                  offset=None, max_contents=MAX_CONTENTS):
@@ -402,8 +403,7 @@ class ConfluenceClient:
                      resource, str(params))
 
         while True:
-            r = requests.get(url, params=params)
-            r.raise_for_status()
+            r = self.fetch(url, payload=params)
             yield r.text
 
             # Pagination is available when 'next' link exists
