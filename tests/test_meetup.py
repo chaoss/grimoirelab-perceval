@@ -45,8 +45,7 @@ from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.meetup import (Meetup,
                                            MeetupCommand,
                                            MeetupClient,
-                                           MIN_RATE_LIMIT,
-                                           MAX_RATE_LIMIT)
+                                           MIN_RATE_LIMIT)
 
 
 MEETUP_URL = 'https://api.meetup.com'
@@ -182,7 +181,7 @@ class TestMeetupBackend(unittest.TestCase):
         self.assertEqual(meetup.client.api_key, 'aaaa')
         self.assertEqual(meetup.client.sleep_for_rate, True)
         self.assertEqual(meetup.client.min_rate_to_sleep, 10)
-        self.assertEqual(meetup.client.sleep_time, 60)
+        self.assertEqual(meetup.client.default_sleep_time, 60)
 
         # When tag is empty or None it will be set to
         # the value in URL
@@ -675,7 +674,7 @@ class TestMeetupClient(unittest.TestCase):
         client = MeetupClient('aaaa', max_items=10,
                               sleep_for_rate=True,
                               min_rate_to_sleep=100000000)
-        self.assertEqual(client.min_rate_to_sleep, MAX_RATE_LIMIT)
+        self.assertEqual(client.min_rate_to_sleep, client.MAX_RATE_LIMIT)
 
     @httpretty.activate
     def test_events(self):
@@ -780,7 +779,7 @@ class TestMeetupClient(unittest.TestCase):
         wait_to_reset = 1
 
         http_requests = setup_http_server(rate_limit=0,
-                                          reset_rate_limit=wait_to_reset)
+                                          reset_rate_limit=int(time.time()) + wait_to_reset)
 
         client = MeetupClient('aaaa', max_items=2,
                               min_rate_to_sleep=2,
@@ -825,7 +824,7 @@ class TestMeetupClient(unittest.TestCase):
         """Test if a rate limit error is raised when rate is exhausted"""
 
         http_requests = setup_http_server(rate_limit=0,
-                                          reset_rate_limit=0.5)
+                                          reset_rate_limit=1)
 
         client = MeetupClient('aaaa', max_items=2)
 
@@ -854,7 +853,7 @@ class TestMeetupClient(unittest.TestCase):
 
     @httpretty.activate
     def test_too_many_requests(self):
-        """Test if a too many requests error is raised"""
+        """Test if a Retry error is raised"""
 
         httpretty.register_uri(httpretty.GET,
                                MEETUP_EVENTS_URL,
@@ -862,10 +861,10 @@ class TestMeetupClient(unittest.TestCase):
 
         client = MeetupClient('aaaa', max_items=2, sleep_time=0.1)
         start = float(time.time())
-        expected = start + (sum([i * client.sleep_time for i in range(client.MAX_RETRIES)]))
+        expected = start + (sum([i * client.default_sleep_time for i in range(client.MAX_RETRIES)]))
 
         events = client.events('sqlpass-es')
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with self.assertRaises(requests.exceptions.RetryError):
             _ = [event for event in events]
 
         end = float(time.time())
