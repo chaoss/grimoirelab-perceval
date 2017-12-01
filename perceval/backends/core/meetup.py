@@ -22,9 +22,6 @@
 
 import json
 import logging
-import time
-
-import requests
 
 from grimoirelab.toolkit.datetime import datetime_to_utc
 from grimoirelab.toolkit.uris import urijoin
@@ -33,7 +30,8 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
-from ...errors import CacheError, RateLimitError
+from ...client import HttpClient, RateLimitHandler
+from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -47,7 +45,6 @@ MAX_ITEMS = 200
 
 # Range before sleeping until rate limit reset
 MIN_RATE_LIMIT = 1
-MAX_RATE_LIMIT = 30
 
 # Time to avoid too many request exception
 SLEEP_TIME = 30
@@ -71,7 +68,7 @@ class Meetup(Backend):
     :param sleep_time: minimun waiting time to avoid too many request
          exception
     """
-    version = '0.5.2'
+    version = '0.6.0'
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None,
@@ -336,7 +333,7 @@ class MeetupCommand(BackendCommand):
         return parser
 
 
-class MeetupClient:
+class MeetupClient(HttpClient, RateLimitHandler):
     """Meetup API client.
 
     Client for fetching information from the Meetup server
@@ -366,24 +363,17 @@ class MeetupClient:
                'suggested', 'draft']
     VUPDATED = 'updated'
 
-    MAX_RETRIES = 5
-
     def __init__(self, api_key, max_items=MAX_ITEMS,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT, sleep_time=SLEEP_TIME):
         self.api_key = api_key
         self.max_items = max_items
-        self.rate_limit = None
-        self.rate_limit_reset_ts = None
-        self.sleep_for_rate = sleep_for_rate
-        self.sleep_time = sleep_time
 
-        if min_rate_to_sleep > MAX_RATE_LIMIT:
-            msg = "Minimum rate to sleep value exceeded (%d)."
-            msg += "High values might cause the client to sleep forever."
-            msg += "Reset to %d."
-            logger.warning(msg, min_rate_to_sleep, MAX_RATE_LIMIT)
-
-        self.min_rate_to_sleep = min(min_rate_to_sleep, MAX_RATE_LIMIT)
+        status_list = HttpClient.DEFAULT_STATUS_FORCE_LIST
+        status_list.append(429)
+        super().__init__(MEETUP_API_URL,
+                         default_sleep_time=sleep_time, status_forcelist=status_list)
+        super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate,
+                                         min_rate_to_sleep=min_rate_to_sleep)
 
     def events(self, group, from_date=DEFAULT_DATETIME):
         """Fetch the events pages of a given group."""
@@ -453,45 +443,21 @@ class MeetupClient:
 
         :returns: a generator of pages for the requeste resource
         """
-        url = urijoin(MEETUP_API_URL, resource)
+        url = urijoin(self.base_url, resource)
 
         params[self.PKEY] = self.api_key
         params[self.PSIGN] = 'true',
 
         do_fetch = True
 
-        retry_time = 0
-        retries = 0
-
         while do_fetch:
             logger.debug("Meetup client calls resource: %s params: %s",
                          resource, str(params))
 
-            if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
-                cause = "Meetup rate limit exceeded"
+            self.sleep_for_rate_limit()
+            r = self.fetch(url, payload=params)
+            self.update_rate_limit(r)
 
-                if self.sleep_for_rate:
-                    logger.warning("%s; waiting %i secs for rate limit reset.",
-                                   cause, self.rate_limit_reset_ts)
-                    time.sleep(self.rate_limit_reset_ts)
-                else:
-                    raise RateLimitError(cause=cause,
-                                         seconds_to_reset=self.rate_limit_reset_ts)
-
-            r = requests.get(url, params=params)
-            time.sleep(retry_time)
-            try:
-                r.raise_for_status()
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 429 and retries < self.MAX_RETRIES:
-                    retries += 1
-                    retry_time = retries * self.sleep_time
-                    continue
-                else:
-                    raise e
-
-            self.rate_limit = float(r.headers['X-RateLimit-Remaining'])
-            self.rate_limit_reset_ts = float(r.headers['X-RateLimit-Reset'])
             yield r.text
 
             if r.links and 'next' in r.links:
