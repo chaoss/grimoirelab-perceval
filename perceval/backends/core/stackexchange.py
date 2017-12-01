@@ -25,8 +25,6 @@ import json
 import logging
 import time
 
-import requests
-
 from grimoirelab.toolkit.datetime import datetime_to_utc
 from grimoirelab.toolkit.uris import urijoin
 
@@ -34,6 +32,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
@@ -56,7 +55,7 @@ class StackExchange(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.6.1'
+    version = '0.7.0'
 
     def __init__(self, site, tagged=None, api_token=None,
                  max_questions=None, tag=None, cache=None):
@@ -179,7 +178,7 @@ class StackExchange(Backend):
             yield question
 
 
-class StackExchangeClient:
+class StackExchangeClient(HttpClient):
     """StackExchange API client.
 
     This class implements a simple client to retrieve questions from
@@ -203,15 +202,11 @@ class StackExchangeClient:
     VERSION_API = '2.2'
 
     def __init__(self, site, tagged, token, max_questions):
+        super().__init__(self.STACKEXCHANGE_API_URL)
         self.site = site
         self.tagged = tagged
         self.token = token
         self.max_questions = max_questions
-
-    def __build_base_url(self, type='questions'):
-        base_api_url = self.STACKEXCHANGE_API_URL
-        base_api_url = urijoin(base_api_url, self.VERSION_API, type)
-        return base_api_url
 
     def __build_payload(self, page, from_date, order='desc', sort='activity'):
         payload = {'page': page,
@@ -245,9 +240,9 @@ class StackExchangeClient:
         """
 
         page = 1
-        req = requests.get(self.__build_base_url(),
-                           params=self.__build_payload(page, from_date))
-        req.raise_for_status()
+        url = urijoin(self.base_url, self.VERSION_API, "questions")
+
+        req = self.fetch(url, payload=self.__build_payload(page, from_date))
         questions = req.text
 
         data = req.json()
@@ -272,9 +267,7 @@ class StackExchangeClient:
                                  backoff)
                     time.sleep(float(backoff))
 
-                req = requests.get(self.__build_base_url(),
-                                   params=self.__build_payload(page, from_date))
-                req.raise_for_status()
+                req = self.fetch(url, payload=self.__build_payload(page, from_date))
                 data = req.json()
                 questions = req.text
                 nquestions += data['page_size']
