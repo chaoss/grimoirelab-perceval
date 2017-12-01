@@ -32,6 +32,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
@@ -58,7 +59,7 @@ class Redmine(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.2'
+    version = '0.6.0'
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
                  tag=None, cache=None):
@@ -379,7 +380,7 @@ class RedmineCommand(BackendCommand):
         return parser
 
 
-class RedmineClient:
+class RedmineClient(HttpClient):
     """Redmine API client.
 
     This class implements a client that retrieves issues from
@@ -412,7 +413,7 @@ class RedmineClient:
     CWATCHERS = 'watchers'
 
     def __init__(self, base_url, api_token=None):
-        self.base_url = base_url.rstrip('/')
+        super().__init__(base_url.rstrip('/'))
         self.api_token = api_token
 
     def issues(self, from_date=DEFAULT_DATETIME,
@@ -490,7 +491,6 @@ class RedmineClient:
         logger.debug("Redmine client requests: %s params: %s",
                      resource, str(params))
 
-        r = requests.get(url, params=params, verify=False)
-        r.raise_for_status()
+        r = self.fetch(url, payload=params, verify=False)
 
         return r.text
