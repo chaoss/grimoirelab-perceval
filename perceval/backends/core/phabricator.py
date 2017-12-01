@@ -22,9 +22,6 @@
 
 import json
 import logging
-import time
-
-import requests
 
 from grimoirelab.toolkit.datetime import datetime_to_utc
 
@@ -32,6 +29,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import BaseError, CacheError
 from ...utils import DEFAULT_DATETIME
 
@@ -51,7 +49,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.4'
+    version = '0.6.0'
 
     def __init__(self, url, api_token, tag=None, cache=None):
         origin = url
@@ -492,7 +490,7 @@ class ConduitError(BaseError):
     message = "%(error)s (code: %(code)s)"
 
 
-class ConduitClient:
+class ConduitClient(HttpClient):
     """Conduit API Client.
 
     Phabricator uses Conduit as the Phabricator REST API.
@@ -504,9 +502,6 @@ class ConduitClient:
         of the API
     """
     URL = '%(base)s/api/%(method)s'
-
-    # Max retries for handled HTTP errors
-    MAX_RETRIES = 3
 
     # Methods
     MANIPHEST_TASKS = 'maniphest.search'
@@ -526,7 +521,10 @@ class ConduitClient:
     VOUTDATED = 'outdated'
 
     def __init__(self, base_url, api_token):
-        self.base_url = base_url.rstrip('/')
+        status_list = HttpClient.DEFAULT_STATUS_FORCE_LIST
+        status_list.extend([502, 503])
+        super().__init__(base_url.rstrip('/'), max_retries=3,
+                         status_forcelist=status_list)
         self.api_token = api_token
 
     def tasks(self, from_date=DEFAULT_DATETIME):
@@ -625,19 +623,7 @@ class ConduitClient:
         logger.debug("Phabricator Conduit client requests: %s params: %s",
                      method, str(data))
 
-        retries = 0
-
-        while retries < self.MAX_RETRIES:
-            r = requests.post(url, data=data, verify=False)
-
-            if r.status_code not in [502, 503]:
-                break
-
-            time.sleep(0.5 * retries)
-            retries += 1
-
-        # Check for other possible HTTP errors
-        r.raise_for_status()
+        r = self.fetch(url, payload=data, method=HttpClient.POST, verify=False)
 
         # Check for possible Conduit API errors
         result = r.json()

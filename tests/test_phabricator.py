@@ -197,12 +197,6 @@ class TestPhabricatorBackend(unittest.TestCase):
 
         self.assertEqual(Phabricator.has_resuming(), True)
 
-    # def test_fetch_live(self):
-    #     # 'api-j44b66jfmkw6k4zisartuokr3yrg'
-    #     # 'api-vwdm7sfkdrf7yknzetdqsizr4y54'
-    #     phab = Phabricator('https://phabricator.bitergia.net', 'api-vwdm7sfkdrf7yknzetdqsizr4y54')
-    #     tasks = [task for task in phab.fetch()]
-
     @httpretty.activate
     def test_fetch(self):
         """Test whether it fetches a set of tasks"""
@@ -876,11 +870,11 @@ class TestConduitClient(unittest.TestCase):
 
         # After 4 tries (request + 3 retries) it fails
         reqs = []
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with self.assertRaises(requests.exceptions.RetryError):
             _ = client.users("PHID-USER-2uk52xorcqb6sjvp467y")
             self.assertEqual(len(reqs), 4)
 
-        # After 1 trie if fails
+        # After 1 try if fails
         reqs = []
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = client.phids("PHID-APPS-PhabricatorHeraldApplication")
