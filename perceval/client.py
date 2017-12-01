@@ -102,7 +102,7 @@ class HttpClient:
     def __del__(self):
         self._close_http_session()
 
-    def fetch(self, url, payload=None, headers=None, method=GET, stream=False):
+    def fetch(self, url, payload=None, headers=None, method=GET, stream=False, verify=True):
         """Fetch the data from a given URL.
 
         :param url: link to the resource
@@ -110,13 +110,14 @@ class HttpClient:
         :param headers: headers of the request
         :param method: type of request call (GET or POST)
         :param stream: defer downloading the response body until the response content is available
+        :param verify: verifying the SSL certificate
 
         :returns a response object
         """
         if method == self.GET:
-            response = self.session.get(url, params=payload, headers=headers, stream=stream)
+            response = self.session.get(url, params=payload, headers=headers, stream=stream, verify=verify)
         else:
-            response = self.session.post(url, data=payload, headers=headers, stream=stream)
+            response = self.session.post(url, data=payload, headers=headers, stream=stream, verify=verify)
 
         response.raise_for_status()
 
