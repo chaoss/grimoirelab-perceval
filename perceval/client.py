@@ -102,7 +102,7 @@ class HttpClient:
     def __del__(self):
         self._close_http_session()
 
-    def fetch(self, url, payload=None, headers=None, method=GET, stream=False, verify=True):
+    def fetch(self, url, payload=None, headers=None, method=GET, stream=False, verify=False):
         """Fetch the data from a given URL.
 
         :param url: link to the resource
