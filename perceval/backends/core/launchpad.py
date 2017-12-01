@@ -25,7 +25,6 @@ import hashlib
 import json
 import logging
 import requests
-import time
 
 from grimoirelab.toolkit.datetime import (datetime_utcnow,
                                           datetime_to_utc,
@@ -36,12 +35,13 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
 
 LAUNCHPAD_URL = "https://launchpad.net/"
-LAUNCHPAD_API_URL = 'https://api.launchpad.net/1.0/'
+LAUNCHPAD_API_URL = 'https://api.launchpad.net/1.0'
 
 TARGET_ISSUE_FIELDS = ['bug_link', 'owner_link', 'assignee_link']
 ITEMS_PER_PAGE = 75
@@ -65,7 +65,7 @@ class Launchpad(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
            it will be reset
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, distribution, package=None,
                  consumer_key=None, api_token=None,
@@ -402,22 +402,20 @@ class Launchpad(Backend):
         return user
 
 
-class LaunchpadClient:
+class LaunchpadClient(HttpClient):
     """Client for retrieving information from Launchpad API"""
 
-    # Max retries for handled HTTP errors
-    MAX_RETRIES = 5
     _users = {}
 
     def __init__(self, distribution, package=None,
                  consumer_key=None, api_token=None,
                  items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME):
+        super().__init__(LAUNCHPAD_API_URL, default_sleep_time=sleep_time)
         self.consumer_key = consumer_key
         self.api_token = api_token
         self.distribution = distribution
         self.package = package
         self.items_per_page = items_per_page
-        self.sleep_time = sleep_time
 
     def issues(self, start=None):
         """Get the issues from pagination"""
@@ -490,7 +488,7 @@ class LaunchpadClient:
     def __get_url_distribution(self):
         """Build URL distribution"""
 
-        return LAUNCHPAD_API_URL + self.distribution
+        return urijoin(self.base_url, self.distribution)
 
     def __get_url_distribution_package(self):
         """Build URL distribution package"""
@@ -500,7 +498,7 @@ class LaunchpadClient:
     def __get_url(self, path):
         """Build genereic URL"""
 
-        return LAUNCHPAD_API_URL + path
+        return urijoin(self.base_url, path)
 
     def _generate_signature(self):
         """Get HTTP request signature based on consumer_key and token"""
@@ -524,22 +522,7 @@ class LaunchpadClient:
         if self.consumer_key and self.api_token:
             headers['Sign'] = self._generate_signature()
 
-        retries = 0
-
-        while retries < self.MAX_RETRIES:
-            try:
-                r = requests.get(url,
-                                 params=params,
-                                 headers=headers)
-                break
-            except requests.exceptions.ConnectionError:
-                logger.warning("Connection was lost, the backend will sleep for " +
-                               str(self.sleep_time) + "s before starting again")
-                time.sleep(self.sleep_time * retries)
-                retries += 1
-
-        r.raise_for_status()
-
+        r = self.fetch(url, payload=params, headers=headers)
         return r.text
 
     def __build_payload(self, size, operation=False, startdate=None):
