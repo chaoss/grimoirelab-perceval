@@ -23,7 +23,6 @@
 import logging
 
 import feedparser
-import requests
 
 from grimoirelab.toolkit.datetime import str_to_datetime
 
@@ -31,8 +30,8 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import CacheError
-from ..._version import __version__
 
 
 logger = logging.getLogger(__name__)
@@ -49,7 +48,7 @@ class RSS(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.1.2'
+    version = '0.2.0'
 
     def __init__(self, url, tag=None, cache=None):
         origin = url
@@ -151,7 +150,7 @@ class RSS(Backend):
         return 'entry'
 
 
-class RSSClient:
+class RSSClient(HttpClient):
     """RSS API client.
 
     This class implements a simple client to retrieve entries from
@@ -163,16 +162,12 @@ class RSSClient:
     """
 
     def __init__(self, url):
-        self.url = url
+        super().__init__(url)
 
     def get_entries(self):
         """ Retrieve all entries from a RSS feed"""
 
-        # wordpress.com blogs need a User-Agent header
-        headers = {'User-Agent': 'perceval-' + __version__}
-
-        req = requests.get(self.url, headers=headers)
-        req.raise_for_status()
+        req = self.fetch(self.base_url)
         return req.text
 
 
