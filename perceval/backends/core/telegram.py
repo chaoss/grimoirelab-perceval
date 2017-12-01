@@ -24,14 +24,13 @@ import functools
 import json
 import logging
 
-import requests
-
 from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import CacheError
 
 
@@ -81,7 +80,7 @@ class Telegram(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.5.1'
+    version = '0.6.0'
 
     def __init__(self, bot, bot_token, tag=None, cache=None):
         origin = urijoin(TELEGRAM_URL, bot)
@@ -307,7 +306,7 @@ class TelegramCommand(BackendCommand):
         return parser
 
 
-class TelegramBotClient:
+class TelegramBotClient(HttpClient):
     """Telegram Bot API 2.0 client.
 
     This class implements a simple client to retrieve those messages
@@ -322,6 +321,7 @@ class TelegramBotClient:
     OFFSET = 'offset'
 
     def __init__(self, bot_token):
+        super().__init__(self.API_URL)
         self.bot_token = bot_token
 
     def updates(self, offset=None):
@@ -350,12 +350,11 @@ class TelegramBotClient:
         :param params: dict with the HTTP parameters needed to retrieve
             the given resource
         """
-        url = self.API_URL % {'token': self.bot_token, 'method': method}
+        url = self.base_url % {'token': self.bot_token, 'method': method}
 
         logger.debug("Telegram bot calls method: %s params: %s",
                      method, str(params))
 
-        r = requests.get(url, params=params)
-        r.raise_for_status()
+        r = self.fetch(url, payload=params)
 
         return r.text
