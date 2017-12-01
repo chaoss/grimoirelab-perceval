@@ -23,8 +23,6 @@
 import json
 import logging
 
-import requests
-
 from grimoirelab.toolkit.datetime import datetime_to_utc, datetime_utcnow
 from grimoirelab.toolkit.uris import urijoin
 
@@ -32,6 +30,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
                         metadata)
+from ...client import HttpClient
 from ...errors import BaseError, CacheError
 from ...utils import DEFAULT_DATETIME
 
@@ -58,7 +57,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.2.3'
+    version = '0.3.0'
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None):
@@ -346,7 +345,7 @@ class SlackClientError(BaseError):
     message = "%(error)s"
 
 
-class SlackClient:
+class SlackClient(HttpClient):
     """Slack API client.
 
     Client for fetching information from the Slack server
@@ -369,6 +368,7 @@ class SlackClient:
     PUSER = 'user'
 
     def __init__(self, api_token, max_items=MAX_ITEMS):
+        super().__init__(SLACK_URL)
         self.api_token = api_token
         self.max_items = max_items
 
@@ -430,8 +430,7 @@ class SlackClient:
         logger.debug("Slack client requests: %s params: %s",
                      resource, str(params))
 
-        r = requests.get(url, params=params)
-        r.raise_for_status()
+        r = self.fetch(url, payload=params)
 
         # Check for possible API errors
         result = r.json()
