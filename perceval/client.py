@@ -56,7 +56,7 @@ class HttpClient:
         of connection problems
     :param headers: list of session headers
     """
-    version = '0.1'
+    version = '0.1.1'
 
     DEFAULT_SLEEP_TIME = 1
 
@@ -74,7 +74,7 @@ class HttpClient:
     DEFAULT_RETRY_AFTER_STATUS_CODES = [413, 429, 503]
     DEFAULT_STATUS_FORCE_LIST = [408, 423, 504]
 
-    DEFAULT_HEADERS = {'User-Agent': 'Perceval/' + __version__}
+    DEFAULT_HEADERS = {'User-Agent': 'Perceval/' + __version__ + ' (+https://bitergia.com/)'}
 
     GET = "GET"
     POST = "POST"
