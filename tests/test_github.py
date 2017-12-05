@@ -1263,17 +1263,17 @@ class TestGitHubClient(unittest.TestCase):
         issue_2 = read_file('data/github/github_empty_request')
         rate_limit = read_file('data/github/rate_limit')
 
+        wait = 2
+        reset = int(time.time() + wait)
+
         httpretty.register_uri(httpretty.GET,
                                GITHUB_RATE_LIMIT,
                                body=rate_limit,
                                status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
-                                   'X-RateLimit-Reset': '15'
+                                   'X-RateLimit-Reset': reset
                                })
-
-        wait = 1
-        reset = int(time.time() + wait)
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
@@ -1291,17 +1291,15 @@ class TestGitHubClient(unittest.TestCase):
                                status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
-                                   'X-RateLimit-Reset': '15'
+                                   'X-RateLimit-Reset': reset
                                })
 
         client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=True)
 
-        before = int(time.time())
         issues = [issues for issues in client.issues()]
         after = int(time.time())
-        dif = after - before
 
-        self.assertGreaterEqual(dif, wait)
+        self.assertTrue(reset >= after)
         self.assertEqual(len(issues), 2)
         self.assertEqual(issues[0], issue_1)
         self.assertEqual(issues[1], issue_2)
