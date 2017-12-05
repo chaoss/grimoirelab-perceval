@@ -197,13 +197,18 @@ class RateLimitHandler:
            raises a RateLimitError exception if sleep_for_rate flag is disabled.
         """
         if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
-            seconds_to_reset = self.rate_limit_reset_ts - int(time.time()) + 1
+            seconds_to_reset = self.calculate_time_to_reset()
             cause = "Rate limit exhausted."
             if self.sleep_for_rate:
                 logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
                 time.sleep(seconds_to_reset)
             else:
                 raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
+
+    def calculate_time_to_reset(self):
+        """Calculate the seconds to reset the token requests."""
+
+        raise NotImplementedError
 
     def update_rate_limit(self, response):
         """Update the rate limit and the time to reset the rate limit
