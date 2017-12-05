@@ -375,6 +375,10 @@ class MeetupClient(HttpClient, RateLimitHandler):
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate,
                                          min_rate_to_sleep=min_rate_to_sleep)
 
+    def calculate_time_to_reset(self):
+        """Number of seconds to wait. They are contained in the rate limit reset header"""
+        return self.rate_limit_reset_ts
+
     def events(self, group, from_date=DEFAULT_DATETIME):
         """Fetch the events pages of a given group."""
 
