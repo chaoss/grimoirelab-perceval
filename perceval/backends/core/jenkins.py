@@ -54,7 +54,7 @@ class Jenkins(Backend):
     :param blacklist_jobs: exclude the jobs of this list while fetching
     :param sleep_time: minimun waiting time due to a timeout connection exception
     """
-    version = '0.6.0'
+    version = '0.6.1'
 
     def __init__(self, url, tag=None, cache=None, blacklist_jobs=None, sleep_time=SLEEP_TIME):
         origin = url
@@ -197,7 +197,7 @@ class JenkinsClient(HttpClient):
     MAX_RETRIES = 5
 
     def __init__(self, url, blacklist_jobs=None, sleep_time=SLEEP_TIME):
-        status_codes = HttpClient.DEFAULT_STATUS_FORCE_LIST
+        status_codes = list(HttpClient.DEFAULT_STATUS_FORCE_LIST)
         status_codes.extend([410, 502, 503])
         super().__init__(url, default_sleep_time=sleep_time, status_forcelist=status_codes)
         self.blacklist_jobs = blacklist_jobs
