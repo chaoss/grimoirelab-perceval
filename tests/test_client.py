@@ -36,7 +36,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.client import HttpClient, RateLimitHandler
-from perceval.errors import RateLimitError
 
 
 CLIENT_API_URL = "https://gateway.marvel.com/v1/"
@@ -312,37 +311,8 @@ class TestRateLimitHandler(unittest.TestCase):
         self.assertEqual(client.rate_limit_reset_ts, None)
 
     @httpretty.activate
-    def test_sleep_for_rate(self):
-        """Test sleep for rate"""
-
-        reset_time = int(time.time() + 1)
-        httpretty.register_uri(httpretty.GET,
-                               CLIENT_SPIDERMAN_URL,
-                               body="",
-                               status=200,
-                               forcing_headers={
-                                   'X-RateLimit-Remaining': '20',
-                                   'X-RateLimit-Reset': str(reset_time)
-                               })
-
-        httpretty.register_uri(httpretty.GET,
-                               CLIENT_SUPERMAN_URL,
-                               body="",
-                               status=200)
-
-        client = MockedClient(CLIENT_API_URL, min_rate_to_sleep=50, sleep_for_rate=True)
-        response = client.fetch(CLIENT_SPIDERMAN_URL)
-        client.update_rate_limit(response)
-
-        client.sleep_for_rate_limit()
-
-        after = int(time.time())
-
-        self.assertTrue(reset_time + 1 == after)
-
-    @httpretty.activate
-    def test_rate_limit_error(self):
-        """Test whether the RateLimit error is raisen when sleep_for_rate is set to False"""
+    def test_calculate_rate_limit_not_implemented(self):
+        """Test whether a NotImplemented error is raisen when calculate_rate_limit is not defined"""
 
         reset_time = 1
         httpretty.register_uri(httpretty.GET,
@@ -363,7 +333,7 @@ class TestRateLimitHandler(unittest.TestCase):
         response = client.fetch(CLIENT_SPIDERMAN_URL)
         client.update_rate_limit(response)
 
-        with self.assertRaises(RateLimitError):
+        with self.assertRaises(NotImplementedError):
             client.sleep_for_rate_limit()
 
 
