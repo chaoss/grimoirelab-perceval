@@ -24,6 +24,7 @@
 
 import json
 import logging
+import time
 
 import requests
 
@@ -507,6 +508,13 @@ class GitHubClient(HttpClient, RateLimitHandler):
                 logger.warning("Rate limit not initialized: %s", error)
             else:
                 raise error
+
+    def calculate_time_to_reset(self):
+        """Calculate the seconds to reset the token requests, by obtaining the different
+        between the current date and the next date when the token is fully regenerated.
+        """
+
+        return self.rate_limit_reset_ts - (int(time.time()) + 1)
 
     def issue_reactions(self, issue_number):
         """Get reactions of an issue"""
