@@ -20,8 +20,11 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+from datetime import datetime, timedelta
 import json
 import logging
+import requests
+import time
 
 from grimoirelab.toolkit.datetime import datetime_to_utc
 from grimoirelab.toolkit.uris import urijoin
@@ -455,7 +458,14 @@ class MeetupClient(HttpClient, RateLimitHandler):
                          resource, str(params))
 
             self.sleep_for_rate_limit()
-            r = self.fetch(url, payload=params)
+            try:
+                r = self.fetch(url, payload=params)
+            except requests.exceptions.RetryError:
+                next_hour = datetime.now().replace(microsecond=0, second=0, minute=0) + timedelta(hours=1)
+                seconds_to_sleep = int((next_hour - datetime.now()).total_seconds()) + 1
+                print("going to sleep")
+                time.sleep(seconds_to_sleep)
+                self._fetch(resource, params)
             self.update_rate_limit(r)
 
             yield r.text
