@@ -197,9 +197,7 @@ class JenkinsClient(HttpClient):
     MAX_RETRIES = 5
 
     def __init__(self, url, blacklist_jobs=None, sleep_time=SLEEP_TIME):
-        status_codes = list(HttpClient.DEFAULT_STATUS_FORCE_LIST)
-        status_codes.extend([410, 502, 503])
-        super().__init__(url, default_sleep_time=sleep_time, status_forcelist=status_codes)
+        super().__init__(url, default_sleep_time=sleep_time, extra_status_forcelist=[410, 502, 503])
         self.blacklist_jobs = blacklist_jobs
 
     def get_jobs(self):
