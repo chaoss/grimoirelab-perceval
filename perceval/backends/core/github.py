@@ -74,7 +74,7 @@ class GitHub(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.12.0'
+    version = '0.12.1'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -475,20 +475,16 @@ class GitHubClient(HttpClient, RateLimitHandler):
         else:
             base_url = GITHUB_API_URL
 
-        headers = self._build_headers()
-
-        super().__init__(base_url,
-                         default_sleep_time=default_sleep_time,
-                         max_retries=max_retries, headers=headers)
-        super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate,
-                                         min_rate_to_sleep=min_rate_to_sleep)
+        super().__init__(base_url, default_sleep_time=default_sleep_time, max_retries=max_retries,
+                         extra_headers=self._set_extra_headers())
+        super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 
         self._init_rate_limit()
 
-    def _build_headers(self):
-        """Set headers for session"""
+    def _set_extra_headers(self):
+        """Set extra headers for session"""
 
-        headers = super().DEFAULT_HEADERS
+        headers = {}
         headers.update({'Accept': 'application/vnd.github.squirrel-girl-preview'})
 
         if self.token:
