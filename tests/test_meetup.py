@@ -779,7 +779,7 @@ class TestMeetupClient(unittest.TestCase):
         wait_to_reset = 1
 
         http_requests = setup_http_server(rate_limit=0,
-                                          reset_rate_limit=int(time.time()) + wait_to_reset)
+                                          reset_rate_limit=wait_to_reset)
 
         client = MeetupClient('aaaa', max_items=2,
                               min_rate_to_sleep=2,
