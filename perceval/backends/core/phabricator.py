@@ -49,7 +49,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.6.0'
+    version = '0.6.1'
 
     def __init__(self, url, api_token, tag=None, cache=None):
         origin = url
@@ -521,10 +521,7 @@ class ConduitClient(HttpClient):
     VOUTDATED = 'outdated'
 
     def __init__(self, base_url, api_token):
-        status_list = HttpClient.DEFAULT_STATUS_FORCE_LIST
-        status_list.extend([502, 503])
-        super().__init__(base_url.rstrip('/'), max_retries=3,
-                         status_forcelist=status_list)
+        super().__init__(base_url.rstrip('/'), max_retries=3, extra_status_forcelist=[502, 503])
         self.api_token = api_token
 
     def tasks(self, from_date=DEFAULT_DATETIME):
