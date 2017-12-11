@@ -50,13 +50,10 @@ class HttpClient:
     :param base_url: base URL of the data source
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
-    :param status_forcelist: list of status codes where the retry
-        attempts occur
     :param default_sleep_time: default time to sleep in case
         of connection problems
-    :param headers: list of session headers
     """
-    version = '0.1'
+    version = '0.1.1'
 
     DEFAULT_SLEEP_TIME = 1
 
@@ -79,18 +76,29 @@ class HttpClient:
     GET = "GET"
     POST = "POST"
 
-    def __init__(self, base_url, max_retries=MAX_RETRIES, status_forcelist=DEFAULT_STATUS_FORCE_LIST,
-                 default_sleep_time=DEFAULT_SLEEP_TIME, headers=DEFAULT_HEADERS):
+    def __init__(self, base_url, max_retries=MAX_RETRIES, default_sleep_time=DEFAULT_SLEEP_TIME,
+                 extra_headers=None, extra_status_forcelist=None, extra_retry_after_status=None):
 
         self.base_url = base_url
 
-        self.headers = headers
+        self.headers = dict(self.DEFAULT_HEADERS)
+        if extra_headers:
+            self.headers.update(extra_headers)
+
+        self.status_forcelist = list(self.DEFAULT_STATUS_FORCE_LIST)
+        if extra_status_forcelist:
+            self.status_forcelist.extend(extra_status_forcelist)
+
+        self.retry_after_status = list(self.DEFAULT_RETRY_AFTER_STATUS_CODES)
+        if extra_retry_after_status:
+            self.retry_after_status.extend(extra_retry_after_status)
+
         self.max_retries = max_retries
         self.max_retries_on_connect = self.MAX_RETRIES_ON_CONNECT
         self.max_retries_on_read = self.MAX_RETRIES_ON_READ
         self.max_retries_on_redirect = self.MAX_RETRIES_ON_REDIRECT
         self.max_retries_on_status = self.MAX_RETRIES_ON_STATUS
-        self.status_forcelist = status_forcelist
+
         self.method_whitelist = self.DEFAULT_METHOD_WHITELIST
         self.raise_on_redirect = self.DEFAULT_RAISE_ON_REDIRECT
         self.raise_on_status = self.DEFAULT_RAISE_ON_STATUS
@@ -102,7 +110,7 @@ class HttpClient:
     def __del__(self):
         self._close_http_session()
 
-    def fetch(self, url, payload=None, headers=None, method=GET, stream=False, verify=False):
+    def fetch(self, url, payload=None, headers=None, method=GET, stream=False, verify=True):
         """Fetch the data from a given URL.
 
         :param url: link to the resource
@@ -114,6 +122,7 @@ class HttpClient:
 
         :returns a response object
         """
+
         if method == self.GET:
             response = self.session.get(url, params=payload, headers=headers, stream=stream, verify=verify)
         else:
@@ -149,7 +158,8 @@ class HttpClient:
     def _close_http_session(self):
         """Close the http session."""
 
-        self.session.close()
+        if self.session:
+            self.session.keep_alive = False
 
 
 class RateLimitHandler:
