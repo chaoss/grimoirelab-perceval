@@ -50,6 +50,7 @@ are:
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from Git
     github           Fetch issues from GitHub
+    gitlab           Fetch issues from GitLab
     gmane            Fetch messages from Gmane
     hyperkitty       Fetch messages from a HyperKitty archiver
     jenkins          Fetch builds from a Jenkins server

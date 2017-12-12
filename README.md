@@ -19,6 +19,7 @@ are:
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from Git
     github           Fetch issues from GitHub
+    gitlab           Fetch issues from GitLab
     gmane            Fetch messages from Gmane
     hyperkitty       Fetch messages from a HyperKitty archiver
     jenkins          Fetch builds from a Jenkins server
@@ -181,6 +182,11 @@ $ perceval git '/tmp/gitlog.log'
 ### GitHub
 ```
 $ perceval github elastic logstash --from-date '2016-01-01'
+```
+
+### GitLab
+```
+$ perceval gitlab elastic logstash --from-date '2016-01-01'
 ```
 
 ### Gmane

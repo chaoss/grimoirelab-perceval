@@ -1,0 +1,40 @@
+[
+    {
+        "attachment": null,
+        "author": {
+            "avatar_url": "https://secure.gravatar.com/avatar/b8c8a858811dfece044c3818e21bf4f3?s=80&d=identicon",
+            "id": 1,
+            "name": "Timothy Engler",
+            "state": "active",
+            "username": "redfish64",
+            "web_url": "https://gitlab.com/redfish64"
+        },
+        "body": "moved to fdroidserver#268",
+        "created_at": "2017-03-18T14:44:19.482Z",
+        "id": 1,
+        "noteable_id": 4741612,
+        "noteable_iid": 639,
+        "noteable_type": "Issue",
+        "system": true,
+        "updated_at": "2017-03-18T14:44:19.482Z"
+    },
+    {
+        "attachment": null,
+        "author": {
+            "avatar_url": "https://secure.gravatar.com/avatar/b8c8a858811dfece044c3818e21bf4f3?s=80&d=identicon",
+            "id": 1,
+            "name": "Timothy Engler",
+            "state": "active",
+            "username": "redfish64",
+            "web_url": "https://gitlab.com/redfish64"
+        },
+        "body": "Nothing on my side to fix, moving to server.",
+        "created_at": "2017-03-18T14:43:38.132Z",
+        "id": 2,
+        "noteable_id": 4741612,
+        "noteable_iid": 639,
+        "noteable_type": "Issue",
+        "system": false,
+        "updated_at": "2017-03-18T14:43:38.132Z"
+    }
+]
