@@ -68,7 +68,7 @@ class Meetup(Backend):
     :param sleep_time: minimun waiting time to avoid too many request
          exception
     """
-    version = '0.6.0'
+    version = '0.6.1'
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None,
@@ -368,12 +368,8 @@ class MeetupClient(HttpClient, RateLimitHandler):
         self.api_key = api_key
         self.max_items = max_items
 
-        status_list = HttpClient.DEFAULT_STATUS_FORCE_LIST
-        status_list.append(429)
-        super().__init__(MEETUP_API_URL,
-                         default_sleep_time=sleep_time, status_forcelist=status_list)
-        super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate,
-                                         min_rate_to_sleep=min_rate_to_sleep)
+        super().__init__(MEETUP_API_URL, default_sleep_time=sleep_time, extra_status_forcelist=[429])
+        super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 
     def calculate_time_to_reset(self):
         """Number of seconds to wait. They are contained in the rate limit reset header"""
