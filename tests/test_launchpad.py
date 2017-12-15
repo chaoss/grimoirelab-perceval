@@ -778,6 +778,21 @@ class TestLaunchpadClient(unittest.TestCase):
         self.assertDictEqual(json.loads(user_retrieved), json.loads(user))
 
     @httpretty.activate
+    def test_user_not_retrieved(self):
+        """Test user API call"""
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/~user-not",
+                               body="",
+                               status=404)
+
+        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
+                                 package="mypackage")
+
+        user_retrieved = client.user("user-not")
+        self.assertEqual(user_retrieved, "{}")
+
+    @httpretty.activate
     def test_http_wrong_status_issue_collection(self):
         """Test if an empty collection is returned when the http status is not 200"""
 
