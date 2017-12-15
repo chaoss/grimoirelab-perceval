@@ -53,7 +53,7 @@ class HttpClient:
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.1.1'
+    version = '0.1.2'
 
     DEFAULT_SLEEP_TIME = 1
 
@@ -221,8 +221,8 @@ class RateLimitHandler:
         raise NotImplementedError
 
     def update_rate_limit(self, response):
-        """Update the rate limit and the time to reset the rate limit
-           from the response headers.
+        """Update the rate limit and the time to reset
+        from the response headers.
 
         :param: response: the response object
         """
@@ -234,6 +234,6 @@ class RateLimitHandler:
 
         if self.rate_limit_reset_header in response.headers:
             self.rate_limit_reset_ts = int(response.headers[self.rate_limit_reset_header])
-            logger.debug("Rate limit reset: %s", self.rate_limit_reset_ts)
+            logger.debug("Rate limit reset: %s", self.calculate_time_to_reset())
         else:
             self.rate_limit_reset_ts = None

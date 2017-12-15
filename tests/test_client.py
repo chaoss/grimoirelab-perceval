@@ -54,8 +54,10 @@ class MockedClient(HttpClient, RateLimitHandler):
                  extra_headers=HttpClient.DEFAULT_HEADERS, sleep_for_rate=False,
                  min_rate_to_sleep=RateLimitHandler.MIN_RATE_LIMIT,
                  rate_limit_header=RateLimitHandler.RATE_LIMIT_HEADER,
-                 rate_limit_reset_header=RateLimitHandler.RATE_LIMIT_RESET_HEADER):
+                 rate_limit_reset_header=RateLimitHandler.RATE_LIMIT_RESET_HEADER,
+                 define_calculate_time_to_reset=True):
 
+        self.define_calculate_time_to_reset = define_calculate_time_to_reset
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_status_forcelist=extra_status_forcelist,
                          extra_retry_after_status=extra_retry_after_status,
@@ -64,6 +66,12 @@ class MockedClient(HttpClient, RateLimitHandler):
                                          min_rate_to_sleep=min_rate_to_sleep,
                                          rate_limit_header=rate_limit_header,
                                          rate_limit_reset_header=rate_limit_reset_header)
+
+    def calculate_time_to_reset(self):
+        if self.define_calculate_time_to_reset:
+            return self.rate_limit_reset_ts
+        else:
+            return super().calculate_time_to_reset()
 
 
 class TestHttpClient(unittest.TestCase):
@@ -288,7 +296,7 @@ class TestRateLimitHandler(unittest.TestCase):
 
     @httpretty.activate
     def test_update_rate_limit(self):
-        """Test update rate limit"""
+        """Test update rate info"""
 
         httpretty.register_uri(httpretty.GET,
                                CLIENT_SPIDERMAN_URL,
@@ -337,12 +345,12 @@ class TestRateLimitHandler(unittest.TestCase):
                                body="",
                                status=200)
 
-        client = MockedClient(CLIENT_API_URL, min_rate_to_sleep=50, sleep_time=0.1, max_retries=1)
+        client = MockedClient(CLIENT_API_URL, min_rate_to_sleep=50, sleep_time=0.1, max_retries=1,
+                              define_calculate_time_to_reset=False)
         response = client.fetch(CLIENT_SPIDERMAN_URL)
-        client.update_rate_limit(response)
 
         with self.assertRaises(NotImplementedError):
-            client.sleep_for_rate_limit()
+            client.update_rate_limit(response)
 
 
 if __name__ == "__main__":
