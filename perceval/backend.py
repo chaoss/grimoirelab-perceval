@@ -429,8 +429,8 @@ def _import_backends(modules):
     for module in modules:
         importlib.import_module(module)
 
-    bkls = _filter_classes(Backend.__subclasses__(), modules)
-    ckls = _filter_classes(BackendCommand.__subclasses__(), modules)
+    bkls = _find_classes(Backend, modules)
+    ckls = _find_classes(BackendCommand, modules)
 
     backends = {name: kls for name, kls in bkls}
     commands = {name: klass for name, klass in ckls}
@@ -438,13 +438,18 @@ def _import_backends(modules):
     return backends, commands
 
 
-def _filter_classes(klasses, modules):
-    for kls in klasses:
+def _find_classes(parent, modules):
+    parents = parent.__subclasses__()
+
+    while parents:
+        kls = parents.pop()
+
         m = kls.__module__
 
         if m not in modules:
             continue
 
         name = m.split('.')[-1]
+        parents.extend(kls.__subclasses__())
 
         yield name, kls
