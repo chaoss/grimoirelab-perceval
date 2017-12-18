@@ -440,8 +440,8 @@ class LaunchpadClient(HttpClient):
             raw_user = self.__send_request(url_user, headers=self.__get_headers())
             user = raw_user
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 410:
-                logger.warning("Data is not available due to HTTP 410 Gone - %s", url_user)
+            if e.response.status_code in [404, 410]:
+                logger.warning("Data is not available - %s", url_user)
                 user = '{}'
             else:
                 raise e
@@ -561,8 +561,8 @@ class LaunchpadClient(HttpClient):
                 raw_content = self.__send_request(url_next, payload, self.__get_headers())
                 content = json.loads(raw_content)
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 410:
-                    logger.warning("Data is not available due to HTTP 410 Gone - %s", url_next)
+                if e.response.status_code in [410]:
+                    logger.warning("Data is not available - %s", url_next)
                     raw_content = '{"total_size": 0, "start": 0, "entries": []}'
                     content = json.loads(raw_content)
                 else:
