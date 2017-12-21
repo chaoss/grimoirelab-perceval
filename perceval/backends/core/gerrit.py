@@ -457,7 +457,7 @@ class GerritCommand(BackendCommand):
                            help="Wrong reviews that must not be retrieved.")
         group.add_argument('--disable-host-key-check', dest='disable_host_key_check', action='store_true',
                            help="Don't check remote host identity")
-        group.add_argument('--ssh-port', dest='port',
+        group.add_argument('--ssh-port', dest='port', nargs='?',
                            default=PORT,
                            help="Set SSH port of the Gerrit server")
 
