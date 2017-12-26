@@ -64,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.8.7'
+    version = '0.8.8'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -1060,8 +1060,9 @@ class GitRepository:
         """Get the current list of local or remote refs."""
 
         if remote:
-            cmd_refs = ['git', 'ls-remote', '-h', '-t', 'origin']
+            cmd_refs = ['git', 'ls-remote', '-h', '-t', '--exit-code', 'origin']
             sep = '\t'
+            ignored_error_codes = [2]
         else:
             # Check first whether the local repo is empty;
             # Running 'show-ref' in empty repos gives an error
@@ -1070,14 +1071,20 @@ class GitRepository:
 
             cmd_refs = ['git', 'show-ref', '--heads', '--tags']
             sep = ' '
+            ignored_error_codes = [1]
 
+        # Error codes returned when no matching refs (i.e, no heads
+        # or tags) are found in a repository will be ignored. Otherwise,
+        # the full process would fail for those situations.
         outs = self._exec(cmd_refs, cwd=self.dirpath,
-                          env=self.gitenv)
+                          env=self.gitenv,
+                          ignored_error_codes=ignored_error_codes)
         outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+        outs = outs.split('\n') if outs else []
 
         refs = []
 
-        for line in outs.split('\n'):
+        for line in outs:
             data = line.split(sep)
             ref = GitRef(data[0], data[1])
             refs.append(ref)
@@ -1176,17 +1183,25 @@ class GitRepository:
                 logger.debug("Git log stderr: " + err_line)
 
     @staticmethod
-    def _exec(cmd, cwd=None, env=None, encoding='utf-8'):
+    def _exec(cmd, cwd=None, env=None, ignored_error_codes=None,
+              encoding='utf-8'):
         """Run a command.
 
-        Execute `cmd` command in the directory set by `cwd`. Enviroment
+        Execute `cmd` command in the directory set by `cwd`. Environment
         variables can be set using the `env` dictionary. The output
         data is returned as encoded bytes.
+
+        Commands which their returning status codes are non-zero will
+        be treated as failed. Error codes considered as valid can be
+        ignored giving them in the `ignored_error_codes` list.
 
         :returns: the output of the command as encoded bytes
 
         :raises RepositoryError: when an error occurs running the command
         """
+        if ignored_error_codes is None:
+            ignored_error_codes = []
+
         logger.debug("Running command %s (cwd: %s, env: %s)",
                      ' '.join(cmd), cwd, str(env))
 
@@ -1198,7 +1213,7 @@ class GitRepository:
         except OSError as e:
             raise RepositoryError(cause=str(e))
 
-        if proc.returncode != 0:
+        if proc.returncode != 0 and proc.returncode not in ignored_error_codes:
             err = errs.decode(encoding, errors='surrogateescape')
             cause = "git command - %s" % err
             raise RepositoryError(cause=cause)

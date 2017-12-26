@@ -1006,6 +1006,7 @@ class TestGitRepository(TestCaseGit):
         cls.git_path = os.path.join(cls.tmp_path, 'gittest')
         cls.git_detached_path = os.path.join(cls.tmp_path, 'gitdetached')
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
+        cls.git_no_refs_path = os.path.join(cls.tmp_path, 'gitnorefs')
 
         data_path = os.path.dirname(os.path.abspath(__file__))
         data_path = os.path.join(data_path, 'data/git')
@@ -1013,7 +1014,8 @@ class TestGitRepository(TestCaseGit):
         repos = [
             ('gittest', cls.git_path),
             ('gitdetached', cls.git_detached_path),
-            ('gittestempty', cls.git_empty_path)
+            ('gittestempty', cls.git_empty_path),
+            ('gittest_no_refs', cls.git_no_refs_path)
         ]
 
         fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
@@ -1323,6 +1325,17 @@ class TestGitRepository(TestCaseGit):
 
         with self.assertRaises(EmptyRepositoryError):
             repo.sync()
+
+        shutil.rmtree(new_path)
+
+    def test_sync_from_repos_without_refs(self):
+        """Test sync process on repositories with no refs"""
+
+        new_path = os.path.join(self.tmp_path, 'norefs')
+
+        repo = GitRepository.clone(self.git_no_refs_path, new_path)
+        new_commits = repo.sync()
+        self.assertListEqual(new_commits, [])
 
         shutil.rmtree(new_path)
 
