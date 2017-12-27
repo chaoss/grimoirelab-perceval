@@ -239,7 +239,7 @@ class TestMeetupBackend(unittest.TestCase):
                 'page': ['2'],
                 'scroll': ['since:1970-01-01T00:00:00.000Z'],
                 'sign': ['true'],
-                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'status': ['cancelled,upcoming,past,proposed,suggested']
             },
             {
                 'key': ['aaaa'],
@@ -324,7 +324,7 @@ class TestMeetupBackend(unittest.TestCase):
                 'page': ['2'],
                 'scroll': ['since:2016-09-25T00:00:00.000Z'],
                 'sign': ['true'],
-                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'status': ['cancelled,upcoming,past,proposed,suggested']
             },
             {
                 'key': ['aaaa'],
@@ -382,7 +382,7 @@ class TestMeetupBackend(unittest.TestCase):
                 'page': ['2'],
                 'scroll': ['since:1970-01-01T00:00:00.000Z'],
                 'sign': ['true'],
-                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'status': ['cancelled,upcoming,past,proposed,suggested']
             },
             {
                 'key': ['aaaa'],
@@ -465,7 +465,7 @@ class TestMeetupBackend(unittest.TestCase):
                 'page': ['2'],
                 'scroll': ['since:2016-04-08T00:00:00.000Z'],
                 'sign': ['true'],
-                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'status': ['cancelled,upcoming,past,proposed,suggested']
             },
             {
                 'key': ['aaaa'],
@@ -507,7 +507,7 @@ class TestMeetupBackend(unittest.TestCase):
             'page': ['2'],
             'scroll': ['since:2017-01-01T00:00:00.000Z'],
             'sign': ['true'],
-            'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+            'status': ['cancelled,upcoming,past,proposed,suggested']
         }
 
         self.assertEqual(len(http_requests), 1)
@@ -700,7 +700,7 @@ class TestMeetupClient(unittest.TestCase):
                 'page': ['2'],
                 'scroll': ['since:2016-01-01T00:00:00.000Z'],
                 'sign': ['true'],
-                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'status': ['cancelled,upcoming,past,proposed,suggested']
             },
             {
                 'key': ['aaaa'],
@@ -803,7 +803,7 @@ class TestMeetupClient(unittest.TestCase):
                 'page': ['2'],
                 'scroll': ['since:1970-01-01T00:00:00.000Z'],
                 'sign': ['true'],
-                'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+                'status': ['cancelled,upcoming,past,proposed,suggested']
             },
             {
                 'key': ['aaaa'],
@@ -841,7 +841,7 @@ class TestMeetupClient(unittest.TestCase):
             'page': ['2'],
             'scroll': ['since:1970-01-01T00:00:00.000Z'],
             'sign': ['true'],
-            'status': ['cancelled,upcoming,past,proposed,suggested,draft']
+            'status': ['cancelled,upcoming,past,proposed,suggested']
         }
 
         self.assertEqual(len(http_requests), 1)

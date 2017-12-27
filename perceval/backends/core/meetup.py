@@ -68,7 +68,7 @@ class Meetup(Backend):
     :param sleep_time: minimun waiting time to avoid too many request
          exception
     """
-    version = '0.6.1'
+    version = '0.7.0'
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None,
@@ -359,8 +359,9 @@ class MeetupClient(HttpClient, RateLimitHandler):
                      'plain_text_description', 'rsvpable', 'series']
     VRSVP_FIELDS = ['attendance_status']
     VRESPONSE = ['yes', 'no']
-    VSTATUS = ['cancelled', 'upcoming', 'past', 'proposed',
-               'suggested', 'draft']
+    # FIXME: Add 'draft' status when the bug in the Meetup API gets fixed.
+    # More info in https://github.com/meetup/api/issues/260
+    VSTATUS = ['cancelled', 'upcoming', 'past', 'proposed', 'suggested']
     VUPDATED = 'updated'
 
     def __init__(self, api_key, max_items=MAX_ITEMS,
