@@ -64,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.8.8'
+    version = '0.8.9'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -976,18 +976,21 @@ class GitRepository:
     def _fetch_pack(self):
         """Fetch changes and store them in a pack."""
 
+        def prepare_refs(refs):
+            return [ref.hash.encode('utf-8') for ref in refs
+                    if not ref.refname.endswith('^{}')]
+
         def determine_wants(refs):
-            remote_refs = self._discover_refs(remote=True)
-            remote_refs = [ref.hash.encode('utf-8') for ref in remote_refs
-                           if not ref.refname.endswith('^{}')]
-            return remote_refs
+            remote_refs = prepare_refs(self._discover_refs(remote=True))
+            local_refs = prepare_refs(self._discover_refs())
+            wants = [ref for ref in remote_refs if ref not in local_refs]
+            return wants
 
         client, repo_path = dulwich.client.get_transport_and_path(self.uri)
         repo = dulwich.repo.Repo(self.dirpath)
         fd = io.BytesIO()
 
-        local_refs = [ref.hash.encode('utf-8') for ref in self._discover_refs()
-                      if not ref.refname.endswith('^{}')]
+        local_refs = prepare_refs(self._discover_refs())
         graph_walker = _GraphWalker(local_refs)
 
         result = client.fetch_pack(repo_path,
