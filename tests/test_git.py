@@ -624,6 +624,12 @@ class TestGitCommand(TestCaseGit):
         cmd = GitCommand(*args)
         self.assertEqual(cmd.parsed_args.gitpath, '/tmp/gitpath')
 
+        args = ['/tmp/gitpath/']
+
+        cmd = GitCommand(*args)
+        self.assertEqual(cmd.parsed_args.gitpath,
+                         os.path.join(self.tmp_path, 'testpath/tmp/gitpath/' + '-git'))
+
     def test_setup_cmd_parser(self):
         """Test if it parser object is correctly initialized"""
 
