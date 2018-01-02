@@ -40,7 +40,7 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.cache import Cache
-from perceval.errors import CacheError, RateLimitError
+from perceval.errors import CacheError, RateLimitError, RepositoryError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.meetup import (Meetup,
                                            MeetupCommand,
@@ -675,6 +675,36 @@ class TestMeetupClient(unittest.TestCase):
                               sleep_for_rate=True,
                               min_rate_to_sleep=100000000)
         self.assertEqual(client.min_rate_to_sleep, client.MAX_RATE_LIMIT)
+
+    @httpretty.activate
+    def test_group_gone(self):
+        """Test whether the group gone exception (HTTP 410) is properly handled"""
+
+        httpretty.register_uri(httpretty.GET,
+                               MEETUP_EVENTS_URL,
+                               body="",
+                               status=410)
+
+        client = MeetupClient('aaaa', max_items=2)
+        events = client.events('sqlpass-es')
+
+        with self.assertRaises(RepositoryError):
+            _ = [event for event in events]
+
+    @httpretty.activate
+    def test_events_error(self):
+        """Test whether HTTP errors different from 410 are thrown when fetching event pages"""
+
+        httpretty.register_uri(httpretty.GET,
+                               MEETUP_EVENTS_URL,
+                               body="",
+                               status=401)
+
+        client = MeetupClient('aaaa', max_items=2)
+        events = client.events('sqlpass-es')
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = [event for event in events]
 
     @httpretty.activate
     def test_events(self):
