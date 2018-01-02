@@ -22,6 +22,7 @@
 
 import json
 import logging
+import requests
 
 from grimoirelab.toolkit.datetime import datetime_to_utc
 from grimoirelab.toolkit.uris import urijoin
@@ -31,7 +32,7 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser,
                         metadata)
 from ...client import HttpClient, RateLimitHandler
-from ...errors import CacheError
+from ...errors import CacheError, RepositoryError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -400,8 +401,15 @@ class MeetupClient(HttpClient, RateLimitHandler):
             self.PPAGE: self.max_items
         }
 
-        for page in self._fetch(resource, params):
-            yield page
+        try:
+            for page in self._fetch(resource, params):
+                yield page
+        except requests.exceptions.HTTPError as error:
+            if error.response.status_code == 410:
+                msg = "Group is no longer accessible: {}".format(error)
+                raise RepositoryError(cause=msg)
+            else:
+                raise error
 
     def comments(self, group, event_id):
         """Fetch the comments of a given event."""
