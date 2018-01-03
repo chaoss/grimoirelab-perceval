@@ -1,0 +1,30 @@
+[
+  {
+    "id": 127,
+    "iid": 4,
+    "project_id": 41,
+    "title": "How can we explain that SonarQube identifies 2.2k  unit tests in Sat4j and a coverage of 0?",
+    "description": "At https://sonarqube.ow2.org/dashboard?id=org.ow2.sat4j%3Aorg.ow2.sat4j.pom",
+    "state": "closed",
+    "created_at": "2017-03-23T10:22:21.700Z",
+    "updated_at": "2017-06-08T15:15:44.981Z",
+    "labels": [],
+    "milestone": null,
+    "assignees": [],
+    "author": {
+      "name": "Stéphane Laurière",
+      "username": "slauriere",
+      "id": 4,
+      "state": "active",
+      "avatar_url": "https://secure.gravatar.com/avatar/123a746066d18aad4b2d83c581fa20cb?s=80&d=identicon",
+      "web_url": "https://gitlab.ow2.org/slauriere"
+    },
+    "assignee": null,
+    "user_notes_count": 2,
+    "upvotes": 0,
+    "downvotes": 0,
+    "due_date": null,
+    "confidential": false,
+    "web_url": "https://gitlab.ow2.org/am/test/issues/4"
+  }
+]
