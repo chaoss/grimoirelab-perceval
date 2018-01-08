@@ -47,7 +47,7 @@ CLIENT_IRONMAN_URL = "https://gateway.marvel.com/v1/public/characters/4"
 
 class MockedClient(HttpClient, RateLimitHandler):
 
-    def __init__(self, base_url, default_sleep_time=HttpClient.DEFAULT_SLEEP_TIME,
+    def __init__(self, base_url, sleep_time=HttpClient.DEFAULT_SLEEP_TIME,
                  max_retries=HttpClient.MAX_RETRIES,
                  extra_status_forcelist=None,
                  extra_retry_after_status=None,
@@ -56,7 +56,7 @@ class MockedClient(HttpClient, RateLimitHandler):
                  rate_limit_header=RateLimitHandler.RATE_LIMIT_HEADER,
                  rate_limit_reset_header=RateLimitHandler.RATE_LIMIT_RESET_HEADER):
 
-        super().__init__(base_url, default_sleep_time=default_sleep_time, max_retries=max_retries,
+        super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_status_forcelist=extra_status_forcelist,
                          extra_retry_after_status=extra_retry_after_status,
                          extra_headers=extra_headers)
@@ -87,7 +87,7 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(client.raise_on_redirect, HttpClient.DEFAULT_RAISE_ON_REDIRECT)
         self.assertEqual(client.raise_on_status, HttpClient.DEFAULT_RAISE_ON_STATUS)
         self.assertEqual(client.respect_retry_after_header, HttpClient.DEFAULT_RESPECT_RETRY_AFTER_HEADER)
-        self.assertEqual(client.default_sleep_time, HttpClient.DEFAULT_SLEEP_TIME)
+        self.assertEqual(client.sleep_time, HttpClient.DEFAULT_SLEEP_TIME)
 
         self.assertIsNotNone(client.session)
         self.assertEqual(client.session.headers['User-Agent'], HttpClient.DEFAULT_HEADERS.get('User-Agent'))
@@ -102,7 +102,7 @@ class TestHttpClient(unittest.TestCase):
 
         client = MockedClient(CLIENT_API_URL,
                               max_retries=expected_retries,
-                              default_sleep_time=expected_sleep_time,
+                              sleep_time=expected_sleep_time,
                               extra_headers=expected_headers,
                               extra_retry_after_status=[extra_status],
                               extra_status_forcelist=[extra_status])
@@ -110,7 +110,7 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(client.session.headers['User-Agent'], expected_headers.get('User-Agent'))
         self.assertEqual(client.session.headers['Token'], expected_headers.get('Token'))
         self.assertEqual(client.max_retries, expected_retries)
-        self.assertEqual(client.default_sleep_time, expected_sleep_time)
+        self.assertEqual(client.sleep_time, expected_sleep_time)
         self.assertTrue(extra_status in client.status_forcelist)
         self.assertTrue(extra_status in client.retry_after_status)
 
@@ -138,7 +138,7 @@ class TestHttpClient(unittest.TestCase):
                                body=output,
                                status=200)
 
-        client = MockedClient(CLIENT_API_URL, default_sleep_time=0.1, max_retries=1)
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1)
         response = client.fetch(CLIENT_SPIDERMAN_URL)
 
         self.assertEqual(response.request.method, HttpClient.GET)
@@ -153,7 +153,7 @@ class TestHttpClient(unittest.TestCase):
                                body="",
                                status=403)
 
-        client = MockedClient(CLIENT_API_URL, default_sleep_time=0.1, max_retries=1)
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1)
 
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = client.fetch(CLIENT_SUPERMAN_URL)
@@ -169,7 +169,7 @@ class TestHttpClient(unittest.TestCase):
                                body=output,
                                status=200)
 
-        client = MockedClient(CLIENT_API_URL, default_sleep_time=0.1, max_retries=1)
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1)
 
         response = client.fetch(CLIENT_SPIDERMAN_URL, method=HttpClient.POST)
         self.assertEqual(response.request.method, HttpClient.POST)
@@ -205,7 +205,7 @@ class TestHttpClient(unittest.TestCase):
                                    'Retry-After': str(retry_after_value)
                                })
 
-        client = MockedClient(CLIENT_API_URL, default_sleep_time=0.1, max_retries=1)
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1)
 
         urls = [CLIENT_SPIDERMAN_URL, CLIENT_SUPERMAN_URL, CLIENT_BATMAN_URL]
 
@@ -243,7 +243,7 @@ class TestHttpClient(unittest.TestCase):
                                body="",
                                status=504)
 
-        client = MockedClient(CLIENT_API_URL, default_sleep_time=0.1, max_retries=1, extra_status_forcelist=[301])
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1, extra_status_forcelist=[301])
 
         urls = [CLIENT_IRONMAN_URL, CLIENT_SPIDERMAN_URL, CLIENT_SUPERMAN_URL, CLIENT_BATMAN_URL]
 
@@ -258,7 +258,7 @@ class TestRateLimitHandler(unittest.TestCase):
     def test_setup_rate_limit_handler(self):
         """Test whether variables are properly initialized during the setup"""
 
-        client = MockedClient(CLIENT_API_URL, default_sleep_time=0.1, max_retries=1)
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1)
 
         self.assertEqual(client.sleep_for_rate, False)
         self.assertEqual(client.min_rate_to_sleep, RateLimitHandler.MIN_RATE_LIMIT)
@@ -270,7 +270,7 @@ class TestRateLimitHandler(unittest.TestCase):
         expected_rate_limit_header = "ACME Corp."
         expected_rate_limit_reset_header = "UMBRELLA Corp."
 
-        client = MockedClient(CLIENT_API_URL, default_sleep_time=0.1, max_retries=1,
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1,
                               sleep_for_rate=expected_sleep_for_rate,
                               min_rate_to_sleep=expected_min_rate_to_sleep,
                               rate_limit_header=expected_rate_limit_header,
@@ -283,7 +283,7 @@ class TestRateLimitHandler(unittest.TestCase):
 
         expected_min_rate_to_sleep = 1000
         client = MockedClient(CLIENT_API_URL, min_rate_to_sleep=expected_min_rate_to_sleep,
-                              default_sleep_time=0.1, max_retries=1)
+                              sleep_time=0.1, max_retries=1)
         self.assertEqual(client.min_rate_to_sleep, min(expected_min_rate_to_sleep, RateLimitHandler.MAX_RATE_LIMIT))
 
     @httpretty.activate
@@ -304,14 +304,14 @@ class TestRateLimitHandler(unittest.TestCase):
                                body="",
                                status=200)
 
-        client = MockedClient(CLIENT_API_URL, default_sleep_time=0.1, max_retries=1)
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1)
         response = client.fetch(CLIENT_SPIDERMAN_URL)
         client.update_rate_limit(response)
 
         self.assertEqual(client.rate_limit, 20)
         self.assertEqual(client.rate_limit_reset_ts, 15)
 
-        client = MockedClient(CLIENT_API_URL, default_sleep_time=0.1, max_retries=1)
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1)
         response = client.fetch(CLIENT_SUPERMAN_URL)
         client.update_rate_limit(response)
 
@@ -337,7 +337,7 @@ class TestRateLimitHandler(unittest.TestCase):
                                body="",
                                status=200)
 
-        client = MockedClient(CLIENT_API_URL, min_rate_to_sleep=50, default_sleep_time=0.1, max_retries=1)
+        client = MockedClient(CLIENT_API_URL, min_rate_to_sleep=50, sleep_time=0.1, max_retries=1)
         response = client.fetch(CLIENT_SPIDERMAN_URL)
         client.update_rate_limit(response)
 
