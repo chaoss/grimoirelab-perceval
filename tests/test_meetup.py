@@ -181,7 +181,7 @@ class TestMeetupBackend(unittest.TestCase):
         self.assertEqual(meetup.client.api_key, 'aaaa')
         self.assertEqual(meetup.client.sleep_for_rate, True)
         self.assertEqual(meetup.client.min_rate_to_sleep, 10)
-        self.assertEqual(meetup.client.default_sleep_time, 60)
+        self.assertEqual(meetup.client.sleep_time, 60)
 
         # When tag is empty or None it will be set to
         # the value in URL
@@ -891,7 +891,7 @@ class TestMeetupClient(unittest.TestCase):
 
         client = MeetupClient('aaaa', max_items=2, sleep_time=0.1)
         start = float(time.time())
-        expected = start + (sum([i * client.default_sleep_time for i in range(client.MAX_RETRIES)]))
+        expected = start + (sum([i * client.sleep_time for i in range(client.MAX_RETRIES)]))
 
         events = client.events('sqlpass-es')
         with self.assertRaises(requests.exceptions.RetryError):
