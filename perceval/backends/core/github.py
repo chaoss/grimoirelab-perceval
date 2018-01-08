@@ -73,14 +73,18 @@ class GitHub(Backend):
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
+    :param max_retries: number of max retries to a data source
+        before raising a RetryError exception
+    :param sleep_time: time to sleep in case
+        of connection problems
     """
-    version = '0.12.1'
+    version = '0.13.0'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
                  tag=None, cache=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
-                 max_retries=MAX_RETRIES, default_sleep_time=DEFAULT_SLEEP_TIME):
+                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
         origin = base_url if base_url else GITHUB_URL
         origin = urijoin(origin, owner, repository)
 
@@ -90,7 +94,7 @@ class GitHub(Backend):
         self.api_token = api_token
         self.client = GitHubClient(owner, repository, api_token, base_url,
                                    sleep_for_rate, min_rate_to_sleep,
-                                   max_retries, default_sleep_time)
+                                   max_retries, sleep_time)
         self._users = {}  # internal users cache
 
     @classmethod
@@ -465,7 +469,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     def __init__(self, owner, repository, token, base_url=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
-                 default_sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES):
+                 sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES):
         self.owner = owner
         self.repository = repository
         self.token = token
@@ -475,7 +479,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         else:
             base_url = GITHUB_API_URL
 
-        super().__init__(base_url, default_sleep_time=default_sleep_time, max_retries=max_retries,
+        super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_headers=self._set_extra_headers())
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 
@@ -672,7 +676,7 @@ class GitHubCommand(BackendCommand):
         group.add_argument('--max-retries', dest='max_retries',
                            default=MAX_RETRIES, type=int,
                            help="number of API call retries")
-        group.add_argument('--default-sleep-time', dest='default_sleep_time',
+        group.add_argument('--sleep-time', dest='sleep_time',
                            default=DEFAULT_SLEEP_TIME, type=int,
                            help="sleeping time between API call retries")
 
