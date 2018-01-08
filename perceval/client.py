@@ -50,7 +50,7 @@ class HttpClient:
     :param base_url: base URL of the data source
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
-    :param default_sleep_time: default time to sleep in case
+    :param sleep_time: time to sleep in case
         of connection problems
     """
     version = '0.1.1'
@@ -76,7 +76,7 @@ class HttpClient:
     GET = "GET"
     POST = "POST"
 
-    def __init__(self, base_url, max_retries=MAX_RETRIES, default_sleep_time=DEFAULT_SLEEP_TIME,
+    def __init__(self, base_url, max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
                  extra_headers=None, extra_status_forcelist=None, extra_retry_after_status=None):
 
         self.base_url = base_url
@@ -103,7 +103,7 @@ class HttpClient:
         self.raise_on_redirect = self.DEFAULT_RAISE_ON_REDIRECT
         self.raise_on_status = self.DEFAULT_RAISE_ON_STATUS
         self.respect_retry_after_header = self.DEFAULT_RESPECT_RETRY_AFTER_HEADER
-        self.default_sleep_time = default_sleep_time
+        self.sleep_time = sleep_time
 
         self._create_http_session()
 
@@ -147,7 +147,7 @@ class HttpClient:
                                      status=self.max_retries_on_status,
                                      method_whitelist=self.method_whitelist,
                                      status_forcelist=self.status_forcelist,
-                                     backoff_factor=self.default_sleep_time,
+                                     backoff_factor=self.sleep_time,
                                      raise_on_redirect=self.raise_on_redirect,
                                      raise_on_status=self.raise_on_status,
                                      respect_retry_after_header=self.respect_retry_after_header)
