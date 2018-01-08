@@ -64,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.8.9'
+    version = '0.8.10'
 
     def __init__(self, uri, gitpath, tag=None, cache=None):
         origin = uri
@@ -674,11 +674,17 @@ class EmptyRepositoryError(RepositoryError):
     message = "%(repository)s is empty"
 
 
+GitRef = collections.namedtuple('GitRef', ['hash', 'refname'])
+
+
 class _GraphWalker:
     """Commit walker needed by fetch_pack"""
 
-    def __init__(self, local_heads):
-        self.heads = set(local_heads)
+    def __init__(self, local_refs):
+        self.heads = [
+            ref.hash.encode('utf-8') for ref in local_refs
+            if ref.refname.startswith('refs/heads/')
+        ]
 
     def ack(self, sha):
         pass
@@ -690,9 +696,6 @@ class _GraphWalker:
         return None
 
     __next__ = next
-
-
-GitRef = collections.namedtuple('GitRef', ['hash', 'refname'])
 
 
 class GitRepository:
@@ -991,7 +994,7 @@ class GitRepository:
         repo = dulwich.repo.Repo(self.dirpath)
         fd = io.BytesIO()
 
-        local_refs = prepare_refs(self._discover_refs())
+        local_refs = self._discover_refs()
         graph_walker = _GraphWalker(local_refs)
 
         result = client.fetch_pack(repo_path,
