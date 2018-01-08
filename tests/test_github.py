@@ -869,7 +869,7 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(client.owner, 'zhquan_example')
         self.assertEqual(client.repository, 'repo')
         self.assertEqual(client.max_retries, GitHubClient.MAX_RETRIES)
-        self.assertEqual(client.default_sleep_time, GitHubClient.DEFAULT_SLEEP_TIME)
+        self.assertEqual(client.sleep_time, GitHubClient.DEFAULT_SLEEP_TIME)
         self.assertEqual(client.max_retries, GitHubClient.MAX_RETRIES)
         self.assertEqual(client.base_url, 'https://api.github.com')
 
@@ -1239,7 +1239,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", default_sleep_time=1, max_retries=1)
+        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_time=1, max_retries=1)
 
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = [issues for issues in client.issues()]
@@ -1377,7 +1377,7 @@ class TestGitHubCommand(unittest.TestCase):
         args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',
                 '--max-retries', '5',
-                '--default-sleep-time', '10',
+                '--sleep-time', '10',
                 '--tag', 'test', '--no-cache',
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
@@ -1390,7 +1390,7 @@ class TestGitHubCommand(unittest.TestCase):
         self.assertEqual(parsed_args.base_url, 'https://example.com')
         self.assertEqual(parsed_args.sleep_for_rate, True)
         self.assertEqual(parsed_args.max_retries, 5)
-        self.assertEqual(parsed_args.default_sleep_time, 10)
+        self.assertEqual(parsed_args.sleep_time, 10)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.no_cache, True)
