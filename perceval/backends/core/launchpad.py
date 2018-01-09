@@ -65,7 +65,7 @@ class Launchpad(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
            it will be reset
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, distribution, package=None,
                  consumer_key=None, api_token=None,
@@ -410,7 +410,7 @@ class LaunchpadClient(HttpClient):
     def __init__(self, distribution, package=None,
                  consumer_key=None, api_token=None,
                  items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME):
-        super().__init__(LAUNCHPAD_API_URL, default_sleep_time=sleep_time)
+        super().__init__(LAUNCHPAD_API_URL, sleep_time=sleep_time)
         self.consumer_key = consumer_key
         self.api_token = api_token
         self.distribution = distribution
