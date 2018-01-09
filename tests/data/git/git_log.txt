@@ -106,3 +106,16 @@ CommitDate: Tue Aug 14 14:30:13 2012 -0300
 0	0	aaa/otherthing
 0	0	aaa/something
 0	0	bbb/bthing
+
+commit 49345fe87bd1dfad7e682f6554f7472c5576a8c7
+Author:     Eduardo Morais <companheiro.vermelho@example.com>
+AuthorDate: Tue Jan 9 15:30:49 2018 +0100
+Commit:     Eduardo Morais <companheiro.vermelho@example.com>
+CommitDate: Tue Jan 9 15:30:49 2018 +0100
+
+    Moving things around
+
+:100644 100644 802992c... 802992c... R100	src1/file3.txt	src3/file3.txt
+:100644 100644 802992c... 802992c... R100	src2/file2.txt	src3/file4.txt
+0	0	{src1 => src3}/file3.txt
+0	0	src2/file2.txt => src3/file4.txt
