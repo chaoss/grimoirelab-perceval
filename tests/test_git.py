@@ -501,7 +501,8 @@ class TestGitBackend(TestCaseGit):
                     ('c0d66f92a95e31c77be08dc9d0f11a16715d1885', 1344965702.0),
                     ('7debcf8a2f57f86663809c58b5c07a398be7674c', 1344965607.0),
                     ('87783129c3f00d2c81a3a8e585eb86a47e39891a', 1344965535.0),
-                    ('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0)]
+                    ('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0),
+                    ('49345fe87bd1dfad7e682f6554f7472c5576a8c7', 1515508249.0)]
 
         self.assertEqual(len(commits), len(expected))
 
@@ -530,7 +531,8 @@ class TestGitBackend(TestCaseGit):
                     'c0d66f92a95e31c77be08dc9d0f11a16715d1885',
                     '7debcf8a2f57f86663809c58b5c07a398be7674c',
                     '87783129c3f00d2c81a3a8e585eb86a47e39891a',
-                    'bc57a9209f096a130dcc5ba7089a8663f758a703']
+                    'bc57a9209f096a130dcc5ba7089a8663f758a703',
+                    '49345fe87bd1dfad7e682f6554f7472c5576a8c7']
 
         self.assertListEqual(result, expected)
 
@@ -669,7 +671,7 @@ class TestGitParser(TestCaseGit):
             parser = GitParser(f)
             commits = [commit for commit in parser.parse()]
 
-        self.assertEqual(len(commits), 9)
+        self.assertEqual(len(commits), 10)
 
         expected = {
             'commit': '456a68ee1407a77f3e804a30dff245bb6c6b872f',
@@ -726,6 +728,39 @@ class TestGitParser(TestCaseGit):
             ]
         }
         self.assertDictEqual(commits[5], expected)
+
+        expected = {
+            'commit': '49345fe87bd1dfad7e682f6554f7472c5576a8c7',
+            'parents': [],
+            'refs': [],
+            'Author': 'Eduardo Morais <companheiro.vermelho@example.com>',
+            'AuthorDate': 'Tue Jan 9 15:30:49 2018 +0100',
+            'Commit': 'Eduardo Morais <companheiro.vermelho@example.com>',
+            'CommitDate': 'Tue Jan 9 15:30:49 2018 +0100',
+            'message': 'Moving things around',
+            'files': [
+                {
+                    'file': 'src1/file3.txt',
+                    'newfile': 'src3/file3.txt',
+                    'added': '0',
+                    'removed': '0',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['802992c...', '802992c...'],
+                    'action': 'R100'
+                },
+                {
+                    'file': 'src2/file2.txt',
+                    'newfile': 'src3/file4.txt',
+                    'added': '0',
+                    'removed': '0',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['802992c...', '802992c...'],
+                    'action': 'R100'
+                }
+            ]
+        }
+
+        self.assertDictEqual(commits[9], expected)
 
     def test_parser_merge_commit(self):
         """Test if it parses all the available data on a merge commit"""
