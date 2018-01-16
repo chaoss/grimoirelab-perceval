@@ -22,8 +22,10 @@
 #
 
 import os
+import shutil
 import sys
 import time
+import tempfile
 import unittest
 
 import httpretty
@@ -35,6 +37,7 @@ import requests
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.archive import Archive
 from perceval.client import HttpClient, RateLimitHandler
 
 
@@ -55,13 +58,14 @@ class MockedClient(HttpClient, RateLimitHandler):
                  min_rate_to_sleep=RateLimitHandler.MIN_RATE_LIMIT,
                  rate_limit_header=RateLimitHandler.RATE_LIMIT_HEADER,
                  rate_limit_reset_header=RateLimitHandler.RATE_LIMIT_RESET_HEADER,
-                 define_calculate_time_to_reset=True):
+                 define_calculate_time_to_reset=True,
+                 archive=None, from_archive=False):
 
         self.define_calculate_time_to_reset = define_calculate_time_to_reset
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_status_forcelist=extra_status_forcelist,
                          extra_retry_after_status=extra_retry_after_status,
-                         extra_headers=extra_headers)
+                         extra_headers=extra_headers, archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate,
                                          min_rate_to_sleep=min_rate_to_sleep,
                                          rate_limit_header=rate_limit_header,
@@ -76,6 +80,12 @@ class MockedClient(HttpClient, RateLimitHandler):
 
 class TestHttpClient(unittest.TestCase):
     """Http client tests"""
+
+    def setUp(self):
+        self.test_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
 
     def test_initialization(self):
         """Test whether attributes are initializated"""
@@ -258,6 +268,49 @@ class TestHttpClient(unittest.TestCase):
         for url in urls:
             with self.assertRaises(requests.exceptions.RetryError):
                 _ = client.fetch(url)
+
+    @httpretty.activate
+    def test_fetch_from_archive(self):
+        """Test whether responses are correctly fecthed from an archive"""
+
+        archive_path = os.path.join(self.test_path, 'myarchive')
+        archive = Archive.create(archive_path)
+
+        httpretty.register_uri(httpretty.GET,
+                               CLIENT_SUPERMAN_URL,
+                               body="good",
+                               status=200)
+
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1, archive=archive)
+        answer_api = client.fetch(CLIENT_SUPERMAN_URL)
+
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1, archive=archive, from_archive=True)
+        answer_archive = client.fetch(CLIENT_SUPERMAN_URL)
+
+        self.assertEqual(answer_api.text, answer_archive.text)
+
+    @httpretty.activate
+    def test_fetch_from_archive_exception(self):
+        """Test whether serialized exceptions are thrown"""
+
+        archive_path = os.path.join(self.test_path, 'myarchive')
+        archive = Archive.create(archive_path)
+
+        httpretty.register_uri(httpretty.GET,
+                               CLIENT_SPIDERMAN_URL,
+                               body="bad",
+                               status=404)
+
+        # populate the archive and check that an exception is thown when fetching data from the API
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1, archive=archive)
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = client.fetch(CLIENT_SPIDERMAN_URL)
+
+        # retrieve data from the archive and check that an exception is
+        # thown as happened when fetching data from the API)
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1, archive=archive, from_archive=True)
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = client.fetch(CLIENT_SPIDERMAN_URL)
 
 
 class TestRateLimitHandler(unittest.TestCase):
