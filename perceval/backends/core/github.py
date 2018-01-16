@@ -33,10 +33,9 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient, RateLimitHandler
-from ...errors import ArchiveError
+
 from ...utils import DEFAULT_DATETIME
 
 
@@ -104,11 +103,61 @@ class GitHub(Backend):
         self.client = None
         self._users = {}  # internal users cache
 
+    def fetch(self, from_date=DEFAULT_DATETIME):
+        """Fetch the issues from the repository.
+
+        The method retrieves, from a GitHub repository, the issues
+        updated since the given date.
+
+        :param from_date: obtain issues updated since this date
+
+        :returns: a generator of issues
+        """
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("issue", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the issues"""
+
+        from_date = kwargs['from_date']
+
+        issues_groups = self.client.issues(from_date=from_date)
+
+        for raw_issues in issues_groups:
+            issues = json.loads(raw_issues)
+            for issue in issues:
+                self.__init_extra_issue_fields(issue)
+                for field in TARGET_ISSUE_FIELDS:
+
+                    if not issue[field]:
+                        continue
+
+                    if field == 'user':
+                        issue[field + '_data'] = self.__get_user(issue[field]['login'])
+                    elif field == 'assignee':
+                        issue[field + '_data'] = self.__get_issue_assignee(issue[field])
+                    elif field == 'assignees':
+                        issue[field + '_data'] = self.__get_issue_assignees(issue[field])
+                    elif field == 'comments':
+                        issue[field + '_data'] = self.__get_issue_comments(issue['number'])
+                    elif field == 'reactions':
+                        issue[field + '_data'] = \
+                            self.__get_issue_reactions(issue['number'], issue['reactions']['total_count'])
+
+                yield issue
+
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
         """
         return False
 
@@ -159,73 +208,6 @@ class GitHub(Backend):
         'issue'.
         """
         return 'issue'
-
-    def fetch(self, from_date=DEFAULT_DATETIME):
-        """Fetch the issues from the repository.
-
-        The method retrieves, from a GitHub repository, the issues
-        updated since the given date.
-
-        :param from_date: obtain issues updated since this date
-
-        :returns: a generator of issues
-        """
-
-        from_date = datetime_to_utc(from_date)
-
-        if self.archive:
-            self.archive.init_metadata(self.origin, GitHub.__name__, self.version, "issue",
-                                       {"from_date": from_date})
-
-        self.client = self._init_client()
-
-        return self._fetch(from_date)
-
-    def fetch_from_archive(self):
-        """Fetch the issues from an archive.
-        It returns the issues stored within an archive.
-        If this method is called but no archive was provided, the method
-        will raise a `ArchiveError` exception.
-
-        :returns: a generator of items
-        :raises ArchiveError: raised when an error occurs accessing an archive
-        """
-        if not self.archive:
-            raise ArchiveError(cause="archive instance was not provided")
-
-        self.client = self._init_client(from_archive=True)
-
-        self.archive._load_metadata()
-        return self._fetch(self.archive.backend_params['from_date'])
-
-    @metadata
-    def _fetch(self, from_date):
-        """Fetch the issues"""
-
-        issues_groups = self.client.issues(from_date=from_date)
-
-        for raw_issues in issues_groups:
-            issues = json.loads(raw_issues)
-            for issue in issues:
-                self.__init_extra_issue_fields(issue)
-                for field in TARGET_ISSUE_FIELDS:
-
-                    if not issue[field]:
-                        continue
-
-                    if field == 'user':
-                        issue[field + '_data'] = self.__get_user(issue[field]['login'])
-                    elif field == 'assignee':
-                        issue[field + '_data'] = self.__get_issue_assignee(issue[field])
-                    elif field == 'assignees':
-                        issue[field + '_data'] = self.__get_issue_assignees(issue[field])
-                    elif field == 'comments':
-                        issue[field + '_data'] = self.__get_issue_comments(issue['number'])
-                    elif field == 'reactions':
-                        issue[field + '_data'] = \
-                            self.__get_issue_reactions(issue['number'], issue['reactions']['total_count'])
-
-                yield issue
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -331,7 +313,24 @@ class GitHub(Backend):
 
 
 class GitHubClient(HttpClient, RateLimitHandler):
-    """Client for retieving information from GitHub API"""
+    """Client for retieving information from GitHub API
+
+    :param owner: GitHub owner
+    :param repository: GitHub repository from the owner
+    :param token: GitHub auth token to access the API
+    :param base_url: GitHub URL in enterprise edition case;
+        when no value is set the backend will be fetch the data
+        from the GitHub public site.
+    :param sleep_for_rate: sleep until rate limit is reset
+    :param min_rate_to_sleep: minimun rate needed to sleep until
+         it will be reset
+    :param sleep_time: time to sleep in case
+        of connection problems
+    :param max_retries: number of max retries to a data source
+        before raising a RetryError exception
+    :param archive: collect issues already retrieved from an archive
+    :param from_archive: it tells whether to write/read the archive
+    """
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
@@ -354,30 +353,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 
         self._init_rate_limit()
-
-    def _set_extra_headers(self):
-        """Set extra headers for session"""
-
-        headers = {}
-        headers.update({'Accept': 'application/vnd.github.squirrel-girl-preview'})
-
-        if self.token:
-            headers.update({'Authorization': 'token ' + self.token})
-
-        return headers
-
-    def _init_rate_limit(self):
-        """Initialize rate limit information"""
-
-        url = urijoin(self.base_url, "rate_limit")
-        try:
-            response = super().fetch(url)
-            self.update_rate_limit(response)
-        except requests.exceptions.HTTPError as error:
-            if error.response.status_code == 404:
-                logger.warning("Rate limit not initialized: %s", error)
-            else:
-                raise error
 
     def calculate_time_to_reset(self):
         """Calculate the seconds to reset the token requests, by obtaining the different
@@ -524,12 +499,36 @@ class GitHubClient(HttpClient, RateLimitHandler):
             items = None
 
             if 'next' in response.links:
-                url_next = response.links['next']['url']  # Loving requests :)
+                url_next = response.links['next']['url']
                 response = self.fetch(url_next, payload=payload)
                 page += 1
 
                 items = response.text
                 logger.debug("Page: %i/%i" % (page, last_page))
+
+    def _set_extra_headers(self):
+        """Set extra headers for session"""
+
+        headers = {}
+        headers.update({'Accept': 'application/vnd.github.squirrel-girl-preview'})
+
+        if self.token:
+            headers.update({'Authorization': 'token ' + self.token})
+
+        return headers
+
+    def _init_rate_limit(self):
+        """Initialize rate limit information"""
+
+        url = urijoin(self.base_url, "rate_limit")
+        try:
+            response = super().fetch(url)
+            self.update_rate_limit(response)
+        except requests.exceptions.HTTPError as error:
+            if error.response.status_code == 404:
+                logger.warning("Rate limit not initialized: %s", error)
+            else:
+                raise error
 
 
 class GitHubCommand(BackendCommand):

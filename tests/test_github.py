@@ -24,10 +24,8 @@
 import datetime
 import json
 import os
-import shutil
 import sys
 import time
-import tempfile
 import unittest
 
 import httpretty
@@ -39,14 +37,14 @@ import requests
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
-from perceval.archive import Archive
 from perceval.backend import BackendCommandArgumentParser
 from perceval.client import RateLimitHandler
-from perceval.errors import ArchiveError, RateLimitError
+from perceval.errors import RateLimitError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.github import (GitHub,
                                            GitHubCommand,
                                            GitHubClient)
+from tests.base import TestCaseBackendArchive
 
 
 GITHUB_API_URL = "https://api.github.com"
@@ -119,7 +117,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.tag, 'https://github.com/zhquan_example/repo')
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
         self.assertEqual(GitHub.has_caching(), False)
 
@@ -129,7 +127,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(GitHub.has_resuming(), True)
 
     def test_has_archiving(self):
-        """Test if it returns True when has_resuming is called"""
+        """Test if it returns True when has_archiving is called"""
 
         self.assertEqual(GitHub.has_archiving(), True)
 
@@ -192,7 +190,7 @@ class TestGitHubBackend(unittest.TestCase):
                                })
 
         github = GitHub("zhquan_example", "repo", "aaa")
-        issues = [issues for issues in github.fetch()]
+        issues = [issues for issues in github.fetch(from_date=None)]
 
         expected = json.loads(read_file('data/github/github_request_expected'))
 
@@ -200,7 +198,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issues[0]['origin'], 'https://github.com/zhquan_example/repo')
         self.assertEqual(issues[0]['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
         self.assertEqual(issues[0]['updated_on'], 1454328801.0)
-        self.assertEqual(issues[0]['category'], 'issue')
+        self.assertEqual(issues[0]['category'], "issue")
         self.assertEqual(issues[0]['tag'], 'https://github.com/zhquan_example/repo')
         self.assertDictEqual(issues[0]['data']['assignee_data'], expected['assignee_data'])
         self.assertEqual(len(issues[0]['data']['assignees_data']), len(expected['assignees_data']))
@@ -676,21 +674,12 @@ class TestGitHubBackend(unittest.TestCase):
             _ = [issues for issues in github.fetch()]
 
 
-class TestGitHubBackendArchive(unittest.TestCase):
-    """GitHub backend tests using the archive"""
+class TestGitHubBackendArchive(TestCaseBackendArchive):
+    """GitHub backend tests using an archive"""
 
     def setUp(self):
-        self.test_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.test_path)
-
-    def test_initialization_null_archive(self):
-        """Test whether an exception is thrown when the archive manager does not exist"""
-
-        github = GitHub("zhquan_example", "repo", "aaa")
-        with self.assertRaises(ArchiveError):
-            _ = [issues for issues in github.fetch_from_archive()]
+        super().setUp()
+        self.backend = GitHub("zhquan_example", "repo", "aaa", archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
@@ -785,28 +774,7 @@ class TestGitHubBackendArchive(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        # First, we fetch the bugs from the server, storing them
-        # in an archive
-
-        archive_path = os.path.join(self.test_path, 'myarchive')
-        archive = Archive.create(archive_path)
-
-        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
-        issues = [issues for issues in github.fetch()]
-
-        # Now, we get the bugs from the archive.
-        # The contents should be the same and there won't be any new remote request
-        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
-        archive_issues = [issues for issues in github.fetch_from_archive()]
-
-        del issues[0]['timestamp']
-        del archive_issues[0]['timestamp']
-        del issues[1]['timestamp']
-        del archive_issues[1]['timestamp']
-
-        self.assertEqual(len(issues), len(archive_issues))
-        self.assertDictEqual(issues[0], archive_issues[0])
-        self.assertDictEqual(issues[1], archive_issues[1])
+        self._test_fetch_from_archive(from_date=None)
 
     @httpretty.activate
     def test_fetch_from_date_from_archive(self):
@@ -838,17 +806,16 @@ class TestGitHubBackendArchive(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
         httpretty.register_uri(httpretty.GET,
-                               GITHUB_ISSUE_2_COMMENTS_URL,
-                               body=comments,
+                               GITHUB_ISSUE_2_REACTION_URL,
+                               body=issue_reactions,
                                status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
         httpretty.register_uri(httpretty.GET,
-                               GITHUB_ISSUE_2_REACTION_URL,
-                               body=issue_reactions,
-                               status=200,
+                               GITHUB_ISSUE_2_COMMENTS_URL,
+                               body=comments, status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
@@ -876,25 +843,8 @@ class TestGitHubBackendArchive(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        archive_path = os.path.join(self.test_path, 'myarchive')
-        archive = Archive.create(archive_path)
-
         from_date = datetime.datetime(2016, 3, 1)
-        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
-
-        issues = [issues for issues in github.fetch(from_date=from_date)]
-
-        # Now, we get the bugs from the archive.
-        # The contents should be the same and there won't be any new remote request
-        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
-        archive_issues = [issues for issues in github.fetch_from_archive()]
-
-        self.assertEqual(len(issues), len(archive_issues))
-
-        del issues[0]['timestamp']
-        del archive_issues[0]['timestamp']
-
-        self.assertEqual(issues[0], archive_issues[0])
+        self._test_fetch_from_archive(from_date=from_date)
 
     @httpretty.activate
     def test_fetch_from_empty_archive(self):
@@ -935,23 +885,7 @@ class TestGitHubBackendArchive(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        origin = "test"
-        backend_name = "github"
-        backend_version = "X.Y.Z"
-        item_category = "item"
-
-        archive_path = os.path.join(self.test_path, 'myarchive')
-        archive = Archive.create(archive_path)
-        archive.init_metadata(origin, backend_name, backend_version, item_category, {"from_date": DEFAULT_DATETIME})
-
-        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
-        issues = [issues for issues in github.fetch()]
-
-        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
-        archive_issues = [issues for issues in github.fetch_from_archive()]
-
-        self.assertEqual(len(issues), 0)
-        self.assertEqual(len(archive_issues), 0)
+        self._test_fetch_from_archive()
 
 
 class TestGitHubClient(unittest.TestCase):
