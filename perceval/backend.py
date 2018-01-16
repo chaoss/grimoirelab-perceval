@@ -33,9 +33,10 @@ from datetime import datetime as dt
 from grimoirelab.toolkit.introspect import find_signature_parameters
 from grimoirelab.toolkit.datetime import str_to_datetime
 
-from ._version import __version__
+from .archive import Archive
 from .cache import Cache, setup_cache
 from .utils import DEFAULT_DATETIME
+from ._version import __version__
 
 
 class Backend:
@@ -61,18 +62,20 @@ class Backend:
 
     :param origin: identifier of the repository
     :param tag: tag items using this label
-    :param cache: object to cache raw data
+    :param cache: object to caeche raw data
+    :param archive: archive object from where fetch the archived data
 
     :raises ValueError: raised when `cache` is not an instance of
         `Cache` class
     """
     version = '0.5'
 
-    def __init__(self, origin, tag=None, cache=None):
+    def __init__(self, origin, tag=None, cache=None, archive=None):
         self._origin = origin
         self.tag = tag if tag else origin
         self.cache = cache or None
         self.cache_queue = []
+        self.archive = archive or None
 
     @property
     def origin(self):
@@ -90,6 +93,18 @@ class Backend:
             raise ValueError(msg)
 
         self._cache = obj
+
+    @ property
+    def archive(self):
+        return self._archive
+
+    @ archive.setter
+    def archive(self, obj):
+        if obj and not isinstance(obj, Archive):
+            msg = "obj is not an instance of Archive. %s object given" % (str(type(obj)))
+            raise ValueError(msg)
+
+        self._archive = obj
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         raise NotImplementedError
