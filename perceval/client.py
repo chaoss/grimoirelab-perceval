@@ -77,7 +77,8 @@ class HttpClient:
     POST = "POST"
 
     def __init__(self, base_url, max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
-                 extra_headers=None, extra_status_forcelist=None, extra_retry_after_status=None):
+                 extra_headers=None, extra_status_forcelist=None, extra_retry_after_status=None,
+                 archive=None, from_archive=False):
 
         self.base_url = base_url
 
@@ -105,6 +106,9 @@ class HttpClient:
         self.respect_retry_after_header = self.DEFAULT_RESPECT_RETRY_AFTER_HEADER
         self.sleep_time = sleep_time
 
+        self.archive = archive
+        self.from_archive = from_archive
+
         self._create_http_session()
 
     def __del__(self):
@@ -122,14 +126,38 @@ class HttpClient:
 
         :returns a response object
         """
+        if self.from_archive:
+            response = self._fetch_from_archive(url, payload, headers)
+        else:
+            response = self._fetch_from_remote(url, payload, headers, method, stream, verify)
+
+        return response
+
+    def _fetch_from_archive(self, url, payload, headers):
+
+        response = self.archive.retrieve(url, payload, headers)
+
+        if type(response) != requests.Response:
+            raise response
+
+        return response
+
+    def _fetch_from_remote(self, url, payload, headers, method, stream, verify):
 
         if method == self.GET:
             response = self.session.get(url, params=payload, headers=headers, stream=stream, verify=verify)
         else:
             response = self.session.post(url, data=payload, headers=headers, stream=stream, verify=verify)
 
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception as e:
+            if self.archive:
+                self.archive.store(url, payload, headers, e)
+            raise e
 
+        if self.archive:
+            self.archive.store(url, payload, headers, response)
         return response
 
     def _create_http_session(self):
