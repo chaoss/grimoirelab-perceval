@@ -70,6 +70,62 @@ class TestBackend(unittest.TestCase):
         b = Backend('test')
         self.assertEqual(b.origin, 'test')
 
+    def test_fetch(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b.fetch()
+
+    def test_fetch_from_cache(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b.fetch_from_cache()
+
+    def test_has_caching(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b.has_caching()
+
+    def test_has_resuming(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b.has_resuming()
+
+    def test_metadata_id(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b.metadata_id(None)
+
+    def test_metadata_updated_on(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b.metadata_updated_on(None)
+
+    def test_metadata_category(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b.metadata_category(None)
+
     def test_tag(self):
         """Test whether tag value is initializated"""
 
@@ -395,6 +451,12 @@ class TestBackendCommand(unittest.TestCase):
         self.assertEqual(cmd.backend.tag, 'test')
 
         cmd.outfile.close()
+
+    def test_setup_cmd_parser(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        with self.assertRaises(NotImplementedError):
+            BackendCommand.setup_cmd_parser()
 
     @unittest.mock.patch('os.path.expanduser')
     def test_cache_on_init(self, mock_expanduser):
