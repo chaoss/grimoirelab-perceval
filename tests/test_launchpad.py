@@ -27,9 +27,7 @@ import json
 import os
 import pkg_resources
 import requests
-import shutil
 import sys
-import tempfile
 import unittest
 
 # Hack to make sure that tests import the right packages
@@ -41,9 +39,8 @@ from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.launchpad import (Launchpad,
                                               LaunchpadClient,
                                               LaunchpadCommand)
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.utils import DEFAULT_DATETIME
+from tests.base import TestCaseBackendArchive
 
 
 LAUNCHPAD_API_URL = "https://api.launchpad.net/1.0"
@@ -71,8 +68,9 @@ class TestLaunchpadBackend(unittest.TestCase):
         self.assertEqual(launchpad.package, None)
         self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
         self.assertEqual(launchpad.tag, 'test')
+        self.assertIsNone(launchpad.client)
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, tag='test', package="mypackage")
+        launchpad = Launchpad('mydistribution', tag='test', package="mypackage")
         self.assertEqual(launchpad.distribution, 'mydistribution')
         self.assertEqual(launchpad.package, 'mypackage')
         self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
@@ -80,20 +78,25 @@ class TestLaunchpadBackend(unittest.TestCase):
 
         # When tag is empty or None it will be set to
         # the value in origin
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, tag=None)
+        launchpad = Launchpad('mydistribution', tag=None)
         self.assertEqual(launchpad.distribution, 'mydistribution')
         self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
         self.assertEqual(launchpad.tag, 'https://launchpad.net/mydistribution')
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, tag='')
+        launchpad = Launchpad('mydistribution', tag='')
         self.assertEqual(launchpad.distribution, 'mydistribution')
         self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
         self.assertEqual(launchpad.tag, 'https://launchpad.net/mydistribution')
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(Launchpad.has_caching(), True)
+        self.assertEqual(Launchpad.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns False when has_archiving is called"""
+
+        self.assertEqual(Launchpad.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -225,7 +228,7 @@ class TestLaunchpadBackend(unittest.TestCase):
 
         launchpad = Launchpad('mydistribution', package="mypackage",
                               items_per_page=2)
-        issues = [issues for issues in launchpad.fetch()]
+        issues = [issues for issues in launchpad.fetch(from_date=None)]
 
         issue_1_expected = json.loads(issue_1_expected)
         issue_2_expected = json.loads(issue_2_expected)
@@ -304,8 +307,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
-                              items_per_page=2)
+        launchpad = Launchpad('mydistribution', package="mypackage", items_per_page=2)
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
         issues = [issues for issues in launchpad.fetch(from_date=from_date)]
         issue_1_expected = json.loads(issue_1_expected)
@@ -331,8 +333,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=empty_issues,
                                status=200)
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
-                              items_per_page=2)
+        launchpad = Launchpad('mydistribution', package="mypackage", items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         self.assertListEqual(issues, [])
@@ -355,7 +356,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=empty_issues,
                                status=200)
 
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, items_per_page=2)
+        launchpad = Launchpad('mydistribution', items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         self.assertListEqual(issues, [])
@@ -404,25 +405,23 @@ class TestLaunchpadBackend(unittest.TestCase):
 
         issue_1_expected = json.loads(issue_1_expected)
 
-        launchpad = Launchpad("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage',
-                              items_per_page=2)
+        launchpad = Launchpad("mydistribution", package='mypackage', items_per_page=2)
         issues = [issues for issues in launchpad.fetch()]
 
         self.assertDictEqual(issues[0]['data'], issue_1_expected)
 
 
-class TestLaunchpadBackendCache(unittest.TestCase):
-    """Launchpad backend tests using a cache"""
+class TestLaunchpadBackendArchive(TestCaseBackendArchive):
+    """Launchpad backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = Launchpad('mydistribution', package="mypackage",
+                                 items_per_page=2, archive=self.archive)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether a list of issues is returned from cache"""
+    def test_fetch_from_archive(self):
+        """Test whether a list of issues is returned from archive"""
 
         issues_page_1 = read_file('data/launchpad/launchpad_issues_page_1')
         issues_page_2 = read_file('data/launchpad/launchpad_issues_page_2')
@@ -432,16 +431,9 @@ class TestLaunchpadBackendCache(unittest.TestCase):
         issue_2 = read_file('data/launchpad/launchpad_issue_2')
         issue_3 = read_file('data/launchpad/launchpad_issue_3')
 
-        issue_1_activities_next_1 = read_file('data/launchpad/launchpad_issue_1_activities_next_1')
-        issue_1_activities_next_2 = read_file('data/launchpad/launchpad_issue_1_activities_next_2')
-
-        issue_1_comments_next_1 = read_file('data/launchpad/launchpad_issue_1_comments_next_1')
-        issue_1_comments_next_2 = read_file('data/launchpad/launchpad_issue_1_comments_next_2')
-
-        issue_1_attachments_next_1 = \
-            read_file('data/launchpad/launchpad_issue_1_attachments_next_1')
-        issue_1_attachments_next_2 = \
-            read_file('data/launchpad/launchpad_issue_1_attachments_next_2')
+        issue_1_comments = read_file('data/launchpad/launchpad_issue_1_comments')
+        issue_1_attachments = read_file('data/launchpad/launchpad_issue_1_attachments')
+        issue_1_activities = read_file('data/launchpad/launchpad_issue_1_activities')
 
         issue_2_activities = read_file('data/launchpad/launchpad_issue_2_activities')
         issue_2_comments = read_file('data/launchpad/launchpad_issue_2_comments')
@@ -485,7 +477,7 @@ class TestLaunchpadBackendCache(unittest.TestCase):
                                "&status=Incomplete+%28without+response%29"
                                "&status=Invalid&status=New&status=Opinion&status=Triaged"
                                "&status=Won%27t+Fix"
-                               "&ws.size=1&ws.start=0",
+                               "&ws.size=1",
                                body=issues_page_1,
                                status=200)
 
@@ -504,15 +496,8 @@ class TestLaunchpadBackendCache(unittest.TestCase):
 
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments_next_2,
-                               params={'ws.size': 2, 'memo': 2, 'ws.start': 2},
+                               body=issue_1_comments,
                                status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments_next_1,
-                               params={'ws.size': 2, 'orderby': '-datecreated', 'ws.start': 0},
-                               status=200)
-
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/2/messages",
                                body=issue_2_comments,
@@ -521,15 +506,10 @@ class TestLaunchpadBackendCache(unittest.TestCase):
                                LAUNCHPAD_API_URL + "/bugs/3/messages",
                                body=empty_issue_comments,
                                status=200)
+
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments_next_2,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'memo': 2, 'ws.start': 2},
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments_next_1,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'ws.start': 0},
+                               body=issue_1_attachments,
                                status=200)
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/2/attachments",
@@ -542,15 +522,8 @@ class TestLaunchpadBackendCache(unittest.TestCase):
 
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities_next_2,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'memo': 2, 'ws.start': 2},
+                               body=issue_1_activities,
                                status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities_next_1,
-                               params={'orderby': '-datecreated', 'ws.size': 2, 'ws.start': 0},
-                               status=200)
-
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_API_URL + "/bugs/2/activity",
                                body=issue_2_activities,
@@ -565,55 +538,109 @@ class TestLaunchpadBackendCache(unittest.TestCase):
                                body=user_1,
                                status=200)
 
-        # First, we fetch the bugs from the server and store them in a cache
-        cache = Cache(self.tmp_path)
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
-                              cache=cache, items_per_page=2)
-        issues = [issues for issues in launchpad.fetch()]
-
-        # Now, we get the bugs from the cache.
-        cache_issues = [cache_issues for cache_issues in launchpad.fetch_from_cache()]
-
-        del issues[0]['timestamp']
-        del cache_issues[0]['timestamp']
-        del issues[1]['timestamp']
-        del cache_issues[1]['timestamp']
-        del issues[2]['timestamp']
-        del cache_issues[2]['timestamp']
-
-        self.assertEqual(len(issues), len(cache_issues))
-        self.assertDictEqual(issues[0], cache_issues[0])
-        self.assertDictEqual(issues[1], cache_issues[1])
-        self.assertDictEqual(issues[2], cache_issues[2])
-
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any issues returned when the cache is empty"""
-
-        cache = Cache(self.tmp_path)
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage",
-                              cache=cache)
-
-        cache_issues = [cache_issues for cache_issues in launchpad.fetch_from_cache()]
-
-        self.assertEqual(len(cache_issues), 0)
-
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package="mypackage")
-
-        with self.assertRaises(CacheError):
-            _ = [cache_issues for cache_issues in launchpad.fetch_from_cache()]
+        self._test_fetch_from_archive(from_date=None)
 
     @httpretty.activate
-    def test_fetch_from_cache_no_entries(self):
-        """Test when activities, attachments and messages contain no JSON-like data"""
+    def test_fetch_from_date_from_archive(self):
+        """Test whether a list of issues is returned from archive after a given date"""
+
+        issues_page_1 = read_file('data/launchpad/launchpad_issues_page_1_no_next')
+        issue_1 = read_file('data/launchpad/launchpad_issue_1')
+        issue_1_comments = read_file('data/launchpad/launchpad_issue_1_comments')
+        issue_1_attachments = read_file('data/launchpad/launchpad_issue_1_attachments')
+        issue_1_activities = read_file('data/launchpad/launchpad_issue_1_activities')
+        user_1 = read_file('data/launchpad/launchpad_user_1')
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_PACKAGE_PROJECT_URL +
+                               "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
+                               "&ws.size=1",
+                               body=issues_page_1,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1",
+                               body=issue_1,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1/messages",
+                               body=issue_1_comments,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
+                               body=issue_1_attachments,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1/activity",
+                               body=issue_1_activities,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/~user",
+                               body=user_1,
+                               status=200)
+
+        from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
+        self._test_fetch_from_archive(from_date=from_date)
+
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test when no issues are returned from an empty archive"""
+
+        empty_issues = read_file('data/launchpad/launchpad_empty_issues')
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_PACKAGE_PROJECT_URL +
+                               "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
+                               "&ws.size=1&ws.start=0",
+                               body=empty_issues,
+                               status=200)
+
+        self._test_fetch_from_archive()
+
+    @httpretty.activate
+    def test_fetch_empty_no_package_from_archive(self):
+        """Test when no issues are returned from an empty archive"""
+
+        empty_issues = read_file('data/launchpad/launchpad_empty_issues')
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_DISTRIBUTION_PROJECT_URL +
+                               "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
+                               "&ws.size=1&ws.start=0",
+                               body=empty_issues,
+                               status=200)
+
+        self.backend = Launchpad('mydistribution', items_per_page=2, archive=self.archive)
+        self._test_fetch_from_archive()
+
+    @httpretty.activate
+    def test_fetch_no_entries_from_archive(self):
+        """Test when activities, attachments and messages contain no JSON-like data in the archive"""
 
         issues_page_1 = read_file('data/launchpad/launchpad_issues_page_1_no_entries')
         issue_1 = read_file('data/launchpad/launchpad_issue_1_no_entries')
         issue_1_comments = read_file('data/launchpad/launchpad_issue_1_comments_no_entries')
         issue_1_attachments = read_file('data/launchpad/launchpad_issue_1_attachments_no_entries')
         issue_1_activities = read_file('data/launchpad/launchpad_issue_1_activities_no_entries')
+        issue_1_expected = read_file('data/launchpad/launchpad_issue_1_expected_no_entries')
 
         httpretty.register_uri(httpretty.GET,
                                LAUNCHPAD_PACKAGE_PROJECT_URL +
@@ -646,14 +673,7 @@ class TestLaunchpadBackendCache(unittest.TestCase):
                                body=issue_1_activities,
                                status=410)
 
-        cache = Cache(self.tmp_path)
-        launchpad = Launchpad('mydistribution', consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN, package='mypackage',
-                              items_per_page=2, cache=cache)
-        issues = [issues for issues in launchpad.fetch()]
-
-        issues_from_cache = [issues for issues in launchpad.fetch_from_cache()]
-
-        self.assertDictEqual(issues[0]['data'], issues_from_cache[0]['data'])
+        self._test_fetch_from_archive()
 
 
 class TestLaunchpadClient(unittest.TestCase):
@@ -679,8 +699,7 @@ class TestLaunchpadClient(unittest.TestCase):
                                body=issues_page_1,
                                status=200)
 
-        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
-                                 package='mypackage', items_per_page=2)
+        client = LaunchpadClient("mydistribution", package='mypackage', items_per_page=2)
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
         issues = [issues for issues in client.issues(start=from_date)]
 
@@ -731,8 +750,7 @@ class TestLaunchpadClient(unittest.TestCase):
                                body=issues_page_1,
                                status=200)
 
-        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
-                                 package="mypackage", items_per_page=2)
+        client = LaunchpadClient("mydistribution", package="mypackage", items_per_page=2)
         issues = [issues for issues in client.issues()]
 
         self.assertEqual(len(issues), 3)
@@ -755,8 +773,7 @@ class TestLaunchpadClient(unittest.TestCase):
                                body=empty_issues,
                                status=200)
 
-        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
-                                 package="mypackage")
+        client = LaunchpadClient("mydistribution", package="mypackage")
         issues = [issues for issues in client.issues()]
 
         self.assertDictEqual(json.loads(issues[0]), json.loads(empty_issues))
@@ -771,8 +788,7 @@ class TestLaunchpadClient(unittest.TestCase):
                                body=user,
                                status=200)
 
-        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
-                                 package="mypackage")
+        client = LaunchpadClient("mydistribution", package="mypackage")
         user_retrieved = client.user("user")
 
         self.assertDictEqual(json.loads(user_retrieved), json.loads(user))
@@ -786,8 +802,7 @@ class TestLaunchpadClient(unittest.TestCase):
                                body="",
                                status=404)
 
-        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
-                                 package="mypackage")
+        client = LaunchpadClient("mydistribution", package="mypackage")
 
         user_retrieved = client.user("user-not")
         self.assertEqual(user_retrieved, "{}")
@@ -796,8 +811,7 @@ class TestLaunchpadClient(unittest.TestCase):
     def test_http_wrong_status_issue_collection(self):
         """Test if an empty collection is returned when the http status is not 200"""
 
-        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
-                                 package="mypackage")
+        client = LaunchpadClient("mydistribution", package="mypackage")
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = next(client.issue_collection("100", "attachments"))
 
@@ -805,8 +819,7 @@ class TestLaunchpadClient(unittest.TestCase):
     def test_http_wrong_status_user(self):
         """Test if an empty user is returned when the http status is not 200"""
 
-        client = LaunchpadClient("mydistribution", consumer_key=CONSUMER_KEY, api_token=OAUTH_TOKEN,
-                                 package="mypackage")
+        client = LaunchpadClient("mydistribution", package="mypackage")
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = client.user("user1")
 
