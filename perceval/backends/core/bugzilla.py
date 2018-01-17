@@ -33,10 +33,9 @@ from grimoirelab.toolkit.datetime import str_to_datetime
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import BackendError, CacheError, ParseError
+from ...errors import BackendError, ParseError
 from ...utils import DEFAULT_DATETIME, xml_to_dict
 
 
@@ -60,21 +59,23 @@ class Bugzilla(Backend):
     :param max_bugs: maximum number of bugs requested on the same query
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect issues already retrieved from an archive
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
     def __init__(self, url, user=None, password=None,
                  max_bugs=MAX_BUGS, max_bugs_csv=MAX_BUGS_CSV,
-                 tag=None, cache=None):
+                 tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
+        self.user = user
+        self.password = password
+        self.max_bugs_csv = max_bugs_csv
+        self.client = None
         self.max_bugs = max(1, max_bugs)
-        self.client = BugzillaClient(url, user=user, password=password,
-                                     max_bugs_csv=max_bugs_csv)
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the bugs from the repository.
 
@@ -88,10 +89,18 @@ class Bugzilla(Backend):
         if not from_date:
             from_date = DEFAULT_DATETIME
 
+        kwargs = {"from_date": from_date}
+        items = super().fetch("bug", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the bugs"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Looking for bugs: '%s' updated from '%s'",
                     self.url, str(from_date))
-
-        self._purge_cache_queue()
 
         buglist = [bug for bug in self.__fetch_buglist(from_date)]
 
@@ -111,99 +120,22 @@ class Bugzilla(Backend):
                 nbugs += 1
                 yield bug
 
-            self._flush_cache_queue()
-
         logger.info("Fetch process completed: %s/%s bugs fetched",
                     nbugs, tbugs)
-
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the bugs from the cache.
-
-        It returns the bugs stored in the cache object provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
-
-        :returns: a generator of bugs
-
-        :raises CacheError: raised when an error occurs accesing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        logger.info("Retrieving cached bugs: '%s'", self.url)
-
-        cache_items = self.cache.retrieve()
-
-        nbugs = 0
-
-        while True:
-            try:
-                raw_bugs = next(cache_items)
-            except StopIteration:
-                break
-
-            bugs = self.parse_bugs_details(raw_bugs)
-
-            for bug in bugs:
-                try:
-                    raw_activity = next(cache_items)
-                except StopIteration:
-                    # Fatal error. The code should not reach here.
-                    # Cache should had stored an activity item per parsed bug.
-                    cause = "cache is exhausted but more items were expected"
-                    raise CacheError(cause=cause)
-
-                activity = self.parse_bug_activity(raw_activity)
-                bug['activity'] = [event for event in activity]
-                nbugs += 1
-                yield bug
-
-        logger.info("Retrieval process completed: %s bugs retrieved from cache",
-                    nbugs)
-
-    def __fetch_buglist(self, from_date):
-        buglist = self.__fetch_and_parse_buglist_page(from_date)
-
-        while buglist:
-            bug = buglist.pop(0)
-            last_date = bug['changeddate']
-            yield bug
-
-            # Bugzilla does not support pagination. Due to this,
-            # the next list of bugs is requested adding one second
-            # to the last date obtained.
-            if not buglist:
-                from_date = str_to_datetime(last_date)
-                from_date += datetime.timedelta(seconds=1)
-                buglist = self.__fetch_and_parse_buglist_page(from_date)
-
-    def __fetch_and_parse_buglist_page(self, from_date):
-        logger.debug("Fetching and parsing buglist page from %s", str(from_date))
-        raw_csv = self.client.buglist(from_date=from_date)
-        buglist = self.parse_buglist(raw_csv)
-        return [bug for bug in buglist]
-
-    def __fetch_and_parse_bugs_details(self, *bug_ids):
-        logger.debug("Fetching and parsing bugs details")
-        raw_bugs = self.client.bugs(*bug_ids)
-        self._push_cache_queue(raw_bugs)
-        return self.parse_bugs_details(raw_bugs)
-
-    def __fetch_and_parse_bug_activity(self, bug_id):
-        logger.debug("Fetching and parsing bug #%s activity", bug_id)
-        raw_activity = self.client.bug_activity(bug_id)
-        self._push_cache_queue(raw_activity)
-        activity = self.parse_bug_activity(raw_activity)
-        return [event for event in activity]
 
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -369,6 +301,45 @@ class Bugzilla(Backend):
                          'Added': format_text(added)}
                 yield event
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return BugzillaClient(self.url, user=self.user, password=self.password,
+                              max_bugs_csv=self.max_bugs_csv, archive=self.archive, from_archive=from_archive)
+
+    def __fetch_buglist(self, from_date):
+        buglist = self.__fetch_and_parse_buglist_page(from_date)
+
+        while buglist:
+            bug = buglist.pop(0)
+            last_date = bug['changeddate']
+            yield bug
+
+            # Bugzilla does not support pagination. Due to this,
+            # the next list of bugs is requested adding one second
+            # to the last date obtained.
+            if not buglist:
+                from_date = str_to_datetime(last_date)
+                from_date += datetime.timedelta(seconds=1)
+                buglist = self.__fetch_and_parse_buglist_page(from_date)
+
+    def __fetch_and_parse_buglist_page(self, from_date):
+        logger.debug("Fetching and parsing buglist page from %s", str(from_date))
+        raw_csv = self.client.buglist(from_date=from_date)
+        buglist = self.parse_buglist(raw_csv)
+        return [bug for bug in buglist]
+
+    def __fetch_and_parse_bugs_details(self, *bug_ids):
+        logger.debug("Fetching and parsing bugs details")
+        raw_bugs = self.client.bugs(*bug_ids)
+        return self.parse_bugs_details(raw_bugs)
+
+    def __fetch_and_parse_bug_activity(self, bug_id):
+        logger.debug("Fetching and parsing bug #%s activity", bug_id)
+        raw_activity = self.client.bug_activity(bug_id)
+        activity = self.parse_bug_activity(raw_activity)
+        return [event for event in activity]
+
 
 class BugzillaCommand(BackendCommand):
     """Class to run Bugzilla backend from the command line."""
@@ -381,7 +352,7 @@ class BugzillaCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               basic_auth=True,
-                                              cache=True)
+                                              cache=False)
 
         # Bugzilla options
         group = parser.parser.add_argument_group('Bugzilla arguments')
@@ -413,6 +384,8 @@ class BugzillaClient(HttpClient):
     :param user: Bugzilla user
     :param password: user password
     :param max_bugs_cvs: max bugs requested per CSV query
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
 
     :raises BackendError: when an error occurs initilizing the
         client
@@ -449,9 +422,9 @@ class BugzillaClient(HttpClient):
     CTYPE_XML = 'xml'
 
     def __init__(self, base_url, user=None, password=None,
-                 max_bugs_csv=MAX_BUGS_CSV):
+                 max_bugs_csv=MAX_BUGS_CSV, archive=None, from_archive=False):
         self.version = None
-        super().__init__(base_url)
+        super().__init__(base_url, archive=archive, from_archive=from_archive)
 
         if user is not None and password is not None:
             self.login(user, password)
