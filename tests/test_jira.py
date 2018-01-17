@@ -25,9 +25,7 @@
 import json
 import os
 import unittest
-import shutil
 import sys
-import tempfile
 
 import httpretty
 import pkg_resources
@@ -40,14 +38,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.jira import (Jira,
                                          JiraClient,
                                          JiraCommand,
                                          filter_custom_fields,
                                          map_custom_field)
+from tests.base import TestCaseBackendArchive
 
 
 JIRA_SERVER_URL = 'http://example.com'
@@ -64,7 +61,6 @@ def read_file(filename, mode='r'):
 class TestJiraCustomFields(unittest.TestCase):
 
     def test_map_custom_field(self):
-
         """Test that all the fields are correctly mapped"""
 
         page = read_file('data/jira/jira_issues_page_1.json')
@@ -121,6 +117,7 @@ class TestJiraCustomFields(unittest.TestCase):
     @httpretty.activate
     def test_filter_custom_fields(self):
         """Test that all the fields returned are just custom"""
+
         body = read_file('data/jira/jira_fields.json')
 
         httpretty.register_uri(httpretty.GET,
@@ -148,7 +145,7 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(jira.origin, JIRA_SERVER_URL)
         self.assertEqual(jira.tag, 'test')
         self.assertEqual(jira.max_issues, 5)
-        self.assertIsInstance(jira.client, JiraClient)
+        self.assertIsNone(jira.client)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -163,9 +160,14 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(jira.tag, JIRA_SERVER_URL)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(Jira.has_caching(), True)
+        self.assertEqual(Jira.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(Jira.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -381,18 +383,16 @@ class TestJiraBackend(unittest.TestCase):
         self.assertDictEqual(request.querystring, expected_req)
 
 
-class TestJiraBackendCache(unittest.TestCase):
-    """Jira backend tests using a cache"""
+class TestJiraBackendArchive(TestCaseBackendArchive):
+    """Jira backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = Jira(JIRA_SERVER_URL, archive=self.archive)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether a list of issues is returned from cache"""
+    def test_fetch_from_archive(self):
+        """Test whether a list of issues is returned from an archive"""
 
         requests = []
 
@@ -410,74 +410,49 @@ class TestJiraBackendCache(unittest.TestCase):
                                JIRA_SEARCH_URL,
                                responses=[httpretty.Response(body=request_callback)
                                           for _ in range(2)])
+
         httpretty.register_uri(httpretty.GET,
                                JIRA_FIELDS_URL,
                                body=body, status=200)
 
-        # First, we fetch the issues from the server, storing them
-        # in a cache
-        cache = Cache(self.tmp_path)
-        jira = Jira(JIRA_SERVER_URL, cache=cache)
+        self._test_fetch_from_archive(from_date=None)
 
-        issues = [issue for issue in jira.fetch()]
-        del issues[0]['timestamp']
+    @httpretty.activate
+    def test_fetch_from_date_from_archive(self):
+        """Test whether a list of issues is returned from a given date from archive"""
 
-        # Now, we get the issues from the cache.
-        # The contents should be the same and there won't be
-        # any new request to the server
-        cache_issues = [cache_issue for cache_issue in jira.fetch_from_cache()]
+        bodies_json = read_file('data/jira/jira_issues_page_2.json')
 
-        expected_req = [
-            {
-                'expand': ['renderedFields,transitions,operations,changelog'],
-                'jql': ['updated > 0 order by updated asc'],
-                'startAt': ['0']
-            },
-            {
-                'expand': ['renderedFields,transitions,operations,changelog'],
-                'jql': ['updated > 0 order by updated asc'],
-                'startAt': ['2']
-            }
-        ]
+        body = read_file('data/jira/jira_fields.json')
 
-        for i in range(len(expected_req)):
-            self.assertEqual(requests[i].method, 'GET')
-            self.assertRegex(requests[i].path, '/rest/api/2/search')
-            self.assertDictEqual(requests[i].querystring, expected_req[i])
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_SEARCH_URL,
+                               body=bodies_json, status=200)
 
-        self.assertEqual(len(issues), len(cache_issues))
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_FIELDS_URL,
+                               body=body, status=200)
 
-        for i in range(len(cache_issues)):
-            self.assertEqual(issues[i]['origin'], cache_issues[i]['origin'])
-            self.assertEqual(issues[i]['uuid'], cache_issues[i]['uuid'])
-            self.assertEqual(issues[i]['updated_on'], cache_issues[i]['updated_on'])
-            self.assertEqual(issues[i]['category'], cache_issues[i]['category'])
-            self.assertEqual(issues[1]['tag'], cache_issues[i]['tag'])
-            self.assertEqual(issues[i]['data']['key'], cache_issues[i]['data']['key'])
-            self.assertEqual(issues[i]['data']['fields']['issuetype']['name'],
-                             cache_issues[i]['data']['fields']['issuetype']['name'])
-            self.assertEqual(issues[i]['data']['fields']['creator']['name'],
-                             cache_issues[i]['data']['fields']['creator']['name'])
-            self.assertEqual(issues[i]['data']['fields']['assignee']['name'],
-                             cache_issues[i]['data']['fields']['assignee']['name'])
+        from_date = str_to_datetime('2015-01-01')
+        self._test_fetch_from_archive(from_date=from_date)
 
-    def test_fetch_from_cache_empty(self):
-        """Test if there are not any issues returned when the cache is empty"""
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test whether the fetch from archive works when no issues are present"""
 
-        cache = Cache(self.tmp_path)
+        bodies_json = read_file('data/jira/jira_issues_page_empty.json')
 
-        jira = Jira(JIRA_SERVER_URL, cache=cache)
-        cache_issues = [cache_issue for cache_issue in jira.fetch_from_cache()]
+        body = read_file('data/jira/jira_fields.json')
 
-        self.assertEqual(len(cache_issues), 0)
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_SEARCH_URL,
+                               body=bodies_json, status=200)
 
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_FIELDS_URL,
+                               body=body, status=200)
 
-        jira = Jira(JIRA_SERVER_URL)
-
-        with self.assertRaises(CacheError):
-            _ = cache_issues = [cache_issue for cache_issue in jira.fetch_from_cache()]
+        self._test_fetch_from_archive(from_date=None)
 
 
 class TestJiraBackendParsers(unittest.TestCase):
