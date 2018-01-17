@@ -24,7 +24,6 @@ import datetime
 import os
 import shutil
 import sys
-import tempfile
 import unittest
 import urllib
 
@@ -37,12 +36,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.confluence import (Confluence,
                                                ConfluenceClient,
                                                ConfluenceCommand)
+from tests.base import TestCaseBackendArchive
 
 
 CONFLUENCE_URL = 'http://example.com'
@@ -135,7 +133,7 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(confluence.url, CONFLUENCE_URL)
         self.assertEqual(confluence.origin, CONFLUENCE_URL)
         self.assertEqual(confluence.tag, 'test')
-        self.assertIsInstance(confluence.client, ConfluenceClient)
+        self.assertIsNone(confluence.client)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -150,9 +148,14 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(confluence.tag, CONFLUENCE_URL)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(Confluence.has_caching(), True)
+        self.assertEqual(Confluence.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(Confluence.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -189,7 +192,7 @@ class TestConfluenceBackend(unittest.TestCase):
             self.assertEqual(hc['origin'], CONFLUENCE_URL)
             self.assertEqual(hc['updated_on'], expected[x][3])
             self.assertEqual(hc['data']['content_url'], expected[x][4])
-            self.assertEqual(hc['category'], 'historical content')
+            self.assertEqual(hc['category'], "historical content")
             self.assertEqual(hc['tag'], CONFLUENCE_URL)
 
         # Check requests
@@ -317,7 +320,7 @@ class TestConfluenceBackend(unittest.TestCase):
                                status=404, body="Mock 404 error")
 
         confluence = Confluence(CONFLUENCE_URL)
-        hcs = [hc for hc in confluence.fetch()]
+        hcs = [hc for hc in confluence.fetch(from_date=None)]
 
         expected = [
             ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976',
@@ -369,7 +372,7 @@ class TestConfluenceBackend(unittest.TestCase):
 
     @httpretty.activate
     def test_fetch_empty(self):
-        """Test if nothing is returnerd when there are no contents"""
+        """Test if nothing is returned when there are no contents"""
 
         http_requests = setup_http_server()
 
@@ -421,77 +424,53 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(hc['version']['when'], '2016-06-10T20:05:21.000Z')
 
 
-class TestConfluenceBackendCache(unittest.TestCase):
-    """Confluence backend tests using a cache"""
+class TestConfluenceBackendArchive(TestCaseBackendArchive):
+    """Confluence backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+        super().setUp()
+        self.backend = Confluence(CONFLUENCE_URL, archive=self.archive)
 
     def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        shutil.rmtree(self.test_path)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether the cache works"""
+    def test_fetch_from_archive(self):
+        """Test it it fetches and parses a list of contents from archive"""
 
-        http_requests = setup_http_server()
+        setup_http_server()
+        self._test_fetch_from_archive(from_date=None)
 
-        # First, we fetch the contents from the server,
-        # storing them in a cache
-        cache = Cache(self.tmp_path)
-        confluence = Confluence(CONFLUENCE_URL, cache=cache)
+    @httpretty.activate
+    def test_fetch_from_date_from_archive(self):
+        """Test if a list of contents is returned from a given date from archive"""
 
-        hcs = [hc for hc in confluence.fetch()]
-        self.assertEqual(len(http_requests), 6)
+        setup_http_server()
 
-        # Now, we get the contents from the cache.
-        # The contents should be the same and there won't be
-        # any new request to the server
-        cached_hcs = [hc for hc in confluence.fetch_from_cache()]
-        self.assertEqual(len(cached_hcs), len(hcs))
+        from_date = datetime.datetime(2016, 6, 16, 0, 0, 0)
+        self._test_fetch_from_archive(from_date=from_date)
 
-        expected = [
-            ('1', 1, '5b8bf26bfd906214ec82f5a682649e8f6fe87984',
-             1465589121.0, 'http://example.com/display/meetings/TSC'),
-            ('1', 2, '94b8015bcb52fca1155ecee14153c8634856f1bc',
-             1466107110.0, 'http://example.com/display/meetings/TSC'),
-            ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976',
-             1467402626.0, 'http://example.com/display/fuel/Colorado+Release+Status'),
-            ('att1', 1, 'ff21bba0b1968adcec2588e94ff42782330174dd',
-             1467831550.0, 'http://example.com/pages/viewpage.action?pageId=131079&preview=%2F131079%2F131085%2Fstep05-04.png')
-        ]
+    @httpretty.activate
+    def test_fetch_removed_content_from_archive(self):
+        """Test if the fetch method from archive works when a content is not found"""
 
-        self.assertEqual(len(cached_hcs), len(expected))
+        setup_http_server()
 
-        for x in range(len(cached_hcs)):
-            hc = cached_hcs[x]
-            self.assertEqual(hc['data']['id'], expected[x][0])
-            self.assertEqual(hc['data']['version']['number'], expected[x][1])
-            self.assertEqual(hc['uuid'], expected[x][2])
-            self.assertEqual(hc['origin'], CONFLUENCE_URL)
-            self.assertEqual(hc['updated_on'], expected[x][3])
-            self.assertEqual(hc['data']['content_url'], expected[x][4])
-            self.assertEqual(hc['category'], 'historical content')
-            self.assertEqual(hc['tag'], CONFLUENCE_URL)
+        # Set server to return a 404 error
+        httpretty.register_uri(httpretty.GET,
+                               CONFLUENCE_HISTORICAL_CONTENT_1,
+                               status=404, body="Mock 404 error")
 
-        # No more requests were sent
-        self.assertEqual(len(http_requests), 6)
+        self._test_fetch_from_archive(from_date=None)
 
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any content returned when the cache is empty"""
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test if nothing is returned from the archive when there are no contents"""
 
-        cache = Cache(self.tmp_path)
-        confluence = Confluence(CONFLUENCE_URL, cache=cache)
-        cached_hcs = [hc for hc in confluence.fetch_from_cache()]
-        self.assertEqual(len(cached_hcs), 0)
+        setup_http_server()
 
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        confluence = Confluence(CONFLUENCE_URL)
-
-        with self.assertRaises(CacheError):
-            _ = [hc for hc in confluence.fetch_from_cache()]
+        from_date = datetime.datetime(2016, 7, 8, 0, 0, 0)
+        self._test_fetch_from_archive(from_date=from_date)
 
 
 class TestConfluenceCommand(unittest.TestCase):
