@@ -30,10 +30,8 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -54,17 +52,17 @@ class Confluence(Backend):
     :param url: URL of the server
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect historical content already retrieved from an archive
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
-    def __init__(self, url, tag=None, cache=None):
+    def __init__(self, url, tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
-        self.client = ConfluenceClient(url)
+        self.client = None
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the contents by version from the server.
 
@@ -82,18 +80,28 @@ class Confluence(Backend):
 
         :returns: a generator of historical versions
         """
-        logger.info("Fetching historical contents of '%s' from %s",
-                    self.url, str(from_date))
-
-        self._purge_cache_queue()
+        if not from_date:
+            from_date = DEFAULT_DATETIME
 
         from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("historical content", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the contents"""
+
+        from_date = kwargs['from_date']
+
+        logger.info("Fetching historical contents of '%s' from %s",
+                    self.url, str(from_date))
 
         nhcs = 0
 
         contents = self.__fetch_contents_summary(from_date)
         contents = [content for content in contents]
-        self._push_cache_queue('{}')
 
         for content in contents:
             cid = content['id']
@@ -106,104 +114,22 @@ class Confluence(Backend):
                 yield hc
                 nhcs += 1
 
-        self._push_cache_queue('END')
-        self._flush_cache_queue()
-
         logger.info("Fetch process completed: %s historical contents fetched",
                     nhcs)
-
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch historical contents from the cache.
-
-        :returns: a generator of contents
-
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        logger.info("Retrieving cached historical contents: '%s'", self.url)
-
-        cache_items = self.cache.retrieve()
-
-        nhcs = 0
-
-        checkpoint = False
-        contents = {}
-
-        for raw_json in cache_items:
-            if raw_json == '{}':
-                checkpoint = True
-                continue
-            elif raw_json == 'END':
-                checkpoint = False
-                contents = {}
-                continue
-            elif not checkpoint:
-                for cs in self.parse_contents_summary(raw_json):
-                    contents[cs['id']] = urijoin(self.origin, cs['_links']['webui'])
-            else:
-                hc = self.parse_historical_content(raw_json)
-                hc['content_url'] = contents[hc['id']]
-                nhcs += 1
-                yield hc
-        logger.info("Retrieval process completed: %s historical contents retrieved from cache",
-                    nhcs)
-
-    def __fetch_contents_summary(self, from_date):
-        logger.debug("Fetching contents summary from %s", str(from_date))
-        for page in self.client.contents(from_date=from_date):
-            self._push_cache_queue(page)
-            for cs in self.parse_contents_summary(page):
-                yield cs
-
-    def __fetch_historical_contents(self, cid, from_date):
-        logger.debug("Fetching historical contents of %s content", cid)
-
-        fetching = True
-        version = 1
-
-        while fetching:
-            logger.debug("Fetching and parsing historical content #%s for %s ",
-                         str(version), cid)
-
-            try:
-                raw_hc = self.client.historical_content(cid, version)
-            except requests.exceptions.HTTPError as e:
-                code = e.response.status_code
-
-                # Common problems found: removed and privated contents
-                if code not in (404, 500):
-                    raise e
-
-                logger.warning("Error retrieving content %s v#%s; skipping",
-                               cid, version)
-                logger.warning("Exception: %s", str(e))
-                break
-
-            hc = self.parse_historical_content(raw_hc)
-
-            # Return those versions that were created after 'from_date'
-            when = str_to_datetime(hc['version']['when'])
-
-            if when >= from_date:
-                self._push_cache_queue(raw_hc)
-                yield hc
-            else:
-                logger.debug("Content %s v%s updated before %s; skipped",
-                             hc['id'], str(hc['version']['number']), str(from_date))
-
-            # Check whether it retrieved the latest version
-            fetching = not hc['history']['latest']
-            version += 1
 
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -287,6 +213,56 @@ class Confluence(Backend):
         hc = json.loads(raw_json)
         return hc
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return ConfluenceClient(self.url, archive=self.archive, from_archive=from_archive)
+
+    def __fetch_contents_summary(self, from_date):
+        logger.debug("Fetching contents summary from %s", str(from_date))
+        for page in self.client.contents(from_date=from_date):
+            for cs in self.parse_contents_summary(page):
+                yield cs
+
+    def __fetch_historical_contents(self, cid, from_date):
+        logger.debug("Fetching historical contents of %s content", cid)
+
+        fetching = True
+        version = 1
+
+        while fetching:
+            logger.debug("Fetching and parsing historical content #%s for %s ",
+                         str(version), cid)
+
+            try:
+                raw_hc = self.client.historical_content(cid, version)
+            except requests.exceptions.HTTPError as e:
+                code = e.response.status_code
+
+                # Common problems found: removed and privated contents
+                if code not in (404, 500):
+                    raise e
+
+                logger.warning("Error retrieving content %s v#%s; skipping",
+                               cid, version)
+                logger.warning("Exception: %s", str(e))
+                break
+
+            hc = self.parse_historical_content(raw_hc)
+
+            # Return those versions that were created after 'from_date'
+            when = str_to_datetime(hc['version']['when'])
+
+            if when >= from_date:
+                yield hc
+            else:
+                logger.debug("Content %s v%s updated before %s; skipped",
+                             hc['id'], str(hc['version']['number']), str(from_date))
+
+            # Check whether it retrieved the latest version
+            fetching = not hc['history']['latest']
+            version += 1
+
 
 class ConfluenceCommand(BackendCommand):
     """Class to run Confluence backend from the command line."""
@@ -314,6 +290,8 @@ class ConfluenceClient(HttpClient):
     Confluence server using its REST API.
 
     :param base_url: URL of the Confluence server
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
     """
     URL = "%(base)s/rest/api/%(resource)s"
 
@@ -338,8 +316,8 @@ class ConfluenceClient(HttpClient):
     VEXPAND = ['body.storage', 'history', 'version']
     VHISTORICAL = 'historical'
 
-    def __init__(self, base_url):
-        super().__init__(base_url.rstrip('/'))
+    def __init__(self, base_url, archive=None, from_archive=False):
+        super().__init__(base_url.rstrip('/'), archive=archive, from_archive=from_archive)
 
     def contents(self, from_date=DEFAULT_DATETIME,
                  offset=None, max_contents=MAX_CONTENTS):
