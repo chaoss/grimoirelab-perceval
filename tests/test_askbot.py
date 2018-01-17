@@ -23,6 +23,7 @@
 import datetime
 import json
 import os
+import shutil
 import sys
 import unittest
 
@@ -35,13 +36,14 @@ import requests
 # due to setuptools behaviour
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
+
 from perceval.backend import BackendCommandArgumentParser
-from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.askbot import (Askbot,
                                            AskbotClient,
                                            AskbotParser,
                                            AskbotCommand)
-
+from perceval.utils import DEFAULT_DATETIME
+from tests.base import TestCaseBackendArchive
 
 ASKBOT_URL = 'http://example.com'
 ASKBOT_QUESTIONS_API_URL = ASKBOT_URL + '/api/v1/questions'
@@ -384,7 +386,7 @@ class TestAskbotBackend(unittest.TestCase):
 
         self.assertEqual(ab.url, ASKBOT_URL)
         self.assertEqual(ab.tag, 'test')
-        self.assertIsInstance(ab.client, AskbotClient)
+        self.assertIsNone(ab.client, None)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -430,7 +432,7 @@ class TestAskbotBackend(unittest.TestCase):
                                body=comments, status=200)
 
         backend = Askbot(ASKBOT_URL)
-        questions = [question for question in backend.fetch(from_date=None)]
+        questions = [question for question in backend.fetch()]
 
         self.assertEqual(len(questions), 1)
 
@@ -470,7 +472,7 @@ class TestAskbotBackend(unittest.TestCase):
 
         backend = Askbot(ASKBOT_URL)
 
-        questions = [question for question in backend.fetch(from_date=None)]
+        questions = [question for question in backend.fetch()]
 
         json_comments = json.loads(comments)
 
@@ -479,7 +481,7 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(questions[0]['uuid'], '3fb5f945a0dd223c60218a98ad35bad6043f9f5f')
         self.assertEqual(questions[0]['updated_on'], 1408116902.0)
         self.assertEqual(questions[0]['data']['id'], 2488)
-        self.assertEqual(questions[0]['category'], 'question')
+        self.assertEqual(questions[0]['category'], backend.metadata_category(questions[0]))
         self.assertEqual(questions[0]['data']['comments'][0], json_comments[0])
         self.assertEqual(len(questions[0]['data']['comments']), len(json_comments))
         self.assertEqual(len(questions[1]['data']['answers']), len(questions[1]['data']['answer_ids']))
@@ -487,7 +489,7 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(questions[1]['uuid'], 'ecc1320265e400edb28700cc3d02efc6d76410be')
         self.assertEqual(questions[1]['updated_on'], 1349928216.0)
         self.assertEqual(questions[1]['data']['id'], 2481)
-        self.assertEqual(questions[1]['category'], 'question')
+        self.assertEqual(questions[1]['category'], backend.metadata_category(questions[1]))
 
     @httpretty.activate
     def test_fetch_from_date(self):
@@ -541,9 +543,98 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(Askbot.has_resuming(), True)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called."""
+        """Test if it returns False when has_caching is called."""
 
         self.assertEqual(Askbot.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Askbot.has_archiving(), True)
+
+
+class TestAskbotBackendArchive(TestCaseBackendArchive):
+    """Askbot backend tests using an archive"""
+
+    def setUp(self):
+        super().setUp()
+        self.backend = Askbot(ASKBOT_URL, archive=self.archive)
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
+
+    @httpretty.activate
+    def test_fetch_from_archive(self):
+        """Test whether a list of questions is returned from the archive"""
+
+        question_api_1 = read_file('data/askbot/askbot_api_questions.json')
+        question_api_2 = read_file('data/askbot/askbot_api_questions_2.json')
+        question_html_1 = read_file('data/askbot/askbot_question.html')
+        question_html_2 = read_file('data/askbot/askbot_question_multipage_1.html')
+        question_html_2_2 = read_file('data/askbot/askbot_question_multipage_2.html')
+        comments = read_file('data/askbot/askbot_2481_multicomments.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_1, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2481_URL,
+                               body=question_html_1, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL,
+                               body=comments, status=200)
+
+        self._test_fetch_from_archive(from_date=None)
+
+    @httpretty.activate
+    def test_fetch_from_date_from_archive(self):
+        """Test whether a list of questions is returned from a given date from the archive."""
+
+        question_api_1 = read_file('data/askbot/askbot_api_questions.json')
+        question_api_2 = read_file('data/askbot/askbot_api_questions_2.json')
+        question_html_1 = read_file('data/askbot/askbot_question.html')
+        question_html_2 = read_file('data/askbot/askbot_question_multipage_1.html')
+        question_html_2_2 = read_file('data/askbot/askbot_question_multipage_2.html')
+        comments = read_file('data/askbot/askbot_2481_multicomments.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_1, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2481_URL,
+                               body=question_html_1, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL,
+                               body=comments, status=200)
+
+        from_date = datetime.datetime(2013, 1, 1)
+        self._test_fetch_from_archive(from_date=from_date)
 
 
 class TestAskbotCommand(unittest.TestCase):
