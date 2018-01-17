@@ -26,7 +26,6 @@ import datetime
 import os
 import shutil
 import sys
-import tempfile
 import unittest
 
 import httpretty
@@ -38,13 +37,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.discourse import (Discourse,
                                               DiscourseCommand,
                                               DiscourseClient)
-
+from tests.base import TestCaseBackendArchive
 
 DISCOURSE_SERVER_URL = 'http://example.com'
 DISCOURSE_TOPICS_URL = DISCOURSE_SERVER_URL + '/latest.json'
@@ -72,7 +69,7 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(discourse.url, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.tag, 'test')
-        self.assertIsInstance(discourse.client, DiscourseClient)
+        self.assertIsNone(discourse.client)
 
         # When origin is empty or None it will be set to
         # the value in url
@@ -87,9 +84,14 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(discourse.tag, DISCOURSE_SERVER_URL)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(Discourse.has_caching(), True)
+        self.assertEqual(Discourse.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(Discourse.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -115,8 +117,8 @@ class TestDiscourseBackend(unittest.TestCase):
                 body = body_topic_1148
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
-            elif (uri.startswith(DISCOURSE_POST_URL_1) or
-                  uri.startswith(DISCOURSE_POST_URL_2)):
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                    uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
                 raise
@@ -165,14 +167,14 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(topics[0]['origin'], DISCOURSE_SERVER_URL)
         self.assertEqual(topics[0]['uuid'], '18068b95de1323a84c8e11dee8f46fd137f10c86')
         self.assertEqual(topics[0]['updated_on'], 1464134770.909)
-        self.assertEqual(topics[0]['category'], 'topic')
+        self.assertEqual(topics[0]['category'], "topic")
         self.assertEqual(topics[0]['tag'], DISCOURSE_SERVER_URL)
 
         self.assertEqual(topics[1]['data']['id'], 1148)
         self.assertEqual(topics[1]['origin'], DISCOURSE_SERVER_URL)
         self.assertEqual(topics[1]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
         self.assertEqual(topics[1]['updated_on'], 1464144769.526)
-        self.assertEqual(topics[1]['category'], 'topic')
+        self.assertEqual(topics[1]['category'], "topic")
         self.assertEqual(topics[1]['tag'], DISCOURSE_SERVER_URL)
 
         # The next assertions check the cases whether the chunk_size is
@@ -215,8 +217,8 @@ class TestDiscourseBackend(unittest.TestCase):
                 body = body_topic_1148
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
-            elif (uri.startswith(DISCOURSE_POST_URL_1) or
-                  uri.startswith(DISCOURSE_POST_URL_2)):
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                    uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
                 raise
@@ -315,8 +317,8 @@ class TestDiscourseBackend(unittest.TestCase):
                 body = body_topic_1149
             elif uri.startswith(DISCOURSE_TOPIC_URL_1150):
                 body = body_topic_1150
-            elif (uri.startswith(DISCOURSE_POST_URL_1) or
-                  uri.startswith(DISCOURSE_POST_URL_2)):
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                    uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
                 raise
@@ -411,7 +413,7 @@ class TestDiscourseBackend(unittest.TestCase):
         # On this tests two topics will be retrieved.
         # One of them has last_posted_at with null
         discourse = Discourse(DISCOURSE_SERVER_URL)
-        topics = [topic for topic in discourse.fetch()]
+        topics = [topic for topic in discourse.fetch(from_date=None)]
 
         self.assertEqual(len(topics), 1)
 
@@ -424,18 +426,19 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(topics[0]['tag'], DISCOURSE_SERVER_URL)
 
 
-class TestDiscourseBackendCache(unittest.TestCase):
-    """Discourse backend tests using a cache"""
+class TestDiscourseBackendArchive(TestCaseBackendArchive):
+    """Discourse backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+        super().setUp()
+        self.backend = Discourse(DISCOURSE_SERVER_URL, archive=self.archive)
 
     def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        shutil.rmtree(self.test_path)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether the cache works"""
+    def test_fetch_from_archive(self):
+        """Test whether a list of topics is returned from archive"""
 
         requests_http = []
 
@@ -452,8 +455,7 @@ class TestDiscourseBackendCache(unittest.TestCase):
                 body = body_topic_1148
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
-            elif (uri.startswith(DISCOURSE_POST_URL_1) or
-                  uri.startswith(DISCOURSE_POST_URL_2)):
+            elif uri.startswith(DISCOURSE_POST_URL_1) or uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
                 raise
@@ -489,63 +491,175 @@ class TestDiscourseBackendCache(unittest.TestCase):
                                    httpretty.Response(body=request_callback)
                                ])
 
-        # First, we fetch the topics from the server, storing them
-        # in a cache
-        cache = Cache(self.tmp_path)
-        discourse = Discourse(DISCOURSE_SERVER_URL, cache=cache)
+        self._test_fetch_from_archive(from_date=None)
 
-        topics = [topic for topic in discourse.fetch()]
-        self.assertEqual(len(requests_http), 6)
+    @httpretty.activate
+    def test_fetch_from_date_from_archive(self):
+        """Test whether a list of topics is returned from a given date from archive"""
 
-        # Now, we get the topics from the cache.
-        # The contents should be the same and there won't be
-        # any new request to the server
-        cached_topics = [topic for topic in discourse.fetch_from_cache()]
-        self.assertEqual(len(cached_topics), len(topics))
+        requests_http = []
 
-        self.assertEqual(len(cached_topics), 2)
+        bodies_topics = [read_file('data/discourse/discourse_topics.json'),
+                         read_file('data/discourse/discourse_topics_empty.json')]
+        body_topic_1148 = read_file('data/discourse/discourse_topic_1148.json')
+        body_topic_1149 = read_file('data/discourse/discourse_topic_1149.json')
+        body_post = read_file('data/discourse/discourse_post.json')
 
-        # Topics are returned in reverse order
-        # from oldest to newest
-        self.assertEqual(cached_topics[0]['data']['id'], 1149)
-        self.assertEqual(len(cached_topics[0]['data']['post_stream']['posts']), 2)
-        self.assertEqual(cached_topics[0]['origin'], DISCOURSE_SERVER_URL)
-        self.assertEqual(cached_topics[0]['uuid'], '18068b95de1323a84c8e11dee8f46fd137f10c86')
-        self.assertEqual(cached_topics[0]['updated_on'], 1464134770.909)
-        self.assertEqual(cached_topics[0]['category'], 'topic')
-        self.assertEqual(cached_topics[0]['origin'], DISCOURSE_SERVER_URL)
+        def request_callback(method, uri, headers):
+            if uri.startswith(DISCOURSE_TOPICS_URL):
+                body = bodies_topics.pop(0)
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1148):
+                body = body_topic_1148
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
+                body = body_topic_1149
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                    uri.startswith(DISCOURSE_POST_URL_2):
+                body = body_post
+            else:
+                raise
 
-        self.assertEqual(cached_topics[1]['data']['id'], 1148)
-        self.assertEqual(cached_topics[1]['origin'], DISCOURSE_SERVER_URL)
-        self.assertEqual(cached_topics[1]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
-        self.assertEqual(cached_topics[1]['updated_on'], 1464144769.526)
-        self.assertEqual(cached_topics[1]['category'], 'topic')
-        self.assertEqual(cached_topics[1]['origin'], DISCOURSE_SERVER_URL)
+            requests_http.append(httpretty.last_request())
 
-        # The next assertions check the cases whether the chunk_size is
-        # less than the number of posts of a topic
-        self.assertEqual(len(cached_topics[1]['data']['post_stream']['posts']), 22)
-        self.assertEqual(cached_topics[1]['data']['post_stream']['posts'][0]['id'], 18952)
-        self.assertEqual(cached_topics[1]['data']['post_stream']['posts'][20]['id'], 2500)
+            return (200, headers, body)
 
-        # No more requests were sent
-        self.assertEqual(len(requests_http), 6)
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPICS_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1148,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1149,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_1,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_2,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
 
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any topics returned when the cache is empty"""
+        # On this tests only one topic will be retrieved
+        from_date = datetime.datetime(2016, 5, 25, 2, 0, 0)
+        self._test_fetch_from_archive(from_date=from_date)
 
-        cache = Cache(self.tmp_path)
-        discourse = Discourse(DISCOURSE_SERVER_URL, cache=cache)
-        cached_topics = [topic for topic in discourse.fetch_from_cache()]
-        self.assertEqual(len(cached_topics), 0)
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test whether the fetch from archive works when no topics are present"""
 
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
+        body = read_file('data/discourse/discourse_topics_empty.json')
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPICS_URL,
+                               body=body, status=200)
 
-        discourse = Discourse(DISCOURSE_SERVER_URL)
+        self._test_fetch_from_archive()
 
-        with self.assertRaises(CacheError):
-            _ = [topic for topic in discourse.fetch_from_cache()]
+    @httpretty.activate
+    def test_fetch_pinned_from_archive(self):
+        """Test whether the right list of topics is returned from the archive when some topics are pinned"""
+
+        bodies_topics = [read_file('data/discourse/discourse_topics_pinned.json'),
+                         read_file('data/discourse/discourse_topics_empty.json')]
+        body_topic_1148 = read_file('data/discourse/discourse_topic_1148.json')
+        body_topic_1149 = read_file('data/discourse/discourse_topic_1149.json')
+        body_topic_1150 = read_file('data/discourse/discourse_topic_1150.json')
+        body_post = read_file('data/discourse/discourse_post.json')
+
+        def request_callback(method, uri, headers):
+            if uri.startswith(DISCOURSE_TOPICS_URL):
+                body = bodies_topics.pop(0)
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1148):
+                body = body_topic_1148
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
+                body = body_topic_1149
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1150):
+                body = body_topic_1150
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                    uri.startswith(DISCOURSE_POST_URL_2):
+                body = body_post
+            else:
+                raise
+            return (200, headers, body)
+
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPICS_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1148,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1149,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1150,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_1,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_2,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+
+        # On this tests two topics will be retrieved.
+        # One of them was pinned but the date is in range.
+        from_date = datetime.datetime(2016, 5, 25, 2, 0, 0)
+        self._test_fetch_from_archive(from_date=from_date)
+
+    @httpretty.activate
+    def test_fetch_topic_last_posted_at_null_from_archive(self):
+        """Test whether list of topics is returned from the archive when a topic has last_posted_at null"""
+
+        bodies_topics = [read_file('data/discourse/discourse_topics_last_posted_at_null.json'),
+                         read_file('data/discourse/discourse_topics_empty.json')]
+        body_topic_1149 = read_file('data/discourse/discourse_topic_1149.json')
+
+        def request_callback(method, uri, headers):
+            if uri.startswith(DISCOURSE_TOPICS_URL):
+                body = bodies_topics.pop(0)
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
+                body = body_topic_1149
+            else:
+                raise
+            return (200, headers, body)
+
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPICS_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1149,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+
+        # On this tests two topics will be retrieved.
+        # One of them has last_posted_at with null
+        self._test_fetch_from_archive()
 
 
 class TestDiscourseClient(unittest.TestCase):
