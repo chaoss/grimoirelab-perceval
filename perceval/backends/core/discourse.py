@@ -30,10 +30,8 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -51,18 +49,18 @@ class Discourse(Backend):
     :param api_token: Discourse API access token
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect topics already retrieved from an archive
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
-    def __init__(self, url, api_token=None,
-                 tag=None, cache=None):
+    def __init__(self, url, api_token=None, tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
-        self.client = DiscourseClient(url, api_key=api_token)
+        self.api_token = api_token
+        self.client = None
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the topics from the Discurse board.
 
@@ -75,13 +73,21 @@ class Discourse(Backend):
         """
         if not from_date:
             from_date = DEFAULT_DATETIME
-        else:
-            from_date = datetime_to_utc(from_date)
+
+        from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("topic", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the topics"""
+
+        from_date = kwargs['from_date']
 
         logger.info("Looking for topics at '%s', updated from '%s'",
                     self.url, str(from_date))
-
-        self._purge_cache_queue()
 
         ntopics = 0
 
@@ -91,162 +97,23 @@ class Discourse(Backend):
             topic = self.__fetch_and_parse_topic(topic_id)
             ntopics += 1
             yield topic
-            self._flush_cache_queue()
 
         logger.info("Fetch process completed: %s topics fetched",
                     ntopics)
-
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch topics from the cache.
-
-        :returns: a generator of topics
-
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        logger.info("Retrieving cached topics: '%s'", self.url)
-
-        cache_items = self.cache.retrieve()
-
-        ntopics = 0
-
-        while True:
-            try:
-                raw_topic = next(cache_items)
-            except StopIteration:
-                break
-
-            topic = json.loads(raw_topic)
-
-            # Retrieve remaining posts for this topic
-            posts_sz = topic['posts_count']
-            chunk_sz = topic['chunk_size']
-
-            if posts_sz > chunk_sz:
-                for _ in range(posts_sz - chunk_sz):
-                    try:
-                        raw_post = next(cache_items)
-                    except StopIteration:
-                        # Fatal error. The code should not reach here.
-                        # Cache should had stored posts_sz - chunk_sz posts
-                        # if the code is running this loop
-                        cause = "cache is exhausted but more items were expected"
-                        raise CacheError(cause=cause)
-
-                    post = json.loads(raw_post)
-                    topic['post_stream']['posts'].append(post)
-
-            ntopics += 1
-            yield topic
-
-        logger.info("Retrieval process completed: %s topics retrieved from cache",
-                    ntopics)
-
-    def __fetch_and_parse_topics_ids(self, from_date):
-        logger.debug("Fetching and parsing topics ids from %s",
-                     str(from_date))
-
-        candidates = []
-        page = 0
-        fetching = True
-
-        while fetching:
-            response = self.client.topics_page(page)
-            topics = self.__parse_topics_page(response)
-
-            if not topics:
-                fetching = False
-
-            # Topics are sorted by updated date from the newest
-            # to the oldest. When a date is older than 'from_date'
-            # we have reached to the end. Pinned topics are
-            # ignored but added to the list if the date is in range.
-            for topic in topics:
-                # Pinned
-                if topic[2] and topic[1] < from_date:
-                    continue
-                elif topic[1] < from_date:
-                    fetching = False
-                    break
-                else:
-                    candidates.append(topic)
-
-            page += 1
-
-        # Sort topics by date and in reverse order to fetch them from
-        # the oldest to the newest
-        candidates = sorted(candidates, key=lambda x: x[1])
-        topics_ids = [topic[0] for topic in candidates]
-
-        return topics_ids
-
-    def __fetch_and_parse_topic(self, topic_id):
-        logger.debug("Fetching and parsing topic %s", topic_id)
-
-        raw_topic = self.client.topic(topic_id)
-        self._push_cache_queue(raw_topic)
-
-        topic = json.loads(raw_topic)
-
-        # There are posts that could not included in the topic.
-        # When post_count is greater than chunk_size, we have
-        # to fetch the remaining posts
-        posts_sz = topic['posts_count']
-        chunk_sz = topic['chunk_size']
-
-        if posts_sz > chunk_sz:
-            posts_ids = topic['post_stream']['stream']
-            posts_ids = posts_ids[chunk_sz:]
-
-            for post_id in posts_ids:
-                logger.debug("Fetching and parsing post %s", post_id)
-                post = self.__fetch_and_parse_post(post_id)
-                topic['post_stream']['posts'].append(post)
-
-        return topic
-
-    def __fetch_and_parse_post(self, post_id):
-        logger.debug("Fetching and parsing post %s", post_id)
-        raw_post = self.client.post(post_id)
-        self._push_cache_queue(raw_post)
-        post = json.loads(raw_post)
-        return post
-
-    def __parse_topics_page(self, raw_json):
-        """Parse a topics page stream.
-
-        The result of parsing process is a generator of tuples. Each
-        tuple contains de identifier of the topic, the last date
-        when it was updated and whether is pinned or not.
-
-        :param raw_json: JSON stream to parse
-
-        :returns: a generator of parsed bugs
-        """
-        topics_page = json.loads(raw_json)
-
-        topics_ids = []
-
-        for topic in topics_page['topic_list']['topics']:
-            topic_id = topic['id']
-            if topic['last_posted_at'] is None:
-                logger.warning("Topic %s with last_posted_at null. Ignoring it.", topic['title'])
-                continue
-            updated_at = str_to_datetime(topic['last_posted_at'])
-            pinned = topic['pinned']
-            topics_ids.append((topic_id, updated_at, pinned))
-
-        return topics_ids
 
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -290,6 +157,105 @@ class Discourse(Backend):
         """
         return 'topic'
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return DiscourseClient(self.url, self.api_token, archive=self.archive, from_archive=from_archive)
+
+    def __fetch_and_parse_topics_ids(self, from_date):
+        logger.debug("Fetching and parsing topics ids from %s",
+                     str(from_date))
+
+        candidates = []
+        page = 0
+        fetching = True
+
+        while fetching:
+            response = self.client.topics_page(page)
+            topics = self.__parse_topics_page(response)
+
+            if not topics:
+                fetching = False
+
+            # Topics are sorted by updated date from the newest
+            # to the oldest. When a date is older than 'from_date'
+            # we have reached to the end. Pinned topics are
+            # ignored but added to the list if the date is in range.
+            for topic in topics:
+                # Pinned
+                if topic[2] and topic[1] < from_date:
+                    continue
+                elif topic[1] < from_date:
+                    fetching = False
+                    break
+                else:
+                    candidates.append(topic)
+
+            page += 1
+
+        # Sort topics by date and in reverse order to fetch them from
+        # the oldest to the newest
+        candidates = sorted(candidates, key=lambda x: x[1])
+        topics_ids = [topic[0] for topic in candidates]
+
+        return topics_ids
+
+    def __fetch_and_parse_topic(self, topic_id):
+        logger.debug("Fetching and parsing topic %s", topic_id)
+
+        raw_topic = self.client.topic(topic_id)
+
+        topic = json.loads(raw_topic)
+
+        # There are posts that could not included in the topic.
+        # When post_count is greater than chunk_size, we have
+        # to fetch the remaining posts
+        posts_sz = topic['posts_count']
+        chunk_sz = topic['chunk_size']
+
+        if posts_sz > chunk_sz:
+            posts_ids = topic['post_stream']['stream']
+            posts_ids = posts_ids[chunk_sz:]
+
+            for post_id in posts_ids:
+                logger.debug("Fetching and parsing post %s", post_id)
+                post = self.__fetch_and_parse_post(post_id)
+                topic['post_stream']['posts'].append(post)
+
+        return topic
+
+    def __fetch_and_parse_post(self, post_id):
+        logger.debug("Fetching and parsing post %s", post_id)
+        raw_post = self.client.post(post_id)
+        post = json.loads(raw_post)
+        return post
+
+    def __parse_topics_page(self, raw_json):
+        """Parse a topics page stream.
+
+        The result of parsing process is a generator of tuples. Each
+        tuple contains de identifier of the topic, the last date
+        when it was updated and whether is pinned or not.
+
+        :param raw_json: JSON stream to parse
+
+        :returns: a generator of parsed bugs
+        """
+        topics_page = json.loads(raw_json)
+
+        topics_ids = []
+
+        for topic in topics_page['topic_list']['topics']:
+            topic_id = topic['id']
+            if topic['last_posted_at'] is None:
+                logger.warning("Topic %s with last_posted_at null. Ignoring it.", topic['title'])
+                continue
+            updated_at = str_to_datetime(topic['last_posted_at'])
+            pinned = topic['pinned']
+            topics_ids.append((topic_id, updated_at, pinned))
+
+        return topics_ids
+
 
 class DiscourseClient(HttpClient):
     """Discourse API client.
@@ -299,6 +265,8 @@ class DiscourseClient(HttpClient):
 
     :param url: URL of the Discourse site
     :param api_key: Discourse API access token
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
 
     :raises HTTPError: when an error occurs doing the request
     """
@@ -315,8 +283,8 @@ class DiscourseClient(HttpClient):
     # Data type
     TJSON = '.json'
 
-    def __init__(self, base_url, api_key=None):
-        super().__init__(base_url)
+    def __init__(self, base_url, api_key=None, archive=None, from_archive=False):
+        super().__init__(base_url, archive=archive, from_archive=from_archive)
         self.api_key = api_key
 
     def topics_page(self, page=None):
