@@ -31,10 +31,9 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import BaseError, BackendError, CacheError
+from ...errors import BaseError, BackendError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -60,20 +59,22 @@ class BugzillaREST(Backend):
     :param max_bugs: maximum number of bugs requested on the same query
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect issues already retrieved from an archive
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
     def __init__(self, url, user=None, password=None, api_token=None,
-                 max_bugs=MAX_BUGS, tag=None, cache=None):
+                 max_bugs=MAX_BUGS, tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
+        self.user = user
+        self.password = password
+        self.api_token = api_token
         self.max_bugs = max(1, max_bugs)
-        self.client = BugzillaRESTClient(url, user=user, password=password,
-                                         api_token=api_token)
+        self.client = None
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the bugs from the repository.
 
@@ -87,10 +88,18 @@ class BugzillaREST(Backend):
         if not from_date:
             from_date = DEFAULT_DATETIME
 
+        kwargs = {'from_date': from_date}
+        items = super().fetch("bug", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch bugs"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Looking for bugs: '%s' updated from '%s'",
                     self.url, str(from_date))
-
-        self._purge_cache_queue()
 
         nbugs = 0
         for bug in self.__fetch_and_parse_bugs(from_date):
@@ -99,152 +108,19 @@ class BugzillaREST(Backend):
 
         logger.info("Fetch process completed: %s bugs fetched", nbugs)
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch bugs from the cache.
-
-        :returns: a generator of bugs
-
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        logger.info("Retrieving cached bugs: '%s'", self.url)
-        nbugs = 0
-
-        for bug in self.__retrieve_bugs_from_cache():
-            nbugs += 1
-            yield bug
-
-        logger.info("Retrieval process completed: %s bugs retrieved from cache",
-                    nbugs)
-
-    def __fetch_and_parse_bugs(self, from_date):
-        max_contents = min(MAX_CONTENTS, self.max_bugs)
-        offset = 0
-
-        while True:
-            logger.debug("Fetching and parsing bugs from: %s, offset: %s, limit: %s ",
-                         str(from_date), offset, self.max_bugs)
-            raw_bugs = self.client.bugs(from_date=from_date, offset=offset,
-                                        max_bugs=self.max_bugs)
-            self._push_cache_queue(raw_bugs)
-
-            data = json.loads(raw_bugs)
-            buglist = data['bugs']
-
-            tbugs = len(buglist)
-
-            if tbugs == 0:
-                break
-
-            for i in range(0, tbugs, max_contents):
-                chunk = buglist[i:i + max_contents]
-                bug_ids = [b['id'] for b in chunk]
-
-                comments = self.__fetch_and_parse_comments(*bug_ids)
-                histories = self.__fetch_and_parse_histories(*bug_ids)
-                attachments = self.__fetch_and_parse_attachments(*bug_ids)
-
-                for bug in chunk:
-                    bug_id = str(bug['id'])
-                    bug['comments'] = comments[bug_id]
-                    bug['history'] = histories[bug_id]
-                    bug['attachments'] = attachments[bug_id]
-                    yield bug
-
-            self._flush_cache_queue()
-            offset += self.max_bugs
-
-    def __fetch_and_parse_comments(self, *bug_ids):
-        logger.debug("Fetching and parsing comments")
-        raw_comments = self.client.comments(*bug_ids)
-        self._push_cache_queue(raw_comments)
-        return self.__parse_comments(raw_comments)
-
-    def __fetch_and_parse_histories(self, *bug_ids):
-        logger.debug("Fetching and parsing histories")
-        raw_histories = self.client.history(*bug_ids)
-        self._push_cache_queue(raw_histories)
-        return self.__parse_histories(raw_histories)
-
-    def __fetch_and_parse_attachments(self, *bug_ids):
-        logger.debug("Fetching and parsing attachments")
-        raw_attachments = self.client.attachments(*bug_ids)
-        self._push_cache_queue(raw_attachments)
-        return self.__parse_attachments(raw_attachments)
-
-    def __retrieve_bugs_from_cache(self):
-        def recover_extra_data(cache_items):
-            try:
-                comments = self.__parse_comments(next(cache_items))
-                histories = self.__parse_histories(next(cache_items))
-                attachments = self.__parse_attachments(next(cache_items))
-            except StopIteration:
-                # Fatal error. The code should not reach here.
-                # Cache should had stored an activity item per parsed bug.
-                cause = "cache is exhausted but more items were expected"
-                raise CacheError(cause=cause)
-            return comments, histories, attachments
-
-        cache_items = self.cache.retrieve()
-
-        while True:
-            try:
-                raw_bugs = next(cache_items)
-            except StopIteration:
-                break
-
-            bugs = json.loads(raw_bugs)['bugs']
-
-            if len(bugs) == 0:
-                continue
-
-            comments, histories, attachments = recover_extra_data(cache_items)
-
-            while bugs:
-                bug = bugs.pop(0)
-                bug_id = str(bug['id'])
-
-                try:
-                    bug['comments'] = comments.pop(bug_id)
-                    bug['history'] = histories.pop(bug_id)
-                    bug['attachments'] = attachments.pop(bug_id)
-                except KeyError:
-                    # Fatal error. Keys must exist.
-                    cause = "invalid cached data, bug id %s not found" % bug_id
-                    raise CacheError(cause=cause)
-
-                yield bug
-
-                if bugs and (len(comments) + len(histories) + len(attachments) == 0):
-                    comments, histories, attachments = recover_extra_data(cache_items)
-
-    @staticmethod
-    def __parse_comments(raw_comments):
-        contents = json.loads(raw_comments)['bugs']
-        comments = {k: v['comments'] for k, v in contents.items()}
-        return comments
-
-    @staticmethod
-    def __parse_histories(raw_histories):
-        contents = json.loads(raw_histories)['bugs']
-        history = {str(c['id']): c['history'] for c in contents}
-        return history
-
-    @staticmethod
-    def __parse_attachments(raw_attachments):
-        contents = json.loads(raw_attachments)['bugs']
-        attachments = {k: v for k, v in contents.items()}
-        return attachments
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -288,6 +164,80 @@ class BugzillaREST(Backend):
         """
         return 'bug'
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return BugzillaRESTClient(self.url, user=self.user, password=self.password, api_token=self.api_token,
+                                  archive=self.archive, from_archive=from_archive)
+
+    def __fetch_and_parse_bugs(self, from_date):
+        max_contents = min(MAX_CONTENTS, self.max_bugs)
+        offset = 0
+
+        while True:
+            logger.debug("Fetching and parsing bugs from: %s, offset: %s, limit: %s ",
+                         str(from_date), offset, self.max_bugs)
+            raw_bugs = self.client.bugs(from_date=from_date, offset=offset,
+                                        max_bugs=self.max_bugs)
+
+            data = json.loads(raw_bugs)
+            buglist = data['bugs']
+
+            tbugs = len(buglist)
+
+            if tbugs == 0:
+                break
+
+            for i in range(0, tbugs, max_contents):
+                chunk = buglist[i:i + max_contents]
+                bug_ids = [b['id'] for b in chunk]
+
+                comments = self.__fetch_and_parse_comments(*bug_ids)
+                histories = self.__fetch_and_parse_histories(*bug_ids)
+                attachments = self.__fetch_and_parse_attachments(*bug_ids)
+
+                for bug in chunk:
+                    bug_id = str(bug['id'])
+                    bug['comments'] = comments[bug_id]
+                    bug['history'] = histories[bug_id]
+                    bug['attachments'] = attachments[bug_id]
+                    yield bug
+
+            offset += self.max_bugs
+
+    def __fetch_and_parse_comments(self, *bug_ids):
+        logger.debug("Fetching and parsing comments")
+        raw_comments = self.client.comments(*bug_ids)
+        return self.__parse_comments(raw_comments)
+
+    def __fetch_and_parse_histories(self, *bug_ids):
+        logger.debug("Fetching and parsing histories")
+        raw_histories = self.client.history(*bug_ids)
+        return self.__parse_histories(raw_histories)
+
+    def __fetch_and_parse_attachments(self, *bug_ids):
+        logger.debug("Fetching and parsing attachments")
+        raw_attachments = self.client.attachments(*bug_ids)
+        return self.__parse_attachments(raw_attachments)
+
+    @staticmethod
+    def __parse_comments(raw_comments):
+        contents = json.loads(raw_comments)['bugs']
+        comments = {k: v['comments'] for k, v in contents.items()}
+        return comments
+
+    @staticmethod
+    def __parse_histories(raw_histories):
+        contents = json.loads(raw_histories)['bugs']
+        history = {str(c['id']): c['history'] for c in contents}
+        return history
+
+    @staticmethod
+    def __parse_attachments(raw_attachments):
+        contents = json.loads(raw_attachments)['bugs']
+        attachments = {k: v for k, v in contents.items()}
+        return attachments
+
 
 class BugzillaRESTError(BaseError):
     """Raised when an error occurs using the API"""
@@ -311,6 +261,8 @@ class BugzillaRESTClient(HttpClient):
     :param password: user password
     :param api_token: api token for user; when this is provided
         `user` and `password` parameters will be ignored
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
 
     :raises BackendError: when an error occurs initilizing the
         client
@@ -341,8 +293,10 @@ class BugzillaRESTClient(HttpClient):
     VINCLUDE_ALL = '_all'
     VEXCLUDE_ATTCH_DATA = 'data'
 
-    def __init__(self, base_url, user=None, password=None, api_token=None):
-        super().__init__(base_url)
+    def __init__(self, base_url, user=None, password=None, api_token=None,
+                 archive=None, from_archive=False):
+        super().__init__(base_url, archive=archive, from_archive=from_archive)
+
         self.api_token = api_token if api_token else None
 
         if user is not None and password is not None:
