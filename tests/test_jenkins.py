@@ -25,9 +25,7 @@
 import json
 import os
 import requests
-import shutil
 import sys
-import tempfile
 import time
 import unittest
 
@@ -40,11 +38,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.backends.core.jenkins import (Jenkins,
                                             JenkinsCommand,
                                             JenkinsClient)
+from tests.base import TestCaseBackendArchive
 
 
 JENKINS_SERVER_URL = 'http://example.com/ci'
@@ -68,6 +65,58 @@ def read_file(filename, mode='r'):
     return content
 
 
+def configure_http_server():
+    bodies_jobs = read_file('data/jenkins/jenkins_jobs.json', mode='rb')
+    bodies_builds_job = read_file('data/jenkins/jenkins_job_builds.json')
+
+    def request_callback(method, uri, headers):
+        status = 200
+
+        if uri.startswith(JENKINS_JOBS_URL):
+            body = bodies_jobs
+        elif (uri.startswith(JENKINS_JOB_BUILDS_URL_1) or
+              uri.startswith(JENKINS_JOB_BUILDS_URL_2)):
+            body = bodies_builds_job
+        elif uri.startswith(JENKINS_JOB_BUILDS_URL_500_ERROR):
+            status = 500
+            body = '500 Internal Server Error'
+        else:
+            body = '{'
+
+        requests_http.append(httpretty.last_request())
+
+        return (status, headers, body)
+
+    httpretty.register_uri(httpretty.GET,
+                           JENKINS_JOBS_URL,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                               for _ in range(3)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           JENKINS_JOB_BUILDS_URL_1,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                               for _ in range(2)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           JENKINS_JOB_BUILDS_URL_2,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                               for _ in range(2)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           JENKINS_JOB_BUILDS_URL_500_ERROR,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           JENKINS_JOB_BUILDS_URL_JSON_ERROR,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                           ])
+
+
 class TestJenkinsBackend(unittest.TestCase):
     """Jenkins backend tests"""
 
@@ -79,8 +128,7 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.tag, 'test')
-        self.assertIsInstance(jenkins.client, JenkinsClient)
-        self.assertEqual(jenkins.client.sleep_time, 60)
+        self.assertIsNone(jenkins.client)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -95,71 +143,25 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(Jenkins.has_caching(), True)
+        self.assertEqual(Jenkins.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(Jenkins.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns False when has_resuming is called"""
 
         self.assertEqual(Jenkins.has_resuming(), False)
 
-    def __configure_http_server(self):
-        bodies_jobs = read_file('data/jenkins/jenkins_jobs.json', mode='rb')
-        bodies_builds_job = read_file('data/jenkins/jenkins_job_builds.json')
-
-        def request_callback(method, uri, headers):
-            status = 200
-
-            if uri.startswith(JENKINS_JOBS_URL):
-                body = bodies_jobs
-            elif (uri.startswith(JENKINS_JOB_BUILDS_URL_1) or
-                  uri.startswith(JENKINS_JOB_BUILDS_URL_2)):
-                body = bodies_builds_job
-            elif uri.startswith(JENKINS_JOB_BUILDS_URL_500_ERROR):
-                status = 500
-                body = '500 Internal Server Error'
-            else:
-                body = '{'
-
-            requests_http.append(httpretty.last_request())
-
-            return (status, headers, body)
-
-        httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOBS_URL,
-                               responses=[
-                                   httpretty.Response(body=request_callback)
-                                   for _ in range(3)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_1,
-                               responses=[
-                                   httpretty.Response(body=request_callback)
-                                   for _ in range(2)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_2,
-                               responses=[
-                                   httpretty.Response(body=request_callback)
-                                   for _ in range(2)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_500_ERROR,
-                               responses=[
-                                   httpretty.Response(body=request_callback)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_JSON_ERROR,
-                               responses=[
-                                   httpretty.Response(body=request_callback)
-                               ])
-
     @httpretty.activate
     def test_fetch(self):
         """Test whether a list of builds is returned"""
 
-        self.__configure_http_server()
+        configure_http_server()
 
         # Test fetch builds from jobs list
         jenkins = Jenkins(JENKINS_SERVER_URL)
@@ -210,7 +212,7 @@ class TestJenkinsBackend(unittest.TestCase):
 
         blacklist = [JENKINS_JOB_BUILDS_1]
 
-        self.__configure_http_server()
+        configure_http_server()
 
         jenkins = Jenkins(JENKINS_SERVER_URL, blacklist_jobs=blacklist)
         nrequests = len(requests_http)
@@ -225,100 +227,39 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(len(builds), 32)
 
 
-class TestJenkinsBackendCache(unittest.TestCase):
-    """Jenkins backend tests using a cache"""
+class TestJenkinsBackendArchive(TestCaseBackendArchive):
+    """Jenkins backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = Jenkins(JENKINS_SERVER_URL, archive=self.archive)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether the cache works"""
+    def test_fetch_from_archive(self):
+        """Test whether a list of builds is returned from an archive"""
 
-        bodies_jobs = read_file('data/jenkins/jenkins_jobs.json', mode='rb')
-        bodies_builds_job = read_file('data/jenkins/jenkins_job_builds.json')
+        configure_http_server()
+        self._test_fetch_from_archive()
 
-        def request_callback(method, uri, headers):
-            status = 200
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test whether it works when no jobs are fetched from archive"""
 
-            if uri.startswith(JENKINS_JOBS_URL):
-                body = bodies_jobs
-            elif (uri.startswith(JENKINS_JOB_BUILDS_URL_1) or
-                  uri.startswith(JENKINS_JOB_BUILDS_URL_2)):
-                body = bodies_builds_job
-            elif uri.startswith(JENKINS_JOB_BUILDS_URL_500_ERROR):
-                status = 500
-                body = '500 Internal Server Error'
-            else:
-                body = '{'
-
-            return (status, headers, body)
-
+        body = '{"jobs":[]}'
         httpretty.register_uri(httpretty.GET,
                                JENKINS_JOBS_URL,
-                               responses=[
-                                   httpretty.Response(body=request_callback)
-                                   for _ in range(3)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_1,
-                               responses=[
-                                   httpretty.Response(body=request_callback)
-                                   for _ in range(2)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_2,
-                               responses=[
-                                   httpretty.Response(body=request_callback)
-                                   for _ in range(2)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_500_ERROR,
-                               responses=[
-                                   httpretty.Response(body=request_callback)
-                               ])
-        httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_JSON_ERROR,
-                               responses=[
-                                   httpretty.Response(body=request_callback)
-                               ])
+                               body=body, status=200)
 
-        # First, we fetch the builds from the server, storing them
-        # in a cache
-        cache = Cache(self.tmp_path)
-        jenkins = Jenkins(JENKINS_SERVER_URL, cache=cache)
+        self._test_fetch_from_archive()
 
-        builds = [build for build in jenkins.fetch()]
+    @httpretty.activate
+    def test_fetch_blacklist_from_archive(self):
+        """Test whether jobs in balcklist are not retrieved from archive"""
 
-        # Now, we get the builds from the cache.
-        # The contents should be the same and there won't be
-        # any new request to the server
-        cached_builds = [build for build in jenkins.fetch_from_cache()]
-        self.assertEqual(len(cached_builds), len(builds))
+        blacklist = [JENKINS_JOB_BUILDS_1]
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
-                as build_json:
-            first_build = json.load(build_json)
-            self.assertDictEqual(cached_builds[0]['data'], first_build['data'])
-
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any builds returned when the cache is empty"""
-
-        cache = Cache(self.tmp_path)
-        jenkins = Jenkins(JENKINS_SERVER_URL, cache=cache)
-        cached_builds = [build for build in jenkins.fetch_from_cache()]
-        self.assertEqual(len(cached_builds), 0)
-
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        jenkins = Jenkins(JENKINS_SERVER_URL)
-
-        with self.assertRaises(CacheError):
-            _ = [build for build in jenkins.fetch_from_cache()]
+        configure_http_server()
+        self._test_fetch_from_archive()
 
 
 class TestJenkinsCommand(unittest.TestCase):
