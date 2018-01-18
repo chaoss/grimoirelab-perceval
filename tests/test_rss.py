@@ -25,9 +25,7 @@
 import httpretty
 import os
 import pkg_resources
-import shutil
 import sys
-import tempfile
 import unittest
 
 # Hack to make sure that tests import the right packages
@@ -36,9 +34,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.backends.core.rss import RSS, RSSCommand, RSSClient
+from tests.base import TestCaseBackendArchive
 
 
 RSS_FEED_URL = 'http://example.com/rss'
@@ -92,7 +89,7 @@ class TestRSSBackend(unittest.TestCase):
         self.assertEqual(rss.url, RSS_FEED_URL)
         self.assertEqual(rss.origin, RSS_FEED_URL)
         self.assertEqual(rss.tag, 'test')
-        self.assertIsInstance(rss.client, RSSClient)
+        self.assertIsNone(rss.client)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -107,9 +104,14 @@ class TestRSSBackend(unittest.TestCase):
         self.assertEqual(rss.tag, RSS_FEED_URL)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(RSS.has_caching(), True)
+        self.assertEqual(RSS.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(RSS.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns False when has_resuming is called"""
@@ -190,51 +192,34 @@ class TestRSSBackend(unittest.TestCase):
         self.assertEqual(entry['author'], 'Matthew Groves')
 
 
-class TestRSSBackendCache(unittest.TestCase):
-    """RSS backend tests using a cache"""
+class TestRSSBackendArchive(TestCaseBackendArchive):
+    """RSS backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = RSS(RSS_FEED_URL, archive=self.archive)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether the cache works"""
+    def test_fetch_from_archive(self):
+        """Test whether a list of entries is returned from archive"""
 
-        http_requests = configure_http_server()
+        configure_http_server()
+        self._test_fetch_from_archive()
 
-        # First, we fetch the entries from the server, storing them
-        # in a cache
-        cache = Cache(self.tmp_path)
-        rss = RSS(RSS_FEED_URL, cache=cache)
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test whether the method fetch from archive works when no entries are present"""
 
-        entries = [entry for entry in rss.fetch()]
-        self.assertEqual(len(http_requests), 1)
+        body = """
+            <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <rss version="2.0">
+            </rss>
+            """
+        httpretty.register_uri(httpretty.GET,
+                               RSS_FEED_URL,
+                               body=body, status=200)
 
-        # Now, we get the entries from the cache.
-        # The contents should be the same and there won't be
-        # any new request to the server
-        cached_entries = [entry for entry in rss.fetch_from_cache()]
-        self.assertEqual(len(cached_entries), len(entries))
-        self.assertEqual(len(http_requests), 1)  # no more requests done
-
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any entries returned when the cache is empty"""
-
-        cache = Cache(self.tmp_path)
-        rss = RSS(RSS_FEED_URL, cache=cache)
-        cached_entries = [entry for entry in rss.fetch_from_cache()]
-        self.assertEqual(len(cached_entries), 0)
-
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        rss = RSS(RSS_FEED_URL)
-
-        with self.assertRaises(CacheError):
-            _ = [entry for entry in rss.fetch_from_cache()]
+        self._test_fetch_from_archive()
 
 
 class TestRSSCommand(unittest.TestCase):
