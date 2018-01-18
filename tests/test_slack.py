@@ -25,9 +25,7 @@ import dateutil
 import httpretty
 import os
 import pkg_resources
-import shutil
 import sys
-import tempfile
 import unittest
 import unittest.mock
 
@@ -37,13 +35,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.slack import (Slack,
                                           SlackClient,
                                           SlackClientError,
                                           SlackCommand)
+from tests.base import TestCaseBackendArchive
 
 
 SLACK_API_URL = 'https://slack.com/api'
@@ -149,8 +146,7 @@ class TestSlackBackend(unittest.TestCase):
         self.assertEqual(slack.tag, 'test')
         self.assertEqual(slack.channel, 'C011DUKE8')
         self.assertEqual(slack.max_items, 5)
-        self.assertIsInstance(slack.client, SlackClient)
-        self.assertEqual(slack.client.api_token, 'aaaa')
+        self.assertIsNone(slack.client)
 
         # When tag is empty or None it will be set to
         # the value in URL
@@ -165,7 +161,12 @@ class TestSlackBackend(unittest.TestCase):
     def test_has_caching(self):
         """Test if it returns True when has_caching is called"""
 
-        self.assertEqual(Slack.has_caching(), True)
+        self.assertEqual(Slack.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(Slack.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns False when has_resuming is called"""
@@ -183,7 +184,7 @@ class TestSlackBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         slack = Slack('C011DUKE8', 'aaaa', max_items=5)
-        messages = [msg for msg in slack.fetch()]
+        messages = [msg for msg in slack.fetch(from_date=None)]
 
         expected = [
             ("<@U0003|dizquierdo> commented on <@U0002|acs> file>: Thanks.",
@@ -440,110 +441,51 @@ class TestSlackBackend(unittest.TestCase):
         self.assertEqual(user['profile']['email'], 'acs@example.com')
 
 
-class TestSlackBackendCache(unittest.TestCase):
-    """Slack backend tests using a cache"""
+class TestSlackBackendArchive(TestCaseBackendArchive):
+    """Slack backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = Slack('C011DUKE8', 'aaaa', max_items=5, archive=self.archive)
 
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
-    def test_fetch_from_cache(self, mock_utcnow):
-        """Test whether the cache works"""
+    def test_fetch_from_archive(self, mock_utcnow):
+        """Test if it fetches a list of messages from archive"""
 
         mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
                                                      tzinfo=dateutil.tz.tzutc())
 
-        http_requests = setup_http_server()
+        setup_http_server()
+        self._test_fetch_from_archive(from_date=None)
 
-        # First, we fetch the events from the server,
-        # storing them in a cache
-        cache = Cache(self.tmp_path)
-        slack = Slack('C011DUKE8', 'aaaa', max_items=5, cache=cache)
-        messages = [msg for msg in slack.fetch()]
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
+    def test_fetch_from_date_from_archive(self, mock_utcnow):
+        """Test if it fetches a list of messages since a given date from archive"""
 
-        self.assertEqual(len(http_requests), 6)
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
 
-        # Now, we get the messages from the cache.
-        # The events should be the same and there won't be
-        # any new request to the server
-        cached_messages = [msg for msg in slack.fetch_from_cache()]
-        self.assertEqual(len(cached_messages), len(messages))
+        setup_http_server()
 
-        expected = [
-            ("<@U0003|dizquierdo> commented on <@U0002|acs> file>: Thanks.",
-             'cc2338c23bf5293308d596629c598cd5ec37d14b',
-             1486999900.000000, 'dizquierdo@example.com', 'test channel'),
-            ("There are no events this week.",
-             'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
-             1486969200.000136, 'B0001', 'test channel'),
-            ("<@U0003|dizquierdo> has joined the channel",
-             'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
-             1427799888.0, 'dizquierdo@example.com', 'test channel'),
-            ("tengo el m\u00f3vil",
-             'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5',
-             1427135890.000071, 'jsmanrique@example.com', 'test channel'),
-            ("hey acs",
-             '29c2942a704c4e0b067daeb76edb2f826376cecf',
-             1427135835.000070, 'jsmanrique@example.com', 'test channel'),
-            ("¿vale?",
-             '757e88ea008db0fff739dd261179219aedb84a95',
-             1427135740.000069, 'acs@example.com', 'test channel'),
-            ("jsmanrique: tenemos que dar m\u00e9tricas super chulas",
-             'e92555381bc431a53c0b594fc118850eafd6e212',
-             1427135733.000068, 'acs@example.com', 'test channel'),
-            ("hi!",
-             'b92892e7b65add0e83d0839de20b2375a42014e8',
-             1427135689.000067, 'jsmanrique@example.com', 'test channel'),
-            ("hi!",
-             'e59d9ca0d9a2ba1c747dc60a0904edd22d69e20e',
-             1427135634.000066, 'acs@example.com', 'test channel')
-        ]
+        from_date = datetime.datetime(2015, 3, 23, 18, 35, 40, 69,
+                                      tzinfo=dateutil.tz.tzutc())
+        self._test_fetch_from_archive(from_date=from_date)
 
-        self.assertEqual(len(cached_messages), len(expected))
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
+    def test_fetch_empty_from_archive(self, mock_utcnow):
+        """Test if nothing is returned when there are no messages from archive"""
 
-        for x in range(len(cached_messages)):
-            cmessage = cached_messages[x]
-            expc = expected[x]
-            self.assertEqual(cmessage['data']['text'], expc[0])
-            self.assertEqual(cmessage['uuid'], expc[1])
-            self.assertEqual(cmessage['origin'], 'https://slack.com/C011DUKE8')
-            self.assertEqual(cmessage['updated_on'], expc[2])
-            self.assertEqual(cmessage['category'], 'message')
-            self.assertEqual(cmessage['tag'], 'https://slack.com/C011DUKE8')
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
 
-            # The second message was sent by a bot
-            if x == 1:
-                self.assertEqual(cmessage['data']['bot_id'], expc[3])
-            else:
-                self.assertEqual(cmessage['data']['user_data']['profile']['email'], expc[3])
+        setup_http_server()
 
-            self.assertEqual(cmessage['data']['channel_info']['name'], expc[4])
-
-            # Compare chached and fetched message
-            self.assertDictEqual(cmessage['data'], messages[x]['data'])
-
-        # No more requests were sent
-        self.assertEqual(len(http_requests), 6)
-
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any message returned when the cache is empty"""
-
-        cache = Cache(self.tmp_path)
-        slack = Slack('C011DUKE8', 'aaaa', max_items=5, cache=cache)
-        cached_messages = [msg for msg in slack.fetch_from_cache()]
-        self.assertEqual(len(cached_messages), 0)
-
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        slack = Slack('C011DUKE8', 'aaaa', max_items=5)
-
-        with self.assertRaises(CacheError):
-            _ = [msg for msg in slack.fetch_from_cache()]
+        from_date = datetime.datetime(2016, 1, 1,
+                                      tzinfo=dateutil.tz.tzutc())
+        self._test_fetch_from_archive(from_date=from_date)
 
 
 class TestSlackClient(unittest.TestCase):
