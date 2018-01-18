@@ -28,10 +28,9 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import BaseError, CacheError
+from ...errors import BaseError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -56,20 +55,22 @@ class Slack(Backend):
     :param max_items: maximum number of message requested on the same query
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect messages already retrieved from an archive
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
-                 tag=None, cache=None):
+                 tag=None, cache=None, archive=None):
         origin = urijoin(SLACK_URL, channel)
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.channel = channel
+        self.api_token = api_token
         self.max_items = max_items
-        self.client = SlackClient(api_token, max_items=max_items)
+        self.client = None
+
         self._users = {}
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the channel.
 
@@ -80,13 +81,25 @@ class Slack(Backend):
 
         :returns: a generator of messages
         """
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("message", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the messages"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Fetching messages of '%s' channel from %s",
                     self.channel, str(from_date))
 
-        self._purge_cache_queue()
-
         raw_info = self.client.channel_info(self.channel)
-        self._push_cache_queue(raw_info)
         channel_info = self.parse_channel_info(raw_info)
 
         oldest = datetime_to_utc(from_date).timestamp()
@@ -112,8 +125,6 @@ class Slack(Backend):
                                               oldest=oldest, latest=latest)
             messages, fetching = self.parse_history(raw_history)
 
-            self._push_cache_queue(raw_history)
-
             for message in messages:
                 # Fetch user data
                 user_id = None
@@ -133,112 +144,21 @@ class Slack(Backend):
                 if fetching:
                     latest = float(message['ts'])
 
-            # Checkpoint. A set of messages ends here.
-            self._push_cache_queue('{}')
-            self._flush_cache_queue()
-
-        # Checkpoint for batch. A batch ends here.
-        self._push_cache_queue('{END}')
-        self._flush_cache_queue()
-
         logger.info("Fetch process completed: %s message fetched", nmsgs)
-
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the messages from the cache.
-
-        It returns the messages stored in the cache object, provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
-
-        :returns: a generator of messages
-
-        :raises CacheError: raised when an error occurs accesing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        logger.info("Retrieving cached messages: '%s'", self.channel)
-
-        cache_items = self.cache.retrieve()
-        cached_users = {}
-        channel_info = None
-
-        nmsgs = 0
-        start_batch = True
-
-        try:
-            while True:
-                try:
-                    raw_json = next(cache_items)
-                except StopIteration:
-                    break
-
-                if start_batch:
-                    channel_info = self.parse_channel_info(raw_json)
-                    start_batch = False
-                    continue
-                elif raw_json == '{END}':
-                    start_batch = True
-                    continue
-                else:
-                    raw_history = raw_json
-
-                checkpoint = False
-
-                while not checkpoint:
-                    raw_item = next(cache_items)
-
-                    if raw_item != '{}':
-                        user = self.parse_user(raw_item)
-                        cached_users[user['id']] = user
-                    else:
-                        checkpoint = True
-
-                messages, _ = self.parse_history(raw_history)
-
-                for message in messages:
-                    user_id = None
-                    if 'user' in message:
-                        user_id = message['user']
-                    elif 'comment' in message:
-                        user_id = message['comment']['user']
-
-                    if user_id:
-                        message['user_data'] = cached_users[user_id]
-
-                    message['channel_info'] = channel_info
-                    yield message
-                    nmsgs += 1
-        except StopIteration:
-            # Fatal error. The code should not reach here.
-            # Cache should had stored an activity item per parsed bug.
-            cause = "cache is exhausted but more items were expected"
-            raise CacheError(cause=cause)
-
-        logger.info("Retrieval process completed: %s messages retrieved from cache",
-                    nmsgs)
-
-    def __get_or_fetch_user(self, user_id):
-        if user_id in self._users:
-            return self._users[user_id]
-
-        logger.debug("User %s not found on client cache; fetching it", user_id)
-
-        raw_user = self.client.user(user_id)
-        user = self.parse_user(raw_user)
-        self._push_cache_queue(raw_user)
-
-        self._users[user_id] = user
-        return user
 
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -338,6 +258,23 @@ class Slack(Backend):
         result = json.loads(raw_user)
         return result['user']
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return SlackClient(self.api_token, self.max_items, self.archive, from_archive)
+
+    def __get_or_fetch_user(self, user_id):
+        if user_id in self._users:
+            return self._users[user_id]
+
+        logger.debug("User %s not found on client cache; fetching it", user_id)
+
+        raw_user = self.client.user(user_id)
+        user = self.parse_user(raw_user)
+
+        self._users[user_id] = user
+        return user
+
 
 class SlackClientError(BaseError):
     """Raised when an error occurs using the Slack client"""
@@ -353,6 +290,8 @@ class SlackClient(HttpClient):
 
     :param api_key: key needed to use the API
     :param max_items: maximum number of items per request
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
     """
     URL = urijoin(SLACK_URL, 'api', '%(resource)s')
 
@@ -367,8 +306,8 @@ class SlackClient(HttpClient):
     PTOKEN = 'token'
     PUSER = 'user'
 
-    def __init__(self, api_token, max_items=MAX_ITEMS):
-        super().__init__(SLACK_URL)
+    def __init__(self, api_token, max_items=MAX_ITEMS, archive=None, from_archive=False):
+        super().__init__(SLACK_URL, archive=archive, from_archive=from_archive)
         self.api_token = api_token
         self.max_items = max_items
 
