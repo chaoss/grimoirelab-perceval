@@ -80,6 +80,8 @@ class Archive:
                            "backend_params BLOB, " \
                            "created_on TEXT)"
 
+    version = '0.1'
+
     def __init__(self, archive_path):
         if not os.path.exists(archive_path):
             raise ArchiveError(cause="archive %s does not exist" % (archive_path))
@@ -225,7 +227,8 @@ class Archive:
         if row:
             found = pickle.loads(row['data'])
         else:
-            msg = "entry %s not found in archive %s" % (hashcode, self.archive_path)
+            msg = "entry [uri:] %s, [payload:] %s, [headers:] %s, [hashcode:] %s not found in archive %s" % \
+                  (uri, str(payload), str(headers), hashcode, self.archive_path)
             raise ArchiveError(cause=msg)
 
         return found
