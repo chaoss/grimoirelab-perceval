@@ -24,9 +24,7 @@ import datetime
 import httpretty
 import os
 import pkg_resources
-import shutil
 import sys
-import tempfile
 import unittest
 
 # Hack to make sure that tests import the right packages
@@ -35,12 +33,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.redmine import (Redmine,
                                             RedmineCommand,
                                             RedmineClient)
+from tests.base import TestCaseBackendArchive
 
 
 REDMINE_URL = 'http://example.com'
@@ -152,8 +149,7 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(redmine.max_issues, 5)
         self.assertEqual(redmine.origin, REDMINE_URL)
         self.assertEqual(redmine.tag, 'test')
-        self.assertIsInstance(redmine.client, RedmineClient)
-        self.assertEqual(redmine.client.api_token, 'AAAA')
+        self.assertIsNone(redmine.client)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -168,9 +164,14 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(redmine.tag, REDMINE_URL)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(Redmine.has_caching(), True)
+        self.assertEqual(Redmine.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(Redmine.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -422,78 +423,37 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(user['login'], 'generic')
 
 
-class TestRedmineBackendCache(unittest.TestCase):
-    """Redmine backend tests using a cache"""
+class TestRedmineBackendArchive(TestCaseBackendArchive):
+    """Redmine backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = Redmine(REDMINE_URL, api_token='AAAA', max_issues=3, archive=self.archive)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether the cache works"""
+    def test_fetch_from_archive(self):
+        """Test whether it fetches a set of issues from archive"""
 
-        http_requests = setup_http_server()
+        setup_http_server()
+        self._test_fetch_from_archive(from_date=None)
 
-        # First, we fetch the issues from the server,
-        # storing them in a cache
-        cache = Cache(self.tmp_path)
-        redmine = Redmine(REDMINE_URL, api_token='AAAA',
-                          max_issues=3, cache=cache)
+    @httpretty.activate
+    def test_fetch_from_date_from_archive(self):
+        """Test wether if fetches a set of issues from the given date from archive"""
 
-        issues = [issue for issue in redmine.fetch()]
-        self.assertEqual(len(http_requests), 12)
+        setup_http_server()
 
-        # Now, we get the issues from the cache.
-        # The issues should be the same and there won't be
-        # any new request to the server
-        cached_issues = [issue for issue in redmine.fetch_from_cache()]
-        self.assertEqual(len(cached_issues), len(issues))
+        from_date = datetime.datetime(2016, 7, 27)
+        self._test_fetch_from_archive(from_date=from_date)
 
-        expected = [(9, '91a8349c2f6ebffcccc49409529c61cfd3825563', 1323367020.0, 3, 3),
-                    (5, 'c4aeb9e77fec8e4679caa23d4012e7cc36ae8b98', 1323367075.0, 3, 3),
-                    (2, '3c3d67925b108a37f88cc6663f7f7dd493fa818c', 1323367117.0, 3, 3),
-                    (7311, '4ab289ab60aee93a66e5490529799cf4a2b4d94c', 1469607427.0, 24, 4)]
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test if nothing is returnerd when there are no issues from archive"""
 
-        self.assertEqual(len(cached_issues), len(expected))
+        setup_http_server()
 
-        for x in range(len(cached_issues)):
-            issue = cached_issues[x]
-            expc = expected[x]
-            self.assertEqual(issue['data']['id'], expc[0])
-            self.assertEqual(issue['uuid'], expc[1])
-            self.assertEqual(issue['origin'], REDMINE_URL)
-            self.assertEqual(issue['updated_on'], expc[2])
-            self.assertEqual(issue['category'], 'issue')
-            self.assertEqual(issue['tag'], REDMINE_URL)
-            self.assertEqual(issue['data']['author_data']['id'], expc[3])
-            self.assertEqual(issue['data']['journals'][0]['user_data']['id'], expc[4])
-            self.assertDictEqual(issue['data'], issues[x]['data'])
-
-        # The user 99 does not have information
-        self.assertEqual(issues[3]['data']['journals'][1]['user']['id'], 99)
-        self.assertDictEqual(issues[3]['data']['journals'][1]['user_data'], {})
-
-        # No more requests were sent
-        self.assertEqual(len(http_requests), 12)
-
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any issue returned when the cache is empty"""
-
-        cache = Cache(self.tmp_path)
-        redmine = Redmine(REDMINE_URL, api_token='AAAA', cache=cache)
-        cached_issues = [issue for issue in redmine.fetch_from_cache()]
-        self.assertEqual(len(cached_issues), 0)
-
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        redmine = Redmine(REDMINE_URL, api_token='AAAA')
-
-        with self.assertRaises(CacheError):
-            _ = [issue for issue in redmine.fetch_from_cache()]
+        from_date = datetime.datetime(2017, 1, 1)
+        self._test_fetch_from_archive(from_date=from_date)
 
 
 class TestRedmineCommand(unittest.TestCase):
