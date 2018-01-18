@@ -60,16 +60,17 @@ class MBox(Backend):
     :param dirpath: directory path where the mboxes are stored
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect events already retrieved from an archive
     """
-    version = '0.7.4'
+    version = '0.8.0'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
 
-    def __init__(self, uri, dirpath, tag=None, cache=None):
+    def __init__(self, uri, dirpath, tag=None, cache=None, archive=None):
         origin = uri
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.uri = uri
         self.dirpath = dirpath
 
@@ -130,6 +131,7 @@ class MBox(Backend):
                     logger.debug("Message %s parsed", message['unixfrom'])
 
                     yield message
+
             except OSError as e:
                 logger.warning("Ignoring %s mbox due to: %s", mbox.filepath, str(e))
             except Exception as e:
@@ -152,6 +154,7 @@ class MBox(Backend):
             with open(tmp_path, mode='wb') as f_out:
                 for l in f_in:
                     f_out.write(l)
+
         return tmp_path
 
     def _validate_message(self, message):
