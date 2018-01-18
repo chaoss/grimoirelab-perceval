@@ -26,9 +26,7 @@ import json
 import os
 import pkg_resources
 import requests
-import shutil
 import sys
-import tempfile
 import unittest
 
 # Hack to make sure that tests import the right packages
@@ -37,13 +35,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.phabricator import (Phabricator,
                                                 PhabricatorCommand,
                                                 ConduitClient,
                                                 ConduitError)
+from tests.base import TestCaseBackendArchive
 
 PHABRICATOR_URL = 'http://example.com'
 PHABRICATOR_API_URL = PHABRICATOR_URL + '/api'
@@ -173,7 +170,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.url, PHABRICATOR_URL)
         self.assertEqual(phab.origin, PHABRICATOR_URL)
         self.assertEqual(phab.tag, 'test')
-        self.assertIsInstance(phab.client, ConduitClient)
+        self.assertIsNone(phab.client)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -188,9 +185,14 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.tag, PHABRICATOR_URL)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(Phabricator.has_caching(), True)
+        self.assertEqual(Phabricator.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(Phabricator.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -204,7 +206,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         phab = Phabricator(PHABRICATOR_URL, 'AAAA')
-        tasks = [task for task in phab.fetch()]
+        tasks = [task for task in phab.fetch(from_date=None)]
 
         expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
                     (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
@@ -554,83 +556,37 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(results[1]['fullName'], 'Mock')
 
 
-class TestPhabricatorBackendCache(unittest.TestCase):
-    """Phabricator backend tests using a cache"""
+class TestPhabricatorBackendArchive(TestCaseBackendArchive):
+    """Phabricator backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = Phabricator(PHABRICATOR_URL, 'AAAA', archive=self.archive)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether the cache works"""
+    def test_fetch_from_archive(self):
+        """Test whether it fetches a set of tasks from archive"""
 
-        http_requests = setup_http_server()
+        setup_http_server()
+        self._test_fetch_from_archive()
 
-        # First, we fetch the tasks from the server,
-        # storing them in a cache
-        cache = Cache(self.tmp_path)
-        phab = Phabricator(PHABRICATOR_URL, 'AAAA', cache=cache)
+    @httpretty.activate
+    def test_fetch_from_date_from_archive(self):
+        """Test wether if fetches a set of tasks from the given date from archive"""
 
-        tasks = [task for task in phab.fetch()]
-        self.assertEqual(len(http_requests), 12)
+        setup_http_server()
 
-        # Now, we get the tasks from the cache.
-        # The tasks should be the same and there won't be
-        # any new request to the server
-        cached_tasks = [task for task in phab.fetch_from_cache()]
-        self.assertEqual(len(cached_tasks), len(tasks))
+        from_date = datetime.datetime(2016, 6, 29, 0, 0, 0)
+        self._test_fetch_from_archive(from_date=from_date)
 
-        expected = [(69, 16, 0, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
-                    (73, 20, 0, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
-                    (78, 17, 0, 'jdoe', None, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0),
-                    (296, 18, 2, 'jane', 'jrae', 'e8fa3e4a4381d6fea3bcf5c848f599b87e7dc4a6', 1467196707.0)]
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test if nothing is returned when there are no tasks in the archive"""
 
-        self.assertEqual(len(cached_tasks), len(expected))
+        setup_http_server()
 
-        for x in range(len(cached_tasks)):
-            task = cached_tasks[x]
-            expc = expected[x]
-            self.assertEqual(task['data']['id'], expc[0])
-            self.assertEqual(len(task['data']['transactions']), expc[1])
-            self.assertEqual(len(task['data']['projects']), expc[2])
-            self.assertEqual(task['data']['fields']['authorData']['userName'], expc[3])
-
-            # Check owner data; when it is null owner is not included
-            if not expc[4]:
-                self.assertNotIn('ownerData', task['data']['fields'])
-            else:
-                self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[4])
-
-            self.assertEqual(task['uuid'], expc[5])
-            self.assertEqual(task['origin'], PHABRICATOR_URL)
-            self.assertEqual(task['updated_on'], expc[6])
-            self.assertEqual(task['category'], 'task')
-            self.assertEqual(task['tag'], PHABRICATOR_URL)
-
-            # Compare chached and fetched task
-            self.assertDictEqual(task['data'], tasks[x]['data'])
-
-        # No more requests were sent
-        self.assertEqual(len(http_requests), 12)
-
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any task returned when the cache is empty"""
-
-        cache = Cache(self.tmp_path)
-        phab = Phabricator(PHABRICATOR_URL, 'AAAA', cache=cache)
-        cached_tasks = [task for task in phab.fetch_from_cache()]
-        self.assertEqual(len(cached_tasks), 0)
-
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        phab = Phabricator(PHABRICATOR_URL, 'AAAA')
-
-        with self.assertRaises(CacheError):
-            _ = [task for task in phab.fetch_from_cache()]
+        from_date = datetime.datetime(2017, 1, 1, 0, 0, 0)
+        self._test_fetch_from_archive(from_date=from_date)
 
 
 class TestPhabricatorCommand(unittest.TestCase):
