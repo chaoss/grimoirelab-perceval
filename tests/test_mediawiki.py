@@ -27,13 +27,12 @@ import dateutil
 import httpretty
 import os
 import pkg_resources
-import shutil
 import sys
-import tempfile
 import unittest
 import urllib
 
-from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab.toolkit.datetime import (datetime_to_utc,
+                                          str_to_datetime)
 
 # Hack to make sure that tests import the right packages
 # due to setuptools behaviour
@@ -41,12 +40,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.mediawiki import (MediaWiki,
                                               MediaWikiCommand,
                                               MediaWikiClient)
+from tests.base import TestCaseBackendArchive
 
 
 MEDIAWIKI_SERVER_URL = 'http://example.com'
@@ -155,7 +153,7 @@ class TestMediaWikiBackend(unittest.TestCase):
         self.assertEqual(mediawiki.url, MEDIAWIKI_SERVER_URL)
         self.assertEqual(mediawiki.origin, MEDIAWIKI_SERVER_URL)
         self.assertEqual(mediawiki.tag, 'test')
-        self.assertIsInstance(mediawiki.client, MediaWikiClient)
+        self.assertIsNone(mediawiki.client)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -170,9 +168,14 @@ class TestMediaWikiBackend(unittest.TestCase):
         self.assertEqual(mediawiki.tag, MEDIAWIKI_SERVER_URL)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(MediaWiki.has_caching(), True)
+        self.assertEqual(MediaWiki.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(MediaWiki.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns False when has_resuming is called"""
@@ -258,93 +261,49 @@ class TestMediaWikiBackend_1_28(TestMediaWikiBackend):
         self.assertEqual(len(pages), 0)
 
 
-class TestMediaWikiBackendCache(unittest.TestCase):
-    """MediaWiki backend tests using a cache for MediaWiki 1.28 version"""
+class TestMediaWikiBackendArchive(TestCaseBackendArchive):
+    """MediaWiki backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = MediaWiki(MEDIAWIKI_SERVER_URL, archive=self.archive)
 
     @httpretty.activate
-    def _test_fetch_from_cache(self, version, reviews_api=False):
-        """Test whether the cache works"""
+    def _test_version(self, version, reviews_api=False):
+        """Test whether the archive works"""
 
         HTTPServer.routes(version)
 
-        # First, we fetch the pages from the server, storing them
-        # in a cache
-        shutil.rmtree(self.tmp_path)
-        cache = Cache(self.tmp_path)
-        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, cache=cache)
+        from_date = dateutil.parser.parse("2016-06-23 15:35")
+        self.backend._test_mode = True
 
-        pages = [page for page in mediawiki.fetch(reviews_api=reviews_api)]
-        requests_done = len(HTTPServer.requests_http)
-
-        # Now, we get the pages from the cache.
-        cached_pages = [page for page in mediawiki.fetch_from_cache()]
-        # No new requests to the server
-        self.assertEqual(len(HTTPServer.requests_http), requests_done)
-        self.assertEqual(len(cached_pages), len(pages))
-
-        if version == "1.28" and reviews_api:
-            # 2 pages in all name spaces
-            self.assertEqual(len(pages), 2)
-        elif version == "1.23" or not reviews_api:
-            # 2 pages per each of the 5 name spaces
-            self.assertEqual(len(pages), 10)
-
-        HTTPServer.check_pages_contents(self, pages)
-
-        # Now let's tests more than one execution in the same cache
-        shutil.rmtree(self.tmp_path)
-        cache = Cache(self.tmp_path)
-        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, cache=cache)
-        pages = [page for page in mediawiki.fetch(reviews_api=reviews_api)]
-        pages_1 = [page for page in mediawiki.fetch(reviews_api=reviews_api)]
-        cached_pages = [page for page in mediawiki.fetch_from_cache()]
-        if version == "1.28" and reviews_api:
-            # 2 unique pages x2 caches
-            self.assertEqual(len(cached_pages), 4)
-        elif version == "1.23" or not reviews_api:
-            # 2 pages per each of the 5 name spaces, x2 caches
-            self.assertEqual(len(cached_pages), 10 * 2)
-
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any pages returned when the cache is empty"""
-
-        cache = Cache(self.tmp_path)
-        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, cache=cache)
-        cached_pages = [page for page in mediawiki.fetch_from_cache()]
-        self.assertEqual(len(cached_pages), 0)
-
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
-
-        with self.assertRaises(CacheError):
-            _ = [page for page in mediawiki.fetch_from_cache()]
+        self._test_fetch_from_archive(from_date=from_date, reviews_api=reviews_api)
 
 
-class TestMediaWikiBackendCache1_23(TestMediaWikiBackendCache):
-    """MediaWiki backend tests using a cache for MediaWiki 1.23 version"""
+class TestMediaWikiBackendArchive1_23(TestMediaWikiBackendArchive):
+    """MediaWiki backend tests using an archive for MediaWiki 1.23 version"""
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether the cache works"""
-        self._test_fetch_from_cache("1.23")
+    def test_fetch_from_archive(self):
+        """Test whether the archive works"""
+
+        self._test_version("1.23")
 
 
-class TestMediaWikiBackendCache1_28(TestMediaWikiBackendCache):
-    """MediaWiki backend tests using a cache for MediaWiki 1.28 version"""
+class TestMediaWikiBackendArchive1_28(TestMediaWikiBackendArchive):
+    """MediaWiki backend tests using an archive for MediaWiki 1.28 version"""
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether the cache works"""
-        self._test_fetch_from_cache("1.28")
-        self._test_fetch_from_cache("1.28", reviews_api=True)
+    def test_fetch_from_archive(self):
+        """Test whether the archive works"""
+
+        self._test_version("1.28")
+
+    @httpretty.activate
+    def test_fetch_from_archive_reviews(self):
+        """Test whether the archive works"""
+
+        self._test_version("1.28", reviews_api=True)
 
 
 class TestMediaWikiClient(unittest.TestCase):
