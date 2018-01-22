@@ -35,7 +35,7 @@ from grimoirelab.toolkit.datetime import str_to_datetime
 
 from .archive import Archive
 from .cache import Cache, setup_cache
-from .utils import DEFAULT_DATETIME
+from .errors import ArchiveError
 from ._version import __version__
 
 
@@ -106,11 +106,71 @@ class Backend:
 
         self._archive = obj
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch_items(self, **kwargs):
         raise NotImplementedError
 
-    def fetch_from_cache(self):
-        raise NotImplementedError
+    def fetch(self, category, **kwargs):
+        """Fetch items from the repository.
+
+        The method retrieves items from a repository.
+
+        :param category: the category of the items fetched
+        :param kwargs: a list of other parameters (e.g., from_date, offset, etc.
+        specific for each backend)
+
+        :returns: a generator of items
+        """
+        if self.archive:
+            self.archive.init_metadata(self.origin, self.__name__, self.version, category,
+                                       kwargs)
+
+        self.client = self._init_client()
+
+        for item in self.fetch_items(**kwargs):
+            yield self.metadata(item)
+
+    def fetch_from_archive(self):
+        """Fetch the questions from an archive.
+
+        It returns the items stored within an archive. If this method is called but
+        no archive was provided, the method will raise a `ArchiveError` exception.
+
+        :returns: a generator of items
+        :raises ArchiveError: raised when an error occurs accessing an archive
+        """
+        if not self.archive:
+            raise ArchiveError(cause="archive instance was not provided")
+
+        self.client = self._init_client(from_archive=True)
+
+        self.archive._load_metadata()
+
+        for item in self.fetch_items(**self.archive.backend_params):
+            yield self.metadata(item)
+
+    def metadata(self, item):
+        """Add metadata to an item.
+
+        It adds metadata to a given item such as how and
+        when it was fetched. The contents from the original item will
+        be stored under the 'data' keyword.
+
+        :param item: an item fetched by a backend
+        """
+        item = {
+            'backend_name': self.__class__.__name__,
+            'backend_version': self.version,
+            'perceval_version': __version__,
+            'timestamp': dt.utcnow().timestamp(),
+            'origin': self.origin,
+            'uuid': uuid(self.origin, self.metadata_id(item)),
+            'updated_on': self.metadata_updated_on(item),
+            'category': self.metadata_category(item),
+            'tag': self.tag,
+            'data': item,
+        }
+
+        return item
 
     @classmethod
     def has_caching(cls):
@@ -145,6 +205,9 @@ class Backend:
         if not self.cache:
             return
         self.cache_queue.append(item)
+
+    def _init_client(self, from_archive=False):
+        raise NotImplementedError
 
 
 class BackendCommandArgumentParser:
