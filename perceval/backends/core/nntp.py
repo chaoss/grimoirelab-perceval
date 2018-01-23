@@ -239,7 +239,11 @@ class NNTP(Backend):
 
         :returns: a UNIX timestamp
         """
-        ts = item['Date']
+        if 'Date' in item:
+            ts = item['Date']
+        elif 'DATE' in item:
+            ts = item['DATE']
+
         ts = str_to_datetime(ts)
 
         return ts.timestamp()

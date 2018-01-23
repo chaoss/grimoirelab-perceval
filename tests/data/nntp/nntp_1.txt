@@ -43,7 +43,7 @@ X-Received: by 10.50.73.133 with SMTP id l5mr23319345igv.69.1458039968327;
 	Tue, 15 Mar 2016 04:06:08 -0700 (PDT)
 MIME-Version: 1.0
 From: =?UTF-8?Q?Fernando_Jim=C3=A9nez_Moreno?= <fmoreno@example.com>
-Date: Tue, 15 Mar 2016 12:05:48 +0100
+DATE: Tue, 15 Mar 2016 12:05:48 +0100
 Subject: Github wiki vs Mozilla wiki
 To: dev-project-link@example.com
 Content-Type: multipart/alternative; boundary=089e0129483a618a18052e14622c
