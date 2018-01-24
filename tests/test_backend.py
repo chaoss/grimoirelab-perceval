@@ -44,7 +44,76 @@ from perceval.backend import (Backend,
                               metadata,
                               uuid)
 from perceval.cache import Cache
+from perceval.errors import ArchiveError
 from perceval.utils import DEFAULT_DATETIME
+from tests.base import TestCaseBackendArchive
+
+
+class MockedBackend(Backend):
+    """Mocked backend for testing"""
+
+    version = '0.2.0'
+    CATEGORY = "mock_item"
+    ITEMS = 5
+
+    def __init__(self, origin, tag=None, archive=None):
+        self.__name__ = "mocked"
+        super().__init__(origin, tag=tag, archive=archive)
+
+    def fetch_items(self, **kwargs):
+        for x in range(MockedBackend.ITEMS):
+            item = {'item': x}
+            yield item
+
+    @metadata
+    def fetch_from_cache(self):
+        for x in range(5):
+            item = {
+                'item': x,
+                'cache': True
+            }
+            yield item
+
+    def _init_client(self, from_archive=False):
+        return None
+
+    @staticmethod
+    def metadata_id(item):
+        return str(item['item'])
+
+    @staticmethod
+    def metadata_updated_on(item):
+        return '2016-01-01'
+
+    @staticmethod
+    def metadata_category(item):
+        return MockedBackend.CATEGORY
+
+
+class MockedBackendCommand(BackendCommand):
+    """Mocked backend command class used for testing"""
+
+    BACKEND = MockedBackend
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def _pre_init(self):
+        setattr(self.parsed_args, 'pre_init', True)
+
+    def _post_init(self):
+        setattr(self.parsed_args, 'post_init', True)
+
+    @staticmethod
+    def setup_cmd_parser():
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              basic_auth=True,
+                                              token_auth=True,
+                                              cache=True)
+        parser.parser.add_argument('origin')
+        parser.parser.add_argument('--category', dest='category')
+
+        return parser
 
 
 class TestBackend(unittest.TestCase):
@@ -69,22 +138,6 @@ class TestBackend(unittest.TestCase):
 
         b = Backend('test')
         self.assertEqual(b.origin, 'test')
-
-    def test_fetch(self):
-        """Test whether an NotImplementedError exception is thrown"""
-
-        b = Backend('test')
-
-        with self.assertRaises(NotImplementedError):
-            b.fetch()
-
-    def test_fetch_from_cache(self):
-        """Test whether an NotImplementedError exception is thrown"""
-
-        b = Backend('test')
-
-        with self.assertRaises(NotImplementedError):
-            b.fetch_from_cache()
 
     def test_has_caching(self):
         """Test whether an NotImplementedError exception is thrown"""
@@ -162,6 +215,62 @@ class TestBackend(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             b.cache = 8
+
+    def test_fetch_client_not_provided(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            _ = [item for item in b.fetch(category="acme")]
+
+    def test_fetch_items(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b.fetch_items()
+
+    def test_init_client(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b._init_client()
+
+
+class TestBackendArchive(TestCaseBackendArchive):
+    """Unit tests for Backend using the archive"""
+
+    def setUp(self):
+        super().setUp()
+        self.backend = MockedBackend('test', archive=self.archive)
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
+
+    def test_fetch_from_archive(self):
+        """Test whether the method fetch_from_archive works properly"""
+
+        self._test_fetch_from_archive(self.backend.CATEGORY)
+
+    def test_fetch_from_archive_not_provided(self):
+        """Test whether an exception is thrown when an archive is not provided"""
+
+        b = MockedBackend('test')
+
+        with self.assertRaises(ArchiveError):
+            _ = [item for item in b.fetch_from_archive()]
+
+    def test_fetch_client_not_provided(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test', archive=self.archive)
+
+        with self.assertRaises(NotImplementedError):
+            _ = [item for item in b.fetch_from_archive()]
 
 
 class TestBackendCommandArgumentParser(unittest.TestCase):
@@ -333,67 +442,6 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
             _ = parser.parse(*args)
 
 
-class MockedBackend(Backend):
-    """Mocked backend for testing"""
-
-    version = '0.2.0'
-
-    def __init__(self, origin, tag=None):
-        super().__init__(origin, tag=tag)
-
-    @metadata
-    def fetch(self, from_date=None):
-        for x in range(5):
-            item = {'item': x}
-            yield item
-
-    @metadata
-    def fetch_from_cache(self):
-        for x in range(5):
-            item = {
-                'item': x,
-                'cache': True
-            }
-            yield item
-
-    @staticmethod
-    def metadata_id(item):
-        return str(item['item'])
-
-    @staticmethod
-    def metadata_updated_on(item):
-        return '2016-01-01'
-
-    @staticmethod
-    def metadata_category(item):
-        return 'mock_item'
-
-
-class MockedBackendCommand(BackendCommand):
-    """Mocked backend command class used for testing"""
-
-    BACKEND = MockedBackend
-
-    def __init__(self, *args):
-        super().__init__(*args)
-
-    def _pre_init(self):
-        setattr(self.parsed_args, 'pre_init', True)
-
-    def _post_init(self):
-        setattr(self.parsed_args, 'post_init', True)
-
-    @staticmethod
-    def setup_cmd_parser():
-        parser = BackendCommandArgumentParser(from_date=True,
-                                              basic_auth=True,
-                                              token_auth=True,
-                                              cache=True)
-        parser.parser.add_argument('origin')
-
-        return parser
-
-
 def convert_cmd_output_to_json(filepath):
     """Transforms the output of a BackendCommand into json objects"""
 
@@ -505,7 +553,7 @@ class TestBackendCommand(unittest.TestCase):
         """Test run method"""
 
         args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
-                '--cache-path', self.test_path,
+                '--cache-path', self.test_path, '--category', 'mocked',
                 '--from-date', '2015-01-01', '--tag', 'test',
                 '--output', self.fout_path, 'http://example.com/']
 
@@ -532,7 +580,7 @@ class TestBackendCommand(unittest.TestCase):
         """Test whether the command runs when fetch from cache is set"""
 
         args = ['--cache-path', self.test_path, '--fetch-cache',
-                '--from-date', '2015-01-01', '--tag', 'test',
+                '--from-date', '2015-01-01', '--tag', 'test', '--category', 'mocked',
                 '--output', self.fout_path, 'http://example.com/']
 
         cmd = MockedBackendCommand(*args)
@@ -590,7 +638,7 @@ class TestMetadata(unittest.TestCase):
     def test_decorator(self):
         backend = MockedBackend('test', 'mytag')
         before = datetime.datetime.utcnow().timestamp()
-        items = [item for item in backend.fetch()]
+        items = [item for item in backend.fetch(category=MockedBackend.CATEGORY)]
         after = datetime.datetime.utcnow().timestamp()
 
         for x in range(5):
