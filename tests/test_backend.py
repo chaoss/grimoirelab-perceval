@@ -38,6 +38,7 @@ from grimoirelab.toolkit.datetime import InvalidDateError
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from perceval import __version__
+from perceval.archive import Archive
 from perceval.backend import (Backend,
                               BackendCommandArgumentParser,
                               BackendCommand,
@@ -57,7 +58,6 @@ class MockedBackend(Backend):
     ITEMS = 5
 
     def __init__(self, origin, tag=None, archive=None):
-        self.__name__ = "mocked"
         super().__init__(origin, tag=tag, archive=archive)
 
     def fetch_items(self, **kwargs):
@@ -128,10 +128,8 @@ class TestBackend(unittest.TestCase):
     def test_version(self):
         """Test whether the backend version is initialized"""
 
-        self.assertEqual(Backend.version, '0.5')
-
-        b = Backend('test')
-        self.assertEqual(b.version, '0.5')
+        b = MockedBackend('test')
+        self.assertEqual(b.version, MockedBackend.version)
 
     def test_origin(self):
         """Test whether origin value is initialized"""
@@ -232,13 +230,27 @@ class TestBackend(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             b.fetch_items()
 
-    def test_init_client(self):
+    def test_init_client_not_implemented(self):
         """Test whether an NotImplementedError exception is thrown"""
 
         b = Backend('test')
 
         with self.assertRaises(NotImplementedError):
             b._init_client()
+
+    def test_init_archive(self):
+        """Test whether the archive is properly initialized when executing the fetch method"""
+
+        archive_path = os.path.join(self.test_path, 'myarchive')
+        archive = Archive.create(archive_path)
+        b = MockedBackend('test', archive=archive)
+
+        _ = [item for item in b.fetch(category=MockedBackend.CATEGORY)]
+
+        self.assertEqual(b.archive.backend_name, b.__class__.__name__)
+        self.assertEqual(b.archive.backend_version, b.version)
+        self.assertEqual(b.archive.origin, b.origin)
+        self.assertEqual(b.archive.item_category, MockedBackend.CATEGORY)
 
 
 class TestBackendArchive(TestCaseBackendArchive):
@@ -264,7 +276,7 @@ class TestBackendArchive(TestCaseBackendArchive):
         with self.assertRaises(ArchiveError):
             _ = [item for item in b.fetch_from_archive()]
 
-    def test_fetch_client_not_provided(self):
+    def test_fetch_client_not_implemented(self):
         """Test whether an NotImplementedError exception is thrown"""
 
         b = Backend('test', archive=self.archive)
