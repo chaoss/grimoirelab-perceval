@@ -68,7 +68,7 @@ class Backend:
     :raises ValueError: raised when `cache` is not an instance of
         `Cache` class
     """
-    version = '0.5'
+    version = '0.5.1'
 
     def __init__(self, origin, tag=None, cache=None, archive=None):
         self._origin = origin
@@ -121,7 +121,7 @@ class Backend:
         :returns: a generator of items
         """
         if self.archive:
-            self.archive.init_metadata(self.origin, self.__name__, self.version, category,
+            self.archive.init_metadata(self.origin, self.__class__.__name__, self.version, category,
                                        kwargs)
 
         self.client = self._init_client()
