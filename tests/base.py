@@ -41,10 +41,10 @@ class TestCaseBackendArchive(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_path)
 
-    def _test_fetch_from_archive(self, category, **kwargs):
+    def _test_fetch_from_archive(self, **kwargs):
         """Test whether the method fetch_from_archive works properly"""
 
-        items = [items for items in self.backend.fetch(category=category, **kwargs)]
+        items = [items for items in self.backend.fetch(**kwargs)]
         items_archived = [item for item in self.backend.fetch_from_archive()]
 
         self.assertEqual(len(items), len(items_archived))
