@@ -65,6 +65,9 @@ class MockedBackend(Backend):
             item = {'item': x}
             yield item
 
+    def fetch(self):
+        return super().fetch(MockedBackend.CATEGORY)
+
     @metadata
     def fetch_from_cache(self):
         for x in range(5):
@@ -254,7 +257,7 @@ class TestBackendArchive(TestCaseBackendArchive):
     def test_fetch_from_archive(self):
         """Test whether the method fetch_from_archive works properly"""
 
-        self._test_fetch_from_archive(self.backend.CATEGORY)
+        self._test_fetch_from_archive()
 
     def test_fetch_from_archive_not_provided(self):
         """Test whether an exception is thrown when an archive is not provided"""
@@ -638,7 +641,7 @@ class TestMetadata(unittest.TestCase):
     def test_decorator(self):
         backend = MockedBackend('test', 'mytag')
         before = datetime.datetime.utcnow().timestamp()
-        items = [item for item in backend.fetch(category=MockedBackend.CATEGORY)]
+        items = [item for item in backend.fetch()]
         after = datetime.datetime.utcnow().timestamp()
 
         for x in range(5):
