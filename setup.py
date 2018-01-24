@@ -82,7 +82,7 @@ setup(name="perceval",
           'feedparser>=5.1.3',
           'dulwich>=0.18.5',
           'urllib3>=1.22',
-          'grimoirelab-toolkit>=0.1.1'
+          'grimoirelab-toolkit>=0.1.4'
       ],
       scripts=[
           'bin/perceval'

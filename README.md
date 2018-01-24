@@ -55,7 +55,7 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 * python3-bs4 (beautifulsoup4) >= 4.3
 * python3-feedparser >= 5.1.3
 * python3-dulwich >= 0.18.5
-* grimoirelab-toolkit >= 0.1.0
+* grimoirelab-toolkit >= 0.1.4
 
 ## Installation
 
