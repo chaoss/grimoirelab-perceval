@@ -64,13 +64,13 @@ class Pipermail(MBox):
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
     """
-    version = '0.4.3'
+    version = '0.5.0'
 
-    def __init__(self, url, dirpath, tag=None, cache=None):
-        super().__init__(url, dirpath, tag=tag, cache=cache)
+    def __init__(self, url, dirpath, tag=None, cache=None, archive=None):
+        super().__init__(url, dirpath, tag=tag, cache=cache, archive=archive)
         self.url = url
+        self.client = None
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the Pipermail archiver.
 
@@ -81,6 +81,19 @@ class Pipermail(MBox):
 
         :returns: a generator of messages
         """
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch(**kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the messages"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Looking for messages from '%s' since %s",
                     self.url, str(from_date))
 
@@ -99,6 +112,14 @@ class Pipermail(MBox):
         """Returns whether it supports caching items on the fetch process.
 
         :returns: this backend dooes not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend dooes not support items archive
         """
         return False
 
