@@ -29,10 +29,8 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import CacheError
 
 
 logger = logging.getLogger(__name__)
@@ -53,18 +51,21 @@ class Jenkins(Backend):
     :param cache: cache object to store raw data
     :param blacklist_jobs: exclude the jobs of this list while fetching
     :param sleep_time: minimun waiting time due to a timeout connection exception
+    :param archive: collect builds already retrieved from an archive
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
-    def __init__(self, url, tag=None, cache=None, blacklist_jobs=None, sleep_time=SLEEP_TIME):
+    def __init__(self, url, tag=None, cache=None, blacklist_jobs=None,
+                 sleep_time=SLEEP_TIME, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
-        self.client = JenkinsClient(url, blacklist_jobs, sleep_time)
+        self.sleep_time = sleep_time
         self.blacklist_jobs = blacklist_jobs
 
-    @metadata
+        self.client = None
+
     def fetch(self):
         """Fetch the builds from the url.
 
@@ -73,9 +74,16 @@ class Jenkins(Backend):
 
         :returns: a generator of builds
         """
-        logger.info("Looking for projects at url '%s'", self.url)
 
-        self._purge_cache_queue()
+        kwargs = {}
+        items = super().fetch("build", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the contents"""
+
+        logger.info("Looking for projects at url '%s'", self.url)
 
         nbuilds = 0  # number of builds processed
         njobs = 0  # number of jobs processed
@@ -108,42 +116,29 @@ class Jenkins(Backend):
                                job['url'])
                 continue
 
-            self._push_cache_queue(raw_builds)
             builds = builds['builds']
             for build in builds:
                 yield build
                 nbuilds += 1
 
-            self._flush_cache_queue()
             njobs += 1
 
         logger.info("Total number of jobs: %i/%i", njobs, len(jobs))
         logger.info("Total number of builds: %i", nbuilds)
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the builds from the cache.
-
-        :returns: a generator of builds
-
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        cache_items = self.cache.retrieve()
-
-        for items in cache_items:
-            builds = json.loads(items)['builds']
-            for build in builds:
-                yield build
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archiving
         """
         return True
 
@@ -183,6 +178,12 @@ class Jenkins(Backend):
         """
         return 'build'
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return JenkinsClient(self.url, self.blacklist_jobs, self.sleep_time,
+                             archive=self.archive, from_archive=from_archive)
+
 
 class JenkinsClient(HttpClient):
     """Jenkins API client.
@@ -191,26 +192,31 @@ class JenkinsClient(HttpClient):
     projects in a Jenkins node.
 
     :param url: URL of jenkins node: https://build.opnfv.org/ci
+    :param blacklist_jobs: exclude the jobs of this list while fetching
+    :param sleep_time: minimun waiting time due to a timeout connection exception
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
 
     :raises HTTPError: when an error occurs doing the request
     """
     MAX_RETRIES = 5
 
-    def __init__(self, url, blacklist_jobs=None, sleep_time=SLEEP_TIME):
-        super().__init__(url, sleep_time=sleep_time, extra_status_forcelist=[410, 502, 503])
+    def __init__(self, url, blacklist_jobs=None, sleep_time=SLEEP_TIME,
+                 archive=None, from_archive=False):
+        super().__init__(url, sleep_time=sleep_time, extra_status_forcelist=[410, 502, 503],
+                         archive=archive, from_archive=from_archive)
         self.blacklist_jobs = blacklist_jobs
 
     def get_jobs(self):
-        """ Retrieve all jobs
-        """
+        """ Retrieve all jobs"""
+
         url_jenkins = urijoin(self.base_url, "api", "json")
 
         response = self.fetch(url_jenkins)
         return response.text
 
     def get_builds(self, job_name):
-        """ Retrieve all builds from a job
-        """
+        """ Retrieve all builds from a job"""
 
         if self.blacklist_jobs and job_name in self.blacklist_jobs:
             logging.info("Not getting blacklisted job: %s", job_name)
