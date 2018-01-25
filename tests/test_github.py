@@ -26,8 +26,8 @@ import json
 import os
 import shutil
 import sys
-import tempfile
 import time
+import tempfile
 import unittest
 
 import httpretty
@@ -39,10 +39,10 @@ import requests
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.archive import Archive
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
 from perceval.client import RateLimitHandler
-from perceval.errors import CacheError, RateLimitError
+from perceval.errors import ArchiveError, RateLimitError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.github import (GitHub,
                                            GitHubCommand,
@@ -121,12 +121,17 @@ class TestGitHubBackend(unittest.TestCase):
     def test_has_caching(self):
         """Test if it returns True when has_caching is called"""
 
-        self.assertEqual(GitHub.has_caching(), True)
+        self.assertEqual(GitHub.has_caching(), False)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 
         self.assertEqual(GitHub.has_resuming(), True)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(GitHub.has_archiving(), True)
 
     @httpretty.activate
     def test_fetch(self):
@@ -645,8 +650,7 @@ class TestGitHubBackend(unittest.TestCase):
                                })
 
         # Check that 404 exception getting user orgs is managed
-        users_orgs = GitHubClient._users_orgs
-        GitHubClient._users_orgs = {}  # clean cache to get orgs using the API
+        GitHubClient._users_orgs.clear()  # clean cache to get orgs using the API
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ORGS_URL,
                                body=orgs, status=404,
@@ -657,8 +661,8 @@ class TestGitHubBackend(unittest.TestCase):
         github = GitHub("zhquan_example", "repo", "aaa")
         issues = [issues for issues in github.fetch()]
 
-        # Check that a no 404 exception getting user orgs is raised
-        GitHubClient._users_orgs = {}
+        # Check that a no 402 exception getting user orgs is raised
+        GitHubClient._users_orgs.clear()
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ORGS_URL,
                                body=orgs, status=402,
@@ -666,25 +670,31 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
+
         github = GitHub("zhquan_example", "repo", "aaa")
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = [issues for issues in github.fetch()]
 
-        GitHubClient._users_orgs = users_orgs  # restore the cache
 
-
-class TestGitHubBackendCache(unittest.TestCase):
-    """GitHub backend tests using a cache"""
+class TestGitHubBackendArchive(unittest.TestCase):
+    """GitHub backend tests using the archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+        self.test_path = tempfile.mkdtemp(prefix='perceval_')
 
     def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        shutil.rmtree(self.test_path)
+
+    def test_initialization_null_archive(self):
+        """Test whether an exception is thrown when the archive manager does not exist"""
+
+        github = GitHub("zhquan_example", "repo", "aaa")
+        with self.assertRaises(ArchiveError):
+            _ = [issues for issues in github.fetch_from_archive()]
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """ Test whether a list of issues is returned from cache """
+    def test_fetch_from_archive(self):
+        """Test whether a list of issues is returned from archive"""
 
         issue_1 = read_file('data/github/github_issue_1')
         issue_2 = read_file('data/github/github_issue_2')
@@ -776,63 +786,38 @@ class TestGitHubBackendCache(unittest.TestCase):
                                })
 
         # First, we fetch the bugs from the server, storing them
-        # in a cache
-        cache = Cache(self.tmp_path)
-        github = GitHub("zhquan_example", "repo", "aaa", cache=cache)
+        # in an archive
 
+        archive_path = os.path.join(self.test_path, 'myarchive')
+        archive = Archive.create(archive_path)
+
+        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
         issues = [issues for issues in github.fetch()]
 
-        # Now, we get the bugs from the cache.
-        # The contents should be the same and there won't be
-        # any new request to the server
-        cache_issues = [cache_issues for cache_issues in github.fetch_from_cache()]
+        # Now, we get the bugs from the archive.
+        # The contents should be the same and there won't be any new remote request
+        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
+        archive_issues = [issues for issues in github.fetch_from_archive()]
 
         del issues[0]['timestamp']
-        del cache_issues[0]['timestamp']
+        del archive_issues[0]['timestamp']
         del issues[1]['timestamp']
-        del cache_issues[1]['timestamp']
+        del archive_issues[1]['timestamp']
 
-        self.assertEqual(len(issues), len(cache_issues))
-        self.assertDictEqual(issues[0], cache_issues[0])
-        self.assertDictEqual(issues[1], cache_issues[1])
-
-    @httpretty.activate
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any issues returned when the cache is empty"""
-
-        rate_limit = read_file('data/github/rate_limit')
-
-        httpretty.register_uri(httpretty.GET,
-                               GITHUB_RATE_LIMIT,
-                               body=rate_limit,
-                               status=200,
-                               forcing_headers={
-                                   'X-RateLimit-Remaining': '20',
-                                   'X-RateLimit-Reset': '15'
-                               })
-
-        cache = Cache(self.tmp_path)
-        rate_limit = read_file('data/github/rate_limit')
-
-        httpretty.register_uri(httpretty.GET,
-                               GITHUB_RATE_LIMIT,
-                               body=rate_limit,
-                               status=200,
-                               forcing_headers={
-                                   'X-RateLimit-Remaining': '20',
-                                   'X-RateLimit-Reset': '15'
-                               })
-
-        github = GitHub("zhquan_example", "repo", "aaa", cache=cache)
-
-        cache_issues = [cache_issues for cache_issues in github.fetch_from_cache()]
-
-        self.assertEqual(len(cache_issues), 0)
+        self.assertEqual(len(issues), len(archive_issues))
+        self.assertDictEqual(issues[0], archive_issues[0])
+        self.assertDictEqual(issues[1], archive_issues[1])
 
     @httpretty.activate
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
+    def test_fetch_from_date_from_archive(self):
+        """Test whether a list of issues is returned from archive after a given date"""
 
+        login = read_file('data/github/github_login')
+        orgs = read_file('data/github/github_orgs')
+        body = read_file('data/github/github_issue_2')
+        comments = read_file('data/github/github_issue_comments_2')
+        issue_reactions = read_file('data/github/github_issue_2_reactions')
+        comment_reactions = read_file('data/github/github_empty_request')
         rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
@@ -844,9 +829,129 @@ class TestGitHubBackendCache(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        github = GitHub("zhquan_example", "repo", "aaa")
-        with self.assertRaises(CacheError):
-            _ = [cache_issues for cache_issues in github.fetch_from_cache()]
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=body,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_COMMENTS_URL,
+                               body=comments,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_REACTION_URL,
+                               body=issue_reactions,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_2_REACTION_URL,
+                               body=comment_reactions,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_USER_URL,
+                               body=login, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body=orgs, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        archive_path = os.path.join(self.test_path, 'myarchive')
+        archive = Archive.create(archive_path)
+
+        from_date = datetime.datetime(2016, 3, 1)
+        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
+
+        issues = [issues for issues in github.fetch(from_date=from_date)]
+
+        # Now, we get the bugs from the archive.
+        # The contents should be the same and there won't be any new remote request
+        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
+        archive_issues = [issues for issues in github.fetch_from_archive()]
+
+        self.assertEqual(len(issues), len(archive_issues))
+
+        del issues[0]['timestamp']
+        del archive_issues[0]['timestamp']
+
+        self.assertEqual(issues[0], archive_issues[0])
+
+    @httpretty.activate
+    def test_fetch_from_empty_archive(self):
+        """Test whether no issues are returned when the archive is empty"""
+
+        body = ""
+        login = read_file('data/github/github_login')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=body, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_USER_URL,
+                               body=login, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body="[]", status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        origin = "test"
+        backend_name = "github"
+        backend_version = "X.Y.Z"
+        item_category = "item"
+
+        archive_path = os.path.join(self.test_path, 'myarchive')
+        archive = Archive.create(archive_path)
+        archive.init_metadata(origin, backend_name, backend_version, item_category, {"from_date": DEFAULT_DATETIME})
+
+        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
+        issues = [issues for issues in github.fetch()]
+
+        github = GitHub("zhquan_example", "repo", "aaa", archive=archive)
+        archive_issues = [issues for issues in github.fetch_from_archive()]
+
+        self.assertEqual(len(issues), 0)
+        self.assertEqual(len(archive_issues), 0)
 
 
 class TestGitHubClient(unittest.TestCase):
