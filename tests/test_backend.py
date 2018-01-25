@@ -248,7 +248,7 @@ class TestBackend(unittest.TestCase):
         archive = Archive.create(archive_path)
         b = MockedBackend('test', archive=archive)
 
-        _ = [item for item in b.fetch(category=MockedBackend.CATEGORY)]
+        _ = [item for item in b.fetch()]
 
         self.assertEqual(b.archive.backend_name, b.__class__.__name__)
         self.assertEqual(b.archive.backend_version, b.version)
