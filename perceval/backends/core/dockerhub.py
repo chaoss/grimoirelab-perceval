@@ -28,10 +28,8 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import CacheError
 
 
 logger = logging.getLogger(__name__)
@@ -59,22 +57,22 @@ class DockerHub(Backend):
     :param repository: DockerHub repository owned by `owner`
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect dockerhub data already retrieved from an archive
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, owner, repository,
-                 tag=None, cache=None):
+                 tag=None, cache=None, archive=None):
         if owner == DOCKER_SHORTCUT_OWNER:
             owner = DOCKER_OWNER
 
         origin = urijoin(DOCKERHUB_URL, owner, repository)
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.owner = owner
         self.repository = repository
-        self.client = DockerHubClient()
+        self.client = None
 
-    @metadata
     def fetch(self):
         """Fetch data from a Docker Hub repository.
 
@@ -84,53 +82,39 @@ class DockerHub(Backend):
 
         :returns: a generator of data
         """
+        kwargs = {}
+        items = super().fetch("dockerhub-data", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch items from a Docker Hub repository"""
+
         logger.info("Fetching data from '%s' repository of '%s' owner",
                     self.repository, self.owner)
 
-        self._purge_cache_queue()
-
         raw_data = self.client.repository(self.owner, self.repository)
         fetched_on = datetime_utcnow().timestamp()
-
-        self._push_cache_queue(
-            {
-                'fetched_on': fetched_on,
-                'data': raw_data
-            }
-        )
 
         data = self.parse_json(raw_data)
         data['fetched_on'] = fetched_on
         yield data
 
-        self._flush_cache_queue()
-
         logger.info("Fetch process completed")
-
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch items from the cache.
-
-        :returns: a generator of items
-
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        cache_items = self.cache.retrieve()
-
-        for raw_item in cache_items:
-            item = self.parse_json(raw_item['data'])
-            item['fetched_on'] = raw_item['fetched_on']
-            yield item
 
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -185,17 +169,25 @@ class DockerHub(Backend):
         result = json.loads(raw_json)
         return result
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return DockerHubClient(archive=self.archive, from_archive=from_archive)
+
 
 class DockerHubClient(HttpClient):
     """DockerHub API client.
 
     Client for fetching information from the DockerHub server
     using its REST API v2.
+
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
     """
     RREPOSITORY = 'repositories'
 
-    def __init__(self):
-        super().__init__(DOCKERHUB_API_URL)
+    def __init__(self, archive=None, from_archive=False):
+        super().__init__(DOCKERHUB_API_URL, archive=archive, from_archive=from_archive)
 
     def repository(self, owner, repository):
         """Fetch information about a repository."""
