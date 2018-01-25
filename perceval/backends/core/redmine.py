@@ -30,10 +30,8 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -58,20 +56,22 @@ class Redmine(Backend):
     :param max_issues:  maximum number of issues requested on the same query
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect issues already retrieved from an archive
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
-                 tag=None, cache=None):
+                 tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
+        self.api_token = api_token
         self.max_issues = max_issues
-        self.client = RedmineClient(url, api_token=api_token)
+        self.client = None
+
         self._users = {}
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the issues from the server.
 
@@ -83,12 +83,23 @@ class Redmine(Backend):
 
         :returns: a generator of issues
         """
-        logger.info("Fetching issues of '%s' from %s",
-                    self.url, str(from_date))
-
-        self._purge_cache_queue()
+        if not from_date:
+            from_date = DEFAULT_DATETIME
 
         from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("issue", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the issues"""
+
+        from_date = kwargs['from_date']
+
+        logger.info("Fetching issues of '%s' from %s",
+                    self.url, str(from_date))
 
         nissues = 0
 
@@ -109,163 +120,24 @@ class Redmine(Backend):
                 user = self.__get_or_fetch_user(journal['user']['id'])
                 journal['user_data'] = user
 
-            # Checkpoint
-            self._push_cache_queue('{}')
-
             yield issue
             nissues += 1
-            self._flush_cache_queue()
 
         logger.info("Fetch process completed: %s issues fetched", nissues)
-
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the issues from the cache.
-
-        It returns the issues stored in the cache object, provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
-
-        :returns: a generator of issues
-
-        :raises CacheError: raised when an error occurs accesing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        logger.info("Retrieving cached tasks: '%s'", self.url)
-
-        nissues = 0
-
-        for issue in self.__fetch_from_cache():
-            yield issue
-            nissues += 1
-
-        logger.info("Retrieval process completed: %s bugs retrieved from cache",
-                    nissues)
-
-    def __fetch_issues_ids(self, from_date):
-        offset = 0
-        issues = self.__fetch_and_parse_issues_page(from_date, offset,
-                                                    self.max_issues)
-
-        while issues:
-            issue = issues.pop(0)
-            issue_id = issue['id']
-            yield issue_id
-
-            if not issues:
-                offset += self.max_issues
-                issues = self.__fetch_and_parse_issues_page(from_date, offset,
-                                                            self.max_issues)
-
-    def __get_or_fetch_user(self, user_id):
-        if user_id in self._users:
-            return self._users[user_id]
-
-        logger.debug("User %s not found on client cache; fetching it", user_id)
-
-        try:
-            user = self.__fetch_and_parse_user(user_id)
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
-                logger.warning("User %s not found on the server; skipping it",
-                               user_id)
-                user = {}
-            else:
-                raise e
-
-        self._users[user_id] = user
-
-        return user
-
-    def __fetch_from_cache(self):
-        cache_items = self.cache.retrieve()
-
-        while True:
-            try:
-                raw_issue = next(cache_items)
-            except StopIteration:
-                break
-
-            issue = self.parse_issue_data(raw_issue)
-
-            for cache_user in self.__fetch_users_from_cache(cache_items):
-                self._users[cache_user['id']] = cache_user
-
-            for key in USER_FIELDS:
-                if key not in issue:
-                    continue
-
-                user_id = issue[key]['id']
-
-                try:
-                    issue[key + '_data'] = self._users.get(user_id, {})
-                except KeyError:
-                    # Fatal error. Keys must exist.
-                    cause = "invalid cached data, user id %s not found" % user_id
-                    raise CacheError(cause=cause)
-
-            for journal in issue['journals']:
-                if 'user' not in journal:
-                    continue
-
-                user_id = journal['user']['id']
-
-                try:
-                    journal['user_data'] = self._users.get(user_id, {})
-                except KeyError:
-                    # Fatal error. Keys must exist.
-                    cause = "invalid cached data, user id %s not found" % user_id
-                    raise CacheError(cause=cause)
-
-            yield issue
-
-    def __fetch_users_from_cache(self, cache_items):
-        fetch_user = True
-
-        while fetch_user:
-            try:
-                raw_user = next(cache_items)
-            except StopIteration:
-                # Fatal error. The code should not reach here.
-                # Cache should had reaeched a checkpoint
-                cause = "cache is exhausted but more items were expected"
-                raise CacheError(cause=cause)
-
-            if raw_user == '{}':
-                fetch_user = False
-            else:
-                user = self.parse_user_data(raw_user)
-                yield user
-
-    def __fetch_and_parse_issues_page(self, from_date, offset, max_issues):
-        logger.debug("Fetching and parsing issues page from %s (offset: %s)",
-                     str(from_date), str(offset))
-        raw_json = self.client.issues(from_date=from_date, offset=offset,
-                                      max_issues=max_issues)
-        issues = self.parse_issues(raw_json)
-        return [issue for issue in issues]
-
-    def __fetch_and_parse_issue(self, issue_id):
-        logger.debug("Fetching and parsing issue #%s", issue_id)
-        raw_issue = self.client.issue(issue_id)
-        self._push_cache_queue(raw_issue)
-        return self.parse_issue_data(raw_issue)
-
-    def __fetch_and_parse_user(self, user_id):
-        logger.debug("Fetching and parsing user #%s", user_id)
-        raw_user = self.client.user(user_id)
-        self._push_cache_queue(raw_user)
-        return self.parse_user_data(raw_user)
 
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -353,6 +225,64 @@ class Redmine(Backend):
         result = json.loads(raw_json)
         return result['user']
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return RedmineClient(self.url, self.api_token, self.archive, from_archive)
+
+    def __fetch_issues_ids(self, from_date):
+        offset = 0
+        issues = self.__fetch_and_parse_issues_page(from_date, offset,
+                                                    self.max_issues)
+
+        while issues:
+            issue = issues.pop(0)
+            issue_id = issue['id']
+            yield issue_id
+
+            if not issues:
+                offset += self.max_issues
+                issues = self.__fetch_and_parse_issues_page(from_date, offset,
+                                                            self.max_issues)
+
+    def __get_or_fetch_user(self, user_id):
+        if user_id in self._users:
+            return self._users[user_id]
+
+        logger.debug("User %s not found on client cache; fetching it", user_id)
+
+        try:
+            user = self.__fetch_and_parse_user(user_id)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                logger.warning("User %s not found on the server; skipping it",
+                               user_id)
+                user = {}
+            else:
+                raise e
+
+        self._users[user_id] = user
+
+        return user
+
+    def __fetch_and_parse_issues_page(self, from_date, offset, max_issues):
+        logger.debug("Fetching and parsing issues page from %s (offset: %s)",
+                     str(from_date), str(offset))
+        raw_json = self.client.issues(from_date=from_date, offset=offset,
+                                      max_issues=max_issues)
+        issues = self.parse_issues(raw_json)
+        return [issue for issue in issues]
+
+    def __fetch_and_parse_issue(self, issue_id):
+        logger.debug("Fetching and parsing issue #%s", issue_id)
+        raw_issue = self.client.issue(issue_id)
+        return self.parse_issue_data(raw_issue)
+
+    def __fetch_and_parse_user(self, user_id):
+        logger.debug("Fetching and parsing user #%s", user_id)
+        raw_user = self.client.user(user_id)
+        return self.parse_user_data(raw_user)
+
 
 class RedmineCommand(BackendCommand):
     """Class to run Redmine backend from the command line."""
@@ -390,6 +320,8 @@ class RedmineClient(HttpClient):
     :param base_url: URL of the Phabricator server
     :param api_token: token to get access to restricted data
         stored in the server
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
     """
     URL = '%(base)s/%(resource)s'
 
@@ -412,8 +344,8 @@ class RedmineClient(HttpClient):
     CRELATIONS = 'relations'
     CWATCHERS = 'watchers'
 
-    def __init__(self, base_url, api_token=None):
-        super().__init__(base_url.rstrip('/'))
+    def __init__(self, base_url, api_token=None, archive=None, from_archive=False):
+        super().__init__(base_url.rstrip('/'), archive, from_archive)
         self.api_token = api_token
 
     def issues(self, from_date=DEFAULT_DATETIME,
