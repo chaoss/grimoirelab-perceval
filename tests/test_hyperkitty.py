@@ -43,6 +43,7 @@ from perceval.backends.core.mbox import MailingList
 from perceval.backends.core.hyperkitty import (HyperKitty,
                                                HyperKittyCommand,
                                                HyperKittyList)
+from tests.base import TestCaseBackendArchive
 
 
 HYPERKITTY_URL = 'http://example.com/archives/list/test@example.com/'
@@ -169,6 +170,7 @@ class TestHyperKittyBackend(unittest.TestCase):
         self.assertEqual(backend.dirpath, self.tmp_path)
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'test')
+        self.assertIsNone(backend.client)
 
         # When tag is empty or None it will be set to
         # the value in uri
@@ -184,6 +186,11 @@ class TestHyperKittyBackend(unittest.TestCase):
         """Test if it returns False when has_caching is called"""
 
         self.assertEqual(HyperKitty.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns Truen when has_archiving is called"""
+
+        self.assertEqual(HyperKitty.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -235,7 +242,7 @@ class TestHyperKittyBackend(unittest.TestCase):
             self.assertEqual(message['origin'], 'http://example.com/archives/list/test@example.com/')
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
-            self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['category'], "message")
             self.assertEqual(message['tag'], 'http://example.com/archives/list/test@example.com/')
 
     @httpretty.activate
@@ -257,6 +264,58 @@ class TestHyperKittyBackend(unittest.TestCase):
         messages = [m for m in backend.fetch(from_date=from_date)]
 
         self.assertEqual(len(messages), 0)
+
+
+class TestHyperKittyBackendArchive(TestCaseBackendArchive):
+    """HyperKitty backend tests using an archive"""
+
+    def setUp(self):
+        super().setUp()
+        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+        self.backend = HyperKitty('http://example.com/archives/list/test@example.com/',
+                                  self.tmp_path, archive=self.archive)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_path)
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.hyperkitty.datetime_utcnow')
+    def test_fetch_from_archive(self, mock_utcnow):
+        """Test whether archives are fetched from archive"""
+
+        mock_utcnow.return_value = datetime.datetime(2016, 4, 10,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        mbox_march = read_file('data/hyperkitty/hyperkitty_2016_march.mbox')
+        mbox_april = read_file('data/hyperkitty/hyperkitty_2016_april.mbox')
+
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL,
+                               body="")
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL + 'export/2016-03.mbox.gz',
+                               body=mbox_march)
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL + 'export/2016-04.mbox.gz',
+                               body=mbox_april)
+
+        from_date = datetime.datetime(2016, 3, 10)
+        self._test_fetch_from_archive(from_date=from_date)
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.hyperkitty.datetime_utcnow')
+    def test_fetch_from_date_after_current_day_from_archive(self, mock_utcnow):
+        """Test if it does not fetch anything when from_date is a date from the future from archive"""
+
+        mock_utcnow.return_value = datetime.datetime(2016, 4, 10,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL,
+                               body="")
+
+        from_date = datetime.datetime(2017, 1, 10)
+        self._test_fetch_from_archive(from_date=from_date)
 
 
 class TestHyperKittyCommand(unittest.TestCase):

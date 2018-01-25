@@ -37,8 +37,7 @@ from grimoirelab.toolkit.datetime import (InvalidDateError,
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...utils import (DEFAULT_DATETIME,
                       check_compressed_file_type,
                       message_to_dict)
@@ -60,20 +59,20 @@ class MBox(Backend):
     :param dirpath: directory path where the mboxes are stored
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect events already retrieved from an archive
     """
-    version = '0.7.4'
+    version = '0.8.0'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
 
-    def __init__(self, uri, dirpath, tag=None, cache=None):
+    def __init__(self, uri, dirpath, tag=None, cache=None, archive=None):
         origin = uri
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.uri = uri
         self.dirpath = dirpath
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the messages from a set of mbox files.
 
@@ -84,131 +83,46 @@ class MBox(Backend):
 
         :returns: a generator of messages
         """
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("message", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the messages"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Looking for messages from '%s' on '%s' since %s",
                     self.uri, self.dirpath, str(from_date))
 
-        mailing_list = MailingList(self.uri, self.dirpath)
+        self.client = MailingList(self.uri, self.dirpath)
 
-        messages = self._fetch_and_parse_messages(mailing_list, from_date)
+        messages = self._fetch_and_parse_messages(self.client, from_date)
 
         for message in messages:
             yield message
 
         logger.info("Fetch process completed")
 
-    def _fetch_and_parse_messages(self, mailing_list, from_date):
-        """Fetch and parse the messages from a mailing list"""
-
-        from_date = datetime_to_utc(from_date)
-
-        nmsgs, imsgs, tmsgs = (0, 0, 0)
-
-        for mbox in mailing_list.mboxes:
-            try:
-                tmp_path = self._copy_mbox(mbox)
-
-                for message in self.parse_mbox(tmp_path):
-                    tmsgs += 1
-
-                    if not self._validate_message(message):
-                        imsgs += 1
-                        continue
-
-                    # Ignore those messages sent before the given date
-                    dt = str_to_datetime(message[MBox.DATE_FIELD])
-
-                    if dt < from_date:
-                        logger.debug("Message %s sent before %s; skipped",
-                                     message['unixfrom'], str(from_date))
-                        tmsgs -= 1
-                        continue
-
-                    # Convert 'CaseInsensitiveDict' to dict
-                    message = self._casedict_to_dict(message)
-
-                    nmsgs += 1
-                    logger.debug("Message %s parsed", message['unixfrom'])
-
-                    yield message
-            except OSError as e:
-                logger.warning("Ignoring %s mbox due to: %s", mbox.filepath, str(e))
-            except Exception as e:
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
-                raise e
-            finally:
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
-
-        logger.info("Done. %s/%s messages fetched; %s ignored",
-                    nmsgs, tmsgs, imsgs)
-
-    def _copy_mbox(self, mbox):
-        """Copy the contents of a mbox to a temporary file"""
-
-        tmp_path = tempfile.mktemp(prefix='perceval_')
-
-        with mbox.container as f_in:
-            with open(tmp_path, mode='wb') as f_out:
-                for l in f_in:
-                    f_out.write(l)
-        return tmp_path
-
-    def _validate_message(self, message):
-        """Check if the given message has the mandatory fields"""
-
-        # This check is "case insensitive" because we're
-        # using 'CaseInsensitiveDict' from requests.structures
-        # module to store the contents of a message.
-        if self.MESSAGE_ID_FIELD not in message:
-            logger.warning("Field 'Message-ID' not found in message %s; ignoring",
-                           message['unixfrom'])
-            return False
-
-        if not message[self.MESSAGE_ID_FIELD]:
-            logger.warning("Field 'Message-ID' is empty in message %s; ignoring",
-                           message['unixfrom'])
-            return False
-
-        if self.DATE_FIELD not in message:
-            logger.warning("Field 'Date' not found in message %s; ignoring",
-                           message['unixfrom'])
-            return False
-
-        if not message[self.DATE_FIELD]:
-            logger.warning("Field 'Date' is empty in message %s; ignoring",
-                           message['unixfrom'])
-            return False
-
-        try:
-            str_to_datetime(message[self.DATE_FIELD])
-        except InvalidDateError:
-            logger.warning("Invalid date %s in message %s; ignoring",
-                           message[self.DATE_FIELD], message['unixfrom'])
-            return False
-
-        return True
-
-    def _casedict_to_dict(self, message):
-        """Convert a message in CaseInsensitiveDict to dict.
-
-        This method also converts well known problematic headers,
-        such as Message-ID and Date to a common name.
-        """
-        message_id = message.pop(self.MESSAGE_ID_FIELD)
-        date = message.pop(self.DATE_FIELD)
-
-        msg = {k: v for k, v in message.items()}
-        msg[self.MESSAGE_ID_FIELD] = message_id
-        msg[self.DATE_FIELD] = date
-
-        return msg
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
         :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend does not support items archive
         """
         return False
 
@@ -269,6 +183,119 @@ class MBox(Backend):
         for msg in mbox:
             message = message_to_dict(msg)
             yield message
+
+    def _init_client(self, from_archive=False):
+        """Init mailing list"""
+
+        return MailingList(self.uri, self.dirpath)
+
+    def _fetch_and_parse_messages(self, mailing_list, from_date):
+        """Fetch and parse the messages from a mailing list"""
+
+        nmsgs, imsgs, tmsgs = (0, 0, 0)
+
+        for mbox in mailing_list.mboxes:
+            try:
+                tmp_path = self._copy_mbox(mbox)
+
+                for message in self.parse_mbox(tmp_path):
+                    tmsgs += 1
+
+                    if not self._validate_message(message):
+                        imsgs += 1
+                        continue
+
+                    # Ignore those messages sent before the given date
+                    dt = str_to_datetime(message[MBox.DATE_FIELD])
+
+                    if dt < from_date:
+                        logger.debug("Message %s sent before %s; skipped",
+                                     message['unixfrom'], str(from_date))
+                        tmsgs -= 1
+                        continue
+
+                    # Convert 'CaseInsensitiveDict' to dict
+                    message = self._casedict_to_dict(message)
+
+                    nmsgs += 1
+                    logger.debug("Message %s parsed", message['unixfrom'])
+
+                    yield message
+
+            except OSError as e:
+                logger.warning("Ignoring %s mbox due to: %s", mbox.filepath, str(e))
+            except Exception as e:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+                raise e
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
+        logger.info("Done. %s/%s messages fetched; %s ignored",
+                    nmsgs, tmsgs, imsgs)
+
+    def _copy_mbox(self, mbox):
+        """Copy the contents of a mbox to a temporary file"""
+
+        tmp_path = tempfile.mktemp(prefix='perceval_')
+
+        with mbox.container as f_in:
+            with open(tmp_path, mode='wb') as f_out:
+                for l in f_in:
+                    f_out.write(l)
+
+        return tmp_path
+
+    def _validate_message(self, message):
+        """Check if the given message has the mandatory fields"""
+
+        # This check is "case insensitive" because we're
+        # using 'CaseInsensitiveDict' from requests.structures
+        # module to store the contents of a message.
+        if self.MESSAGE_ID_FIELD not in message:
+            logger.warning("Field 'Message-ID' not found in message %s; ignoring",
+                           message['unixfrom'])
+            return False
+
+        if not message[self.MESSAGE_ID_FIELD]:
+            logger.warning("Field 'Message-ID' is empty in message %s; ignoring",
+                           message['unixfrom'])
+            return False
+
+        if self.DATE_FIELD not in message:
+            logger.warning("Field 'Date' not found in message %s; ignoring",
+                           message['unixfrom'])
+            return False
+
+        if not message[self.DATE_FIELD]:
+            logger.warning("Field 'Date' is empty in message %s; ignoring",
+                           message['unixfrom'])
+            return False
+
+        try:
+            str_to_datetime(message[self.DATE_FIELD])
+        except InvalidDateError:
+            logger.warning("Invalid date %s in message %s; ignoring",
+                           message[self.DATE_FIELD], message['unixfrom'])
+            return False
+
+        return True
+
+    def _casedict_to_dict(self, message):
+        """Convert a message in CaseInsensitiveDict to dict.
+
+        This method also converts well known problematic headers,
+        such as Message-ID and Date to a common name.
+        """
+        message_id = message.pop(self.MESSAGE_ID_FIELD)
+        date = message.pop(self.DATE_FIELD)
+
+        msg = {k: v for k, v in message.items()}
+        msg[self.MESSAGE_ID_FIELD] = message_id
+        msg[self.DATE_FIELD] = date
+
+        return msg
 
 
 class _MBox(mailbox.mbox):

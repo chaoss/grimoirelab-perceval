@@ -33,8 +33,7 @@ from grimoirelab.toolkit.uris import urijoin
 
 from .mbox import MBox, MailingList
 from ...backend import (BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
 from ...utils import (DEFAULT_DATETIME,
                       months_range)
@@ -55,14 +54,16 @@ class HyperKitty(MBox):
     :param dirpath: directory path where the mboxes are stored
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect message already retrieved from an archive
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
-    def __init__(self, url, dirpath, tag=None, cache=None):
-        super().__init__(url, dirpath, tag=tag, cache=cache)
+    def __init__(self, url, dirpath, tag=None, cache=None, archive=None):
+        super().__init__(url, dirpath, tag=tag, cache=cache, archive=archive)
         self.url = url
 
-    @metadata
+        self.client = None
+
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the HyperKitty mailing list archiver.
 
@@ -79,13 +80,27 @@ class HyperKitty(MBox):
 
         :returns: a generator of messages
         """
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch(**kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch messages"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Looking for messages from '%s' since %s",
                     self.url, str(from_date))
 
-        mailing_list = HyperKittyList(self.url, self.dirpath)
-        mailing_list.fetch(from_date=from_date)
+        self.client.fetch(from_date=from_date)
 
-        messages = self._fetch_and_parse_messages(mailing_list, from_date)
+        messages = self._fetch_and_parse_messages(self.client, from_date)
 
         for message in messages:
             yield message
@@ -101,12 +116,25 @@ class HyperKitty(MBox):
         return False
 
     @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
+        """
+        return True
+
+    @classmethod
     def has_resuming(cls):
         """Returns whether it supports to resume the fetch process.
 
         :returns: this backend supports items resuming
         """
         return True
+
+    def _init_client(self, from_archive=False):
+        """Init mailing list"""
+
+        return HyperKittyList(self.url, self.dirpath, self.archive, from_archive)
 
 
 class HyperKittyList(MailingList):
@@ -122,10 +150,12 @@ class HyperKittyList(MailingList):
 
     :param url: URL to the HyperKitty archiver for this list
     :param dirpath: path to the local mboxes archives
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
     """
-    def __init__(self, url, dirpath):
+    def __init__(self, url, dirpath, archive=None, from_archive=False):
         super().__init__(url, dirpath)
-        self.client = HttpClient(url)
+        self.client = HttpClient(url, archive=archive, from_archive=from_archive)
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the mbox files from the remote archiver.
@@ -224,7 +254,7 @@ class HyperKittyList(MailingList):
 
         try:
             with open(filepath, 'wb') as fd:
-                fd.write(r.raw.read())
+                fd.write(str.encode(r.text))
         except OSError as e:
             logger.warning("Ignoring %s archive due to: %s", url, str(e))
             return False
