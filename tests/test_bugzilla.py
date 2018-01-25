@@ -25,7 +25,6 @@ import datetime
 import os
 import shutil
 import sys
-import tempfile
 import unittest
 
 import httpretty
@@ -38,12 +37,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import BackendError, CacheError, ParseError
+from perceval.errors import BackendError, ParseError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.bugzilla import (Bugzilla,
                                              BugzillaCommand,
                                              BugzillaClient)
+from tests.base import TestCaseBackendArchive
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'
@@ -73,7 +72,7 @@ class TestBugzillaBackend(unittest.TestCase):
         self.assertEqual(bg.origin, BUGZILLA_SERVER_URL)
         self.assertEqual(bg.tag, 'test')
         self.assertEqual(bg.max_bugs, 5)
-        self.assertIsInstance(bg.client, BugzillaClient)
+        self.assertIsNone(bg.client)
 
         # When tag is empty or None it will be set to
         # the value in the origin (URL)
@@ -88,9 +87,14 @@ class TestBugzillaBackend(unittest.TestCase):
         self.assertEqual(bg.tag, BUGZILLA_SERVER_URL)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(Bugzilla.has_caching(), True)
+        self.assertEqual(Bugzilla.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(Bugzilla.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -326,7 +330,7 @@ class TestBugzillaBackend(unittest.TestCase):
 
     @httpretty.activate
     def test_fetch_empty(self):
-        """Test whethet it works when no bugs are fetched"""
+        """Test whether it works when no bugs are fetched"""
 
         body = read_file('data/bugzilla/bugzilla_version.xml')
         httpretty.register_uri(httpretty.GET,
@@ -474,18 +478,20 @@ class TestBugzillaBackend(unittest.TestCase):
             self.assertDictEqual(requests[i].querystring, expected[i])
 
 
-class TestBugzillaBackendCache(unittest.TestCase):
-    """Bugzilla backend tests using a cache"""
+class TestBugzillaBackendArchive(TestCaseBackendArchive):
+    """Bugzilla backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+        super().setUp()
+        self.backend = Bugzilla(BUGZILLA_SERVER_URL, max_bugs=5, max_bugs_csv=500,
+                                archive=self.archive)
 
     def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        shutil.rmtree(self.test_path)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether the cache works"""
+    def test_fetch_from_archive(self):
+        """Test whether a list of bugs is returned from the archive"""
 
         requests = []
         bodies_csv = [read_file('data/bugzilla/bugzilla_buglist.csv'),
@@ -528,56 +534,67 @@ class TestBugzillaBackendCache(unittest.TestCase):
                                    for _ in range(7)
                                ])
 
-        # First, we fetch the bugs from the server, storing them
-        # in a cache
-        cache = Cache(self.tmp_path)
-        bg = Bugzilla(BUGZILLA_SERVER_URL, max_bugs=5, cache=cache)
+        self._test_fetch_from_archive(from_date=None)
 
-        bugs = [bug for bug in bg.fetch()]
-        self.assertEqual(len(requests), 13)
+    @httpretty.activate
+    def test_fetch_from_date_from_archive(self):
+        """Test whether a list of bugs is returned from a given date from archive"""
 
-        # Now, we get the bugs from the cache.
-        # The contents should be the same and there won't be
-        # any new request to the server
-        cached_bugs = [bug for bug in bg.fetch_from_cache()]
-        self.assertEqual(len(cached_bugs), len(bugs))
+        requests = []
+        bodies_csv = [read_file('data/bugzilla/bugzilla_buglist_next.csv'),
+                      ""]
+        bodies_xml = [read_file('data/bugzilla/bugzilla_version.xml', mode='rb'),
+                      read_file('data/bugzilla/bugzilla_bugs_details_next.xml', mode='rb')]
+        bodies_html = [read_file('data/bugzilla/bugzilla_bug_activity.html', mode='rb'),
+                       read_file('data/bugzilla/bugzilla_bug_activity_empty.html', mode='rb')]
 
-        self.assertEqual(len(cached_bugs), 7)
+        def request_callback(method, uri, headers):
+            if uri.startswith(BUGZILLA_BUGLIST_URL):
+                body = bodies_csv.pop(0)
+            elif uri.startswith(BUGZILLA_BUG_URL):
+                body = bodies_xml.pop(0)
+            else:
+                body = bodies_html[len(requests) % 2]
 
-        self.assertEqual(cached_bugs[0]['data']['bug_id'][0]['__text__'], '15')
-        self.assertEqual(len(cached_bugs[0]['data']['activity']), 0)
-        self.assertEqual(cached_bugs[0]['origin'], BUGZILLA_SERVER_URL)
-        self.assertEqual(cached_bugs[0]['uuid'], '5a8a1e25dfda86b961b4146050883cbfc928f8ec')
-        self.assertEqual(cached_bugs[0]['updated_on'], 1248276445.0)
-        self.assertEqual(cached_bugs[0]['category'], 'bug')
-        self.assertEqual(cached_bugs[0]['tag'], BUGZILLA_SERVER_URL)
+            requests.append(httpretty.last_request())
 
-        self.assertEqual(cached_bugs[6]['data']['bug_id'][0]['__text__'], '888')
-        self.assertEqual(len(cached_bugs[6]['data']['activity']), 14)
-        self.assertEqual(cached_bugs[6]['origin'], BUGZILLA_SERVER_URL)
-        self.assertEqual(cached_bugs[6]['uuid'], 'b4009442d38f4241a4e22e3e61b7cd8ef5ced35c')
-        self.assertEqual(cached_bugs[6]['updated_on'], 1439404330.0)
-        self.assertEqual(cached_bugs[6]['category'], 'bug')
-        self.assertEqual(cached_bugs[6]['tag'], BUGZILLA_SERVER_URL)
+            return (200, headers, body)
 
-        self.assertEqual(len(requests), 13)
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGLIST_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUG_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUG_ACTIVITY_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
+                               ])
 
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any bugs returned when the cache is empty"""
+        from_date = datetime.datetime(2015, 1, 1)
+        self._test_fetch_from_archive(from_date=from_date)
 
-        cache = Cache(self.tmp_path)
-        bg = Bugzilla(BUGZILLA_SERVER_URL, max_bugs=5, cache=cache)
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test whether it works when no bugs are fetched from archive"""
 
-        cached_bugs = [bug for bug in bg.fetch_from_cache()]
-        self.assertEqual(len(cached_bugs), 0)
+        body = read_file('data/bugzilla/bugzilla_version.xml')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_METADATA_URL,
+                               body=body, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGLIST_URL,
+                               body="", status=200)
 
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        bg = Bugzilla(BUGZILLA_SERVER_URL, max_bugs=5)
-
-        with self.assertRaises(CacheError):
-            _ = [bug for bug in bg.fetch_from_cache()]
+        from_date = datetime.datetime(2100, 1, 1)
+        self._test_fetch_from_archive(from_date=from_date)
 
 
 class TestBugzillaBackendParsers(unittest.TestCase):
@@ -699,7 +716,6 @@ class TestBugzillaCommand(unittest.TestCase):
                 '--backend-password', '1234',
                 '--max-bugs', '10', '--max-bugs-csv', '5',
                 '--tag', 'test',
-                '--no-cache',
                 '--from-date', '1970-01-01',
                 BUGZILLA_SERVER_URL]
 
@@ -710,7 +726,6 @@ class TestBugzillaCommand(unittest.TestCase):
         self.assertEqual(parsed_args.max_bugs_csv, 5)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.url, BUGZILLA_SERVER_URL)
-        self.assertEqual(parsed_args.no_cache, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
