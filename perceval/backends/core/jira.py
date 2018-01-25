@@ -33,10 +33,8 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -94,18 +92,20 @@ class Jira(Backend):
     :param password: Jira user password
     :param verify: allows to disable SSL verification
     :param cert: SSL certificate path (PEM)
+    :param max_issues: max number of issues per query
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect issues already retrieved from an archive
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, url, project=None,
                  user=None, password=None,
                  verify=None, cert=None,
-                 max_issues=None, tag=None, cache=None):
+                 max_issues=None, tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
         self.project = project
         self.user = user
@@ -113,10 +113,8 @@ class Jira(Backend):
         self.verify = verify
         self.cert = cert
         self.max_issues = max_issues
-        self.client = JiraClient(url, project, user, password,
-                                 verify, cert, max_issues)
+        self.client = None
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the issues from the site.
 
@@ -130,12 +128,20 @@ class Jira(Backend):
         if not from_date:
             from_date = DEFAULT_DATETIME
 
+        from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("issue", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch issues"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Looking for issues at site '%s', in project '%s' and updated from '%s'",
                     self.url, self.project, str(from_date))
-
-        self._purge_cache_queue()
-
-        from_date = datetime_to_utc(from_date)
 
         whole_pages = self.client.get_issues(from_date)
 
@@ -143,8 +149,6 @@ class Jira(Backend):
         custom_fields = filter_custom_fields(fields)
 
         for whole_page in whole_pages:
-            self._push_cache_queue(whole_page)
-            self._flush_cache_queue()
             issues = self.parse_issues(whole_page)
             for issue in issues:
                 mapping = map_custom_field(custom_fields, issue['fields'])
@@ -152,30 +156,19 @@ class Jira(Backend):
                     issue['fields'][k] = v
                 yield issue
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the issues from the cache.
-
-        :returns: a generator of issues
-
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        cache_items = self.cache.retrieve()
-
-        for items in cache_items:
-            issues = self.parse_issues(items)
-            for issue in issues:
-                yield issue
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -235,6 +228,13 @@ class Jira(Backend):
         for issue in issues:
             yield issue
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return JiraClient(self.url, self.project, self.user, self.password,
+                          self.verify, self.cert, self.max_issues,
+                          self.archive, from_archive)
+
 
 class JiraClient(HttpClient):
     """JIRA API client.
@@ -249,6 +249,8 @@ class JiraClient(HttpClient):
     :param verify: allows to disable SSL verification
     :param cert: SSL certificate
     :param max_issues: max number of issues per query
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
 
     :raises HTTPError: when an error occurs doing the request
     """
@@ -257,8 +259,9 @@ class JiraClient(HttpClient):
     VERSION_API = '2'
     RESOURCE = 'rest/api'
 
-    def __init__(self, url, project, user, password, verify, cert, max_issues):
-        super().__init__(url)
+    def __init__(self, url, project, user, password, verify, cert, max_issues,
+                 archive=None, from_archive=False):
+        super().__init__(url, archive=archive, from_archive=from_archive)
         self.project = project
         self.user = user
         self.password = password
@@ -267,6 +270,44 @@ class JiraClient(HttpClient):
         self.max_issues = max_issues
 
         self.__init_session()
+
+    def get_issues(self, from_date):
+        """Retrieve all the issues from a given date.
+
+        :param from_date: obtain issues updated since this date
+        """
+        start_at = 0
+
+        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, 'search')
+        req = self.fetch(url, payload=self.__build_payload(start_at, from_date))
+        issues = req.text
+
+        data = req.json()
+        tissues = data['total']
+        nissues = data['maxResults']
+
+        start_at += min(nissues, tissues)
+        self.__log_status(start_at, tissues)
+
+        while issues:
+            yield issues
+            issues = None
+
+            if data['startAt'] + nissues < tissues:
+                req = self.fetch(url, payload=self.__build_payload(start_at, from_date))
+
+                data = req.json()
+                start_at += nissues
+                issues = req.text
+                self.__log_status(start_at, tissues)
+
+    def get_fields(self):
+        """Retrieve all the fields available."""
+
+        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, 'field')
+        req = self.fetch(url)
+
+        return req.text
 
     def __build_jql_query(self, from_date):
         AND_OP = 'AND'
@@ -316,44 +357,6 @@ class JiraClient(HttpClient):
         if self.verify is not True:
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
             self.session.verify = False
-
-    def get_issues(self, from_date):
-        """Retrieve all the issues from a given date.
-
-        :param from_date: obtain issues updated since this date
-        """
-        start_at = 0
-
-        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, 'search')
-        req = self.fetch(url, payload=self.__build_payload(start_at, from_date))
-        issues = req.text
-
-        data = req.json()
-        tissues = data['total']
-        nissues = data['maxResults']
-
-        start_at += min(nissues, tissues)
-        self.__log_status(start_at, tissues)
-
-        while issues:
-            yield issues
-            issues = None
-
-            if data['startAt'] + nissues < tissues:
-                req = self.fetch(url, payload=self.__build_payload(start_at, from_date))
-
-                data = req.json()
-                start_at += nissues
-                issues = req.text
-                self.__log_status(start_at, tissues)
-
-    def get_fields(self):
-        """Retrieve all the fields available."""
-
-        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, 'field')
-        req = self.fetch(url)
-
-        return req.text
 
 
 class JiraCommand(BackendCommand):
