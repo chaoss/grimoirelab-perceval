@@ -26,9 +26,7 @@ import httpretty
 import json
 import os
 import pkg_resources
-import shutil
 import sys
-import tempfile
 import time
 import unittest
 import urllib
@@ -39,12 +37,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.stackexchange import (StackExchange,
                                                   StackExchangeCommand,
                                                   StackExchangeClient)
+from tests.base import TestCaseBackendArchive
 
 
 VERSION_API = '/2.2'
@@ -74,6 +71,7 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(stack.max_questions, 1)
         self.assertEqual(stack.origin, 'stackoverflow')
         self.assertEqual(stack.tag, 'test')
+        self.assertIsNone(stack.client)
 
         # When tag is empty or None it will be set to
         # the value in site
@@ -88,9 +86,14 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(stack.tag, 'stackoverflow')
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(StackExchange.has_caching(), True)
+        self.assertEqual(StackExchange.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(StackExchange.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -164,18 +167,18 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertDictEqual(questions[0]['data'], data['items'][0])
 
 
-class TestStackExchangeBackendCache(unittest.TestCase):
-    """StackExchange backend tests using a cache"""
+class TestStackExchangeBackendArchive(TestCaseBackendArchive):
+    """StackExchange backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = StackExchange(site="stackoverflow", tagged="python",
+                                     api_token="aaa", max_questions=1,
+                                     archive=self.archive)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """ Test whether a list of questions is returned from cache """
+    def test_fetch_from_archive(self):
+        """Test whether a list of questions is returned from archive"""
 
         question = read_file('data/stackexchange/stackexchange_question')
 
@@ -183,42 +186,32 @@ class TestStackExchangeBackendCache(unittest.TestCase):
                                STACKEXCHANGE_QUESTIONS_URL,
                                body=question, status=200)
 
-        # First, we fetch the bugs from the server, storing them
-        # in a cache
-        cache = Cache(self.tmp_path)
-        stack = StackExchange(site="stackoverflow", tagged="python",
-                              api_token="aaa", max_questions=1, cache=cache)
+        self._test_fetch_from_archive()
 
-        questions = [question for question in stack.fetch(from_date=None)]
-        del questions[0]['timestamp']
+    @httpretty.activate
+    def test_fetch_from_date_from_archive(self):
+        """Test whether a list of questions from a given date is returned from the archive"""
 
-        # Now, we get the bugs from the cache.
-        # The contents should be the same and there won't be
-        # any new request to the server
-        cache_questions = [cache_question for cache_question in stack.fetch_from_cache()]
-        del cache_questions[0]['timestamp']
+        question = read_file('data/stackexchange/stackexchange_question')
 
-        self.assertEqual(cache_questions, questions)
+        httpretty.register_uri(httpretty.GET,
+                               STACKEXCHANGE_QUESTIONS_URL,
+                               body=question, status=200)
 
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any questions returned when the cache is empty"""
+        from_date = datetime.datetime(2016, 4, 5)
+        self._test_fetch_from_archive(from_date=from_date)
 
-        cache = Cache(self.tmp_path)
-        stack = StackExchange(site="stackoverflow", tagged="python",
-                              api_token="aaa", max_questions=1, cache=cache)
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test whether a list of questions is returned from archive"""
 
-        cache_questions = [cache_question for cache_question in stack.fetch_from_cache()]
+        # Required fields
+        question = '{"total": 0, "page_size": 0, "quota_remaining": 0, "quota_max": 0, "has_more": false, "items": []}'
+        httpretty.register_uri(httpretty.GET,
+                               STACKEXCHANGE_QUESTIONS_URL,
+                               body=question, status=200)
 
-        self.assertEqual(len(cache_questions), 0)
-
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        stack = StackExchange(site="stackoverflow", tagged="python",
-                              api_token="aaa", max_questions=1)
-
-        with self.assertRaises(CacheError):
-            _ = [cache_question for cache_question in stack.fetch_from_cache()]
+        self._test_fetch_from_archive(from_date=None)
 
 
 class TestStackExchangeBackendParsers(unittest.TestCase):
