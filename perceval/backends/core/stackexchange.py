@@ -30,10 +30,8 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -52,22 +50,25 @@ class StackExchange(Backend):
     :param site: StackExchange site
     :param tagged: filter items by question Tag
     :param api_token: StackExchange access_token for the API
+    :param max_questions: max of questions per page retrieved
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect questions already retrieved from an archive
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
     def __init__(self, site, tagged=None, api_token=None,
-                 max_questions=None, tag=None, cache=None):
+                 max_questions=None, tag=None, cache=None, archive=None):
         origin = site
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.site = site
+        self.api_token = api_token
         self.tagged = tagged
         self.max_questions = max_questions
-        self.client = StackExchangeClient(site, tagged, api_token, max_questions)
 
-    @metadata
+        self.client = None
+
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the questions from the site.
 
@@ -81,12 +82,20 @@ class StackExchange(Backend):
         if not from_date:
             from_date = DEFAULT_DATETIME
 
+        from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("question", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the questions"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Looking for questions at site '%s', with tag '%s' and updated from '%s'",
                     self.site, self.tagged, str(from_date))
-
-        self._purge_cache_queue()
-
-        from_date = datetime_to_utc(from_date)
 
         whole_pages = self.client.get_questions(from_date)
 
@@ -97,30 +106,19 @@ class StackExchange(Backend):
             for question in questions:
                 yield question
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the questions from the cache.
-
-        :returns: a generator of questions
-
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        cache_items = self.cache.retrieve()
-
-        for items in cache_items:
-            questions = self.parse_questions(items)
-            for question in questions:
-                yield question
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -177,6 +175,12 @@ class StackExchange(Backend):
         for question in questions:
             yield question
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return StackExchangeClient(self.site, self.tagged, self.api_token, self.max_questions,
+                                   self.archive, from_archive)
+
 
 class StackExchangeClient(HttpClient):
     """StackExchange API client.
@@ -188,6 +192,8 @@ class StackExchangeClient(HttpClient):
     :param tagged: filter items by question Tag
     :param token: StackExchange access_token for the API
     :param max_questions: max number of questions per query
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
 
     :raises HTTPError: when an error occurs doing the request
     """
@@ -201,8 +207,8 @@ class StackExchangeClient(HttpClient):
     STACKEXCHANGE_API_URL = 'https://api.stackexchange.com'
     VERSION_API = '2.2'
 
-    def __init__(self, site, tagged, token, max_questions):
-        super().__init__(self.STACKEXCHANGE_API_URL)
+    def __init__(self, site, tagged, token, max_questions, archive=None, from_archive=False):
+        super().__init__(self.STACKEXCHANGE_API_URL, archive=archive, from_archive=from_archive)
         self.site = site
         self.tagged = tagged
         self.token = token
