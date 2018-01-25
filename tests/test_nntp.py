@@ -36,11 +36,13 @@ import unittest.mock
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
+from perceval.archive import Archive
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError, ParseError
+from perceval.errors import ArchiveError, ParseError
 from perceval.backends.core.nntp import (NNTP,
+                                         NNTTPClient,
                                          NNTPCommand)
+from tests.base import TestCaseBackendArchive
 
 
 NNTP_SERVER = 'nntp.example.com'
@@ -98,6 +100,9 @@ class MockNNTPLib:
             lines = [l.rstrip() for l in f]
         return None, MockArticleInfo(article_id, message_id, lines)
 
+    def quit(self):
+        pass
+
 
 class TestNNTPBackend(unittest.TestCase):
     """NNTP backend tests"""
@@ -112,6 +117,7 @@ class TestNNTPBackend(unittest.TestCase):
         self.assertEqual(nntp.group, NNTP_GROUP)
         self.assertEqual(nntp.origin, expected_origin)
         self.assertEqual(nntp.tag, 'test')
+        self.assertIsNone(nntp.client)
 
         # When tag is empty or None it will be set to
         # the value in the origin
@@ -120,17 +126,24 @@ class TestNNTPBackend(unittest.TestCase):
         self.assertEqual(nntp.group, NNTP_GROUP)
         self.assertEqual(nntp.origin, expected_origin)
         self.assertEqual(nntp.tag, expected_origin)
+        self.assertIsNone(nntp.client)
 
         nntp = NNTP(NNTP_SERVER, NNTP_GROUP, tag='')
         self.assertEqual(nntp.host, NNTP_SERVER)
         self.assertEqual(nntp.group, NNTP_GROUP)
         self.assertEqual(nntp.origin, expected_origin)
         self.assertEqual(nntp.tag, expected_origin)
+        self.assertIsNone(nntp.client)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(NNTP.has_caching(), True)
+        self.assertEqual(NNTP.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(NNTP.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -144,7 +157,7 @@ class TestNNTPBackend(unittest.TestCase):
         mock_nntp.return_value = MockNNTPLib()
 
         nntp = NNTP(NNTP_SERVER, NNTP_GROUP)
-        articles = [article for article in nntp.fetch()]
+        articles = [article for article in nntp.fetch(offset=None)]
 
         expected = [
             ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 1,
@@ -241,73 +254,195 @@ class TestNNTPBackend(unittest.TestCase):
             _ = NNTP.parse_article(raw_article)
 
 
-class TestNNTPBackendCache(unittest.TestCase):
-    """NNTP backend tests using a cache"""
+class TestNNTPBackendArchive(TestCaseBackendArchive):
+    """NNTP backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = NNTP(NNTP_SERVER, NNTP_GROUP, archive=self.archive)
 
     @unittest.mock.patch('nntplib.NNTP')
-    def test_fetch_from_cache(self, mock_nntp):
-        """Test whether the cache works"""
+    def test_fetch_from_archive(self, mock_nntp):
+        """Test whether it fetches a set of articles from the archive"""
+
+        mock_nntp.return_value = MockNNTPLib()
+        self._test_fetch_from_archive()
+
+    @unittest.mock.patch('nntplib.NNTP')
+    def test_fetch_from_offset(self, mock_nntp):
+        """Test whether it fetches a set of articles from a given offset in the archive"""
+
+        mock_nntp.return_value = MockNNTPLib()
+        self._test_fetch_from_archive(offset=2)
+
+    @unittest.mock.patch('nntplib.NNTP')
+    def test_fetch_empty(self, mock_nntp):
+        """Test if nothing is returned when there are no new articles in the archive"""
+
+        mock_nntp.return_value = MockNNTPLib()
+        self._test_fetch_from_archive(offset=3)
+
+
+class TestNNTPClient(unittest.TestCase):
+    """Tests for NNTPCommand client"""
+
+    def setUp(self):
+        self.test_path = tempfile.mkdtemp(prefix='perceval_')
+        archive_path = os.path.join(self.test_path, 'myarchive')
+        self.archive = Archive.create(archive_path)
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
+
+    @unittest.mock.patch('nntplib.NNTP')
+    def initalization(self, mock_nntp):
+        """Test whether the client is correctly initialized"""
+
+        mock_nntp.return_value = MockNNTPLib()
+        client = NNTTPClient(NNTP_SERVER, archive=None, from_archive=False)
+
+        self.assertEqual(client.host, NNTP_SERVER)
+        self.assertIsNone(client.archive)
+        self.assertFalse(client.from_archive)
+        self.assertIsNone(client.handler)
+
+        mock_nntp.return_value = MockNNTPLib()
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=False)
+
+        self.assertEqual(client.host, NNTP_SERVER)
+        self.assertEqual(client.archive, self.archive)
+        self.assertFalse(client.from_archive)
+        self.assertIsNotNone(client.handler)
+
+        mock_nntp.return_value = MockNNTPLib()
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=True)
+
+        self.assertEqual(client.host, NNTP_SERVER)
+        self.assertEqual(client.archive, self.archive)
+        self.assertTrue(client.from_archive)
+        self.assertIsNotNone(client.handler)
+
+    @unittest.mock.patch('nntplib.NNTP')
+    def test_group(self, mock_nntp):
+        """Test whether the group method works properly"""
 
         mock_nntp.return_value = MockNNTPLib()
 
-        # First, we fetch the tasks from the server,
-        # storing them in a cache
-        cache = Cache(self.tmp_path)
-        nntp = NNTP(NNTP_SERVER, NNTP_GROUP, cache=cache)
-        articles = [article for article in nntp.fetch()]
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=False)
+        data = client.group("example.dev.project-link")
+        self.assertEqual((None, None, 1, 4, None), data)
 
-        self.assertEqual(len(articles), 2)
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=True)
+        archived_data = client.group("example.dev.project-link")
+        self.assertEqual((None, None, 1, 4, None), data)
 
-        # Now, we get the articles from the cache which
-        # should be the same
-        cached_articles = [article for article in nntp.fetch_from_cache()]
-        self.assertEqual(len(cached_articles), len(articles))
+        self.assertEqual(data, archived_data)
 
-        expected = [
-            ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 1,
-             'd088688545d7c2f3733993e215503b367193a26d', 1458039948.0),
-            ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2,
-             '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076496.0)
-        ]
-        expected_origin = NNTP_SERVER + '-' + NNTP_GROUP
+    @unittest.mock.patch('nntplib.NNTP')
+    def test_over(self, mock_nntp):
+        """Test whether the over method works properly"""
 
-        self.assertEqual(len(cached_articles), len(expected))
+        mock_nntp.return_value = MockNNTPLib()
 
-        for x in range(len(cached_articles)):
-            carticle = cached_articles[x]
-            expc = expected[x]
-            self.assertEqual(carticle['data']['message_id'], expc[0])
-            self.assertEqual(carticle['offset'], expc[1])
-            self.assertEqual(carticle['uuid'], expc[2])
-            self.assertEqual(carticle['origin'], expected_origin)
-            self.assertEqual(carticle['updated_on'], expc[3])
-            self.assertEqual(carticle['category'], 'article')
-            self.assertEqual(carticle['tag'], expected_origin)
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=False)
+        data = client.over((1, 1))
+        self.assertEqual(len(data), 2)
+        self.assertDictEqual(data[1][0][1],
+                             {'message_id': '<mailman.350.1458060579.14303.dev-project-link@example.com>'})
 
-            # Compare chached and fetched task
-            self.assertDictEqual(carticle['data'], articles[x]['data'])
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=True)
+        archived_data = client.over((1, 1))
+        self.assertEqual(len(data), 2)
+        self.assertDictEqual(data[1][0][1],
+                             {'message_id': '<mailman.350.1458060579.14303.dev-project-link@example.com>'})
 
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any articles returned when the cache is empty"""
+        self.assertEqual(data, archived_data)
 
-        cache = Cache(self.tmp_path)
-        nntp = NNTP(NNTP_SERVER, NNTP_GROUP, cache=cache)
-        cached_articles = [article for article in nntp.fetch_from_cache()]
-        self.assertEqual(len(cached_articles), 0)
+    @unittest.mock.patch('nntplib.NNTP')
+    def test_article(self, mock_nntp):
+        """Test whether the article method works properly"""
 
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
+        mock_nntp.return_value = MockNNTPLib()
 
-        nntp = NNTP(NNTP_SERVER, NNTP_GROUP)
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=False)
+        data = client.article(2)
+        self.assertEqual(len(data), 3)
+        self.assertEqual(len(data['lines']), 220)
+        self.assertEqual(data['lines'][-1], b'--lATx5p5hwwFl8QooX4JNWNU6e6LBSB7ES--')
+        self.assertEqual(data['message_id'], '<mailman.361.1458076505.14303.dev-project-link@example.com>')
+        self.assertEqual(data['number'], 2)
 
-        with self.assertRaises(CacheError):
-            _ = [article for article in nntp.fetch_from_cache()]
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=True)
+        archived_data = client.article(2)
+        self.assertEqual(len(data), 3)
+        self.assertEqual(len(data['lines']), 220)
+        self.assertEqual(data['lines'][-1], b'--lATx5p5hwwFl8QooX4JNWNU6e6LBSB7ES--')
+        self.assertEqual(data['message_id'], '<mailman.361.1458076505.14303.dev-project-link@example.com>')
+        self.assertEqual(data['number'], 2)
+
+        self.assertEqual(data, archived_data)
+
+    @unittest.mock.patch('nntplib.NNTP')
+    def test_archive_not_provided(self, mock_nntp):
+        """Test whether an exception is thrown if the archive is not provided"""
+
+        mock_nntp.return_value = MockNNTPLib()
+
+        client = NNTTPClient(NNTP_SERVER, archive=None, from_archive=True)
+        with self.assertRaises(ArchiveError):
+            client.group("example.dev.project-link")
+
+    @unittest.mock.patch('nntplib.NNTP')
+    def test_fetch_remote_nntp_temporary_error(self, mock_nntp):
+        """Test whether an exception is thrown in case of temporary error"""
+
+        mock_nntp.return_value = MockNNTPLib()
+        client = NNTTPClient(NNTP_SERVER, archive=None, from_archive=False)
+
+        with self.assertRaises(nntplib.NNTPTemporaryError):
+            client._fetch_from_remote("article", 3)
+
+    @unittest.mock.patch('nntplib.NNTP')
+    def test_fetch_from_archive(self, mock_nntp):
+        """Test whether the fetch from archive method works properly"""
+
+        mock_nntp.return_value = MockNNTPLib()
+
+        # first we upload data to the archive
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=False)
+        group = client.group("example.dev.project-link")
+        over = client.over((1, 1))
+        article = client.article(2)
+
+        # then we read the data within the archive
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=True)
+
+        group_archived = client._fetch_from_archive("group", "example.dev.project-link")
+        self.assertEqual(group, group_archived)
+
+        over_archived = client._fetch_from_archive("over", (1, 1))
+        self.assertEqual(over, over_archived)
+
+        article_archived = client._fetch_from_archive("article", 2)
+        self.assertEqual(article, article_archived)
+
+    @unittest.mock.patch('nntplib.NNTP')
+    def test_fetch_from_article(self, mock_nntp):
+        """Test whether the fetch_from_article works properly"""
+
+        mock_nntp.return_value = MockNNTPLib()
+
+        client = NNTTPClient(NNTP_SERVER, archive=self.archive, from_archive=False)
+        data = client._fetch_article(2)
+        self.assertEqual(len(data), 3)
+        self.assertIsNotNone(data['lines'])
+        self.assertEqual(len(data['lines']), 220)
+
+        self.assertIsNotNone(data['message_id'])
+        self.assertEqual(data['message_id'], '<mailman.361.1458076505.14303.dev-project-link@example.com>')
+
+        self.assertIsNotNone(data['number'])
+        self.assertEqual(data['number'], 2)
 
 
 class TestNNTPCommand(unittest.TestCase):
