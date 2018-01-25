@@ -28,10 +28,8 @@ from grimoirelab.toolkit.datetime import str_to_datetime
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import CacheError
 
 
 logger = logging.getLogger(__name__)
@@ -47,17 +45,17 @@ class RSS(Backend):
     :param url: RSS url
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect entries already retrieved from an archive
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
-    def __init__(self, url, tag=None, cache=None):
+    def __init__(self, url, tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
-        self.client = RSSClient(url)
+        self.client = None
 
-    @metadata
     def fetch(self):
         """Fetch the entries from the url.
 
@@ -65,6 +63,13 @@ class RSS(Backend):
 
         :returns: a generator of entries
         """
+        kwargs = {}
+        items = super().fetch("entry", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch entries"""
 
         logger.info("Looking for rss entries at feed '%s'", self.url)
 
@@ -72,9 +77,7 @@ class RSS(Backend):
         nentries = 0  # number of entries
 
         raw_entries = self.client.get_entries()
-        self._push_cache_queue(raw_entries)
         entries = self.parse_feed(raw_entries)['entries']
-        self._flush_cache_queue()
         for item in entries:
             yield item
             nentries += 1
@@ -85,29 +88,19 @@ class RSS(Backend):
     def parse_feed(self, raw_entries):
         return feedparser.parse(raw_entries)
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the entries from the cache.
-
-        :returns: a generator of entries
-
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        cache_entries = next(self.cache.retrieve())
-        entries = feedparser.parse(cache_entries)['entries']
-
-        for item in entries:
-            yield item
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching entries on the fetch process.
 
-        :returns: this backend supports entries cache
+        :returns: this backend does not support entries cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving entries on the fetch process.
+
+        :returns: this backend supports entries archive
         """
         return True
 
@@ -149,6 +142,11 @@ class RSS(Backend):
         """
         return 'entry'
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return RSSClient(self.url, self.archive, from_archive)
+
 
 class RSSClient(HttpClient):
     """RSS API client.
@@ -157,12 +155,14 @@ class RSSClient(HttpClient):
     projects in a RSS node.
 
     :param url: URL of rss node: https://item.opnfv.org/ci
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
 
     :raises HTTPError: when an error occurs doing the request
     """
 
-    def __init__(self, url):
-        super().__init__(url)
+    def __init__(self, url, archive=None, from_archive=False):
+        super().__init__(url, archive=archive, from_archive=from_archive)
 
     def get_entries(self):
         """ Retrieve all entries from a RSS feed"""
