@@ -31,10 +31,9 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import BackendError, CacheError
+from ...errors import BackendError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -69,45 +68,50 @@ class MediaWiki(Backend):
     :param url: MediaWiki url
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect pages already retrieved from an archive
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
-    def __init__(self, url, tag=None, cache=None):
+    def __init__(self, url, tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
-        self.client = MediaWikiClient(url)
+        self.client = None
         self._test_mode = False
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME, reviews_api=False):
         """Fetch the pages from the backend url.
 
         The method retrieves, from a MediaWiki url, the
         wiki pages.
 
+        :param from_date: obtain pages updated since this date
         :param reviews_api: use the reviews API available in MediaWiki >= 1.27
-
 
         :returns: a generator of pages
         """
-
-        self._purge_cache_queue()
-
         if from_date == DEFAULT_DATETIME:
             from_date = None
         else:
             from_date = datetime_to_utc(from_date)
 
+        kwargs = {"from_date": from_date, "reviews_api": reviews_api}
+        items = super().fetch("page", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch pages"""
+
+        from_date = kwargs['from_date']
+        reviews_api = kwargs['reviews_api']
+
         mediawiki_version = self.client.get_version()
         logger.info("MediaWiki version: %s", mediawiki_version)
-        self._push_cache_queue(json.dumps({"reviews_api": reviews_api}))
-        self._flush_cache_queue()
 
         if reviews_api:
-            if ((mediawiki_version[0] == 1 and mediawiki_version[1] >= 27) or
-                mediawiki_version[0] > 1):
+            if ((mediawiki_version[0] == 1 and mediawiki_version[1] >= 27) or mediawiki_version[0] > 1):
                 fetcher = self.__fetch_1_27(from_date)
             else:
                 logger.warning("Reviews API only available in MediaWiki >= 1.27")
@@ -119,54 +123,19 @@ class MediaWiki(Backend):
         for page_reviews in fetcher:
             yield page_reviews
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the pages from the cache.
-
-        :returns: a generator of pages
-
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        cache_items = self.cache.retrieve()
-
-        pages_dicts = ['allrevisions', 'allpages', 'recentchanges']
-        pages_done = []  # pages already retrieved in reviews API
-        reviews_api_json = json.loads(next(cache_items))
-        if 'reviews_api' not in reviews_api_json:
-            raise CacheError(cause="reviews_api not found at cache file start.")
-        reviews_api = reviews_api_json['reviews_api']
-
-        # pages -> revisions
-        for items in cache_items:
-            data_json = json.loads(items)
-            if 'reviews_api' in data_json:
-                # New perceval execution
-                reviews_api = data_json['reviews_api']
-                pages_done = []
-                continue
-            for pages_dict in pages_dicts:
-                if pages_dict in data_json['query']:
-                    pages_json = data_json['query'][pages_dict]
-                    for page in pages_json:
-                        if reviews_api:
-                            if page['pageid'] in pages_done:
-                                # The page was already returned for previous revisions
-                                continue
-                            pages_done.append(page['pageid'])
-                        page_reviews = self.__build_page_reviews(page, json.loads(next(cache_items)))
-                        if not page_reviews:
-                            continue
-                        yield page_reviews
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -206,6 +175,11 @@ class MediaWiki(Backend):
         """
         return 'page'
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return MediaWikiClient(self.url, self.archive, from_archive)
+
     def __get_max_date(self, reviews):
         """"Get the max date in unixtime format from reviews."""
         max_ts = 0
@@ -236,7 +210,6 @@ class MediaWiki(Backend):
 
         logger.info("Looking for pages at url '%s'", self.url)
 
-        self._purge_cache_queue()
         npages = 0  # number of pages processed
         pages_done = []  # pages already retrieved in reviews API
 
@@ -245,7 +218,6 @@ class MediaWiki(Backend):
         arvcontinue = ''  # pagination for getting revisions and their pages
         while arvcontinue is not None:
             raw_pages = self.client.get_pages_from_allrevisions(namespaces_contents, from_date, arvcontinue)
-            self._push_cache_queue(raw_pages)
             data_json = json.loads(raw_pages)
             if 'continue' in data_json:
                 arvcontinue = data_json['continue']['arvcontinue']
@@ -259,14 +231,11 @@ class MediaWiki(Backend):
                 pages_done.append(page['pageid'])
                 yield self.__get_page_reviews(page)
                 npages += 1
-            self._flush_cache_queue()
 
         logger.info("Total number of pages: %i", npages)
 
     def __get_page_reviews(self, page):
         revisions_raw = self.client.get_revisions(page['title'])
-        self._push_cache_queue(revisions_raw)
-        self._flush_cache_queue()
         page_reviews = self.__build_page_reviews(page, json.loads(revisions_raw))
         return page_reviews
 
@@ -286,8 +255,6 @@ class MediaWiki(Backend):
             hole_created = True  # To detect that incremental is not complete
             while rccontinue is not None:
                 raw_pages = self.client.get_recent_pages(namespaces_contents, rccontinue)
-                self._push_cache_queue(raw_pages)
-                self._flush_cache_queue()
                 data_json = json.loads(raw_pages)
                 if 'query-continue' in data_json:
                     # < 1.27
@@ -325,8 +292,6 @@ class MediaWiki(Backend):
                 logger.debug("Getting pages for namespace: %s", ns)
                 while apcontinue is not None:
                     raw_pages = self.client.get_pages(ns, apcontinue)
-                    self._push_cache_queue(raw_pages)
-                    self._flush_cache_queue()
                     data_json = json.loads(raw_pages)
                     if 'query-continue' in data_json:
                         # < 1.27
@@ -352,8 +317,6 @@ class MediaWiki(Backend):
                 cause = "Can't get incremental pages older than %i days." % MAX_RECENT_DAYS
                 cause += " Do a complete analysis without from_date for older changes."
                 raise BackendError(cause=cause)
-
-        self._purge_cache_queue()
 
         namespaces_contents = self.__get_namespaces_contents()
 
@@ -384,12 +347,14 @@ class MediaWikiClient(HttpClient):
     projects in a MediaWiki node.
 
     :param url: URL of mediawiki site: https://wiki.mozilla.org
+    :param archive: an archive to store/retrieved the fetched data
+    :param from_archive: define whether the archive is used to store/read data
 
     :raises HTTPError: when an error occurs doing the request
     """
 
-    def __init__(self, url):
-        super().__init__(urijoin(url, "api.php"))
+    def __init__(self, url, archive=None, from_archive=False):
+        super().__init__(urijoin(url, "api.php"), archive=archive, from_archive=from_archive)
         self.limit = "max"  # Always get the max number of items
 
     def call(self, params):
