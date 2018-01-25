@@ -20,23 +20,18 @@
 #     Valerio Cosentino <valcos@bitergia.com>
 #
 
-import hmac
-import hashlib
 import json
 import logging
 import requests
 
-from grimoirelab.toolkit.datetime import (datetime_utcnow,
-                                          datetime_to_utc,
+from grimoirelab.toolkit.datetime import (datetime_to_utc,
                                           str_to_datetime)
 from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import CacheError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -57,34 +52,29 @@ class Launchpad(Backend):
 
     :param distribution: Launchpad distribution
     :param package: Distribution package
-    :param consumer_key: App consumer key
-    :param api_token: Launchpad auth token to access the API
+    :param items_per_page: number of items in a retrieved page
+    :param sleep_time: time to sleep in case of connection problems
     :param tag: label used to mark the data
     :param cache: use issues already retrieved in cache
-    :param sleep_for_rate: sleep until rate limit is reset
-    :param min_rate_to_sleep: minimun rate needed to sleep until
-           it will be reset
+    :param archive: collect issues already retrieved from an archive
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, distribution, package=None,
-                 consumer_key=None, api_token=None,
                  items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME,
-                 tag=None, cache=None):
+                 tag=None, cache=None, archive=None):
 
         origin = urijoin(LAUNCHPAD_URL, distribution)
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.distribution = distribution
         self.package = package
-        self.client = LaunchpadClient(distribution, package=package,
-                                      consumer_key=consumer_key, api_token=api_token,
-                                      items_per_page=items_per_page,
-                                      sleep_time=sleep_time)
+        self.items_per_page = items_per_page
+        self.sleep_time = sleep_time
 
+        self.client = None
         self._users = {}  # internal users cache
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the issues from a project (distribution/package).
 
@@ -98,76 +88,42 @@ class Launchpad(Backend):
         if not from_date:
             from_date = DEFAULT_DATETIME
 
+        from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("issue", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the issues"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Fetching issues of '%s' distribution from %s",
                     self.distribution, str(from_date))
 
-        self._purge_cache_queue()
-
-        from_date = datetime_to_utc(from_date)
         nissues = 0
 
-        for issue in self._fetch(from_date):
+        for issue in self._fetch_issues(from_date):
             yield issue
             nissues += 1
 
         logger.info("Fetch process completed: %s issues fetched", nissues)
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the issues from the cache.
-
-        It returns the issues stored in the cache object provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
-
-        :returns: a generator of items
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        cache_items = self.cache.retrieve()
-        raw_item = next(cache_items)
-
-        while raw_item != '{}{}':
-
-            if raw_item == '{ISSUES}':
-                issues = self.__fetch_issues_from_cache(cache_items)
-
-            raw_item = next(cache_items)
-            for issue in issues:
-                issue = self.__init_extra_issue_fields(issue)
-
-                while raw_item != '{ISSUE-END}':
-                    try:
-                        if raw_item == '{OWNER}':
-                            issue['owner_data'] = self.__fetch_user_from_cache(cache_items)
-                        elif raw_item == '{ASSIGNEE}':
-                            issue['assignee_data'] = self.__fetch_user_from_cache(cache_items)
-                        elif raw_item == '{ISSUE-CORE-START}':
-                            data = self.__fetch_issue_content_from_cache(cache_items)
-                            issue['bug_data'] = data[0]
-                            issue['activity_data'] = data[1]
-                            issue['messages_data'] = data[2]
-                            issue['attachments_data'] = data[3]
-
-                        raw_item = next(cache_items)
-
-                    except StopIteration:
-                        # this should be never executed, the while condition prevents
-                        # to trigger the StopIteration exception
-                        break
-
-                raw_item = next(cache_items)
-                yield issue
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -212,76 +168,11 @@ class Launchpad(Backend):
         """
         return 'issue'
 
-    def __fetch_issue_content_from_cache(self, cache_items):
-        """Fetch issue content from cache"""
+    def _init_client(self, from_archive=False):
+        """Init client"""
 
-        raw_issue_content = next(cache_items)
-        issue_content = json.loads(raw_issue_content)
-
-        raw_data = next(cache_items)
-
-        activities = []
-        messages = []
-        attachments = []
-        while raw_data != '{ISSUE-CORE-END}':
-            if raw_data == '{ACTIVITIES}':
-                activities.extend(self.__fetch_issue_activities_from_cache(cache_items))
-            elif raw_data == '{MESSAGES}':
-                messages.extend(self.__fetch_issue_messages_from_cache(cache_items))
-            elif raw_data == '{ATTACHMENTS}':
-                attachments.extend(self.__fetch_issue_attachments_from_cache(cache_items))
-
-            raw_data = next(cache_items)
-
-        return issue_content, activities, messages, attachments
-
-    def __fetch_issue_messages_from_cache(self, cache_items):
-        """Fetch issue messages from cache"""
-
-        messages_raw = next(cache_items)
-        messages = json.loads(messages_raw)
-
-        for msg in messages['entries']:
-            _ = next(cache_items)
-            msg['owner_data'] = self.__fetch_user_from_cache(cache_items)
-
-        return messages['entries']
-
-    def __fetch_issue_attachments_from_cache(self, cache_items):
-        """Fetch issue attachments from cache"""
-
-        attachments_raw = next(cache_items)
-        attachments = json.loads(attachments_raw)
-
-        return attachments['entries']
-
-    def __fetch_issue_activities_from_cache(self, cache_items):
-        """Fetch issue activities from cache"""
-
-        activities_raw = next(cache_items)
-        activities = json.loads(activities_raw)
-
-        for act in activities['entries']:
-            _ = next(cache_items)
-            act['person_data'] = self.__fetch_user_from_cache(cache_items)
-
-        return activities['entries']
-
-    def __fetch_user_from_cache(self, cache_items):
-        """Fetch user from cache"""
-
-        _ = next(cache_items)
-        raw_user = next(cache_items)
-        user = json.loads(raw_user)
-
-        return user
-
-    def __fetch_issues_from_cache(self, cache_items):
-        """Fetch issues from cache"""
-
-        raw_issues = next(cache_items)
-        issues = json.loads(raw_issues)['entries']
-        return issues
+        return LaunchpadClient(self.distribution, self.package, self.items_per_page,
+                               self.sleep_time, self.archive, from_archive)
 
     def __init_extra_issue_fields(self, issue):
         """Add fields to an issue"""
@@ -297,14 +188,12 @@ class Launchpad(Backend):
 
         return bug_link.split('/')[-1]
 
-    def _fetch(self, from_date):
+    def _fetch_issues(self, from_date):
         """Fetch the issues from a project (distribution/package)"""
 
         issues_groups = self.client.issues(start=from_date)
 
         for raw_issues in issues_groups:
-            self._push_cache_queue('{ISSUES}')
-            self._push_cache_queue(raw_issues)
 
             issues = json.loads(raw_issues)['entries']
             for issue in issues:
@@ -317,31 +206,21 @@ class Launchpad(Backend):
                         continue
 
                     if field == 'bug_link':
-                        self._push_cache_queue('{ISSUE-CORE-START}')
                         issue['bug_data'] = self.__fetch_issue_data(issue_id)
                         issue['activity_data'] = [activity for activity in self.__fetch_issue_activities(issue_id)]
                         issue['messages_data'] = [message for message in self.__fetch_issue_messages(issue_id)]
                         issue['attachments_data'] = [attachment for attachment in self.__fetch_issue_attachments(issue_id)]
-                        self._push_cache_queue('{ISSUE-CORE-END}')
                     elif field == 'assignee_link':
                         issue['assignee_data'] = self.__fetch_user_data('{ASSIGNEE}', issue[field])
                     elif field == 'owner_link':
                         issue['owner_data'] = self.__fetch_user_data('{OWNER}', issue[field])
 
-                self._push_cache_queue('{ISSUE-END}')
-
                 yield issue
-
-            self._flush_cache_queue()
-
-        self._push_cache_queue('{}{}')
-        self._flush_cache_queue()
 
     def __fetch_issue_data(self, issue_id):
         """Get data associated to an issue"""
 
         raw_issue = self.client.issue(issue_id)
-        self._push_cache_queue(raw_issue)
         issue = json.loads(raw_issue)
 
         return issue
@@ -351,8 +230,6 @@ class Launchpad(Backend):
 
         for attachments_raw in self.client.issue_collection(issue_id, "attachments"):
             attachments = json.loads(attachments_raw)
-            self._push_cache_queue('{ATTACHMENTS}')
-            self._push_cache_queue(attachments_raw)
 
             for attachment in attachments['entries']:
                 yield attachment
@@ -362,8 +239,6 @@ class Launchpad(Backend):
 
         for messages_raw in self.client.issue_collection(issue_id, "messages"):
             messages = json.loads(messages_raw)
-            self._push_cache_queue('{MESSAGES}')
-            self._push_cache_queue(messages_raw)
 
             for msg in messages['entries']:
                 msg['owner_data'] = self.__fetch_user_data('{OWNER}', msg['owner_link'])
@@ -374,8 +249,6 @@ class Launchpad(Backend):
 
         for activities_raw in self.client.issue_collection(issue_id, "activity"):
             activities = json.loads(activities_raw)
-            self._push_cache_queue('{ACTIVITIES}')
-            self._push_cache_queue(activities_raw)
 
             for act in activities['entries']:
                 act['person_data'] = self.__fetch_user_data('{PERSON}', act['person_link'])
@@ -385,37 +258,42 @@ class Launchpad(Backend):
         """Get data associated to an user"""
 
         user_name = self.client.user_name(user_link)
-        self._push_cache_queue(tag_type)
-        self._push_cache_queue('{USER}')
 
         user = {}
 
         if not user_name:
-            self._push_cache_queue('{}')
             return user
 
         user_raw = self.client.user(user_name)
-        self._push_cache_queue(user_raw)
-
         user = json.loads(user_raw)
 
         return user
 
 
 class LaunchpadClient(HttpClient):
-    """Client for retrieving information from Launchpad API"""
+    """Client for retrieving information from Launchpad API
+
+    :param distribution: Launchpad distribution
+    :param package: Distribution package
+    :param items_per_page: number of items in a retrieved page
+    :param sleep_time: time to sleep in case of connection problems
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
+    """
 
     _users = {}
 
     def __init__(self, distribution, package=None,
-                 consumer_key=None, api_token=None,
-                 items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME):
-        super().__init__(LAUNCHPAD_API_URL, sleep_time=sleep_time)
-        self.consumer_key = consumer_key
-        self.api_token = api_token
+                 items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME,
+                 archive=None, from_archive=False):
+
         self.distribution = distribution
         self.package = package
         self.items_per_page = items_per_page
+
+        extra_headers = self.__define_headers()
+        super().__init__(LAUNCHPAD_API_URL, sleep_time=sleep_time, extra_headers=extra_headers,
+                         archive=archive, from_archive=from_archive)
 
     def issues(self, start=None):
         """Get the issues from pagination"""
@@ -437,7 +315,7 @@ class LaunchpadClient(HttpClient):
         logger.info("Getting info for %s" % (url_user))
 
         try:
-            raw_user = self.__send_request(url_user, headers=self.__get_headers())
+            raw_user = self.__send_request(url_user)
             user = raw_user
         except requests.exceptions.HTTPError as e:
             if e.response.status_code in [404, 410]:
@@ -460,7 +338,7 @@ class LaunchpadClient(HttpClient):
 
         path = urijoin("bugs", str(issue_id))
         url_issue = self.__get_url(path)
-        raw_text = self.__send_request(url_issue, headers=self.__get_headers())
+        raw_text = self.__send_request(url_issue)
 
         return raw_text
 
@@ -500,29 +378,17 @@ class LaunchpadClient(HttpClient):
 
         return urijoin(self.base_url, path)
 
-    def _generate_signature(self):
-        """Get HTTP request signature based on consumer_key and token"""
+    def __define_headers(self):
+        """Add headers to the Client default ones"""
 
-        sign = hmac.new(bytes(self.consumer_key.encode('utf-8')),
-                        bytes(self.api_token.encode('utf-8')),
-                        hashlib.sha256).hexdigest()
-        return sign
-
-    def __get_headers(self):
-        """Set header for request"""
-
-        headers = {'Content-type': 'application/json',
-                   'date': datetime_utcnow().strftime('%Y-%m-%d %H:%M:%S')}
+        headers = {'Content-type': 'application/json'}
 
         return headers
 
-    def __send_request(self, url, params=None, headers=None):
+    def __send_request(self, url, params=None):
         """Send request"""
 
-        if self.consumer_key and self.api_token:
-            headers['Sign'] = self._generate_signature()
-
-        r = self.fetch(url, payload=params, headers=headers)
+        r = self.fetch(url, payload=params)
         return r.text
 
     def __build_payload(self, size, operation=False, startdate=None):
@@ -558,7 +424,7 @@ class LaunchpadClient(HttpClient):
             logger.debug("Fetching page: %i", page)
 
             try:
-                raw_content = self.__send_request(url_next, payload, self.__get_headers())
+                raw_content = self.__send_request(url_next, payload)
                 content = json.loads(raw_content)
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code in [410]:
@@ -589,7 +455,7 @@ class LaunchpadCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               cache=True,
-                                              token_auth=True)
+                                              token_auth=False)
 
         # Optional arguments
         group = parser.parser.add_argument_group('Launchpad arguments')
@@ -597,8 +463,6 @@ class LaunchpadCommand(BackendCommand):
                            help="Items per page")
         group.add_argument('--sleep-time', dest='sleep_time',
                            help="Sleep time in case of connection lost")
-        group.add_argument('--consumer-key', dest='consumer_key',
-                           help="Consumer key")
 
         # Required arguments
         parser.parser.add_argument('distribution',
