@@ -31,9 +31,8 @@ from grimoirelab.toolkit.datetime import datetime_to_utc
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
-from ...errors import BackendError, CacheError
+                        BackendCommandArgumentParser)
+from ...errors import BackendError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -52,28 +51,33 @@ class Gerrit(Backend):
 
     :param url: Gerrit server URL
     :param user: SSH user used to connect to the Gerrit server
+    :param port: SSH port
     :param max_reviews: maximum number of reviews requested on the same query
     :param blacklist_reviews: exclude the reviews of this list while fetching
+    :param disable_host_key_check: disable host key checks
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect message already retrieved from an archive
     """
-    version = '0.7.4'
+    version = '0.8.0'
 
     def __init__(self, url,
                  user=None, port=PORT, max_reviews=MAX_REVIEWS,
                  blacklist_reviews=None,
                  disable_host_key_check=False,
-                 tag=None, cache=None):
+                 tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
+        self.user = user
         self.max_reviews = max(1, max_reviews)
         self.blacklist_reviews = blacklist_reviews
-        self.client = GerritClient(self.url, user, max_reviews,
-                                   blacklist_reviews, disable_host_key_check, port=port)
+        self.disable_host_key_check = disable_host_key_check
+        self.port = port
 
-    @metadata
+        self.client = None
+
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the reviews from the repository.
 
@@ -84,9 +88,30 @@ class Gerrit(Backend):
 
         :returns: a generator of reviews
         """
-        self._purge_cache_queue()
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        # Convert date to Unix time
+        from_ut = datetime_to_utc(from_date)
+        from_ut = from_ut.timestamp()
 
         if self.client.version[0] == 2 and self.client.version[1] == 8:
+            fetcher = 28
+        else:
+            fetcher = 0
+
+        kwargs = {"from_date": from_ut, "fetcher": fetcher}
+        items = super().fetch("review", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch reviews"""
+
+        from_date = kwargs['from_date']
+        fetcher = kwargs['fetcher']
+
+        if fetcher == 28:
             fetcher = self._fetch_gerrit28(from_date)
         else:
             fetcher = self._fetch_gerrit(from_date)
@@ -94,125 +119,19 @@ class Gerrit(Backend):
         for review in fetcher:
             yield review
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch reviews from the cache.
-
-        It returns the reviews stored in the cache object provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
-
-        :returns: a generator of items
-
-        :raises CacheError: raised when an error occurs accesing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        cache_items = self.cache.retrieve()
-
-        for raw_items in cache_items:
-            reviews = self.parse_reviews(raw_items)
-            for review in reviews:
-                yield review
-
-    def _fetch_gerrit28(self, from_date=DEFAULT_DATETIME):
-        """ Specific fetch for gerrit 2.8 version.
-
-        Get open and closed reviews in different queries.
-        Take the newer review from both lists and iterate.
-        """
-
-        # Convert date to Unix time
-        from_ut = datetime_to_utc(from_date)
-        from_ut = from_ut.timestamp()
-
-        filter_open = "status:open"
-        filter_closed = "status:closed"
-
-        last_item_open = self.client.next_retrieve_group_item()
-        last_item_closed = self.client.next_retrieve_group_item()
-        reviews_open = self._get_reviews(last_item_open, filter_open)
-        reviews_closed = self._get_reviews(last_item_closed, filter_closed)
-        last_nreviews_open = len(reviews_open)
-        last_nreviews_closed = len(reviews_closed)
-
-        while reviews_open or reviews_closed:
-            if reviews_open and reviews_closed:
-                if reviews_open[0]['lastUpdated'] >= reviews_closed[0]['lastUpdated']:
-                    review_open = reviews_open.pop(0)
-                    review = review_open
-                else:
-                    review_closed = reviews_closed.pop(0)
-                    review = review_closed
-            elif reviews_closed:
-                review_closed = reviews_closed.pop(0)
-                review = review_closed
-            else:
-                review_open = reviews_open.pop(0)
-                review = review_open
-
-            updated = review['lastUpdated']
-            if updated <= from_ut:
-                logger.debug("No more updates for %s" % (self.url))
-                break
-            else:
-                yield review
-
-            if not reviews_open and last_nreviews_open >= self.max_reviews:
-                last_item_open = self.client.next_retrieve_group_item(last_item_open, review_open)
-                reviews_open = self._get_reviews(last_item_open, filter_open)
-                last_nreviews_open = len(reviews_open)
-            if not reviews_closed and last_nreviews_closed >= self.max_reviews:
-                last_item_closed = self.client.next_retrieve_group_item(last_item_closed, review_closed)
-                reviews_closed = self._get_reviews(last_item_closed, filter_closed)
-                last_nreviews_closed = len(reviews_closed)
-
-    def _fetch_gerrit(self, from_date=DEFAULT_DATETIME):
-        last_item = self.client.next_retrieve_group_item()
-        reviews = self._get_reviews(last_item)
-        last_nreviews = len(reviews)
-
-        # Convert date to Unix time
-        from_ut = datetime_to_utc(from_date)
-        from_ut = from_ut.timestamp()
-
-        while reviews:
-            review = reviews.pop(0)
-            try:
-                last_item += 1
-            except Exception:
-                pass  # last_item is a string in old gerrits
-            updated = review['lastUpdated']
-            if updated <= from_ut:
-                logger.debug("No more updates for %s" % (self.url))
-                break
-            else:
-                yield review
-
-            if not reviews and last_nreviews >= self.max_reviews:
-                logger.debug("GETTING MORE REVIEWS %i >= %i " % (last_nreviews, self.max_reviews))
-                last_item = self.client.next_retrieve_group_item(last_item, review)
-                reviews = self._get_reviews(last_item)
-                last_nreviews = len(reviews)
-
-    def _get_reviews(self, last_item, filter_=None):
-        task_init = time.time()
-        raw_data = self.client.reviews(last_item, filter_)
-        self._push_cache_queue(raw_data)
-        self._flush_cache_queue()
-        reviews = self.parse_reviews(raw_data)
-        logger.info("Received %i reviews in %.2fs" % (len(reviews),
-                                                      time.time() - task_init))
-        return reviews
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -268,6 +187,90 @@ class Gerrit(Backend):
 
         return reviews
 
+    def _init_client(self, from_archive=False):
+
+        return GerritClient(self.url, self.user, self.max_reviews, self.blacklist_reviews,
+                            self.disable_host_key_check, self.port, self.archive, from_archive)
+
+    def _fetch_gerrit28(self, from_date):
+        """ Specific fetch for gerrit 2.8 version.
+
+        Get open and closed reviews in different queries.
+        Take the newer review from both lists and iterate.
+        """
+        filter_open = "status:open"
+        filter_closed = "status:closed"
+
+        last_item_open = self.client.next_retrieve_group_item()
+        last_item_closed = self.client.next_retrieve_group_item()
+        reviews_open = self._get_reviews(last_item_open, filter_open)
+        reviews_closed = self._get_reviews(last_item_closed, filter_closed)
+        last_nreviews_open = len(reviews_open)
+        last_nreviews_closed = len(reviews_closed)
+
+        while reviews_open or reviews_closed:
+            if reviews_open and reviews_closed:
+                if reviews_open[0]['lastUpdated'] >= reviews_closed[0]['lastUpdated']:
+                    review_open = reviews_open.pop(0)
+                    review = review_open
+                else:
+                    review_closed = reviews_closed.pop(0)
+                    review = review_closed
+            elif reviews_closed:
+                review_closed = reviews_closed.pop(0)
+                review = review_closed
+            else:
+                review_open = reviews_open.pop(0)
+                review = review_open
+
+            updated = review['lastUpdated']
+            if updated <= from_date:
+                logger.debug("No more updates for %s" % (self.url))
+                break
+            else:
+                yield review
+
+            if not reviews_open and last_nreviews_open >= self.max_reviews:
+                last_item_open = self.client.next_retrieve_group_item(last_item_open, review_open)
+                reviews_open = self._get_reviews(last_item_open, filter_open)
+                last_nreviews_open = len(reviews_open)
+            if not reviews_closed and last_nreviews_closed >= self.max_reviews:
+                last_item_closed = self.client.next_retrieve_group_item(last_item_closed, review_closed)
+                reviews_closed = self._get_reviews(last_item_closed, filter_closed)
+                last_nreviews_closed = len(reviews_closed)
+
+    def _fetch_gerrit(self, from_date):
+        last_item = self.client.next_retrieve_group_item()
+        reviews = self._get_reviews(last_item)
+        last_nreviews = len(reviews)
+
+        while reviews:
+            review = reviews.pop(0)
+            try:
+                last_item += 1
+            except Exception:
+                pass  # last_item is a string in old gerrits
+            updated = review['lastUpdated']
+            if updated <= from_date:
+                logger.debug("No more updates for %s" % (self.url))
+                break
+            else:
+                yield review
+
+            if not reviews and last_nreviews >= self.max_reviews:
+                logger.debug("GETTING MORE REVIEWS %i >= %i " % (last_nreviews, self.max_reviews))
+                last_item = self.client.next_retrieve_group_item(last_item, review)
+                reviews = self._get_reviews(last_item)
+                last_nreviews = len(reviews)
+
+    def _get_reviews(self, last_item, filter_=None):
+        task_init = time.time()
+        raw_data = self.client.reviews(last_item, filter_)
+        reviews = self.parse_reviews(raw_data)
+        logger.info("Received %i reviews in %.2fs" % (len(reviews),
+                                                      time.time() - task_init))
+        return reviews
+
 
 class GerritClient():
     """Gerrit API client.
@@ -282,6 +285,11 @@ class GerritClient():
     :param repository: URL of the Gerrit server
     :param user: SSH user to be used to connect to gerrit server
     :param max_reviews: max number of reviews per query
+    :param blacklist_reviews: exclude the reviews of this list while fetching
+    :param disable_host_key_check: disable host key checks
+    :param port: SSH port
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
     """
     VERSION_REGEX = re.compile(r'gerrit version (\d+)\.(\d+).*')
     CMD_GERRIT = 'gerrit'
@@ -290,7 +298,8 @@ class GerritClient():
     RETRY_WAIT = 60  # number of seconds when retrying a ssh command
 
     def __init__(self, repository, user, max_reviews, blacklist_reviews=[],
-                 disable_host_key_check=False, port=PORT):
+                 disable_host_key_check=False, port=PORT,
+                 archive=None, from_archive=False):
         self.gerrit_user = user
         self.max_reviews = max_reviews
         self.blacklist_reviews = blacklist_reviews
@@ -299,6 +308,10 @@ class GerritClient():
         self._version = None
         self.port = port
         ssh_opts = ''
+
+        self.archive = archive
+        self.from_archive = from_archive
+
         if disable_host_key_check:
             ssh_opts += "-o StrictHostKeyChecking=no "
 
@@ -311,6 +324,21 @@ class GerritClient():
         self.gerrit_cmd += " %s " % (GerritClient.CMD_GERRIT)
 
     def __execute(self, cmd):
+        """ Execute gerrit command"""
+
+        if self.from_archive:
+            data = self.archive.retrieve(cmd, "", "")
+        else:
+            try:
+                data = self.__execute_remote(cmd)
+                self.archive.store(cmd, "", "", data)
+            except RuntimeError as e:
+                self.archive.store(cmd, "", "", e)
+                raise e
+
+        return data
+
+    def __execute_remote(self, cmd):
         """ Execute gerrit command with retry if it fails """
 
         data = None  # data result from the cmd execution
