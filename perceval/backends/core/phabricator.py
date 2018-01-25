@@ -27,10 +27,9 @@ from grimoirelab.toolkit.datetime import datetime_to_utc
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import BaseError, CacheError
+from ...errors import BaseError
 from ...utils import DEFAULT_DATETIME
 
 logger = logging.getLogger(__name__)
@@ -48,19 +47,21 @@ class Phabricator(Backend):
     :param api_token: token needed to use the API
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect tasks already retrieved from an archive
     """
-    version = '0.6.1'
+    version = '0.7.0'
 
-    def __init__(self, url, api_token, tag=None, cache=None):
+    def __init__(self, url, api_token, tag=None, cache=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.url = url
-        self.client = ConduitClient(url, api_token)
+        self.api_token = api_token
+        self.client = None
+
         self._users = {}
         self._projects = {}
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the tasks from the server.
 
@@ -72,11 +73,20 @@ class Phabricator(Backend):
 
         :returns: a generator of tasks
         """
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("task", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the tasks"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Fetching tasks of '%s' from %s", self.url, str(from_date))
-
-        self._purge_cache_queue()
-
-        from_date = datetime_to_utc(from_date)
 
         ntasks = 0
 
@@ -86,280 +96,19 @@ class Phabricator(Backend):
 
         logger.info("Fetch process completed: %s tasks fetched", ntasks)
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the tasks from the cache.
-
-        It returns the tasks stored in the cache object, provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
-
-        :returns: a generator of tasks
-
-        :raises CacheError: raised when an error occurs accesing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        logger.info("Retrieving cached tasks: '%s'", self.url)
-
-        ntasks = 0
-
-        try:
-            for task in self.__fetch_tasks_from_cache():
-                yield task
-                ntasks += 1
-        except StopIteration:
-            # Fatal error. The code should not reach here.
-            # Cache should had stored an activity item per parsed bug.
-            cause = "cache is exhausted but more items were expected"
-            raise CacheError(cause=cause)
-
-        logger.info("Retrieval process completed: %s tasks retrieved from cache",
-                    ntasks)
-
-    def __fetch_tasks(self, from_date):
-        for raw_tasks in self.client.tasks(from_date=from_date):
-            self._push_cache_queue(raw_tasks)
-
-            tasks = [t for t in self.parse_tasks(raw_tasks)]
-
-            if not tasks:
-                break
-
-            tasks_ids = [t['id'] for t in tasks]
-            tasks_trans = self.__fetch_and_parse_tasks_transactions(*tasks_ids)
-
-            for task in tasks:
-                # Task check point
-                self._push_cache_queue('{TASK}')
-
-                tid = str(task['id'])
-                author_id = task['fields']['authorPHID']
-                owner_id = task['fields']['ownerPHID']
-
-                task['fields']['authorData'] = self.__get_or_fetch_user(author_id)
-
-                if owner_id:
-                    task['fields']['ownerData'] = self.__get_or_fetch_user(owner_id)
-
-                # Users checkpoint
-                self._push_cache_queue('{ENDUSERS}')
-
-                project_ids = task['attachments']['projects']['projectPHIDs']
-                task_projects = [self.__get_or_fetch_project(project_id)
-                                 for project_id in project_ids]
-
-                # Projects checkpoint
-                self._push_cache_queue('{ENDPROJECTS}')
-
-                task['transactions'] = tasks_trans[tid]
-                task['projects'] = task_projects
-
-                yield task
-
-            # Checkpoint. A tasks set finish here.
-            self._push_cache_queue('{}')
-            self._flush_cache_queue()
-
-    def __fetch_tasks_from_cache(self):
-        cache_items = self.cache.retrieve()
-        cached_users = {}
-        cached_projects = {}
-
-        while True:
-            try:
-                raw_tasks = next(cache_items)
-            except StopIteration:
-                break
-
-            tasks = [t for t in self.parse_tasks(raw_tasks)]
-
-            if not tasks:
-                break
-
-            raw_trans = next(cache_items)
-            tasks_trans = self.parse_tasks_transactions(raw_trans)
-
-            # Retrieve cached users from the transactions
-            users = self.__retrieve_cached_users(cache_items)
-            for user in users:
-                if not user:
-                    continue
-                user_id = user['phid']
-                cached_users[user_id] = user
-
-            # Retrieve cached tasks users and projects
-            raw_checkpoint = next(cache_items)
-            checkpoint = raw_checkpoint == '{}'
-
-            while not checkpoint:
-                users = self.__retrieve_cached_users(cache_items)
-                for user in users:
-                    if not user:
-                        continue
-                    user_id = user['phid']
-                    cached_users[user_id] = user
-
-                projects = self.__retrieve_cached_projects(cache_items)
-                for project in projects:
-                    project_id = project['phid']
-                    cached_projects[project_id] = project
-
-                raw_checkpoint = next(cache_items)
-                checkpoint = raw_checkpoint == '{}'
-
-            task_builder = self.__build_cached_tasks(tasks, tasks_trans,
-                                                     cached_users, cached_projects)
-
-            for task in task_builder:
-                yield task
-
-    def __get_or_fetch_user(self, user_id):
-        if user_id in self._users:
-            return self._users[user_id]
-
-        logger.debug("User %s not found on client cache; fetching it", user_id)
-
-        if user_id.startswith('PHID-USER-'):
-            users = self.__fetch_and_parse_users(user_id)
-        else:
-            logger.debug("User %s is not a real user. Using PHID API to fetch it",
-                         user_id)
-            users = self.__fetch_and_parse_phids(user_id)
-
-        if len(users) == 0:
-            logger.warning("User %s not found on the server. Setting empty data",
-                           user_id)
-            user = None
-        else:
-            user = users[0]
-
-        self._users[user_id] = user
-        return user
-
-    def __get_or_fetch_project(self, project_id):
-        if project_id in self._projects:
-            return self._projects[project_id]
-
-        logger.debug("Project %s not found on client cache; fetching it", project_id)
-
-        phids = self.__fetch_and_parse_phids(project_id)
-        project = None
-        if phids:
-            project = phids[0]
-
-        self._projects[project_id] = project
-        return project
-
-    def __retrieve_cached_users(self, cache_items):
-        checkpoint = False
-
-        while not checkpoint:
-            raw_item = next(cache_items)
-
-            if raw_item in ('{ENDUSERS}', '{ENDTRANS}'):
-                checkpoint = True
-            elif raw_item == '{PHID}':
-                raw_item = next(cache_items)
-                json_item = json.loads(raw_item)
-                phids = [phid for phid in self.parse_phids(json_item)]
-                yield phids[0]
-            else:
-                users = [user for user in self.parse_users(raw_item)]
-                user = users[0] if len(users) > 0 else None
-                yield user
-
-    def __retrieve_cached_projects(self, cache_items):
-        checkpoint = False
-
-        while not checkpoint:
-            raw_item = next(cache_items)
-
-            if raw_item == '{ENDPROJECTS}':
-                checkpoint = True
-            else:
-                raw_item = next(cache_items)
-                json_item = json.loads(raw_item)
-                phids = [phid for phid in self.parse_phids(json_item)]
-                yield phids[0]
-
-    def __fetch_and_parse_tasks_transactions(self, *tasks_ids):
-        logger.debug("Fetching and parsing tasks transactions")
-
-        raw_json = self.client.transactions(*tasks_ids)
-        self._push_cache_queue(raw_json)
-        tasks_trans = self.parse_tasks_transactions(raw_json)
-
-        for trans in tasks_trans.values():
-            for tt in trans:
-                author_id = tt['authorPHID']
-                author = self.__get_or_fetch_user(author_id)
-                tt['authorData'] = author
-
-        # Transactions checkpoint
-        self._push_cache_queue('{ENDTRANS}')
-
-        return tasks_trans
-
-    def __fetch_and_parse_users(self, *users_ids):
-        logger.debug("Fetching and parsing users data")
-        raw_json = self.client.users(*users_ids)
-        self._push_cache_queue(raw_json)
-        users = self.parse_users(raw_json)
-        return [user for user in users]
-
-    def __fetch_and_parse_phids(self, *phids):
-        logger.debug("Fetching and parsing phids data")
-        raw_phids = self.client.phids(*phids)
-        phids = json.loads(raw_phids)
-
-        self._push_cache_queue('{PHID}')
-        self._push_cache_queue(raw_phids)
-
-        result = []
-        if phids['result']:
-            # PHID checkpoint
-            result = self.parse_phids(phids)
-
-        return [phid for phid in result]
-
-    def __build_cached_tasks(self, tasks, transactions,
-                             cached_users, cached_projects):
-        for task in tasks:
-            tid = str(task['id'])
-            author_id = task['fields']['authorPHID']
-            owner_id = task['fields']['ownerPHID']
-
-            task['fields']['authorData'] = cached_users.get(author_id, None)
-
-            if owner_id:
-                task['fields']['ownerData'] = cached_users.get(owner_id, None)
-
-            # Build tasks transactions
-            task_trans = transactions[tid]
-
-            for tt in task_trans:
-                user_id = tt['authorPHID']
-                tt['authorData'] = cached_users.get(user_id, None)
-
-            # Build tasks projects
-            projects_ids = task['attachments']['projects']['projectPHIDs']
-            task_projects = [cached_projects[project_id]
-                             for project_id in projects_ids]
-
-            task['transactions'] = task_trans
-            task['projects'] = task_projects
-
-            yield task
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -463,6 +212,112 @@ class Phabricator(Backend):
         for phid in results['result'].values():
             yield phid
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return ConduitClient(self.url, self.api_token, self.archive, from_archive)
+
+    def __fetch_tasks(self, from_date):
+        for raw_tasks in self.client.tasks(from_date=from_date):
+
+            tasks = [t for t in self.parse_tasks(raw_tasks)]
+
+            if not tasks:
+                break
+
+            tasks_ids = [t['id'] for t in tasks]
+            tasks_trans = self.__fetch_and_parse_tasks_transactions(*tasks_ids)
+
+            for task in tasks:
+                # Task check point
+
+                tid = str(task['id'])
+                author_id = task['fields']['authorPHID']
+                owner_id = task['fields']['ownerPHID']
+
+                task['fields']['authorData'] = self.__get_or_fetch_user(author_id)
+
+                if owner_id:
+                    task['fields']['ownerData'] = self.__get_or_fetch_user(owner_id)
+
+                project_ids = task['attachments']['projects']['projectPHIDs']
+                task_projects = [self.__get_or_fetch_project(project_id)
+                                 for project_id in project_ids]
+
+                task['transactions'] = tasks_trans[tid]
+                task['projects'] = task_projects
+
+                yield task
+
+    def __get_or_fetch_user(self, user_id):
+        if user_id in self._users:
+            return self._users[user_id]
+
+        logger.debug("User %s not found on client cache; fetching it", user_id)
+
+        if user_id.startswith('PHID-USER-'):
+            users = self.__fetch_and_parse_users(user_id)
+        else:
+            logger.debug("User %s is not a real user. Using PHID API to fetch it",
+                         user_id)
+            users = self.__fetch_and_parse_phids(user_id)
+
+        if len(users) == 0:
+            logger.warning("User %s not found on the server. Setting empty data",
+                           user_id)
+            user = None
+        else:
+            user = users[0]
+
+        self._users[user_id] = user
+        return user
+
+    def __get_or_fetch_project(self, project_id):
+        if project_id in self._projects:
+            return self._projects[project_id]
+
+        logger.debug("Project %s not found on client cache; fetching it", project_id)
+
+        phids = self.__fetch_and_parse_phids(project_id)
+        project = None
+        if phids:
+            project = phids[0]
+
+        self._projects[project_id] = project
+        return project
+
+    def __fetch_and_parse_tasks_transactions(self, *tasks_ids):
+        logger.debug("Fetching and parsing tasks transactions")
+
+        raw_json = self.client.transactions(*tasks_ids)
+        tasks_trans = self.parse_tasks_transactions(raw_json)
+
+        for trans in tasks_trans.values():
+            for tt in trans:
+                author_id = tt['authorPHID']
+                author = self.__get_or_fetch_user(author_id)
+                tt['authorData'] = author
+
+        return tasks_trans
+
+    def __fetch_and_parse_users(self, *users_ids):
+        logger.debug("Fetching and parsing users data")
+        raw_json = self.client.users(*users_ids)
+        users = self.parse_users(raw_json)
+        return [user for user in users]
+
+    def __fetch_and_parse_phids(self, *phids):
+        logger.debug("Fetching and parsing phids data")
+        raw_phids = self.client.phids(*phids)
+        phids = json.loads(raw_phids)
+
+        result = []
+        if phids['result']:
+            # PHID checkpoint
+            result = self.parse_phids(phids)
+
+        return [phid for phid in result]
+
 
 class PhabricatorCommand(BackendCommand):
     """Class to run Phabricator backend from the command line."""
@@ -500,6 +355,8 @@ class ConduitClient(HttpClient):
     :param base_url: URL of the Phabricator server
     :param api_token: token to get access to restricted methods
         of the API
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
     """
     URL = '%(base)s/api/%(method)s'
 
@@ -520,8 +377,9 @@ class ConduitClient(HttpClient):
 
     VOUTDATED = 'outdated'
 
-    def __init__(self, base_url, api_token):
-        super().__init__(base_url.rstrip('/'), max_retries=3, extra_status_forcelist=[502, 503])
+    def __init__(self, base_url, api_token, archive=None, from_archive=False):
+        super().__init__(base_url.rstrip('/'), max_retries=3, extra_status_forcelist=[502, 503],
+                         archive=archive, from_archive=from_archive)
         self.api_token = api_token
 
     def tasks(self, from_date=DEFAULT_DATETIME):
