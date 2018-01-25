@@ -29,10 +29,9 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient, RateLimitHandler
-from ...errors import CacheError, RepositoryError
+from ...errors import RepositoryError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -68,24 +67,26 @@ class Meetup(Backend):
          it will be reset
     :param sleep_time: minimun waiting time to avoid too many request
          exception
+    :param archive: collect events already retrieved from an archive
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, cache=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
-                 sleep_time=SLEEP_TIME):
+                 sleep_time=SLEEP_TIME, archive=None):
         origin = MEETUP_URL
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.group = group
         self.max_items = max_items
-        self.client = MeetupClient(api_token, max_items=max_items,
-                                   sleep_for_rate=sleep_for_rate,
-                                   min_rate_to_sleep=min_rate_to_sleep,
-                                   sleep_time=sleep_time)
+        self.api_token = api_token
+        self.sleep_for_rate = sleep_for_rate
+        self.min_rate_to_sleep = min_rate_to_sleep
+        self.sleep_time = sleep_time
 
-    @metadata
+        self.client = None
+
     def fetch(self, from_date=DEFAULT_DATETIME, to_date=None):
         """Fetch the events from the server.
 
@@ -98,13 +99,26 @@ class Meetup(Backend):
 
         :returns: a generator of events
         """
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        from_date = datetime_to_utc(from_date)
+
+        kwargs = {"from_date": from_date, "to_date": to_date}
+        items = super().fetch("event", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the events"""
+
+        from_date = kwargs['from_date']
+        to_date = kwargs['to_date']
+
         logger.info("Fetching events of '%s' group from %s to %s",
                     self.group, str(from_date),
                     str(to_date) if to_date else '--')
 
-        self._purge_cache_queue()
-
-        from_date = datetime_to_utc(from_date)
         to_date_ts = datetime_to_utc(to_date).timestamp() if to_date else None
 
         nevents = 0
@@ -113,8 +127,6 @@ class Meetup(Backend):
         ev_pages = self.client.events(self.group, from_date=from_date)
 
         for evp in ev_pages:
-            self._push_cache_queue(evp)
-
             events = [event for event in self.parse_json(evp)]
 
             for event in events:
@@ -127,119 +139,30 @@ class Meetup(Backend):
                 event_ts = self.metadata_updated_on(event)
 
                 if to_date_ts and event_ts >= to_date_ts:
-                    # Comments and RSVPS of items from the current
-                    # page be fetched to avoid problems with the cache
                     stop_fetching = True
                     continue
 
                 yield event
                 nevents += 1
 
-            self._flush_cache_queue()
-
             if stop_fetching:
                 break
 
         logger.info("Fetch process completed: %s events fetched", nevents)
 
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the events from the cache.
-
-        It returns the events stored in the cache object, provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
-
-        :returns: a generator of events
-
-        :raises CacheError: raised when an error occurs accesing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        logger.info("Retrieving cached events: %s", self.origin)
-
-        nevents = 0
-
-        for event in self.__fetch_from_cache():
-            yield event
-            nevents += 1
-
-        logger.info("Retrieval process completed: %s events retrieved from cache",
-                    nevents)
-
-    def __fetch_from_cache(self):
-        def fetch_items_from_cache(cache_items, checkpoint):
-            items = []
-
-            while True:
-                raw_page = next(cache_items)
-                if raw_page == checkpoint:
-                    break
-                items += [item for item in self.parse_json(raw_page)]
-            return items
-
-        # Fetch from cache starts here
-        cache_items = self.cache.retrieve()
-
-        while True:
-            try:
-                raw_events = next(cache_items)
-            except StopIteration:
-                break
-
-            events = [event for event in self.parse_json(raw_events)]
-
-            for event in events:
-                comments = fetch_items_from_cache(cache_items, '{ENDCOMMENTS}')
-                rsvps = fetch_items_from_cache(cache_items, '{ENDRSVPS}')
-
-                event['comments'] = comments
-                event['rsvps'] = rsvps
-
-                yield event
-
-    def __fetch_and_parse_comments(self, event_id):
-        logger.debug("Fetching and parsing comments from group '%s' event '%s'",
-                     self.group, str(event_id))
-
-        comments = []
-        raw_pages = self.client.comments(self.group, event_id)
-
-        for raw_page in raw_pages:
-            self._push_cache_queue(raw_page)
-
-            for comment in self.parse_json(raw_page):
-                comments.append(comment)
-
-        self._push_cache_queue('{ENDCOMMENTS}')
-
-        return comments
-
-    def __fetch_and_parse_rsvps(self, event_id):
-        logger.debug("Fetching and parsing rsvps from group '%s' event '%s'",
-                     self.group, str(event_id))
-
-        rsvps = []
-        raw_pages = self.client.rsvps(self.group, event_id)
-
-        for raw_page in raw_pages:
-            self._push_cache_queue(raw_page)
-
-            for rsvp in self.parse_json(raw_page):
-                rsvps.append(rsvp)
-
-        self._push_cache_queue('{ENDRSVPS}')
-
-        return rsvps
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -297,6 +220,41 @@ class Meetup(Backend):
         result = json.loads(raw_json)
         return result
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return MeetupClient(self.api_token, self.max_items,
+                            self.sleep_for_rate, self.min_rate_to_sleep, self.sleep_time,
+                            self.archive, from_archive)
+
+    def __fetch_and_parse_comments(self, event_id):
+        logger.debug("Fetching and parsing comments from group '%s' event '%s'",
+                     self.group, str(event_id))
+
+        comments = []
+        raw_pages = self.client.comments(self.group, event_id)
+
+        for raw_page in raw_pages:
+
+            for comment in self.parse_json(raw_page):
+                comments.append(comment)
+
+        return comments
+
+    def __fetch_and_parse_rsvps(self, event_id):
+        logger.debug("Fetching and parsing rsvps from group '%s' event '%s'",
+                     self.group, str(event_id))
+
+        rsvps = []
+        raw_pages = self.client.rsvps(self.group, event_id)
+
+        for raw_page in raw_pages:
+
+            for rsvp in self.parse_json(raw_page):
+                rsvps.append(rsvp)
+
+        return rsvps
+
 
 class MeetupCommand(BackendCommand):
     """Class to run Meetup backend from the command line."""
@@ -342,6 +300,13 @@ class MeetupClient(HttpClient, RateLimitHandler):
 
     :param api_key: key needed to use the API
     :param max_items: maximum number of items per request
+    :param sleep_for_rate: sleep until rate limit is reset
+    :param min_rate_to_sleep: minimun rate needed to sleep until
+         it will be reset
+    :param sleep_time: time to sleep in case
+        of connection problems
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
     """
     RCOMMENTS = 'comments'
     REVENTS = 'events'
@@ -366,11 +331,13 @@ class MeetupClient(HttpClient, RateLimitHandler):
     VUPDATED = 'updated'
 
     def __init__(self, api_key, max_items=MAX_ITEMS,
-                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT, sleep_time=SLEEP_TIME):
+                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT, sleep_time=SLEEP_TIME,
+                 archive=None, from_archive=False):
         self.api_key = api_key
         self.max_items = max_items
 
-        super().__init__(MEETUP_API_URL, sleep_time=sleep_time, extra_status_forcelist=[429])
+        super().__init__(MEETUP_API_URL, sleep_time=sleep_time, extra_status_forcelist=[429],
+                         archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 
     def calculate_time_to_reset(self):
