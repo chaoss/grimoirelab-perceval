@@ -23,9 +23,7 @@
 import httpretty
 import os
 import pkg_resources
-import shutil
 import sys
-import tempfile
 import unittest
 import urllib
 
@@ -35,12 +33,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.cache import Cache
-from perceval.errors import CacheError
 from perceval.backends.core.telegram import (Telegram,
                                              TelegramCommand,
                                              TelegramBotClient)
-
+from tests.base import TestCaseBackendArchive
 
 TELEGRAM_BOT = 'mybot'
 TELEGRAM_TOKEN = '12345678'
@@ -99,7 +95,7 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(tlg.bot, 'mybot')
         self.assertEqual(tlg.origin, origin)
         self.assertEqual(tlg.tag, 'test')
-        self.assertIsInstance(tlg.client, TelegramBotClient)
+        self.assertIsNone(tlg.client)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -114,9 +110,14 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(tlg.tag, origin)
 
     def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
+        """Test if it returns False when has_caching is called"""
 
-        self.assertEqual(Telegram.has_caching(), True)
+        self.assertEqual(Telegram.has_caching(), False)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(Telegram.has_archiving(), True)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -130,7 +131,7 @@ class TestTelegramBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
-        messages = [msg for msg in tlg.fetch()]
+        messages = [msg for msg in tlg.fetch(offset=None)]
 
         expected = [(31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0, 319280318),
                     (32, '16a59e93e919174fcd4e70e5b3289201c1016c72', 1467289329.0, 319280319),
@@ -262,70 +263,51 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(len(result), 0)
 
 
-class TestTelegramBackendCache(unittest.TestCase):
-    """Telegram backend tests using a cache"""
+class TestTelegramBackendArchive(TestCaseBackendArchive):
+    """Telegram backend tests using an archive"""
 
     def setUp(self):
-        self.tmp_path = tempfile.mkdtemp(prefix='perceval_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_path)
+        super().setUp()
+        self.backend = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, archive=self.archive)
 
     @httpretty.activate
-    def test_fetch_from_cache(self):
-        """Test whether the cache works"""
+    def test_fetch_from_archive(self):
+        """Test whether a list of messages is returned from archive"""
 
-        http_requests = setup_http_server()
+        setup_http_server()
+        self._test_fetch_from_archive()
 
-        # First, we fetch the messages from the server,
-        # storing them in a cache
-        cache = Cache(self.tmp_path)
-        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, cache=cache)
+    @httpretty.activate
+    def test_fetch_from_offset_from_archive(self):
+        """Test whether it fetches and parses messages from the given offset from archive"""
 
-        messages = [msg for msg in tlg.fetch()]
-        self.assertEqual(len(http_requests), 3)
+        setup_http_server()
+        self._test_fetch_from_archive(offset=319280321)
 
-        # Now, we get the messages from the cache.
-        # The contents should be the same and there won't be
-        # any new request to the server
-        cached_messages = [msg for msg in tlg.fetch_from_cache()]
-        self.assertEqual(len(cached_messages), len(messages))
+    @httpretty.activate
+    def test_fetch_by_chats_from_archive(self):
+        """Test if the fetch from archive returns only those messages that belong to the given chats"""
 
-        expected = [(31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0, 319280318),
-                    (32, '16a59e93e919174fcd4e70e5b3289201c1016c72', 1467289329.0, 319280319),
-                    (33, '9d03eeea7e3186ca8e5c150b4cbf18c8283cca9d', 1467289371.0, 319280320),
-                    (34, '2e61e72b64c9084f3c5a36671c3119641c3ae42f', 1467370372.0, 319280321)]
+        setup_http_server()
 
-        self.assertEqual(len(cached_messages), len(expected))
+        chats = [8, -1]
+        self._test_fetch_from_archive(chats=chats)
 
-        for x in range(len(cached_messages)):
-            message = cached_messages[x]
-            self.assertEqual(message['data']['message']['message_id'], expected[x][0])
-            self.assertEqual(message['origin'], 'https://telegram.org/' + TELEGRAM_BOT)
-            self.assertEqual(message['uuid'], expected[x][1])
-            self.assertEqual(message['updated_on'], expected[x][2])
-            self.assertEqual(message['offset'], expected[x][3])
-            self.assertEqual(message['category'], 'message')
-            self.assertEqual(message['tag'], 'https://telegram.org/' + TELEGRAM_BOT)
+    @httpretty.activate
+    def test_fetch_empty_by_chats_from_archive(self):
+        """Test whether no chat messages are returned from an empty archive"""
 
-        # No more requests were sent
-        self.assertEqual(len(http_requests), 3)
+        setup_http_server()
 
-    def test_fetch_from_empty_cache(self):
-        """Test if there are not any message returned when the cache is empty"""
+        chats = []
+        self._test_fetch_from_archive(chats=chats)
 
-        cache = Cache(self.tmp_path)
-        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, cache=cache)
-        cached_messages = [msg for msg in tlg.fetch_from_cache()]
-        self.assertEqual(len(cached_messages), 0)
+    @httpretty.activate
+    def test_fetch_empty_from_archive(self):
+        """Test whether no messages are returned from an empty archive"""
 
-    def test_fetch_from_non_set_cache(self):
-        """Test if a error is raised when the cache was not set"""
-
-        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
-
-        with self.assertRaises(CacheError):
-            _ = [msg for msg in tlg.fetch_from_cache()]
+        setup_http_server()
+        self._test_fetch_from_archive(offset=319280322)
 
 
 class TestTelegramCommand(unittest.TestCase):
