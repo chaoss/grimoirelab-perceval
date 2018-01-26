@@ -35,7 +35,8 @@ from grimoirelab.toolkit.datetime import datetime_to_utc
 from grimoirelab.toolkit.uris import urijoin
 
 from .mbox import MBox, MailingList
-from ...backend import BackendCommand, BackendCommandArgumentParser, metadata
+from ...backend import (BackendCommand,
+                        BackendCommandArgumentParser)
 from ...utils import DEFAULT_DATETIME
 
 
@@ -63,14 +64,14 @@ class Pipermail(MBox):
     :param dirpath: directory path where the mboxes are stored
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: archive to read/store data fetched by the backend
     """
-    version = '0.4.3'
+    version = '0.5.0'
 
-    def __init__(self, url, dirpath, tag=None, cache=None):
-        super().__init__(url, dirpath, tag=tag, cache=cache)
+    def __init__(self, url, dirpath, tag=None, cache=None, archive=None):
+        super().__init__(url, dirpath, tag=tag, cache=cache, archive=archive)
         self.url = url
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the Pipermail archiver.
 
@@ -81,6 +82,15 @@ class Pipermail(MBox):
 
         :returns: a generator of messages
         """
+        items = super().fetch(from_date)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the messages"""
+
+        from_date = kwargs['from_date']
+
         logger.info("Looking for messages from '%s' since %s",
                     self.url, str(from_date))
 
@@ -98,7 +108,15 @@ class Pipermail(MBox):
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend dooes not support items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend does not support items archive
         """
         return False
 
