@@ -20,7 +20,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import functools
 import json
 import logging
 
@@ -28,10 +27,8 @@ from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...client import HttpClient
-from ...errors import CacheError
 
 
 logger = logging.getLogger(__name__)
@@ -39,22 +36,6 @@ logger = logging.getLogger(__name__)
 
 TELEGRAM_URL = 'https://telegram.org'
 DEFAULT_OFFSET = 1
-
-
-def telegram_metadata(func):
-    """Telegram metadata decorator.
-
-    This decorator takes an item and overrides `metadata` decorator
-    to add extra information related to Telegram.
-
-    Currently, it adds the 'offset' keyword.
-    """
-    @functools.wraps(func)
-    def decorator(self, *args, **kwargs):
-        for item in func(self, *args, **kwargs):
-            item['offset'] = item['data']['update_id']
-            yield item
-    return decorator
 
 
 class Telegram(Backend):
@@ -79,18 +60,19 @@ class Telegram(Backend):
     :param bot_token: authentication token used by the bot
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: collect message already retrieved from an archive
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
-    def __init__(self, bot, bot_token, tag=None, cache=None):
+    def __init__(self, bot, bot_token, tag=None, cache=None, archive=None):
         origin = urijoin(TELEGRAM_URL, bot)
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.bot = bot
-        self.client = TelegramBotClient(bot_token)
+        self.bot_token = bot_token
 
-    @telegram_metadata
-    @metadata
+        self.client = None
+
     def fetch(self, offset=DEFAULT_OFFSET, chats=None):
         """Fetch the messages the bot can read from the server.
 
@@ -109,6 +91,20 @@ class Telegram(Backend):
 
         :raises ValueError: when `chats` is an empty list
         """
+        if not offset:
+            offset = DEFAULT_OFFSET
+
+        kwargs = {"offset": offset, "chats": chats}
+        items = super().fetch("message", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the messages"""
+
+        offset = kwargs['offset']
+        chats = kwargs['chats']
+
         logger.info("Looking for messages of '%s' bot from offset '%s'",
                     self.bot, offset)
 
@@ -119,19 +115,10 @@ class Telegram(Backend):
                 logger.info("Messages which belong to chats %s will be fetched",
                             '[' + ','.join(str(ch_id) for ch_id in chats) + ']')
 
-        self._purge_cache_queue()
-
         nmsgs = 0
 
         while True:
             raw_json = self.client.updates(offset=offset)
-
-            # Due to Telegram deletes the messages from the server
-            # when they are fetched, the backend stores these messages
-            # in the cache before doing anything.
-            self._push_cache_queue(raw_json)
-            self._flush_cache_queue()
-
             messages = [msg for msg in self.parse_messages(raw_json)]
 
             if len(messages) == 0:
@@ -153,64 +140,35 @@ class Telegram(Backend):
         logger.info("Fetch process completed: %s messages fetched",
                     nmsgs)
 
-    @telegram_metadata
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the messages from the cache.
+    def metadata(self, item):
+        """Telegram metadata.
 
-        It returns the messages stored in the cache object provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
+        The metod takes an item and overrides the `metadata` information
+        to add extra information related to Telegram.
 
-        :returns: a generator of messages
+        Currently, it adds the 'offset' keyword.
 
-        :raises CacheError: raised when an error occurs accesing the
-            cache
+        :param item: an item fetched by a backend
         """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
 
-        logger.info("Retrieving cached messages: '%s'", self.bot)
+        item = super().metadata(item)
+        item['offset'] = item['data']['update_id']
 
-        cache_items = self.cache.retrieve()
-
-        nmsgs = 0
-
-        for raw_json in cache_items:
-            messages = [msg for msg in self.parse_messages(raw_json)]
-
-            for msg in messages:
-                yield msg
-                nmsgs += 1
-
-        logger.info("Retrieval process completed: %s messages retrieved from cache",
-                    nmsgs)
-
-    def _filter_message_by_chats(self, message, chats):
-        """Check if a message can be filtered based in a list of chats.
-
-        This method returns `True` when the message was sent to a chat
-        of the given list. It also returns `True` when chats is `None`.
-
-        :param message: Telegram message
-        :param chats: list of chat, groups and channels identifiers
-
-        :returns: `True` when the message can be filtered; otherwise,
-            it returns `False`
-        """
-        if chats is None:
-            return True
-
-        chat_id = message['message']['chat']['id']
-
-        return chat_id in chats
+        return item
 
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -271,6 +229,30 @@ class Telegram(Backend):
         for msg in messages:
             yield msg
 
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return TelegramBotClient(self.bot_token, self.archive, from_archive)
+
+    def _filter_message_by_chats(self, message, chats):
+        """Check if a message can be filtered based in a list of chats.
+
+        This method returns `True` when the message was sent to a chat
+        of the given list. It also returns `True` when chats is `None`.
+
+        :param message: Telegram message
+        :param chats: list of chat, groups and channels identifiers
+
+        :returns: `True` when the message can be filtered; otherwise,
+            it returns `False`
+        """
+        if chats is None:
+            return True
+
+        chat_id = message['message']['chat']['id']
+
+        return chat_id in chats
+
 
 class TelegramCommand(BackendCommand):
     """Class to run Telegram backend from the command line."""
@@ -314,14 +296,16 @@ class TelegramBotClient(HttpClient):
     messages sent to a channel (when privacy settings are disabled).
 
     :param bot_token: token for the bot
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
     """
     API_URL = "https://api.telegram.org/bot%(token)s/%(method)s"
 
     UPDATES_METHOD = 'getUpdates'
     OFFSET = 'offset'
 
-    def __init__(self, bot_token):
-        super().__init__(self.API_URL)
+    def __init__(self, bot_token, archive=None, from_archive=False):
+        super().__init__(self.API_URL, archive=archive, from_archive=from_archive)
         self.bot_token = bot_token
 
     def updates(self, offset=None):
