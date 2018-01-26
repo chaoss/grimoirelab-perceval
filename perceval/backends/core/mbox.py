@@ -61,7 +61,7 @@ class MBox(Backend):
     :param cache: cache object to store raw data
     :param archive: archive to read/store data fetched by the backend
     """
-    version = '0.8.0'
+    version = '0.8.1'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
@@ -219,7 +219,7 @@ class MBox(Backend):
                     logger.debug("Message %s parsed", message['unixfrom'])
 
                     yield message
-            except OSError as e:
+            except (OSError, EOFError) as e:
                 logger.warning("Ignoring %s mbox due to: %s", mbox.filepath, str(e))
             except Exception as e:
                 if os.path.exists(tmp_path):
