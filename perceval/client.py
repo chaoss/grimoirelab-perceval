@@ -53,7 +53,7 @@ class HttpClient:
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.1.2'
+    version = '0.1.3'
 
     DEFAULT_SLEEP_TIME = 1
 
@@ -137,7 +137,7 @@ class HttpClient:
 
         response = self.archive.retrieve(url, payload, headers)
 
-        if type(response) != requests.Response:
+        if not isinstance(response, requests.Response):
             raise response
 
         return response
