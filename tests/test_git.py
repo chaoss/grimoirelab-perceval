@@ -123,6 +123,11 @@ class TestGitBackend(TestCaseGit):
 
         self.assertEqual(Git.has_caching(), False)
 
+    def test_has_archiving(self):
+        """Test if it returns False when has_archiving is called"""
+
+        self.assertEqual(Git.has_archiving(), False)
+
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 
