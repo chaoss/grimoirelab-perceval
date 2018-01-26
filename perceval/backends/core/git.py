@@ -35,8 +35,7 @@ from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...errors import RepositoryError, ParseError
 from ...utils import DEFAULT_DATETIME
 
@@ -60,20 +59,20 @@ class Git(Backend):
     :param gitpath: path to the repository or to the log file
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: an archive to read/store data fetched by the backend
 
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
     version = '0.8.10'
 
-    def __init__(self, uri, gitpath, tag=None, cache=None):
+    def __init__(self, uri, gitpath, tag=None, cache=None, archive=None):
         origin = uri
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.uri = uri
         self.gitpath = gitpath
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME, branches=None,
               latest_items=False):
         """Fetch commits.
@@ -108,6 +107,21 @@ class Git(Backend):
 
         :returns: a generator of commits
         """
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        kwargs = {'from_date': from_date, 'branches': branches, 'latest_items': latest_items}
+        items = super().fetch("commit", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch commits"""
+
+        from_date = kwargs['from_date']
+        branches = kwargs['branches']
+        latest_items = kwargs['latest_items']
+
         ncommits = 0
 
         try:
@@ -126,71 +140,19 @@ class Git(Backend):
         logger.info("Fetch process completed: %s commits fetched",
                     ncommits)
 
-    def __fetch_from_log(self):
-        logger.info("Fetching commits: '%s' git repository from log file %s",
-                    self.uri, self.gitpath)
-        return self.parse_git_log_from_file(self.gitpath)
-
-    def __fetch_from_repo(self, from_date, branches, latest_items=False):
-        # When no latest items are set or the repository has not
-        # been cloned use the default mode
-        default_mode = not latest_items or not os.path.exists(self.gitpath)
-
-        repo = self.__create_git_repository()
-
-        if default_mode:
-            commits = self.__fetch_commits_from_repo(repo, from_date, branches)
-        else:
-            commits = self.__fetch_newest_commits_from_repo(repo)
-
-        return commits
-
-    def __fetch_commits_from_repo(self, repo, from_date, branches):
-        if branches is None:
-            branches_text = "all"
-        elif len(branches) == 0:
-            branches_text = "no"
-        else:
-            branches_text = ", ".join(branches)
-
-        logger.info("Fetching commits: '%s' git repository from %s; %s branches",
-                    self.uri, str(from_date), branches_text)
-
-        # Ignore default datetime to avoid problems with git
-        # or convert to UTC
-        if from_date == DEFAULT_DATETIME:
-            from_date = None
-        else:
-            from_date = datetime_to_utc(from_date)
-
-        repo.update()
-
-        gitlog = repo.log(from_date, branches)
-        return self.parse_git_log_from_iter(gitlog)
-
-    def __fetch_newest_commits_from_repo(self, repo):
-        logger.info("Fetching latest commits: '%s' git repository",
-                    self.uri)
-
-        hashes = repo.sync()
-        if not hashes:
-            return []
-
-        gitshow = repo.show(hashes)
-        return self.parse_git_log_from_iter(gitshow)
-
-    def __create_git_repository(self):
-        if not os.path.exists(self.gitpath):
-            repo = GitRepository.clone(self.uri, self.gitpath)
-        elif os.path.isdir(self.gitpath):
-            repo = GitRepository(self.uri, self.gitpath)
-        return repo
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
         :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend does not support items archive
         """
         return False
 
@@ -274,6 +236,69 @@ class Git(Backend):
 
         for commit in parser.parse():
             yield commit
+
+    def _init_client(self, from_archive=False):
+        pass
+
+    def __fetch_from_log(self):
+        logger.info("Fetching commits: '%s' git repository from log file %s",
+                    self.uri, self.gitpath)
+        return self.parse_git_log_from_file(self.gitpath)
+
+    def __fetch_from_repo(self, from_date, branches, latest_items=False):
+        # When no latest items are set or the repository has not
+        # been cloned use the default mode
+        default_mode = not latest_items or not os.path.exists(self.gitpath)
+
+        repo = self.__create_git_repository()
+
+        if default_mode:
+            commits = self.__fetch_commits_from_repo(repo, from_date, branches)
+        else:
+            commits = self.__fetch_newest_commits_from_repo(repo)
+
+        return commits
+
+    def __fetch_commits_from_repo(self, repo, from_date, branches):
+        if branches is None:
+            branches_text = "all"
+        elif len(branches) == 0:
+            branches_text = "no"
+        else:
+            branches_text = ", ".join(branches)
+
+        logger.info("Fetching commits: '%s' git repository from %s; %s branches",
+                    self.uri, str(from_date), branches_text)
+
+        # Ignore default datetime to avoid problems with git
+        # or convert to UTC
+        if from_date == DEFAULT_DATETIME:
+            from_date = None
+        else:
+            from_date = datetime_to_utc(from_date)
+
+        repo.update()
+
+        gitlog = repo.log(from_date, branches)
+        return self.parse_git_log_from_iter(gitlog)
+
+    def __fetch_newest_commits_from_repo(self, repo):
+        logger.info("Fetching latest commits: '%s' git repository",
+                    self.uri)
+
+        hashes = repo.sync()
+        if not hashes:
+            return []
+
+        gitshow = repo.show(hashes)
+        return self.parse_git_log_from_iter(gitshow)
+
+    def __create_git_repository(self):
+        if not os.path.exists(self.gitpath):
+            repo = GitRepository.clone(self.uri, self.gitpath)
+        elif os.path.isdir(self.gitpath):
+            repo = GitRepository(self.uri, self.gitpath)
+        return repo
 
 
 class GitCommand(BackendCommand):
