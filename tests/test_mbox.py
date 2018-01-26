@@ -206,6 +206,11 @@ class TestMBoxBackend(TestBaseMBox):
 
         self.assertEqual(MBox.has_caching(), False)
 
+    def test_has_archiving(self):
+        """Test if it returns False when has_archiving is called"""
+
+        self.assertEqual(MBox.has_archiving(), False)
+
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 
@@ -215,7 +220,7 @@ class TestMBoxBackend(TestBaseMBox):
         """Test whether it parses a set of mbox files"""
 
         backend = MBox('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch()]
+        messages = [m for m in backend.fetch(from_date=None)]
 
         expected = [
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
