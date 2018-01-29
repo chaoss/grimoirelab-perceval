@@ -31,8 +31,7 @@ from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
+                        BackendCommandArgumentParser)
 from ...errors import ParseError
 from ...utils import DEFAULT_DATETIME
 
@@ -60,17 +59,17 @@ class Supybot(Backend):
     :param dirpath: directory path where the archives are stored
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: an archive to retrieve/store data fetched by the backend
     """
-    version = '0.5.2'
+    version = '0.6.0'
 
-    def __init__(self, uri, dirpath, tag=None, cache=None):
+    def __init__(self, uri, dirpath, tag=None, cache=None, archive=None):
         origin = uri
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.uri = uri
         self.dirpath = dirpath
 
-    @metadata
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the Supybot IRC logger.
 
@@ -81,10 +80,23 @@ class Supybot(Backend):
 
         :returns: a generator of messages
         """
-        logger.info("Fetching messages of '%s' from %s",
-                    self.uri, str(from_date))
+        if not from_date:
+            from_date = DEFAULT_DATETIME
 
         from_date = datetime_to_utc(from_date)
+
+        kwargs = {'from_date': from_date}
+        items = super().fetch("message", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch the messages"""
+
+        from_date = kwargs['from_date']
+
+        logger.info("Fetching messages of '%s' from %s",
+                    self.uri, str(from_date))
 
         nmessages = 0
         archives = self.__retrieve_archives(from_date)
@@ -106,59 +118,19 @@ class Supybot(Backend):
         logger.info("Fetch process completed: %s messages fetched",
                     nmessages)
 
-    def __retrieve_archives(self, from_date):
-        """Retrieve the Supybot archives after the given date"""
-
-        archives = []
-
-        candidates = self.__list_supybot_archives()
-
-        for candidate in candidates:
-            dt = self.__parse_date_from_filepath(candidate)
-
-            if dt.date() >= from_date.date():
-                archives.append((dt, candidate))
-            else:
-                logger.debug("Archive %s stored before %s; skipped",
-                             candidate, str(from_date))
-
-        archives.sort(key=lambda x: x[0])
-
-        return [archive[1] for archive in archives]
-
-    def __list_supybot_archives(self):
-        """List the filepath of the archives stored in dirpath"""
-
-        archives = []
-
-        for root, _, files in os.walk(self.dirpath):
-            for filename in files:
-                location = os.path.join(root, filename)
-                archives.append(location)
-
-        return archives
-
-    def __parse_date_from_filepath(self, filepath):
-        default_dt = datetime.datetime(2100, 1, 1,
-                                       tzinfo=dateutil.tz.tzutc())
-
-        try:
-            name = os.path.basename(filepath)
-            dt = dateutil.parser.parse(name, default=default_dt,
-                                       fuzzy=True)
-        except (AttributeError, TypeError, ValueError) as e:
-            dt = default_dt
-            logger.debug("Date of file %s not detected due to %s",
-                         filepath, str(e))
-            logger.debug("Date set to default: %s", str(dt))
-
-        return dt
-
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
         :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend does not support items archive
         """
         return False
 
@@ -234,6 +206,57 @@ class Supybot(Backend):
             except ParseError as e:
                 cause = "file: %s; reason: %s" % (filepath, str(e))
                 raise ParseError(cause=cause)
+
+    def _init_client(self, from_archive=False):
+        pass
+
+    def __retrieve_archives(self, from_date):
+        """Retrieve the Supybot archives after the given date"""
+
+        archives = []
+
+        candidates = self.__list_supybot_archives()
+
+        for candidate in candidates:
+            dt = self.__parse_date_from_filepath(candidate)
+
+            if dt.date() >= from_date.date():
+                archives.append((dt, candidate))
+            else:
+                logger.debug("Archive %s stored before %s; skipped",
+                             candidate, str(from_date))
+
+        archives.sort(key=lambda x: x[0])
+
+        return [archive[1] for archive in archives]
+
+    def __list_supybot_archives(self):
+        """List the filepath of the archives stored in dirpath"""
+
+        archives = []
+
+        for root, _, files in os.walk(self.dirpath):
+            for filename in files:
+                location = os.path.join(root, filename)
+                archives.append(location)
+
+        return archives
+
+    def __parse_date_from_filepath(self, filepath):
+        default_dt = datetime.datetime(2100, 1, 1,
+                                       tzinfo=dateutil.tz.tzutc())
+
+        try:
+            name = os.path.basename(filepath)
+            dt = dateutil.parser.parse(name, default=default_dt,
+                                       fuzzy=True)
+        except (AttributeError, TypeError, ValueError) as e:
+            dt = default_dt
+            logger.debug("Date of file %s not detected due to %s",
+                         filepath, str(e))
+            logger.debug("Date set to default: %s", str(dt))
+
+        return dt
 
 
 class SupybotCommand(BackendCommand):
