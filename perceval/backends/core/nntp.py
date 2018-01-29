@@ -20,7 +20,6 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
-import functools
 import io
 import logging
 import nntplib
@@ -31,9 +30,8 @@ from grimoirelab.toolkit.datetime import str_to_datetime
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser,
-                        metadata)
-from ...errors import CacheError, ParseError
+                        BackendCommandArgumentParser)
+from ...errors import ArchiveError, ParseError
 from ...utils import message_to_dict
 
 
@@ -43,20 +41,6 @@ nntplib._MAXLINE = 4096
 logger = logging.getLogger(__name__)
 
 DEFAULT_OFFSET = 1
-
-
-def nntp_metadata(func):
-    """NNTP metadata decorator.
-
-    This decorator takes items, overriding `metadata` decorator,
-    to add extra information related to NNTP.
-    """
-    @functools.wraps(func)
-    def decorator(self, *args, **kwargs):
-        for item in func(self, *args, **kwargs):
-            item['offset'] = item['data']['offset']
-            yield item
-    return decorator
 
 
 class NNTP(Backend):
@@ -70,18 +54,18 @@ class NNTP(Backend):
     :param group: name of the group
     :param tag: label used to mark the data
     :param cache: cache object to store raw data
+    :param archive: an archive to read/store fetched data
     """
-    version = '0.2.5'
+    version = '0.3.0'
 
-    def __init__(self, host, group, tag=None, cache=None):
+    def __init__(self, host, group, tag=None, cache=None, archive=None):
         origin = host + '-' + group
 
-        super().__init__(origin, tag=tag, cache=cache)
+        super().__init__(origin, tag=tag, cache=cache, archive=archive)
         self.host = host
         self.group = group
+        self.client = None
 
-    @nntp_metadata
-    @metadata
     def fetch(self, offset=DEFAULT_OFFSET):
         """Fetch articles posted on a news group.
 
@@ -92,125 +76,80 @@ class NNTP(Backend):
 
         :returns: a generator of articles
         """
+        if not offset:
+            offset = DEFAULT_OFFSET
+
+        kwargs = {'offset': offset}
+        items = super().fetch("article", **kwargs)
+
+        return items
+
+    def fetch_items(self, **kwargs):
+        """Fetch articles"""
+
+        offset = kwargs['offset']
+
         logger.info("Fetching articles of '%s' group on '%s' offset %s",
                     self.group, self.host, str(offset))
 
-        self._purge_cache_queue()
-
         narts, iarts, tarts = (0, 0, 0)
 
-        # Connect with the server and select the given group
-        with nntplib.NNTP(self.host) as client:
-            _, _, first, last, _ = client.group(self.group)
+        _, _, first, last, _ = self.client.group(self.group)
 
-            if offset <= last:
-                first = max(first, offset)
-                _, overview = client.over((first, last))
-            else:
-                overview = []
+        if offset <= last:
+            first = max(first, offset)
+            _, overview = self.client.over((first, last))
+        else:
+            overview = []
 
-            tarts = len(overview)
+        tarts = len(overview)
 
-            logger.debug("Total number of articles to fetch: %s", tarts)
+        logger.debug("Total number of articles to fetch: %s", tarts)
 
-            for article_id, _ in overview:
-                try:
-                    article = self.__fetch_and_parse_article(client, article_id)
-                except ParseError:
-                    logger.warning("Error parsing %s article; skipping",
-                                   article_id)
-                    iarts += 1
-                    continue
-                except nntplib.NNTPTemporaryError as e:
-                    logger.warning("Error '%s' fetching article %s; skipping",
-                                   e.response, article_id)
-                    iarts += 1
-                    continue
-
-                yield article
-                narts += 1
-
-                self._flush_cache_queue()
-
-        logger.info("Fetch process completed: %s/%s articles fetched; %s ignored",
-                    narts, tarts, iarts)
-
-    @nntp_metadata
-    @metadata
-    def fetch_from_cache(self):
-        """Fetch the articles from the cache.
-
-        It returns the articles stored in the cache object, provided during
-        the initialization of the object. If this method is called but
-        no cache object was provided, the method will raise a `CacheError`
-        exception.
-
-        :returns: a generator of articles
-
-        :raises CacheError: raised when an error occurs accessing the
-            cache
-        """
-        if not self.cache:
-            raise CacheError(cause="cache instance was not provided")
-
-        logger.info("Retrieving cached articles of '%s' group on '%s'",
-                    self.group, self.host)
-
-        cache_items = self.cache.retrieve()
-
-        narts = 0
-
-        for raw_item in cache_items:
-            reader = io.BytesIO(b'\n'.join(raw_item['lines']))
-            raw_article = reader.read().decode('utf-8', errors='surrogateescape')
-            data = self.parse_article(raw_article)
-
-            article = self.__build_article(data,
-                                           raw_item['message_id'],
-                                           raw_item['number'])
+        for article_id, _ in overview:
+            try:
+                article_raw = self.client.article(article_id)
+                article = self.__parse_article(article_raw)
+            except ParseError:
+                logger.warning("Error parsing %s article; skipping",
+                               article_id)
+                iarts += 1
+                continue
+            except nntplib.NNTPTemporaryError as e:
+                logger.warning("Error '%s' fetching article %s; skipping",
+                               e.response, article_id)
+                iarts += 1
+                continue
 
             yield article
             narts += 1
 
-        logger.info("Retrieval process completed: %s articles retrieved from cache",
-                    narts)
+    def metadata(self, item):
+        """NNTP metadata.
 
-    def __fetch_and_parse_article(self, client, article_id):
-        _, info = client.article(article_id)
+        This method takes items, overriding `metadata` decorator,
+        to add extra information related to NNTP.
 
-        # Store data on the cache
-        cache_data = {
-            'number': info.number,
-            'message_id': info.message_id,
-            'lines': info.lines
-        }
-        self._push_cache_queue(cache_data)
+        :param item: an item fetched by a backend
+        """
+        item = super().metadata(item)
+        item['offset'] = item['data']['offset']
 
-        # Parse article data
-        reader = io.BytesIO(b'\n'.join(info.lines))
-        raw_article = reader.read().decode('utf-8', errors='surrogateescape')
-        data = self.parse_article(raw_article)
-
-        article = self.__build_article(data,
-                                       info.message_id,
-                                       info.number)
-
-        logger.debug("Article %s (offset: %s) parsed",
-                     article['message_id'], article['offset'])
-
-        return article
-
-    def __build_article(self, article, message_id, offset):
-        a = {k: v for k, v in article.items()}
-        a['message_id'] = message_id
-        a['offset'] = offset
-        return a
+        return item
 
     @classmethod
     def has_caching(cls):
         """Returns whether it supports caching items on the fetch process.
 
-        :returns: this backend supports items cache
+        :returns: this backend does not support items cache
+        """
+        return False
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
         """
         return True
 
@@ -276,6 +215,146 @@ class NNTP(Backend):
         except UnicodeEncodeError as e:
             raise ParseError(cause=str(e))
         return article
+
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return NNTTPClient(self.host, self.archive, from_archive)
+
+    def __parse_article(self, info):
+        reader = io.BytesIO(b'\n'.join(info['lines']))
+        raw_article = reader.read().decode('utf-8', errors='surrogateescape')
+        data = self.parse_article(raw_article)
+
+        article = self.__build_article(data,
+                                       info['message_id'],
+                                       info['number'])
+
+        logger.debug("Article %s (offset: %s) parsed",
+                     article['message_id'], article['offset'])
+
+        return article
+
+    def __build_article(self, article, message_id, offset):
+        a = {k: v for k, v in article.items()}
+        a['message_id'] = message_id
+        a['offset'] = offset
+        return a
+
+
+class NNTTPClient():
+    """NNTP client
+
+    :param host: host
+    :param group: name of the group
+    :param archive: an archive to store/read fetched data
+    :param from_archive: it tells whether to write/read the archive
+    """
+
+    GROUP = "group"
+    ARTICLE = "article"
+    OVER = "over"
+
+    def __init__(self, host, archive=None, from_archive=False):
+        self.host = host
+        self.archive = archive
+        self.from_archive = from_archive
+
+        if not self.from_archive:
+            self.handler = nntplib.NNTP(self.host)
+
+    def __del__(self):
+        if not self.from_archive:
+            self.quit()
+
+    def group(self, group_name):
+        """Fetch group data
+
+        :param group_name: name of the group
+        """
+        return self._fetch("group", group_name)
+
+    def over(self, offset):
+        """Fetch messages data
+
+        :param offset: a tuple representing the offset to retrieve
+        """
+        return self._fetch("over", offset)
+
+    def article(self, article_id):
+        """Fetch article data
+
+        :param article_id: id of the article to fetch
+        """
+        return self._fetch("article", article_id)
+
+    def _fetch(self, method, args):
+        """Fetch NNTP data from the server or from the archive
+
+        :param method: the name of the command to execute
+        :param args: the arguments required by the command
+        """
+        if self.from_archive:
+            data = self._fetch_from_archive(method, args)
+        else:
+            data = self._fetch_from_remote(method, args)
+
+        return data
+
+    def _fetch_article(self, article_id):
+        """Fetch article data
+
+        :param article_id: id of the article to fetch
+        """
+        fetched_data = self.handler.article(article_id)
+        data = {
+            'number': fetched_data[1].number,
+            'message_id': fetched_data[1].message_id,
+            'lines': fetched_data[1].lines
+        }
+
+        return data
+
+    def _fetch_from_remote(self, method, args):
+        """Fetch data from NNTP
+
+        :param method: the name of the command to execute
+        :param args: the arguments required by the command
+        """
+        try:
+            if method == NNTTPClient.GROUP:
+                data = self.handler.group(args)
+            elif method == NNTTPClient.OVER:
+                data = self.handler.over(args)
+            elif method == NNTTPClient.ARTICLE:
+                data = self._fetch_article(args)
+        except nntplib.NNTPTemporaryError as e:
+            data = e
+            raise e
+        finally:
+            if self.archive:
+                self.archive.store(method, args, None, data)
+
+        return data
+
+    def _fetch_from_archive(self, method, args):
+        """Fetch data from the archive
+
+        :param method: the name of the command to execute
+        :param args: the arguments required by the command
+        """
+        if not self.archive:
+            raise ArchiveError(cause="Archive not provided")
+
+        data = self.archive.retrieve(method, args, None)
+
+        if isinstance(data, nntplib.NNTPTemporaryError):
+            raise data
+
+        return data
+
+    def quit(self):
+        self.handler.quit()
 
 
 class NNTPCommand(BackendCommand):
