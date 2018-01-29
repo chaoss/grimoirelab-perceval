@@ -1,0 +1,21 @@
+[
+    {
+        "attachment": null,
+        "author": {
+            "avatar_url": "https://secure.gravatar.com/avatar/165370ed8ecc66deca004a8499589b6b?s=80&d=identicon",
+            "id": 2,
+            "name": "Yoeri Nijs",
+            "state": "active",
+            "username": "YoeriNijs",
+            "web_url": "https://gitlab.com/YoeriNijs"
+        },
+        "body": "closed",
+        "created_at": "2017-03-18T19:29:36.614Z",
+        "id": 1,
+        "noteable_id": 4759442,
+        "noteable_iid": 642,
+        "noteable_type": "Issue",
+        "system": true,
+        "updated_at": "2017-03-18T19:29:36.614Z"
+    }
+]

@@ -1,0 +1,90 @@
+[
+    {
+        "assignee": {
+            "avatar_url": "https://secure.gravatar.com/avatar/b8c8a858811dfece044c3818e21bf4f3?s=80&d=identicon",
+            "id": 1,
+            "name": "Timothy Engler",
+            "state": "active",
+            "username": "redfish64",
+            "web_url": "https://gitlab.com/redfish64"
+        },
+        "assignees": [{
+            "avatar_url": "https://secure.gravatar.com/avatar/b8c8a858811dfece044c3818e21bf4f3?s=80&d=identicon",
+            "id": 1,
+            "name": "Timothy Engler",
+            "state": "active",
+            "username": "redfish64",
+            "web_url": "https://gitlab.com/redfish64"
+        }],
+        "author": {
+            "avatar_url": "https://secure.gravatar.com/avatar/b8c8a858811dfece044c3818e21bf4f3?s=80&d=identicon",
+            "id": 1,
+            "name": "Timothy Engler",
+            "state": "active",
+            "username": "redfish64",
+            "web_url": "https://gitlab.com/redfish64"
+        },
+        "closed_at": null,
+        "confidential": false,
+        "created_at": "2017-03-17T03:44:12.073Z",
+        "description": "From: https://f-droid.org/wiki/index.php?title=com.rareventure.gps2/lastbuild_71&redirect=no\r\n\r\n```\r\nFAILURE: Build failed with an exception.\r\n\r\n* What went wrong:\r\nA problem occurred configuring project ':demo'.\r\n> Could not resolve all dependencies for configuration ':demo:_debugApk'.\r\n   > A problem occurred configuring project ':tangram'.\r\n      > Failed to install the following SDK components:\r\n        [CMake 3.6.3155560]\r\n        The SDK directory (/home/vagrant/android-sdk) is not writeable,\r\n        please update the directory permissions.\r\n```",
+        "discussion_locked": null,
+        "downvotes": 0,
+        "due_date": null,
+        "id": 1,
+        "iid": 1,
+        "labels": [],
+        "milestone": null,
+        "project_id": 1,
+        "state": "closed",
+        "time_stats": {
+            "human_time_estimate": null,
+            "human_total_time_spent": null,
+            "time_estimate": 0,
+            "total_time_spent": 0
+        },
+        "title": "bad directory permissions when building TTT?",
+        "updated_at": "2016-03-18T14:44:19.566Z",
+        "upvotes": 0,
+        "user_notes_count": 1,
+        "web_url": "https://gitlab.com/fdroid/fdroiddata/issues/639",
+        "weight": null
+    },
+    {
+        "assignee": null,
+        "assignees": [],
+        "author": {
+            "avatar_url": "https://secure.gravatar.com/avatar/b8c8a858811dfece044c3818e21bf4f3?s=80&d=identicon",
+            "id": 1,
+            "name": "Timothy Engler",
+            "state": "active",
+            "username": "redfish64",
+            "web_url": "https://gitlab.com/redfish64"
+        },
+        "closed_at": null,
+        "confidential": false,
+        "created_at": "2017-03-18T09:52:55.303Z",
+        "description": "Feeder (com.nononsenseapps.feeder) unnecessary require Android 7.0\n\nPlease compile it with lower minSDK.",
+        "discussion_locked": null,
+        "downvotes": 0,
+        "due_date": null,
+        "id": 2,
+        "iid": 2,
+        "labels": [],
+        "milestone": null,
+        "project_id": 1,
+        "state": "closed",
+        "time_stats": {
+            "human_time_estimate": null,
+            "human_total_time_spent": null,
+            "time_estimate": 0,
+            "total_time_spent": 0
+        },
+        "title": "Feeder (com.nononsenseapps.feeder) unnecessary require Android 7.0",
+        "updated_at": "2017-03-18T18:36:39.764Z",
+        "upvotes": 0,
+        "user_notes_count": 2,
+        "web_url": "https://gitlab.com/fdroid/fdroiddata/issues/641",
+        "weight": null
+    }
+]
