@@ -250,7 +250,7 @@ class PipermailList(MailingList):
         return [a[1] for a in archives]
 
     def _parse_archive_links(self, raw_html):
-        bs = bs4.BeautifulSoup(raw_html)
+        bs = bs4.BeautifulSoup(raw_html, 'html.parser')
 
         candidates = [a['href'] for a in bs.find_all('a', href=True)]
         links = []
