@@ -27,12 +27,13 @@ import logging
 import os
 import pickle
 import sqlite3
+import uuid
 
 from grimoirelab.toolkit.datetime import (datetime_utcnow,
                                           datetime_to_utc,
                                           str_to_datetime)
 
-from .errors import ArchiveError
+from .errors import ArchiveError, ArchiveManagerError
 
 
 logger = logging.getLogger(__name__)
@@ -342,3 +343,123 @@ class Archive:
             cursor.close()
 
         return row[0]
+
+
+class ArchiveManager:
+    """Manager for handling archives in Perceval.
+
+    This class manages the creation, deletion and access of `Archive`
+    objects. Archives are stored under `dirpath` directory, using
+    a random SHA1 for each file. The first byte of the hashcode will
+    be the name of the subdirectory; the remaining bytes, the archive
+    name.
+
+    :param: dirpath: path where the archives are stored
+    """
+
+    STORAGE_EXT = '.sqlite3'
+
+    def __init__(self, dirpath):
+        self.dirpath = dirpath
+
+        if not os.path.exists(self.dirpath):
+            os.makedirs(self.dirpath)
+
+    def create_archive(self):
+        """Create a new archive.
+
+        The method creates in the filesystem a brand new archive with
+        a random SHA1 as its name. The first byte of the hashcode will
+        be the name of the subdirectory; the remaining bytes, the
+        archive name.
+
+        :returns: a new `Archive` object
+
+        :raises ArchiveManagerError: when an error occurs creating the
+            new archive
+        """
+        hashcode = uuid.uuid4().hex
+        archive_dir = os.path.join(self.dirpath, hashcode[0:2])
+        archive_name = hashcode[2:] + self.STORAGE_EXT
+        archive_path = os.path.join(archive_dir, archive_name)
+
+        if not os.path.exists(archive_dir):
+            os.makedirs(archive_dir)
+
+        try:
+            archive = Archive.create(archive_path)
+        except ArchiveError as e:
+            raise ArchiveManagerError(cause=str(e))
+
+        return archive
+
+    def remove_archive(self, archive_path):
+        """Remove an archive.
+
+        This method deletes from the filesystem the archive stored
+        in `archive_path`.
+
+        :param archive_path: path to the archive
+
+        :raises ArchiveManangerError: when an error occurs removing the
+            archive
+        """
+        try:
+            Archive(archive_path)
+        except ArchiveError as e:
+            raise ArchiveManagerError(cause=str(e))
+
+        os.remove(archive_path)
+
+    def search(self, origin, backend_name, category, archived_after):
+        """Search archives.
+
+        Get the archives which store data based on the given parameters.
+        These parameters define which the origin was (`origin`), how data
+        was fetched (`backend_name`) and data type ('category').
+        Only those archives created on or after `archived_after` will be
+        returned.
+
+        The method returns a list with the file paths to those archives.
+        The list is sorted by the date of creation of each archive.
+
+        :param origin: data origin
+        :param backend_name: backed used to fetch data
+        :param category: type of the items fetched by the backend
+        :param archived_after: get archives created on or after this date
+
+        :returns: a list with archive names which match the search criteria
+        """
+        archives = self._search_archives(origin, backend_name,
+                                         category, archived_after)
+        archives = [(fp, date) for fp, date in archives]
+        archives = [fp for fp, _ in sorted(archives, key=lambda x: x[1])]
+
+        return archives
+
+    def _search_archives(self, origin, backend_name, category, archived_after):
+        """Search archives using filters."""
+
+        for archive_path in self._search_files():
+            try:
+                archive = Archive(archive_path)
+            except ArchiveError:
+                continue
+
+            match = archive.origin == origin and \
+                archive.backend_name == backend_name and \
+                archive.category == category and \
+                archive.created_on >= archived_after
+
+            if not match:
+                continue
+
+            yield archive_path, archive.created_on
+
+    def _search_files(self):
+        """Retrieve the file paths stored under the base path."""
+
+        for root, _, files in os.walk(self.dirpath):
+            for filename in files:
+                location = os.path.join(root, filename)
+                yield location

@@ -28,6 +28,7 @@ import shutil
 import sqlite3
 import sys
 import tempfile
+import unittest
 import unittest.mock
 
 import httpretty
@@ -37,8 +38,8 @@ from grimoirelab.toolkit.datetime import datetime_utcnow, datetime_to_utc
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-from perceval.archive import Archive
-from perceval.errors import ArchiveError
+from perceval.archive import Archive, ArchiveManager
+from perceval.errors import ArchiveError, ArchiveManagerError
 
 
 def count_number_rows(db, table_name):
@@ -269,6 +270,252 @@ class TestArchive(unittest.TestCase):
 
         with self.assertRaisesRegex(ArchiveError, "not found in archive"):
             _ = archive.retrieve("http://wrong", payload={}, headers={})
+
+
+ARCHIVE_TEST_DIR = 'archivedir'
+
+
+class MockUUID:
+    def __init__(self, uuid):
+        self.hex = uuid
+
+
+class TestArchiveManager(unittest.TestCase):
+    """Archive Manager tests"""
+
+    def setUp(self):
+        self.test_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
+
+    def test_struct(self):
+        """Test whether the structure of an archive manager directory is created"""
+
+        archive_mng_path = os.path.join(self.test_path, ARCHIVE_TEST_DIR)
+
+        # Directory does not exist yet
+        self.assertEqual(os.path.isdir(archive_mng_path), False)
+
+        # Object and directory are created
+        manager = ArchiveManager(archive_mng_path)
+        self.assertEqual(manager.dirpath, archive_mng_path)
+        self.assertEqual(os.path.isdir(archive_mng_path), True)
+
+        # A new object using the same directory does not create
+        # a new directory
+        alt_manager = ArchiveManager(archive_mng_path)
+        self.assertEqual(alt_manager.dirpath, archive_mng_path)
+        self.assertEqual(os.path.isdir(archive_mng_path), True)
+
+    @unittest.mock.patch('uuid.uuid4')
+    def test_create_archive(self, mock_uuid):
+        """Test if a new archive is created"""
+
+        mock_uuid.return_value = MockUUID('AB0123456789')
+
+        archive_mng_path = os.path.join(self.test_path, ARCHIVE_TEST_DIR)
+        manager = ArchiveManager(archive_mng_path)
+
+        archive = manager.create_archive()
+        self.assertIsInstance(archive, Archive)
+
+        expected = os.path.join(archive_mng_path, 'AB', '0123456789.sqlite3')
+        self.assertEqual(archive.archive_path, expected)
+        self.assertEqual(os.path.exists(archive.archive_path), True)
+
+    @unittest.mock.patch('uuid.uuid4')
+    def test_create_existing_archive(self, mock_uuid):
+        """Test if an exception is raised when the archive to create exists"""
+
+        mock_uuid.return_value = MockUUID('AB0123456789')
+
+        archive_mng_path = os.path.join(self.test_path, ARCHIVE_TEST_DIR)
+        manager = ArchiveManager(archive_mng_path)
+
+        # First we create the archive
+        archive = manager.create_archive()
+        self.assertIsInstance(archive, Archive)
+
+        expected = os.path.join(archive_mng_path, 'AB', '0123456789.sqlite3')
+        self.assertEqual(archive.archive_path, expected)
+
+        # The archive already exist so it must raise an exception
+        with self.assertRaisesRegex(ArchiveManagerError, 'archive .+ already exists'):
+            _ = manager.create_archive()
+
+    def test_remove_archive(self):
+        """Test if an archive is removed by the archive manager"""
+
+        archive_mng_path = os.path.join(self.test_path, ARCHIVE_TEST_DIR)
+        manager = ArchiveManager(archive_mng_path)
+
+        archive = manager.create_archive()
+        self.assertEqual(os.path.exists(archive.archive_path), True)
+
+        manager.remove_archive(archive.archive_path)
+        self.assertEqual(os.path.exists(archive.archive_path), False)
+
+    def test_remove_archive_not_found(self):
+        """Test if an exception is raised when the archive is not found"""
+
+        archive_mng_path = os.path.join(self.test_path, ARCHIVE_TEST_DIR)
+        manager = ArchiveManager(archive_mng_path)
+
+        with self.assertRaisesRegex(ArchiveManagerError, 'archive mockarchive does not exist'):
+            manager.remove_archive('mockarchive')
+
+    def test_search(self):
+        """Test if a set of archives is found based on the given criteria"""
+
+        archive_mng_path = os.path.join(self.test_path, ARCHIVE_TEST_DIR)
+        manager = ArchiveManager(archive_mng_path)
+
+        dt = datetime_utcnow()
+        metadata = [
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'git',
+                'backend_version': '0.8',
+                'category': 'commit',
+                'backend_params': {},
+            },
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'gerrit',
+                'backend_version': '0.1',
+                'category': 'changes',
+                'backend_params': {}
+            },
+            {
+                'origin': 'https://example.org',
+                'backend_name': 'git',
+                'backend_version': '0.1',
+                'category': 'commit',
+                'backend_params': {}
+            },
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'git',
+                'backend_version': '0.1',
+                'category': 'commit',
+                'backend_params': {}
+            }
+        ]
+
+        for meta in metadata:
+            archive = manager.create_archive()
+            archive.init_metadata(**meta)
+            meta['filepath'] = archive.archive_path
+
+        archives = manager.search('https://example.com', 'git', 'commit', dt)
+
+        expected = [metadata[0]['filepath'], metadata[3]['filepath']]
+        self.assertListEqual(archives, expected)
+
+    def test_search_archived_after(self):
+        """Check if a set of archives created after a given date are searched"""
+
+        archive_mng_path = os.path.join(self.test_path, ARCHIVE_TEST_DIR)
+        manager = ArchiveManager(archive_mng_path)
+
+        # First set of archives to create
+        metadata = [
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'git',
+                'backend_version': '0.8',
+                'category': 'commit',
+                'backend_params': {},
+            },
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'gerrit',
+                'backend_version': '0.1',
+                'category': 'changes',
+                'backend_params': {}
+            },
+        ]
+
+        for meta in metadata:
+            archive = manager.create_archive()
+            archive.init_metadata(**meta)
+
+        # Second set, archived after the date we'll use to search
+        after_dt = datetime_utcnow()
+        metadata = [
+            {
+                'origin': 'https://example.org',
+                'backend_name': 'git',
+                'backend_version': '0.1',
+                'category': 'commit',
+                'backend_params': {}
+            },
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'git',
+                'backend_version': '0.1',
+                'category': 'commit',
+                'backend_params': {}
+            }
+        ]
+
+        for meta in metadata:
+            archive = manager.create_archive()
+            archive.init_metadata(**meta)
+            meta['filepath'] = archive.archive_path
+
+        archives = manager.search('https://example.com', 'git', 'commit',
+                                  after_dt)
+
+        expected = [metadata[1]['filepath']]
+        self.assertListEqual(archives, expected)
+
+    def test_search_no_match(self):
+        """Check if an empty set of archives is returned when none match the criteria"""
+
+        archive_mng_path = os.path.join(self.test_path, ARCHIVE_TEST_DIR)
+        manager = ArchiveManager(archive_mng_path)
+
+        dt = datetime_utcnow()
+        metadata = [
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'git',
+                'backend_version': '0.8',
+                'category': 'commit',
+                'backend_params': {},
+            },
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'gerrit',
+                'backend_version': '0.1',
+                'category': 'changes',
+                'backend_params': {}
+            },
+            {
+                'origin': 'https://example.org',
+                'backend_name': 'git',
+                'backend_version': '0.1',
+                'category': 'commit',
+                'backend_params': {}
+            },
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'git',
+                'backend_version': '0.1',
+                'category': 'commit',
+                'backend_params': {}
+            }
+        ]
+
+        for meta in metadata:
+            archive = manager.create_archive()
+            archive.init_metadata(**meta)
+            meta['filepath'] = archive.archive_path
+
+        archives = manager.search('https://example.com', 'bugzilla', 'commit', dt)
+        self.assertListEqual(archives, [])
 
 
 if __name__ == "__main__":
