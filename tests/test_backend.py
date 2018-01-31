@@ -253,7 +253,7 @@ class TestBackend(unittest.TestCase):
         self.assertEqual(b.archive.backend_name, b.__class__.__name__)
         self.assertEqual(b.archive.backend_version, b.version)
         self.assertEqual(b.archive.origin, b.origin)
-        self.assertEqual(b.archive.item_category, MockedBackend.CATEGORY)
+        self.assertEqual(b.archive.category, MockedBackend.CATEGORY)
 
 
 class TestBackendArchive(TestCaseBackendArchive):

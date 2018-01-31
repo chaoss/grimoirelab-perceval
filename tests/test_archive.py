@@ -74,7 +74,7 @@ class TestArchive(unittest.TestCase):
         self.assertEqual(archive.origin, None)
         self.assertEqual(archive.backend_name, None)
         self.assertEqual(archive.backend_version, None)
-        self.assertEqual(archive.item_category, None)
+        self.assertEqual(archive.category, None)
         self.assertEqual(archive.backend_params, None)
 
         # Tables are empty
@@ -105,7 +105,7 @@ class TestArchive(unittest.TestCase):
         self.assertEqual(archive.origin, None)
         self.assertEqual(archive.backend_name, None)
         self.assertEqual(archive.backend_version, None)
-        self.assertEqual(archive.item_category, None)
+        self.assertEqual(archive.category, None)
         self.assertEqual(archive.backend_params, None)
 
     def test_init_not_existing_archive(self):
@@ -145,7 +145,7 @@ class TestArchive(unittest.TestCase):
             self.assertEqual(arch.origin, 'marvel.com')
             self.assertEqual(arch.backend_name, 'marvel-comics-backend')
             self.assertEqual(arch.backend_version, '0.1.0')
-            self.assertEqual(arch.item_category, 'issue')
+            self.assertEqual(arch.category, 'issue')
             self.assertGreaterEqual(arch.created_on, before_dt)
             self.assertLessEqual(arch.created_on, after_dt)
             self.assertDictEqual(arch.backend_params, {'from_date': before_dt})

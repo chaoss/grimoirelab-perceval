@@ -76,7 +76,7 @@ class Archive:
                            "origin TEXT, " \
                            "backend_name TEXT, " \
                            "backend_version TEXT, " \
-                           "item_category TEXT, " \
+                           "category TEXT, " \
                            "backend_params BLOB, " \
                            "created_on TEXT)"
 
@@ -88,7 +88,7 @@ class Archive:
         self.origin = None
         self.backend_name = None
         self.backend_version = None
-        self.item_category = None
+        self.category = None
         self.backend_params = None
         self.created_on = None
 
@@ -103,7 +103,7 @@ class Archive:
             conn.close()
 
     def init_metadata(self, origin, backend_name, backend_version,
-                      item_category, backend_params):
+                      category, backend_params):
         """Init metadata information.
 
         Metatada is composed by basic information needed to identify
@@ -113,7 +113,7 @@ class Archive:
         :param: origin: identifier of the repository
         :param: backend_name: name of the backend
         :param: backend_version: version of the backend
-        :param: item_category: category of the items fetched
+        :param: category: category of the items fetched
         :param: backend_params: dict representation of the fetch parameters
 
         raises ArchiveError: when an error occurs initializing the metadata
@@ -122,14 +122,14 @@ class Archive:
         created_on_dumped = created_on.isoformat()
         backend_params_dumped = pickle.dumps(backend_params, 0)
 
-        metadata = (origin, backend_name, backend_version, item_category,
+        metadata = (origin, backend_name, backend_version, category,
                     backend_params_dumped, created_on_dumped,)
 
         try:
             cursor = self._db.cursor()
             insert_stmt = "INSERT INTO " + self.METADATA_TABLE + " "\
                           "(origin, backend_name, backend_version, " \
-                          "item_category, backend_params, created_on) " \
+                          "category, backend_params, created_on) " \
                           "VALUES (?, ?, ?, ?, ?, ?)"
             cursor.execute(insert_stmt, metadata)
 
@@ -142,7 +142,7 @@ class Archive:
         self.origin = origin
         self.backend_name = backend_name
         self.backend_version = backend_version
-        self.item_category = item_category
+        self.category = category
         self.backend_params = backend_params
         self.created_on = created_on
 
@@ -307,7 +307,7 @@ class Archive:
 
         cursor = self._db.cursor()
         select_stmt = "SELECT origin, backend_name, backend_version, " \
-                      "item_category, backend_params, created_on " \
+                      "category, backend_params, created_on " \
                       "FROM " + self.METADATA_TABLE + " " \
                       "LIMIT 1"
         cursor.execute(select_stmt)
@@ -318,7 +318,7 @@ class Archive:
             self.origin = row[0]
             self.backend_name = row[1]
             self.backend_version = row[2]
-            self.item_category = row[3]
+            self.category = row[3]
             self.backend_params = pickle.loads(row[4])
             self.created_on = str_to_datetime(row[5])
         else:
