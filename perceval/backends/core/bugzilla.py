@@ -269,7 +269,7 @@ class Bugzilla(Backend):
             return s
 
         # Parsing starts here
-        bs = bs4.BeautifulSoup(raw_html)
+        bs = bs4.BeautifulSoup(raw_html, 'html.parser')
 
         if is_activity_empty(bs):
             fields = []
