@@ -50,7 +50,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.4'
+    version = '0.9.5'
 
     CATEGORIES = [CATEGORY_TASK]
 
@@ -299,7 +299,82 @@ class Phabricator(Backend):
                 author = self.__get_or_fetch_user(author_id)
                 tt['authorData'] = author
 
+                if tt['transactionType'] == 'reassign':
+                    tt['newValue_data'] = self.__resolve_reassign_id(tt['newValue'])
+                    tt['oldValue_data'] = self.__resolve_reassign_id(tt['oldValue'])
+
+                if tt['transactionType'] == 'core:columns':
+                    tt['newValue'] = self.__resolve_board_ids(tt['newValue'])
+                    tt['oldValue'] = self.__resolve_board_ids(tt['oldValue'])
+
+                if tt['transactionType'] == 'core:subscribers':
+                    tt['newValue_data'] = self.__resolve_subsribers_ids(tt['newValue'])
+                    tt['oldValue_data'] = self.__resolve_subsribers_ids(tt['oldValue'])
+
+                if tt['transactionType'] in ['core:edit-policy', 'core:view-policy']:
+                    tt['newValue_data'] = self.__resolve_policy_id(tt['newValue'])
+                    tt['oldValue_data'] = self.__resolve_policy_id(tt['oldValue'])
+
+                if tt['transactionType'] == 'core:edge':
+                    tt['oldValue'] = self.__resolve_project_ids(tt['oldValue'])
+                    tt['newValue'] = self.__resolve_project_ids(tt['newValue'])
+
         return tasks_trans
+
+    def __resolve_reassign_id(self, value):
+        if not value:
+            return value
+
+        resolved = self.__get_or_fetch_user(value)
+        return resolved
+
+    def __resolve_policy_id(self, value):
+        if not value:
+            return value
+
+        if value.startswith('PHID-PROJ'):
+            resolved = self.__get_or_fetch_project(value)
+        else:
+            resolved = value
+
+        return resolved
+
+    def __resolve_board_ids(self, lst):
+        if not lst:
+            return lst
+
+        for e in lst:
+            e['boardPHID_data'] = self.__get_or_fetch_project(e['boardPHID'])
+
+        return lst
+
+    def __resolve_subsribers_ids(self, lst):
+        if not lst:
+            return lst
+
+        resolved_lst = []
+        for e in lst:
+            resolved = e
+            if e.startswith('PHID-PROJ'):
+                resolved = self.__get_or_fetch_project(e)
+            elif e.startswith('PHID-USER'):
+                resolved = self.__get_or_fetch_user(e)
+
+            resolved_lst.append(resolved)
+
+        return resolved_lst
+
+    def __resolve_project_ids(self, dct):
+        if not dct:
+            return dct
+
+        for key in dct.keys():
+            content = dct.get(key)
+
+            if 'dst' in content and content['dst'] and content['dst'].startswith('PHID-PROJ'):
+                content['dst_data'] = self.__get_or_fetch_project(content['dst'])
+
+        return dct
 
     def __fetch_and_parse_users(self, *users_ids):
         logger.debug("Fetching and parsing users data")
