@@ -223,6 +223,7 @@ class BackendCommandArgumentParser:
     :param offset: set offset argument
     :param basic_auth: set basic authentication arguments
     :param token_auth: set token/key authentication arguments
+    :param archive: set archiving arguments
     :param cache: set caching arguments
     :param aliases: define aliases for parsed arguments
 
@@ -230,10 +231,11 @@ class BackendCommandArgumentParser:
         to `True`
     """
     def __init__(self, from_date=False, to_date=False, offset=False,
-                 basic_auth=False, token_auth=False,
+                 basic_auth=False, token_auth=False, archive=False,
                  cache=False, aliases=None):
         self._from_date = from_date
         self._to_date = to_date
+        self._archive = archive
         self._cache = cache
 
         self.aliases = aliases or {}
@@ -262,6 +264,9 @@ class BackendCommandArgumentParser:
             self._set_auth_arguments(basic_auth=basic_auth,
                                      token_auth=token_auth)
 
+        if archive:
+            self._set_archive_arguments()
+
         if cache:
             self._set_cache_arguments()
 
@@ -284,6 +289,9 @@ class BackendCommandArgumentParser:
             parsed_args.from_date = str_to_datetime(parsed_args.from_date)
         if self._to_date and parsed_args.to_date:
             parsed_args.to_date = str_to_datetime(parsed_args.to_date)
+
+        if self._archive and parsed_args.fetch_archive and parsed_args.no_archive:
+            raise AttributeError("fetch-archive and no-archive arguments are not compatible")
 
         if self._cache and parsed_args.fetch_cache and parsed_args.no_cache:
             raise AttributeError("fetch-cache and no-cache arguments are not compatible")
@@ -309,6 +317,17 @@ class BackendCommandArgumentParser:
         if token_auth:
             group.add_argument('-t', '--api-token', dest='api_token',
                                help="backend authentication token / API key")
+
+    def _set_archive_arguments(self):
+        """Activate archive arguments parsing"""
+
+        group = self.parser.add_argument_group('archive arguments')
+        group.add_argument('--archive-path', dest='archive_path', default=None,
+                           help="directory path to the archives")
+        group.add_argument('--no-archive', dest='no_archive', action='store_true',
+                           help="do not archive data")
+        group.add_argument('--fetch-archive', dest='fetch_archive', action='store_true',
+                           help="fetch data from the archives")
 
     def _set_cache_arguments(self):
         """Activate cache arguments parsing"""

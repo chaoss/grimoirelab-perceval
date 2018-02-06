@@ -432,6 +432,29 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         self.assertEqual(parsed_args.password, '1234')
         self.assertEqual(parsed_args.api_token, 'abcd')
 
+    def test_parse_archive_args(self):
+        """Test if achiving arguments are parsed"""
+
+        args = ['--archive-path', '/tmp/archive',
+                '--fetch-archive']
+
+        parser = BackendCommandArgumentParser(archive=True)
+        parsed_args = parser.parse(*args)
+
+        self.assertIsInstance(parsed_args, argparse.Namespace)
+        self.assertEqual(parsed_args.archive_path, '/tmp/archive')
+        self.assertEqual(parsed_args.fetch_archive, True)
+        self.assertEqual(parsed_args.no_archive, False)
+
+    def test_incompatible_fetch_archive_and_no_archive(self):
+        """Test if fetch-archive and no-archive arguments are incompatible"""
+
+        args = ['--fetch-archive', '--no-archive']
+        parser = BackendCommandArgumentParser(archive=True)
+
+        with self.assertRaises(AttributeError):
+            _ = parser.parse(*args)
+
     def test_parse_cache_args(self):
         """Test if the authtentication arguments are parsed"""
 
