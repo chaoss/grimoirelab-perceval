@@ -242,6 +242,8 @@ class BackendCommandArgumentParser:
         self.parser = argparse.ArgumentParser()
 
         group = self.parser.add_argument_group('general arguments')
+        group.add_argument('--category', dest='category',
+                           help="type of the items to fetch")
         group.add_argument('--tag', dest='tag',
                            help="tag the items generated during the fetching process")
 
@@ -292,6 +294,9 @@ class BackendCommandArgumentParser:
 
         if self._archive and parsed_args.fetch_archive and parsed_args.no_archive:
             raise AttributeError("fetch-archive and no-archive arguments are not compatible")
+
+        if self._archive and parsed_args.fetch_archive and not parsed_args.category:
+            raise AttributeError("fetch-archive needs a category to work with")
 
         if self._cache and parsed_args.fetch_cache and parsed_args.no_cache:
             raise AttributeError("fetch-cache and no-cache arguments are not compatible")

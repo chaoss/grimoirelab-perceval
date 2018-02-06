@@ -114,7 +114,7 @@ class MockedBackendCommand(BackendCommand):
                                               token_auth=True,
                                               cache=True)
         parser.parser.add_argument('origin')
-        parser.parser.add_argument('--category', dest='category')
+        parser.parser.add_argument('--subtype', dest='subtype')
 
         return parser
 
@@ -436,7 +436,7 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         """Test if achiving arguments are parsed"""
 
         args = ['--archive-path', '/tmp/archive',
-                '--fetch-archive']
+                '--fetch-archive', '--category', 'mocked']
 
         parser = BackendCommandArgumentParser(archive=True)
         parsed_args = parser.parse(*args)
@@ -450,6 +450,15 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         """Test if fetch-archive and no-archive arguments are incompatible"""
 
         args = ['--fetch-archive', '--no-archive']
+        parser = BackendCommandArgumentParser(archive=True)
+
+        with self.assertRaises(AttributeError):
+            _ = parser.parse(*args)
+
+    def test_fetch_archive_needs_category(self):
+        """Test if fetch-archive needs a category"""
+
+        args = ['--fetch-archive']
         parser = BackendCommandArgumentParser(archive=True)
 
         with self.assertRaises(AttributeError):
@@ -592,6 +601,7 @@ class TestBackendCommand(unittest.TestCase):
 
         args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
                 '--cache-path', self.test_path, '--category', 'mocked',
+                '--subtype', 'mocksubtype',
                 '--from-date', '2015-01-01', '--tag', 'test',
                 '--output', self.fout_path, 'http://example.com/']
 
@@ -619,6 +629,7 @@ class TestBackendCommand(unittest.TestCase):
 
         args = ['--cache-path', self.test_path, '--fetch-cache',
                 '--from-date', '2015-01-01', '--tag', 'test', '--category', 'mocked',
+                '--subtype', 'mocksubtype',
                 '--output', self.fout_path, 'http://example.com/']
 
         cmd = MockedBackendCommand(*args)
