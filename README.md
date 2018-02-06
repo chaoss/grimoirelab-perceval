@@ -201,7 +201,7 @@ $ perceval hyperkitty 'https://lists.mailman3.org/archives/list/mailman-users@ma
 
 ### Jenkins
 ```
-$ perceval jenkins 'http://jenkins.cyanogenmod.org/'
+$ perceval jenkins 'https://build.opnfv.org/ci/'
 ```
 
 ### JIRA
