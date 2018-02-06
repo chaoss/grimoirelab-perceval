@@ -436,15 +436,21 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         """Test if achiving arguments are parsed"""
 
         args = ['--archive-path', '/tmp/archive',
-                '--fetch-archive', '--category', 'mocked']
+                '--fetch-archive',
+                '--archived-since', '2016-01-01',
+                '--category', 'mocked']
 
         parser = BackendCommandArgumentParser(archive=True)
         parsed_args = parser.parse(*args)
+
+        expected_dt = datetime.datetime(2016, 1, 1, 0, 0,
+                                        tzinfo=dateutil.tz.tzutc())
 
         self.assertIsInstance(parsed_args, argparse.Namespace)
         self.assertEqual(parsed_args.archive_path, '/tmp/archive')
         self.assertEqual(parsed_args.fetch_archive, True)
         self.assertEqual(parsed_args.no_archive, False)
+        self.assertEqual(parsed_args.archived_since, expected_dt)
 
     def test_incompatible_fetch_archive_and_no_archive(self):
         """Test if fetch-archive and no-archive arguments are incompatible"""

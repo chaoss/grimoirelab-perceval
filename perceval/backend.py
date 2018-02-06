@@ -291,10 +291,11 @@ class BackendCommandArgumentParser:
             parsed_args.from_date = str_to_datetime(parsed_args.from_date)
         if self._to_date and parsed_args.to_date:
             parsed_args.to_date = str_to_datetime(parsed_args.to_date)
+        if self._archive and parsed_args.archived_since:
+            parsed_args.archived_since = str_to_datetime(parsed_args.archived_since)
 
         if self._archive and parsed_args.fetch_archive and parsed_args.no_archive:
             raise AttributeError("fetch-archive and no-archive arguments are not compatible")
-
         if self._archive and parsed_args.fetch_archive and not parsed_args.category:
             raise AttributeError("fetch-archive needs a category to work with")
 
@@ -333,6 +334,8 @@ class BackendCommandArgumentParser:
                            help="do not archive data")
         group.add_argument('--fetch-archive', dest='fetch_archive', action='store_true',
                            help="fetch data from the archives")
+        group.add_argument('--archived-since', dest='archived_since', default='1970-01-01',
+                           help="retrieve items archived since the given date")
 
     def _set_cache_arguments(self):
         """Activate cache arguments parsing"""
