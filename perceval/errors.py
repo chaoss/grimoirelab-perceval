@@ -37,14 +37,20 @@ class BaseError(Exception):
         return self.msg
 
 
-class BackendError(BaseError):
-    """Generic error for backends"""
+class ArchiveError(BaseError):
+    """Generic error for archive objects"""
 
     message = "%(cause)s"
 
 
-class ArchiveError(BaseError):
-    """Generic error for archive objects"""
+class ArchiveManagerError(BaseError):
+    """Generic error for archive manager"""
+
+    message = "%(cause)s"
+
+
+class BackendError(BaseError):
+    """Generic error for backends"""
 
     message = "%(cause)s"
 

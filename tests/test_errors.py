@@ -67,6 +67,24 @@ class TestBaseError(unittest.TestCase):
         self.assertRaises(KeyError, MockErrorArgs, **kwargs)
 
 
+class TestArchiveError(unittest.TestCase):
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = errors.ArchiveError(cause='archive item not found')
+        self.assertEqual('archive item not found', str(e))
+
+
+class TestArchiveManagerError(unittest.TestCase):
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = errors.ArchiveManagerError(cause='archive not found')
+        self.assertEqual('archive not found', str(e))
+
+
 class TestBackendError(unittest.TestCase):
 
     def test_message(self):

@@ -309,7 +309,6 @@ class TestHyperKittyCommand(unittest.TestCase):
         self.assertEqual(cmd.parsed_args.url, 'http://example.com/archives/list/test@example.com/')
         self.assertEqual(cmd.parsed_args.mboxes_path, '/tmp/perceval/')
         self.assertEqual(cmd.parsed_args.tag, 'test')
-        self.assertIsInstance(cmd.backend, HyperKitty)
 
     def test_setup_cmd_parser(self):
         """Test if it parser object is correctly initialized"""
