@@ -25,6 +25,7 @@ import functools
 import hashlib
 import importlib
 import json
+import os
 import pkgutil
 import sys
 
@@ -33,10 +34,13 @@ from datetime import datetime as dt
 from grimoirelab.toolkit.introspect import find_signature_parameters
 from grimoirelab.toolkit.datetime import str_to_datetime
 
-from .archive import Archive
-from .cache import Cache, setup_cache
+from .archive import Archive, ArchiveManager
+from .cache import Cache
 from .errors import ArchiveError
 from ._version import __version__
+
+
+ARCHIVES_DEFAULT_PATH = '~/.perceval/archives/'
 
 
 class Backend:
@@ -94,11 +98,11 @@ class Backend:
 
         self._cache = obj
 
-    @ property
+    @property
     def archive(self):
         return self._archive
 
-    @ archive.setter
+    @archive.setter
     def archive(self, obj):
         if obj and not isinstance(obj, Archive):
             msg = "obj is not an instance of Archive. %s object given" % (str(type(obj)))
@@ -142,8 +146,6 @@ class Backend:
             raise ArchiveError(cause="archive instance was not provided")
 
         self.client = self._init_client(from_archive=True)
-
-        self.archive._load_metadata()
 
         for item in self.fetch_items(**self.archive.backend_params):
             yield self.metadata(item)
@@ -380,13 +382,10 @@ class BackendCommand:
         parser = self.setup_cmd_parser()
         self.parsed_args = parser.parse(*args)
 
+        self.archive_manager = None
+
         self._pre_init()
-
-        parsed_args = vars(self.parsed_args)
-        kw = find_signature_parameters(self.BACKEND.__init__, parsed_args)
-        self.backend = self.BACKEND(**kw)
-        self.backend.cache = self._initialize_cache()
-
+        self._initialize_archive()
         self._post_init()
 
         self.outfile = self.parsed_args.outfile
@@ -402,14 +401,16 @@ class BackendCommand:
         the inizialization of the instance, the items will be retrieved
         from the cache.
         """
-        if self.backend.cache and self.parsed_args.fetch_cache:
-            fetch = self.backend.fetch_from_cache
-        else:
-            fetch = self.backend.fetch
+        backend_args = vars(self.parsed_args)
 
-        parsed_args = vars(self.parsed_args)
-        kw = find_signature_parameters(fetch, parsed_args)
-        items = fetch(**kw)
+        if self.parsed_args.fetch_archive:
+            items = fetch_from_archive(self.BACKEND, backend_args,
+                                       self.archive_manager,
+                                       self.parsed_args.category,
+                                       self.parsed_args.archived_since)
+        else:
+            items = fetch(self.BACKEND, backend_args,
+                          manager=self.archive_manager)
 
         try:
             for item in items:
@@ -419,8 +420,6 @@ class BackendCommand:
         except IOError as e:
             raise RuntimeError(str(e))
         except Exception as e:
-            if self.backend.cache:
-                self.backend.cache.recover()
             raise RuntimeError(str(e))
 
     def _pre_init(self):
@@ -431,18 +430,22 @@ class BackendCommand:
         """Override to execute after backend is initialized."""
         pass
 
-    def _initialize_cache(self):
-        """Initialize cache based on the parsed parameters"""
+    def _initialize_archive(self):
+        """Initialize archive based on the parsed parameters"""
 
-        if 'cache_path' not in self.parsed_args:
-            return None
+        if 'archive_path' not in self.parsed_args:
+            manager = None
+        elif self.parsed_args.no_archive:
+            manager = None
+        else:
+            if not self.parsed_args.archive_path:
+                archive_path = os.path.expanduser(ARCHIVES_DEFAULT_PATH)
+            else:
+                archive_path = self.parsed_args.archive_path
 
-        if self.parsed_args.no_cache:
-            return None
+            manager = ArchiveManager(archive_path)
 
-        return setup_cache(self.backend.origin,
-                           cache_path=self.parsed_args.cache_path,
-                           clean_cache=self.parsed_args.clean_cache)
+        self.archive_manager = manager
 
     @staticmethod
     def setup_cmd_parser():
