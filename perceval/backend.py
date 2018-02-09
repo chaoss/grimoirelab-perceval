@@ -231,10 +231,11 @@ class BackendCommandArgumentParser:
     """
     def __init__(self, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False,
-                 cache=False, aliases=None):
+                 cache=False, aliases=None, archive=False):
         self._from_date = from_date
         self._to_date = to_date
         self._cache = cache
+        self._archive = archive
 
         self.aliases = aliases or {}
         self.parser = argparse.ArgumentParser()
@@ -264,6 +265,9 @@ class BackendCommandArgumentParser:
 
         if cache:
             self._set_cache_arguments()
+
+        if archive:
+            self._set_archive_arguments()
 
         self._set_output_arguments()
 
@@ -322,6 +326,17 @@ class BackendCommandArgumentParser:
                            help="do not store data in the cache")
         group.add_argument('--fetch-cache', dest='fetch_cache', action='store_true',
                            help="fetch data from the cache")
+
+    def _set_archive_arguments(self):
+        """Activate archive arguments parsing"""
+
+        group = self.parser.add_argument_group('archive arguments')
+        group.add_argument('--archive-path', dest='archive_path', default=None,
+                           help="directory path to the archive")
+        group.add_argument('--no-archive', dest='no_archive', action='store_true',
+                           help="do not store data in the archive")
+        group.add_argument('--fetch-archive', dest='fetch_archive', action='store_true',
+                           help="fetch data from the archive")
 
     def _set_output_arguments(self):
         """Activate output arguments parsing"""

@@ -49,6 +49,12 @@ class ArchiveError(BaseError):
     message = "%(cause)s"
 
 
+class ArchiveManagerError(BaseError):
+    """Generic error for archive manager objects"""
+
+    message = "%(cause)s"
+
+
 class CacheError(BaseError):
     """Generic error for cache objects"""
 
