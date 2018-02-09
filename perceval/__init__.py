@@ -23,8 +23,8 @@
 import logging
 
 from ._version import __version__
-from .backend import find_backends
+from .backend import fetch, fetch_from_archive, find_backends
 
-__all__ = [__version__, find_backends]
+__all__ = [__version__, fetch, fetch_from_archive, find_backends]
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

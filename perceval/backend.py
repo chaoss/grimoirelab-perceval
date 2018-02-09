@@ -510,6 +510,71 @@ def uuid(*args):
     return uuid_sha1
 
 
+def fetch(backend_class, backend_args, manager=None):
+    """Fetch items using the given backend.
+
+    Generator to get items using the given backend class. When
+    an archive manager is given, this function will store
+    the fetched items in an `Archive`.
+
+    The parameters needed to initialize the `backend` class and
+    get the items are given using `backend_args` dict parameter.
+
+    :param backend_class: backend class to fetch items
+    :param backend_args: dict of arguments needed to fetch the items
+    :param manager: archive manager needed to store the items
+
+    :returns: a generator of items
+    """
+    init_args = find_signature_parameters(backend_class.__init__,
+                                          backend_args)
+    init_args['archive'] = manager.create_archive() if manager else None
+
+    backend = backend_class(**init_args)
+    fetch_args = find_signature_parameters(backend.fetch,
+                                           backend_args)
+    items = backend.fetch(**fetch_args)
+
+    for item in items:
+        yield item
+
+
+def fetch_from_archive(backend_class, backend_args, manager,
+                       category, archived_after):
+    """Fetch items from an archive manager.
+
+    Generator to get the items of a category (previously fetched
+    by the given backend class) from an archive manager. Only those
+    items archived after the given date will be returned.
+
+    The parameters needed to initialize `backend` and get the
+    items are given using `backend_args` dict parameter.
+
+    :param backend_class: backend class to retrive items
+    :param backend_args: dict of arguments needed to retrieve the items
+    :param manager: archive manager where the items will be retrieved
+    :param category: category of the items to retrieve
+    :param archived_after: return items archived after this date
+
+    :returns: a generator of archived items
+    """
+    init_args = find_signature_parameters(backend_class.__init__,
+                                          backend_args)
+    backend = backend_class(**init_args)
+
+    filepaths = manager.search(backend.origin,
+                               backend.__class__.__name__,
+                               category,
+                               archived_after)
+
+    for filepath in filepaths:
+        backend.archive = Archive(filepath)
+        items = backend.fetch_from_archive()
+
+        for item in items:
+            yield item
+
+
 def find_backends(top_package):
     """Find available backends.
 
