@@ -42,11 +42,9 @@ from perceval.archive import Archive, ArchiveManager
 from perceval.backend import (Backend,
                               BackendCommandArgumentParser,
                               BackendCommand,
-                              metadata,
                               uuid,
                               fetch,
                               fetch_from_archive)
-from perceval.cache import Cache
 from perceval.errors import ArchiveError
 from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
@@ -76,15 +74,6 @@ class MockedBackend(Backend):
 
     def fetch(self):
         return super().fetch(MockedBackend.CATEGORY)
-
-    @metadata
-    def fetch_from_cache(self):
-        for x in range(5):
-            item = {
-                'item': x,
-                'cache': True
-            }
-            yield item
 
     def _init_client(self, from_archive=False):
         self._fetch_from_archive = from_archive
@@ -160,13 +149,13 @@ class TestBackend(unittest.TestCase):
         b = Backend('test')
         self.assertEqual(b.origin, 'test')
 
-    def test_has_caching(self):
+    def test_has_archiving(self):
         """Test whether an NotImplementedError exception is thrown"""
 
         b = Backend('test')
 
         with self.assertRaises(NotImplementedError):
-            b.has_caching()
+            b.has_archiving()
 
     def test_has_resuming(self):
         """Test whether an NotImplementedError exception is thrown"""
@@ -211,55 +200,31 @@ class TestBackend(unittest.TestCase):
         self.assertEqual(b.origin, 'test')
         self.assertEqual(b.tag, 'mytag')
 
-    def test_cache(self):
-        """Test whether cache value is initializated"""
+    def test_archive(self):
+        """Test whether archive value is initializated"""
 
-        cache_path = os.path.join(self.test_path, 'mockrepo')
-        cache = Cache(cache_path)
+        archive_path = os.path.join(self.test_path, 'myarchive')
+        archive = Archive.create(archive_path)
 
-        b = Backend('test', cache=cache)
-        self.assertEqual(b.cache, cache)
+        b = Backend('test', archive=archive)
+        self.assertEqual(b.archive, archive)
 
         b = Backend('test')
-        self.assertEqual(b.cache, None)
+        self.assertEqual(b.archive, None)
 
-        b.cache = cache
-        self.assertEqual(b.cache, cache)
+        b.archive = archive
+        self.assertEqual(b.archive, archive)
 
-    def test_cache_value_error(self):
-        """Test whether it raises a error on invalid cache istances"""
+    def test_archive_value_error(self):
+        """Test whether it raises a error on invalid archive istances"""
 
         with self.assertRaises(ValueError):
-            Backend('test', cache=8)
+            Backend('test', archive=8)
 
         b = Backend('test')
 
         with self.assertRaises(ValueError):
-            b.cache = 8
-
-    def test_fetch_client_not_provided(self):
-        """Test whether an NotImplementedError exception is thrown"""
-
-        b = Backend('test')
-
-        with self.assertRaises(NotImplementedError):
-            _ = [item for item in b.fetch(category="acme")]
-
-    def test_fetch_items(self):
-        """Test whether an NotImplementedError exception is thrown"""
-
-        b = Backend('test')
-
-        with self.assertRaises(NotImplementedError):
-            b.fetch_items()
-
-    def test_init_client_not_implemented(self):
-        """Test whether an NotImplementedError exception is thrown"""
-
-        b = Backend('test')
-
-        with self.assertRaises(NotImplementedError):
-            b._init_client()
+            b.archive = 8
 
     def test_init_archive(self):
         """Test whether the archive is properly initialized when executing the fetch method"""
@@ -274,6 +239,30 @@ class TestBackend(unittest.TestCase):
         self.assertEqual(b.archive.backend_version, b.version)
         self.assertEqual(b.archive.origin, b.origin)
         self.assertEqual(b.archive.category, MockedBackend.CATEGORY)
+
+    def test_fetch_client_not_provided(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            _ = [item for item in b.fetch(category="acme")]
+
+    def test_init_client_not_implemented(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b._init_client()
+
+    def test_fetch_items(self):
+        """Test whether an NotImplementedError exception is thrown"""
+
+        b = Backend('test')
+
+        with self.assertRaises(NotImplementedError):
+            b.fetch_items()
 
 
 class TestBackendArchive(TestCaseBackendArchive):
@@ -486,30 +475,6 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
 
         args = ['--fetch-archive']
         parser = BackendCommandArgumentParser(archive=True)
-
-        with self.assertRaises(AttributeError):
-            _ = parser.parse(*args)
-
-    def test_parse_cache_args(self):
-        """Test if the authtentication arguments are parsed"""
-
-        args = ['--cache-path', '/tmp/cache',
-                '--clean-cache', '--fetch-cache']
-
-        parser = BackendCommandArgumentParser(cache=True)
-        parsed_args = parser.parse(*args)
-
-        self.assertIsInstance(parsed_args, argparse.Namespace)
-        self.assertEqual(parsed_args.cache_path, '/tmp/cache')
-        self.assertEqual(parsed_args.clean_cache, True)
-        self.assertEqual(parsed_args.fetch_cache, True)
-        self.assertEqual(parsed_args.no_cache, False)
-
-    def test_incompatible_fetch_cache_and_no_cache(self):
-        """Test if fetch-cache and no-cache arguments are incompatible"""
-
-        args = ['--fetch-cache', '--no-cache']
-        parser = BackendCommandArgumentParser(cache=True)
 
         with self.assertRaises(AttributeError):
             _ = parser.parse(*args)
