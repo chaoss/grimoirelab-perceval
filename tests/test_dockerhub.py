@@ -23,7 +23,6 @@
 import datetime
 import os
 import shutil
-import sys
 import unittest
 import unittest.mock
 
@@ -33,16 +32,13 @@ import pkg_resources
 
 from grimoirelab.toolkit.uris import urijoin
 
-# Hack to make sure that tests import the right packages
-# due to setuptools behaviour
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.dockerhub import (DockerHub,
                                               DockerHubClient,
                                               DockerHubCommand)
-from tests.base import TestCaseBackendArchive
+from base import TestCaseBackendArchive
 
 DOCKERHUB_URL = "https://hub.docker.com/"
 DOCKERHUB_API_URL = DOCKERHUB_URL + 'v2'

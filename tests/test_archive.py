@@ -26,7 +26,6 @@ import os
 import pickle
 import shutil
 import sqlite3
-import sys
 import tempfile
 import unittest
 import unittest.mock
@@ -35,8 +34,6 @@ import httpretty
 import requests
 
 from grimoirelab.toolkit.datetime import datetime_utcnow, datetime_to_utc
-
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from perceval.archive import Archive, ArchiveManager
 from perceval.errors import ArchiveError, ArchiveManagerError

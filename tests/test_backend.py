@@ -27,7 +27,6 @@ import io
 import json
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 import unittest.mock
@@ -37,8 +36,6 @@ import dateutil.tz
 from grimoirelab.toolkit.datetime import (InvalidDateError,
                                           datetime_utcnow,
                                           str_to_datetime)
-
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from perceval import __version__
 from perceval.archive import Archive, ArchiveManager
@@ -52,7 +49,7 @@ from perceval.backend import (Backend,
 from perceval.cache import Cache
 from perceval.errors import ArchiveError
 from perceval.utils import DEFAULT_DATETIME
-from tests.base import TestCaseBackendArchive
+from base import TestCaseBackendArchive
 
 
 class MockedBackend(Backend):

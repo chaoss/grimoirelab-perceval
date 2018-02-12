@@ -23,12 +23,10 @@
 
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 import unittest.mock
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from perceval.cache import (CACHE_DEFAULT_PATH,
                             Cache,
                             setup_cache)

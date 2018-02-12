@@ -24,16 +24,12 @@
 import datetime
 import os
 import shutil
-import sys
 import unittest
 
 import httpretty
 import pkg_resources
 import requests
 
-# Hack to make sure that tests import the right packages
-# due to setuptools behaviour
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -42,7 +38,7 @@ from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.bugzilla import (Bugzilla,
                                              BugzillaCommand,
                                              BugzillaClient)
-from tests.base import TestCaseBackendArchive
+from base import TestCaseBackendArchive
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'

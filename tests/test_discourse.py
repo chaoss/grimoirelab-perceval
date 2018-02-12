@@ -25,15 +25,11 @@
 import datetime
 import os
 import shutil
-import sys
 import unittest
 
 import httpretty
 import pkg_resources
 
-# Hack to make sure that tests import the right packages
-# due to setuptools behaviour
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -41,7 +37,7 @@ from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.discourse import (Discourse,
                                               DiscourseCommand,
                                               DiscourseClient)
-from tests.base import TestCaseBackendArchive
+from base import TestCaseBackendArchive
 
 DISCOURSE_SERVER_URL = 'http://example.com'
 DISCOURSE_TOPICS_URL = DISCOURSE_SERVER_URL + '/latest.json'

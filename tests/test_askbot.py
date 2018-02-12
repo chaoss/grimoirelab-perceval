@@ -24,7 +24,6 @@ import datetime
 import json
 import os
 import shutil
-import sys
 import unittest
 
 import bs4
@@ -32,9 +31,6 @@ import httpretty
 import pkg_resources
 import requests
 
-# Hack to make sure that tests import the right packages
-# due to setuptools behaviour
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -43,7 +39,7 @@ from perceval.backends.core.askbot import (Askbot,
                                            AskbotParser,
                                            AskbotCommand)
 from perceval.utils import DEFAULT_DATETIME
-from tests.base import TestCaseBackendArchive
+from base import TestCaseBackendArchive
 
 ASKBOT_URL = 'http://example.com'
 ASKBOT_QUESTIONS_API_URL = ASKBOT_URL + '/api/v1/questions'

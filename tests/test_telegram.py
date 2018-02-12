@@ -23,20 +23,16 @@
 import httpretty
 import os
 import pkg_resources
-import sys
 import unittest
 import urllib
 
-# Hack to make sure that tests import the right packages
-# due to setuptools behaviour
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.telegram import (Telegram,
                                              TelegramCommand,
                                              TelegramBotClient)
-from tests.base import TestCaseBackendArchive
+from base import TestCaseBackendArchive
 
 TELEGRAM_BOT = 'mybot'
 TELEGRAM_TOKEN = '12345678'
