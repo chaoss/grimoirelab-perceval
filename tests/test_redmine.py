@@ -159,11 +159,6 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(redmine.origin, REDMINE_URL)
         self.assertEqual(redmine.tag, REDMINE_URL)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(Redmine.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -470,7 +465,7 @@ class TestRedmineCommand(unittest.TestCase):
                 '--api-token', '12345678',
                 '--max-issues', '5',
                 '--tag', 'test',
-                '--no-cache',
+                '--no-archive',
                 '--from-date', '1970-01-01']
 
         parsed_args = parser.parse(*args)
@@ -478,7 +473,7 @@ class TestRedmineCommand(unittest.TestCase):
         self.assertEqual(parsed_args.api_token, '12345678')
         self.assertEqual(parsed_args.max_issues, 5)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 

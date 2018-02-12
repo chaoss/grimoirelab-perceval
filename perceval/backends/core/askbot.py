@@ -50,7 +50,7 @@ class Askbot(Backend):
 
     :param url: Askbot site URL
     :param tag: label used to mark the data
-    :param archive: collect questions already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
     version = '0.4.0'
 
@@ -108,14 +108,6 @@ class Askbot(Backend):
         :returns: this backend supports items resuming
         """
         return True
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -525,7 +517,8 @@ class AskbotCommand(BackendCommand):
     def setup_cmd_parser():
         """Returns the Askbot argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True)
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              archive=True)
 
         # Required arguments
         parser.parser.add_argument('url',

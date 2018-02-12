@@ -183,11 +183,6 @@ class TestMeetupBackend(unittest.TestCase):
         self.assertEqual(meetup.origin, 'https://meetup.com/')
         self.assertEqual(meetup.tag, 'https://meetup.com/')
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(Meetup.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -600,7 +595,7 @@ class TestMeetupCommand(unittest.TestCase):
                 '--api-token', 'aaaa',
                 '--max-items', '5',
                 '--tag', 'test',
-                '--no-cache',
+                '--no-archive',
                 '--from-date', '1970-01-01',
                 '--to-date', '2016-01-01',
                 '--sleep-for-rate',
@@ -615,7 +610,7 @@ class TestMeetupCommand(unittest.TestCase):
         self.assertEqual(parsed_args.api_token, 'aaaa')
         self.assertEqual(parsed_args.max_items, 5)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.to_date, expected_ts)
         self.assertEqual(parsed_args.sleep_for_rate, True)

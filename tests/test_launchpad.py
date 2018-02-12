@@ -84,11 +84,6 @@ class TestLaunchpadBackend(unittest.TestCase):
         self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
         self.assertEqual(launchpad.tag, 'https://launchpad.net/mydistribution')
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(Launchpad.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns False when has_archiving is called"""
 
@@ -834,7 +829,7 @@ class TestLaunchpadCommand(unittest.TestCase):
         parser = LaunchpadCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
 
-        args = ['--tag', 'test', '--no-cache',
+        args = ['--tag', 'test', '--no-archive',
                 '--from-date', '1970-01-01',
                 '--items-per-page', '75',
                 '--sleep-time', '600',
@@ -844,7 +839,7 @@ class TestLaunchpadCommand(unittest.TestCase):
         self.assertEqual(parsed_args.distribution, 'mydistribution')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.items_per_page, '75')
         self.assertEqual(parsed_args.sleep_time, '600')
 

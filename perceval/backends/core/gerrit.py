@@ -54,19 +54,18 @@ class Gerrit(Backend):
     :param max_reviews: maximum number of reviews requested on the same query
     :param blacklist_reviews: exclude the reviews of this list while fetching
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: an archive to read/store data fetched by the backend
+    :param archive: archive to store/retrieve items
     """
-    version = '0.7.4'
+    version = '0.8.0'
 
     def __init__(self, url,
                  user=None, port=PORT, max_reviews=MAX_REVIEWS,
                  blacklist_reviews=None,
                  disable_host_key_check=False,
-                 tag=None, cache=None, archive=None):
+                 tag=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.user = user
         self.port = port
@@ -105,14 +104,6 @@ class Gerrit(Backend):
 
         for review in fetcher:
             yield review
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -263,8 +254,6 @@ class Gerrit(Backend):
     def _get_reviews(self, last_item, filter_=None):
         task_init = time.time()
         raw_data = self.client.reviews(last_item, filter_)
-        self._push_cache_queue(raw_data)
-        self._flush_cache_queue()
         reviews = self.parse_reviews(raw_data)
         logger.info("Received %i reviews in %.2fs" % (len(reviews),
                                                       time.time() - task_init))
@@ -444,8 +433,7 @@ class GerritCommand(BackendCommand):
     def setup_cmd_parser():
         """Returns the Gerrit argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True,
-                                              cache=True)
+        parser = BackendCommandArgumentParser(from_date=True)
 
         # Gerrit options
         group = parser.parser.add_argument_group('Gerrit arguments')

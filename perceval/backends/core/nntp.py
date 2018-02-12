@@ -53,15 +53,14 @@ class NNTP(Backend):
     :param host: host
     :param group: name of the group
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: an archive to read/store fetched data
+    :param archive: archive to store/retrieve items
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
-    def __init__(self, host, group, tag=None, cache=None, archive=None):
+    def __init__(self, host, group, tag=None, archive=None):
         origin = host + '-' + group
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.host = host
         self.group = group
         self.client = None
@@ -136,14 +135,6 @@ class NNTP(Backend):
         item['offset'] = item['data']['offset']
 
         return item
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -367,7 +358,7 @@ class NNTPCommand(BackendCommand):
         """Returns the NNTP argument parser."""
 
         parser = BackendCommandArgumentParser(offset=True,
-                                              cache=True)
+                                              archive=True)
 
         # Required arguments
         parser.parser.add_argument('host',

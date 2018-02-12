@@ -81,11 +81,6 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(stack.origin, 'stackoverflow')
         self.assertEqual(stack.tag, 'stackoverflow')
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(StackExchange.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -437,7 +432,7 @@ class TestStackExchangeCommand(unittest.TestCase):
                 '--api-token', 'aaa',
                 '--max-questions', '1',
                 '--tag', 'test',
-                '--no-cache',
+                '--no-archive',
                 '--from-date', '1970-01-01']
 
         parsed_args = parser.parse(*args)
@@ -446,7 +441,7 @@ class TestStackExchangeCommand(unittest.TestCase):
         self.assertEqual(parsed_args.api_token, 'aaa')
         self.assertEqual(parsed_args.max_questions, 1)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 

@@ -131,11 +131,6 @@ class TestNNTPBackend(unittest.TestCase):
         self.assertEqual(nntp.tag, expected_origin)
         self.assertIsNone(nntp.client)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(NNTP.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -458,14 +453,14 @@ class TestNNTPCommand(unittest.TestCase):
         args = ['nntp.example.com',
                 'example.dev.project-link',
                 '--tag', 'test',
-                '--no-cache',
+                '--no-archive',
                 '--offset', '6']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.host, 'nntp.example.com')
         self.assertEqual(parsed_args.group, 'example.dev.project-link')
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.offset, 6)
 
 

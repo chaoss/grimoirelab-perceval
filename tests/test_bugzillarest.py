@@ -144,11 +144,6 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         self.assertEqual(bg.origin, BUGZILLA_SERVER_URL)
         self.assertEqual(bg.tag, BUGZILLA_SERVER_URL)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(BugzillaREST.has_caching(), False)
-
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 
@@ -604,7 +599,7 @@ class TestBugzillaRESTCommand(unittest.TestCase):
                 '--api-token', 'abcdefg',
                 '--max-bugs', '10', '--tag', 'test',
                 '--from-date', '1970-01-01',
-                '--no-cache',
+                '--no-archive',
                 BUGZILLA_SERVER_URL]
 
         parsed_args = parser.parse(*args)
@@ -614,6 +609,7 @@ class TestBugzillaRESTCommand(unittest.TestCase):
         self.assertEqual(parsed_args.max_bugs, 10)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.url, BUGZILLA_SERVER_URL)
 
 

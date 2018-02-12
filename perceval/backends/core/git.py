@@ -58,18 +58,17 @@ class Git(Backend):
     :param uri: URI of the Git repository
     :param gitpath: path to the repository or to the log file
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: an archive to read/store data fetched by the backend
+    :param archive: archive to store/retrieve items
 
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.8.10'
+    version = '0.9.0'
 
-    def __init__(self, uri, gitpath, tag=None, cache=None, archive=None):
+    def __init__(self, uri, gitpath, tag=None, archive=None):
         origin = uri
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.uri = uri
         self.gitpath = gitpath
 
@@ -139,14 +138,6 @@ class Git(Backend):
 
         logger.info("Fetch process completed: %s commits fetched",
                     ncommits)
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):

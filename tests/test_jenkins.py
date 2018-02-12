@@ -138,11 +138,6 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(Jenkins.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -272,7 +267,7 @@ class TestJenkinsCommand(unittest.TestCase):
         parser = JenkinsCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
 
-        args = ['--tag', 'test', '--no-cache', '--sleep-time', '60',
+        args = ['--tag', 'test', '--no-archive', '--sleep-time', '60',
                 '--blacklist-jobs', '1', '2', '3', '4', '--',
                 JENKINS_SERVER_URL]
 
@@ -280,7 +275,7 @@ class TestJenkinsCommand(unittest.TestCase):
         self.assertEqual(parsed_args.url, JENKINS_SERVER_URL)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.sleep_time, 60)
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertListEqual(parsed_args.blacklist_jobs, ['1', '2', '3', '4'])
 
 

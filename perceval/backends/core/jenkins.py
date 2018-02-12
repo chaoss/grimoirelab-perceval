@@ -48,18 +48,18 @@ class Jenkins(Backend):
 
     :param url: Jenkins url
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
+    :param archive: archive to store/retrieve items
     :param blacklist_jobs: exclude the jobs of this list while fetching
     :param sleep_time: minimun waiting time due to a timeout connection exception
     :param archive: collect builds already retrieved from an archive
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
-    def __init__(self, url, tag=None, cache=None, blacklist_jobs=None,
-                 sleep_time=SLEEP_TIME, archive=None):
+    def __init__(self, url, tag=None, archive=None,
+                 blacklist_jobs=None, sleep_time=SLEEP_TIME):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.sleep_time = sleep_time
         self.blacklist_jobs = blacklist_jobs
@@ -125,14 +125,6 @@ class Jenkins(Backend):
 
         logger.info("Total number of jobs: %i/%i", njobs, len(jobs))
         logger.info("Total number of builds: %i", nbuilds)
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -238,7 +230,7 @@ class JenkinsCommand(BackendCommand):
     def setup_cmd_parser():
         """Returns the Jenkins argument parser."""
 
-        parser = BackendCommandArgumentParser(cache=True)
+        parser = BackendCommandArgumentParser(archive=True)
 
         # Jenkins options
         group = parser.parser.add_argument_group('Jenkins arguments')

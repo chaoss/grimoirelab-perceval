@@ -58,16 +58,15 @@ class BugzillaREST(Backend):
     :param api_token: Bugzilla token
     :param max_bugs: maximum number of bugs requested on the same query
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: collect issues already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
     def __init__(self, url, user=None, password=None, api_token=None,
-                 max_bugs=MAX_BUGS, tag=None, cache=None, archive=None):
+                 max_bugs=MAX_BUGS, tag=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.user = user
         self.password = password
@@ -107,14 +106,6 @@ class BugzillaREST(Backend):
             yield bug
 
         logger.info("Fetch process completed: %s bugs fetched", nbugs)
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -438,7 +429,7 @@ class BugzillaRESTCommand(BackendCommand):
         parser = BackendCommandArgumentParser(from_date=True,
                                               basic_auth=True,
                                               token_auth=True,
-                                              cache=True)
+                                              archive=True)
 
         # BugzillaREST options
         group = parser.parser.add_argument_group('Bugzilla REST arguments')

@@ -54,16 +54,15 @@ class Slack(Backend):
     :param api_token: token or key needed to use the API
     :param max_items: maximum number of message requested on the same query
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: collect messages already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
-                 tag=None, cache=None, archive=None):
+                 tag=None, archive=None):
         origin = urijoin(SLACK_URL, channel)
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.channel = channel
         self.api_token = api_token
         self.max_items = max_items
@@ -145,14 +144,6 @@ class Slack(Backend):
                     latest = float(message['ts'])
 
         logger.info("Fetch process completed: %s message fetched", nmsgs)
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -391,7 +382,7 @@ class SlackCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               token_auth=True,
-                                              cache=True)
+                                              archive=True)
 
         # Backend token is required
         action = parser.parser._option_string_actions['--api-token']

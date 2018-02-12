@@ -99,11 +99,6 @@ class TestRSSBackend(unittest.TestCase):
         self.assertEqual(rss.origin, RSS_FEED_URL)
         self.assertEqual(rss.tag, RSS_FEED_URL)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(RSS.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -233,13 +228,13 @@ class TestRSSCommand(unittest.TestCase):
         self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['--tag', 'test',
-                '--no-cache',
+                '--no-archive',
                 RSS_FEED_URL]
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, RSS_FEED_URL)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
 
 
 class TestRSSClient(unittest.TestCase):

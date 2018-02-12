@@ -58,17 +58,16 @@ class Bugzilla(Backend):
     :param password: Bugzilla user password
     :param max_bugs: maximum number of bugs requested on the same query
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: collect issues already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, url, user=None, password=None,
                  max_bugs=MAX_BUGS, max_bugs_csv=MAX_BUGS_CSV,
-                 tag=None, cache=None, archive=None):
+                 tag=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.user = user
         self.password = password
@@ -122,14 +121,6 @@ class Bugzilla(Backend):
 
         logger.info("Fetch process completed: %s/%s bugs fetched",
                     nbugs, tbugs)
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -305,7 +296,8 @@ class Bugzilla(Backend):
         """Init client"""
 
         return BugzillaClient(self.url, user=self.user, password=self.password,
-                              max_bugs_csv=self.max_bugs_csv, archive=self.archive, from_archive=from_archive)
+                              max_bugs_csv=self.max_bugs_csv,
+                              archive=self.archive, from_archive=from_archive)
 
     def __fetch_buglist(self, from_date):
         buglist = self.__fetch_and_parse_buglist_page(from_date)
@@ -352,7 +344,7 @@ class BugzillaCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               basic_auth=True,
-                                              cache=False)
+                                              archive=True)
 
         # Bugzilla options
         group = parser.parser.add_argument_group('Bugzilla arguments')
