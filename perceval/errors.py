@@ -55,12 +55,6 @@ class BackendError(BaseError):
     message = "%(cause)s"
 
 
-class CacheError(BaseError):
-    """Generic error for cache objects"""
-
-    message = "%(cause)s"
-
-
 class HttpClientError(BaseError):
     """Generic error for HTTP Cient"""
 
