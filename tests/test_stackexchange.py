@@ -26,14 +26,10 @@ import httpretty
 import json
 import os
 import pkg_resources
-import sys
 import time
 import unittest
 import urllib
 
-# Hack to make sure that tests import the right packages
-# due to setuptools behaviour
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -41,7 +37,7 @@ from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.stackexchange import (StackExchange,
                                                   StackExchangeCommand,
                                                   StackExchangeClient)
-from tests.base import TestCaseBackendArchive
+from base import TestCaseBackendArchive
 
 
 VERSION_API = '/2.2'

@@ -25,17 +25,13 @@
 import httpretty
 import os
 import pkg_resources
-import sys
 import unittest
 
-# Hack to make sure that tests import the right packages
-# due to setuptools behaviour
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.rss import RSS, RSSCommand, RSSClient
-from tests.base import TestCaseBackendArchive
+from base import TestCaseBackendArchive
 
 
 RSS_FEED_URL = 'http://example.com/rss'

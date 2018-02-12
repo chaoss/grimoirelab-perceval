@@ -25,7 +25,6 @@ import datetime
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 import unittest
 import unittest.mock
@@ -33,9 +32,6 @@ import unittest.mock
 import dateutil.tz
 import pkg_resources
 
-# Hack to make sure that tests import the right packages
-# due to setuptools behaviour
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser, uuid

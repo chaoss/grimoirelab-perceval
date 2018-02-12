@@ -27,11 +27,8 @@ import email
 import gzip
 import os
 import shutil
-import sys
 import tempfile
 import unittest
-
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from perceval.errors import ParseError
 from perceval.utils import (check_compressed_file_type,

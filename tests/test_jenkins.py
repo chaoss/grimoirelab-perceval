@@ -25,23 +25,19 @@
 import json
 import os
 import requests
-import sys
 import time
 import unittest
 
 import httpretty
 import pkg_resources
 
-# Hack to make sure that tests import the right packages
-# due to setuptools behaviour
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.jenkins import (Jenkins,
                                             JenkinsCommand,
                                             JenkinsClient)
-from tests.base import TestCaseBackendArchive
+from base import TestCaseBackendArchive
 
 
 JENKINS_SERVER_URL = 'http://example.com/ci'
