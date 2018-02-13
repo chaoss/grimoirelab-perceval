@@ -21,7 +21,6 @@
 #
 
 import argparse
-import functools
 import hashlib
 import importlib
 import json
@@ -399,36 +398,6 @@ class BackendCommand:
     @staticmethod
     def setup_cmd_parser():
         raise NotImplementedError
-
-
-def metadata(func):
-    """Add metadata to an item.
-
-    Decorator that adds metadata to a given item such as how and
-    when it was fetched. The contents from the original item will
-    be stored under the 'data' keyword.
-
-    Take into account that this decorator can only be called from a
-    'Backend' class due it needs access to some of the attributes
-    and methods of this class.
-    """
-    @functools.wraps(func)
-    def decorator(self, *args, **kwargs):
-        for data in func(self, *args, **kwargs):
-            item = {
-                'backend_name': self.__class__.__name__,
-                'backend_version': self.version,
-                'perceval_version': __version__,
-                'timestamp': dt.utcnow().timestamp(),
-                'origin': self.origin,
-                'uuid': uuid(self.origin, self.metadata_id(data)),
-                'updated_on': self.metadata_updated_on(data),
-                'category': self.metadata_category(data),
-                'tag': self.tag,
-                'data': data,
-            }
-            yield item
-    return decorator
 
 
 def uuid(*args):
