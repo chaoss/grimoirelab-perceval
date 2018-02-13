@@ -58,15 +58,14 @@ class Supybot(Backend):
         IRC channel
     :param dirpath: directory path where the archives are stored
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: an archive to retrieve/store data fetched by the backend
+    :param archive: archive to store/retrieve items
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
-    def __init__(self, uri, dirpath, tag=None, cache=None, archive=None):
+    def __init__(self, uri, dirpath, tag=None, archive=None):
         origin = uri
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.uri = uri
         self.dirpath = dirpath
 
@@ -117,14 +116,6 @@ class Supybot(Backend):
 
         logger.info("Fetch process completed: %s messages fetched",
                     nmessages)
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):

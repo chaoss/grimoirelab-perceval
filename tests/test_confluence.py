@@ -143,11 +143,6 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(confluence.origin, CONFLUENCE_URL)
         self.assertEqual(confluence.tag, CONFLUENCE_URL)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(Confluence.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -484,13 +479,13 @@ class TestConfluenceCommand(unittest.TestCase):
         self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['http://example.com',
-                '--tag', 'test', '--no-cache',
+                '--tag', 'test', '--no-archive',
                 '--from-date', '1970-01-01']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, 'http://example.com')
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 

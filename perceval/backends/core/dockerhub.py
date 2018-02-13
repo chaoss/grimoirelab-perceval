@@ -56,19 +56,17 @@ class DockerHub(Backend):
     :param owner: DockerHub owner
     :param repository: DockerHub repository owned by `owner`
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: collect dockerhub data already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
-    def __init__(self, owner, repository,
-                 tag=None, cache=None, archive=None):
+    def __init__(self, owner, repository, tag=None, archive=None):
         if owner == DOCKER_SHORTCUT_OWNER:
             owner = DOCKER_OWNER
 
         origin = urijoin(DOCKERHUB_URL, owner, repository)
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.owner = owner
         self.repository = repository
         self.client = None
@@ -101,14 +99,6 @@ class DockerHub(Backend):
         yield data
 
         logger.info("Fetch process completed")
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -210,7 +200,7 @@ class DockerHubCommand(BackendCommand):
     def setup_cmd_parser():
         """Returns the DockerHub argument parser."""
 
-        parser = BackendCommandArgumentParser(cache=True)
+        parser = BackendCommandArgumentParser(archive=True)
 
         # Required arguments
         parser.parser.add_argument('owner',

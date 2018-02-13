@@ -55,16 +55,15 @@ class Redmine(Backend):
     :param api_token: token needed to use the API
     :param max_issues:  maximum number of issues requested on the same query
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: collect issues already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
-                 tag=None, cache=None, archive=None):
+                 tag=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.api_token = api_token
         self.max_issues = max_issues
@@ -124,14 +123,6 @@ class Redmine(Backend):
             nissues += 1
 
         logger.info("Fetch process completed: %s issues fetched", nissues)
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -295,7 +286,7 @@ class RedmineCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               token_auth=True,
-                                              cache=True)
+                                              archive=True)
 
         # Redmine options
         group = parser.parser.add_argument_group('Redmine arguments')

@@ -58,18 +58,17 @@ class MBox(Backend):
         mailing list
     :param dirpath: directory path where the mboxes are stored
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: archive to read/store data fetched by the backend
+    :param archive: archive to store/retrieve items
     """
-    version = '0.8.1'
+    version = '0.9.0'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
 
-    def __init__(self, uri, dirpath, tag=None, cache=None, archive=None):
+    def __init__(self, uri, dirpath, tag=None, archive=None):
         origin = uri
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.uri = uri
         self.dirpath = dirpath
 
@@ -107,14 +106,6 @@ class MBox(Backend):
             yield message
 
         logger.info("Fetch process completed")
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):

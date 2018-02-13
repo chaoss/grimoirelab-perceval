@@ -538,11 +538,6 @@ class TestAskbotBackend(unittest.TestCase):
 
         self.assertEqual(Askbot.has_resuming(), True)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called."""
-
-        self.assertEqual(Askbot.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_resuming is called"""
 
@@ -649,12 +644,14 @@ class TestAskbotCommand(unittest.TestCase):
 
         args = ['--tag', 'test',
                 '--from-date', '1970-01-01',
+                '--no-archive',
                 ASKBOT_URL]
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, ASKBOT_URL)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.no_archive, True)
 
 
 if __name__ == "__main__":

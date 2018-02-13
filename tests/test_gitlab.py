@@ -220,11 +220,6 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(gitlab.tag, GITLAB_ENTERPRISE_URL + "/am/test")
         self.assertIsNone(gitlab.client)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(GitLab.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns False when has_archiving is called"""
 
@@ -631,7 +626,7 @@ class TestGitLabCommand(unittest.TestCase):
 
         args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',
-                '--tag', 'test', '--no-cache',
+                '--tag', 'test', '--no-archive',
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
                 '--enterprise-url', 'https://example.com',
@@ -645,7 +640,7 @@ class TestGitLabCommand(unittest.TestCase):
         self.assertEqual(parsed_args.min_rate_to_sleep, 1)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
 
 

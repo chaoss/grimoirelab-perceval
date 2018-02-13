@@ -176,11 +176,6 @@ class TestHyperKittyBackend(unittest.TestCase):
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'http://example.com/')
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(HyperKitty.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns False when has_archiving is called"""
 

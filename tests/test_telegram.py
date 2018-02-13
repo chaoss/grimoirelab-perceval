@@ -105,11 +105,6 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(tlg.origin, origin)
         self.assertEqual(tlg.tag, origin)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(Telegram.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -325,7 +320,7 @@ class TestTelegramCommand(unittest.TestCase):
                 '--offset', '10',
                 '--chats', '-10000',
                 '--tag', 'test',
-                '--no-cache']
+                '--no-archive']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.bot, 'mybot')
@@ -333,7 +328,7 @@ class TestTelegramCommand(unittest.TestCase):
         self.assertEqual(parsed_args.offset, 10)
         self.assertEqual(parsed_args.chats, [-10000])
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
 
 
 class TestTelegramBotClient(unittest.TestCase):

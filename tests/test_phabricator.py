@@ -180,11 +180,6 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.origin, PHABRICATOR_URL)
         self.assertEqual(phab.tag, PHABRICATOR_URL)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(Phabricator.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -602,14 +597,14 @@ class TestPhabricatorCommand(unittest.TestCase):
         args = ['http://example.com',
                 '--api-token', '12345678',
                 '--tag', 'test',
-                '--no-cache',
+                '--no-archive',
                 '--from-date', '1970-01-01']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, 'http://example.com')
         self.assertEqual(parsed_args.api_token, '12345678')
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 

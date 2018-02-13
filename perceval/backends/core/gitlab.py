@@ -66,23 +66,21 @@ class GitLab(Backend):
         when no value is set the backend will be fetch the data
         from the GitLab public site.
     :param tag: label used to mark the data
-    :param cache: use issues already retrieved in cache
-    :param archive: an archive to store/read fetched data
+    :param archive: archive to store/retrieve items
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     def __init__(self, owner=None, repository=None,
-                 api_token=None, base_url=None, tag=None,
-                 cache=None, archive=None,
+                 api_token=None, base_url=None, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
 
         origin = base_url if base_url else GITLAB_URL
         origin = urijoin(origin, owner, repository)
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.base_url = base_url
         self.owner = owner
         self.repository = repository
@@ -130,14 +128,6 @@ class GitLab(Backend):
                     self.__get_issue_award_emoji(issue['iid'])
 
                 yield issue
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -455,7 +445,7 @@ class GitLabCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               token_auth=True,
-                                              cache=True)
+                                              archive=True)
 
         # GitLab options
         group = parser.parser.add_argument_group('GitLab arguments')

@@ -61,23 +61,22 @@ class Meetup(Backend):
     :param api_token: token or key needed to use the API
     :param max_items:  maximum number of issues requested on the same query
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
+    :param archive: archive to store/retrieve items
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     :param sleep_time: minimun waiting time to avoid too many request
          exception
-    :param archive: collect events already retrieved from an archive
     """
-    version = '0.9.0'
+    version = '0.10.0'
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
-                 tag=None, cache=None,
+                 tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
-                 sleep_time=SLEEP_TIME, archive=None):
+                 sleep_time=SLEEP_TIME):
         origin = MEETUP_URL
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.group = group
         self.max_items = max_items
         self.api_token = api_token
@@ -149,14 +148,6 @@ class Meetup(Backend):
                 break
 
         logger.info("Fetch process completed: %s events fetched", nevents)
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -268,7 +259,7 @@ class MeetupCommand(BackendCommand):
         parser = BackendCommandArgumentParser(from_date=True,
                                               to_date=True,
                                               token_auth=True,
-                                              cache=True)
+                                              archive=True)
 
         # Meetup options
         group = parser.parser.add_argument_group('Meetup arguments')

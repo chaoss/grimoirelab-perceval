@@ -112,11 +112,6 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.origin, 'https://github.com/zhquan_example/repo')
         self.assertEqual(github.tag, 'https://github.com/zhquan_example/repo')
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(GitHub.has_caching(), False)
-
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
 
@@ -1413,7 +1408,7 @@ class TestGitHubCommand(unittest.TestCase):
                 '--min-rate-to-sleep', '1',
                 '--max-retries', '5',
                 '--sleep-time', '10',
-                '--tag', 'test', '--no-cache',
+                '--tag', 'test', '--no-archive',
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
                 '--enterprise-url', 'https://example.com',
@@ -1428,7 +1423,7 @@ class TestGitHubCommand(unittest.TestCase):
         self.assertEqual(parsed_args.sleep_time, 10)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
 
 

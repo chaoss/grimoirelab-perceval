@@ -35,7 +35,6 @@ from grimoirelab.toolkit.introspect import find_signature_parameters
 from grimoirelab.toolkit.datetime import str_to_datetime
 
 from .archive import Archive, ArchiveManager
-from .cache import Cache
 from .errors import ArchiveError
 from ._version import __version__
 
@@ -47,11 +46,11 @@ class Backend:
     """Abstract class for backends.
 
     Base class to fetch data from a repository. This repository
-    will be named as 'origin'. During the initialization, a `Cache`
-    object can be provided for caching raw data from the repositories.
+    will be named as 'origin'. During the initialization, an `Archive`
+    object can be provided for archiving raw data from the repositories.
 
-    Derivated classes have to implement `fetch`, `fetch_from_cache`,
-    `has_caching` and `has_resuming` methods. Otherwise, `NotImplementedError`
+    Derivated classes have to implement `fetch_items`, `has_archiving` and
+    `has_resuming` methods. Otherwise, `NotImplementedError`
     exception will be raised. Metadata decorator can be used together with
     fetch methods but requires the implementation of `metadata_id`,
     `metadata_updated_on` and `metadata_category` static methods.
@@ -66,37 +65,21 @@ class Backend:
 
     :param origin: identifier of the repository
     :param tag: tag items using this label
-    :param cache: object to caeche raw data
-    :param archive: archive object from where fetch the archived data
+    :param archive: archive to store/retrieve data
 
-    :raises ValueError: raised when `cache` is not an instance of
-        `Cache` class
+    :raises ValueError: raised when `archive` is not an instance of
+        `Archive` class
     """
-    version = '0.5.1'
+    version = '0.6.0'
 
-    def __init__(self, origin, tag=None, cache=None, archive=None):
+    def __init__(self, origin, tag=None, archive=None):
         self._origin = origin
         self.tag = tag if tag else origin
-        self.cache = cache or None
-        self.cache_queue = []
         self.archive = archive or None
 
     @property
     def origin(self):
         return self._origin
-
-    @property
-    def cache(self):
-        return self._cache
-
-    @cache.setter
-    def cache(self, obj):
-        if obj and not isinstance(obj, Cache):
-            msg = "obj is not an instance of Cache. %s object given" \
-                % (str(type(obj)))
-            raise ValueError(msg)
-
-        self._cache = obj
 
     @property
     def archive(self):
@@ -105,7 +88,8 @@ class Backend:
     @archive.setter
     def archive(self, obj):
         if obj and not isinstance(obj, Archive):
-            msg = "obj is not an instance of Archive. %s object given" % (str(type(obj)))
+            msg = "obj is not an instance of Archive. %s object given" \
+                % (str(type(obj)))
             raise ValueError(msg)
 
         self._archive = obj
@@ -175,7 +159,7 @@ class Backend:
         return item
 
     @classmethod
-    def has_caching(cls):
+    def has_archiving(cls):
         raise NotImplementedError
 
     @classmethod
@@ -194,20 +178,6 @@ class Backend:
     def metadata_category(item):
         raise NotImplementedError
 
-    def _purge_cache_queue(self):
-        self.cache_queue = []
-
-    def _flush_cache_queue(self):
-        if not self.cache:
-            return
-        self.cache.store(*self.cache_queue)
-        self._purge_cache_queue()
-
-    def _push_cache_queue(self, item):
-        if not self.cache:
-            return
-        self.cache_queue.append(item)
-
     def _init_client(self, from_archive=False):
         raise NotImplementedError
 
@@ -216,7 +186,7 @@ class BackendCommandArgumentParser:
     """Manage and parse backend command arguments.
 
     This class defines and parses a set of arguments common to
-    backends commands. Some parameters like cache or the different
+    backends commands. Some parameters like archive or the different
     types of authentication can be set during the initialization
     of the instance.
 
@@ -226,7 +196,6 @@ class BackendCommandArgumentParser:
     :param basic_auth: set basic authentication arguments
     :param token_auth: set token/key authentication arguments
     :param archive: set archiving arguments
-    :param cache: set caching arguments
     :param aliases: define aliases for parsed arguments
 
     :raises AttributeArror: when both `from_date` and `offset` are set
@@ -234,11 +203,10 @@ class BackendCommandArgumentParser:
     """
     def __init__(self, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False, archive=False,
-                 cache=False, aliases=None):
+                 aliases=None):
         self._from_date = from_date
         self._to_date = to_date
         self._archive = archive
-        self._cache = cache
 
         self.aliases = aliases or {}
         self.parser = argparse.ArgumentParser()
@@ -271,9 +239,6 @@ class BackendCommandArgumentParser:
         if archive:
             self._set_archive_arguments()
 
-        if cache:
-            self._set_cache_arguments()
-
         self._set_output_arguments()
 
     def parse(self, *args):
@@ -300,9 +265,6 @@ class BackendCommandArgumentParser:
             raise AttributeError("fetch-archive and no-archive arguments are not compatible")
         if self._archive and parsed_args.fetch_archive and not parsed_args.category:
             raise AttributeError("fetch-archive needs a category to work with")
-
-        if self._cache and parsed_args.fetch_cache and parsed_args.no_cache:
-            raise AttributeError("fetch-cache and no-cache arguments are not compatible")
 
         # Set aliases
         for alias, arg in self.aliases.items():
@@ -338,19 +300,6 @@ class BackendCommandArgumentParser:
                            help="fetch data from the archives")
         group.add_argument('--archived-since', dest='archived_since', default='1970-01-01',
                            help="retrieve items archived since the given date")
-
-    def _set_cache_arguments(self):
-        """Activate cache arguments parsing"""
-
-        group = self.parser.add_argument_group('cache arguments')
-        group.add_argument('--cache-path', dest='cache_path', default=None,
-                           help="directory path to the cache")
-        group.add_argument('--clean-cache', dest='clean_cache', action='store_true',
-                           help="clean the cache before the fetching process")
-        group.add_argument('--no-cache', dest='no_cache', action='store_true',
-                           help="do not store data in the cache")
-        group.add_argument('--fetch-cache', dest='fetch_cache', action='store_true',
-                           help="fetch data from the cache")
 
     def _set_output_arguments(self):
         """Activate output arguments parsing"""
@@ -397,9 +346,9 @@ class BackendCommand:
         origin. Items are converted to JSON objects and written to the
         defined output.
 
-        If `fetch-cache` parameter was given as an argument during
+        If `fetch-archive` parameter was given as an argument during
         the inizialization of the instance, the items will be retrieved
-        from the cache.
+        using the archive manager.
         """
         backend_args = vars(self.parsed_args)
 

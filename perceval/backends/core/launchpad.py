@@ -55,18 +55,17 @@ class Launchpad(Backend):
     :param items_per_page: number of items in a retrieved page
     :param sleep_time: time to sleep in case of connection problems
     :param tag: label used to mark the data
-    :param cache: use issues already retrieved in cache
-    :param archive: collect issues already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, distribution, package=None,
                  items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME,
-                 tag=None, cache=None, archive=None):
+                 tag=None, archive=None):
 
         origin = urijoin(LAUNCHPAD_URL, distribution)
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.distribution = distribution
         self.package = package
         self.items_per_page = items_per_page
@@ -110,14 +109,6 @@ class Launchpad(Backend):
             nissues += 1
 
         logger.info("Fetch process completed: %s issues fetched", nissues)
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -454,7 +445,7 @@ class LaunchpadCommand(BackendCommand):
         """Returns the Launchpad argument parser."""
 
         parser = BackendCommandArgumentParser(from_date=True,
-                                              cache=True,
+                                              archive=True,
                                               token_auth=False)
 
         # Optional arguments

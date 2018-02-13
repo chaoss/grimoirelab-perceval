@@ -52,16 +52,15 @@ class StackExchange(Backend):
     :param api_token: StackExchange access_token for the API
     :param max_questions: max of questions per page retrieved
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: collect questions already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, site, tagged=None, api_token=None,
-                 max_questions=None, tag=None, cache=None, archive=None):
+                 max_questions=None, tag=None, archive=None):
         origin = site
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.site = site
         self.api_token = api_token
         self.tagged = tagged
@@ -100,19 +99,9 @@ class StackExchange(Backend):
         whole_pages = self.client.get_questions(from_date)
 
         for whole_page in whole_pages:
-            self._push_cache_queue(whole_page)
-            self._flush_cache_queue()
             questions = self.parse_questions(whole_page)
             for question in questions:
                 yield question
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -294,7 +283,7 @@ class StackExchangeCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               token_auth=True,
-                                              cache=True)
+                                              archive=True)
 
         # StackExchange options
         group = parser.parser.add_argument_group('StackExchange arguments')

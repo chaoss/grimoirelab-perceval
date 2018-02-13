@@ -160,7 +160,7 @@ def read_config_file(filepath, backend):
     config.read(filepath)
 
     args = {}
-    sections = ['cache', backend]
+    sections = ['archive', backend]
 
     for section in sections:
         if section in config.sections():

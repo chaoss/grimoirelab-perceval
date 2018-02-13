@@ -59,15 +59,14 @@ class Telegram(Backend):
     :param bot: name of the bot
     :param bot_token: authentication token used by the bot
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: collect message already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
-    def __init__(self, bot, bot_token, tag=None, cache=None, archive=None):
+    def __init__(self, bot, bot_token, tag=None, archive=None):
         origin = urijoin(TELEGRAM_URL, bot)
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.bot = bot
         self.bot_token = bot_token
 
@@ -155,14 +154,6 @@ class Telegram(Backend):
         item['offset'] = item['data']['update_id']
 
         return item
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -268,7 +259,7 @@ class TelegramCommand(BackendCommand):
         }
         parser = BackendCommandArgumentParser(offset=True,
                                               token_auth=True,
-                                              cache=True,
+                                              archive=True,
                                               aliases=aliases)
 
         # Backend token is required

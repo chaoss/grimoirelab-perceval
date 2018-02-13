@@ -94,18 +94,18 @@ class Jira(Backend):
     :param cert: SSL certificate path (PEM)
     :param max_issues: max number of issues per query
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: collect issues already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.9.0'
+    version = '0.10.0'
 
     def __init__(self, url, project=None,
                  user=None, password=None,
                  verify=None, cert=None,
-                 max_issues=None, tag=None, cache=None, archive=None):
+                 max_issues=None, tag=None,
+                 archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.project = project
         self.user = user
@@ -155,14 +155,6 @@ class Jira(Backend):
                 for k, v in mapping.items():
                     issue['fields'][k] = v
                 yield issue
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -370,7 +362,7 @@ class JiraCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               basic_auth=True,
-                                              cache=True)
+                                              archive=True)
 
         # JIRA options
         group = parser.parser.add_argument_group('JIRA arguments')

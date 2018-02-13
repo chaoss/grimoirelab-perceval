@@ -53,13 +53,12 @@ class HyperKitty(MBox):
     :param url: URL to the HyperKitty mailing list archiver
     :param dirpath: directory path where the mboxes are stored
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: archive to read/store data fetched by the backend
+    :param archive: archive to store/retrieve items
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
-    def __init__(self, url, dirpath, tag=None, cache=None, archive=None):
-        super().__init__(url, dirpath, tag=tag, cache=cache, archive=archive)
+    def __init__(self, url, dirpath, tag=None, archive=None):
+        super().__init__(url, dirpath, tag=tag, archive=archive)
         self.url = url
 
     def fetch(self, from_date=DEFAULT_DATETIME):
@@ -99,14 +98,6 @@ class HyperKitty(MBox):
             yield message
 
         logger.info("Fetch process completed")
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -270,8 +261,7 @@ class HyperKittyCommand(BackendCommand):
     def setup_cmd_parser():
         """Returns the HyperKitty argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True,
-                                              cache=False)
+        parser = BackendCommandArgumentParser(from_date=True)
 
         # Optional arguments
         group = parser.parser.add_argument_group('HyperKitty arguments')

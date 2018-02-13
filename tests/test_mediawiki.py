@@ -163,11 +163,6 @@ class TestMediaWikiBackend(unittest.TestCase):
         self.assertEqual(mediawiki.origin, MEDIAWIKI_SERVER_URL)
         self.assertEqual(mediawiki.tag, MEDIAWIKI_SERVER_URL)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(MediaWiki.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -493,13 +488,13 @@ class TestMediaWikiCommand(unittest.TestCase):
         self.assertIsInstance(parser, BackendCommandArgumentParser)
 
         args = ['--tag', 'test',
-                '--no-cache', '--from-date', '1970-01-01',
+                '--no-archive', '--from-date', '1970-01-01',
                 MEDIAWIKI_SERVER_URL]
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, MEDIAWIKI_SERVER_URL)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 

@@ -67,15 +67,14 @@ class MediaWiki(Backend):
 
     :param url: MediaWiki url
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: collect pages already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
-    def __init__(self, url, tag=None, cache=None, archive=None):
+    def __init__(self, url, tag=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.client = None
         self._test_mode = False
@@ -122,14 +121,6 @@ class MediaWiki(Backend):
 
         for page_reviews in fetcher:
             yield page_reviews
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -491,7 +482,7 @@ class MediaWikiCommand(BackendCommand):
         """Returns the MediaWiki argument parser."""
 
         parser = BackendCommandArgumentParser(from_date=True,
-                                              cache=True)
+                                              archive=True)
 
         # MediaWiki options
         group = parser.parser.add_argument_group('MediaWiki arguments')

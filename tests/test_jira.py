@@ -155,11 +155,6 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(jira.origin, JIRA_SERVER_URL)
         self.assertEqual(jira.tag, JIRA_SERVER_URL)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(Jira.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -635,7 +630,7 @@ class TestJiraCommand(unittest.TestCase):
                 '--cert', 'aaaa',
                 '--max-issues', '1',
                 '--tag', 'test',
-                '--no-cache',
+                '--no-archive',
                 '--from-date', '1970-01-01',
                 JIRA_SERVER_URL]
 
@@ -647,7 +642,7 @@ class TestJiraCommand(unittest.TestCase):
         self.assertEqual(parsed_args.cert, 'aaaa')
         self.assertEqual(parsed_args.max_issues, 1)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.url, JIRA_SERVER_URL)
 

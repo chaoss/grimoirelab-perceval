@@ -68,8 +68,7 @@ class GitHub(Backend):
         when no value is set the backend will be fetch the data
         from the GitHub public site.
     :param tag: label used to mark the data
-    :param cache: collect issues already retrieved in cache
-    :param archive: collect issues already retrieved from an archive
+    :param archive: archive to store/retrieve items
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
@@ -78,17 +77,17 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.13.0'
+    version = '0.14.0'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
-                 tag=None, cache=None, archive=None,
+                 tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
         origin = base_url if base_url else GITHUB_URL
         origin = urijoin(origin, owner, repository)
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
 
         self.owner = owner
         self.repository = repository
@@ -152,14 +151,6 @@ class GitHub(Backend):
                             self.__get_issue_reactions(issue['number'], issue['reactions']['total_count'])
 
                 yield issue
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -542,7 +533,7 @@ class GitHubCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               token_auth=True,
-                                              cache=True)
+                                              archive=True)
 
         # GitHub options
         group = parser.parser.add_argument_group('GitHub arguments')

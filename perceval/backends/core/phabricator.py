@@ -46,15 +46,14 @@ class Phabricator(Backend):
     :param url: URL of the server
     :param api_token: token needed to use the API
     :param tag: label used to mark the data
-    :param cache: cache object to store raw data
-    :param archive: collect tasks already retrieved from an archive
+    :param archive: archive to store/retrieve items
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
-    def __init__(self, url, api_token, tag=None, cache=None, archive=None):
+    def __init__(self, url, api_token, tag=None, archive=None):
         origin = url
 
-        super().__init__(origin, tag=tag, cache=cache, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.api_token = api_token
         self.client = None
@@ -95,14 +94,6 @@ class Phabricator(Backend):
             ntasks += 1
 
         logger.info("Fetch process completed: %s tasks fetched", ntasks)
-
-    @classmethod
-    def has_caching(cls):
-        """Returns whether it supports caching items on the fetch process.
-
-        :returns: this backend does not support items cache
-        """
-        return False
 
     @classmethod
     def has_archiving(cls):
@@ -330,7 +321,7 @@ class PhabricatorCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               token_auth=True,
-                                              cache=True)
+                                              archive=True)
 
         # Required arguments
         parser.parser.add_argument('url',

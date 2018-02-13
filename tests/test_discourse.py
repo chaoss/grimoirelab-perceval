@@ -79,11 +79,6 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.tag, DISCOURSE_SERVER_URL)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(Discourse.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -787,14 +782,14 @@ class TestDiscourseCommand(unittest.TestCase):
         parser = DiscourseCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
 
-        args = ['--tag', 'test', '--no-cache',
+        args = ['--tag', 'test', '--no-archive',
                 '--from-date', '1970-01-01',
                 DISCOURSE_SERVER_URL]
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, DISCOURSE_SERVER_URL)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 

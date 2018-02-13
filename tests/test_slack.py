@@ -154,11 +154,6 @@ class TestSlackBackend(unittest.TestCase):
         self.assertEqual(slack.origin, 'https://slack.com/C011DUKE8')
         self.assertEqual(slack.tag, 'https://slack.com/C011DUKE8')
 
-    def test_has_caching(self):
-        """Test if it returns True when has_caching is called"""
-
-        self.assertEqual(Slack.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -597,7 +592,7 @@ class TestSlackCommand(unittest.TestCase):
         parser = SlackCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
 
-        args = ['--tag', 'test', '--no-cache',
+        args = ['--tag', 'test', '--no-archive',
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
                 '--max-items', '10',
@@ -607,7 +602,7 @@ class TestSlackCommand(unittest.TestCase):
         self.assertEqual(parsed_args.channel, 'C001')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.no_cache, True)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
         self.assertEqual(parsed_args.max_items, 10)
 

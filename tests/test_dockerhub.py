@@ -99,11 +99,6 @@ class TestDockerHubBackend(unittest.TestCase):
         self.assertEqual(dockerhub.repository, 'redis')
         self.assertEqual(dockerhub.origin, expected_origin)
 
-    def test_has_caching(self):
-        """Test if it returns False when has_caching is called"""
-
-        self.assertEqual(DockerHub.has_caching(), False)
-
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -209,9 +204,10 @@ class TestDockerHubCommand(unittest.TestCase):
         parser = DockerHubCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
 
-        args = ['grimoirelab', 'perceval', '--no-cache']
+        args = ['grimoirelab', 'perceval', '--no-archive']
 
         parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.owner, 'grimoirelab')
         self.assertEqual(parsed_args.repository, 'perceval')
 
