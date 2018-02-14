@@ -1,4 +1,4 @@
-# Perceval [![Build Status](https://travis-ci.org/grimoirelab/perceval.svg?branch=master)](https://travis-ci.org/grimoirelab/perceval) [![Coverage Status](https://img.shields.io/coveralls/grimoirelab/perceval.svg)](https://coveralls.io/r/grimoirelab/perceval?branch=master) [![PyPI version](https://badge.fury.io/py/perceval.svg)](https://badge.fury.io/py/perceval)
+# Perceval [![Build Status](https://travis-ci.org/chaoss/grimoirelab-perceval.svg?branch=master)](https://travis-ci.org/chaoss/grimoirelab-perceval) [![Coverage Status](https://img.shields.io/coveralls/chaoss/grimoirelab-perceval.svg)](https://coveralls.io/r/chaoss/grimoirelab-perceval?branch=master) [![PyPI version](https://badge.fury.io/py/perceval.svg)](https://badge.fury.io/py/perceval)
 
 Send Sir Perceval on a quest to retrieve and gather data from software
 repositories.
@@ -75,14 +75,14 @@ $ pip3 install perceval
 
 A Perceval Docker image is available at [DockerHub](https://hub.docker.com/r/grimoirelab/perceval/).
 
-Detailed information on how to run and/or build this image can be found [here](https://github.com/grimoirelab/perceval/tree/master/docker/images/).
+Detailed information on how to run and/or build this image can be found [here](https://github.com/chaoss/grimoirelab-perceval/tree/master/docker/images/).
 
 ### Source code
 
 To install from the source code you will need to clone the repository first:
 
 ```
-$ git clone https://github.com/grimoirelab/perceval.git
+$ git clone https://github.com/chaoss/grimoirelab-perceval.git
 ```
 
 In this case, [setuptools](http://setuptools.readthedocs.io/en/latest/) package will be required.
@@ -157,7 +157,7 @@ To run this backend execute the next command. Take into account that to run
 this backend Git program has to be installed on your system.
 
 ```
-$ perceval git 'https://github.com/grimoirelab/perceval.git' --from-date '2016-01-01'
+$ perceval git 'https://github.com/chaoss/grimoirelab-perceval.git' --from-date '2016-01-01'
 ```
 
 Git backend can also work with a Git log file as input. We recommend to use the next command to get the most complete log file.
