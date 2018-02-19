@@ -128,6 +128,30 @@ class MockedBackendCommand(BackendCommand):
         return parser
 
 
+class NoArchiveBackendCommand(BackendCommand):
+    """Mocked backend command class used for testing which does not support archive"""
+
+    BACKEND = CommandBackend
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def _pre_init(self):
+        setattr(self.parsed_args, 'pre_init', True)
+
+    def _post_init(self):
+        setattr(self.parsed_args, 'post_init', True)
+
+    @staticmethod
+    def setup_cmd_parser():
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              archive=False)
+        parser.parser.add_argument('origin')
+        parser.parser.add_argument('--subtype', dest='subtype')
+
+        return parser
+
+
 class TestBackend(unittest.TestCase):
     """Unit tests for Backend"""
 
@@ -664,6 +688,30 @@ class TestBackendCommand(unittest.TestCase):
                 'http://example.com/']
 
         cmd = MockedBackendCommand(*args)
+        cmd.run()
+        cmd.outfile.close()
+
+        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+
+    def test_run_not_supported_archive(self):
+        """Test whether the comand runs when archive is not supported"""
+
+        args = ['--from-date', '2015-01-01',
+                '--tag', 'test', '--output', self.fout_path,
+                'http://example.com/']
+
+        cmd = NoArchiveBackendCommand(*args)
         cmd.run()
         cmd.outfile.close()
 

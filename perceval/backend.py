@@ -351,7 +351,7 @@ class BackendCommand:
         """
         backend_args = vars(self.parsed_args)
 
-        if self.parsed_args.fetch_archive:
+        if self.archive_manager and self.parsed_args.fetch_archive:
             items = fetch_from_archive(self.BACKEND, backend_args,
                                        self.archive_manager,
                                        self.parsed_args.category,
