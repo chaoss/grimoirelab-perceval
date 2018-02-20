@@ -34,6 +34,7 @@ from grimoirelab.toolkit.datetime import (datetime_utcnow,
                                           str_to_datetime)
 
 from .errors import ArchiveError, ArchiveManagerError
+from .utils import DEFAULT_DATETIME
 
 
 logger = logging.getLogger(__name__)
@@ -411,7 +412,7 @@ class ArchiveManager:
 
         os.remove(archive_path)
 
-    def search(self, origin, backend_name, category, archived_after):
+    def search(self, origin, backend_name, category, archived_after=DEFAULT_DATETIME):
         """Search archives.
 
         Get the archives which store data based on the given parameters.
@@ -430,6 +431,9 @@ class ArchiveManager:
 
         :returns: a list with archive names which match the search criteria
         """
+        if not archived_after:
+            archived_after = DEFAULT_DATETIME
+
         archives = self._search_archives(origin, backend_name,
                                          category, archived_after)
         archives = [(fp, date) for fp, date in archives]

@@ -368,7 +368,6 @@ class TestArchiveManager(unittest.TestCase):
         archive_mng_path = os.path.join(self.test_path, ARCHIVE_TEST_DIR)
         manager = ArchiveManager(archive_mng_path)
 
-        dt = datetime_utcnow()
         metadata = [
             {
                 'origin': 'https://example.com',
@@ -400,14 +399,66 @@ class TestArchiveManager(unittest.TestCase):
             }
         ]
 
+        for i in range(len(metadata)):
+            # initialize the archived_after parameter after
+            # the creation of the first archive
+            if i == 1:
+                dt = datetime_utcnow()
+
+            archive = manager.create_archive()
+            archive.init_metadata(**metadata[i])
+            metadata[i]['filepath'] = archive.archive_path
+
+        archives = manager.search('https://example.com', 'git', 'commit', dt)
+
+        expected = [metadata[3]['filepath']]
+        self.assertListEqual(archives, expected)
+
+    def test_search_no_archived_after(self):
+        """Check if all archives are retrieved when the archived_after is not defined"""
+
+        archive_mng_path = os.path.join(self.test_path, ARCHIVE_TEST_DIR)
+        manager = ArchiveManager(archive_mng_path)
+
+        metadata = [
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'git',
+                'backend_version': '0.8',
+                'category': 'commit',
+                'backend_params': {},
+            },
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'gerrit',
+                'backend_version': '0.1',
+                'category': 'changes',
+                'backend_params': {}
+            },
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'git',
+                'backend_version': '0.1',
+                'category': 'commit',
+                'backend_params': {}
+            },
+            {
+                'origin': 'https://example.com',
+                'backend_name': 'git',
+                'backend_version': '0.1',
+                'category': 'commit',
+                'backend_params': {}
+            }
+        ]
+
         for meta in metadata:
             archive = manager.create_archive()
             archive.init_metadata(**meta)
             meta['filepath'] = archive.archive_path
 
-        archives = manager.search('https://example.com', 'git', 'commit', dt)
+        archives = manager.search('https://example.com', 'git', 'commit')
 
-        expected = [metadata[0]['filepath'], metadata[3]['filepath']]
+        expected = [metadata[0]['filepath'], metadata[2]['filepath'], metadata[3]['filepath']]
         self.assertListEqual(archives, expected)
 
     def test_search_archived_after(self):
