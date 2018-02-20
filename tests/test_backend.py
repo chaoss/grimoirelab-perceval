@@ -27,6 +27,7 @@ import io
 import json
 import os
 import shutil
+import sqlite3
 import tempfile
 import unittest
 import unittest.mock
@@ -45,7 +46,7 @@ from perceval.backend import (Backend,
                               uuid,
                               fetch,
                               fetch_from_archive)
-from perceval.errors import ArchiveError
+from perceval.errors import ArchiveError, BackendError
 from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
 
@@ -100,6 +101,15 @@ class CommandBackend(MockedBackend):
             if self._fetch_from_archive:
                 item['archive'] = True
             yield item
+
+
+class ErrorCommandBackend(CommandBackend):
+    """Backend which raises an exception while fetching items"""
+
+    def fetch_items(self, **kwargs):
+        for item in super().fetch_items(**kwargs):
+            yield item
+            raise BackendError(cause="Unhandled exception")
 
 
 class MockedBackendCommand(BackendCommand):
@@ -861,6 +871,29 @@ class TestFetch(unittest.TestCase):
         archive = Archive(filepaths[0])
         self.assertEqual(archive._count_table_rows('archive'), 5)
 
+    def test_remove_archive_on_error(self):
+        """Test whether an archive is removed when an unhandled exception occurs"""
+
+        manager = ArchiveManager(self.test_path)
+
+        args = {
+            'origin': 'http://example.com/',
+            'category': 'mock_item',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        items = fetch(ErrorCommandBackend, args, manager=manager)
+
+        with self.assertRaises(BackendError):
+            _ = [item for item in items]
+
+        filepaths = manager.search('http://example.com/', 'ErrorCommandBackend',
+                                   'mock_item', str_to_datetime('1970-01-01'))
+
+        self.assertEqual(len(filepaths), 0)
+
 
 class TestFetchFromArchive(unittest.TestCase):
     """Unit tests for fetch_from_archive function"""
@@ -969,6 +1002,62 @@ class TestFetchFromArchive(unittest.TestCase):
                                    'alt_item', str_to_datetime('1970-01-01'))
         items = [item for item in items]
         self.assertEqual(len(items), 0)
+
+    def test_ignore_corrupted_archive(self):
+        """Check if a corrupted archive is ignored while fetching from archive"""
+
+        def delete_rows(db, table_name):
+            conn = sqlite3.connect(db)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM " + table_name)
+            cursor.close()
+            conn.commit()
+
+        manager = ArchiveManager(self.test_path)
+
+        args = {
+            'origin': 'http://example.com/',
+            'category': 'mock_item',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        # First, fetch the items twice to check if several archive
+        # are used
+        items = fetch(CommandBackend, args, manager=manager)
+        items = [item for item in items]
+        self.assertEqual(len(items), 5)
+
+        items = fetch(CommandBackend, args, manager=manager)
+        items = [item for item in items]
+        self.assertEqual(len(items), 5)
+
+        # Find archive names to delete the rows of one of them to make it
+        # corrupted
+        filepaths = manager.search('http://example.com/', 'CommandBackend',
+                                   'mock_item', str_to_datetime('1970-01-01'))
+        self.assertEqual(len(filepaths), 2)
+
+        to_remove = filepaths[0]
+        delete_rows(to_remove, 'archive')
+
+        # Fetch items from the archive
+        items = fetch_from_archive(CommandBackend, args, manager,
+                                   'mock_item', str_to_datetime('1970-01-01'))
+        items = [item for item in items]
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['data']['archive'], True)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
 
 
 if __name__ == "__main__":
