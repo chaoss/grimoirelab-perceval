@@ -436,7 +436,8 @@ def fetch(backend_class, backend_args, manager=None):
 
     Generator to get items using the given backend class. When
     an archive manager is given, this function will store
-    the fetched items in an `Archive`.
+    the fetched items in an `Archive`. If an exception is raised,
+    this archive will be removed to avoid corrupted archives.
 
     The parameters needed to initialize the `backend` class and
     get the items are given using `backend_args` dict parameter.
@@ -449,15 +450,22 @@ def fetch(backend_class, backend_args, manager=None):
     """
     init_args = find_signature_parameters(backend_class.__init__,
                                           backend_args)
-    init_args['archive'] = manager.create_archive() if manager else None
+    archive = manager.create_archive() if manager else None
+    init_args['archive'] = archive
 
     backend = backend_class(**init_args)
     fetch_args = find_signature_parameters(backend.fetch,
                                            backend_args)
     items = backend.fetch(**fetch_args)
 
-    for item in items:
-        yield item
+    try:
+        for item in items:
+            yield item
+    except Exception as e:
+        if manager:
+            archive_path = archive.archive_path
+            manager.remove_archive(archive_path)
+        raise e
 
 
 def fetch_from_archive(backend_class, backend_args, manager,

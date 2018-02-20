@@ -45,7 +45,7 @@ from perceval.backend import (Backend,
                               uuid,
                               fetch,
                               fetch_from_archive)
-from perceval.errors import ArchiveError
+from perceval.errors import ArchiveError, BackendError
 from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
 
@@ -100,6 +100,15 @@ class CommandBackend(MockedBackend):
             if self._fetch_from_archive:
                 item['archive'] = True
             yield item
+
+
+class ErrorCommandBackend(CommandBackend):
+    """Backend which raises an exception while fetching items"""
+
+    def fetch_items(self, **kwargs):
+        for item in super().fetch_items(**kwargs):
+            yield item
+            raise BackendError(cause="Unhandled exception")
 
 
 class MockedBackendCommand(BackendCommand):
@@ -860,6 +869,29 @@ class TestFetch(unittest.TestCase):
 
         archive = Archive(filepaths[0])
         self.assertEqual(archive._count_table_rows('archive'), 5)
+
+    def test_remove_archive_on_error(self):
+        """Test whether an archive is removed when an unhandled exception occurs"""
+
+        manager = ArchiveManager(self.test_path)
+
+        args = {
+            'origin': 'http://example.com/',
+            'category': 'mock_item',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        items = fetch(ErrorCommandBackend, args, manager=manager)
+
+        with self.assertRaises(BackendError):
+            _ = [item for item in items]
+
+        filepaths = manager.search('http://example.com/', 'ErrorCommandBackend',
+                                   'mock_item', str_to_datetime('1970-01-01'))
+
+        self.assertEqual(len(filepaths), 0)
 
 
 class TestFetchFromArchive(unittest.TestCase):
