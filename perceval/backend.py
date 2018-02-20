@@ -24,6 +24,7 @@ import argparse
 import hashlib
 import importlib
 import json
+import logging
 import os
 import pkgutil
 import sys
@@ -37,6 +38,8 @@ from .archive import Archive, ArchiveManager
 from .errors import ArchiveError
 from ._version import __version__
 
+
+logger = logging.getLogger(__name__)
 
 ARCHIVES_DEFAULT_PATH = '~/.perceval/archives/'
 
@@ -500,8 +503,11 @@ def fetch_from_archive(backend_class, backend_args, manager,
         backend.archive = Archive(filepath)
         items = backend.fetch_from_archive()
 
-        for item in items:
-            yield item
+        try:
+            for item in items:
+                yield item
+        except ArchiveError as e:
+            logger.warning("Ignoring %s archive due to: %s", filepath, str(e))
 
 
 def find_backends(top_package):
