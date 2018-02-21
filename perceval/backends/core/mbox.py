@@ -60,7 +60,7 @@ class MBox(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.0'
+    version = '0.9.1'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
@@ -184,6 +184,8 @@ class MBox(Backend):
         nmsgs, imsgs, tmsgs = (0, 0, 0)
 
         for mbox in mailing_list.mboxes:
+            tmp_path = None
+
             try:
                 tmp_path = self._copy_mbox(mbox)
 
@@ -213,11 +215,11 @@ class MBox(Backend):
             except (OSError, EOFError) as e:
                 logger.warning("Ignoring %s mbox due to: %s", mbox.filepath, str(e))
             except Exception as e:
-                if os.path.exists(tmp_path):
+                if tmp_path and os.path.exists(tmp_path):
                     os.remove(tmp_path)
                 raise e
             finally:
-                if os.path.exists(tmp_path):
+                if tmp_path and os.path.exists(tmp_path):
                     os.remove(tmp_path)
 
         logger.info("Done. %s/%s messages fetched; %s ignored",
