@@ -473,6 +473,7 @@ class TestAskbotBackend(unittest.TestCase):
         json_comments = json.loads(comments)
 
         self.assertEqual(len(questions[0]['data']['answers']), len(questions[0]['data']['answer_ids']))
+        self.assertTrue(questions[0]['data']['answers'][0]['accepted'])
         self.assertEqual(questions[0]['tag'], 'http://example.com')
         self.assertEqual(questions[0]['uuid'], '3fb5f945a0dd223c60218a98ad35bad6043f9f5f')
         self.assertEqual(questions[0]['updated_on'], 1408116902.0)
@@ -481,6 +482,7 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(questions[0]['data']['comments'][0], json_comments[0])
         self.assertEqual(len(questions[0]['data']['comments']), len(json_comments))
         self.assertEqual(len(questions[1]['data']['answers']), len(questions[1]['data']['answer_ids']))
+        self.assertFalse(questions[1]['data']['answers'][0]['accepted'])
         self.assertEqual(questions[1]['tag'], 'http://example.com')
         self.assertEqual(questions[1]['uuid'], 'ecc1320265e400edb28700cc3d02efc6d76410be')
         self.assertEqual(questions[1]['updated_on'], 1349928216.0)

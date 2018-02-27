@@ -52,7 +52,7 @@ class Askbot(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, url, tag=None, archive=None):
         origin = url
@@ -425,6 +425,7 @@ class AskbotParser:
         for bs_answer in bs_answers:
             answer_id = bs_answer.attrs["data-post-id"]
             votes_element = bs_answer.select("div.vote-number")[0].text
+            accepted_answer = bs_answer.select("div.answer-img-accept")[0].get('title').endswith("correct")
             # Select the body of the answer
             body = bs_answer.select("div.post-body")
             # Get the user information container and parse it
@@ -437,7 +438,8 @@ class AskbotParser:
             # Generate the answer object
             answer = {'id': answer_id,
                       'score': votes_element,
-                      'summary': body
+                      'summary': body,
+                      'accepted': accepted_answer
                       }
             # Update the object with the information in the answer container
             answer.update(answer_container)
