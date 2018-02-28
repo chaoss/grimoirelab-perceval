@@ -34,6 +34,7 @@ from ...backend import (Backend,
 from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_ISSUE = "issue"
 
 LAUNCHPAD_URL = "https://launchpad.net/"
 LAUNCHPAD_API_URL = 'https://api.launchpad.net/1.0'
@@ -57,7 +58,7 @@ class Launchpad(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.5.0'
+    version = '0.6.0'
 
     def __init__(self, distribution, package=None,
                  items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME,
@@ -74,12 +75,13 @@ class Launchpad(Backend):
         self.client = None
         self._users = {}  # internal users cache
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
         """Fetch the issues from a project (distribution/package).
 
         The method retrieves, from a Launchpad project, the issues
         updated since the given date.
 
+        :param category: the category of items to fetch
         :param from_date: obtain issues updated since this date
 
         :returns: a generator of issues
@@ -90,7 +92,7 @@ class Launchpad(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("issue", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -157,7 +159,7 @@ class Launchpad(Backend):
         This backend only generates one type of item which is
         'issue'.
         """
-        return 'issue'
+        return CATEGORY_ISSUE
 
     def _init_client(self, from_archive=False):
         """Init client"""
