@@ -34,13 +34,13 @@ from ...backend import (Backend,
 from ...errors import ArchiveError, ParseError
 from ...utils import message_to_dict
 
+CATEGORY_ARTICLE = "article"
+DEFAULT_OFFSET = 1
 
 # Hack to avoid "line too long" errors
 nntplib._MAXLINE = 4096
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_OFFSET = 1
 
 
 class NNTP(Backend):
@@ -55,7 +55,7 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, host, group, tag=None, archive=None):
         origin = host + '-' + group
@@ -65,12 +65,13 @@ class NNTP(Backend):
         self.group = group
         self.client = None
 
-    def fetch(self, offset=DEFAULT_OFFSET):
+    def fetch(self, category=CATEGORY_ARTICLE, offset=DEFAULT_OFFSET):
         """Fetch articles posted on a news group.
 
         This method fetches those messages or articles published
         on a news group starting on the given offset.
 
+        :param category: the category of items to fetch
         :param offset: obtain messages from this offset
 
         :returns: a generator of articles
@@ -79,7 +80,7 @@ class NNTP(Backend):
             offset = DEFAULT_OFFSET
 
         kwargs = {'offset': offset}
-        items = super().fetch("article", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -185,7 +186,7 @@ class NNTP(Backend):
         This backend only generates one type of item which is
         'article'.
         """
-        return 'article'
+        return CATEGORY_ARTICLE
 
     @staticmethod
     def parse_article(raw_article):
