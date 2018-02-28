@@ -38,6 +38,7 @@ from ...client import HttpClient, RateLimitHandler
 
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_ISSUE = "issue"
 
 GITHUB_URL = "https://github.com/"
 GITHUB_API_URL = "https://api.github.com"
@@ -77,7 +78,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.14.0'
+    version = '0.15.0'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -102,12 +103,13 @@ class GitHub(Backend):
         self.client = None
         self._users = {}  # internal users cache
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
         """Fetch the issues from the repository.
 
         The method retrieves, from a GitHub repository, the issues
         updated since the given date.
 
+        :param category: the category of items to fetch
         :param from_date: obtain issues updated since this date
 
         :returns: a generator of issues
@@ -118,7 +120,7 @@ class GitHub(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("issue", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -198,7 +200,7 @@ class GitHub(Backend):
         This backend only generates one type of item which is
         'issue'.
         """
-        return 'issue'
+        return CATEGORY_ISSUE
 
     def _init_client(self, from_archive=False):
         """Init client"""
