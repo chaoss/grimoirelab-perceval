@@ -31,13 +31,12 @@ import dateutil.tz
 from grimoirelab.toolkit.datetime import datetime_to_utc, datetime_utcnow
 from grimoirelab.toolkit.uris import urijoin
 
-from .mbox import MBox, MailingList
+from .mbox import MBox, MailingList, CATEGORY_MESSAGE
 from ...backend import (BackendCommand,
                         BackendCommandArgumentParser)
 from ...client import HttpClient
 from ...utils import (DEFAULT_DATETIME,
                       months_range)
-
 
 logger = logging.getLogger(__name__)
 
@@ -55,13 +54,13 @@ class HyperKitty(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, url, dirpath, tag=None, archive=None):
         super().__init__(url, dirpath, tag=tag, archive=archive)
         self.url = url
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the HyperKitty mailing list archiver.
 
         The method fetches the mbox files from a remote HyperKitty
@@ -73,11 +72,12 @@ class HyperKitty(MBox):
         date where the first message was sent will make to download
         empty mbox files.
 
+        :param category: the category of items to fetch
         :param from_date: obtain messages since this date
 
         :returns: a generator of messages
         """
-        items = super().fetch(from_date)
+        items = super().fetch(category, from_date)
 
         return items
 
