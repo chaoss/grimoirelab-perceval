@@ -34,14 +34,10 @@ import requests
 from grimoirelab.toolkit.datetime import datetime_to_utc
 from grimoirelab.toolkit.uris import urijoin
 
-from .mbox import MBox, MailingList
+from .mbox import MBox, MailingList, CATEGORY_MESSAGE
 from ...backend import (BackendCommand,
                         BackendCommandArgumentParser)
 from ...utils import DEFAULT_DATETIME
-
-
-logger = logging.getLogger(__name__)
-
 
 PIPERMAIL_COMPRESSED_TYPES = ['.gz', '.bz2', '.zip',
                               '.tar', '.tar.gz', '.tar.bz2',
@@ -50,6 +46,8 @@ PIPERMAIL_ACCEPTED_TYPES = ['.mbox', '.txt']
 PIPERMAIL_TYPES = PIPERMAIL_COMPRESSED_TYPES + PIPERMAIL_ACCEPTED_TYPES
 
 MOD_MBOX_THREAD_STR = "/thread"
+
+logger = logging.getLogger(__name__)
 
 
 class Pipermail(MBox):
@@ -65,23 +63,24 @@ class Pipermail(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
     def __init__(self, url, dirpath, tag=None, archive=None):
         super().__init__(url, dirpath, tag=tag, archive=archive)
         self.url = url
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the Pipermail archiver.
 
         The method fetches the mbox files from a remote Pipermail
         archiver and retrieves the messages stored on them.
 
+        :param category: the category of items to fetch
         :param from_date: obtain messages since this date
 
         :returns: a generator of messages
         """
-        items = super().fetch(from_date)
+        items = super().fetch(category, from_date)
 
         return items
 
