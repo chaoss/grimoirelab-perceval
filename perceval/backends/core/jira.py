@@ -37,6 +37,7 @@ from ...backend import (Backend,
 from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_ISSUE = "issue"
 
 MAX_ISSUES = 100  # Maximum number of issues per query
 
@@ -96,7 +97,7 @@ class Jira(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.0'
+    version = '0.11.0'
 
     def __init__(self, url, project=None,
                  user=None, password=None,
@@ -115,12 +116,13 @@ class Jira(Backend):
         self.max_issues = max_issues
         self.client = None
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
         """Fetch the issues from the site.
 
         The method retrieves, from a JIRA site, the
         issues updated since the given date.
 
+        :param category: the category of items to fetch
         :param from_date: retrieve issues updated from this date
 
         :returns: a generator of issues
@@ -131,7 +133,7 @@ class Jira(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("issue", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -202,7 +204,7 @@ class Jira(Backend):
         This backend only generates one type of item which is
         'issue'.
         """
-        return 'issue'
+        return CATEGORY_ISSUE
 
     @staticmethod
     def parse_issues(raw_page):
