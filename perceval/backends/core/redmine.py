@@ -34,12 +34,12 @@ from ...backend import (Backend,
 from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
-
-logger = logging.getLogger(__name__)
-
+CATEGORY_ISSUE = "issue"
 
 MAX_ISSUES = 100  # Maximum number of issues per query
 USER_FIELDS = ['assigned_to', 'author']
+
+logger = logging.getLogger(__name__)
 
 
 class Redmine(Backend):
@@ -57,7 +57,7 @@ class Redmine(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
                  tag=None, archive=None):
@@ -71,13 +71,14 @@ class Redmine(Backend):
 
         self._users = {}
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
         """Fetch the issues from the server.
 
         This method fetches the issues stored on the server that were
         updated since the given date. Data about attachments, journals
         and watchers (among others) are included within each issue.
 
+        :param category: the category of items to fetch
         :param from_date: obtain issues updated since this date
 
         :returns: a generator of issues
@@ -88,7 +89,7 @@ class Redmine(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("issue", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -169,7 +170,7 @@ class Redmine(Backend):
         This backend only generates one type of item which is
         'issue'.
         """
-        return 'issue'
+        return CATEGORY_ISSUE
 
     @staticmethod
     def parse_issues(raw_json):
