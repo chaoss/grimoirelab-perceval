@@ -33,11 +33,12 @@ from ...client import HttpClient
 from ...errors import BaseError
 from ...utils import DEFAULT_DATETIME
 
-
-logger = logging.getLogger(__name__)
+CATEGORY_MESSAGE = "message"
 
 SLACK_URL = 'https://slack.com/'
 MAX_ITEMS = 1000
+
+logger = logging.getLogger(__name__)
 
 
 class Slack(Backend):
@@ -56,7 +57,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.5.0'
+    version = '0.6.0'
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
                  tag=None, archive=None):
@@ -70,12 +71,13 @@ class Slack(Backend):
 
         self._users = {}
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the channel.
 
         This method fetches the messages stored on the channel that were
         sent since the given date.
 
+        :param category: the category of items to fetch
         :param from_date: obtain messages sent since this date
 
         :returns: a generator of messages
@@ -86,7 +88,7 @@ class Slack(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("message", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -202,7 +204,7 @@ class Slack(Backend):
         This backend only generates one type of item which is
         'message'.
         """
-        return 'message'
+        return CATEGORY_MESSAGE
 
     @staticmethod
     def parse_channel_info(raw_channel_info):
