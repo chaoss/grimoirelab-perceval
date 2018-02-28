@@ -32,6 +32,8 @@ from ...client import HttpClient
 from ...errors import BaseError
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_TASK = "task"
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,7 +50,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, url, api_token, tag=None, archive=None):
         origin = url
@@ -61,13 +63,14 @@ class Phabricator(Backend):
         self._users = {}
         self._projects = {}
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_TASK, from_date=DEFAULT_DATETIME):
         """Fetch the tasks from the server.
 
         This method fetches the tasks stored on the server that were
         updated since the given date. The transactions data related
         to each task is also included within them.
 
+        :param category: the category of items to fetch
         :param from_date: obtain tasks updated since this date
 
         :returns: a generator of tasks
@@ -76,7 +79,7 @@ class Phabricator(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("task", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -138,7 +141,7 @@ class Phabricator(Backend):
         This backend only generates one type of item which is
         'task'.
         """
-        return 'task'
+        return CATEGORY_TASK
 
     @staticmethod
     def parse_tasks(raw_json):
