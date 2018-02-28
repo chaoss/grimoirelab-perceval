@@ -34,11 +34,10 @@ from ...backend import (Backend,
 from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_HISTORICAL_CONTENT = "historical content"
+MAX_CONTENTS = 200
 
 logger = logging.getLogger(__name__)
-
-
-MAX_CONTENTS = 200
 
 
 class Confluence(Backend):
@@ -53,7 +52,7 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, url, tag=None, archive=None):
         origin = url
@@ -62,7 +61,7 @@ class Confluence(Backend):
         self.url = url
         self.client = None
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_HISTORICAL_CONTENT, from_date=DEFAULT_DATETIME):
         """Fetch the contents by version from the server.
 
         This method fetches the different historical versions (or
@@ -74,6 +73,7 @@ class Confluence(Backend):
         be ignored because the Confluence REST API only accepts the date
         and hours and minutes for timestamps values.
 
+        :param category: the category of items to fetch
         :param from_date: obtain historical versions of contents updated
             since this date
 
@@ -85,7 +85,7 @@ class Confluence(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("historical content", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -171,7 +171,7 @@ class Confluence(Backend):
         This backend only generates one type of item which is
         'historical content'.
         """
-        return 'historical content'
+        return CATEGORY_HISTORICAL_CONTENT
 
     @staticmethod
     def parse_contents_summary(raw_json):
