@@ -36,6 +36,7 @@ from ...client import HttpClient
 from ...errors import BackendError
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_PAGE = 'page'
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ class MediaWiki(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, url, tag=None, archive=None):
         origin = url
@@ -79,12 +80,13 @@ class MediaWiki(Backend):
         self.client = None
         self._test_mode = False
 
-    def fetch(self, from_date=DEFAULT_DATETIME, reviews_api=False):
+    def fetch(self, category=CATEGORY_PAGE, from_date=DEFAULT_DATETIME, reviews_api=False):
         """Fetch the pages from the backend url.
 
         The method retrieves, from a MediaWiki url, the
         wiki pages.
 
+        :param category: the category of items to fetch
         :param from_date: obtain pages updated since this date
         :param reviews_api: use the reviews API available in MediaWiki >= 1.27
 
@@ -96,7 +98,7 @@ class MediaWiki(Backend):
             from_date = datetime_to_utc(from_date)
 
         kwargs = {"from_date": from_date, "reviews_api": reviews_api}
-        items = super().fetch("page", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -164,7 +166,7 @@ class MediaWiki(Backend):
         This backend only generates one type of item which is
         'page'.
         """
-        return 'page'
+        return CATEGORY_PAGE
 
     def _init_client(self, from_archive=False):
         """Init client"""
