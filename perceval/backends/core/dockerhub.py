@@ -31,15 +31,15 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser)
 from ...client import HttpClient
 
-
-logger = logging.getLogger(__name__)
-
+CATEGORY_DOCKERHUB_DATA = "dockerhub-data"
 
 DOCKERHUB_URL = "https://hub.docker.com/"
 DOCKERHUB_API_URL = urijoin(DOCKERHUB_URL, 'v2')
 
 DOCKER_OWNER = 'library'
 DOCKER_SHORTCUT_OWNER = '_'
+
+logger = logging.getLogger(__name__)
 
 
 class DockerHub(Backend):
@@ -71,17 +71,19 @@ class DockerHub(Backend):
         self.repository = repository
         self.client = None
 
-    def fetch(self):
+    def fetch(self, category=CATEGORY_DOCKERHUB_DATA):
         """Fetch data from a Docker Hub repository.
 
         The method retrieves, from a repository stored in Docker Hub,
         its data which includes number of pulls, stars, description,
         among other data.
 
+        :param category: the category of items to fetch
+
         :returns: a generator of data
         """
         kwargs = {}
-        items = super().fetch("dockerhub-data", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -143,7 +145,7 @@ class DockerHub(Backend):
         This backend only generates one type of item which is
         'dockerhub-data'.
         """
-        return 'dockerhub-data'
+        return CATEGORY_DOCKERHUB_DATA
 
     @staticmethod
     def parse_json(raw_json):

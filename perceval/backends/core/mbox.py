@@ -42,6 +42,7 @@ from ...utils import (DEFAULT_DATETIME,
                       check_compressed_file_type,
                       message_to_dict)
 
+CATEGORY_MESSAGE = "message"
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ class MBox(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.1'
+    version = '0.10.0'
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
@@ -72,12 +73,13 @@ class MBox(Backend):
         self.uri = uri
         self.dirpath = dirpath
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
         """Fetch the messages from a set of mbox files.
 
         The method retrieves, from mbox files, the messages stored in
         these containers.
 
+        :param category: the category of items to fetch
         :param from_date: obtain messages since this date
 
         :returns: a generator of messages
@@ -86,7 +88,7 @@ class MBox(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("message", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -153,7 +155,7 @@ class MBox(Backend):
         This backend only generates one type of item which is
         'message'.
         """
-        return 'message'
+        return CATEGORY_MESSAGE
 
     @staticmethod
     def parse_mbox(filepath):

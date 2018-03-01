@@ -30,12 +30,12 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser)
 from ...client import HttpClient
 
-
-logger = logging.getLogger(__name__)
-
+CATEGORY_MESSAGE = "message"
 
 TELEGRAM_URL = 'https://telegram.org'
 DEFAULT_OFFSET = 1
+
+logger = logging.getLogger(__name__)
 
 
 class Telegram(Backend):
@@ -61,7 +61,7 @@ class Telegram(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, bot, bot_token, tag=None, archive=None):
         origin = urijoin(TELEGRAM_URL, bot)
@@ -72,7 +72,7 @@ class Telegram(Backend):
 
         self.client = None
 
-    def fetch(self, offset=DEFAULT_OFFSET, chats=None):
+    def fetch(self, category=CATEGORY_MESSAGE, offset=DEFAULT_OFFSET, chats=None):
         """Fetch the messages the bot can read from the server.
 
         The method retrieves, from the Telegram server, the messages
@@ -83,6 +83,7 @@ class Telegram(Backend):
         messages sent to any of these will be returned. An empty list
         will return no messages.
 
+        :param category: the category of items to fetch
         :param offset: obtain messages from this offset
         :param chats: list of chat names used to filter messages
 
@@ -94,7 +95,7 @@ class Telegram(Backend):
             offset = DEFAULT_OFFSET
 
         kwargs = {"offset": offset, "chats": chats}
-        items = super().fetch("message", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -201,7 +202,7 @@ class Telegram(Backend):
         This backend only generates one type of item which is
         'message'.
         """
-        return 'message'
+        return CATEGORY_MESSAGE
 
     @staticmethod
     def parse_messages(raw_json):

@@ -38,7 +38,7 @@ from ...client import HttpClient
 from ...errors import BackendError, ParseError
 from ...utils import DEFAULT_DATETIME, xml_to_dict
 
-
+CATEGORY_BUG = "bug"
 MAX_BUGS = 200  # Maximum number of bugs per query
 MAX_BUGS_CSV = 10000  # Maximum number of bugs per CSV query
 
@@ -60,7 +60,7 @@ class Bugzilla(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.0'
+    version = '0.10.0'
 
     def __init__(self, url, user=None, password=None,
                  max_bugs=MAX_BUGS, max_bugs_csv=MAX_BUGS_CSV,
@@ -75,12 +75,13 @@ class Bugzilla(Backend):
         self.client = None
         self.max_bugs = max(1, max_bugs)
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_BUG, from_date=DEFAULT_DATETIME):
         """Fetch the bugs from the repository.
 
         The method retrieves, from a Bugzilla repository, the bugs
         updated since the given date.
 
+        :param category: the category of items to fetch
         :param from_date: obtain bugs updated since this date
 
         :returns: a generator of bugs
@@ -89,7 +90,7 @@ class Bugzilla(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {"from_date": from_date}
-        items = super().fetch("bug", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -170,7 +171,7 @@ class Bugzilla(Backend):
         This backend only generates one type of item which is
         'bug'.
         """
-        return 'bug'
+        return CATEGORY_BUG
 
     @staticmethod
     def parse_buglist(raw_csv):

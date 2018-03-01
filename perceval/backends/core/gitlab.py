@@ -37,6 +37,8 @@ from ...backend import (Backend,
 from ...client import HttpClient, RateLimitHandler
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_ISSUE = "issue"
+
 GITLAB_URL = "https://gitlab.com/"
 GITLAB_API_URL = "https://gitlab.com/api/v4"
 
@@ -71,7 +73,7 @@ class GitLab(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None, tag=None, archive=None,
@@ -90,12 +92,13 @@ class GitLab(Backend):
         self.client = None
         self._users = {}  # internal users cache
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
         """Fetch the issues from the repository.
 
         The method retrieves, from a GitLab repository, the issues
         updated since the given date.
 
+        :param category: the category of items to fetch
         :param from_date: obtain issues updated since this date
 
         :returns: a generator of issues
@@ -106,7 +109,7 @@ class GitLab(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("issue", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -175,7 +178,7 @@ class GitLab(Backend):
         This backend only generates one type of item which is
         'issue'.
         """
-        return 'issue'
+        return CATEGORY_ISSUE
 
     def _init_client(self, from_archive=False):
         """Init client"""

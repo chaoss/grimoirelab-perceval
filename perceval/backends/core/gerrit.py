@@ -35,6 +35,7 @@ from ...backend import (Backend,
 from ...errors import BackendError
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_REVIEW = "review"
 
 MAX_REVIEWS = 500  # Maximum number of reviews per query
 PORT = '29418'
@@ -56,7 +57,7 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, url,
                  user=None, port=PORT, max_reviews=MAX_REVIEWS,
@@ -74,12 +75,13 @@ class Gerrit(Backend):
         self.disable_host_key_check = disable_host_key_check
         self.client = None
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_REVIEW, from_date=DEFAULT_DATETIME):
         """Fetch the reviews from the repository.
 
         The method retrieves, from a Gerrit repository, the reviews
         updated since the given date.
 
+        :param category: the category of items to fetch
         :param from_date: obtain reviews updated since this date
 
         :returns: a generator of reviews
@@ -88,7 +90,7 @@ class Gerrit(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("question", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -147,7 +149,7 @@ class Gerrit(Backend):
         This backend only generates one type of item which is
         'review'.
         """
-        return 'review'
+        return CATEGORY_REVIEW
 
     @staticmethod
     def parse_reviews(raw_data):

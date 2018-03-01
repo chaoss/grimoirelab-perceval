@@ -31,6 +31,7 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser)
 from ...client import HttpClient
 
+CATEGORY_ENTRY = "entry"
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ class RSS(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.4.0'
+    version = '0.5.0'
 
     def __init__(self, url, tag=None, archive=None):
         origin = url
@@ -55,15 +56,17 @@ class RSS(Backend):
         self.url = url
         self.client = None
 
-    def fetch(self):
+    def fetch(self, category=CATEGORY_ENTRY):
         """Fetch the entries from the url.
 
         The method retrieves all entries from a RSS url
 
+        :param category: the category of items to fetch
+
         :returns: a generator of entries
         """
         kwargs = {}
-        items = super().fetch("entry", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -130,7 +133,7 @@ class RSS(Backend):
         This backend only generates one type of item which is
         'entry'.
         """
-        return 'entry'
+        return CATEGORY_ENTRY
 
     def _init_client(self, from_archive=False):
         """Init client"""

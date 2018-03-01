@@ -35,6 +35,7 @@ from ...backend import (Backend,
 from ...errors import ParseError
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_MESSAGE = "message"
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
     def __init__(self, uri, dirpath, tag=None, archive=None):
         origin = uri
@@ -69,12 +70,13 @@ class Supybot(Backend):
         self.uri = uri
         self.dirpath = dirpath
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the Supybot IRC logger.
 
         The method parsers and returns the messages saved on the
         IRC log files and stored by Supybot in `dirpath`.
 
+        :param category: the category of items to fetch
         :param from_date: obtain messages since this date
 
         :returns: a generator of messages
@@ -85,7 +87,7 @@ class Supybot(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("message", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -169,7 +171,7 @@ class Supybot(Backend):
         This backend only generates one type of item which is
         'message'.
         """
-        return 'message'
+        return CATEGORY_MESSAGE
 
     @staticmethod
     def parse_supybot_log(filepath):

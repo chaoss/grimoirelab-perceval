@@ -39,7 +39,7 @@ from ...utils import DEFAULT_DATETIME
 
 logger = logging.getLogger(__name__)
 
-
+CATEGORY_BUG = "bug"
 MAX_BUGS = 500  # Maximum number of bugs per query
 MAX_CONTENTS = 25  # Maximum number of bug contents (history, comments) per query
 
@@ -74,12 +74,13 @@ class BugzillaREST(Backend):
         self.max_bugs = max(1, max_bugs)
         self.client = None
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_BUG, from_date=DEFAULT_DATETIME):
         """Fetch the bugs from the repository.
 
         The method retrieves, from a Bugzilla repository, the bugs
         updated since the given date.
 
+        :param category: the category of items to fetch
         :param from_date: obtain bugs updated since this date
 
         :returns: a generator of bugs
@@ -88,7 +89,7 @@ class BugzillaREST(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("bug", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -153,7 +154,7 @@ class BugzillaREST(Backend):
         This backend only generates one type of item which is
         'bug'.
         """
-        return 'bug'
+        return CATEGORY_BUG
 
     def _init_client(self, from_archive=False):
         """Init client"""

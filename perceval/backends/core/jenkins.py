@@ -32,11 +32,10 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser)
 from ...client import HttpClient
 
+CATEGORY_BUILD = "build"
+SLEEP_TIME = 10
 
 logger = logging.getLogger(__name__)
-
-
-SLEEP_TIME = 10
 
 
 class Jenkins(Backend):
@@ -53,7 +52,7 @@ class Jenkins(Backend):
     :param sleep_time: minimun waiting time due to a timeout connection exception
     :param archive: collect builds already retrieved from an archive
     """
-    version = '0.9.0'
+    version = '0.10.0'
 
     def __init__(self, url, tag=None, archive=None,
                  blacklist_jobs=None, sleep_time=SLEEP_TIME):
@@ -66,17 +65,19 @@ class Jenkins(Backend):
 
         self.client = None
 
-    def fetch(self):
+    def fetch(self, category=CATEGORY_BUILD):
         """Fetch the builds from the url.
 
         The method retrieves, from a Jenkins url, the
         builds updated since the given date.
 
+        :param category: the category of items to fetch
+
         :returns: a generator of builds
         """
 
         kwargs = {}
-        items = super().fetch("build", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -168,7 +169,7 @@ class Jenkins(Backend):
         This backend only generates one type of item which is
         'build'.
         """
-        return 'build'
+        return CATEGORY_BUILD
 
     def _init_client(self, from_archive=False):
         """Init client"""

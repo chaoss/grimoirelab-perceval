@@ -34,9 +34,7 @@ from ...client import HttpClient, RateLimitHandler
 from ...errors import RepositoryError
 from ...utils import DEFAULT_DATETIME
 
-
-logger = logging.getLogger(__name__)
-
+CATEGORY_EVENT = "event"
 
 MEETUP_URL = 'https://meetup.com/'
 MEETUP_API_URL = 'https://api.meetup.com/'
@@ -48,6 +46,8 @@ MIN_RATE_LIMIT = 1
 
 # Time to avoid too many request exception
 SLEEP_TIME = 30
+
+logger = logging.getLogger(__name__)
 
 
 class Meetup(Backend):
@@ -68,7 +68,7 @@ class Meetup(Backend):
     :param sleep_time: minimun waiting time to avoid too many request
          exception
     """
-    version = '0.10.0'
+    version = '0.11.0'
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, archive=None,
@@ -86,13 +86,14 @@ class Meetup(Backend):
 
         self.client = None
 
-    def fetch(self, from_date=DEFAULT_DATETIME, to_date=None):
+    def fetch(self, category=CATEGORY_EVENT, from_date=DEFAULT_DATETIME, to_date=None):
         """Fetch the events from the server.
 
         This method fetches those events of a group stored on the server
         that were updated since the given date. Data comments and rsvps
         are included within each event.
 
+        :param category: the category of items to fetch
         :param from_date: obtain events updated since this date
         :param to_date: obtain events updated before this date
 
@@ -104,7 +105,7 @@ class Meetup(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {"from_date": from_date, "to_date": to_date}
-        items = super().fetch("event", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -195,7 +196,7 @@ class Meetup(Backend):
         This backend only generates one type of item which is
         'event'.
         """
-        return 'event'
+        return CATEGORY_EVENT
 
     @staticmethod
     def parse_json(raw_json):

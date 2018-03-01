@@ -39,6 +39,7 @@ from ...backend import (Backend,
 from ...errors import RepositoryError, ParseError
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_COMMIT = 'commit'
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.9.0'
+    version = '0.10.0'
 
     def __init__(self, uri, gitpath, tag=None, archive=None):
         origin = uri
@@ -72,7 +73,7 @@ class Git(Backend):
         self.uri = uri
         self.gitpath = gitpath
 
-    def fetch(self, from_date=DEFAULT_DATETIME, branches=None,
+    def fetch(self, category=CATEGORY_COMMIT, from_date=DEFAULT_DATETIME, branches=None,
               latest_items=False):
         """Fetch commits.
 
@@ -98,6 +99,7 @@ class Git(Backend):
         The class raises a `RepositoryError` exception when an error
         occurs accessing the repository.
 
+        :param category: the category of items to fetch
         :param from_date: obtain commits newer than a specific date
             (inclusive)
         :param branches: names of branches to fetch from (default: None)
@@ -110,7 +112,7 @@ class Git(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {'from_date': from_date, 'branches': branches, 'latest_items': latest_items}
-        items = super().fetch("commit", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -185,7 +187,7 @@ class Git(Backend):
         This backend only generates one type of item which is
         'commit'.
         """
-        return 'commit'
+        return CATEGORY_COMMIT
 
     @staticmethod
     def parse_git_log_from_file(filepath):

@@ -35,6 +35,8 @@ from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
 
+CATEGORY_TOPIC = "topic"
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,7 +52,7 @@ class Discourse(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     def __init__(self, url, api_token=None, tag=None, archive=None):
         origin = url
@@ -60,12 +62,13 @@ class Discourse(Backend):
         self.api_token = api_token
         self.client = None
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_TOPIC, from_date=DEFAULT_DATETIME):
         """Fetch the topics from the Discurse board.
 
         The method retrieves, from a Discourse board the topics
         updated since the given date.
 
+        :param category: the category of items to fetch
         :param from_date: obtain topics updated since this date
 
         :returns: a generator of topics
@@ -76,7 +79,7 @@ class Discourse(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("topic", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -146,7 +149,7 @@ class Discourse(Backend):
         This backend only generates one type of item which is
         'topic'.
         """
-        return 'topic'
+        return CATEGORY_TOPIC
 
     def _init_client(self, from_archive=False):
         """Init client"""

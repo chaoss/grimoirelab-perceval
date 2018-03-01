@@ -34,6 +34,7 @@ from ...backend import (Backend,
 from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
+CATEGORY_QUESTION = "question"
 
 MAX_QUESTIONS = 100  # Maximum number of reviews per query
 
@@ -54,7 +55,7 @@ class StackExchange(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.0'
+    version = '0.10.0'
 
     def __init__(self, site, tagged=None, api_token=None,
                  max_questions=None, tag=None, archive=None):
@@ -68,7 +69,7 @@ class StackExchange(Backend):
 
         self.client = None
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_QUESTION, from_date=DEFAULT_DATETIME):
         """Fetch the questions from the site.
 
         The method retrieves, from a StackExchange site, the
@@ -84,7 +85,7 @@ class StackExchange(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch("question", **kwargs)
+        items = super().fetch(category, **kwargs)
 
         return items
 
@@ -146,7 +147,7 @@ class StackExchange(Backend):
         This backend only generates one type of item which is
         'question'.
         """
-        return 'question'
+        return CATEGORY_QUESTION
 
     @staticmethod
     def parse_questions(raw_page):

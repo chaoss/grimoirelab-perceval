@@ -319,7 +319,7 @@ class TestJiraBackend(unittest.TestCase):
 
         jira = Jira(JIRA_SERVER_URL)
 
-        issues = [issue for issue in jira.fetch(from_date)]
+        issues = [issue for issue in jira.fetch(from_date=from_date)]
 
         expected_req = {
             'expand': ['renderedFields,transitions,operations,changelog'],
