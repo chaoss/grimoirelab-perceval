@@ -55,7 +55,9 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.5.0'
+    version = '0.5.1'
+
+    CATEGORIES = [CATEGORY_ARTICLE]
 
     def __init__(self, host, group, tag=None, archive=None):
         origin = host + '-' + group
