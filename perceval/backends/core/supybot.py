@@ -61,7 +61,9 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.8.1'
+
+    CATEGORIES = [CATEGORY_MESSAGE]
 
     def __init__(self, uri, dirpath, tag=None, archive=None):
         origin = uri
