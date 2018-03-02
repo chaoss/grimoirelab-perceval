@@ -58,7 +58,9 @@ class Launchpad(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.0'
+    version = '0.6.1'
+
+    CATEGORIES = [CATEGORY_ISSUE]
 
     def __init__(self, distribution, package=None,
                  items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME,
