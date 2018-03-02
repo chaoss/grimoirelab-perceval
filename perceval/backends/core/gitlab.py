@@ -73,7 +73,9 @@ class GitLab(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.3.0'
+    version = '0.3.1'
+
+    CATEGORIES = [CATEGORY_ISSUE]
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None, tag=None, archive=None,
