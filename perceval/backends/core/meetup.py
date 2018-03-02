@@ -68,7 +68,9 @@ class Meetup(Backend):
     :param sleep_time: minimun waiting time to avoid too many request
          exception
     """
-    version = '0.11.0'
+    version = '0.11.1'
+
+    CATEGORIES = [CATEGORY_EVENT]
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, archive=None,
