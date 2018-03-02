@@ -97,7 +97,9 @@ class Jira(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.11.0'
+    version = '0.11.1'
+
+    CATEGORIES = [CATEGORY_ISSUE]
 
     def __init__(self, url, project=None,
                  user=None, password=None,
