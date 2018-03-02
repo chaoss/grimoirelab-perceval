@@ -60,7 +60,9 @@ class Bugzilla(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.0'
+    version = '0.10.1'
+
+    CATEGORIES = [CATEGORY_BUG]
 
     def __init__(self, url, user=None, password=None,
                  max_bugs=MAX_BUGS, max_bugs_csv=MAX_BUGS_CSV,
