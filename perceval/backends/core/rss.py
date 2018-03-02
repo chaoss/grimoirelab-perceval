@@ -47,7 +47,9 @@ class RSS(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.5.0'
+    version = '0.5.1'
+
+    CATEGORIES = [CATEGORY_ENTRY]
 
     def __init__(self, url, tag=None, archive=None):
         origin = url
