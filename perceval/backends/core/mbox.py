@@ -61,7 +61,9 @@ class MBox(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.0'
+    version = '0.10.1'
+
+    CATEGORIES = [CATEGORY_MESSAGE]
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
