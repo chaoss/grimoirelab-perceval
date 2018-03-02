@@ -52,7 +52,9 @@ class Jenkins(Backend):
     :param sleep_time: minimun waiting time due to a timeout connection exception
     :param archive: collect builds already retrieved from an archive
     """
-    version = '0.10.0'
+    version = '0.10.1'
+
+    CATEGORIES = [CATEGORY_BUILD]
 
     def __init__(self, url, tag=None, archive=None,
                  blacklist_jobs=None, sleep_time=SLEEP_TIME):
