@@ -64,7 +64,9 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.10.0'
+    version = '0.10.1'
+
+    CATEGORIES = [CATEGORY_COMMIT]
 
     def __init__(self, uri, gitpath, tag=None, archive=None):
         origin = uri
