@@ -63,7 +63,9 @@ class Pipermail(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.7.0'
+    version = '0.7.1'
+
+    CATEGORIES = [CATEGORY_MESSAGE]
 
     def __init__(self, url, dirpath, tag=None, archive=None):
         super().__init__(url, dirpath, tag=tag, archive=archive)
