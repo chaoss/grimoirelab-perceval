@@ -78,7 +78,9 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.15.0'
+    version = '0.15.1'
+
+    CATEGORIES = [CATEGORY_ISSUE]
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
