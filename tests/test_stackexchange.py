@@ -163,7 +163,7 @@ class TestStackExchangeBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = StackExchange(site="stackoverflow", tagged="python",
+        self.backend = StackExchange(site="stackoverflow.com", tagged="python",
                                      api_token="aaa", max_questions=1,
                                      archive=self.archive)
 
