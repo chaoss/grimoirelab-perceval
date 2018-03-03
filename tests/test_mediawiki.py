@@ -29,6 +29,7 @@ import os
 import pkg_resources
 import unittest
 import urllib
+import unittest.mock
 
 from grimoirelab.toolkit.datetime import (datetime_to_utc,
                                           str_to_datetime)
@@ -174,10 +175,14 @@ class TestMediaWikiBackend(unittest.TestCase):
         self.assertEqual(MediaWiki.has_resuming(), False)
 
     @httpretty.activate
-    def _test_fetch_version(self, version, from_date=None, reviews_api=False):
+    @unittest.mock.patch('perceval.backends.core.mediawiki.datetime_utcnow')
+    def _test_fetch_version(self, version, mock_utcnow, from_date=None, reviews_api=False):
         """Test whether the pages with their reviews are returned"""
 
         HTTPServer.routes(version)
+
+        mock_utcnow.return_value = datetime.datetime(2016, 6, 10,
+                                                     tzinfo=dateutil.tz.tzutc())
 
         # Test fetch pages with their reviews
         mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
@@ -213,7 +218,7 @@ class TestMediaWikiBackend_1_23(TestMediaWikiBackend):
     @httpretty.activate
     def test_fetch_from_date(self):
         from_date = dateutil.parser.parse("2016-06-23 15:35")
-        self._test_fetch_version("1.23", from_date)
+        self._test_fetch_version("1.23", from_date=from_date)
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -237,8 +242,8 @@ class TestMediaWikiBackend_1_28(TestMediaWikiBackend):
     @httpretty.activate
     def test_fetch_from_date(self):
         from_date = dateutil.parser.parse("2016-06-23 15:35")
-        self._test_fetch_version("1.28", from_date)
-        self._test_fetch_version("1.28", from_date, reviews_api=True)
+        self._test_fetch_version("1.28", from_date=from_date)
+        self._test_fetch_version("1.28", from_date=from_date, reviews_api=True)
 
     @httpretty.activate
     def test_fetch_empty_1_28(self):
@@ -260,13 +265,15 @@ class TestMediaWikiBackendArchive(TestCaseBackendArchive):
         self.backend = MediaWiki(MEDIAWIKI_SERVER_URL, archive=self.archive)
 
     @httpretty.activate
-    def _test_version(self, version, reviews_api=False):
+    @unittest.mock.patch('perceval.backends.core.mediawiki.datetime_utcnow')
+    def _test_version(self, version, mock_utcnow, reviews_api=False):
         """Test whether the archive works"""
 
         HTTPServer.routes(version)
+        mock_utcnow.return_value = datetime.datetime(2016, 6, 10,
+                                                     tzinfo=dateutil.tz.tzutc())
 
         from_date = dateutil.parser.parse("2016-06-23 15:35")
-        self.backend._test_mode = True
 
         self._test_fetch_from_archive(from_date=from_date, reviews_api=reviews_api)
 

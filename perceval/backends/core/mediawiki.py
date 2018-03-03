@@ -20,13 +20,14 @@
 #     Alvaro del Castillo <acs@bitergia.com>
 #
 
-import datetime
 import json
 import logging
 
 import dateutil
 
-from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab.toolkit.datetime import (datetime_to_utc,
+                                          datetime_utcnow,
+                                          str_to_datetime)
 from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
@@ -70,7 +71,7 @@ class MediaWiki(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.1'
+    version = '0.9.2'
 
     CATEGORIES = [CATEGORY_PAGE]
 
@@ -80,7 +81,6 @@ class MediaWiki(Backend):
         super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.client = None
-        self._test_mode = False
 
     def fetch(self, category=CATEGORY_PAGE, from_date=DEFAULT_DATETIME, reviews_api=False):
         """Fetch the pages from the backend url.
@@ -306,9 +306,7 @@ class MediaWiki(Backend):
 
         # from_date can not be older than MAX_RECENT_DAYS days ago
         if from_date:
-            if self._test_mode:
-                logger.warning("Test mode active; MAX_RECENT_DAYS limit ignored")
-            elif (datetime.datetime.now(dateutil.tz.tzlocal()) - from_date).days >= MAX_RECENT_DAYS:
+            if (datetime_utcnow() - from_date).days >= MAX_RECENT_DAYS:
                 cause = "Can't get incremental pages older than %i days." % MAX_RECENT_DAYS
                 cause += " Do a complete analysis without from_date for older changes."
                 raise BackendError(cause=cause)
@@ -417,6 +415,7 @@ class MediaWikiClient(HttpClient):
     def get_recent_pages(self, namespaces, rccontinue=''):
         """Retrieve recent pages from all namespaces starting from rccontinue."""
 
+        namespaces.sort()
         params = {
             "action": "query",
             "list": "recentchanges",
