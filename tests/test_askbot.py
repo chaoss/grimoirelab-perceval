@@ -170,7 +170,7 @@ class TestAskbotParser(unittest.TestCase):
         container = question[0].select("div.post-update-info")
         created = container[0]
         author = AskbotParser.parse_user_info(created)
-        self.assertEqual(author, "This post is a wiki")
+        self.assertEqual(author, {})
 
         # Test the user_info from an item with country and website
         page = read_file('data/askbot/html_country_and_website.html')
