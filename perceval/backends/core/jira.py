@@ -97,14 +97,14 @@ class Jira(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.11.1'
+    version = '0.11.2'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
     def __init__(self, url, project=None,
                  user=None, password=None,
-                 verify=None, cert=None,
-                 max_issues=None, tag=None,
+                 verify=True, cert=None,
+                 max_issues=MAX_ISSUES, tag=None,
                  archive=None):
         origin = url
 
@@ -255,7 +255,7 @@ class JiraClient(HttpClient):
     VERSION_API = '2'
     RESOURCE = 'rest/api'
 
-    def __init__(self, url, project, user, password, verify, cert, max_issues,
+    def __init__(self, url, project, user, password, verify, cert, max_issues=MAX_ISSUES,
                  archive=None, from_archive=False):
         super().__init__(url, archive=archive, from_archive=from_archive)
         self.project = project

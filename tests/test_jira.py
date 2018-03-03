@@ -202,12 +202,14 @@ class TestJiraBackend(unittest.TestCase):
             {
                 'expand': ['renderedFields,transitions,operations,changelog'],
                 'jql': ['updated > 0 order by updated asc'],
-                'startAt': ['0']
+                'startAt': ['0'],
+                'maxResults': ['100']
             },
             {
                 'expand': ['renderedFields,transitions,operations,changelog'],
                 'jql': ['updated > 0 order by updated asc'],
-                'startAt': ['2']
+                'startAt': ['2'],
+                'maxResults': ['100']
             }
         ]
 
@@ -324,7 +326,8 @@ class TestJiraBackend(unittest.TestCase):
         expected_req = {
             'expand': ['renderedFields,transitions,operations,changelog'],
             'jql': ['updated > 1420070400000 order by updated asc'],
-            'startAt': ['0']
+            'startAt': ['0'],
+            'maxResults': ['100']
         }
 
         self.assertEqual(len(issues), 1)
@@ -363,7 +366,8 @@ class TestJiraBackend(unittest.TestCase):
         expected_req = {
             'expand': ['renderedFields,transitions,operations,changelog'],
             'jql': ['updated > 0 order by updated asc'],
-            'startAt': ['0']
+            'startAt': ['0'],
+            'maxResults': ['100']
         }
 
         self.assertEqual(len(issues), 0)
