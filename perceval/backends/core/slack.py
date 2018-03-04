@@ -57,7 +57,9 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.0'
+    version = '0.6.1'
+
+    CATEGORIES = [CATEGORY_MESSAGE]
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
                  tag=None, archive=None):

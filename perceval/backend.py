@@ -35,7 +35,7 @@ from grimoirelab.toolkit.introspect import find_signature_parameters
 from grimoirelab.toolkit.datetime import str_to_datetime
 
 from .archive import Archive, ArchiveManager
-from .errors import ArchiveError
+from .errors import ArchiveError, BackendError
 from ._version import __version__
 
 
@@ -74,6 +74,8 @@ class Backend:
     """
     version = '0.6.0'
 
+    CATEGORIES = []
+
     def __init__(self, origin, tag=None, archive=None):
         self._origin = origin
         self.tag = tag if tag else origin
@@ -96,6 +98,10 @@ class Backend:
 
         self._archive = obj
 
+    @property
+    def categories(self):
+        return self.CATEGORIES
+
     def fetch_items(self, **kwargs):
         raise NotImplementedError
 
@@ -110,6 +116,10 @@ class Backend:
 
         :returns: a generator of items
         """
+        if category not in self.categories:
+            cause = "%s category not valid for %s" % (category, self.__class__.__name__)
+            raise BackendError(cause=cause)
+
         if self.archive:
             self.archive.init_metadata(self.origin, self.__class__.__name__, self.version, category,
                                        kwargs)
@@ -355,6 +365,7 @@ class BackendCommand:
         backend_args = vars(self.parsed_args)
 
         if self.archive_manager and self.parsed_args.fetch_archive:
+
             items = fetch_from_archive(self.BACKEND, backend_args,
                                        self.archive_manager,
                                        self.parsed_args.category,

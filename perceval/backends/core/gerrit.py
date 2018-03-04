@@ -57,7 +57,9 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.0'
+    version = '0.9.1'
+
+    CATEGORIES = [CATEGORY_REVIEW]
 
     def __init__(self, url,
                  user=None, port=PORT, max_reviews=MAX_REVIEWS,

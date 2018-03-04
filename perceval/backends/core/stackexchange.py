@@ -55,7 +55,9 @@ class StackExchange(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.0'
+    version = '0.10.1'
+
+    CATEGORIES = [CATEGORY_QUESTION]
 
     def __init__(self, site, tagged=None, api_token=None,
                  max_questions=None, tag=None, archive=None):

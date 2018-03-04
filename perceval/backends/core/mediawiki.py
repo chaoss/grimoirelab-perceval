@@ -70,7 +70,9 @@ class MediaWiki(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.0'
+    version = '0.9.1'
+
+    CATEGORIES = [CATEGORY_PAGE]
 
     def __init__(self, url, tag=None, archive=None):
         origin = url

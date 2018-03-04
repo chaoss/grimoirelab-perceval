@@ -56,6 +56,7 @@ class MockedBackend(Backend):
 
     version = '0.2.0'
     CATEGORY = "mock_item"
+    CATEGORIES = [CATEGORY]
     ITEMS = 5
 
     def __init__(self, origin, tag=None, archive=None):
@@ -73,8 +74,8 @@ class MockedBackend(Backend):
                     self.archive.store(str(x), None, None, item)
                 yield item
 
-    def fetch(self):
-        return super().fetch(MockedBackend.CATEGORY)
+    def fetch(self, category=CATEGORY):
+        return super().fetch(category)
 
     def _init_client(self, from_archive=False):
         self._fetch_from_archive = from_archive
@@ -274,13 +275,22 @@ class TestBackend(unittest.TestCase):
         self.assertEqual(b.archive.origin, b.origin)
         self.assertEqual(b.archive.category, MockedBackend.CATEGORY)
 
+    def test_fetch_wrong_category(self):
+        """Check that an error is thrown if the category is not valid"""
+
+        b = MockedBackend('test')
+
+        with self.assertRaises(BackendError):
+            _ = [item for item in b.fetch(category="acme")]
+
     def test_fetch_client_not_provided(self):
         """Test whether an NotImplementedError exception is thrown"""
 
         b = Backend('test')
+        b.CATEGORIES = [MockedBackend.CATEGORY]
 
         with self.assertRaises(NotImplementedError):
-            _ = [item for item in b.fetch(category="acme")]
+            _ = [item for item in b.fetch(category=MockedBackend.CATEGORY)]
 
     def test_init_client_not_implemented(self):
         """Test whether an NotImplementedError exception is thrown"""
@@ -695,6 +705,7 @@ class TestBackendCommand(unittest.TestCase):
 
         args = ['--no-archive', '--from-date', '2015-01-01',
                 '--tag', 'test', '--output', self.fout_path,
+                '--category', 'mock_item',
                 'http://example.com/']
 
         cmd = MockedBackendCommand(*args)
@@ -719,6 +730,7 @@ class TestBackendCommand(unittest.TestCase):
 
         args = ['--from-date', '2015-01-01',
                 '--tag', 'test', '--output', self.fout_path,
+                '--category', 'mock_item',
                 'http://example.com/']
 
         cmd = NoArchiveBackendCommand(*args)
