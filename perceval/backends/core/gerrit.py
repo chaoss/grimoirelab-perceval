@@ -52,12 +52,14 @@ class Gerrit(Backend):
 
     :param url: Gerrit server URL
     :param user: SSH user used to connect to the Gerrit server
+    :param port: SSH port
     :param max_reviews: maximum number of reviews requested on the same query
     :param blacklist_reviews: exclude the reviews of this list while fetching
+    :param disable_host_key_check: disable host key controls
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.1'
+    version = '0.10.0'
 
     CATEGORIES = [CATEGORY_REVIEW]
 
@@ -75,6 +77,7 @@ class Gerrit(Backend):
         self.max_reviews = max(1, max_reviews)
         self.blacklist_reviews = blacklist_reviews
         self.disable_host_key_check = disable_host_key_check
+        self.archive = archive
         self.client = None
 
     def fetch(self, category=CATEGORY_REVIEW, from_date=DEFAULT_DATETIME):
@@ -115,7 +118,7 @@ class Gerrit(Backend):
 
         :returns: this backend supports items archive
         """
-        return False
+        return True
 
     @classmethod
     def has_resuming(cls):
@@ -173,7 +176,7 @@ class Gerrit(Backend):
 
         return GerritClient(self.url, self.user, self.max_reviews,
                             self.blacklist_reviews, self.disable_host_key_check,
-                            self.port)
+                            self.port, self.archive, from_archive)
 
     def _fetch_gerrit28(self, from_date=DEFAULT_DATETIME):
         """ Specific fetch for gerrit 2.8 version.
@@ -277,6 +280,11 @@ class GerritClient():
     :param repository: URL of the Gerrit server
     :param user: SSH user to be used to connect to gerrit server
     :param max_reviews: max number of reviews per query
+    :param blacklist_reviews: exclude the reviews of this list while fetching
+    :param disable_host_key_check: disable host key controls
+    :param port: SSH port
+    :param archive: collect issues already retrieved from an archive
+    :param from_archive: it tells whether to write/read the archive
     """
     VERSION_REGEX = re.compile(r'gerrit version (\d+)\.(\d+).*')
     CMD_GERRIT = 'gerrit'
@@ -284,15 +292,20 @@ class GerritClient():
     MAX_RETRIES = 3  # max number of retries when a command fails
     RETRY_WAIT = 60  # number of seconds when retrying a ssh command
 
-    def __init__(self, repository, user, max_reviews, blacklist_reviews=[],
-                 disable_host_key_check=False, port=PORT):
+    def __init__(self, repository, user=None, max_reviews=MAX_REVIEWS, blacklist_reviews=None,
+                 disable_host_key_check=False, port=PORT,
+                 archive=None, from_archive=False):
         self.gerrit_user = user
         self.max_reviews = max_reviews
-        self.blacklist_reviews = blacklist_reviews
+
+        self.blacklist_reviews = [] if not blacklist_reviews else blacklist_reviews
         self.repository = repository
         self.project = None
         self._version = None
         self.port = port
+        self.archive = archive
+        self.from_archive = from_archive
+
         ssh_opts = ''
         if disable_host_key_check:
             ssh_opts += "-o StrictHostKeyChecking=no "
@@ -304,27 +317,6 @@ class GerritClient():
             self.gerrit_cmd = "ssh %s %s@%s" % (ssh_opts, self.gerrit_user, self.repository)
 
         self.gerrit_cmd += " %s " % (GerritClient.CMD_GERRIT)
-
-    def __execute(self, cmd):
-        """ Execute gerrit command with retry if it fails """
-
-        data = None  # data result from the cmd execution
-
-        retries = 0
-
-        while retries < self.MAX_RETRIES:
-            try:
-                data = subprocess.check_output(cmd, shell=True)
-                break
-            except subprocess.CalledProcessError as ex:
-                logger.error("gerrit cmd %s failed: %s", cmd, ex)
-                time.sleep(self.RETRY_WAIT * retries)
-                retries += 1
-
-        if data is None:
-            raise RuntimeError(cmd + " failed " + str(self.MAX_RETRIES) + " times. Giving up!")
-
-        return data
 
     @property
     def version(self):
@@ -390,6 +382,52 @@ class GerritClient():
 
         return next_item
 
+    def __execute(self, cmd):
+        """Execute gerrit command"""
+
+        if self.from_archive:
+            response = self.__execute_from_archive(cmd)
+        else:
+            response = self.__execute_from_remote(cmd)
+
+        return response
+
+    def __execute_from_archive(self, cmd):
+        """Execute gerrit command against the archive"""
+
+        response = self.archive.retrieve(cmd, None, None)
+
+        if isinstance(response, RuntimeError):
+            raise response
+
+        return response
+
+    def __execute_from_remote(self, cmd):
+        """Execute gerrit command with retry if it fails"""
+
+        result = None  # data result from the cmd execution
+        retries = 0
+
+        while retries < self.MAX_RETRIES:
+            try:
+                result = subprocess.check_output(cmd, shell=True)
+                break
+            except subprocess.CalledProcessError as ex:
+                logger.error("gerrit cmd %s failed: %s", cmd, ex)
+                time.sleep(self.RETRY_WAIT * retries)
+                retries += 1
+
+        if result is None:
+            result = RuntimeError(cmd + " failed " + str(self.MAX_RETRIES) + " times. Giving up!")
+
+        if self.archive:
+            self.archive.store(cmd, None, None, result)
+
+        if isinstance(result, RuntimeError):
+            raise result
+
+        return result
+
     def _get_gerrit_cmd(self, last_item, filter_=None):
 
         if filter_ and filter_ not in ['status:open', 'status:closed']:
@@ -437,7 +475,8 @@ class GerritCommand(BackendCommand):
     def setup_cmd_parser():
         """Returns the Gerrit argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True)
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              archive=True)
 
         # Gerrit options
         group = parser.parser.add_argument_group('Gerrit arguments')
@@ -452,7 +491,7 @@ class GerritCommand(BackendCommand):
         group.add_argument('--disable-host-key-check', dest='disable_host_key_check', action='store_true',
                            help="Don't check remote host identity")
         group.add_argument('--ssh-port', dest='port',
-                           default=PORT,
+                           default=PORT, type=int,
                            help="Set SSH port of the Gerrit server")
 
         # Required arguments
