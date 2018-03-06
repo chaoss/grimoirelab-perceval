@@ -57,7 +57,7 @@ class Redmine(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.1'
+    version = '0.9.2'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -89,7 +89,6 @@ class Redmine(Backend):
             from_date = DEFAULT_DATETIME
 
         from_date = datetime_to_utc(from_date)
-
         kwargs = {'from_date': from_date}
         items = super().fetch(category, **kwargs)
 
@@ -339,7 +338,7 @@ class RedmineClient(HttpClient):
     CWATCHERS = 'watchers'
 
     def __init__(self, base_url, api_token=None, archive=None, from_archive=False):
-        super().__init__(base_url.rstrip('/'), archive, from_archive)
+        super().__init__(base_url.rstrip('/'), archive=archive, from_archive=from_archive)
         self.api_token = api_token
 
     def issues(self, from_date=DEFAULT_DATETIME,
