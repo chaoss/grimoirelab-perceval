@@ -57,7 +57,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.1'
+    version = '0.6.2'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -88,8 +88,9 @@ class Slack(Backend):
             from_date = DEFAULT_DATETIME
 
         from_date = datetime_to_utc(from_date)
+        latest = datetime_utcnow().timestamp()
 
-        kwargs = {'from_date': from_date}
+        kwargs = {'from_date': from_date, 'latest': latest}
         items = super().fetch(category, **kwargs)
 
         return items
@@ -98,6 +99,7 @@ class Slack(Backend):
         """Fetch the messages"""
 
         from_date = kwargs['from_date']
+        latest = kwargs['latest']
 
         logger.info("Fetching messages of '%s' channel from %s",
                     self.channel, str(from_date))
@@ -106,7 +108,6 @@ class Slack(Backend):
         channel_info = self.parse_channel_info(raw_info)
 
         oldest = datetime_to_utc(from_date).timestamp()
-        latest = datetime_utcnow().timestamp()
 
         # Minimum value supported by Slack is 0 not 0.0
         if oldest == 0.0:
