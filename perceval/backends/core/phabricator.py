@@ -50,7 +50,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.1'
+    version = '0.9.2'
 
     CATEGORIES = [CATEGORY_TASK]
 
@@ -466,7 +466,7 @@ class ConduitClient(HttpClient):
         params['__conduit__'] = {'token': self.api_token}
 
         data = {
-            'params': json.dumps(params),
+            'params': json.dumps(params, sort_keys=True),
             'output': 'json',
             '__conduit__': True
         }
