@@ -55,12 +55,12 @@ class StackExchange(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.1'
+    version = '0.10.2'
 
     CATEGORIES = [CATEGORY_QUESTION]
 
     def __init__(self, site, tagged=None, api_token=None,
-                 max_questions=None, tag=None, archive=None):
+                 max_questions=MAX_QUESTIONS, tag=None, archive=None):
         origin = site
 
         super().__init__(origin, tag=tag, archive=archive)
@@ -199,7 +199,7 @@ class StackExchangeClient(HttpClient):
     STACKEXCHANGE_API_URL = 'https://api.stackexchange.com'
     VERSION_API = '2.2'
 
-    def __init__(self, site, tagged, token, max_questions, archive=None, from_archive=False):
+    def __init__(self, site, tagged, token, max_questions=MAX_QUESTIONS, archive=None, from_archive=False):
         super().__init__(self.STACKEXCHANGE_API_URL, archive=archive, from_archive=from_archive)
         self.site = site
         self.tagged = tagged
