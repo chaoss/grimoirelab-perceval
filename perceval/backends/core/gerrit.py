@@ -59,7 +59,7 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.0'
+    version = '0.10.1'
 
     CATEGORIES = [CATEGORY_REVIEW]
 
@@ -320,7 +320,7 @@ class GerritClient():
 
     @property
     def version(self):
-        """ Return the Gerrit server version."""
+        """Return the Gerrit server version."""
 
         if self._version:
             return self._version
@@ -367,12 +367,12 @@ class GerritClient():
 
         gerrit_version = self.version
 
-        if gerrit_version[0] == 2 and gerrit_version[1] >= 9:
+        if gerrit_version[0] == 2 and gerrit_version[1] > 9:
             if last_item is None:
                 next_item = 0
             else:
                 next_item = last_item
-        elif gerrit_version[0] == 2 and gerrit_version == 9:
+        elif gerrit_version[0] == 2 and gerrit_version[1] == 9:
             # https://groups.google.com/forum/#!topic/repo-discuss/yQgRR5hlS3E
             cause = "Gerrit 2.9.0 does not support pagination"
             raise BackendError(cause=cause)
