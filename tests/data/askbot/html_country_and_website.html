@@ -1,1064 +1,1380 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+      <title>Why is Karma named Karma? - My site</title>
+      <meta name="description" content="Is there a specific reason why Karma is named Karma and not Reputation? Just asking, I assume it won&#39;t be a big deal to change in a local installation." />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+      <meta name="keywords" content=",Askbot,forum,community" />
+      <meta name="google-site-verification" content="zSSjjKfWfluMtcMUgquEdgqek3oSGt22RNk8jU8TZqc" />
+      <meta name="referrer" content="always" />
+      <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+      <link rel="shortcut icon" href="/m/default/media/images/favicon.gif?v=108" />
+      <link
+         rel="alternate"
+         type="application/rss+xml"
+         title="RSS feed from Askbot"
+         href="http://askbot.org/en/feeds/rss/"
+         />
+      <link rel="stylesheet" href="/m/CACHE/css/6e65900ec513.css" type="text/css" />
+      <link
+         href="/en/custom.css?v=108"
+         rel="stylesheet"
+         type="text/css"
+         />
+      <link href="//fonts.googleapis.com/css?family=Open+Sans+Condensed:700&amp;subset=latin-ext" rel="stylesheet" type="text/css" />
+      <link href="//fonts.googleapis.com/css?family=Open+Sans+Condensed:700&amp;subset=cyrillic-ext" rel="stylesheet" type="text/css" />
+      <link rel="canonical" href="http://askbot.org/en/question/2503/why-is-karma-named-karma/" />
+      <link rel="stylesheet" type="text/css" href="/m/default/media/wmd/wmd.css?v=108" />
+      <script type="text/javascript" src="/m/default/media/jslib/modernizr.custom.js?v=108"></script> <script type="text/javascript">
+         var askbot = {};
+         askbot['data'] = {};
+         askbot['data']['userIsAuthenticated'] = false;
+         askbot['data']['languageCode'] = 'en';
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> <html xmlns="http://www.w3.org/1999/xhtml"> <head> <title>Why is Karma named Karma? - My site</title> <meta name="description" content="Is there a specific reason why Karma is named Karma and not Reputation? Just asking, I assume it won&#39;t be a big deal to change in a local installation." /> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> <meta http-equiv="X-UA-Compatible" content="IE=EDGE" /> <meta name="keywords" content=",Askbot,forum,community" /> <meta name="google-site-verification" content="zSSjjKfWfluMtcMUgquEdgqek3oSGt22RNk8jU8TZqc" /> <meta name="referrer" content="always" /> <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" /> <link rel="shortcut icon" href="/m/default/media/images/favicon.gif?v=108" /> <link
-            rel="alternate"
-            type="application/rss+xml"
-            title="RSS feed from Askbot"
-            href="http://askbot.org/en/feeds/rss/"
-        /> <link rel="stylesheet" href="/m/CACHE/css/6e65900ec513.css" type="text/css" /> <link
-        href="/en/custom.css?v=108"
-        rel="stylesheet"
-        type="text/css"
-    /> <link href="//fonts.googleapis.com/css?family=Open+Sans+Condensed:700&amp;subset=latin-ext" rel="stylesheet" type="text/css" /> <link href="//fonts.googleapis.com/css?family=Open+Sans+Condensed:700&amp;subset=cyrillic-ext" rel="stylesheet" type="text/css" /> <link rel="canonical" href="http://askbot.org/en/question/2503/why-is-karma-named-karma/" /> <link rel="stylesheet" type="text/css" href="/m/default/media/wmd/wmd.css?v=108" /> <script type="text/javascript" src="/m/default/media/jslib/modernizr.custom.js?v=108"></script> <script type="text/javascript">
-    var askbot = {};
-    askbot['data'] = {};
-    askbot['data']['userIsAuthenticated'] = false;
-    askbot['data']['languageCode'] = 'en';
-    
-        askbot['data']['userReputation'] = 0;
-        askbot['data']['userEmail'] = null;
-        askbot['data']['userIsReadOnly'] = false;//in principle we allow anon users to start posting
-    
-    askbot['urls'] = {};
-    askbot['settings'] = {};
-    askbot['messages'] = {};
-</script> <script type="text/javascript" src="/en/jsi18n/"></script> <script type="text/javascript">
-        /*<![CDATA[*/
-        //below is pure cross-browser javascript, no jQuery
-        askbot['data']['userIsThreadModerator'] = false;
-        askbot['data']['oldestAnswerId'] = 3389;
-        askbot['data']['threadIsClosed'] = false;
-        
-        (function(){
+             askbot['data']['userReputation'] = 0;
+             askbot['data']['userEmail'] = null;
+             askbot['data']['userIsReadOnly'] = false;//in principle we allow anon users to start posting
 
-            var hasClass = function(node, selector) {
-                var classes = (" " + node.className + " ").split(' ');
-                for (var i = 0; i < classes.length; i++) {
-                    if (classes[i] === selector) {
-                        return true;
-                    }
-                }
-                return false;
-            }
+         askbot['urls'] = {};
+         askbot['settings'] = {};
+         askbot['messages'] = {};
+      </script> <script type="text/javascript" src="/en/jsi18n/"></script> <script type="text/javascript">
+         /*<![CDATA[*/
+         //below is pure cross-browser javascript, no jQuery
+         askbot['data']['userIsThreadModerator'] = false;
+         askbot['data']['oldestAnswerId'] = 3389;
+         askbot['data']['threadIsClosed'] = false;
 
-            var findClosestParentByClassName = function(node, className) {
-                if (hasClass(node, className)) {
-                    return node;
-                }
-                if (node.nodeName === 'BODY') {
-                    return false;
-                } else {
-                    return findClosestParentByClassName(node.parentNode, className);
-                }
-            };
+         (function(){
 
-            var findChildrenByClassName = function(node, className) {
-                var nodes = [];
-                var walk = function(node) {
-                    if (hasClass(node, className)) {
-                        nodes.push(node);
-                    }
-                    if (node.childNodes) {
-                        for (var i=0; i < node.childNodes.length; i++) {
-                            walk(node.childNodes[i]);
-                        }
-                    }
-                };
-                walk(node);
-                return nodes;
-            };
+             var hasClass = function(node, selector) {
+                 var classes = (" " + node.className + " ").split(' ');
+                 for (var i = 0; i < classes.length; i++) {
+                     if (classes[i] === selector) {
+                         return true;
+                     }
+                 }
+                 return false;
+             }
 
-            var getTextContent = function(node) {
-                var text = node.innerText || node.textContent;
-                if (text === undefined) {
-                    return '';
-                } else {
-                    return text;
-                }
-            };
+             var findClosestParentByClassName = function(node, className) {
+                 if (hasClass(node, className)) {
+                     return node;
+                 }
+                 if (node.nodeName === 'BODY') {
+                     return false;
+                 } else {
+                     return findClosestParentByClassName(node.parentNode, className);
+                 }
+             };
 
-            var hasAttribute = function(node, attrName) {
-                if (node.hasAttribute) {
-                    return node.hasAttribute(attrName);
-                } else {
-                    return (!(!(node.getAttribute(attrName))));
-                }
-            };
+             var findChildrenByClassName = function(node, className) {
+                 var nodes = [];
+                 var walk = function(node) {
+                     if (hasClass(node, className)) {
+                         nodes.push(node);
+                     }
+                     if (node.childNodes) {
+                         for (var i=0; i < node.childNodes.length; i++) {
+                             walk(node.childNodes[i]);
+                         }
+                     }
+                 };
+                 walk(node);
+                 return nodes;
+             };
 
-            var findChildByAttribute = function(node, attrName, attrVal) {
-                var children = node.childNodes;
-                for (var i = 0; i < children.length; i++) {
-                    var child = children[i];
-                    if (child.getAttribute(attrName) === attrVal) {
-                        return child;
-                    }
-                };
-                return null;
-            };
+             var getTextContent = function(node) {
+                 var text = node.innerText || node.textContent;
+                 if (text === undefined) {
+                     return '';
+                 } else {
+                     return text;
+                 }
+             };
 
-            var postIsComment = function(postId) {
-                if (document.getElementById('comment-' + postId)) {
-                    return true;
-                }
-                return false;
-            };
+             var hasAttribute = function(node, attrName) {
+                 if (node.hasAttribute) {
+                     return node.hasAttribute(attrName);
+                 } else {
+                     return (!(!(node.getAttribute(attrName))));
+                 }
+             };
 
-            var postIsQuestion = function(postId) {
-                var content = document.getElementById('post-id-' + postId);
-                if (content) {
-                    if (findClosestParentByClassName(content, 'question')) {
-                        return true;
-                    }
-                }
-                return false;
-            };
+             var findChildByAttribute = function(node, attrName, attrVal) {
+                 var children = node.childNodes;
+                 for (var i = 0; i < children.length; i++) {
+                     var child = children[i];
+                     if (child.getAttribute(attrName) === attrVal) {
+                         return child;
+                     }
+                 };
+                 return null;
+             };
 
-            var removeNode = function(node) {
-                node.parentNode.removeChild(node);
-            };
+             var postIsComment = function(postId) {
+                 if (document.getElementById('comment-' + postId)) {
+                     return true;
+                 }
+                 return false;
+             };
 
-            var trim = function(text) {
-                return text.replace(/^\s+|\s+$/g, '');
-            };
+             var postIsQuestion = function(postId) {
+                 var content = document.getElementById('post-id-' + postId);
+                 if (content) {
+                     if (findClosestParentByClassName(content, 'question')) {
+                         return true;
+                     }
+                 }
+                 return false;
+             };
 
-            var data = askbot['data'];
-            var isAuthorOfPost = function(post_id) {
-                return (data['user_posts'] && data['user_posts'][post_id]);
-            };
+             var removeNode = function(node) {
+                 node.parentNode.removeChild(node);
+             };
 
-            if (data['userIsAuthenticated']){
-                var votes = {};
-                
-                data['user_votes'] = votes;
-                var posts = {};
-                
-                data['user_posts'] = posts;
-            }
+             var trim = function(text) {
+                 return text.replace(/^\s+|\s+$/g, '');
+             };
 
-            function render_vote_buttons(post_type, post_id){
-                var upvote_btn = document.getElementById(
-                    post_type + '-img-upvote-' + post_id
-                );
-                var downvote_btn = document.getElementById(
-                    post_type + '-img-downvote-' + post_id
-                );
-                if (data['userIsAuthenticated']){
-                    if (post_id in data['user_votes']){
-                        var vote = data['user_votes'][post_id];
-                        if (vote == -1){
-                            var btn = downvote_btn;
-                        } else if (vote == 1){
-                            var btn = upvote_btn;
-                        } else {
-                            return;
-                        }
-                        if (post_type == 'comment'){
-                            btn.className = btn.className + ' upvoted';
-                        } else {
-                            btn.className = btn.className + ' on';
-                        }
-                    }
-                }
-            }
+             var data = askbot['data'];
+             var isAuthorOfPost = function(post_id) {
+                 return (data['user_posts'] && data['user_posts'][post_id]);
+             };
 
-            function hide_convert_answer_links(post_id){
-                var id1 = 'post-' + post_id + '-convert';//for repost as Q comment
-                var repostAsQuestionComment = document.getElementById(id1);
-                var id2 = 'post-' + post_id + '-repost-as-comment-under-previous-answer';
-                var repostAsPrevAnsComment = document.getElementById(id2);
-                var extraOptsList = repostAsQuestionComment.parentNode;
-                var extraOpts = extraOptsList.parentNode;
+             if (data['userIsAuthenticated']){
+                 var votes = {};
 
-                var isAuthenticated = data['userIsAuthenticated'];
-                var isMod = data['userIsAdminOrMod'];
-                if (isAuthenticated && (isMod || isAuthorOfPost(post_id))) {
-                    //still may need to hide because answer may be too long
-                    var answer_id = 'post-id-' + post_id;
-                    var answer_container = document.getElementById(answer_id);
-                    var answerBody = findChildrenByClassName(answer_container, 'post-body')[0];
-                    //todo: this is not reliable
-                    var answerBodyNodes = answerBody.childNodes;
-                    var answerElement = answerBodyNodes[answerBodyNodes.length - 1];
-                    if (trim(getTextContent(answerElement)).length > askbot['data']['maxCommentLength']) {
-                        repostAsQuestionComment.parentNode.removeChild(repostAsQuestionComment);
-                        repostAsPrevAnsComment.parentNode.removeChild(repostAsPrevAnsComment);
-                    } else if (parseInt(post_id) === data['oldestAnswerId']) {
-                        repostAsPrevAnsComment.parentNode.removeChild(repostAsPrevAnsComment);
-                    }
-                } else {
-                    repostAsQuestionComment.parentNode.removeChild(repostAsQuestionComment);
-                    repostAsPrevAnsComment.parentNode.removeChild(repostAsPrevAnsComment);
-                }
+                 data['user_votes'] = votes;
+                 var posts = {};
 
-                //if the whole control is empty - remove it
-                if (extraOptsList.getElementsByTagName('li').length === 0) {
-                    extraOpts.parentNode.removeChild(extraOpts);
-                }
-            }
+                 data['user_posts'] = posts;
+             }
 
-            function hidePublishAnswerLink(postId) {
-                if (data['userIsThreadModerator'] === false) {
-                    //hide publish/unpublish answer links
-                    var answerId = 'post-' + postId + '-publish';
-                    var pubBtn = document.getElementById(answerId);
-                    if (pubBtn) {
-                        removeNode(pubBtn);
-                    }
-                }
-            }
+             function render_vote_buttons(post_type, post_id){
+                 var upvote_btn = document.getElementById(
+                     post_type + '-img-upvote-' + post_id
+                 );
+                 var downvote_btn = document.getElementById(
+                     post_type + '-img-downvote-' + post_id
+                 );
+                 if (data['userIsAuthenticated']){
+                     if (post_id in data['user_votes']){
+                         var vote = data['user_votes'][post_id];
+                         if (vote == -1){
+                             var btn = downvote_btn;
+                         } else if (vote == 1){
+                             var btn = upvote_btn;
+                         } else {
+                             return;
+                         }
+                         if (post_type == 'comment'){
+                             btn.className = btn.className + ' upvoted';
+                         } else {
+                             btn.className = btn.className + ' on';
+                         }
+                     }
+                 }
+             }
 
-            function remove_all_controls(post_id) {
-                var deleteBtn = document.getElementById('post-' + post_id + '-delete');
-                var controls = deleteBtn.parentNode;
-                if (controls.className == 'comment-content') {
-                    removeNode(deleteBtn);
-                    var convertLinks = findChildrenByClassName(controls, 'convert-comment');
-                    if (convertLinks.length) {
-                        removeNode(convertLinks[0]);
-                    }
-                    var editLinks = findChildrenByClassName(controls, 'edit');
-                    if (editLinks.length) {
-                        removeNode(editLinks[0]);
-                    }
-                } else {
-                    var buttons = controls.childNodes;
-                    var numButtons = buttons.length;
-                    for (var i = numButtons - 1; i >= 0; i--) {
-                        removeNode(buttons[i]);
-                    }
-                }
-            };
+             function hide_convert_answer_links(post_id){
+                 var id1 = 'post-' + post_id + '-convert';//for repost as Q comment
+                 var repostAsQuestionComment = document.getElementById(id1);
+                 var id2 = 'post-' + post_id + '-repost-as-comment-under-previous-answer';
+                 var repostAsPrevAnsComment = document.getElementById(id2);
+                 var extraOptsList = repostAsQuestionComment.parentNode;
+                 var extraOpts = extraOptsList.parentNode;
 
-            function render_post_controls(post_id, is_wiki){
+                 var isAuthenticated = data['userIsAuthenticated'];
+                 var isMod = data['userIsAdminOrMod'];
+                 if (isAuthenticated && (isMod || isAuthorOfPost(post_id))) {
+                     //still may need to hide because answer may be too long
+                     var answer_id = 'post-id-' + post_id;
+                     var answer_container = document.getElementById(answer_id);
+                     var answerBody = findChildrenByClassName(answer_container, 'post-body')[0];
+                     //todo: this is not reliable
+                     var answerBodyNodes = answerBody.childNodes;
+                     var answerElement = answerBodyNodes[answerBodyNodes.length - 1];
+                     if (trim(getTextContent(answerElement)).length > askbot['data']['maxCommentLength']) {
+                         repostAsQuestionComment.parentNode.removeChild(repostAsQuestionComment);
+                         repostAsPrevAnsComment.parentNode.removeChild(repostAsPrevAnsComment);
+                     } else if (parseInt(post_id) === data['oldestAnswerId']) {
+                         repostAsPrevAnsComment.parentNode.removeChild(repostAsPrevAnsComment);
+                     }
+                 } else {
+                     repostAsQuestionComment.parentNode.removeChild(repostAsQuestionComment);
+                     repostAsPrevAnsComment.parentNode.removeChild(repostAsPrevAnsComment);
+                 }
 
-                //in this case remove all post controls
-                if (askbot['settings']['readOnlyModeEnabled'] === true) {
-                    remove_all_controls(post_id);
-                    return;
-                }
+                 //if the whole control is empty - remove it
+                 if (extraOptsList.getElementsByTagName('li').length === 0) {
+                     extraOpts.parentNode.removeChild(extraOpts);
+                 }
+             }
 
-                var deleteBtn = document.getElementById('post-' + post_id + '-delete');
-                var controls = deleteBtn.parentNode;
-                var mergeBtn = findChildrenByClassName(controls, 'question-merge');
-                if (mergeBtn.length === 1 && data['userIsThreadModerator'] === false) {
-                    removeNode(mergeBtn[0]);
-                }
+             function hidePublishAnswerLink(postId) {
+                 if (data['userIsThreadModerator'] === false) {
+                     //hide publish/unpublish answer links
+                     var answerId = 'post-' + postId + '-publish';
+                     var pubBtn = document.getElementById(answerId);
+                     if (pubBtn) {
+                         removeNode(pubBtn);
+                     }
+                 }
+             }
 
-                if (data['userIsAdminOrMod']) {
-                    return;//all remaining functions stay on
-                }
+             function remove_all_controls(post_id) {
+                 var deleteBtn = document.getElementById('post-' + post_id + '-delete');
+                 var controls = deleteBtn.parentNode;
+                 if (controls.className == 'comment-content') {
+                     removeNode(deleteBtn);
+                     var convertLinks = findChildrenByClassName(controls, 'convert-comment');
+                     if (convertLinks.length) {
+                         removeNode(convertLinks[0]);
+                     }
+                     var editLinks = findChildrenByClassName(controls, 'edit');
+                     if (editLinks.length) {
+                         removeNode(editLinks[0]);
+                     }
+                 } else {
+                     var buttons = controls.childNodes;
+                     var numButtons = buttons.length;
+                     for (var i = numButtons - 1; i >= 0; i--) {
+                         removeNode(buttons[i]);
+                     }
+                 }
+             };
 
-                
+             function render_post_controls(post_id, is_wiki){
 
-                if (data['user_posts'] && post_id in data['user_posts']){
-                    if (postIsQuestion(post_id) && 1) {
-                        if (data['userReputation'] < 1) {
-                            if (!data['userIsAdminOrMod']) {
-                                removeNode(deleteBtn);
-                            }
-                        }
-                    }
-                    //todo: remove edit button from older comments
-                    return;
-                }
+                 //in this case remove all post controls
+                 if (askbot['settings']['readOnlyModeEnabled'] === true) {
+                     remove_all_controls(post_id);
+                     return;
+                 }
 
-                if (//maybe remove "delete" button
-                    (data['userReputation'] <
-                    200) || data['userIsReadOnly']
-                ) {
-                    removeNode(deleteBtn);
-                }
+                 var deleteBtn = document.getElementById('post-' + post_id + '-delete');
+                 var controls = deleteBtn.parentNode;
+                 var mergeBtn = findChildrenByClassName(controls, 'question-merge');
+                 if (mergeBtn.length === 1 && data['userIsThreadModerator'] === false) {
+                     removeNode(mergeBtn[0]);
+                 }
 
-                var canFlagPosts = data['userReputation'] >= 5;
-                var flags = findChildrenByClassName(controls, 'question-flag');
-                if (flags.length > 0 && !canFlagPosts) {
-                    for (var i = 0; i < flags.length; i++) {
-                        removeNode(flags[i]);
-                    }
-                }
-                var closeBtn = findChildrenByClassName(controls, 'question-close');
-                if (
-                    closeBtn.length === 1 &&
-                    (
-                        (data['userReputation'] < 200) ||
-                        data['userIsReadOnly']
-                    )
-                ) {
-                    removeNode(closeBtn[0]);
-                }
-                var enoughRep = (data['userReputation'] >= 200 ||
-                        (is_wiki && data['userReputation'] >= 100));
-                if (//maybe remove "edit" button
-                    !enoughRep || data['userIsReadOnly']//only authors edit comments
-                ){
-                    var editBtns = findChildrenByClassName(controls, 'js-edit');
-                    if (editBtns.length) {
-                        removeNode(editBtns[0]);
-                    }
-                }
-                if (//maybe remove retag button
-                    (data['userReputation'] <
-                    100) ||
-                    data['userIsReadOnly']
-                ){
-                    var retagBtn = document.getElementById('retag');
-                    if (retagBtn) {
-                        retagBtn.parentNode.removeChild(retagBtn);
-                    }
-                }
-            }
+                 if (data['userIsAdminOrMod']) {
+                     return;//all remaining functions stay on
+                 }
 
-            function render_add_answer_button(){
-                var add_answer_btn = document.getElementById('add-answer-btn');
-                if (askbot['data']['userIsAuthenticated']){
-                    if (askbot['data']['userId'] == 27){
-                        add_answer_btn.className += ' answer-own-question';
-                        add_answer_btn.setAttribute(
+
+
+                 if (data['user_posts'] && post_id in data['user_posts']){
+                     if (postIsQuestion(post_id) && 1) {
+                         if (data['userReputation'] < 1) {
+                             if (!data['userIsAdminOrMod']) {
+                                 removeNode(deleteBtn);
+                             }
+                         }
+                     }
+                     //todo: remove edit button from older comments
+                     return;
+                 }
+
+                 if (//maybe remove "delete" button
+                     (data['userReputation'] <
+                     200) || data['userIsReadOnly']
+                 ) {
+                     removeNode(deleteBtn);
+                 }
+
+                 var canFlagPosts = data['userReputation'] >= 5;
+                 var flags = findChildrenByClassName(controls, 'question-flag');
+                 if (flags.length > 0 && !canFlagPosts) {
+                     for (var i = 0; i < flags.length; i++) {
+                         removeNode(flags[i]);
+                     }
+                 }
+                 var closeBtn = findChildrenByClassName(controls, 'question-close');
+                 if (
+                     closeBtn.length === 1 &&
+                     (
+                         (data['userReputation'] < 200) ||
+                         data['userIsReadOnly']
+                     )
+                 ) {
+                     removeNode(closeBtn[0]);
+                 }
+                 var enoughRep = (data['userReputation'] >= 200 ||
+                         (is_wiki && data['userReputation'] >= 100));
+                 if (//maybe remove "edit" button
+                     !enoughRep || data['userIsReadOnly']//only authors edit comments
+                 ){
+                     var editBtns = findChildrenByClassName(controls, 'js-edit');
+                     if (editBtns.length) {
+                         removeNode(editBtns[0]);
+                     }
+                 }
+                 if (//maybe remove retag button
+                     (data['userReputation'] <
+                     100) ||
+                     data['userIsReadOnly']
+                 ){
+                     var retagBtn = document.getElementById('retag');
+                     if (retagBtn) {
+                         retagBtn.parentNode.removeChild(retagBtn);
+                     }
+                 }
+             }
+
+             function render_add_answer_button(){
+                 var add_answer_btn = document.getElementById('add-answer-btn');
+                 if (askbot['data']['userIsAuthenticated']){
+                     if (askbot['data']['userId'] == 27){
+                         add_answer_btn.className += ' answer-own-question';
+                         add_answer_btn.setAttribute(
+                             'value',
+                             'Answer Your Own Question'
+                         )
+                     } else {
+                         add_answer_btn.setAttribute(
                             'value',
-                            'Answer Your Own Question'
-                        )
-                    } else {
-                        add_answer_btn.setAttribute(
-                           'value',
-                           'Post Your Answer'
-                        )
-                    }
-                } else {
-                    add_answer_btn.setAttribute(
-                        'value',
-                        'Login/Signup to Post'
-                    );
-                }
-            }
+                            'Post Your Answer'
+                         )
+                     }
+                 } else {
+                     add_answer_btn.setAttribute(
+                         'value',
+                         'Login/Signup to Post'
+                     );
+                 }
+             }
 
-            function hide_convert_links() {
-                var isAuthenticated = data['userIsAuthenticated'];
-                var isMod = data['userIsAdminOrMod'];
-                if (isAuthenticated && isMod) {
-                    return;
-                }
-                var convertForms = findChildrenByClassName(document, 'convert-comment');
-                for (var i = 0; i < convertForms.length; i++) {
-                    //get comment id
-                    var form = convertForms[i];
-                    var idInput = findChildByAttribute(form, 'name', 'comment_id');
-                    var commentId = idInput.getAttribute('value');
-                    if (! isAuthorOfPost(commentId) ) {
-                        form.setAttribute('style', 'display:none;');
-                    }
-                }
-            }
+             function hide_convert_links() {
+                 var isAuthenticated = data['userIsAuthenticated'];
+                 var isMod = data['userIsAdminOrMod'];
+                 if (isAuthenticated && isMod) {
+                     return;
+                 }
+                 var convertForms = findChildrenByClassName(document, 'convert-comment');
+                 for (var i = 0; i < convertForms.length; i++) {
+                     //get comment id
+                     var form = convertForms[i];
+                     var idInput = findChildByAttribute(form, 'name', 'comment_id');
+                     var commentId = idInput.getAttribute('value');
+                     if (! isAuthorOfPost(commentId) ) {
+                         form.setAttribute('style', 'display:none;');
+                     }
+                 }
+             }
 
-            askbot['functions'] = askbot['functions'] || {};
-            askbot['functions']['renderPostVoteButtons'] = render_vote_buttons;
-            askbot['functions']['renderPostControls'] = render_post_controls;
-            askbot['functions']['renderAddAnswerButton'] = render_add_answer_button;
-            askbot['functions']['hideConvertLinks'] = hide_convert_links;
-            askbot['functions']['hideConvertAnswerLinks'] = hide_convert_answer_links;
-            askbot['functions']['hidePublishAnswerLink'] = hidePublishAnswerLink;
-        })();
-        /*]]>*/
-    </script> </head> <body class="two-col user-messages question-page anon lang-en"> <div class="notify" style="display:none"> <div class="content-wrapper"> <p class="notification">First time here? Check out the FAQ!</p> <a id="closeNotify" onclick="notify.close(true)"></a> </div> </div> <div id="custom-header"> <div class="content-wrapper"><div id="ab-top-nav"> <div class="ab-proj-header"> <ul> <li class="first"><a href="/en/questions/">Home</a></li> <span class="sep">|</span> <li><a href="http://askbot.com">About Askbot</a></li> <span class="sep">|</span> <li><a href="/doc/index.html">Documentation</a></li> <span class="sep">|</span> <li><a href="/en/feedback/">Contact</a></li> <span class="sep">|</span> <li><a href="http://twitter.com/askbot7">Follow @askbot7</a></li> <span class="sep">|</span> <li><a href="http://askbot.com/hire-us">Consulting services</a></li> <span class="sep">|</span> <li><a href="https://github.com/ASKBOT/askbot-devel">Contribute</a></li> </ul> </div></div></div> </div> <!-- template header.html --> <div 
-    id="header"
-    class="without-logo"
-> <div class="content-wrapper"> <div id="userToolsNav"> <a href="/en/account/signin/?next=/en/question/2503/why-is-karma-named-karma/"
-    >Hi there! Please sign in</a> <a class="help" href="/en/help/" title="help">help</a> <span class="lang-nav dropdown-toggle"> <ul class="dropdown-menu"> </ul> <i class="fa fa-globe"></i> <span class="curr-lang">English</span> <span class="toggle">&#9660;</span> </span> </div> <div id="metaNav"> <a 
-  id="navTags"
-  href="/en/tags/"
-  
->tags</a> <a 
-  id="navUsers"
-  href="/en/users/"
-  
->users</a> <a 
-  id="navBadges"
-  href="/en/badges/"
-  
->badges</a> </div> <div class="clean"></div> </div> </div> <!-- end template header.html --> <!-- template secondary_header.html --> <div id="secondaryHeader"> <div class="content-wrapper"> <form
-            
-                action="/en/questions/" id="searchForm"
-            
-            class="scopes-True-True-False"
-            method="get"> <table width="100%"> <tr> <td width="1"><a id="homeButton" href="/en/questions/"><i class="fa fa-home"></i></a></td> <td width="1"><div id="scopeNav"> <a class="scope-selector "
-            href="/en/questions/scope:all/sort:activity-desc/page:1/"
-        >ALL</a> <a class="scope-selector "
-            href="/en/questions/scope:unanswered/sort:answers-asc/page:1/"
-        >UNANSWERED</a> </div></td> <td width="*" class="search-bar"> <div 
-    id="searchBar"
-    class="search-bar"
-><input 
-        class="searchInput" 
-        type="text" 
-        autocomplete="off"
-        value="" 
-        name="query" 
-        placeholder="search or ask your question"
-        id="keywords"
-    /><input type="submit" value="" name="search" class="searchBtn" /><input type="button"
-        value="X"
-        name="reset_query"
-        class="cancelSearchBtn"
-        
-            style="display: none;"
-        
-    /></div> </td> <td width="1"> <a
-        id="askButton"
-        class="button"
-        href="/en/questions/ask/"
-        >
-            Ask Your Question
-        </a> </td> </tr> </table> </form> </div> </div> <div class="content-wrapper"> <div id="ContentLeft"> <div class="banner"> </div> <div class="post js-question" data-post-id="2503"> <div class="vote-buttons"> <div id="question-img-upvote-2503"
-    class="question-img-upvote post-vote upvote"> </div> <div 
-    id="question-vote-number-2503"
-    class="vote-number"
-    title="current number of votes"
->8</div> <div
-    id="question-img-downvote-2503"
-    class="question-img-downvote post-vote downvote"> </div> <script type="text/javascript">
-    askbot['functions']['renderPostVoteButtons']('question', '2503');
-</script> <a class="twitter-share icon"
-        title="Share this content on twitter"
-    ></a> <a class="facebook-share icon"
-        title="Share this content on facebook"
-    ></a> <a class="linkedin-share icon"
-        title="Share this content on linkedin"
-    ></a> <a class="identica-share icon"
-        title="Share this content on identica"
-    ></a> <g:plusone size="small" count="false"></g:plusone> </div> <div id="post-id-2503" class="post-content"> <h1><a href="/en/question/2503/why-is-karma-named-karma/">Why is Karma named Karma?</a></h1> <ul id="question-tags"
-    class="tags post-tags tags"
-> <li> <div class="js-tag "><a
-            class="js-tag-name"
-            rel="tag"
-            
-            href="/en/questions/scope:all/sort:activity-desc/tags:karma/page:1/"
-            
-            data-tag-name="karma"
-        >karma</a></div> </li> <li> <div class="js-tag "><a
-            class="js-tag-name"
-            rel="tag"
-            
-            href="/en/questions/scope:all/sort:activity-desc/tags:reputation/page:1/"
-            
-            data-tag-name="reputation"
-        >reputation</a></div> </li> <li> <div class="js-tag "><a
-            class="js-tag-name"
-            rel="tag"
-            
-            href="/en/questions/scope:all/sort:activity-desc/tags:naming-conventions/page:1/"
-            
-            data-tag-name="naming-conventions"
-        >naming-conventions</a></div> </li> </ul> <div class="clearfix"></div> <div class="post-body"> <div class="post-update-info-container"> <div class='post-update-info'> <p style="line-height:12px;"> <a 
-        
-            href="/en/questions/2503/revisions/"
-        
-        >asked <strong><abbr class="timeago" title="2010-04-23 15:02:11 -0600">
-        2010-04-23 15:02:11 -0600
-    </abbr></strong></a> </p> <div class="user-card"> <a class="js-avatar-box"
-    href="/en/users/27/pekka/"
-><img class="js-avatar gravatar" 
-    width="32" height="32"
-    src="//www.gravatar.com/avatar/628d6cb4c2ad9d7b38a62f76a3bb7651?s=32&amp;d=identicon&amp;r=PG"
-    title="Pekka" 
-    alt="Pekka gravatar image" 
-/></a> <div class="user-info"> <a href="/en/users/27/pekka/">Pekka</a> <br/> <span class="reputation-score">600</span> <span class="badges" title="Pekka has 22 gold badges, 28 silver badges and 37 bronze badges"> <span class='badge1'>&#9679;</span><span class="badgecount">22</span> <span class='badge2'>&#9679;</span><span class="badgecount">28</span> <span class='badge3'>&#9679;</span><span class="badgecount">37</span> </span> </div> </div> </div> </div> <p>Is there a specific reason why Karma is named Karma and not Reputation? Just asking, I assume it won't be a big deal to change in a local installation. </p> </div> <div id="question-controls" class="post-controls"> <a id="post-2503-edit" class="question-edit js-edit" href="/en/questions/2503/edit/">edit</a> <a id="retag" class="question-retag" href="/en/questions/2503/retag/">retag</a> <span
-        id="question-offensive-flag-2503" class="offensive-flag"
-        title="report as offensive (i.e containing spam, advertising, malicious text, etc.)"
-    > <a class="question-flag">flag offensive</a> </span> <a class="question-close" href="/en/questions/2503/close/">close</a> <a class="question-merge">merge</a> <a
-    id="post-2503-delete"
-    class="question-delete"
->delete</a> <script type="text/javascript">
-    askbot['functions']['renderPostControls']('2503');
-</script> </div> <h2 class="comment-title">Comments</h2><div class="clean"></div><div class="comments ordering-forward" 
-        data-parent-post-type="question"
-        data-parent-post-id="2503"
-    ><div class="content"><div id="post-id-7571" class="comment js-comment" data-comment-id="7571"><div class="comment-votes"><div 
-                id="comment-img-upvote-7571" 
-                class="upvote js-score"
-            ></div><script type="text/javascript">
-                askbot['functions']['renderPostVoteButtons']('comment', '7571');
-            </script></div><div class="comment-content"><div id="post-7571-delete" class="comment-delete"><span class="js-delete-icon" title="delete this comment"></span></div><div class="comment-body"><p>I want to +1 this for being a good question, but if I +1 it, <a href="/en/users/1/evgeny/">@Evgeny</a> might interpret that as a vote to change the text to 'reputation'!  I like being distinct from that certain other group of Q&amp;A-based websites... (:</p></div><div class="comment-controls"><a class="js-avatar-box"
-    href="/en/users/625/todofixthis/"
-><img class="js-avatar gravatar" 
-    width="16" height="16"
-    src="/upfiles/avatars/todofixthis/resized/16/gravatar.jpg"
-    title="todofixthis" 
-    alt="todofixthis gravatar image" 
-/></a><a 
-                    class="author"
-                    href="/en/users/625/todofixthis/"
-                >todofixthis</a><span class="age">&nbsp;(<abbr class="timeago" title="2012-05-17 16:30:01 -0600">
-        2012-05-17 16:30:01 -0600
-    </abbr>)</span><a 
-                    id="post-7571-edit"
-                    class="js-edit"
-                >edit</a><form 
-                    action="/en/comment/convert/"
-                    method="POST"
-                    accept-charset="utf-8"
-                    class='convert-comment'
-                ><input type="hidden" name="csrfmiddlewaretoken" value="X2Adf9NHB9JoHSoytumOGK99ss69Phi6"><input type="hidden" value="7571" name="comment_id"><input type="submit" value="convert to answer"></form></div></div></div><script type="text/javascript">
-        askbot['functions']['hideConvertLinks']();
-        askbot['functions']['renderPostControls']('7571');
-    </script></div><div class="controls"><a class="js-open-editor-btn">add a comment</a></div></div> </div> </div> <div class="clean"></div> <div class="tabBar tabBar-answer"> <h2 id="questionCount">
-        1 answer
-    </h2> <div class="tabsA"> <span class="label">
-                    Sort by »
-                    </span> <a id="oldest" href="/en/question/2503/why-is-karma-named-karma/?sort=oldest#sort-top"
-        ><span>oldest</span></a> <a id="latest" href="/en/question/2503/why-is-karma-named-karma/?sort=latest#sort-top"
-        ><span>newest</span></a> <a id="votes" href="/en/question/2503/why-is-karma-named-karma/?sort=votes#sort-top"
-        ><span>most voted</span></a> </div> </div> <div class="clean"></div> <div class="pager"> </div> <div class="clean"></div> <a name="3389"></a> <a class="old_answer_id_anchor" name="49"></a> <div
-    id="post-id-3389"
-    data-post-id="3389"
-    class="post answer   "
-> <div class="vote-buttons"> <div id="answer-img-upvote-3389"
-    class="answer-img-upvote post-vote upvote"> </div> <div 
-    id="answer-vote-number-3389"
-    class="vote-number"
-    title="current number of votes"
->2</div> <div
-    id="answer-img-downvote-3389"
-    class="answer-img-downvote post-vote downvote"> </div> <script type="text/javascript">
-    askbot['functions']['renderPostVoteButtons']('answer', '3389');
-</script> <div
-    id="answer-img-accept-3389"
-    class="answer-img-accept"
-    
-        title="mark this answer as correct (click again to undo)"
-    
-></div> </div> <div class="post-content"> <div class="post-body"> <div class="post-update-info-container"> <div class='post-update-info'> <p style="line-height:12px;"> <a 
-        
-            href="/en/answers/3389/revisions/"
-        
-        >answered <strong><abbr class="timeago" title="2010-04-24 12:53:32 -0600">
-        2010-04-24 12:53:32 -0600
-    </abbr></strong></a> </p> <div class="user-card"> <a class="js-avatar-box"
-    href="/en/users/1/evgeny/"
-><img class="js-avatar gravatar" 
-    width="32" height="32"
-    src="//www.gravatar.com/avatar/db77fe6f52095bd53cbd53a406e2c4b2?s=32&amp;d=identicon&amp;r=PG"
-    title="Evgeny" 
-    alt="Evgeny gravatar image" 
-/></a> <div class="user-info"> <a href="/en/users/1/evgeny/">Evgeny</a> <img class="flag" 
-            
-            src="/m/default/media/images/flags/cl.gif?v=108" 
-            alt="flag of Chile"
-            title="Evgeny is from Chile"
-        /> <br/> <span class="reputation-score">14023</span> <span class="badges" title="Evgeny has 56 gold badges, 98 silver badges and 212 bronze badges"> <span class='badge1'>&#9679;</span><span class="badgecount">56</span> <span class='badge2'>&#9679;</span><span class="badgecount">98</span> <span class='badge3'>&#9679;</span><span class="badgecount">212</span> </span> <a 
-            href="http://askbot.org/"
-            title="Evgeny's website is http://askbot.org/"
-            
-        >
-        http://askbot.org/
-        </a> </div> </div> </div> <div class='post-update-info'> <p style="line-height:12px;"> <a 
-        
-            href="/en/answers/3389/revisions/"
-        
-        >updated <strong><abbr class="timeago" title="2010-04-24 17:11:10 -0600">
-        2010-04-24 17:11:10 -0600
-    </abbr></strong></a> </p> </div> </div> <p>Sure, some people will like reputation, others will like karma. If your post gets many upvotes we'll change "karma" to "reputation". So whoever likes word "reputation" better - please vote for Pekka's question!</p> <p><a href="http://askbot.org/meta/question/42/how-to-customize-messages-in-django-apps">This post</a> explains how to change messages in the main localization file (there is also a small javascript language file <code>forum/skins/default/media/js/com.cnprog.i18n.js</code>). There are nine messages containing word karma in the locale file and one more in <code>.js</code> file.</p> </div> <div class="answer-controls post-controls"> <span id='post-3389-edit' class="action-link"> <a class="question-edit js-edit" href="/en/answers/3389/edit/">edit</a> </span> <span 
-    id="answer-offensive-flag-3389"
-    class="action-link offensive-flag"
-    title="report as offensive (i.e containing spam, advertising, malicious text, etc.)"
-> <a class="question-flag">flag offensive</a> </span> <span id='post-3389-delete' class="action-link delete-post"> <a class="question-delete"
-    >delete</a> </span> <span class="action-link"> <a  class="permant-link"
-        href="/en/question/2503/why-is-karma-named-karma/?answer=3389#post-id-3389"
-        title="permanent link">
-        link
-    </a> </span> <span class="action-link dropdown-toggle">more
-<ul class="dropdown-menu"> <li id='post-3389-convert'> <form 
-            class="answer-convert"
-            action="/en/answer/repost-as-comment-under-question/"
-            method="post"
-        > <input type='hidden' name='csrfmiddlewaretoken' value='X2Adf9NHB9JoHSoytumOGK99ss69Phi6' /> <input type="hidden" name="answer_id" value="3389"/> <input 
-                type="submit"
-                class="link"
-                value="repost as a question comment"
-            /> </form> </li> <li id='post-3389-repost-as-comment-under-previous-answer'> <form class="answer-convert repost-as-comment-under-previous-answer"
-            action="/en/answer/repost-as-comment-under-previous-answer/"
-            method="post"
-        > <input type='hidden' name='csrfmiddlewaretoken' value='X2Adf9NHB9JoHSoytumOGK99ss69Phi6' /> <input type="hidden" name="answer_id" value="3389"/> <input 
-                type="submit"
-                class="link"
-                value="repost as a comment under older answer"
-            /> </form> </li> </ul> </span> <script type="text/javascript">
-    askbot['functions']['hideConvertAnswerLinks']('3389');
-    askbot['functions']['hidePublishAnswerLink']('3389');
-    askbot['functions']['renderPostControls']('3389');
-</script> </div> <h2 class="comment-title">Comments</h2><div class="clean"></div><div class="comments ordering-forward" 
-        data-parent-post-type="answer"
-        data-parent-post-id="3389"
-    ><div class="content"><div id="post-id-5287" class="comment js-comment" data-comment-id="5287"><div class="comment-votes"><div 
-                id="comment-img-upvote-5287" 
-                class="upvote js-score"
-            >1</div><script type="text/javascript">
-                askbot['functions']['renderPostVoteButtons']('comment', '5287');
-            </script></div><div class="comment-content"><div id="post-5287-delete" class="comment-delete"><span class="js-delete-icon" title="delete this comment"></span></div><div class="comment-body">
-                I am fine with Karma really but askbot is using it inconsistently.  The user profile page for instance has a link called reputation instead.  You should use karma there as well and in the url too
-            </div><div class="comment-controls"><a class="js-avatar-box"
-    href="/en/users/309/mether/"
-><img class="js-avatar gravatar" 
-    width="16" height="16"
-    src="//www.gravatar.com/avatar/b641d9eb0b02e7bcdc3dae0300c63154?s=16&amp;d=identicon&amp;r=PG"
-    title="mether" 
-    alt="mether gravatar image" 
-/></a><a 
-                    class="author"
-                    href="/en/users/309/mether/"
-                >mether</a><span class="age">&nbsp;(<abbr class="timeago" title="2011-07-15 22:37:54 -0600">
-        2011-07-15 22:37:54 -0600
-    </abbr>)</span><a 
-                    id="post-5287-edit"
-                    class="js-edit"
-                >edit</a><form 
-                    action="/en/comment/convert/"
-                    method="POST"
-                    accept-charset="utf-8"
-                    class='convert-comment'
-                ><input type="hidden" name="csrfmiddlewaretoken" value="X2Adf9NHB9JoHSoytumOGK99ss69Phi6"><input type="hidden" value="5287" name="comment_id"><input type="submit" value="convert to answer"></form></div></div></div><script type="text/javascript">
-        askbot['functions']['hideConvertLinks']();
-        askbot['functions']['renderPostControls']('5287');
-    </script></div><div class="controls"><a class="js-open-editor-btn">add a comment</a></div></div> </div> <div class="clean"></div> </div> <div class="clean"></div> <div class="banner"> </div> <div class="pager"> </div> <div class="clean"></div> <form
-        id="fmanswer"
-        action="/en/questions/2503/answer/"
-        method="post"
-        ><input type='hidden' name='csrfmiddlewaretoken' value='X2Adf9NHB9JoHSoytumOGK99ss69Phi6' /> <div style="clear:both"></div> <div> <h2>
-                        
-                            Your Answer
-                        
-                    </h2> </div> <p class="message"> <span class="strong big">Please start posting anonymously</span> - your entry will be published after you log in or create a new account.
-            
-                
-            </p> <div class="folded-editor" tabindex="6"> <p class="prompt"><a>Add Answer</a></p> <div class="editor-proper"> <div class="form-group"> <label for="editor"></label> <div class="wmd-container"> <div id="wmd-button-bar" class="wmd-panel"></div> <textarea cols="40" id="editor" name="text" rows="10"> </textarea> </div> <div class="form-item"> <p class="editor-status action-status"><span></span></p> </div> <div class="preview-toggle"> <span 
-                id="pre-collapse" 
-                title="Toggle the real time Markdown editor preview"
-            >
-                [hide preview]
-            </span> </div> <div class="clearfix"></div> <div id="previewer" class="wmd-preview"></div> </div> <div class="answer-options"> <div class="checkbox"
-        title=""> <input id="id_wiki" name="wiki" type="checkbox" /> <label for="id_wiki">community wiki (karma is not awarded &amp; many others can edit wiki post)</label> </div> </div> <div> <script src='https://www.google.com/recaptcha/api.js?hl=en'></script> <script type="text/javascript">
-    var DjangoRecaptchaOptions = {
-  "lang": "en"
-};
-    if (typeof RecaptchaOptions !== 'object') {
-        RecaptchaOptions = DjangoRecaptchaOptions;
-    } else {
-        for (key in DjangoRecaptchaOptions) {
-            RecaptchaOptions[key] = DjangoRecaptchaOptions[key];
-        }
-    }
-</script> <div class="g-recaptcha" data-sitekey="6LdPyLkSAAAAAPq8tm4ffdM2K4VIntU3PunnFspp"></div> <noscript> <div style="width: 302px; height: 352px;"> <div style="width: 302px; height: 352px; position: relative;"> <div style="width: 302px; height: 352px; position: absolute;"> <iframe src="https://www.google.com/recaptcha/api/fallback?k=6LdPyLkSAAAAAPq8tm4ffdM2K4VIntU3PunnFspp"
-                frameborder="0" scrolling="no"
-                style="width: 302px; height:352px; border-style: none;"> </iframe> </div> <div style="width: 250px; height: 80px; position: absolute; border-style: none;
-                  bottom: 21px; left: 25px; margin: 0px; padding: 0px; right: 25px;"> <textarea id="g-recaptcha-response" name="g-recaptcha-response"
-                  class="recaptcha_challenge_field"
-                  style="width: 250px; height: 80px; border: 1px solid #c1c1c1;
-                         margin: 0px; padding: 0px; resize: none;" value=""> </textarea> <input type='hidden' name='recaptcha_response_field' value='manual_challenge' /> </div> </div> </div> </noscript> </div> <div class="clearfix"></div> <input id="add-answer-btn" type="submit" class="submit"/> <script type="text/javascript">
+             askbot['functions'] = askbot['functions'] || {};
+             askbot['functions']['renderPostVoteButtons'] = render_vote_buttons;
+             askbot['functions']['renderPostControls'] = render_post_controls;
+             askbot['functions']['renderAddAnswerButton'] = render_add_answer_button;
+             askbot['functions']['hideConvertLinks'] = hide_convert_links;
+             askbot['functions']['hideConvertAnswerLinks'] = hide_convert_answer_links;
+             askbot['functions']['hidePublishAnswerLink'] = hidePublishAnswerLink;
+         })();
+         /*]]>*/
+      </script>
+   </head>
+   <body class="two-col user-messages question-page anon lang-en">
+      <div class="notify" style="display:none">
+         <div class="content-wrapper">
+            <p class="notification">First time here? Check out the FAQ!</p>
+            <a id="closeNotify" onclick="notify.close(true)"></a>
+         </div>
+      </div>
+      <div id="custom-header">
+         <div class="content-wrapper">
+            <div id="ab-top-nav">
+               <div class="ab-proj-header">
+                  <ul>
+                     <li class="first"><a href="/en/questions/">Home</a></li>
+                     <span class="sep">|</span>
+                     <li><a href="http://askbot.com">About Askbot</a></li>
+                     <span class="sep">|</span>
+                     <li><a href="/doc/index.html">Documentation</a></li>
+                     <span class="sep">|</span>
+                     <li><a href="/en/feedback/">Contact</a></li>
+                     <span class="sep">|</span>
+                     <li><a href="http://twitter.com/askbot7">Follow @askbot7</a></li>
+                     <span class="sep">|</span>
+                     <li><a href="http://askbot.com/hire-us">Consulting services</a></li>
+                     <span class="sep">|</span>
+                     <li><a href="https://github.com/ASKBOT/askbot-devel">Contribute</a></li>
+                  </ul>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- template header.html -->
+      <div
+         id="header"
+         class="without-logo"
+         >
+         <div class="content-wrapper">
+            <div id="userToolsNav">
+               <a href="/en/account/signin/?next=/en/question/2503/why-is-karma-named-karma/"
+                  >Hi there! Please sign in</a> <a class="help" href="/en/help/" title="help">help</a>
+               <span class="lang-nav dropdown-toggle">
+                  <ul class="dropdown-menu"> </ul>
+                  <i class="fa fa-globe"></i> <span class="curr-lang">English</span> <span class="toggle">&#9660;</span>
+               </span>
+            </div>
+            <div id="metaNav"> <a
+               id="navTags"
+               href="/en/tags/"
+               >tags</a> <a
+               id="navUsers"
+               href="/en/users/"
+               >users</a> <a
+               id="navBadges"
+               href="/en/badges/"
+               >badges</a> </div>
+            <div class="clean"></div>
+         </div>
+      </div>
+      <!-- end template header.html --> <!-- template secondary_header.html -->
+      <div id="secondaryHeader">
+         <div class="content-wrapper">
+            <form
+               action="/en/questions/" id="searchForm"
+               class="scopes-True-True-False"
+               method="get">
+               <table width="100%">
+                  <tr>
+                     <td width="1"><a id="homeButton" href="/en/questions/"><i class="fa fa-home"></i></a></td>
+                     <td width="1">
+                        <div id="scopeNav"> <a class="scope-selector "
+                           href="/en/questions/scope:all/sort:activity-desc/page:1/"
+                           >ALL</a> <a class="scope-selector "
+                           href="/en/questions/scope:unanswered/sort:answers-asc/page:1/"
+                           >UNANSWERED</a> </div>
+                     </td>
+                     <td width="*" class="search-bar">
+                        <div
+                           id="searchBar"
+                           class="search-bar"
+                           ><input
+                           class="searchInput"
+                           type="text"
+                           autocomplete="off"
+                           value=""
+                           name="query"
+                           placeholder="search or ask your question"
+                           id="keywords"
+                           /><input type="submit" value="" name="search" class="searchBtn" /><input type="button"
+                           value="X"
+                           name="reset_query"
+                           class="cancelSearchBtn"
+                           style="display: none;"
+                           /></div>
+                     </td>
+                     <td width="1"> <a
+                        id="askButton"
+                        class="button"
+                        href="/en/questions/ask/"
+                        >
+                        Ask Your Question
+                        </a>
+                     </td>
+                  </tr>
+               </table>
+            </form>
+         </div>
+      </div>
+      <div class="content-wrapper">
+         <div id="ContentLeft">
+            <div class="banner"> </div>
+            <div class="post js-question" data-post-id="2503">
+               <div class="vote-buttons">
+                  <div id="question-img-upvote-2503"
+                     class="question-img-upvote post-vote upvote"> </div>
+                  <div
+                     id="question-vote-number-2503"
+                     class="vote-number"
+                     title="current number of votes"
+                     >8</div>
+                  <div
+                     id="question-img-downvote-2503"
+                     class="question-img-downvote post-vote downvote"> </div>
+                  <script type="text/javascript">
+                     askbot['functions']['renderPostVoteButtons']('question', '2503');
+                  </script> <a class="twitter-share icon"
+                     title="Share this content on twitter"
+                     ></a> <a class="facebook-share icon"
+                     title="Share this content on facebook"
+                     ></a> <a class="linkedin-share icon"
+                     title="Share this content on linkedin"
+                     ></a> <a class="identica-share icon"
+                     title="Share this content on identica"
+                     ></a>
+                  <g:plusone size="small" count="false"></g:plusone>
+               </div>
+               <div id="post-id-2503" class="post-content">
+                  <h1><a href="/en/question/2503/why-is-karma-named-karma/">Why is Karma named Karma?</a></h1>
+                  <ul id="question-tags"
+                     class="tags post-tags tags"
+                     >
+                     <li>
+                        <div class="js-tag "><a
+                           class="js-tag-name"
+                           rel="tag"
+                           href="/en/questions/scope:all/sort:activity-desc/tags:karma/page:1/"
+                           data-tag-name="karma"
+                           >karma</a></div>
+                     </li>
+                     <li>
+                        <div class="js-tag "><a
+                           class="js-tag-name"
+                           rel="tag"
+                           href="/en/questions/scope:all/sort:activity-desc/tags:reputation/page:1/"
+                           data-tag-name="reputation"
+                           >reputation</a></div>
+                     </li>
+                     <li>
+                        <div class="js-tag "><a
+                           class="js-tag-name"
+                           rel="tag"
+                           href="/en/questions/scope:all/sort:activity-desc/tags:naming-conventions/page:1/"
+                           data-tag-name="naming-conventions"
+                           >naming-conventions</a></div>
+                     </li>
+                  </ul>
+                  <div class="clearfix"></div>
+                  <div class="post-body">
+                     <div class="post-update-info-container">
+                        <div class='post-update-info'>
+                           <p style="line-height:12px;"> <a
+                              href="/en/questions/2503/revisions/"
+                              >asked <strong><abbr class="timeago" title="2010-04-23 15:02:11 -0600">
+                              2010-04-23 15:02:11 -0600
+                              </abbr></strong></a>
+                           </p>
+                           <div class="user-card">
+                              <a class="js-avatar-box"
+                                 href="/en/users/27/pekka/"
+                                 ><img class="js-avatar gravatar"
+                                 width="32" height="32"
+                                 src="//www.gravatar.com/avatar/628d6cb4c2ad9d7b38a62f76a3bb7651?s=32&amp;d=identicon&amp;r=PG"
+                                 title="Pekka"
+                                 alt="Pekka gravatar image"
+                                 /></a>
+                              <div class="user-info"> <a href="/en/users/27/pekka/">Pekka</a> <br/> <span class="reputation-score">600</span> <span class="badges" title="Pekka has 22 gold badges, 28 silver badges and 37 bronze badges"> <span class='badge1'>&#9679;</span><span class="badgecount">22</span> <span class='badge2'>&#9679;</span><span class="badgecount">28</span> <span class='badge3'>&#9679;</span><span class="badgecount">37</span> </span> </div>
+                           </div>
+                        </div>
+                     </div>
+                     <p>Is there a specific reason why Karma is named Karma and not Reputation? Just asking, I assume it won't be a big deal to change in a local installation. </p>
+                  </div>
+                  <div id="question-controls" class="post-controls">
+                     <a id="post-2503-edit" class="question-edit js-edit" href="/en/questions/2503/edit/">edit</a> <a id="retag" class="question-retag" href="/en/questions/2503/retag/">retag</a> <span
+                        id="question-offensive-flag-2503" class="offensive-flag"
+                        title="report as offensive (i.e containing spam, advertising, malicious text, etc.)"
+                        > <a class="question-flag">flag offensive</a> </span> <a class="question-close" href="/en/questions/2503/close/">close</a> <a class="question-merge">merge</a> <a
+                        id="post-2503-delete"
+                        class="question-delete"
+                        >delete</a> <script type="text/javascript">
+                        askbot['functions']['renderPostControls']('2503');
+                     </script>
+                  </div>
+                  <h2 class="comment-title">Comments</h2>
+                  <div class="clean"></div>
+                  <div class="comments ordering-forward"
+                     data-parent-post-type="question"
+                     data-parent-post-id="2503"
+                     >
+                     <div class="content">
+                        <div id="post-id-7571" class="comment js-comment" data-comment-id="7571">
+                           <div class="comment-votes">
+                              <div
+                                 id="comment-img-upvote-7571"
+                                 class="upvote js-score"
+                                 ></div>
+                              <script type="text/javascript">
+                                 askbot['functions']['renderPostVoteButtons']('comment', '7571');
+                              </script>
+                           </div>
+                           <div class="comment-content">
+                              <div id="post-7571-delete" class="comment-delete"><span class="js-delete-icon" title="delete this comment"></span></div>
+                              <div class="comment-body">
+                                 <p>I want to +1 this for being a good question, but if I +1 it, <a href="/en/users/1/evgeny/">@Evgeny</a> might interpret that as a vote to change the text to 'reputation'!  I like being distinct from that certain other group of Q&amp;A-based websites... (:</p>
+                              </div>
+                              <div class="comment-controls">
+                                 <a class="js-avatar-box"
+                                    href="/en/users/625/todofixthis/"
+                                    ><img class="js-avatar gravatar"
+                                    width="16" height="16"
+                                    src="/upfiles/avatars/todofixthis/resized/16/gravatar.jpg"
+                                    title="todofixthis"
+                                    alt="todofixthis gravatar image"
+                                    /></a><a
+                                    class="author"
+                                    href="/en/users/625/todofixthis/"
+                                    >todofixthis</a><span class="age">&nbsp;(<abbr class="timeago" title="2012-05-17 16:30:01 -0600">
+                                 2012-05-17 16:30:01 -0600
+                                 </abbr>)</span><a
+                                    id="post-7571-edit"
+                                    class="js-edit"
+                                    >edit</a>
+                                 <form
+                                    action="/en/comment/convert/"
+                                    method="POST"
+                                    accept-charset="utf-8"
+                                    class='convert-comment'
+                                    ><input type="hidden" name="csrfmiddlewaretoken" value="X2Adf9NHB9JoHSoytumOGK99ss69Phi6"><input type="hidden" value="7571" name="comment_id"><input type="submit" value="convert to answer"></form>
+                              </div>
+                           </div>
+                        </div>
+                        <script type="text/javascript">
+                           askbot['functions']['hideConvertLinks']();
+                           askbot['functions']['renderPostControls']('7571');
+                        </script>
+                     </div>
+                     <div class="controls"><a class="js-open-editor-btn">add a comment</a></div>
+                  </div>
+               </div>
+            </div>
+            <div class="clean"></div>
+            <div class="tabBar tabBar-answer">
+               <h2 id="questionCount">
+                  1 answer
+               </h2>
+               <div class="tabsA"> <span class="label">
+                  Sort by »
+                  </span> <a id="oldest" href="/en/question/2503/why-is-karma-named-karma/?sort=oldest#sort-top"
+                     ><span>oldest</span></a> <a id="latest" href="/en/question/2503/why-is-karma-named-karma/?sort=latest#sort-top"
+                     ><span>newest</span></a> <a id="votes" href="/en/question/2503/why-is-karma-named-karma/?sort=votes#sort-top"
+                     ><span>most voted</span></a>
+               </div>
+            </div>
+            <div class="clean"></div>
+            <div class="pager"> </div>
+            <div class="clean"></div>
+            <a name="3389"></a> <a class="old_answer_id_anchor" name="49"></a>
+            <div
+               id="post-id-3389"
+               data-post-id="3389"
+               class="post answer   "
+               >
+               <div class="vote-buttons">
+                  <div id="answer-img-upvote-3389"
+                     class="answer-img-upvote post-vote upvote"> </div>
+                  <div
+                     id="answer-vote-number-3389"
+                     class="vote-number"
+                     title="current number of votes"
+                     >2</div>
+                  <div
+                     id="answer-img-downvote-3389"
+                     class="answer-img-downvote post-vote downvote"> </div>
+                  <script type="text/javascript">
+                     askbot['functions']['renderPostVoteButtons']('answer', '3389');
+                  </script>
+                  <div
+                     id="answer-img-accept-3389"
+                     class="answer-img-accept"
+                     title="mark this answer as correct (click again to undo)"
+                     ></div>
+               </div>
+               <div class="post-content">
+                  <div class="post-body">
+                     <div class="post-update-info-container">
+                        <div class='post-update-info'>
+                           <p style="line-height:12px;"> <a
+                              href="/en/answers/3389/revisions/"
+                              >answered <strong><abbr class="timeago" title="2010-04-24 12:53:32 -0600">
+                              2010-04-24 12:53:32 -0600
+                              </abbr></strong></a>
+                           </p>
+                           <div class="user-card">
+                              <a class="js-avatar-box"
+                                 href="/en/users/1/evgeny/"
+                                 ><img class="js-avatar gravatar"
+                                 width="32" height="32"
+                                 src="//www.gravatar.com/avatar/db77fe6f52095bd53cbd53a406e2c4b2?s=32&amp;d=identicon&amp;r=PG"
+                                 title="Evgeny"
+                                 alt="Evgeny gravatar image"
+                                 /></a>
+                              <div class="user-info"> <a href="/en/users/1/evgeny/">Evgeny</a> <img class="flag"
+                                 src="/m/default/media/images/flags/cl.gif?v=108"
+                                 alt="flag of Chile"
+                                 title="Evgeny is from Chile"
+                                 /> <br/> <span class="reputation-score">14023</span> <span class="badges" title="Evgeny has 56 gold badges, 98 silver badges and 212 bronze badges"> <span class='badge1'>&#9679;</span><span class="badgecount">56</span> <span class='badge2'>&#9679;</span><span class="badgecount">98</span> <span class='badge3'>&#9679;</span><span class="badgecount">212</span> </span> <a
+                                 href="http://askbot.org/"
+                                 title="Evgeny's website is http://askbot.org/"
+                                 >
+                                 http://askbot.org/
+                                 </a>
+                              </div>
+                           </div>
+                        </div>
+                        <div class='post-update-info'>
+                           <p style="line-height:12px;"> <a
+                              href="/en/answers/3389/revisions/"
+                              >updated <strong><abbr class="timeago" title="2010-04-24 17:11:10 -0600">
+                              2010-04-24 17:11:10 -0600
+                              </abbr></strong></a>
+                           </p>
+                        </div>
+                     </div>
+                     <p>Sure, some people will like reputation, others will like karma. If your post gets many upvotes we'll change "karma" to "reputation". So whoever likes word "reputation" better - please vote for Pekka's question!</p>
+                     <p><a href="http://askbot.org/meta/question/42/how-to-customize-messages-in-django-apps">This post</a> explains how to change messages in the main localization file (there is also a small javascript language file <code>forum/skins/default/media/js/com.cnprog.i18n.js</code>). There are nine messages containing word karma in the locale file and one more in <code>.js</code> file.</p>
+                  </div>
+                  <div class="answer-controls post-controls">
+                     <span id='post-3389-edit' class="action-link"> <a class="question-edit js-edit" href="/en/answers/3389/edit/">edit</a> </span> <span
+                        id="answer-offensive-flag-3389"
+                        class="action-link offensive-flag"
+                        title="report as offensive (i.e containing spam, advertising, malicious text, etc.)"
+                        > <a class="question-flag">flag offensive</a> </span> <span id='post-3389-delete' class="action-link delete-post"> <a class="question-delete"
+                        >delete</a> </span> <span class="action-link"> <a  class="permant-link"
+                        href="/en/question/2503/why-is-karma-named-karma/?answer=3389#post-id-3389"
+                        title="permanent link">
+                     link
+                     </a> </span>
+                     <span class="action-link dropdown-toggle">
+                        more
+                        <ul class="dropdown-menu">
+                           <li id='post-3389-convert'>
+                              <form
+                                 class="answer-convert"
+                                 action="/en/answer/repost-as-comment-under-question/"
+                                 method="post"
+                                 > <input type='hidden' name='csrfmiddlewaretoken' value='X2Adf9NHB9JoHSoytumOGK99ss69Phi6' /> <input type="hidden" name="answer_id" value="3389"/> <input
+                                 type="submit"
+                                 class="link"
+                                 value="repost as a question comment"
+                                 /> </form>
+                           </li>
+                           <li id='post-3389-repost-as-comment-under-previous-answer'>
+                              <form class="answer-convert repost-as-comment-under-previous-answer"
+                                 action="/en/answer/repost-as-comment-under-previous-answer/"
+                                 method="post"
+                                 > <input type='hidden' name='csrfmiddlewaretoken' value='X2Adf9NHB9JoHSoytumOGK99ss69Phi6' /> <input type="hidden" name="answer_id" value="3389"/> <input
+                                 type="submit"
+                                 class="link"
+                                 value="repost as a comment under older answer"
+                                 /> </form>
+                           </li>
+                        </ul>
+                     </span>
+                     <script type="text/javascript">
+                        askbot['functions']['hideConvertAnswerLinks']('3389');
+                        askbot['functions']['hidePublishAnswerLink']('3389');
+                        askbot['functions']['renderPostControls']('3389');
+                     </script>
+                  </div>
+                  <h2 class="comment-title">Comments</h2>
+                  <div class="clean"></div>
+                  <div class="comments ordering-forward"
+                     data-parent-post-type="answer"
+                     data-parent-post-id="3389"
+                     >
+                     <div class="content">
+                        <div id="post-id-5287" class="comment js-comment" data-comment-id="5287">
+                           <div class="comment-votes">
+                              <div
+                                 id="comment-img-upvote-5287"
+                                 class="upvote js-score"
+                                 >1</div>
+                              <script type="text/javascript">
+                                 askbot['functions']['renderPostVoteButtons']('comment', '5287');
+                              </script>
+                           </div>
+                           <div class="comment-content">
+                              <div id="post-5287-delete" class="comment-delete"><span class="js-delete-icon" title="delete this comment"></span></div>
+                              <div class="comment-body">
+                                 I am fine with Karma really but askbot is using it inconsistently.  The user profile page for instance has a link called reputation instead.  You should use karma there as well and in the url too
+                              </div>
+                              <div class="comment-controls">
+                                 <a class="js-avatar-box"
+                                    href="/en/users/309/mether/"
+                                    ><img class="js-avatar gravatar"
+                                    width="16" height="16"
+                                    src="//www.gravatar.com/avatar/b641d9eb0b02e7bcdc3dae0300c63154?s=16&amp;d=identicon&amp;r=PG"
+                                    title="mether"
+                                    alt="mether gravatar image"
+                                    /></a><a
+                                    class="author"
+                                    href="/en/users/309/mether/"
+                                    >mether</a><span class="age">&nbsp;(<abbr class="timeago" title="2011-07-15 22:37:54 -0600">
+                                 2011-07-15 22:37:54 -0600
+                                 </abbr>)</span><a
+                                    id="post-5287-edit"
+                                    class="js-edit"
+                                    >edit</a>
+                                 <form
+                                    action="/en/comment/convert/"
+                                    method="POST"
+                                    accept-charset="utf-8"
+                                    class='convert-comment'
+                                    ><input type="hidden" name="csrfmiddlewaretoken" value="X2Adf9NHB9JoHSoytumOGK99ss69Phi6"><input type="hidden" value="5287" name="comment_id"><input type="submit" value="convert to answer"></form>
+                              </div>
+                           </div>
+                        </div>
+                        <script type="text/javascript">
+                           askbot['functions']['hideConvertLinks']();
+                           askbot['functions']['renderPostControls']('5287');
+                        </script>
+                     </div>
+                     <div class="controls"><a class="js-open-editor-btn">add a comment</a></div>
+                  </div>
+               </div>
+               <div class="clean"></div>
+            </div>
+            <div class="clean"></div>
+            <div class="banner"> </div>
+            <div class="pager"> </div>
+            <div class="clean"></div>
+            <form
+               id="fmanswer"
+               action="/en/questions/2503/answer/"
+               method="post"
+               >
+               <input type='hidden' name='csrfmiddlewaretoken' value='X2Adf9NHB9JoHSoytumOGK99ss69Phi6' />
+               <div style="clear:both"></div>
+               <div>
+                  <h2>
+                     Your Answer
+                  </h2>
+               </div>
+               <p class="message"> <span class="strong big">Please start posting anonymously</span> - your entry will be published after you log in or create a new account.
+               </p>
+               <div class="folded-editor" tabindex="6">
+                  <p class="prompt"><a>Add Answer</a></p>
+                  <div class="editor-proper">
+                     <div class="form-group">
+                        <label for="editor"></label>
+                        <div class="wmd-container">
+                           <div id="wmd-button-bar" class="wmd-panel"></div>
+                           <textarea cols="40" id="editor" name="text" rows="10"> </textarea>
+                        </div>
+                        <div class="form-item">
+                           <p class="editor-status action-status"><span></span></p>
+                        </div>
+                        <div class="preview-toggle"> <span
+                           id="pre-collapse"
+                           title="Toggle the real time Markdown editor preview"
+                           >
+                           [hide preview]
+                           </span>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div id="previewer" class="wmd-preview"></div>
+                     </div>
+                     <div class="answer-options">
+                        <div class="checkbox"
+                           title=""> <input id="id_wiki" name="wiki" type="checkbox" /> <label for="id_wiki">community wiki (karma is not awarded &amp; many others can edit wiki post)</label> </div>
+                     </div>
+                     <div>
+                        <script src='https://www.google.com/recaptcha/api.js?hl=en'></script> <script type="text/javascript">
+                           var DjangoRecaptchaOptions = {
+                           "lang": "en"
+                           };
+                           if (typeof RecaptchaOptions !== 'object') {
+                               RecaptchaOptions = DjangoRecaptchaOptions;
+                           } else {
+                               for (key in DjangoRecaptchaOptions) {
+                                   RecaptchaOptions[key] = DjangoRecaptchaOptions[key];
+                               }
+                           }
+                        </script>
+                        <div class="g-recaptcha" data-sitekey="6LdPyLkSAAAAAPq8tm4ffdM2K4VIntU3PunnFspp"></div>
+                        <noscript>
+                           <div style="width: 302px; height: 352px;">
+                              <div style="width: 302px; height: 352px; position: relative;">
+                                 <div style="width: 302px; height: 352px; position: absolute;"> <iframe src="https://www.google.com/recaptcha/api/fallback?k=6LdPyLkSAAAAAPq8tm4ffdM2K4VIntU3PunnFspp"
+                                    frameborder="0" scrolling="no"
+                                    style="width: 302px; height:352px; border-style: none;"> </iframe> </div>
+                                 <div style="width: 250px; height: 80px; position: absolute; border-style: none;
+                                    bottom: 21px; left: 25px; margin: 0px; padding: 0px; right: 25px;"> <textarea id="g-recaptcha-response" name="g-recaptcha-response"
+                                    class="recaptcha_challenge_field"
+                                    style="width: 250px; height: 80px; border: 1px solid #c1c1c1;
+                                    margin: 0px; padding: 0px; resize: none;" value=""> </textarea> <input type='hidden' name='recaptcha_response_field' value='manual_challenge' /> </div>
+                              </div>
+                           </div>
+                        </noscript>
+                     </div>
+                     <div class="clearfix"></div>
+                     <input id="add-answer-btn" type="submit" class="submit"/> <script type="text/javascript">
                         askbot['functions']['renderAddAnswerButton']();
-                    </script> </div> </div> </form> </div> <div id="ContentRight"> <div class="box"> <!--div class="box"> <h2>Reliable Askbot Hosting</h2> <style type="text/css">
-.classname {
-        text-align: center;
-	-moz-box-shadow:inset 0px 1px 0px 0px #f29c93;
-	-webkit-box-shadow:inset 0px 1px 0px 0px #f29c93;
-	box-shadow:inset 0px 1px 0px 0px #f29c93;
-	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #fe1a00), color-stop(1, #ce0100) );
-	background:-moz-linear-gradient( center top, #fe1a00 5%, #ce0100 100% );
-	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fe1a00', endColorstr='#ce0100');
-	background-color:#fe1a00;
-	-moz-border-radius:6px;
-	-webkit-border-radius:6px;
-	border-radius:6px;
-	border:1px solid #d83526;
-	display:inline-block;
-	color:#ffffff;
-	font-family:arial;
-	font-size:15px;
-	font-weight:bold;
-	padding:6px 24px;
-	text-decoration:none;
-	text-shadow:1px 1px 0px #b23e35;
-}.classname:hover {
-        color: white;
-        text-decoration: none;
-	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #ce0100), color-stop(1, #fe1a00) );
-	background:-moz-linear-gradient( center top, #ce0100 5%, #fe1a00 100% );
-	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ce0100', endColorstr='#fe1a00');
-	background-color:#ce0100;
-}.classname:active {
-	position:relative;
-	top:1px;
-}
-/* This imageless css button was generated by CSSButtonGenerator.com */
-</style> <p style="font-family: Arial, sans">Create your Q&A site at askbot.com. Managed Askbot hosting at just $15/mo. Dedicated hosting, support contracts, consulting services.</p> <a href="http://askbot.com/accounts/register/" class="classname">create your Q&A site<br/><span style="font-size: 12px">30 days free trial</span></a> </div--> </div> <div class="box vote-buttons"> <h2>Question Tools</h2> <button class="js-follow-question button large"
-        data-is-on="false"
-        data-off-prompt-text="Unfollow"
-        data-on-prompt-text="Follow"
-        data-on-state-text="Following"
-        data-off-state-text="Follow"
-        data-toggle-url="/en/toggle-follow-question/"
-    >
-        
-            Follow
-        
-    </button> <div class="clearfix"></div> <div class="js-question-follower-count">
-        
-        
-            2 followers
-        
-    </div> <div class="notify-sidebar"> <p class="rss"> <a
-                href="http://askbot.org/feeds/question/2503"
-                title="subscribe to the rss feed"
-                >subscribe to rss feed</a> </p> </div> </div> <div class="clearfix"></div> <div class="box statsWidget"> <div class="clearfix"></div> <h2>Stats</h2> <p>
-        Asked: <strong><abbr class="timeago" title="2010-04-23 15:02:11 -0600">
-        2010-04-23 15:02:11 -0600
-    </abbr></strong> </p> <p> 
-        Seen: <strong>1,286 times</strong> </p> <p>
-        Last updated: <strong title="2010-04-24 17:11:10">Apr 24 '10</strong> </p> </div> <div class="box"> <h2>Related questions</h2> <div class="questions-related"> <p> <a href="/en/question/8738/determine-expert-users-not-only-with-generic-karma-for-all/">Determine expert users not only with generic Karma for all</a> </p> <p> <a href="/en/question/2796/can-i-remove-the-word-karma-and-use-instead-the-word-reputation/">Can I remove the word &#34;Karma&#34; and use instead the word &#34;Reputation&#34;?</a> </p> <p> <a href="/en/question/12317/where-can-i-find-the-list-of-karma-thresholds-for-various-actionsprivileges/">Where can I find the list of karma thresholds for various actions/privileges?</a> </p> <p> <a href="/en/question/10657/how-to-increase-users-karma/">How to increase user&#39;s karma?</a> </p> <p> <a href="/en/question/13186/custom-reputation-eg-karma-badges/">Custom reputation e.g. karma, badges</a> </p> <p> <a href="/en/question/2883/extracting-the-karmareputation-system-into-its-own-pluggable-app/">Extracting the karma/reputation system into its own pluggable app</a> </p> <p> <a href="/en/question/10132/faqs-karma-list-generated-automatically/">FAQ&#39;s karma list generated automatically</a> </p> <p> <a href="/en/question/11928/how-to-rename-karma-to-something-else-using-django-rosetta/">How to rename Karma to something else using django-rosetta?</a> </p> <p> <a href="/en/question/7713/include-descriptions-in-karma-change-log/">Include descriptions in karma change log</a> </p> <p> <a href="/en/question/7628/live-settings-about-downvoting-karma-loss/">live settings about downvoting karma loss</a> </p> </div> </div> <div class="box"> </div> </div> </div> <!-- template footer.html --> <div id="ground"> <div class="content-wrapper"> <div class="copyright"> <a href="http://creativecommons.org/licenses/by-sa/3.0/legalcode"> <img
-                            class="license-logo"
-                            src="/m/default/media/images/cc-by-sa.png?v=108"
-                            title="cc-by-sa"
-                            alt="cc-by-sa"
-                        /> </a>
-                
-                Copyright Askbot, 2010-2011. Content on this site is licensed under a <a href="http://creativecommons.org/licenses/by-sa/3.0/legalcode">Creative Commons Attribution Share Alike 3.0</a> license.
+                     </script>
+                  </div>
+               </div>
+            </form>
+         </div>
+         <div id="ContentRight">
+            <div class="box">
+               <!--div class="box"> <h2>Reliable Askbot Hosting</h2> <style type="text/css">
+                  .classname {
+                          text-align: center;
+                  	-moz-box-shadow:inset 0px 1px 0px 0px #f29c93;
+                  	-webkit-box-shadow:inset 0px 1px 0px 0px #f29c93;
+                  	box-shadow:inset 0px 1px 0px 0px #f29c93;
+                  	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #fe1a00), color-stop(1, #ce0100) );
+                  	background:-moz-linear-gradient( center top, #fe1a00 5%, #ce0100 100% );
+                  	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fe1a00', endColorstr='#ce0100');
+                  	background-color:#fe1a00;
+                  	-moz-border-radius:6px;
+                  	-webkit-border-radius:6px;
+                  	border-radius:6px;
+                  	border:1px solid #d83526;
+                  	display:inline-block;
+                  	color:#ffffff;
+                  	font-family:arial;
+                  	font-size:15px;
+                  	font-weight:bold;
+                  	padding:6px 24px;
+                  	text-decoration:none;
+                  	text-shadow:1px 1px 0px #b23e35;
+                  }.classname:hover {
+                          color: white;
+                          text-decoration: none;
+                  	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #ce0100), color-stop(1, #fe1a00) );
+                  	background:-moz-linear-gradient( center top, #ce0100 5%, #fe1a00 100% );
+                  	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ce0100', endColorstr='#fe1a00');
+                  	background-color:#ce0100;
+                  }.classname:active {
+                  	position:relative;
+                  	top:1px;
+                  }
+                  /* This imageless css button was generated by CSSButtonGenerator.com */
+                  </style> <p style="font-family: Arial, sans">Create your Q&A site at askbot.com. Managed Askbot hosting at just $15/mo. Dedicated hosting, support contracts, consulting services.</p> <a href="http://askbot.com/accounts/register/" class="classname">create your Q&A site<br/><span style="font-size: 12px">30 days free trial</span></a> </div-->
+            </div>
+            <div class="box vote-buttons">
+               <h2>Question Tools</h2>
+               <button class="js-follow-question button large"
+                  data-is-on="false"
+                  data-off-prompt-text="Unfollow"
+                  data-on-prompt-text="Follow"
+                  data-on-state-text="Following"
+                  data-off-state-text="Follow"
+                  data-toggle-url="/en/toggle-follow-question/"
+                  >
+               Follow
+               </button>
+               <div class="clearfix"></div>
+               <div class="js-question-follower-count">
+                  2 followers
+               </div>
+               <div class="notify-sidebar">
+                  <p class="rss"> <a
+                     href="http://askbot.org/feeds/question/2503"
+                     title="subscribe to the rss feed"
+                     >subscribe to rss feed</a> </p>
+               </div>
+            </div>
+            <div class="clearfix"></div>
+            <div class="box statsWidget">
+               <div class="clearfix"></div>
+               <h2>Stats</h2>
+               <p>
+                  Asked: <strong><abbr class="timeago" title="2010-04-23 15:02:11 -0600">
+                  2010-04-23 15:02:11 -0600
+                  </abbr></strong>
+               </p>
+               <p>
+                  Seen: <strong>1,286 times</strong>
+               </p>
+               <p>
+                  Last updated: <strong title="2010-04-24 17:11:10">Apr 24 '10</strong>
+               </p>
+            </div>
+            <div class="box">
+               <h2>Related questions</h2>
+               <div class="questions-related">
+                  <p> <a href="/en/question/8738/determine-expert-users-not-only-with-generic-karma-for-all/">Determine expert users not only with generic Karma for all</a> </p>
+                  <p> <a href="/en/question/2796/can-i-remove-the-word-karma-and-use-instead-the-word-reputation/">Can I remove the word &#34;Karma&#34; and use instead the word &#34;Reputation&#34;?</a> </p>
+                  <p> <a href="/en/question/12317/where-can-i-find-the-list-of-karma-thresholds-for-various-actionsprivileges/">Where can I find the list of karma thresholds for various actions/privileges?</a> </p>
+                  <p> <a href="/en/question/10657/how-to-increase-users-karma/">How to increase user&#39;s karma?</a> </p>
+                  <p> <a href="/en/question/13186/custom-reputation-eg-karma-badges/">Custom reputation e.g. karma, badges</a> </p>
+                  <p> <a href="/en/question/2883/extracting-the-karmareputation-system-into-its-own-pluggable-app/">Extracting the karma/reputation system into its own pluggable app</a> </p>
+                  <p> <a href="/en/question/10132/faqs-karma-list-generated-automatically/">FAQ&#39;s karma list generated automatically</a> </p>
+                  <p> <a href="/en/question/11928/how-to-rename-karma-to-something-else-using-django-rosetta/">How to rename Karma to something else using django-rosetta?</a> </p>
+                  <p> <a href="/en/question/7713/include-descriptions-in-karma-change-log/">Include descriptions in karma change log</a> </p>
+                  <p> <a href="/en/question/7628/live-settings-about-downvoting-karma-loss/">live settings about downvoting karma loss</a> </p>
+               </div>
+            </div>
+            <div class="box"> </div>
+         </div>
+      </div>
+      <!-- template footer.html -->
+      <div id="ground">
+         <div class="content-wrapper">
+            <div class="copyright"> <a href="http://creativecommons.org/licenses/by-sa/3.0/legalcode"> <img
+               class="license-logo"
+               src="/m/default/media/images/cc-by-sa.png?v=108"
+               title="cc-by-sa"
+               alt="cc-by-sa"
+               /> </a>
+               Copyright Askbot, 2010-2011. Content on this site is licensed under a <a href="http://creativecommons.org/licenses/by-sa/3.0/legalcode">Creative Commons Attribution Share Alike 3.0</a> license.
+            </div>
+            <div class="footer-links" > <a href="/en/about/">about</a><span class="link-separator"> |</span> <a href="/en/faq/">faq</a><span class="link-separator"> |</span> <a href="/en/help/" title="help">help</a> <span class="link-separator"> |</span> <a href="/en/privacy/">privacy policy</a><span class="link-separator"> |</span> <a href="/en/terms/">terms of service</a> <span class="link-separator"> |</span> <a
+               href="/en/feedback/?next=/en/question/2503/why-is-karma-named-karma/"
+               >
+               give feedback
+               </a>
+            </div>
+            <div class="powered-link"> <a href="http://askbot.com" target="_blank">
+               Powered by Askbot version 0.7.54
+               </a>
+            </div>
+            <div class="clean"></div>
+         </div>
+      </div>
+      <!-- end template footer.html -->
+      <div id="no-javascript">
+         <noscript class="noscript">
+            Please note: Askbot requires javascript to work properly, please enable javascript in your browser, <a href="https://www.google.com/support/bin/answer.py?answer=23852">here is how</a>
+         </noscript>
+         <script type="text/javascript">
+            //IE fix to hide the red margin
+            var noscript = document.getElementsByTagName('noscript')[0];
+            noscript.style.padding = '0px';
+            noscript.style.backgroundColor = 'transparent';
+         </script>
+      </div>
+      <script type="text/javascript">
+         askbot['urls']['mark_read_message'] = '/en/messages/markread/';
+         askbot['urls']['get_tags_by_wildcard'] = '/en/get-tags-by-wildcard/';
+         askbot['urls']['get_tag_list'] = '/en/get-tag-list/';
+         askbot['urls']['follow_user'] = '/followit/follow/user/{{userId}}/';
+         askbot['urls']['unfollow_user'] = '/followit/unfollow/user/{{userId}}/';
+         askbot['urls']['user_signin'] = '/en/account/signin/';
+         askbot['urls']['getEditor'] = '/en/get-editor/';
 
-            </div> <div class="footer-links" > <a href="/en/about/">about</a><span class="link-separator"> |</span> <a href="/en/faq/">faq</a><span class="link-separator"> |</span> <a href="/en/help/" title="help">help</a> <span class="link-separator"> |</span> <a href="/en/privacy/">privacy policy</a><span class="link-separator"> |</span> <a href="/en/terms/">terms of service</a> <span class="link-separator"> |</span> <a 
-                
-                    href="/en/feedback/?next=/en/question/2503/why-is-karma-named-karma/"
-                
-            >
-                give feedback
-            </a> </div> <div class="powered-link"> <a href="http://askbot.com" target="_blank">
-                Powered by Askbot version 0.7.54
-            </a> </div> <div class="clean"></div> </div> </div> <!-- end template footer.html --> <div id="no-javascript"> <noscript class="noscript">
-        Please note: Askbot requires javascript to work properly, please enable javascript in your browser, <a href="https://www.google.com/support/bin/answer.py?answer=23852">here is how</a> </noscript> <script type="text/javascript">
-        //IE fix to hide the red margin
-        var noscript = document.getElementsByTagName('noscript')[0];
-        noscript.style.padding = '0px';
-        noscript.style.backgroundColor = 'transparent';
-    </script> </div> <script type="text/javascript">
-    askbot['urls']['mark_read_message'] = '/en/messages/markread/';
-    askbot['urls']['get_tags_by_wildcard'] = '/en/get-tags-by-wildcard/';
-    askbot['urls']['get_tag_list'] = '/en/get-tag-list/';
-    askbot['urls']['follow_user'] = '/followit/follow/user/{{userId}}/';
-    askbot['urls']['unfollow_user'] = '/followit/unfollow/user/{{userId}}/';
-    askbot['urls']['user_signin'] = '/en/account/signin/';
-    askbot['urls']['getEditor'] = '/en/get-editor/';
-    
-        askbot['urls']['translateUrl'] = '/en/translate-url/';
-    
-    askbot['urls']['apiGetQuestions'] = '/en/api/get_questions/';
-    askbot['urls']['ask'] = '/en/questions/ask/';
-	askbot['urls']['questions'] = '/en/questions/';
-    askbot['settings']['groupsEnabled'] = false;
-    askbot['settings']['static_url'] = '/m/';
-    askbot['settings']['minSearchWordLength'] = 3;
-    askbot['settings']['mathjaxEnabled'] = true;
-    askbot['settings']['sharingSuffixText'] = '';
-    askbot['settings']['errorPlacement'] = 'after-label';
-    askbot['data']['maxCommentLength'] = 1000;
-    askbot['settings']['editorType'] = 'markdown';
-    askbot['settings']['commentsEditorType'] = 'plain-text';
-    askbot['messages']['askYourQuestion'] = 'Ask Your Question';
-    askbot['messages']['questionSingular'] = 'question';
-    askbot['messages']['answerSingular'] = 'answer';
-    askbot['messages']['acceptOwnAnswer'] = 'accept or unaccept your own answer';
-    askbot['messages']['followQuestions'] = 'follow questions';
-    
-        askbot['settings']['allowedUploadFileTypes'] = [
-            "jpg", "jpeg", "gif", "bmp", "png", "tiff"
-        ];
-    
-    askbot['data']['haveFlashNotifications'] = true;
-    askbot['data']['activeTab'] = 'questions';
-    askbot['settings']['csrfCookieName'] = '_csrf';
-    
-        askbot['data']['searchUrl'] = '';
-    
-</script> <script type="text/javascript" src="/m/CACHE/js/36e3f6479f6c.js"></script> <script type="text/javascript">
-    /*<![CDATA[*/
-    $('.mceStatusbar').remove();//a hack to remove the tinyMCE status bar
-    $(document).ready(function(){
-        // focus input on the search bar endcomment
-        var activeTab = askbot['data']['activeTab'];
-        if (inArray(activeTab, ['users', 'questions', 'tags', 'badges'])) {
-            var searchInput = $('#keywords');
-        } else if (activeTab === 'ask') {
-            var searchInput = $('#id_title');
-        } else {
-            var searchInput = undefined;
-            animateHashes();
-        }
+             askbot['urls']['translateUrl'] = '/en/translate-url/';
 
-        if (searchInput) {
-            searchInput.focus();
-            putCursorAtEnd(searchInput);
-        }
+         askbot['urls']['apiGetQuestions'] = '/en/api/get_questions/';
+         askbot['urls']['ask'] = '/en/questions/ask/';
+         askbot['urls']['questions'] = '/en/questions/';
+         askbot['settings']['groupsEnabled'] = false;
+         askbot['settings']['static_url'] = '/m/';
+         askbot['settings']['minSearchWordLength'] = 3;
+         askbot['settings']['mathjaxEnabled'] = true;
+         askbot['settings']['sharingSuffixText'] = '';
+         askbot['settings']['errorPlacement'] = 'after-label';
+         askbot['data']['maxCommentLength'] = 1000;
+         askbot['settings']['editorType'] = 'markdown';
+         askbot['settings']['commentsEditorType'] = 'plain-text';
+         askbot['messages']['askYourQuestion'] = 'Ask Your Question';
+         askbot['messages']['questionSingular'] = 'question';
+         askbot['messages']['answerSingular'] = 'answer';
+         askbot['messages']['acceptOwnAnswer'] = 'accept or unaccept your own answer';
+         askbot['messages']['followQuestions'] = 'follow questions';
 
-        var haveFullTextSearchTab = inArray(activeTab, ['questions', 'badges', 'ask']);
-        var haveUserProfilePage = $('body').hasClass('user-profile-page');
-        if ((haveUserProfilePage || haveFullTextSearchTab) && searchInput && searchInput.length) {
-            var search = new FullTextSearch();
-            askbot['controllers'] = askbot['controllers'] || {};
-            askbot['controllers']['fullTextSearch'] = search;
-            search.setSearchUrl(askbot['data']['searchUrl']);
-            if (activeTab === 'ask') {
-                search.setAskButtonEnabled(false);
-            }
-            search.decorate(searchInput);
-        } else if (activeTab === 'tags') {
-            var search = new TagSearch();
-            search.decorate(searchInput);
-        }
+             askbot['settings']['allowedUploadFileTypes'] = [
+                 "jpg", "jpeg", "gif", "bmp", "png", "tiff"
+             ];
 
-        if (askbot['data']['userIsAdminOrMod']) {
-            $('body').addClass('admin');
-        }
-        if (askbot['settings']['groupsEnabled']) {
-            askbot['urls']['add_group'] = "/en/add-group/";
-            var group_dropdown = new GroupDropdown();
-            $('.groups-dropdown').append(group_dropdown.getElement());
-        }
-        var userRep = $('#userToolsNav .reputation');
-        if (userRep.length) {
-            var showPermsTrigger = new ShowPermsTrigger();
-            showPermsTrigger.decorate(userRep);
-        }
-    });
-    if (askbot['data']['haveFlashNotifications']) {
-        $('#validate_email_alert').click(function(){notify.close(true)})
-        notify.show();
-    }
+         askbot['data']['haveFlashNotifications'] = true;
+         askbot['data']['activeTab'] = 'questions';
+         askbot['settings']['csrfCookieName'] = '_csrf';
 
-    var langNav = $('.lang-nav');
-    if (langNav.length) {
-        var nav = new LangNav();
-        nav.decorate(langNav);
-    }
+             askbot['data']['searchUrl'] = '';
 
-    $('abbr.timeago').timeago();
-    /*]]>*/
-</script> <script type='text/javascript' src="http://askbot.org/mathjax/MathJax.js">
-        MathJax.Hub.Config({
-            extensions: ["tex2jax.js"],
-            jax: ["input/TeX","output/HTML-CSS"],
-            tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]}
-        });
-    </script> <script type="text/javascript">
-    var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-    document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script> <script type="text/javascript">
-    try {
-    var pageTracker = _gat._getTracker('UA-15652450-1');
-    pageTracker._trackPageview();
-    } catch(err) {}
-</script> <div class="js-templates" style="display: none;"><div id="post-id-0" class="comment js-comment" data-comment-id="0"><div class="comment-votes"><div 
-                id="comment-img-upvote-0" 
-                class="upvote js-score"
-            ></div></div><div class="comment-content"><div id="post-0-delete" class="comment-delete"><span class="js-delete-icon" title="delete this comment"></span></div><div class="comment-body"></div><div class="comment-controls"><a class="js-avatar-box"
-    href=""
-><img class="js-avatar gravatar" 
-    width="16" height="16"
-    src=""
-    title="" 
-    alt=" gravatar image" 
-/></a><a 
-                    class="author"
-                    href=""
-                ></a><span class="age">&nbsp;(<abbr class="timeago" title="2016-11-07 08:59:45 -0600">
-        2016-11-07 08:59:45 -0600
-    </abbr>)</span><a 
-                    id="post-0-edit"
-                    class="js-edit"
-                >edit</a><form 
-                    action="/en/comment/convert/"
-                    method="POST"
-                    accept-charset="utf-8"
-                    class='convert-comment'
-                ><input type="hidden" name="csrfmiddlewaretoken" value="None"><input type="hidden" value="0" name="comment_id"><input type="submit" value="convert to answer"></form></div></div></div><div class="js-simple-editor"><textarea></textarea></div><div class="js-tag "><a
+      </script> <script type="text/javascript" src="/m/CACHE/js/36e3f6479f6c.js"></script> <script type="text/javascript">
+         /*<![CDATA[*/
+         $('.mceStatusbar').remove();//a hack to remove the tinyMCE status bar
+         $(document).ready(function(){
+             // focus input on the search bar endcomment
+             var activeTab = askbot['data']['activeTab'];
+             if (inArray(activeTab, ['users', 'questions', 'tags', 'badges'])) {
+                 var searchInput = $('#keywords');
+             } else if (activeTab === 'ask') {
+                 var searchInput = $('#id_title');
+             } else {
+                 var searchInput = undefined;
+                 animateHashes();
+             }
+
+             if (searchInput) {
+                 searchInput.focus();
+                 putCursorAtEnd(searchInput);
+             }
+
+             var haveFullTextSearchTab = inArray(activeTab, ['questions', 'badges', 'ask']);
+             var haveUserProfilePage = $('body').hasClass('user-profile-page');
+             if ((haveUserProfilePage || haveFullTextSearchTab) && searchInput && searchInput.length) {
+                 var search = new FullTextSearch();
+                 askbot['controllers'] = askbot['controllers'] || {};
+                 askbot['controllers']['fullTextSearch'] = search;
+                 search.setSearchUrl(askbot['data']['searchUrl']);
+                 if (activeTab === 'ask') {
+                     search.setAskButtonEnabled(false);
+                 }
+                 search.decorate(searchInput);
+             } else if (activeTab === 'tags') {
+                 var search = new TagSearch();
+                 search.decorate(searchInput);
+             }
+
+             if (askbot['data']['userIsAdminOrMod']) {
+                 $('body').addClass('admin');
+             }
+             if (askbot['settings']['groupsEnabled']) {
+                 askbot['urls']['add_group'] = "/en/add-group/";
+                 var group_dropdown = new GroupDropdown();
+                 $('.groups-dropdown').append(group_dropdown.getElement());
+             }
+             var userRep = $('#userToolsNav .reputation');
+             if (userRep.length) {
+                 var showPermsTrigger = new ShowPermsTrigger();
+                 showPermsTrigger.decorate(userRep);
+             }
+         });
+         if (askbot['data']['haveFlashNotifications']) {
+             $('#validate_email_alert').click(function(){notify.close(true)})
+             notify.show();
+         }
+
+         var langNav = $('.lang-nav');
+         if (langNav.length) {
+             var nav = new LangNav();
+             nav.decorate(langNav);
+         }
+
+         $('abbr.timeago').timeago();
+         /*]]>*/
+      </script> <script type='text/javascript' src="http://askbot.org/mathjax/MathJax.js">
+         MathJax.Hub.Config({
+             extensions: ["tex2jax.js"],
+             jax: ["input/TeX","output/HTML-CSS"],
+             tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]}
+         });
+      </script> <script type="text/javascript">
+         var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+         document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+      </script> <script type="text/javascript">
+         try {
+         var pageTracker = _gat._getTracker('UA-15652450-1');
+         pageTracker._trackPageview();
+         } catch(err) {}
+      </script>
+      <div class="js-templates" style="display: none;">
+         <div id="post-id-0" class="comment js-comment" data-comment-id="0">
+            <div class="comment-votes">
+               <div
+                  id="comment-img-upvote-0"
+                  class="upvote js-score"
+                  ></div>
+            </div>
+            <div class="comment-content">
+               <div id="post-0-delete" class="comment-delete"><span class="js-delete-icon" title="delete this comment"></span></div>
+               <div class="comment-body"></div>
+               <div class="comment-controls">
+                  <a class="js-avatar-box"
+                     href=""
+                     ><img class="js-avatar gravatar"
+                     width="16" height="16"
+                     src=""
+                     title=""
+                     alt=" gravatar image"
+                     /></a><a
+                     class="author"
+                     href=""
+                     ></a><span class="age">&nbsp;(<abbr class="timeago" title="2016-11-07 08:59:45 -0600">
+                  2016-11-07 08:59:45 -0600
+                  </abbr>)</span><a
+                     id="post-0-edit"
+                     class="js-edit"
+                     >edit</a>
+                  <form
+                     action="/en/comment/convert/"
+                     method="POST"
+                     accept-charset="utf-8"
+                     class='convert-comment'
+                     ><input type="hidden" name="csrfmiddlewaretoken" value="None"><input type="hidden" value="0" name="comment_id"><input type="submit" value="convert to answer"></form>
+               </div>
+            </div>
+         </div>
+         <div class="js-simple-editor"><textarea></textarea></div>
+         <div class="js-tag "><a
             class="js-tag-name"
             rel="tag"
-            
             href="/en/questions/scope:all/sort:activity-desc/tags:none/page:1/"
-            
             data-tag-name="none"
-        >none</a></div></div> <script type='text/javascript'>
-        
-        askbot['urls']['postComments'] = '/en/post_comments/';
-        askbot['urls']['editComment'] = '/en/edit_comment/';
-        askbot['urls']['deleteComment'] = '/en/comment/delete/';
-        askbot['urls']['convertComment'] = '/en/comment/convert/';
-        askbot['urls']['getComment'] = '/en/comment/get-text/';
-        askbot['urls']['saveDraftAnswer'] = '/en/save-draft-answer/';
-        askbot['urls']['vote_url'] = '/en/vote'
-        askbot['urls']['user_signin'] = '/en/account/signin/';
-        askbot['urls']['swap_question_with_answer'] = '/en/swap-question-with-answer/';
-        askbot['urls']['upvote_comment'] = '/en/comment/upvote/';
-        askbot['urls']['delete_post'] = '/en/post/delete/';
-        askbot['urls']['get_html_template'] = '/en/get-html-template/';
-        askbot['urls']['getGroupsList'] = '/en/get-groups-list/';
-        askbot['urls']['publishAnswer'] = '/en/answer/publish/';
-        askbot['urls']['apiV1Questions'] = '/en/api/v1/questions/';
-        askbot['urls']['mergeQuestions'] = '/en/merge-questions/';
-        
-        askbot['data']['questionAuthorId'] = 27;
-        askbot['data']['answersSortTab'] = 'votes';
-        askbot['data']['questionId'] = 2503;
-        askbot['data']['threadSlug'] = 'why-is-karma-named-karma';
-        askbot['messages']['addComment'] = 'add a comment';
-        askbot['messages']['userNamePrompt'] = 'User name:';
-        askbot['messages']['userEmailPrompt'] = 'Email address:';
-        askbot['messages']['mergeQuestions'] = 'Merge duplicate questions';
-        askbot['messages']['enterDuplicateQuestionId'] = 'Enter duplicate question ID';
-        
-        askbot['settings']['saveCommentOnEnter'] = false;
-        askbot['settings']['tagSource'] = 'user-input';
-        askbot['settings']['enableSharingGoogle'] = true;
-        askbot['settings']['enableEmailAlerts'] = true;
-    </script> <script type="text/javascript">
-    
-    askbot['settings']['tagsAreRequired'] = false
-    askbot['settings']['maxTagLength'] = 20;
-    askbot['messages']['maxTagLength'] = "each tag must be shorter than 20 characters";
-    askbot['settings']['maxTagsPerPost'] = 5;
-    askbot['messages']['maxTagsPerPost'] = "please use 5 tags or less";
-    askbot['messages']['tagLimits'] = "please use up to 5 tags, less than 20 characters each";
-    askbot['urls']['upload'] = '/en/upload/';
-    askbot['settings']['minTitleLength'] = 10;
-    askbot['settings']['minQuestionBodyLength'] = 10;
-    askbot['settings']['minAnswerBodyLength'] = 10;
-    askbot['settings']['minCommentBodyLength'] = 10;
-    askbot['settings']['tag_editor'] = '{\u0022tag_forbidden_first_chars\u0022: \u0022#\u0022, \u0022max_tag_length\u0022: 20, \u0022tag_regex\u0022: \u0022^\u005C\u005Cw[\u005C\u005Cw+.#\u002D]+$\u0022, \u0022max_tags_per_post\u0022: 5, \u0022messages\u0022: {\u0022wrong_first_char\u0022: \u0022# is not a valid character at the beginning of tags, use only letters and numbers\u0022, \u0022wrong_chars\u0022: \u0022please use letters, numbers and characters \u005C\u0022\u002D+.#\u005C\u0022\u0022, \u0022required\u0022: \u0022tags are required\u0022}, \u0022tags_are_required\u0022: false, \u0022force_lowercase_tags\u0022: true}';
-    askbot['settings']['tinyMCEPlugins'] = JSON.parse('[]');
-</script> <script type='text/javascript'>
-    (function() {
-        askbot['settings']['commentsReversed'] = false;
-        //make images always fit the screen
-        var images = $('.question-page .post-body img');
-        //these breakpoints must match those in css
-        //for explanation see utils.js:LimitedWidthImage
-        var breakpoints = [
-            [980, undefined],
-            [800, 55]
-        ];
-        var maxWidth = 685;
-        images.each(function(idx, item) {
-            var img = new LimitedWidthImage(breakpoints, maxWidth);
-            img.decorate($(item));
-        });
-    })();
-</script> <script type="text/javascript" src="/m/CACHE/js/0d4451ccbe84.js"></script> <script type="text/javascript">
-    // define reputation needs for comments
-    askbot['urls']['getPostHtml'] = '/en/get-post-html/';
-    askbot['urls']['retag'] = "/en/questions/2503/retag/";
+            >none</a></div>
+      </div>
+      <script type='text/javascript'>
+         askbot['urls']['postComments'] = '/en/post_comments/';
+         askbot['urls']['editComment'] = '/en/edit_comment/';
+         askbot['urls']['deleteComment'] = '/en/comment/delete/';
+         askbot['urls']['convertComment'] = '/en/comment/convert/';
+         askbot['urls']['getComment'] = '/en/comment/get-text/';
+         askbot['urls']['saveDraftAnswer'] = '/en/save-draft-answer/';
+         askbot['urls']['vote_url'] = '/en/vote'
+         askbot['urls']['user_signin'] = '/en/account/signin/';
+         askbot['urls']['swap_question_with_answer'] = '/en/swap-question-with-answer/';
+         askbot['urls']['upvote_comment'] = '/en/comment/upvote/';
+         askbot['urls']['delete_post'] = '/en/post/delete/';
+         askbot['urls']['get_html_template'] = '/en/get-html-template/';
+         askbot['urls']['getGroupsList'] = '/en/get-groups-list/';
+         askbot['urls']['publishAnswer'] = '/en/answer/publish/';
+         askbot['urls']['apiV1Questions'] = '/en/api/v1/questions/';
+         askbot['urls']['mergeQuestions'] = '/en/merge-questions/';
 
-    
-    
-    askbot['settings']['commentAvatarSize'] = 16;
+         askbot['data']['questionAuthorId'] = 27;
+         askbot['data']['answersSortTab'] = 'votes';
+         askbot['data']['questionId'] = 2503;
+         askbot['data']['threadSlug'] = 'why-is-karma-named-karma';
+         askbot['messages']['addComment'] = 'add a comment';
+         askbot['messages']['userNamePrompt'] = 'User name:';
+         askbot['messages']['userEmailPrompt'] = 'Email address:';
+         askbot['messages']['mergeQuestions'] = 'Merge duplicate questions';
+         askbot['messages']['enterDuplicateQuestionId'] = 'Enter duplicate question ID';
 
-    $(document).ready(function(){
-        $("#nav_questions").attr('className',"on");
-        $("#" + askbot['data']['answersSortTab']).attr('className',"on");
-
-        Vote.init(
-            askbot['data']['questionId'],
-            askbot['data']['threadSlug'],
-            askbot['data']['questionAuthorId'],
-            askbot['data']['userId']
-        );
-
-        if ((askbot['data']['threadIsClosed'] === false) && askbot['data']['userIsAuthenticated']) {
-            initEditor();
-        }
-
-        lanai.highlightSyntax();
-        $('#btLogin').bind('click', function(){
-            window.location.href='/en/account/signin/';
-        });
-        if (window.location.hash === 'fmanswer'){
-            $('#fmanswer textarea').focus();
-        }
-
-        if (askbot['settings']['enableSharingGoogle']) {
-            $.getScript("//apis.google.com/js/plusone.js");
-        }
-
-        if (askbot['data']['userId'] === askbot['data']['questionAuthorId']) {
-            $("#fmanswer_button").click(function() {
-                $("#fmanswer").show();
-                $("#fmanswer_button").hide();
-            });
-        }
-
-        if (askbot['data']['userIsAuthenticated']) {
-            var draftHandler = new DraftAnswer();
-            draftHandler.setThreadId(38);
-            draftHandler.decorate($('body'));
-        }
-
-        var expanders = $('.expander');
-        expanders.each(function(idx, item) {
-            var expanderElement = $(item);
-            var post = expanderElement.closest('.post,.comment');
-            if (post.length === 1) {
-                var expander = new PostExpander();
-                expander.setPostId(post.data('postId'));
-                expander.decorate(expanderElement);
-            }
-        });
-
-        var followBtn = $('.js-follow-question');
-        if (followBtn.length) {
-            var toggle = new TwoStateToggle();
-            toggle.setPostData({'question_id': 2503 });
-            toggle.decorate(followBtn);
-            followBtn.bind('askbot.two-state-toggle.success', updateQuestionFollowerCount);
-        }
-    });
-
-    $(window).bind('hashchange', animate_hashes);
-
-    function animate_hashes(){
-      var id_value = window.location.hash;
-      if (id_value != ""){
-        var previous_color = $(id_value).css('background-color');
-        $(id_value).css('backgroundColor', '#FFF8C6');
-        $(id_value).animate(
-            {backgroundColor: '#ff7f2a'}, 1000
-        ).animate({backgroundColor: '#FFF8C6'}, 1000, function(){
-            $(id_value).css('backgroundColor', previous_color);
-        });
-      }
-    }
+         askbot['settings']['saveCommentOnEnter'] = false;
+         askbot['settings']['tagSource'] = 'user-input';
+         askbot['settings']['enableSharingGoogle'] = true;
+         askbot['settings']['enableEmailAlerts'] = true;
+      </script> <script type="text/javascript">
+         askbot['settings']['tagsAreRequired'] = false
+         askbot['settings']['maxTagLength'] = 20;
+         askbot['messages']['maxTagLength'] = "each tag must be shorter than 20 characters";
+         askbot['settings']['maxTagsPerPost'] = 5;
+         askbot['messages']['maxTagsPerPost'] = "please use 5 tags or less";
+         askbot['messages']['tagLimits'] = "please use up to 5 tags, less than 20 characters each";
+         askbot['urls']['upload'] = '/en/upload/';
+         askbot['settings']['minTitleLength'] = 10;
+         askbot['settings']['minQuestionBodyLength'] = 10;
+         askbot['settings']['minAnswerBodyLength'] = 10;
+         askbot['settings']['minCommentBodyLength'] = 10;
+         askbot['settings']['tag_editor'] = '{\u0022tag_forbidden_first_chars\u0022: \u0022#\u0022, \u0022max_tag_length\u0022: 20, \u0022tag_regex\u0022: \u0022^\u005C\u005Cw[\u005C\u005Cw+.#\u002D]+$\u0022, \u0022max_tags_per_post\u0022: 5, \u0022messages\u0022: {\u0022wrong_first_char\u0022: \u0022# is not a valid character at the beginning of tags, use only letters and numbers\u0022, \u0022wrong_chars\u0022: \u0022please use letters, numbers and characters \u005C\u0022\u002D+.#\u005C\u0022\u0022, \u0022required\u0022: \u0022tags are required\u0022}, \u0022tags_are_required\u0022: false, \u0022force_lowercase_tags\u0022: true}';
+         askbot['settings']['tinyMCEPlugins'] = JSON.parse('[]');
+      </script> <script type='text/javascript'>
+         (function() {
+             askbot['settings']['commentsReversed'] = false;
+             //make images always fit the screen
+             var images = $('.question-page .post-body img');
+             //these breakpoints must match those in css
+             //for explanation see utils.js:LimitedWidthImage
+             var breakpoints = [
+                 [980, undefined],
+                 [800, 55]
+             ];
+             var maxWidth = 685;
+             images.each(function(idx, item) {
+                 var img = new LimitedWidthImage(breakpoints, maxWidth);
+                 img.decorate($(item));
+             });
+         })();
+      </script> <script type="text/javascript" src="/m/CACHE/js/0d4451ccbe84.js"></script> <script type="text/javascript">
+         // define reputation needs for comments
+         askbot['urls']['getPostHtml'] = '/en/get-post-html/';
+         askbot['urls']['retag'] = "/en/questions/2503/retag/";
 
 
-    function initEditor(){
-        $('#editor').TextAreaResizer();
-        //highlight code synctax when editor has new text
-        $("#editor").typeWatch({highlight: false, wait: 3000,
-                         captureLength: 5, callback: lanai.highlightSyntax});
 
-        var display = true;
-        var txt = "[hide preview]";
-        $('#pre-collapse').text(txt);
-        $('#pre-collapse').bind('click', function(){
-            txt = display ? "[show preview]" : "[hide preview]";
-            display = !display;
-            $('#previewer').toggle();
-            $('#pre-collapse').text(txt);
-        });
-        setupFormValidation(
-            $("#fmanswer"),
-            CPValidator.getAnswerFormRules(),
-            CPValidator.getAnswerFormMessages()
-        );
-    }
-    (function() {
-        var editorBox = $('.folded-editor');
-        if (editorBox.length) {
-            var foldedEditor = new FoldedEditor();
-            foldedEditor.decorate(editorBox);
-        }
-    })();
-</script> <script type="text/javascript">
-            for (url_name in askbot['urls']){
-                askbot['urls'][url_name] = cleanUrl(askbot['urls'][url_name]);
-            }
-        </script> </body> </html>
+         askbot['settings']['commentAvatarSize'] = 16;
+
+         $(document).ready(function(){
+             $("#nav_questions").attr('className',"on");
+             $("#" + askbot['data']['answersSortTab']).attr('className',"on");
+
+             Vote.init(
+                 askbot['data']['questionId'],
+                 askbot['data']['threadSlug'],
+                 askbot['data']['questionAuthorId'],
+                 askbot['data']['userId']
+             );
+
+             if ((askbot['data']['threadIsClosed'] === false) && askbot['data']['userIsAuthenticated']) {
+                 initEditor();
+             }
+
+             lanai.highlightSyntax();
+             $('#btLogin').bind('click', function(){
+                 window.location.href='/en/account/signin/';
+             });
+             if (window.location.hash === 'fmanswer'){
+                 $('#fmanswer textarea').focus();
+             }
+
+             if (askbot['settings']['enableSharingGoogle']) {
+                 $.getScript("//apis.google.com/js/plusone.js");
+             }
+
+             if (askbot['data']['userId'] === askbot['data']['questionAuthorId']) {
+                 $("#fmanswer_button").click(function() {
+                     $("#fmanswer").show();
+                     $("#fmanswer_button").hide();
+                 });
+             }
+
+             if (askbot['data']['userIsAuthenticated']) {
+                 var draftHandler = new DraftAnswer();
+                 draftHandler.setThreadId(38);
+                 draftHandler.decorate($('body'));
+             }
+
+             var expanders = $('.expander');
+             expanders.each(function(idx, item) {
+                 var expanderElement = $(item);
+                 var post = expanderElement.closest('.post,.comment');
+                 if (post.length === 1) {
+                     var expander = new PostExpander();
+                     expander.setPostId(post.data('postId'));
+                     expander.decorate(expanderElement);
+                 }
+             });
+
+             var followBtn = $('.js-follow-question');
+             if (followBtn.length) {
+                 var toggle = new TwoStateToggle();
+                 toggle.setPostData({'question_id': 2503 });
+                 toggle.decorate(followBtn);
+                 followBtn.bind('askbot.two-state-toggle.success', updateQuestionFollowerCount);
+             }
+         });
+
+         $(window).bind('hashchange', animate_hashes);
+
+         function animate_hashes(){
+           var id_value = window.location.hash;
+           if (id_value != ""){
+             var previous_color = $(id_value).css('background-color');
+             $(id_value).css('backgroundColor', '#FFF8C6');
+             $(id_value).animate(
+                 {backgroundColor: '#ff7f2a'}, 1000
+             ).animate({backgroundColor: '#FFF8C6'}, 1000, function(){
+                 $(id_value).css('backgroundColor', previous_color);
+             });
+           }
+         }
+
+
+         function initEditor(){
+             $('#editor').TextAreaResizer();
+             //highlight code synctax when editor has new text
+             $("#editor").typeWatch({highlight: false, wait: 3000,
+                              captureLength: 5, callback: lanai.highlightSyntax});
+
+             var display = true;
+             var txt = "[hide preview]";
+             $('#pre-collapse').text(txt);
+             $('#pre-collapse').bind('click', function(){
+                 txt = display ? "[show preview]" : "[hide preview]";
+                 display = !display;
+                 $('#previewer').toggle();
+                 $('#pre-collapse').text(txt);
+             });
+             setupFormValidation(
+                 $("#fmanswer"),
+                 CPValidator.getAnswerFormRules(),
+                 CPValidator.getAnswerFormMessages()
+             );
+         }
+         (function() {
+             var editorBox = $('.folded-editor');
+             if (editorBox.length) {
+                 var foldedEditor = new FoldedEditor();
+                 foldedEditor.decorate(editorBox);
+             }
+         })();
+      </script> <script type="text/javascript">
+         for (url_name in askbot['urls']){
+             askbot['urls'][url_name] = cleanUrl(askbot['urls'][url_name]);
+         }
+      </script>
+   </body>
+</html>

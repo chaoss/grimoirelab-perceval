@@ -53,7 +53,7 @@ class Askbot(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.1'
+    version = '0.6.2'
 
     CATEGORIES = [CATEGORY_QUESTION]
 
@@ -498,12 +498,8 @@ class AskbotParser:
             if update_info.select("img.flag"):
                 flag = update_info.select("img.flag")[0].attrs["alt"]
                 user_info['country'] = re.sub("flag of ", "", flag)
-            return user_info
-        elif update_info.select("p.tip"):
-            user_info = "This post is a wiki"
-            return user_info
-        else:
-            return
+
+        return user_info
 
     @staticmethod
     def _find_question_container(bs_question):
