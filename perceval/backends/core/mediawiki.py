@@ -71,7 +71,7 @@ class MediaWiki(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.2'
+    version = '0.9.3'
 
     CATEGORIES = [CATEGORY_PAGE]
 
@@ -456,6 +456,7 @@ class MediaWikiClient(HttpClient):
 
             from_date_str = from_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
+        namespaces.sort()
         params = {
             "action": "query",
             "list": "allrevisions",
