@@ -262,7 +262,8 @@ class TestMediaWikiBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = MediaWiki(MEDIAWIKI_SERVER_URL, archive=self.archive)
+        self.backend_write_archive = MediaWiki(MEDIAWIKI_SERVER_URL, archive=self.archive)
+        self.backend_read_archive = MediaWiki(MEDIAWIKI_SERVER_URL, archive=self.archive)
 
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.mediawiki.datetime_utcnow')

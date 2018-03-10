@@ -529,7 +529,8 @@ class TestMeetupBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Meetup('sqlpass-es', 'aaaa', max_items=2, archive=self.archive)
+        self.backend_write_archive = Meetup('sqlpass-es', 'aaaa', max_items=2, archive=self.archive)
+        self.backend_read_archive = Meetup('sqlpass-es', 'aaaa', max_items=2, archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):

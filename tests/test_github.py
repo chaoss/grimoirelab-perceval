@@ -670,7 +670,8 @@ class TestGitHubBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = GitHub("zhquan_example", "repo", "aaa", archive=self.archive)
+        self.backend_write_archive = GitHub("zhquan_example", "repo", "aaa", archive=self.archive)
+        self.backend_read_archive = GitHub("zhquan_example", "repo", "aaa", archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):

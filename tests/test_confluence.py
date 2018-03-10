@@ -420,7 +420,8 @@ class TestConfluenceBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Confluence(CONFLUENCE_URL, archive=self.archive)
+        self.backend_write_archive = Confluence(CONFLUENCE_URL, archive=self.archive)
+        self.backend_read_archive = Confluence(CONFLUENCE_URL, archive=self.archive)
 
     def tearDown(self):
         shutil.rmtree(self.test_path)

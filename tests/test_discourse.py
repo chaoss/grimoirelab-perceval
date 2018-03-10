@@ -422,7 +422,8 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Discourse(DISCOURSE_SERVER_URL, archive=self.archive)
+        self.backend_write_archive = Discourse(DISCOURSE_SERVER_URL, archive=self.archive)
+        self.backend_read_archive = Discourse(DISCOURSE_SERVER_URL, archive=self.archive)
 
     def tearDown(self):
         shutil.rmtree(self.test_path)
