@@ -44,8 +44,8 @@ class TestCaseBackendArchive(unittest.TestCase):
     def _test_fetch_from_archive(self, **kwargs):
         """Test whether the method fetch_from_archive works properly"""
 
-        items = [items for items in self.backend.fetch(**kwargs)]
-        items_archived = [item for item in self.backend.fetch_from_archive()]
+        items = [items for items in self.backend_write_archive.fetch(**kwargs)]
+        items_archived = [item for item in self.backend_write_archive.fetch_from_archive()]
 
         self.assertEqual(len(items), len(items_archived))
 
