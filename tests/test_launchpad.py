@@ -407,8 +407,10 @@ class TestLaunchpadBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Launchpad('mydistribution', package="mypackage",
-                                 items_per_page=2, archive=self.archive)
+        self.backend_write_archive = Launchpad('mydistribution', package="mypackage",
+                                               items_per_page=2, archive=self.archive)
+        self.backend_read_archive = Launchpad('mydistribution', package="mypackage",
+                                              items_per_page=2, archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
@@ -619,7 +621,9 @@ class TestLaunchpadBackendArchive(TestCaseBackendArchive):
                                body=empty_issues,
                                status=200)
 
-        self.backend = Launchpad('mydistribution', items_per_page=2, archive=self.archive)
+        self.backend_write_archive = Launchpad('mydistribution', items_per_page=2, archive=self.archive)
+        self.backend_read_archive = Launchpad('mydistribution', items_per_page=2, archive=self.archive)
+
         self._test_fetch_from_archive()
 
     @httpretty.activate
