@@ -314,7 +314,8 @@ class TestBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = MockedBackend('test', archive=self.archive)
+        self.backend_write_archive = MockedBackend('test', archive=self.archive)
+        self.backend_read_archive = MockedBackend('test', archive=self.archive)
 
     def tearDown(self):
         shutil.rmtree(self.test_path)
