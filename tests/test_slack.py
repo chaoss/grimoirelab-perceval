@@ -437,7 +437,8 @@ class TestSlackBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Slack('C011DUKE8', 'aaaa', max_items=5, archive=self.archive)
+        self.backend_write_archive = Slack('C011DUKE8', 'aaaa', max_items=5, archive=self.archive)
+        self.backend_read_archive = Slack('C011DUKE8', 'aaaa', max_items=5, archive=self.archive)
 
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
