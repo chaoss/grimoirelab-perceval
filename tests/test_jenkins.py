@@ -223,7 +223,8 @@ class TestJenkinsBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Jenkins(JENKINS_SERVER_URL, archive=self.archive)
+        self.backend_write_archive = Jenkins(JENKINS_SERVER_URL, archive=self.archive)
+        self.backend_read_archive = Jenkins(JENKINS_SERVER_URL, archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):

@@ -188,7 +188,8 @@ class TestRSSBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = RSS(RSS_FEED_URL, archive=self.archive)
+        self.backend_write_archive = RSS(RSS_FEED_URL, archive=self.archive)
+        self.backend_read_archive = RSS(RSS_FEED_URL, archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):

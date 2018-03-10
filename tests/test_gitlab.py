@@ -317,7 +317,8 @@ class TestGitHUbBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = GitLab("fdroid", "fdroiddata", api_token="your-token", archive=self.archive)
+        self.backend_write_archive = GitLab("fdroid", "fdroiddata", api_token="your-token", archive=self.archive)
+        self.backend_read_archive = GitLab("fdroid", "fdroiddata", api_token="your-token", archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
@@ -341,7 +342,8 @@ class TestGitHUbBackendArchive(TestCaseBackendArchive):
 
         setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT, GITLAB_ENTERPRISE_ISSUES_URL)
 
-        self.backend = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
+        self.backend_write_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
+        self.backend_read_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
         self._test_fetch_from_archive()
 
     @httpretty.activate

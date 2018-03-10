@@ -264,7 +264,8 @@ class TestBugzillaRESTBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2, archive=self.archive)
+        self.backend_write_archive = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2, archive=self.archive)
+        self.backend_read_archive = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2, archive=self.archive)
 
     def tearDown(self):
         shutil.rmtree(self.test_path)

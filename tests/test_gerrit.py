@@ -23,6 +23,7 @@
 
 import datetime
 import os
+import shutil
 import unittest.mock
 
 import pkg_resources
@@ -233,6 +234,16 @@ class TestGerritBackend(unittest.TestCase):
 
 class TestGerritBackendArchive(TestCaseBackendArchive):
     """Gerrit backend tests using an archive"""
+
+    def setUp(self):
+        super().setUp()
+        self.backend_write_archive = Gerrit(GERRIT_REPO, user=GERRIT_USER, port=29418, max_reviews=2,
+                                            archive=self.archive)
+        self.backend_read_archive = Gerrit(GERRIT_REPO, user=GERRIT_USER, port=29418, max_reviews=2,
+                                           archive=self.archive)
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
 
     @unittest.mock.patch('subprocess.check_output', mock_check_ouput)
     def test_fetch_from_archive(self):

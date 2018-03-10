@@ -383,7 +383,8 @@ class TestJiraBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Jira(JIRA_SERVER_URL, archive=self.archive)
+        self.backend_write_archive = Jira(JIRA_SERVER_URL, archive=self.archive)
+        self.backend_read_archive = Jira(JIRA_SERVER_URL, archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
