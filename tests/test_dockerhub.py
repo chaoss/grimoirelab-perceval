@@ -148,7 +148,8 @@ class TestDockerHubBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = DockerHub('grimoirelab', 'perceval', archive=self.archive)
+        self.backend_write_archive = DockerHub('grimoirelab', 'perceval', archive=self.archive)
+        self.backend_read_archive = DockerHub('grimoirelab', 'perceval', archive=self.archive)
 
     def tearDown(self):
         shutil.rmtree(self.test_path)
