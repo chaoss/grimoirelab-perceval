@@ -250,7 +250,8 @@ class TestNNTPBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = NNTP(NNTP_SERVER, NNTP_GROUP, archive=self.archive)
+        self.backend_write_archive = NNTP(NNTP_SERVER, NNTP_GROUP, archive=self.archive)
+        self.backend_read_archive = NNTP(NNTP_SERVER, NNTP_GROUP, archive=self.archive)
 
     @unittest.mock.patch('nntplib.NNTP')
     def test_fetch_from_archive(self, mock_nntp):
