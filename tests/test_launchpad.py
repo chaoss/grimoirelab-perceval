@@ -802,13 +802,23 @@ class TestLaunchpadClient(unittest.TestCase):
     def test_http_wrong_status_issue_collection(self):
         """Test if an empty collection is returned when the http status is not 200"""
 
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/100/attachments",
+                               body="",
+                               status=404)
+
         client = LaunchpadClient("mydistribution", package="mypackage")
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = next(client.issue_collection("100", "attachments"))
 
     @httpretty.activate
     def test_http_wrong_status_user(self):
-        """Test if an empty user is returned when the http status is not 200"""
+        """Test if an empty user is returned when the http status is not 200, 404, 410"""
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/~user1",
+                               body="",
+                               status=500)
 
         client = LaunchpadClient("mydistribution", package="mypackage")
         with self.assertRaises(requests.exceptions.HTTPError):
