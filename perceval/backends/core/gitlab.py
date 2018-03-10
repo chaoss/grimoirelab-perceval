@@ -73,7 +73,7 @@ class GitLab(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.3.1'
+    version = '0.3.2'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -371,9 +371,23 @@ class GitLabClient(HttpClient, RateLimitHandler):
         return self.rate_limit_reset_ts - (int(time.time()) + 1)
 
     def fetch(self, url, payload=None, headers=None, method=HttpClient.GET, stream=False):
-        self.sleep_for_rate_limit()
+        """Fetch the data from a given URL.
+
+        :param url: link to the resource
+        :param payload: payload of the request
+        :param headers: headers of the request
+        :param method: type of request call (GET or POST)
+        :param stream: defer downloading the response body until the response content is available
+
+        :returns a response object
+        """
+        if not self.from_archive:
+            self.sleep_for_rate_limit()
+
         response = super().fetch(url, payload, headers, method, stream)
-        self.update_rate_limit(response)
+
+        if not self.from_archive:
+            self.update_rate_limit(response)
 
         return response
 
