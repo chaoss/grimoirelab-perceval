@@ -419,7 +419,8 @@ class TestRedmineBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Redmine(REDMINE_URL, api_token='AAAA', max_issues=3, archive=self.archive)
+        self.backend_write_archive = Redmine(REDMINE_URL, api_token='AAAA', max_issues=3, archive=self.archive)
+        self.backend_read_archive = Redmine(REDMINE_URL, api_token='AAAA', max_issues=3, archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
