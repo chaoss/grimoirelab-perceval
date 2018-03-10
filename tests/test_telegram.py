@@ -259,7 +259,8 @@ class TestTelegramBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, archive=self.archive)
+        self.backend_write_archive = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, archive=self.archive)
+        self.backend_read_archive = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
