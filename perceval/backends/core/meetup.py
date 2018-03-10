@@ -68,7 +68,7 @@ class Meetup(Backend):
     :param sleep_time: minimun waiting time to avoid too many request
          exception
     """
-    version = '0.11.1'
+    version = '0.11.2'
 
     CATEGORIES = [CATEGORY_EVENT]
 
@@ -424,9 +424,13 @@ class MeetupClient(HttpClient, RateLimitHandler):
             logger.debug("Meetup client calls resource: %s params: %s",
                          resource, str(params))
 
-            self.sleep_for_rate_limit()
+            if not self.from_archive:
+                self.sleep_for_rate_limit()
+
             r = self.fetch(url, payload=params)
-            self.update_rate_limit(r)
+
+            if not self.from_archive:
+                self.update_rate_limit(r)
 
             yield r.text
 
