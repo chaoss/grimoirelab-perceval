@@ -163,9 +163,12 @@ class TestStackExchangeBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = StackExchange(site="stackoverflow.com", tagged="python",
-                                     api_token="aaa", max_questions=1,
-                                     archive=self.archive)
+        self.backend_write_archive = StackExchange(site="stackoverflow.com", tagged="python",
+                                                   api_token="aaa", max_questions=1,
+                                                   archive=self.archive)
+        self.backend_read_archive = StackExchange(site="stackoverflow.com", tagged="python",
+                                                  api_token="aaa", max_questions=1,
+                                                  archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
