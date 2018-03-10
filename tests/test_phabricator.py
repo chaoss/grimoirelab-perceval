@@ -552,7 +552,8 @@ class TestPhabricatorBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Phabricator(PHABRICATOR_URL, 'AAAA', archive=self.archive)
+        self.backend_write_archive = Phabricator(PHABRICATOR_URL, 'AAAA', archive=self.archive)
+        self.backend_read_archive = Phabricator(PHABRICATOR_URL, 'AAAA', archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
