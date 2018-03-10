@@ -551,7 +551,8 @@ class TestAskbotBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend = Askbot(ASKBOT_URL, archive=self.archive)
+        self.backend_write_archive = Askbot(ASKBOT_URL, archive=self.archive)
+        self.backend_read_archive = Askbot(ASKBOT_URL, archive=self.archive)
 
     def tearDown(self):
         shutil.rmtree(self.test_path)
