@@ -78,7 +78,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.15.1'
+    version = '0.15.2'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -126,9 +126,14 @@ class GitHub(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the issues"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the issues
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         from_date = kwargs['from_date']
 
         issues_groups = self.client.issues(from_date=from_date)
