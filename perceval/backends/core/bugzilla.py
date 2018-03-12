@@ -60,7 +60,7 @@ class Bugzilla(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.1'
+    version = '0.10.2'
 
     CATEGORIES = [CATEGORY_BUG]
 
@@ -96,8 +96,14 @@ class Bugzilla(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the bugs"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the bugs
+
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
 
         from_date = kwargs['from_date']
 
