@@ -73,7 +73,7 @@ class GitLab(Backend):
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
     """
-    version = '0.3.2'
+    version = '0.3.3'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -115,9 +115,14 @@ class GitLab(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the issues"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the issues
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         from_date = kwargs['from_date']
 
         issues_groups = self.client.issues(from_date=from_date)
