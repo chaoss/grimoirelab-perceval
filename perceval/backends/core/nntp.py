@@ -55,7 +55,7 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.5.1'
+    version = '0.5.2'
 
     CATEGORIES = [CATEGORY_ARTICLE]
 
@@ -86,9 +86,14 @@ class NNTP(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch articles"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the articles
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         offset = kwargs['offset']
 
         logger.info("Fetching articles of '%s' group on '%s' offset %s",
