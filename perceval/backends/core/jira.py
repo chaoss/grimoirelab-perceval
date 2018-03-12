@@ -97,7 +97,7 @@ class Jira(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.11.2'
+    version = '0.11.3'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -139,9 +139,14 @@ class Jira(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch issues"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the issues
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         from_date = kwargs['from_date']
 
         logger.info("Looking for issues at site '%s', in project '%s' and updated from '%s'",
