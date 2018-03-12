@@ -64,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.10.1'
+    version = '0.10.2'
 
     CATEGORIES = [CATEGORY_COMMIT]
 
@@ -118,9 +118,14 @@ class Git(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch commits"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the commits
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         from_date = kwargs['from_date']
         branches = kwargs['branches']
         latest_items = kwargs['latest_items']

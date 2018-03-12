@@ -53,7 +53,7 @@ class Askbot(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.2'
+    version = '0.6.3'
 
     CATEGORIES = [CATEGORY_QUESTION]
 
@@ -84,8 +84,14 @@ class Askbot(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the questions"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the questions
+
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
 
         from_date = datetime_to_utc(kwargs['from_date']).timestamp()
 

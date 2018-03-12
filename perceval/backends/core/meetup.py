@@ -68,7 +68,7 @@ class Meetup(Backend):
     :param sleep_time: minimun waiting time to avoid too many request
          exception
     """
-    version = '0.11.2'
+    version = '0.11.3'
 
     CATEGORIES = [CATEGORY_EVENT]
 
@@ -111,9 +111,14 @@ class Meetup(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the events"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the events
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         from_date = kwargs['from_date']
         to_date = kwargs['to_date']
 

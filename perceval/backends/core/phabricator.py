@@ -50,7 +50,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.2'
+    version = '0.9.3'
 
     CATEGORIES = [CATEGORY_TASK]
 
@@ -85,9 +85,14 @@ class Phabricator(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the tasks"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the tasks
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         from_date = kwargs['from_date']
 
         logger.info("Fetching tasks of '%s' from %s", self.url, str(from_date))

@@ -59,7 +59,7 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.1'
+    version = '0.10.2'
 
     CATEGORIES = [CATEGORY_REVIEW]
 
@@ -99,9 +99,14 @@ class Gerrit(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the reviews from the repository"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the reviews
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         from_date = kwargs['from_date']
 
         if self.client.version[0] == 2 and self.client.version[1] == 8:

@@ -61,7 +61,7 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.1'
+    version = '0.8.2'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -93,9 +93,14 @@ class Supybot(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the messages"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the messages
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         from_date = kwargs['from_date']
 
         logger.info("Fetching messages of '%s' from %s",

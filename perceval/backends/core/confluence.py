@@ -52,7 +52,7 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.1'
+    version = '0.9.2'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 
@@ -91,8 +91,14 @@ class Confluence(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the contents"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the contents
+
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
 
         from_date = kwargs['from_date']
 

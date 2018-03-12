@@ -58,7 +58,7 @@ class DockerHub(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.4.1'
+    version = '0.4.2'
 
     CATEGORIES = [CATEGORY_DOCKERHUB_DATA]
 
@@ -89,9 +89,14 @@ class DockerHub(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch items from a Docker Hub repository"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the Dockher Hub items
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         logger.info("Fetching data from '%s' repository of '%s' owner",
                     self.repository, self.owner)
 
