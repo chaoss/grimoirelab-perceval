@@ -52,7 +52,7 @@ class Jenkins(Backend):
     :param sleep_time: minimun waiting time due to a timeout connection exception
     :param archive: collect builds already retrieved from an archive
     """
-    version = '0.10.1'
+    version = '0.10.2'
 
     CATEGORIES = [CATEGORY_BUILD]
 
@@ -83,9 +83,14 @@ class Jenkins(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the contents"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the contents
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         logger.info("Looking for projects at url '%s'", self.url)
 
         nbuilds = 0  # number of builds processed
