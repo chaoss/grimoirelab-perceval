@@ -61,7 +61,7 @@ class Telegram(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.1'
+    version = '0.9.2'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -101,9 +101,14 @@ class Telegram(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch the messages"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the messages
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         offset = kwargs['offset']
         chats = kwargs['chats']
 
