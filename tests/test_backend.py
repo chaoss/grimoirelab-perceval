@@ -63,7 +63,7 @@ class MockedBackend(Backend):
         super().__init__(origin, tag=tag, archive=archive)
         self._fetch_from_archive = False
 
-    def fetch_items(self, **kwargs):
+    def fetch_items(self, category, **kwargs):
         for x in range(MockedBackend.ITEMS):
             if self._fetch_from_archive:
                 item = self.archive.retrieve(str(x), None, None)
@@ -97,8 +97,8 @@ class MockedBackend(Backend):
 class CommandBackend(MockedBackend):
     """Backend used for testing in BackendCommand tests"""
 
-    def fetch_items(self, **kwargs):
-        for item in super().fetch_items(**kwargs):
+    def fetch_items(self, category, **kwargs):
+        for item in super().fetch_items(category, **kwargs):
             if self._fetch_from_archive:
                 item['archive'] = True
             yield item
@@ -107,8 +107,8 @@ class CommandBackend(MockedBackend):
 class ErrorCommandBackend(CommandBackend):
     """Backend which raises an exception while fetching items"""
 
-    def fetch_items(self, **kwargs):
-        for item in super().fetch_items(**kwargs):
+    def fetch_items(self, category, **kwargs):
+        for item in super().fetch_items(category, **kwargs):
             yield item
             raise BackendError(cause="Unhandled exception")
 
@@ -306,7 +306,7 @@ class TestBackend(unittest.TestCase):
         b = Backend('test')
 
         with self.assertRaises(NotImplementedError):
-            b.fetch_items()
+            b.fetch_items(MockedBackend.CATEGORY)
 
 
 class TestBackendArchive(TestCaseBackendArchive):

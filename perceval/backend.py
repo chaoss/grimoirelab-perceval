@@ -72,7 +72,7 @@ class Backend:
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.6.0'
+    version = '0.6.1'
 
     CATEGORIES = []
 
@@ -102,7 +102,7 @@ class Backend:
     def categories(self):
         return self.CATEGORIES
 
-    def fetch_items(self, **kwargs):
+    def fetch_items(self, category, **kwargs):
         raise NotImplementedError
 
     def fetch(self, category, **kwargs):
@@ -126,7 +126,7 @@ class Backend:
 
         self.client = self._init_client()
 
-        for item in self.fetch_items(**kwargs):
+        for item in self.fetch_items(category, **kwargs):
             yield self.metadata(item)
 
     def fetch_from_archive(self):
@@ -143,7 +143,7 @@ class Backend:
 
         self.client = self._init_client(from_archive=True)
 
-        for item in self.fetch_items(**self.archive.backend_params):
+        for item in self.fetch_items(self.archive.category, **self.archive.backend_params):
             yield self.metadata(item)
 
     def metadata(self, item):
