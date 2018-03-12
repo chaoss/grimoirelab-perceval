@@ -47,7 +47,7 @@ class RSS(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.5.1'
+    version = '0.5.2'
 
     CATEGORIES = [CATEGORY_ENTRY]
 
@@ -72,9 +72,14 @@ class RSS(Backend):
 
         return items
 
-    def fetch_items(self, **kwargs):
-        """Fetch entries"""
+    def fetch_items(self, category, **kwargs):
+        """Fetch the entries
 
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
         logger.info("Looking for rss entries at feed '%s'", self.url)
 
         nentries = 0  # number of entries
