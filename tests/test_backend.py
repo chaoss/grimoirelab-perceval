@@ -524,6 +524,23 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = parser.parse(*args)
 
+    def test_remove_empty_category(self):
+        """Test whether category argument is removed when no value is given"""
+
+        args = []
+        parser = BackendCommandArgumentParser(archive=True)
+        parsed_args = parser.parse(*args)
+
+        with self.assertRaises(AttributeError):
+            _ = parsed_args.category
+
+        # An empty string is parsed
+        args = ['--category', '']
+        parser = BackendCommandArgumentParser(archive=True)
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.category, '')
+
 
 def convert_cmd_output_to_json(filepath):
     """Transforms the output of a BackendCommand into json objects"""
