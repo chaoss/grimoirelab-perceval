@@ -33,6 +33,8 @@ import requests
 
 pkg_resources.declare_namespace('perceval.backends')
 
+from grimoirelab.toolkit.datetime import datetime_utcnow
+
 from perceval.archive import Archive
 from perceval.client import HttpClient, RateLimitHandler
 
@@ -69,7 +71,7 @@ class MockedClient(HttpClient, RateLimitHandler):
 
     def calculate_time_to_reset(self):
         if self.define_calculate_time_to_reset:
-            return self.rate_limit_reset_ts
+            return -1
         else:
             return super().calculate_time_to_reset()
 
@@ -400,6 +402,21 @@ class TestRateLimitHandler(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             client.update_rate_limit(response)
+
+    def test_sleep_for_rate_limit(self):
+        """Test whether the time to reset is zero if the sleep time is negative"""
+
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1,
+                              min_rate_to_sleep=100,
+                              sleep_for_rate=True)
+        client.rate_limit = 50
+        self.rate_limit_reset_ts = -1
+
+        before = datetime_utcnow().replace(microsecond=0).timestamp()
+        client.sleep_for_rate_limit()
+        after = datetime_utcnow().replace(microsecond=0).timestamp()
+
+        self.assertEqual(before, after)
 
 
 if __name__ == "__main__":
