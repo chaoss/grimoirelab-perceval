@@ -27,6 +27,7 @@ import os
 import pkg_resources
 import time
 import unittest
+import unittest.mock
 
 import requests
 
@@ -156,6 +157,16 @@ def setup_http_server(rate_limit=-1, reset_rate_limit=-1):
                                ])
 
     return http_requests
+
+
+class MockedMeetupClient(MeetupClient):
+    """Mocked meetup client for testing"""
+
+    def __init__(self, token, max_items, min_rate_to_sleep, sleep_for_rate):
+        super().__init__(token, max_items=max_items,
+                         min_rate_to_sleep=min_rate_to_sleep,
+                         sleep_for_rate=sleep_for_rate)
+        self.rate_limit_reset_ts = -1
 
 
 class TestMeetupBackend(unittest.TestCase):
@@ -775,6 +786,16 @@ class TestMeetupClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/sqlpass-es/events/1/rsvps')
         self.assertDictEqual(req.querystring, expected)
+
+    def test_calculate_time_to_reset(self):
+        """Test whether the time to reset is zero if the sleep time is negative"""
+
+        client = MockedMeetupClient('aaaa', max_items=2,
+                                    min_rate_to_sleep=2,
+                                    sleep_for_rate=True)
+
+        time_to_reset = client.calculate_time_to_reset()
+        self.assertEqual(time_to_reset, 0)
 
     @httpretty.activate
     def test_sleep_for_rate(self):

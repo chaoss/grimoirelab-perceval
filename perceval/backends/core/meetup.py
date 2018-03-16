@@ -68,7 +68,7 @@ class Meetup(Backend):
     :param sleep_time: minimun waiting time to avoid too many request
          exception
     """
-    version = '0.11.3'
+    version = '0.11.4'
 
     CATEGORIES = [CATEGORY_EVENT]
 
@@ -341,6 +341,10 @@ class MeetupClient(HttpClient, RateLimitHandler):
 
     def calculate_time_to_reset(self):
         """Number of seconds to wait. They are contained in the rate limit reset header"""
+
+        if self.rate_limit_reset_ts < 0:
+            self.rate_limit_reset_ts = 0
+
         return self.rate_limit_reset_ts
 
     def events(self, group, from_date=DEFAULT_DATETIME):
