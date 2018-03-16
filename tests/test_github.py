@@ -32,6 +32,7 @@ import requests
 
 pkg_resources.declare_namespace('perceval.backends')
 
+from grimoirelab.toolkit.datetime import datetime_utcnow
 from perceval.backend import BackendCommandArgumentParser
 from perceval.client import RateLimitHandler
 from perceval.errors import RateLimitError
@@ -2084,6 +2085,25 @@ class TestGitHubClient(unittest.TestCase):
 
         self.assertDictEqual(httpretty.last_request().querystring, expected)
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
+
+    @httpretty.activate
+    def test_calculate_time_to_reset(self):
+        """Test whether the time to reset is zero if the sleep time is negative"""
+
+        rate_limit = read_file('data/github/rate_limit')
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': int(datetime_utcnow().replace(microsecond=0).timestamp())
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=True)
+        time_to_reset = client.calculate_time_to_reset()
+
+        self.assertEqual(time_to_reset, 0)
 
     @httpretty.activate
     def test_sleep_for_rate(self):
