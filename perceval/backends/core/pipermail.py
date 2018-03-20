@@ -63,7 +63,7 @@ class Pipermail(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.7.2'
+    version = '0.7.3'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -290,12 +290,17 @@ class PipermailList(MailingList):
         return dt
 
     def _download_archive(self, url, filepath):
-        r = requests.get(url, stream=True)
-        r.raise_for_status()
-
         try:
+            r = requests.get(url, stream=True)
+            r.raise_for_status()
             with open(filepath, 'wb') as fd:
                 fd.write(r.raw.read())
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 403:
+                logger.warning("Ignoring %s archive due to: %s", url, str(e))
+                return False
+            else:
+                raise e
         except OSError as e:
             logger.warning("Ignoring %s archive due to: %s", url, str(e))
             return False

@@ -107,6 +107,34 @@ class TestPipermailList(unittest.TestCase):
         self.assertEqual(mboxes[2].filepath, os.path.join(self.tmp_path, '2016-April.txt'))
 
     @httpretty.activate
+    def test_fetch_http_403_error(self):
+        """Test whether 403 HTTP errors are properly handled"""
+
+        pipermail_index = read_file('data/pipermail/pipermail_index.html')
+        mbox_nov = read_file('data/pipermail/pipermail_2015_november.mbox')
+        mbox_march = read_file('data/pipermail/pipermail_2016_march.mbox')
+        mbox_april = read_file('data/pipermail/pipermail_2016_april.mbox')
+
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL,
+                               body=pipermail_index)
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL + '2015-November.txt.gz',
+                               body=mbox_nov)
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL + '2016-March.txt',
+                               body=mbox_march)
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL + '2016-April.txt',
+                               body=mbox_april,
+                               status=403)
+
+        pmls = PipermailList('http://example.com/', self.tmp_path)
+        links = pmls.fetch()
+
+        self.assertEqual(len(links), 2)
+
+    @httpretty.activate
     def test_fetch_empty(self):
         """Test whether it does not store anything when the list of archives is empty"""
 
