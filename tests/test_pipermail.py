@@ -24,6 +24,7 @@ import datetime
 import httpretty
 import os
 import pkg_resources
+import requests
 import shutil
 import tempfile
 import unittest
@@ -133,6 +134,43 @@ class TestPipermailList(unittest.TestCase):
         links = pmls.fetch()
 
         self.assertEqual(len(links), 2)
+
+    @httpretty.activate
+    def test_fetch_http_errors(self):
+        """Test whether an exception is thrown when the HTTP error is not 403"""
+
+        pipermail_index = read_file('data/pipermail/pipermail_index.html')
+        mbox_april = read_file('data/pipermail/pipermail_2016_april.mbox')
+
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL,
+                               body=pipermail_index)
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL + '2016-April.txt',
+                               body=mbox_april,
+                               status=404)
+
+        pmls = PipermailList('http://example.com/', self.tmp_path)
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            links = pmls.fetch()
+
+    @httpretty.activate
+    def test_fetch_no_existing_dir(self):
+        """Test whether the dir_path where to store the archives is created if it doesn't exist"""
+
+        pipermail_index = read_file('data/pipermail/pipermail_index_empty.html')
+        httpretty.register_uri(httpretty.GET,
+                               PIPERMAIL_URL,
+                               body=pipermail_index)
+
+        # delete the dir path
+        os.removedirs(self.tmp_path)
+
+        self.assertFalse(os.path.exists(self.tmp_path))
+        pmls = PipermailList('http://example.com/', self.tmp_path)
+        _ = pmls.fetch()
+        self.assertTrue(os.path.exists(self.tmp_path))
 
     @httpretty.activate
     def test_fetch_empty(self):
