@@ -44,6 +44,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_DATETIME = datetime.datetime(1970, 1, 1, 0, 0, 0,
                                      tzinfo=dateutil.tz.tzutc())
+DEFAULT_LAST_DATETIME = datetime.datetime(2100, 1, 1, 0, 0, 0,
+                                          tzinfo=dateutil.tz.tzutc())
 
 
 def check_compressed_file_type(filepath):
