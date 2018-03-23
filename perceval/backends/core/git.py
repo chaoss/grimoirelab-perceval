@@ -37,7 +37,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser)
 from ...errors import RepositoryError, ParseError
-from ...utils import DEFAULT_DATETIME
+from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 
 CATEGORY_COMMIT = 'commit'
 
@@ -75,8 +75,8 @@ class Git(Backend):
         self.uri = uri
         self.gitpath = gitpath
 
-    def fetch(self, category=CATEGORY_COMMIT, from_date=DEFAULT_DATETIME, branches=None,
-              latest_items=False):
+    def fetch(self, category=CATEGORY_COMMIT, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
+              branches=None, latest_items=False):
         """Fetch commits.
 
         The method retrieves from a Git repository or a log file
@@ -104,6 +104,7 @@ class Git(Backend):
         :param category: the category of items to fetch
         :param from_date: obtain commits newer than a specific date
             (inclusive)
+        :param to_date: obtain commits older than a specific date
         :param branches: names of branches to fetch from (default: None)
         :param latest_items: sync with the repository to fetch only the
             newest commits
@@ -112,8 +113,15 @@ class Git(Backend):
         """
         if not from_date:
             from_date = DEFAULT_DATETIME
+        if not to_date:
+            to_date = DEFAULT_LAST_DATETIME
 
-        kwargs = {'from_date': from_date, 'branches': branches, 'latest_items': latest_items}
+        kwargs = {
+            'from_date': from_date,
+            'to_date': to_date,
+            'branches': branches,
+            'latest_items': latest_items
+        }
         items = super().fetch(category, **kwargs)
 
         return items
@@ -127,6 +135,7 @@ class Git(Backend):
         :returns: a generator of items
         """
         from_date = kwargs['from_date']
+        to_date = kwargs['to_date']
         branches = kwargs['branches']
         latest_items = kwargs['latest_items']
 
@@ -136,7 +145,7 @@ class Git(Backend):
             if os.path.isfile(self.gitpath):
                 commits = self.__fetch_from_log()
             else:
-                commits = self.__fetch_from_repo(from_date, branches,
+                commits = self.__fetch_from_repo(from_date, to_date, branches,
                                                  latest_items)
 
             for commit in commits:
@@ -245,7 +254,7 @@ class Git(Backend):
                     self.uri, self.gitpath)
         return self.parse_git_log_from_file(self.gitpath)
 
-    def __fetch_from_repo(self, from_date, branches, latest_items=False):
+    def __fetch_from_repo(self, from_date, to_date, branches, latest_items=False):
         # When no latest items are set or the repository has not
         # been cloned use the default mode
         default_mode = not latest_items or not os.path.exists(self.gitpath)
@@ -253,13 +262,13 @@ class Git(Backend):
         repo = self.__create_git_repository()
 
         if default_mode:
-            commits = self.__fetch_commits_from_repo(repo, from_date, branches)
+            commits = self.__fetch_commits_from_repo(repo, from_date, to_date, branches)
         else:
             commits = self.__fetch_newest_commits_from_repo(repo)
 
         return commits
 
-    def __fetch_commits_from_repo(self, repo, from_date, branches):
+    def __fetch_commits_from_repo(self, repo, from_date, to_date, branches):
         if branches is None:
             branches_text = "all"
         elif len(branches) == 0:
@@ -267,11 +276,16 @@ class Git(Backend):
         else:
             branches_text = ", ".join(branches)
 
-        logger.info("Fetching commits: '%s' git repository from %s; %s branches",
-                    self.uri, str(from_date), branches_text)
+        logger.info("Fetching commits: '%s' git repository from %s to %s; %s branches",
+                    self.uri, str(from_date), str(to_date), branches_text)
 
         # Ignore default datetime to avoid problems with git
         # or convert to UTC
+        if to_date == DEFAULT_LAST_DATETIME:
+            to_date = None
+        else:
+            to_date = datetime_to_utc(to_date)
+
         if from_date == DEFAULT_DATETIME:
             from_date = None
         else:
@@ -279,7 +293,7 @@ class Git(Backend):
 
         repo.update()
 
-        gitlog = repo.log(from_date, branches)
+        gitlog = repo.log(from_date, to_date, branches)
         return self.parse_git_log_from_iter(gitlog)
 
     def __fetch_newest_commits_from_repo(self, repo):
@@ -324,7 +338,7 @@ class GitCommand(BackendCommand):
     def setup_cmd_parser():
         """Returns the Git argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True)
+        parser = BackendCommandArgumentParser(from_date=True, to_date=True)
 
         # Optional arguments
         group = parser.parser.add_argument_group('Git arguments')
@@ -913,7 +927,7 @@ class GitRepository:
 
         return commits
 
-    def log(self, from_date=None, branches=None, encoding='utf-8'):
+    def log(self, from_date=None, to_date=None, branches=None, encoding='utf-8'):
         """Read the commit log from the repository.
 
         The method returns the Git log of the repository using the
@@ -953,6 +967,10 @@ class GitRepository:
         if from_date:
             dt = from_date.strftime("%Y-%m-%d %H:%M:%S %z")
             cmd_log.append('--since=' + dt)
+
+        if to_date:
+            dt = to_date.strftime("%Y-%m-%d %H:%M:%S %z")
+            cmd_log.append('--until=' + dt)
 
         if branches is None:
             cmd_log.extend(['--branches', '--tags', '--remotes=origin'])

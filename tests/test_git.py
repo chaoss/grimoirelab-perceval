@@ -36,7 +36,7 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser, uuid
 from perceval.errors import RepositoryError
-from perceval.utils import DEFAULT_DATETIME
+from perceval.utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 from perceval.backends.core.git import (EmptyRepositoryError,
                                         Git,
                                         GitCommand,
@@ -173,6 +173,54 @@ class TestGitBackend(TestCaseGit):
 
         shutil.rmtree(new_path)
 
+    def test_fetch_till_date(self):
+        """Test whether commits are fetched from a Git repository before the given date"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        to_date = datetime.datetime(2014, 2, 11, 22, 7, 49)
+        git = Git(self.git_path, new_path)
+        commits = [commit for commit in git.fetch(to_date=to_date)]
+
+        expected = [('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0),
+                    ('87783129c3f00d2c81a3a8e585eb86a47e39891a', 1344965535.0),
+                    ('7debcf8a2f57f86663809c58b5c07a398be7674c', 1344965607.0),
+                    ('c0d66f92a95e31c77be08dc9d0f11a16715d1885', 1344965702.0),
+                    ('c6ba8f7a1058db3e6b4bc6f1090e932b107605fb', 1344966351.0),
+                    ('589bb080f059834829a2a5955bebfd7c2baa110a', 1344967441.0)]
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x][0])
+            commit = commits[x]
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['updated_on'], expected[x][1])
+            self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
+
+        # Test it using a datetime that includes the timezone
+        to_date = datetime.datetime(2012, 8, 14, 14, 30, 00,
+                                    tzinfo=dateutil.tz.tzoffset(None, -36000))
+        git = Git(self.git_path, new_path)
+        commits = [commit for commit in git.fetch(to_date=to_date)]
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x][0])
+            commit = commits[x]
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['updated_on'], expected[x][1])
+            self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
+
+        shutil.rmtree(new_path)
+
     def test_fetch_since_date(self):
         """Test whether commits are fetched from a Git repository since the given date"""
 
@@ -203,6 +251,53 @@ class TestGitBackend(TestCaseGit):
                                       tzinfo=dateutil.tz.tzoffset(None, -36000))
         git = Git(self.git_path, new_path)
         commits = [commit for commit in git.fetch(from_date=from_date)]
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x][0])
+            commit = commits[x]
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['updated_on'], expected[x][1])
+            self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
+
+        shutil.rmtree(new_path)
+
+    def test_fetch_between_dates(self):
+        """Test whether commits are fetched between given start and end dates"""
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        from_date = datetime.datetime(2012, 8, 14, 17, 34, 0)
+        to_date = datetime.datetime(2014, 2, 11, 22, 7, 49)
+        git = Git(self.git_path, new_path)
+        commits = [commit for commit in git.fetch(from_date=from_date, to_date=to_date)]
+
+        expected = [('c0d66f92a95e31c77be08dc9d0f11a16715d1885', 1344965702.0),
+                    ('c6ba8f7a1058db3e6b4bc6f1090e932b107605fb', 1344966351.0),
+                    ('589bb080f059834829a2a5955bebfd7c2baa110a', 1344967441.0)]
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(self.git_path, expected[x][0])
+            commit = commits[x]
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+            self.assertEqual(commit['origin'], self.git_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['updated_on'], expected[x][1])
+            self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], self.git_path)
+
+        # Test it using a datetime that includes the timezone
+        from_date = datetime.datetime(2012, 8, 14, 7, 34, 00,
+                                      tzinfo=dateutil.tz.tzoffset(None, -36000))
+        to_date = datetime.datetime(2012, 8, 14, 14, 30, 00,
+                                    tzinfo=dateutil.tz.tzoffset(None, -36000))
+        git = Git(self.git_path, new_path)
+        commits = [commit for commit in git.fetch(from_date=from_date, to_date=to_date)]
 
         self.assertEqual(len(commits), len(expected))
 
@@ -336,6 +431,12 @@ class TestGitBackend(TestCaseGit):
         from_date = datetime.datetime(2020, 1, 1, 1, 1, 1)
         git = Git(self.git_path, new_path)
         commits = [commit for commit in git.fetch(from_date=from_date)]
+
+        self.assertListEqual(commits, [])
+
+        to_date = datetime.datetime(1970, 1, 1, 1, 1, 1)
+        git = Git(self.git_path, new_path)
+        commits = [commit for commit in git.fetch(to_date=to_date)]
 
         self.assertListEqual(commits, [])
 
@@ -637,7 +738,8 @@ class TestGitCommand(TestCaseGit):
         args = ['http://example.com/',
                 '--git-log', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/git/git_log.txt'),
                 '--tag', 'test',
-                '--from-date', '1970-01-01']
+                '--from-date', '1970-01-01',
+                '--to-date', '2100-01-01']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.uri, 'http://example.com/')
@@ -645,6 +747,7 @@ class TestGitCommand(TestCaseGit):
                                                            'data/git/git_log.txt'))
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.to_date, DEFAULT_LAST_DATETIME)
         self.assertEqual(parsed_args.branches, None)
 
         args = ['http://example.com/',
@@ -1385,6 +1488,20 @@ class TestGitRepository(TestCaseGit):
         gitlog = repo.log()
         gitlog = [line for line in gitlog]
         self.assertEqual(len(gitlog), 108)
+        self.assertEqual(gitlog[0][:14], "commit bc57a92")
+
+        shutil.rmtree(new_path)
+
+    def test_log_to_date(self):
+        """Test if commits are returned before the given date"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        gitlog = repo.log(to_date=datetime.datetime(2014, 2, 11, 22, 7, 49))
+        gitlog = [line for line in gitlog]
+
+        self.assertEqual(len(gitlog), 71)
         self.assertEqual(gitlog[0][:14], "commit bc57a92")
 
         shutil.rmtree(new_path)
