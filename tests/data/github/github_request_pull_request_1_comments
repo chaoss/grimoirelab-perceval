@@ -1,0 +1,116 @@
+[
+    {
+        "_links": {
+            "html": {
+                "href": "https://github.com/zhquan_example/repo/pull/1#discussion_r46718983"
+            },
+            "pull_request": {
+                "href": "https://api.github.com/repos/zhquan_example/repo/pulls/1"
+            },
+            "self": {
+                "href": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/1"
+            }
+        },
+        "author_association": "OWNER",
+        "body": "This module is not used. It should be removed.\n",
+        "commit_id": "cc134f32fa8c518abe5f0501836af69741b25a64",
+        "created_at": "2015-12-04T19:07:22Z",
+        "diff_hunk": "@@ -0,0 +1,315 @@\n+# -*- coding: utf-8 -*-\n+#\n+# Copyright (C) 2015 Bitergia\n+#\n+# This program is free software; you can redistribute it and/or modify\n+# it under the terms of the GNU General Public License as published by\n+# the Free Software Foundation; either version 3 of the License, or\n+# (at your option) any later version.\n+#\n+# This program is distributed in the hope that it will be useful,\n+# but WITHOUT ANY WARRANTY; without even the implied warranty of\n+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n+# GNU General Public License for more details.\n+#\n+# You should have received a copy of the GNU General Public License\n+# along with this program; if not, write to the Free Software\n+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n+#\n+# Authors:\n+#   Alvaro del Castillo San Felix <acs@bitergia.com>\n+#\n+\n+'''Gerrit backend for Perseval'''\n+\n+\n+from datetime import datetime\n+from dateutil import parser",
+        "html_url": "https://github.com/zhquan_example/repo/pull/1#discussion_r46718983",
+        "id": 1,
+        "original_commit_id": "b030dbf53d3ecaae2f080018073c9bdafb6b4166",
+        "original_position": 27,
+        "path": "perceval/backends/gerrit.py",
+        "position": null,
+        "pull_request_review_id": null,
+        "pull_request_url": "https://api.github.com/repos/zhquan_example/repo/pulls/1",
+        "reactions": {
+            "+1": 0,
+            "-1": 0,
+            "confused": 0,
+            "heart": 0,
+            "hooray": 0,
+            "laugh": 0,
+            "total_count": 0,
+            "url": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/1/reactions"
+        },
+        "updated_at": "2015-12-22T12:03:01Z",
+        "url": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/1",
+        "user": {
+            "avatar_url": "https://avatars3.githubusercontent.com/u/1?v=4",
+            "events_url": "https://api.github.com/users/zhquan_example/events{/privacy}",
+            "followers_url": "https://api.github.com/users/zhquan_example/followers",
+            "following_url": "https://api.github.com/users/zhquan_example/following{/other_user}",
+            "gists_url": "https://api.github.com/users/zhquan_example/gists{/gist_id}",
+            "gravatar_id": "",
+            "html_url": "https://github.com/zhquan_example",
+            "id": 1,
+            "login": "zhquan_example",
+            "organizations_url": "https://api.github.com/users/zhquan_example/orgs",
+            "received_events_url": "https://api.github.com/users/zhquan_example/received_events",
+            "repos_url": "https://api.github.com/users/zhquan_example/repos",
+            "site_admin": false,
+            "starred_url": "https://api.github.com/users/zhquan_example/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/zhquan_example/subscriptions",
+            "type": "User",
+            "url": "https://api.github.com/users/zhquan_example"
+        }
+    },
+    {
+        "_links": {
+            "html": {
+                "href": "https://github.com/zhquan_example/repo/pull/1#discussion_r46719268"
+            },
+            "pull_request": {
+                "href": "https://api.github.com/repos/zhquan_example/repo/pulls/1"
+            },
+            "self": {
+                "href": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/2"
+            }
+        },
+        "author_association": "OWNER",
+        "body": "It shouldn't be there any spaces around keywords and assignments.\nFor instance : `url=None`. The same mistake can be found in other parts of this code.\n",
+        "commit_id": "cc134f32fa8c518abe5f0501836af69741b25a64",
+        "created_at": "2015-12-04T19:09:29Z",
+        "diff_hunk": "@@ -0,0 +1,315 @@\n+# -*- coding: utf-8 -*-\n+#\n+# Copyright (C) 2015 Bitergia\n+#\n+# This program is free software; you can redistribute it and/or modify\n+# it under the terms of the GNU General Public License as published by\n+# the Free Software Foundation; either version 3 of the License, or\n+# (at your option) any later version.\n+#\n+# This program is distributed in the hope that it will be useful,\n+# but WITHOUT ANY WARRANTY; without even the implied warranty of\n+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n+# GNU General Public License for more details.\n+#\n+# You should have received a copy of the GNU General Public License\n+# along with this program; if not, write to the Free Software\n+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n+#\n+# Authors:\n+#   Alvaro del Castillo San Felix <acs@bitergia.com>\n+#\n+\n+'''Gerrit backend for Perseval'''\n+\n+\n+from datetime import datetime\n+from dateutil import parser\n+import json\n+import logging\n+import os.path\n+import re\n+import subprocess\n+from time import time\n+\n+from ..backend import Backend, BackendCommand\n+from ..cache import Cache\n+from ..errors import BackendError, CacheError\n+from ..utils import DEFAULT_DATETIME, str_to_datetime\n+\n+\n+\n+class Gerrit(Backend):\n+\n+    name = \"gerrit\"\n+\n+    def __init__(self, user = None, url = None, nreviews = None,",
+        "html_url": "https://github.com/zhquan_example/repo/pull/1#discussion_r46719268",
+        "id": 2,
+        "original_commit_id": "b030dbf53d3ecaae2f080018073c9bdafb6b4166",
+        "original_position": 46,
+        "path": "perceval/backends/gerrit.py",
+        "position": null,
+        "pull_request_review_id": null,
+        "pull_request_url": "https://api.github.com/repos/zhquan_example/repo/pulls/1",
+        "reactions": {
+            "+1": 1,
+            "-1": 0,
+            "confused": 1,
+            "heart": 1,
+            "hooray": 1,
+            "laugh": 1,
+            "total_count": 5,
+            "url": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/2/reactions"
+        },
+        "updated_at": "2015-12-22T12:03:01Z",
+        "url": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/2",
+        "user": {
+            "avatar_url": "https://avatars3.githubusercontent.com/u/833352?v=4",
+            "events_url": "https://api.github.com/users/zhquan_example/events{/privacy}",
+            "followers_url": "https://api.github.com/users/zhquan_example/followers",
+            "following_url": "https://api.github.com/users/zhquan_example/following{/other_user}",
+            "gists_url": "https://api.github.com/users/zhquan_example/gists{/gist_id}",
+            "gravatar_id": "",
+            "html_url": "https://github.com/zhquan_example",
+            "id": 1,
+            "login": "zhquan_example",
+            "organizations_url": "https://api.github.com/users/zhquan_example/orgs",
+            "received_events_url": "https://api.github.com/users/zhquan_example/received_events",
+            "repos_url": "https://api.github.com/users/zhquan_example/repos",
+            "site_admin": false,
+            "starred_url": "https://api.github.com/users/zhquan_example/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/zhquan_example/subscriptions",
+            "type": "User",
+            "url": "https://api.github.com/users/zhquan_example"
+        }
+    }
+]

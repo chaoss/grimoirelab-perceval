@@ -85,6 +85,12 @@
     "created_at": "2016-02-17T17:33:46Z",
     "updated_at": "2016-03-15T09:56:22Z",
     "closed_at": null,
+    "pull_request": {
+      "url": "https://api.github.com/repos/zhquan_example/repo/pulls/1",
+      "html_url": "https://github.com/zhquan_example/repo/pull/1",
+      "diff_url": "https://github.com/zhquan_example/repo/pull/1.diff",
+      "patch_url": "https://github.com/zhquan_example/repo/pull/1.patch"
+    },
     "body": "body"
   }
 ]
