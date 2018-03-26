@@ -64,8 +64,8 @@ class GitHub(Backend):
     This class allows the fetch the issues stored in GitHub
     repository.
 
-    :param owner: GitHub owner
-    :param repository: GitHub repository from the owner
+    :param owner: GitHub owner (e.g. chaoss)
+    :param repository: GitHub repository from the owner (e.g. gimoirelab-perceval)
     :param api_token: GitHub auth token to access the API
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
@@ -414,8 +414,8 @@ class GitHub(Backend):
 class GitHubClient(HttpClient, RateLimitHandler):
     """Client for retieving information from GitHub API
 
-    :param owner: GitHub owner
-    :param repository: GitHub repository from the owner
+    :param owner: GitHub owner (e.g. chaoss)
+    :param repository: GitHub repository from the owner (e.g. gimoirelab-perceval)
     :param token: GitHub auth token to access the API
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
