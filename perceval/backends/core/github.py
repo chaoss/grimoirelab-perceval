@@ -24,11 +24,11 @@
 
 import json
 import logging
-import time
 
 import requests
-
-from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab.toolkit.datetime import (datetime_to_utc,
+                                          datetime_utcnow,
+                                          str_to_datetime)
 from grimoirelab.toolkit.uris import urijoin
 
 from ...backend import (Backend,
@@ -80,7 +80,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.16.0'
+    version = '0.16.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
 
@@ -458,7 +458,12 @@ class GitHubClient(HttpClient, RateLimitHandler):
         between the current date and the next date when the token is fully regenerated.
         """
 
-        return self.rate_limit_reset_ts - (int(time.time()) + 1)
+        time_to_reset = self.rate_limit_reset_ts - (datetime_utcnow().replace(microsecond=0).timestamp() + 1)
+
+        if time_to_reset < 0:
+            time_to_reset = 0
+
+        return time_to_reset
 
     def issue_reactions(self, issue_number):
         """Get reactions of an issue"""

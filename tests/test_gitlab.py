@@ -34,6 +34,7 @@ import requests
 
 pkg_resources.declare_namespace('perceval.backends')
 
+from grimoirelab.toolkit.datetime import datetime_utcnow
 from perceval.backend import BackendCommandArgumentParser
 from perceval.errors import RateLimitError
 from perceval.utils import DEFAULT_DATETIME
@@ -560,6 +561,24 @@ class TestGitLabClient(unittest.TestCase):
 
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = [issues for issues in client.issues()]
+
+    @httpretty.activate
+    def test_calculate_time_to_reset(self):
+        """Test whether the time to reset is zero if the sleep time is negative"""
+
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_URL_PROJECT,
+                               body='',
+                               status=200,
+                               forcing_headers={
+                                   'RateLimit-Remaining': '20',
+                                   'RateLimit-Reset': int(datetime_utcnow().replace(microsecond=0).timestamp())
+                               })
+
+        client = GitLabClient("fdroid", "fdroiddata", "your-token")
+        time_to_reset = client.calculate_time_to_reset()
+
+        self.assertEqual(time_to_reset, 0)
 
     @httpretty.activate
     def test_sleep_for_rate(self):

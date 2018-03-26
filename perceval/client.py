@@ -53,7 +53,7 @@ class HttpClient:
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.1.3'
+    version = '0.1.4'
 
     DEFAULT_SLEEP_TIME = 1
 
@@ -198,7 +198,7 @@ class RateLimitHandler:
     :param rate_limit_header: header to know the current rate limit
     :param rate_limit_reset_header: header to know the next rate limit reset
     """
-    version = '0.1'
+    version = '0.2'
 
     MIN_RATE_LIMIT = 10
     MAX_RATE_LIMIT = 500
@@ -236,6 +236,11 @@ class RateLimitHandler:
         """
         if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
             seconds_to_reset = self.calculate_time_to_reset()
+
+            if seconds_to_reset < 0:
+                logger.warning("Value of sleep for rate limit is negative, reset it to 0")
+                seconds_to_reset = 0
+
             cause = "Rate limit exhausted."
             if self.sleep_for_rate:
                 logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
