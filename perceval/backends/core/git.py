@@ -56,8 +56,8 @@ class Git(Backend):
     considered as the place where the repository is/will be cloned;
     when `gitpath` is a file it will be considered as a Git log file.
 
-    :param uri: URI of the Git repository
-    :param gitpath: path to the repository or to the log file
+    :param uri: URI of the Git repository (e.g. https://github.com/chaoss/grimoirelab-perceval.git)
+    :param gitpath: path to the repository or to the log file (e.g. /tmp/grimoirelab-perceval.git)
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
 
