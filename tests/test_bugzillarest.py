@@ -21,6 +21,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import copy
 import datetime
 import os
 import shutil
@@ -264,8 +265,12 @@ class TestBugzillaRESTBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend_write_archive = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2, archive=self.archive)
-        self.backend_read_archive = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2, archive=self.archive)
+        self.backend_write_archive = BugzillaREST(BUGZILLA_SERVER_URL,
+                                                  user='jsmith@example.com', password='1234',
+                                                  max_bugs=2, archive=self.archive)
+        self.backend_read_archive = BugzillaREST(BUGZILLA_SERVER_URL,
+                                                 user='jreno@example.com', password='5678',
+                                                 max_bugs=2, archive=self.archive)
 
     def tearDown(self):
         shutil.rmtree(self.test_path)
@@ -274,6 +279,10 @@ class TestBugzillaRESTBackendArchive(TestCaseBackendArchive):
     def test_fetch_from_archive(self):
         """Test whether a list of bugs is returned from the archive"""
 
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_LOGIN_URL,
+                               body='{"token": "786-OLaWfBisMY", "id": "786"}',
+                               status=200)
         setup_http_server()
         self._test_fetch_from_archive(from_date=None)
 
@@ -281,6 +290,10 @@ class TestBugzillaRESTBackendArchive(TestCaseBackendArchive):
     def test_fetch_empty_from_archive(self):
         """Test whether it works when no bugs are fetched from the archive"""
 
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_LOGIN_URL,
+                               body='{"token": "786-OLaWfBisMY", "id": "786"}',
+                               status=200)
         body = read_file('data/bugzilla/bugzilla_rest_bugs_empty.json')
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_URL,
@@ -579,6 +592,34 @@ class TestBugzillaRESTClient(unittest.TestCase):
             self.assertEqual(e.exception.code, 32000)
             self.assertEqual(e.exception.error,
                              "API key authentication is required.")
+
+    def test_sanitize_for_archive_login(self):
+        """Test whether the sanitize method works properly when login"""
+
+        url = "http://example.com"
+        headers = "headers-information"
+        payload = {'login': 'jsmith@example.com', 'password': '1234'}
+
+        s_url, s_headers, s_payload = BugzillaRESTClient.sanitize_for_archive(url, headers, copy.deepcopy(payload))
+        payload.pop('login')
+        payload.pop('password')
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
+
+    def test_sanitize_for_archive_token(self):
+        """Test whether the sanitize method works properly for token-signed requests"""
+
+        payload = {'limit': 2,
+                   'order': 'changeddate',
+                   'token': '786-OLaWfBisMY',
+                   'include_fields': '_all',
+                   'last_change_time': '1970-01-01T00:00:00Z'}
+
+        url, headers, payload = BugzillaRESTClient.sanitize_for_archive(None, None, payload)
+        with self.assertRaises(KeyError):
+            payload.pop('token')
 
 
 class TestBugzillaRESTCommand(unittest.TestCase):
