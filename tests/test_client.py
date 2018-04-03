@@ -48,6 +48,8 @@ CLIENT_IRONMAN_URL = "https://gateway.marvel.com/v1/public/characters/4"
 
 class MockedClient(HttpClient, RateLimitHandler):
 
+    sanitize = False
+
     def __init__(self, base_url, sleep_time=HttpClient.DEFAULT_SLEEP_TIME,
                  max_retries=HttpClient.MAX_RETRIES,
                  extra_status_forcelist=None,
@@ -57,9 +59,10 @@ class MockedClient(HttpClient, RateLimitHandler):
                  rate_limit_header=RateLimitHandler.RATE_LIMIT_HEADER,
                  rate_limit_reset_header=RateLimitHandler.RATE_LIMIT_RESET_HEADER,
                  define_calculate_time_to_reset=True,
-                 archive=None, from_archive=False):
+                 archive=None, from_archive=False, sanitize=False):
 
         self.define_calculate_time_to_reset = define_calculate_time_to_reset
+        MockedClient.sanitize = sanitize
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_status_forcelist=extra_status_forcelist,
                          extra_retry_after_status=extra_retry_after_status,
@@ -309,6 +312,15 @@ class TestHttpClient(unittest.TestCase):
         client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1, archive=archive, from_archive=True)
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = client.fetch(CLIENT_SPIDERMAN_URL)
+
+    def test_sanitize_for_archive(self):
+        """Test whether the default sanitize method works properly"""
+
+        url, headers, payload = HttpClient.sanitize_for_archive("url", "headers", "payload")
+
+        self.assertEqual(url, "url")
+        self.assertEqual(headers, "headers")
+        self.assertEqual(payload, "payload")
 
 
 class TestRateLimitHandler(unittest.TestCase):
