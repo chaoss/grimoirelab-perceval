@@ -21,6 +21,7 @@
 #     Quan Zhou <quan@bitergia.com>
 #
 
+import copy
 import datetime
 import httpretty
 import json
@@ -167,7 +168,7 @@ class TestStackExchangeBackendArchive(TestCaseBackendArchive):
                                                    api_token="aaa", max_questions=1,
                                                    archive=self.archive)
         self.backend_read_archive = StackExchange(site="stackoverflow.com", tagged="python",
-                                                  api_token="aaa", max_questions=1,
+                                                  api_token="bbb", max_questions=1,
                                                   archive=self.archive)
 
     @httpretty.activate
@@ -414,6 +415,27 @@ class TestStackExchangeClient(unittest.TestCase):
         # backoff value harcoded in the JSON
         diff = after - before
         self.assertGreaterEqual(diff, 0.2)
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = "headers-information"
+        payload = {'order': 'desc',
+                   'site': 'stackoverflow',
+                   'sort': 'activity',
+                   'pagesize': 1,
+                   'key': 'aaa',
+                   'filter': 'Bf*y*ByQD_upZqozgU6lXL_62USGOoV3)MFNgiHqHpmO_Y-jHR',
+                   'page': 1,
+                   'tagged': 'python'}
+
+        s_url, s_headers, s_payload = StackExchangeClient.sanitize_for_archive(url, headers, copy.deepcopy(payload))
+        payload.pop("key")
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
 
 
 class TestStackExchangeCommand(unittest.TestCase):
