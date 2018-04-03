@@ -57,7 +57,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.3'
+    version = '0.6.4'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -356,6 +356,22 @@ class SlackClient(HttpClient):
         response = self._fetch(resource, params)
 
         return response
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the token information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if SlackClient.PTOKEN in payload:
+            payload.pop(SlackClient.PTOKEN)
+
+        return url, headers, payload
 
     def _fetch(self, resource, params):
         """Fetch a resource.

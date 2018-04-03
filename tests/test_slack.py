@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import copy
 import datetime
 import dateutil
 import httpretty
@@ -438,7 +439,7 @@ class TestSlackBackendArchive(TestCaseBackendArchive):
     def setUp(self):
         super().setUp()
         self.backend_write_archive = Slack('C011DUKE8', 'aaaa', max_items=5, archive=self.archive)
-        self.backend_read_archive = Slack('C011DUKE8', 'aaaa', max_items=5, archive=self.archive)
+        self.backend_read_archive = Slack('C011DUKE8', 'bbbb', max_items=5, archive=self.archive)
 
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
@@ -577,6 +578,20 @@ class TestSlackClient(unittest.TestCase):
 
         with self.assertRaises(SlackClientError):
             _ = client.history('CH0')
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = "headers-information"
+        payload = {'token': 'aaaa', 'channel': 'C011DUKE8'}
+
+        s_url, s_headers, s_payload = SlackClient.sanitize_for_archive(url, headers, copy.deepcopy(payload))
+        payload.pop("token")
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
 
 
 class TestSlackCommand(unittest.TestCase):
