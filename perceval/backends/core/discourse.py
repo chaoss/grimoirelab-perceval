@@ -52,7 +52,7 @@ class Discourse(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.2'
+    version = '0.9.3'
 
     CATEGORIES = [CATEGORY_TOPIC]
 
@@ -334,6 +334,22 @@ class DiscourseClient(HttpClient):
                               params=params)
 
         return response
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the token information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if DiscourseClient.PKEY in payload:
+            payload.pop(DiscourseClient.PKEY)
+
+        return url, headers, payload
 
     def _call(self, res, res_id, params):
         """Run an API command.
