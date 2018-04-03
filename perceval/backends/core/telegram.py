@@ -22,6 +22,7 @@
 
 import json
 import logging
+import re
 
 from grimoirelab.toolkit.uris import urijoin
 
@@ -61,7 +62,7 @@ class Telegram(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.2'
+    version = '0.9.3'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -325,6 +326,21 @@ class TelegramBotClient(HttpClient):
         response = self._call(self.UPDATES_METHOD, params)
 
         return response
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize URL of a HTTP request by removing the token information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns the sanitized url, plus the headers and payload
+        """
+        url = re.sub('bot.*/', 'botXXXXX/', url)
+
+        return url, headers, payload
 
     def _call(self, method, params):
         """Retrive the given resource.
