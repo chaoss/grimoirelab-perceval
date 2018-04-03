@@ -50,7 +50,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.3'
+    version = '0.9.4'
 
     CATEGORIES = [CATEGORY_TASK]
 
@@ -455,6 +455,24 @@ class ConduitClient(HttpClient):
         response = self._call(self.PHAB_PHIDS, params)
 
         return response
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the token information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if '__conduit__' in payload['params']:
+            params = json.loads(payload['params'])
+            params.pop('__conduit__')
+            payload['params'] = json.dumps(params, sort_keys=True)
+
+        return url, headers, payload
 
     def _call(self, method, params):
         """Call a method.
