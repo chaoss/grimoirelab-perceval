@@ -383,7 +383,7 @@ class TestJiraBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend_write_archive = Jira(JIRA_SERVER_URL, archive=self.archive)
+        self.backend_write_archive = Jira(JIRA_SERVER_URL, user="test", password="test", archive=self.archive)
         self.backend_read_archive = Jira(JIRA_SERVER_URL, archive=self.archive)
 
     @httpretty.activate
@@ -412,6 +412,9 @@ class TestJiraBackendArchive(TestCaseBackendArchive):
                                body=body, status=200)
 
         self._test_fetch_from_archive(from_date=None)
+
+        self.assertEqual(("test", "test"), self.backend_write_archive.client.session.auth)
+        self.assertIsNone(self.backend_read_archive.client.session.auth)
 
     @httpretty.activate
     def test_fetch_from_date_from_archive(self):
