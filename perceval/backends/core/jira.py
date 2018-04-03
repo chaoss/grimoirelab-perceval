@@ -97,7 +97,7 @@ class Jira(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.11.3'
+    version = '0.11.4'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -270,7 +270,8 @@ class JiraClient(HttpClient):
         self.cert = cert
         self.max_issues = max_issues
 
-        self.__init_session()
+        if not from_archive:
+            self.__init_session()
 
     def get_issues(self, from_date):
         """Retrieve all the issues from a given date.
