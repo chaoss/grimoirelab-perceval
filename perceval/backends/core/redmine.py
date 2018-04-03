@@ -57,7 +57,7 @@ class Redmine(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.3'
+    version = '0.9.4'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -405,6 +405,22 @@ class RedmineClient(HttpClient):
         response = self._call(resource, params)
 
         return response
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the token information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if RedmineClient.PKEY in payload:
+            payload.pop(RedmineClient.PKEY)
+
+        return url, headers, payload
 
     def _call(self, resource, params):
         """Call to get a resource.
