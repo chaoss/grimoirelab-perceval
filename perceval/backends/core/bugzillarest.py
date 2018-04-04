@@ -60,7 +60,7 @@ class BugzillaREST(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.2'
+    version = '0.8.3'
 
     CATEGORIES = [CATEGORY_BUG]
 
@@ -424,6 +424,28 @@ class BugzillaRESTClient(HttpClient):
                                     code=result['code'])
 
         return r.text
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the login, password and token information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if BugzillaRESTClient.PBUGZILLA_LOGIN in payload:
+            payload.pop(BugzillaRESTClient.PBUGZILLA_LOGIN)
+
+        if BugzillaRESTClient.PBUGZILLA_PASSWORD in payload:
+            payload.pop(BugzillaRESTClient.PBUGZILLA_PASSWORD)
+
+        if BugzillaRESTClient.PBUGZILLA_TOKEN in payload:
+            payload.pop(BugzillaRESTClient.PBUGZILLA_TOKEN)
+
+        return url, headers, payload
 
 
 class BugzillaRESTCommand(BackendCommand):

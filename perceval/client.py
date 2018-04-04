@@ -53,7 +53,7 @@ class HttpClient:
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.1.4'
+    version = '0.1.5'
 
     DEFAULT_SLEEP_TIME = 1
 
@@ -133,8 +133,23 @@ class HttpClient:
 
         return response
 
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize the URL, headers and payload of a HTTP request before storing/retrieving items.
+        By default, this method does not modify url, headers and payload. The modifications take
+        place within the specific backends that redefine the sanitize_for_archive.
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and payload sanitized
+        """
+        return url, headers, payload
+
     def _fetch_from_archive(self, url, payload, headers):
 
+        url, headers, payload = self.sanitize_for_archive(url, headers, payload)
         response = self.archive.retrieve(url, payload, headers)
 
         if not isinstance(response, requests.Response):
@@ -153,10 +168,12 @@ class HttpClient:
             response.raise_for_status()
         except Exception as e:
             if self.archive:
+                url, headers, payload = self.sanitize_for_archive(url, headers, payload)
                 self.archive.store(url, payload, headers, e)
             raise e
 
         if self.archive:
+            url, headers, payload = self.sanitize_for_archive(url, headers, payload)
             self.archive.store(url, payload, headers, response)
         return response
 

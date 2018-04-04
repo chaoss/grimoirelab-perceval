@@ -55,7 +55,7 @@ class StackExchange(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.3'
+    version = '0.10.4'
 
     CATEGORIES = [CATEGORY_QUESTION]
 
@@ -211,31 +211,6 @@ class StackExchangeClient(HttpClient):
         self.token = token
         self.max_questions = max_questions
 
-    def __build_payload(self, page, from_date, order='desc', sort='activity'):
-        payload = {'page': page,
-                   'pagesize': self.max_questions,
-                   'order': order,
-                   'sort': sort,
-                   'tagged': self.tagged,
-                   'site': self.site,
-                   'key': self.token,
-                   'filter': self.QUESTIONS_FILTER}
-        if from_date:
-            timestamp = int(from_date.timestamp())
-            payload['min'] = timestamp
-        return payload
-
-    def __log_status(self, quota_remaining, quota_max, page_size, total):
-
-        logger.debug("Rate limit: %s/%s" % (quota_remaining,
-                                            quota_max))
-        if (total != 0):
-            nquestions = min(page_size, total)
-            logger.info("Fetching questions: %s/%s" % (nquestions,
-                                                       total))
-        else:
-            logger.info("No questions were found.")
-
     def get_questions(self, from_date):
         """Retrieve all the questions from a given date.
 
@@ -278,6 +253,47 @@ class StackExchangeClient(HttpClient):
                                   data['quota_max'],
                                   nquestions,
                                   tquestions)
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the token information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if 'key' in payload:
+            payload.pop('key')
+
+        return url, headers, payload
+
+    def __build_payload(self, page, from_date, order='desc', sort='activity'):
+        payload = {'page': page,
+                   'pagesize': self.max_questions,
+                   'order': order,
+                   'sort': sort,
+                   'tagged': self.tagged,
+                   'site': self.site,
+                   'key': self.token,
+                   'filter': self.QUESTIONS_FILTER}
+        if from_date:
+            timestamp = int(from_date.timestamp())
+            payload['min'] = timestamp
+        return payload
+
+    def __log_status(self, quota_remaining, quota_max, page_size, total):
+
+        logger.debug("Rate limit: %s/%s" % (quota_remaining,
+                                            quota_max))
+        if (total != 0):
+            nquestions = min(page_size, total)
+            logger.info("Fetching questions: %s/%s" % (nquestions,
+                                                       total))
+        else:
+            logger.info("No questions were found.")
 
 
 class StackExchangeCommand(BackendCommand):

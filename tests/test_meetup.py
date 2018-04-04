@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import copy
 import datetime
 import dateutil.tz
 import httpretty
@@ -541,7 +542,7 @@ class TestMeetupBackendArchive(TestCaseBackendArchive):
     def setUp(self):
         super().setUp()
         self.backend_write_archive = Meetup('sqlpass-es', 'aaaa', max_items=2, archive=self.archive)
-        self.backend_read_archive = Meetup('sqlpass-es', 'aaaa', max_items=2, archive=self.archive)
+        self.backend_read_archive = Meetup('sqlpass-es', 'bbbb', max_items=2, archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
@@ -894,6 +895,25 @@ class TestMeetupClient(unittest.TestCase):
 
         end = float(time.time())
         self.assertGreater(end, expected)
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = "headers-information"
+        payload = {'page': 2,
+                   'sign': ('true',),
+                   'order': 'updated',
+                   'scroll': 'since:2016-01-01T00:00:00.000Z',
+                   'key': 'aaaa'}
+
+        s_url, s_headers, s_payload = MeetupClient.sanitize_for_archive(url, headers, copy.deepcopy(payload))
+        payload.pop('key')
+        payload.pop('sign')
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
 
 
 if __name__ == "__main__":

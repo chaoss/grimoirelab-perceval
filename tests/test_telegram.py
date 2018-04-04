@@ -260,7 +260,7 @@ class TestTelegramBackendArchive(TestCaseBackendArchive):
     def setUp(self):
         super().setUp()
         self.backend_write_archive = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, archive=self.archive)
-        self.backend_read_archive = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, archive=self.archive)
+        self.backend_read_archive = Telegram(TELEGRAM_BOT, "another-token", archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
@@ -375,6 +375,19 @@ class TestTelegramBotClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/bot12345678/getUpdates')
         self.assertDictEqual(req.querystring, expected)
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "https://api.telegram.org/bot12345678/getUpdates"
+        headers = "headers-information"
+        payload = "payload-information"
+
+        s_url, s_headers, s_payload = TelegramBotClient.sanitize_for_archive(url, headers, payload)
+
+        self.assertEqual(s_url, "https://api.telegram.org/botXXXXX/getUpdates")
+        self.assertEqual(s_headers, headers)
+        self.assertEqual(s_payload, payload)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import copy
 import datetime
 import httpretty
 import json
@@ -553,7 +554,7 @@ class TestPhabricatorBackendArchive(TestCaseBackendArchive):
     def setUp(self):
         super().setUp()
         self.backend_write_archive = Phabricator(PHABRICATOR_URL, 'AAAA', archive=self.archive)
-        self.backend_read_archive = Phabricator(PHABRICATOR_URL, 'AAAA', archive=self.archive)
+        self.backend_read_archive = Phabricator(PHABRICATOR_URL, 'BBBB', archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
@@ -827,6 +828,40 @@ class TestConduitClient(unittest.TestCase):
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = client.phids("PHID-APPS-PhabricatorHeraldApplication")
             self.assertEqual(len(reqs), 1)
+
+    def test_sanitize_for_archive_no_token(self):
+        """Test whether the sanitize method works properly when a token is not given"""
+
+        url = "http://example.com"
+        headers = "headers-information"
+        payload = {'__conduit__': True,
+                   'output': 'json',
+                   'params': '{"phids": ["PHID-APPS-PhabricatorHeraldApplication"]}'}
+
+        s_url, s_headers, s_payload = ConduitClient.sanitize_for_archive(url, headers, copy.deepcopy(payload))
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
+
+    def test_sanitize_for_archive_token(self):
+        """Test whether the sanitize method works properly when a token is given"""
+
+        url = "http://example.com"
+        headers = "headers-information"
+        payload = {'__conduit__': True,
+                   'output': 'json',
+                   'params': '{"__conduit__": {"token": "aaaa"}, '
+                             '"phids": ["PHID-APPS-PhabricatorHeraldApplication"]}'}
+
+        s_url, s_headers, s_payload = ConduitClient.sanitize_for_archive(url, headers, copy.deepcopy(payload))
+        params = json.loads(payload['params'])
+        params.pop("__conduit__")
+        payload['params'] = json.dumps(params, sort_keys=True)
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
 
 
 if __name__ == "__main__":
