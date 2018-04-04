@@ -59,7 +59,7 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.2'
+    version = '0.10.3'
 
     CATEGORIES = [CATEGORY_REVIEW]
 
@@ -387,6 +387,19 @@ class GerritClient():
 
         return next_item
 
+    @staticmethod
+    def sanitize_for_archive(cmd):
+        """Sanitize the Gerrit command by removing username information
+        before storing/retrieving archived items
+
+        :param: cmd: Gerrit command
+
+        :returns the sanitized cmd
+        """
+        sanitized_cmd = re.sub(" \S*@", ' xxxxx@', cmd)
+
+        return sanitized_cmd
+
     def __execute(self, cmd):
         """Execute gerrit command"""
 
@@ -400,6 +413,7 @@ class GerritClient():
     def __execute_from_archive(self, cmd):
         """Execute gerrit command against the archive"""
 
+        cmd = self.sanitize_for_archive(cmd)
         response = self.archive.retrieve(cmd, None, None)
 
         if isinstance(response, RuntimeError):
@@ -426,6 +440,7 @@ class GerritClient():
             result = RuntimeError(cmd + " failed " + str(self.MAX_RETRIES) + " times. Giving up!")
 
         if self.archive:
+            cmd = self.sanitize_for_archive(cmd)
             self.archive.store(cmd, None, None, result)
 
         if isinstance(result, RuntimeError):

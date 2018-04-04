@@ -410,6 +410,25 @@ class MeetupClient(HttpClient, RateLimitHandler):
         for page in self._fetch(resource, params):
             yield page
 
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the token information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if MeetupClient.PKEY in payload:
+            payload.pop(MeetupClient.PKEY)
+
+        if MeetupClient.PSIGN in payload:
+            payload.pop(MeetupClient.PSIGN)
+
+        return url, headers, payload
+
     def _fetch(self, resource, params):
         """Fetch a resource.
 

@@ -60,7 +60,7 @@ class Bugzilla(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.2'
+    version = '0.10.3'
 
     CATEGORIES = [CATEGORY_BUG]
 
@@ -554,6 +554,28 @@ class BugzillaClient(HttpClient):
         req = self.fetch(url, payload=params)
 
         return req.text
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the login and password information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if BugzillaClient.PBUGZILLA_LOGIN in payload:
+            payload.pop(BugzillaClient.PBUGZILLA_LOGIN)
+
+        if BugzillaClient.PBUGZILLA_PASSWORD in payload:
+            payload.pop(BugzillaClient.PBUGZILLA_PASSWORD)
+
+        if BugzillaClient.PLOGIN in payload:
+            payload.pop(BugzillaClient.PLOGIN)
+
+        return url, headers, payload
 
     def __fetch_version(self):
         response = self.metadata()

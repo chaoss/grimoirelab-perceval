@@ -239,7 +239,7 @@ class TestGerritBackendArchive(TestCaseBackendArchive):
         super().setUp()
         self.backend_write_archive = Gerrit(GERRIT_REPO, user=GERRIT_USER, port=29418, max_reviews=2,
                                             archive=self.archive)
-        self.backend_read_archive = Gerrit(GERRIT_REPO, user=GERRIT_USER, port=29418, max_reviews=2,
+        self.backend_read_archive = Gerrit(GERRIT_REPO, user="another-user", port=29418, max_reviews=2,
                                            archive=self.archive)
 
     def tearDown(self):
@@ -368,6 +368,14 @@ class TestGerritClient(unittest.TestCase):
         client._version[0] = 1
         result = client.next_retrieve_group_item(entry={'sortKey': 'asc'})
         self.assertEqual(result, 'asc')
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        cmd = "ssh -p 29418 user@example.org gerrit version"
+        sanitized_cmd = GerritClient.sanitize_for_archive(cmd)
+
+        self.assertEqual("ssh -p 29418 xxxxx@example.org gerrit version", sanitized_cmd)
 
 
 class TestGerritCommand(unittest.TestCase):

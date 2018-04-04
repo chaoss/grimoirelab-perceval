@@ -422,7 +422,7 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend_write_archive = Discourse(DISCOURSE_SERVER_URL, archive=self.archive)
+        self.backend_write_archive = Discourse(DISCOURSE_SERVER_URL, api_token="aaaaa", archive=self.archive)
         self.backend_read_archive = Discourse(DISCOURSE_SERVER_URL, archive=self.archive)
 
     def tearDown(self):
@@ -767,6 +767,30 @@ class TestDiscourseClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/posts/21.json')
         self.assertDictEqual(req.querystring, expected)
+
+    def test_sanitize_for_archive_no_api_key(self):
+        """Test whether the sanitize method works properly when the api_key does not exist"""
+
+        url = "http://example.com"
+        headers = "headers-information"
+        payload = "payload-information"
+
+        s_url, s_headers, s_payload = DiscourseClient.sanitize_for_archive(url, headers, payload)
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = "headers-information"
+        payload = {'api_key': 'aaaa'}
+
+        url, headers, payload = DiscourseClient.sanitize_for_archive(None, None, payload)
+        with self.assertRaises(KeyError):
+            payload.pop("api_key")
 
 
 class TestDiscourseCommand(unittest.TestCase):

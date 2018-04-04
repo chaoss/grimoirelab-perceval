@@ -20,6 +20,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import copy
 import datetime
 import httpretty
 import os
@@ -420,7 +421,7 @@ class TestRedmineBackendArchive(TestCaseBackendArchive):
     def setUp(self):
         super().setUp()
         self.backend_write_archive = Redmine(REDMINE_URL, api_token='AAAA', max_issues=3, archive=self.archive)
-        self.backend_read_archive = Redmine(REDMINE_URL, api_token='AAAA', max_issues=3, archive=self.archive)
+        self.backend_read_archive = Redmine(REDMINE_URL, api_token='BBBB', max_issues=3, archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
@@ -575,6 +576,20 @@ class TestRedmineClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/users/3.json')
         self.assertDictEqual(req.querystring, expected)
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = "headers-information"
+        payload = {'key': 'aaaa'}
+
+        s_url, s_headers, s_payload = RedmineClient.sanitize_for_archive(url, headers, copy.deepcopy(payload))
+        payload.pop("key")
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
 
 
 if __name__ == "__main__":

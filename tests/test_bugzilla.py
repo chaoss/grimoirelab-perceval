@@ -21,6 +21,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import copy
 import datetime
 import os
 import shutil
@@ -474,9 +475,13 @@ class TestBugzillaBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend_write_archive = Bugzilla(BUGZILLA_SERVER_URL, max_bugs=5, max_bugs_csv=500,
+        self.backend_write_archive = Bugzilla(BUGZILLA_SERVER_URL,
+                                              user='jsmith@example.com', password='1234',
+                                              max_bugs=5, max_bugs_csv=500,
                                               archive=self.archive)
-        self.backend_read_archive = Bugzilla(BUGZILLA_SERVER_URL, max_bugs=5, max_bugs_csv=500,
+        self.backend_read_archive = Bugzilla(BUGZILLA_SERVER_URL,
+                                             user='jreno@example.com', password='5678',
+                                             max_bugs=5, max_bugs_csv=500,
                                              archive=self.archive)
 
     def tearDown(self):
@@ -508,6 +513,10 @@ class TestBugzillaBackendArchive(TestCaseBackendArchive):
 
             return (200, headers, body)
 
+        httpretty.register_uri(httpretty.POST,
+                               BUGZILLA_LOGIN_URL,
+                               body="index.cgi?logout=1",
+                               status=200)
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGLIST_URL,
                                responses=[
@@ -553,6 +562,10 @@ class TestBugzillaBackendArchive(TestCaseBackendArchive):
 
             return (200, headers, body)
 
+        httpretty.register_uri(httpretty.POST,
+                               BUGZILLA_LOGIN_URL,
+                               body="index.cgi?logout=1",
+                               status=200)
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGLIST_URL,
                                responses=[
@@ -579,6 +592,10 @@ class TestBugzillaBackendArchive(TestCaseBackendArchive):
         """Test whether it works when no bugs are fetched from archive"""
 
         body = read_file('data/bugzilla/bugzilla_version.xml')
+        httpretty.register_uri(httpretty.POST,
+                               BUGZILLA_LOGIN_URL,
+                               body="index.cgi?logout=1",
+                               status=200)
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_METADATA_URL,
                                body=body, status=200)
@@ -1005,6 +1022,24 @@ class TestBugzillaClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/show_activity.cgi')
         self.assertDictEqual(req.querystring, expected)
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = "headers-information"
+        payload = {'GoAheadAndLogIn': 'Log in',
+                   'Bugzilla_password': '1234',
+                   'Bugzilla_login': 'jsmith@example.com'}
+
+        s_url, s_headers, s_payload = BugzillaClient.sanitize_for_archive(url, headers, copy.deepcopy(payload))
+        payload.pop('GoAheadAndLogIn')
+        payload.pop('Bugzilla_password')
+        payload.pop('Bugzilla_login')
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
 
 
 if __name__ == "__main__":
