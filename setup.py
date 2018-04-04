@@ -100,7 +100,7 @@ setup(name="perceval",
           'requests>=2.7.0',
           'beautifulsoup4>=4.3.2',
           'feedparser>=5.1.3',
-          'dulwich>=0.18.5',
+          'dulwich>=0.18.5, <0.19',
           'urllib3>=1.22',
           'grimoirelab-toolkit>=0.1.4'
       ],
