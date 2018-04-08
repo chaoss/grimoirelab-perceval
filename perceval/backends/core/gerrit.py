@@ -47,10 +47,10 @@ class Gerrit(Backend):
     """Gerrit backend.
 
     Class to fetch the reviews from a Gerrit server. To initialize
-    this class the URL of the server must be provided. The `url`
+    this class the Hostname of the server must be provided. The `hostname`
     will be set as the origin of the data.
 
-    :param url: Gerrit server URL
+    :param hostname: Gerrit server Hostname
     :param user: SSH user used to connect to the Gerrit server
     :param port: SSH port
     :param max_reviews: maximum number of reviews requested on the same query
@@ -63,15 +63,15 @@ class Gerrit(Backend):
 
     CATEGORIES = [CATEGORY_REVIEW]
 
-    def __init__(self, url,
+    def __init__(self, hostname,
                  user=None, port=PORT, max_reviews=MAX_REVIEWS,
                  blacklist_reviews=None,
                  disable_host_key_check=False,
                  tag=None, archive=None):
-        origin = url
+        origin = hostname
 
         super().__init__(origin, tag=tag, archive=archive)
-        self.url = url
+        self.hostname = hostname
         self.user = user
         self.port = port
         self.max_reviews = max(1, max_reviews)
@@ -179,7 +179,7 @@ class Gerrit(Backend):
 
     def _init_client(self, from_archive=False):
 
-        return GerritClient(self.url, self.user, self.max_reviews,
+        return GerritClient(self.hostname, self.user, self.max_reviews,
                             self.blacklist_reviews, self.disable_host_key_check,
                             self.port, self.archive, from_archive)
 
@@ -221,7 +221,7 @@ class Gerrit(Backend):
 
             updated = review['lastUpdated']
             if updated <= from_ut:
-                logger.debug("No more updates for %s" % (self.url))
+                logger.debug("No more updates for %s" % (self.hostname))
                 break
             else:
                 yield review
@@ -252,7 +252,7 @@ class Gerrit(Backend):
                 pass  # last_item is a string in old gerrits
             updated = review['lastUpdated']
             if updated <= from_ut:
-                logger.debug("No more updates for %s" % (self.url))
+                logger.debug("No more updates for %s" % (self.hostname))
                 break
             else:
                 yield review
@@ -282,7 +282,7 @@ class GerritClient():
     Check the next link for more info:
     https://gerrit-documentation.storage.googleapis.com/Documentation/2.12/cmd-query.html
 
-    :param repository: URL of the Gerrit server
+    :param repository: Hostname of the Gerrit server
     :param user: SSH user to be used to connect to gerrit server
     :param max_reviews: max number of reviews per query
     :param blacklist_reviews: exclude the reviews of this list while fetching
@@ -515,7 +515,7 @@ class GerritCommand(BackendCommand):
                            help="Set SSH port of the Gerrit server")
 
         # Required arguments
-        parser.parser.add_argument('url',
-                                   help="URL of the Gerrit server")
+        parser.parser.add_argument('hostname',
+                                   help="Hostname of the Gerrit server")
 
         return parser
