@@ -109,7 +109,7 @@ class TestGerritBackend(unittest.TestCase):
         """Test whether attributes are initializated"""
 
         gerrit = Gerrit(GERRIT_REPO, tag='test')
-        self.assertEqual(gerrit.url, GERRIT_REPO)
+        self.assertEqual(gerrit.hostname, GERRIT_REPO)
         self.assertEqual(gerrit.port, PORT)
         self.assertEqual(gerrit.max_reviews, MAX_REVIEWS)
         self.assertIsNone(gerrit.user)
@@ -117,7 +117,7 @@ class TestGerritBackend(unittest.TestCase):
         self.assertIsNone(gerrit.client)
 
         gerrit = Gerrit(GERRIT_REPO, GERRIT_USER, port=1000, max_reviews=100)
-        self.assertEqual(gerrit.url, GERRIT_REPO)
+        self.assertEqual(gerrit.hostname, GERRIT_REPO)
         self.assertEqual(gerrit.port, 1000)
         self.assertEqual(gerrit.max_reviews, 100)
         self.assertEqual(gerrit.tag, GERRIT_REPO)
@@ -401,7 +401,7 @@ class TestGerritCommand(unittest.TestCase):
                 '--tag', 'test', '--no-archive']
 
         parsed_args = parser.parse(*args)
-        self.assertEqual(parsed_args.url, GERRIT_REPO)
+        self.assertEqual(parsed_args.hostname, GERRIT_REPO)
         self.assertEqual(parsed_args.user, GERRIT_USER)
         self.assertEqual(parsed_args.max_reviews, 5)
         self.assertEqual(parsed_args.tag, 'test')
