@@ -59,7 +59,7 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.3'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_REVIEW]
 
