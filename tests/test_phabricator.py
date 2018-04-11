@@ -231,12 +231,51 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(trans[0]['authorData']['userName'], 'jdoe')
         self.assertEqual(trans[15]['authorData']['userName'], 'jdoe')
 
+        # Check that subscribers data is included for core:subscribers type transactions
+        trans = tasks[0]['data']['transactions'][6]
+        self.assertEqual(trans['transactionType'], 'core:subscribers')
+        self.assertEqual(trans['oldValue'], [])
+        self.assertEqual(trans['oldValue'], trans['oldValue_data'])
+        self.assertEqual(len(trans['newValue']), len(trans['newValue_data']))
+        self.assertDictEqual(trans['newValue_data'][0], trans['authorData'])
+
+        # Check that project data is included for core:edge type transactions
+        trans = tasks[0]['data']['transactions'][7]
+        self.assertEqual(trans['transactionType'], 'core:edge')
+        self.assertEqual(trans['newValue']['PHID-PROJ-2qnt6thbrd7qnx5bitzy']['dst_data']['phid'],
+                         trans['newValue']['PHID-PROJ-2qnt6thbrd7qnx5bitzy']['dst'])
+        self.assertEqual(trans['newValue']['PHID-PROJ-2qnt6thbrd7qnx5bitzy']['dst_data']['name'], 'Bug report')
+
+        # Check that policy data is include for core:edit-policy type transactions
+        trans = tasks[0]['data']['transactions'][8]
+        self.assertEqual(trans['transactionType'], 'core:edit-policy')
+        self.assertIsNotNone(trans['newValue_data'])
+        self.assertIsNone(trans['oldValue_data'])
+
+        # Check that policy data is include for core:view-policy type transactions
+        trans = tasks[0]['data']['transactions'][9]
+        self.assertEqual(trans['transactionType'], 'core:view-policy')
+        self.assertIsNotNone(trans['newValue_data'])
+        self.assertIsNone(trans['oldValue_data'])
+
+        # Check that project data is include for core:columns type transactions
+        trans = tasks[3]['data']['transactions'][15]
+        self.assertEqual(trans['transactionType'], 'core:columns')
+        self.assertEqual(trans['newValue'][0]['boardPHID_data']['name'], 'Team: Devel')
+        self.assertIsNone(trans['oldValue'])
+
+        # Check that reassign data is include for reassign type transactions
+        trans = tasks[0]['data']['transactions'][13]
+        self.assertEqual(trans['transactionType'], 'reassign')
+        self.assertDictEqual(trans['newValue_data'], trans['authorData'])
+        self.assertIsNone(trans['oldValue_data'])
+
         # Check authors that weren't found on the server: jsmith
         trans = tasks[1]['data']['transactions']
         self.assertEqual(trans[3]['authorData'], None)
 
         trans = tasks[3]['data']['transactions']
-        self.assertEqual(trans[0]['authorData']['userName'], 'jrae')
+        self.assertEqual(trans[0]['authorData']['userName'], 'jdoe')
         self.assertEqual(trans[15]['authorData']['userName'], 'jane')
         self.assertEqual(trans[16]['authorData']['name'], 'Herald')
 
@@ -277,6 +316,22 @@ class TestPhabricatorBackend(unittest.TestCase):
                 'params': {
                     '__conduit__': {'token': 'AAAA'},
                     'phids': ['PHID-USER-2uk52xorcqb6sjvp467y']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-PROJ-2qnt6thbrd7qnx5bitzy']
                 }
             },
             {
@@ -337,22 +392,6 @@ class TestPhabricatorBackend(unittest.TestCase):
                     '__conduit__': {'token': 'AAAA'},
                     'phids': ['PHID-APPS-PhabricatorHeraldApplication']
                 }
-            },
-            {
-                '__conduit__': ['True'],
-                'output': ['json'],
-                'params': {
-                    '__conduit__': {'token': 'AAAA'},
-                    'phids': ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
-                }
-            },
-            {
-                '__conduit__': ['True'],
-                'output': ['json'],
-                'params': {
-                    '__conduit__': {'token': 'AAAA'},
-                    'phids': ['PHID-PROJ-2qnt6thbrd7qnx5bitzy']
-                }
             }
         ]
 
@@ -361,7 +400,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         for i in range(len(expected)):
             rparams = http_requests[i].parsed_body
             rparams['params'] = json.loads(rparams['params'][0])
-            self.assertDictEqual(rparams, expected[i])
+            self.assertIn(rparams, expected)
 
     @httpretty.activate
     def test_fetch_from_date(self):
@@ -386,6 +425,14 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(task['updated_on'], 1467196707.0)
         self.assertEqual(task['category'], 'task')
         self.assertEqual(task['tag'], PHABRICATOR_URL)
+
+        # Check subscribers transaction type
+        trans = task['data']['transactions'][4]
+        self.assertEqual(trans['newValue_data'][0]['userName'], 'jdoe')
+
+        # Check reassign transaction type
+        trans = task['data']['transactions'][11]
+        self.assertEqual(trans['newValue_data']['userName'], 'jdoe')
 
         # Check requests
         expected = [
@@ -412,7 +459,15 @@ class TestPhabricatorBackend(unittest.TestCase):
                 'output': ['json'],
                 'params': {
                     '__conduit__': {'token': 'AAAA'},
-                    'phids': ['PHID-USER-pr5fcxy4xk5ofqsfqcfc']
+                    'phids': ['PHID-USER-2uk52xorcqb6sjvp467y']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
                 }
             },
             {
@@ -436,15 +491,15 @@ class TestPhabricatorBackend(unittest.TestCase):
                 'output': ['json'],
                 'params': {
                     '__conduit__': {'token': 'AAAA'},
-                    'phids': ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
+                    'phids': ['PHID-USER-pr5fcxy4xk5ofqsfqcfc']
                 }
             },
             {
                 '__conduit__': ['True'],
                 'output': ['json'],
                 'params': {
-                    '__conduit__': {'token': 'AAAA'},
-                    'phids': ['PHID-PROJ-2qnt6thbrd7qnx5bitzy']
+                    "__conduit__": {"token": "AAAA"},
+                    "phids": ["PHID-PROJ-2qnt6thbrd7qnx5bitzy"]
                 }
             }
         ]

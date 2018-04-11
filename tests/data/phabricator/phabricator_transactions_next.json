@@ -4,30 +4,27 @@
     "result": {
         "296": [
             {
-                "authorPHID": "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
+                "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
                 "comments": null,
                 "dateCreated": "1467196707",
-                "newValue": {
-                    "afterPHID": "PHID-TASK-ivlrol6stsi537lsshxm",
-                    "beforePHID": null,
-                    "columnPHIDs": [
-                        "PHID-PCOL-dbt3mnrmocumpfqfzu3w"
-                    ],
-                    "projectPHID": "PHID-PROJ-dd44hclhk7iboav6x7e4"
-                },
-                "oldValue": {
-                    "columnPHIDs": {
-                        "PHID-PCOL-joga2mjnalekgr5slbiw": "PHID-PCOL-joga2mjnalekgr5slbiw"
-                    },
-                    "projectPHID": "PHID-PROJ-dd44hclhk7iboav6x7e4"
-                },
+                "newValue": [
+                    {
+                      "afterPHID": "PHID-TASK-ivlrol6stsi537lsshxm",
+                      "boardPHID": "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo",
+                      "columnPHID": "PHID-PCOL-dbt3mnrmocumpfqfzu3w",
+                      "fromColumnPHIDs": [
+                            "PHID-PCOL-g4lqvslxi3yyw626qi6i"
+                      ]
+                    }
+                ],
+                "oldValue": null,
                 "taskID": "296",
                 "transactionID": "8821",
                 "transactionPHID": "PHID-XACT-TASK-gva4ty36zx4ojcg",
-                "transactionType": "projectcolumn"
+                "transactionType": "core:columns"
             },
             {
-                "authorPHID": "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
+                "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
                 "comments": "A comment",
                 "dateCreated": "1467196681",
                 "newValue": null,
@@ -38,7 +35,7 @@
                 "transactionType": "core:comment"
             },
             {
-                "authorPHID": "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
+                "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
                 "comments": null,
                 "dateCreated": "1466598205",
                 "newValue": null,
@@ -49,34 +46,32 @@
                 "transactionType": "core:comment"
             },
             {
-                "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
+                "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
                 "comments": null,
                 "dateCreated": "1465815171",
-                "newValue": {
-                    "afterPHID": null,
-                    "beforePHID": null,
-                    "columnPHIDs": [
-                        "PHID-PCOL-joga2mjnalekgr5slbiw"
-                    ],
-                    "projectPHID": "PHID-PROJ-dd44hclhk7iboav6x7e4"
-                },
-                "oldValue": {
-                    "columnPHIDs": {
-                        "PHID-PCOL-lfrrnk3pbd4bdcrqbgw4": "PHID-PCOL-lfrrnk3pbd4bdcrqbgw4"
-                    },
-                    "projectPHID": "PHID-PROJ-dd44hclhk7iboav6x7e4"
-                },
+                "newValue": [
+                    {
+                      "afterPHID": null,
+                      "boardPHID": "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo",
+                      "columnPHID": "PHID-PCOL-joga2mjnalekgr5slbiw",
+                      "fromColumnPHIDs": [
+                        "PHID-PCOL-g4lqvslxi3yyw626qi6i"
+                      ]
+                    }
+                ],
+                "oldValue": null,
                 "taskID": "296",
                 "transactionID": "5451",
                 "transactionPHID": "PHID-XACT-TASK-lmeevrxm6t6s2ig",
-                "transactionType": "projectcolumn"
+                "transactionType": "core:columns"
             },
             {
                 "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
                 "comments": null,
                 "dateCreated": "1465815168",
                 "newValue": [
-                    "PHID-USER-ojtcpympsmwenszuef7p"
+                    "PHID-USER-2uk52xorcqb6sjvp467y",
+                    "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo"
                 ],
                 "oldValue": [],
                 "taskID": "296",
@@ -89,9 +84,9 @@
                 "comments": null,
                 "dateCreated": "1465815168",
                 "newValue": {
-                    "PHID-PROJ-dd44hclhk7iboav6x7e4": {
+                    "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo": {
                         "data": [],
-                        "dst": "PHID-PROJ-dd44hclhk7iboav6x7e4",
+                        "dst": "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo",
                         "type": 41
                     }
                 },
@@ -105,7 +100,7 @@
                 "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
                 "comments": null,
                 "dateCreated": "1465815168",
-                "newValue": "users",
+                "newValue": "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo",
                 "oldValue": null,
                 "taskID": "296",
                 "transactionID": "5448",
@@ -160,7 +155,7 @@
                 "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
                 "comments": null,
                 "dateCreated": "1465815168",
-                "newValue": "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
+                "newValue": "PHID-USER-2uk52xorcqb6sjvp467y",
                 "oldValue": null,
                 "taskID": "296",
                 "transactionID": "5443",
@@ -193,31 +188,41 @@
                 "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
                 "comments": null,
                 "dateCreated": "1465815168",
-                "newValue": {
-                    "columnPHIDs": [
-                        "PHID-PCOL-lfrrnk3pbd4bdcrqbgw4"
-                    ],
-                    "projectPHID": "PHID-PROJ-dd44hclhk7iboav6x7e4"
-                },
-                "oldValue": {
-                    "columnPHIDs": [],
-                    "projectPHID": "PHID-PROJ-dd44hclhk7iboav6x7e4"
-                },
+                "newValue": [
+                    {
+                      "afterPHID": null,
+                      "boardPHID": "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo",
+                      "columnPHID": "PHID-PCOL-lfrrnk3pbd4bdcrqbgw4",
+                      "fromColumnPHIDs": [
+                        "PHID-PCOL-g4lqvslxi3yyw626qi6i"
+                      ]
+                    }
+                ],
+                "oldValue": null,
                 "taskID": "296",
                 "transactionID": "5440",
                 "transactionPHID": "PHID-XACT-TASK-pud7bqpuns46eee",
-                "transactionType": "projectcolumn"
+                "transactionType": "core:columns"
             },
             {
                 "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
                 "comments": null,
                 "dateCreated": "1465815168",
-                "newValue": "PHID-PCOL-lfrrnk3pbd4bdcrqbgw4",
+                "newValue": [
+                    {
+                      "afterPHID": null,
+                      "boardPHID": "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo",
+                      "columnPHID": "PHID-PCOL-lfrrnk3pbd4bdcrqbgw4",
+                      "fromColumnPHIDs": [
+                        "PHID-PCOL-g4lqvslxi3yyw626qi6i"
+                      ]
+                    }
+                ],
                 "oldValue": null,
                 "taskID": "296",
                 "transactionID": "5439",
                 "transactionPHID": "PHID-XACT-TASK-wync2cng44cncmb",
-                "transactionType": "column"
+                "transactionType": "core:columns"
             },
             {
                 "authorPHID": "PHID-APPS-PhabricatorHeraldApplication",
