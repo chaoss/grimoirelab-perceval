@@ -1,5 +1,68 @@
 # Releases
 
+## Perceval 0.10 - (2018-04-11)
+
+** New features and improvements: **
+
+ * Support for Python 3.5, 3.6.
+ * New set of backends added:
+   - **GitLab**
+   - **Launchpad**
+ * `Cache` was removed in favor of `Archive`. This new feature stores, in
+   SQLite databases, each data response received from a remote source. Thus,
+   it is possible to retrieve original data again without accessing the remote
+   source.
+ * A new generic HTTP client (`HttpClient`) is available and shared by those
+   backends which require to fetch data using that protocol. This client manages
+   rate limits, sleep times and retries in case of error. It is fully extensible
+   and configurable.
+ * With the integration of categories, backends would be able to generate
+   different types of items. For instance, GitHub generates issue and
+   pull request items. The option `--category` allows to set which type of
+   items will be fetched.
+ * Gmane site shut down its activity in July 2016. Although there were some
+   actions to revamp it, it is still down. For these reasons, Gmane backend
+   is no longer maintained and has been removed from the core backends.
+ * Tests were improved, specially, adding unit tests for Gerrit backend.
+ * Perceval and GrimoireLab project are now part of CHAOSS community.
+
+** Backend improvements: **
+
+ * **askbot**
+   - add data about accepted answers
+ * **gerrit**
+   - rename parameter URL to hostname
+ * **git**
+   - add `to-date` option to fetch data up to the given date
+   - run Git commands setting HOME environment variable
+   - clone data into a bare repository instead of a work copy
+ * **github**
+   - fetch issue comments
+   - fetch issue/comments reactions
+   - fetch multiple assignees
+   - fetch pull request category
+   - major refactoring reducing the number of requests sent by the client
+ * **phabricator**
+   - include project/user information in task transactions
+
+** Bugs fixed: **
+
+ * The process for discovering references in Git repositories failed
+   with those repositories which do not have any. (#260)
+ * When a local Git repository was analyzed by Perceval, the directory where
+   it was cloned was created inside the local repository. (#262)
+ * Sleep times when rate limit is in use were wrongly calculated in some
+   cases, generating negative values. (#355)
+ * Pipermail backend failed on inaccessible archive URLs. Now, it skips
+   those URLs generating warning messages. (#358)
+
+** Thanks to: **
+
+ * Anvesh Chaturvedi
+ * David Pose Fernández
+ * Prabhat Sharma
+
+
 ## Perceval 0.9 - (2017-07-17)
 
 ** New features and improvements: **
