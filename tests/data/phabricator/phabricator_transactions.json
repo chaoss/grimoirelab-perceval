@@ -341,18 +341,7 @@
                 "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
                 "comments": null,
                 "dateCreated": "1462379566",
-                "newValue": {
-                    "PHID-PROJ-2qnt6thbrd7qnx5bitzy": {
-                        "data": [],
-                        "dst": "PHID-PROJ-2qnt6thbrd7qnx5bitzy",
-                        "type": 41
-                    },
-                    "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo": {
-                        "data": [],
-                        "dst": "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo",
-                        "type": 41
-                    }
-                },
+                "newValue": ["PHID-PROJ-2qnt6thbrd7qnx5bitzy", "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo"],
                 "oldValue": [],
                 "taskID": "73",
                 "transactionID": "1248",
@@ -531,7 +520,7 @@
                 "comments": null,
                 "dateCreated": "1462645103",
                 "newValue": [
-                    "PHID-USER-2uk52xorcqb6sjvp467y",
+                    null,
                     "PHID-USER-bjxhrstz5fb5gkrojmev"
                 ],
                 "oldValue": [],

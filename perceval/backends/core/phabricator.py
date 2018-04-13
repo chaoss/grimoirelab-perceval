@@ -50,7 +50,7 @@ class Phabricator(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.5'
+    version = '0.10.0'
 
     CATEGORIES = [CATEGORY_TASK]
 
@@ -316,8 +316,8 @@ class Phabricator(Backend):
                     tt['oldValue_data'] = self.__resolve_policy_id(tt['oldValue'])
 
                 if tt['transactionType'] == 'core:edge':
-                    tt['oldValue'] = self.__resolve_project_ids(tt['oldValue'])
-                    tt['newValue'] = self.__resolve_project_ids(tt['newValue'])
+                    tt['oldValue_data'] = self.__resolve_project_ids(tt['oldValue'])
+                    tt['newValue_data'] = self.__resolve_project_ids(tt['newValue'])
 
         return tasks_trans
 
@@ -355,7 +355,9 @@ class Phabricator(Backend):
         resolved_lst = []
         for e in lst:
             resolved = e
-            if e.startswith('PHID-PROJ'):
+            if not e:
+                continue
+            elif e.startswith('PHID-PROJ'):
                 resolved = self.__get_or_fetch_project(e)
             elif e.startswith('PHID-USER'):
                 resolved = self.__get_or_fetch_user(e)
@@ -364,17 +366,38 @@ class Phabricator(Backend):
 
         return resolved_lst
 
-    def __resolve_project_ids(self, dct):
-        if not dct:
-            return dct
+    def __resolve_project_ids(self, obj):
+        if not obj:
+            return obj
+
+        if isinstance(obj, dict):
+            obj = self.__resolve_project_ids_from_dict(obj)
+        elif isinstance(obj, list):
+            obj = self.__resolve_project_ids_from_list(obj)
+
+        return obj
+
+    def __resolve_project_ids_from_dict(self, dct):
+        projects = []
 
         for key in dct.keys():
             content = dct.get(key)
 
             if 'dst' in content and content['dst'] and content['dst'].startswith('PHID-PROJ'):
-                content['dst_data'] = self.__get_or_fetch_project(content['dst'])
+                project_info = self.__get_or_fetch_project(content['dst'])
+                projects.append(project_info)
 
-        return dct
+        return projects
+
+    def __resolve_project_ids_from_list(self, lst):
+        projects = []
+
+        for e in lst:
+            if e.startswith('PHID-PROJ'):
+                project_info = self.__get_or_fetch_project(e)
+                projects.append(project_info)
+
+        return projects
 
     def __fetch_and_parse_users(self, *users_ids):
         logger.debug("Fetching and parsing users data")
