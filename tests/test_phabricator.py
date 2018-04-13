@@ -242,9 +242,8 @@ class TestPhabricatorBackend(unittest.TestCase):
         # Check that project data is included for core:edge type transactions
         trans = tasks[0]['data']['transactions'][7]
         self.assertEqual(trans['transactionType'], 'core:edge')
-        self.assertEqual(trans['newValue']['PHID-PROJ-2qnt6thbrd7qnx5bitzy']['dst_data']['phid'],
-                         trans['newValue']['PHID-PROJ-2qnt6thbrd7qnx5bitzy']['dst'])
-        self.assertEqual(trans['newValue']['PHID-PROJ-2qnt6thbrd7qnx5bitzy']['dst_data']['name'], 'Bug report')
+        self.assertEqual(trans['newValue_data'][0]['phid'],
+                         trans['newValue'][trans['newValue_data'][0]['phid']]['dst'])
 
         # Check that policy data is include for core:edit-policy type transactions
         trans = tasks[0]['data']['transactions'][8]
