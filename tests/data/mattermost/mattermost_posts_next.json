@@ -1,0 +1,86 @@
+{
+    "order": [
+        "swqyc3ekabrjbxc5bjf6hhba3w",
+        "b15jpgkw9bftufcdzteqiypoyr",
+        "49ctz9ndgfd48eb5oq4xbjpfby",
+        "1ju85sxo7bfab8nf3yk5snn17a"
+    ],
+    "posts": {
+        "1ju85sxo7bfab8nf3yk5snn17a": {
+            "id": "1ju85sxo7bfab8nf3yk5snn17a",
+            "create_at": 1523525981213,
+            "update_at": 1523525981213,
+            "edit_at": 0,
+            "delete_at": 0,
+            "is_pinned": false,
+            "user_id": "8tbwn7uikpdy3gpse6fgiie5co",
+            "channel_id": "cf6axeehstft9eq4nq5uk5jqby",
+            "root_id": "",
+            "parent_id": "",
+            "original_id": "",
+            "message": "sduenas joined the team.",
+            "type": "system_join_team",
+            "props": {
+                "username": "sduenas"
+            },
+            "hashtags": "",
+            "pending_post_id": ""
+        },
+        "49ctz9ndgfd48eb5oq4xbjpfby": {
+            "id": "49ctz9ndgfd48eb5oq4xbjpfby",
+            "create_at": 1523526171280,
+            "update_at": 1523526171280,
+            "edit_at": 0,
+            "delete_at": 0,
+            "is_pinned": false,
+            "user_id": "haqnaxe4cpn4jfsx3w7x3y96ea",
+            "channel_id": "cf6axeehstft9eq4nq5uk5jqby",
+            "root_id": "",
+            "parent_id": "",
+            "original_id": "",
+            "message": "valcos joined the team.",
+            "type": "system_join_team",
+            "props": {
+                "username": "valcos"
+            },
+            "hashtags": "",
+            "pending_post_id": ""
+        },
+        "b15jpgkw9bftufcdzteqiypoyr": {
+            "id": "b15jpgkw9bftufcdzteqiypoyr",
+            "create_at": 1523526181298,
+            "update_at": 1523526181298,
+            "edit_at": 0,
+            "delete_at": 0,
+            "is_pinned": false,
+            "user_id": "haqnaxe4cpn4jfsx3w7x3y96ea",
+            "channel_id": "cf6axeehstft9eq4nq5uk5jqby",
+            "root_id": "",
+            "parent_id": "",
+            "original_id": "",
+            "message": "hola! soy valerio!",
+            "type": "",
+            "props": {},
+            "hashtags": "",
+            "pending_post_id": ""
+        },
+        "swqyc3ekabrjbxc5bjf6hhba3w": {
+            "id": "swqyc3ekabrjbxc5bjf6hhba3w",
+            "create_at": 1523526187090,
+            "update_at": 1523526187090,
+            "edit_at": 0,
+            "delete_at": 0,
+            "is_pinned": false,
+            "user_id": "haqnaxe4cpn4jfsx3w7x3y96ea",
+            "channel_id": "cf6axeehstft9eq4nq5uk5jqby",
+            "root_id": "",
+            "parent_id": "",
+            "original_id": "",
+            "message": "qu\u00e9 tal va todo?",
+            "type": "",
+            "props": {},
+            "hashtags": "",
+            "pending_post_id": ""
+        }
+    }
+}

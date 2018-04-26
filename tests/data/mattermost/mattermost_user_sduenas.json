@@ -1,0 +1,21 @@
+{
+    "id": "8tbwn7uikpdy3gpse6fgiie5co",
+    "create_at": 1523525971112,
+    "update_at": 1523525981147,
+    "delete_at": 0,
+    "username": "sduenas",
+    "auth_data": "",
+    "auth_service": "",
+    "email": "sduenas@bitergia.com",
+    "nickname": "",
+    "first_name": "",
+    "last_name": "",
+    "position": "",
+    "roles": "system_admin system_user",
+    "locale": "en",
+    "timezone": {
+        "automaticTimezone": "",
+        "manualTimezone": "",
+        "useAutomaticTimezone": "true"
+    }
+}

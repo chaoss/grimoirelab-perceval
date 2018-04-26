@@ -24,6 +24,7 @@ are:
     jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
     launchpad        Fetch issues from Launchpad issue tracker
+    mattermost       Fetch posts from a Mattermost server
     mbox             Fetch messages from MBox files
     mediawiki        Fetch pages and revisions from a MediaWiki site
     meetup           Fetch events from a Meetup group
@@ -206,6 +207,11 @@ $ perceval jira 'https://tickets.puppetlabs.com' --project PUP --from-date '2016
 ### Launchpad
 ```
 $ perceval launchpad ubuntu --from-date '2016-01-01'
+```
+
+### Mattermost
+```
+$ perceval mattermost 'http://mattermost.example.com' jgw7jdmjkjf19ffkwnw59i5f9e --from-date '2016-01-01' -t 'abcdefghijk'
 ```
 
 ### MBox
