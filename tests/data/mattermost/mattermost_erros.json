@@ -1,0 +1,7 @@
+{
+    "id":"api.context.permissions.app_error",
+    "message":"You do not have the appropriate permissions",
+    "detailed_error":"",
+    "request_id":"eacx15x9yjyrmjokidydrzykwy",
+    "status_code":403
+}
