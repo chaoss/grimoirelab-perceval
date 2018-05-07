@@ -28,8 +28,8 @@ import os.path
 import sys
 
 import perceval
-import perceval.backends
-
+import perceval.backend
+import perceval.backends.core
 
 PERCEVAL_USAGE_MSG = \
 """%(prog)s [-c <file>] [-g] <backend> [<args>] | --help | --version"""
@@ -81,7 +81,7 @@ PERCEVAL_EPILOG_MSG = \
 """Run '%(prog)s <backend> --help' to get information about a specific backend."""
 
 PERCEVAL_VERSION_MSG = \
-"""%(prog)s """  + perceval.__version__
+"""%(prog)s """  + perceval.backends.core.__version__
 
 
 # Logging formats
@@ -98,7 +98,7 @@ def main():
     else:
         defaults = {}
 
-    _, PERCEVAL_CMDS = perceval.find_backends(perceval.backends)
+    _, PERCEVAL_CMDS = perceval.backend.find_backends(perceval.backends)
 
     if args.backend not in PERCEVAL_CMDS:
         raise RuntimeError("Unknown backend %s" % args.backend)
