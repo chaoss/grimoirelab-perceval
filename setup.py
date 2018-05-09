@@ -92,9 +92,7 @@ setup(name="perceval",
           'perceval.backends',
           'perceval.backends.core'
       ],
-      namespaces=[
-          'perceval.backends'
-      ],
+      namespace_packages=['perceval', 'perceval.backends'],
       install_requires=[
           'python-dateutil>=2.6.0',
           'requests>=2.7.0',

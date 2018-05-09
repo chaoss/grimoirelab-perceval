@@ -38,7 +38,7 @@ from grimoirelab.toolkit.datetime import (InvalidDateError,
                                           datetime_utcnow,
                                           str_to_datetime)
 
-from perceval import __version__
+from perceval.backends.core import __version__
 from perceval.archive import Archive, ArchiveManager
 from perceval.backend import (Backend,
                               BackendCommandArgumentParser,
