@@ -29,11 +29,9 @@ import os
 import pkgutil
 import sys
 
-from datetime import datetime as dt
-
 from grimoirelab.toolkit.introspect import find_signature_parameters
-from grimoirelab.toolkit.datetime import str_to_datetime
-
+from grimoirelab.toolkit.datetime import (datetime_utcnow,
+                                          str_to_datetime)
 from .archive import Archive, ArchiveManager
 from .errors import ArchiveError, BackendError
 from ._version import __version__
@@ -72,7 +70,7 @@ class Backend:
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.6.1'
+    version = '0.6.2'
 
     CATEGORIES = []
 
@@ -159,7 +157,7 @@ class Backend:
             'backend_name': self.__class__.__name__,
             'backend_version': self.version,
             'perceval_version': __version__,
-            'timestamp': dt.utcnow().timestamp(),
+            'timestamp': datetime_utcnow().timestamp(),
             'origin': self.origin,
             'uuid': uuid(self.origin, self.metadata_id(item)),
             'updated_on': self.metadata_updated_on(item),
