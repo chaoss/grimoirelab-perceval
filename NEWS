@@ -1,5 +1,19 @@
 # Releases
 
+## Perceval 0.11 - (2018-05-21)
+
+** New features improvements: **
+
+ * Problems with namespaces were fixed. This package was not really using
+   Python namespaces. When other packages, such as `perceval-mozilla` or
+   `perceval-opnfv`, were installed `__init__.py` (inside `perceval`)
+   were overwritten breaking the structure of the main package and making
+   Perceval unusable. This release defines `perceval` as a namespace. Due
+   to it, `fetch`, `find_backends` and other symbols are no longer accessible
+   from the main package.
+ * Mattermost backend added.
+
+
 ## Perceval 0.10 - (2018-04-11)
 
 ** New features and improvements: **

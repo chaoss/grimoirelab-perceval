@@ -72,7 +72,7 @@ cmdclass = {'test': TestCommand}
 setup(name="perceval",
       description="Fetch data from software repositories",
       long_description=long_description,
-      url="https://github.com/grimoirelab/perceval",
+      url="https://github.com/chaoss/grimoirelab-perceval",
       version=version,
       author="Bitergia",
       author_email="sduenas@bitergia.com",
@@ -90,9 +90,17 @@ setup(name="perceval",
           'perceval.backends',
           'perceval.backends.core'
       ],
-      namespace_packages=['perceval', 'perceval.backends'],
-      setup_requires=['wheel', 'pandoc'],
-      tests_require=['httpretty==0.8.6'],
+      namespace_packages=[
+          'perceval',
+          'perceval.backends'
+      ],
+      setup_requires=[
+          'wheel',
+          'pandoc'
+      ],
+      tests_require=[
+          'httpretty==0.8.6'
+      ],
       install_requires=[
           'python-dateutil>=2.6.0',
           'requests>=2.7.0',
