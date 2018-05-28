@@ -60,16 +60,18 @@ class Pipermail(MBox):
 
     :param url: URL to the Pipermail archiver
     :param dirpath: directory path where the mboxes are stored
+    :param verify: allows to disable SSL verification
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.7.3'
+    version = '0.8.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
-    def __init__(self, url, dirpath, tag=None, archive=None):
+    def __init__(self, url, dirpath, verify=True, tag=None, archive=None):
         super().__init__(url, dirpath, tag=tag, archive=archive)
         self.url = url
+        self.verify = verify
 
     def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the Pipermail archiver.
@@ -99,7 +101,7 @@ class Pipermail(MBox):
         logger.info("Looking for messages from '%s' since %s",
                     self.url, str(from_date))
 
-        mailing_list = PipermailList(self.url, self.dirpath)
+        mailing_list = PipermailList(self.url, self.dirpath, self.verify)
         mailing_list.fetch(from_date=from_date)
 
         messages = self._fetch_and_parse_messages(mailing_list, from_date)
@@ -152,6 +154,9 @@ class PipermailCommand(BackendCommand):
         group = parser.parser.add_argument_group('Pipermail arguments')
         group.add_argument('--mboxes-path', dest='mboxes_path',
                            help="Path where mbox files will be stored")
+        group.add_argument('--verify', dest='verify',
+                           default=True,
+                           help="Value 'True' enable SSL verification")
 
         # Required arguments
         parser.parser.add_argument('url',
@@ -169,10 +174,12 @@ class PipermailList(MailingList):
 
     :param url: URL to the Pipermail archiver for this list
     :param dirpath: path to the local mboxes archives
+    :param verify: allows to disable SSL verification
     """
-    def __init__(self, url, dirpath):
+    def __init__(self, url, dirpath, verify=True):
         super().__init__(url, dirpath)
         self.url = url
+        self.verify = verify
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the mbox files from the remote archiver.
@@ -199,7 +206,7 @@ class PipermailList(MailingList):
 
         from_date = datetime_to_utc(from_date)
 
-        r = requests.get(self.url)
+        r = requests.get(self.url, verify=self.verify)
         r.raise_for_status()
 
         links = self._parse_archive_links(r.text)
@@ -291,7 +298,7 @@ class PipermailList(MailingList):
 
     def _download_archive(self, url, filepath):
         try:
-            r = requests.get(url, stream=True)
+            r = requests.get(url, stream=True, verify=self.verify)
             r.raise_for_status()
             with open(filepath, 'wb') as fd:
                 fd.write(r.raw.read())
