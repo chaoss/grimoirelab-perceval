@@ -67,6 +67,15 @@ class TestPipermailList(unittest.TestCase):
         self.assertEqual(pmls.uri, PIPERMAIL_URL)
         self.assertEqual(pmls.dirpath, self.tmp_path)
         self.assertEqual(pmls.url, PIPERMAIL_URL)
+        self.assertTrue(pmls.verify)
+
+        pmls = PipermailList(PIPERMAIL_URL, self.tmp_path, verify=False)
+
+        self.assertIsInstance(pmls, MailingList)
+        self.assertEqual(pmls.uri, PIPERMAIL_URL)
+        self.assertEqual(pmls.dirpath, self.tmp_path)
+        self.assertEqual(pmls.url, PIPERMAIL_URL)
+        self.assertFalse(pmls.verify)
 
     @httpretty.activate
     def test_fetch(self):
@@ -263,6 +272,7 @@ class TestPipermailBackend(unittest.TestCase):
         self.assertEqual(backend.dirpath, self.tmp_path)
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'test')
+        self.assertTrue(backend.verify)
 
         # When tag is empty or None it will be set to
         # the value in uri
@@ -273,6 +283,11 @@ class TestPipermailBackend(unittest.TestCase):
         backend = Pipermail('http://example.com/', self.tmp_path, tag='')
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'http://example.com/')
+
+        backend = Pipermail('http://example.com/', self.tmp_path, verify=True, tag='')
+        self.assertEqual(backend.origin, 'http://example.com/')
+        self.assertEqual(backend.tag, 'http://example.com/')
+        self.assertTrue(backend.verify)
 
     def test_has_archiving(self):
         """Test if it returns False when has_archiving is called"""
@@ -499,6 +514,14 @@ class TestPipermailCommand(unittest.TestCase):
         cmd = PipermailCommand(*args)
         self.assertEqual(cmd.parsed_args.dirpath, '/tmp/perceval/')
 
+        args = ['http://example.com/',
+                '--mboxes-path', '/tmp/perceval/',
+                '--verify', False]
+
+        cmd = PipermailCommand(*args)
+        self.assertEqual(cmd.parsed_args.dirpath, '/tmp/perceval/')
+        self.assertFalse(cmd.parsed_args.verify)
+
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
@@ -520,13 +543,15 @@ class TestPipermailCommand(unittest.TestCase):
         args = ['http://example.com/',
                 '--mboxes-path', '/tmp/perceval/',
                 '--tag', 'test',
-                '--from-date', '1970-01-01']
+                '--from-date', '1970-01-01',
+                '--verify', False]
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, 'http://example.com/')
         self.assertEqual(parsed_args.mboxes_path, '/tmp/perceval/')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertFalse(parsed_args.verify)
 
 
 if __name__ == "__main__":
