@@ -293,8 +293,7 @@ class PipermailList(MailingList):
         try:
             r = requests.get(url, stream=True)
             r.raise_for_status()
-            with open(filepath, 'wb') as fd:
-                fd.write(r.raw.read())
+            self._write_archive(r, filepath)
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 403:
                 logger.warning("Ignoring %s archive due to: %s", url, str(e))
@@ -308,3 +307,8 @@ class PipermailList(MailingList):
         logger.debug("%s archive downloaded and stored in %s", url, filepath)
 
         return True
+
+    @staticmethod
+    def _write_archive(r, filepath):
+        with open(filepath, 'wb') as fd:
+            fd.write(r.raw.read())
