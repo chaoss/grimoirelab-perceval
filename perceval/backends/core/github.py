@@ -53,7 +53,7 @@ DEFAULT_SLEEP_TIME = 1
 MAX_RETRIES = 5
 
 TARGET_ISSUE_FIELDS = ['user', 'assignee', 'assignees', 'comments', 'reactions']
-TARGET_PULL_FIELDS = ['user', 'review_comments', 'requested_reviewers', "merged_by"]
+TARGET_PULL_FIELDS = ['user', 'review_comments', 'requested_reviewers', "merged_by", "commits"]
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.16.1'
+    version = '0.17.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
 
@@ -255,6 +255,8 @@ class GitHub(Backend):
                     pull[field + '_data'] = self.__get_pull_review_comments(pull['number'])
                 elif field == 'requested_reviewers':
                     pull[field + '_data'] = self.__get_pull_requested_reviewers(pull['number'])
+                elif field == 'commits':
+                    pull[field + '_data'] = self.__get_pull_commits(pull['number'])
 
             yield pull
 
@@ -342,6 +344,20 @@ class GitHub(Backend):
 
         return requested_reviewers
 
+    def __get_pull_commits(self, pr_number):
+        """Get pull request commit hashes"""
+
+        hashes = []
+        group_pull_commits = self.client.pull_commits(pr_number)
+
+        for raw_pull_commits in group_pull_commits:
+
+            for commit in json.loads(raw_pull_commits):
+                commit_hash = commit['sha']
+                hashes.append(commit_hash)
+
+        return hashes
+
     def __get_pull_review_comments(self, pr_number):
         """Get pull request review comments"""
 
@@ -409,6 +425,7 @@ class GitHub(Backend):
         pull['review_comments_data'] = {}
         pull['requested_reviewers_data'] = []
         pull['merged_by_data'] = []
+        pull['commits_data'] = []
 
 
 class GitHubClient(HttpClient, RateLimitHandler):
@@ -541,6 +558,16 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         requested_reviewers_url = urijoin("pulls", str(pr_number), "requested_reviewers")
         return self.fetch_items(requested_reviewers_url, {})
+
+    def pull_commits(self, pr_number):
+        """Get pull request commits"""
+
+        payload = {
+            'per_page': 30,
+        }
+
+        commit_url = urijoin("pulls", str(pr_number), "commits")
+        return self.fetch_items(commit_url, payload)
 
     def pull_review_comments(self, pr_number):
         """Get pull request review comments"""
