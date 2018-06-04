@@ -70,7 +70,7 @@ class Backend:
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.6.2'
+    version = '0.7.0'
 
     CATEGORIES = []
 
@@ -365,15 +365,17 @@ class BackendCommand:
         using the archive manager.
         """
         backend_args = vars(self.parsed_args)
+        category = backend_args.pop('category', None)
+        archived_since = backend_args.pop('archived_since', None)
 
         if self.archive_manager and self.parsed_args.fetch_archive:
 
             items = fetch_from_archive(self.BACKEND, backend_args,
                                        self.archive_manager,
-                                       self.parsed_args.category,
-                                       self.parsed_args.archived_since)
+                                       category,
+                                       archived_since)
         else:
-            items = fetch(self.BACKEND, backend_args,
+            items = fetch(self.BACKEND, backend_args, category,
                           manager=self.archive_manager)
 
         try:
@@ -447,7 +449,7 @@ def uuid(*args):
     return uuid_sha1
 
 
-def fetch(backend_class, backend_args, manager=None):
+def fetch(backend_class, backend_args, category, manager=None):
     """Fetch items using the given backend.
 
     Generator to get items using the given backend class. When
@@ -460,6 +462,8 @@ def fetch(backend_class, backend_args, manager=None):
 
     :param backend_class: backend class to fetch items
     :param backend_args: dict of arguments needed to fetch the items
+    :param category: category of the items to retrieve.
+       If None, it will use the default backend category
     :param manager: archive manager needed to store the items
 
     :returns: a generator of items
@@ -470,6 +474,10 @@ def fetch(backend_class, backend_args, manager=None):
     init_args['archive'] = archive
 
     backend = backend_class(**init_args)
+
+    if category:
+        backend_args['category'] = category
+
     fetch_args = find_signature_parameters(backend.fetch,
                                            backend_args)
     items = backend.fetch(**fetch_args)
