@@ -64,7 +64,7 @@ class Pipermail(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -154,8 +154,8 @@ class PipermailCommand(BackendCommand):
         group = parser.parser.add_argument_group('Pipermail arguments')
         group.add_argument('--mboxes-path', dest='mboxes_path',
                            help="Path where mbox files will be stored")
-        group.add_argument('--verify', dest='verify',
-                           default=True,
+        group.add_argument('--no-verify', dest='verify',
+                           action='store_false',
                            help="Value 'True' enable SSL verification")
 
         # Required arguments

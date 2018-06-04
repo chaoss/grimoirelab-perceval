@@ -549,12 +549,10 @@ class TestPipermailCommand(unittest.TestCase):
         self.assertEqual(cmd.parsed_args.dirpath, '/tmp/perceval/')
 
         args = ['http://example.com/',
-                '--mboxes-path', '/tmp/perceval/',
-                '--verify', False]
+                '--mboxes-path', '/tmp/perceval/']
 
         cmd = PipermailCommand(*args)
         self.assertEqual(cmd.parsed_args.dirpath, '/tmp/perceval/')
-        self.assertFalse(cmd.parsed_args.verify)
 
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
@@ -578,7 +576,7 @@ class TestPipermailCommand(unittest.TestCase):
                 '--mboxes-path', '/tmp/perceval/',
                 '--tag', 'test',
                 '--from-date', '1970-01-01',
-                '--verify', False]
+                '--no-verify']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, 'http://example.com/')
