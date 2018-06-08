@@ -783,7 +783,8 @@ class GitRepository:
         self.gitenv = {
             'LANG': 'C',
             'PAGER': '',
-            'HOME': os.getenv('HOME', '')
+            'HOME': os.getenv('HOME', ''),
+            'PATH': os.getenv('PATH', '')
         }
 
     @classmethod
@@ -804,7 +805,8 @@ class GitRepository:
         cmd = ['git', 'clone', '--bare', uri, dirpath]
         env = {
             'LANG': 'C',
-            'HOME': os.getenv('HOME', '')
+            'HOME': os.getenv('HOME', ''),
+            'PATH': os.getenv('PATH', '')
         }
 
         cls._exec(cmd, env=env)
