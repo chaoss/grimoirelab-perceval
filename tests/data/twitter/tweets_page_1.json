@@ -1,0 +1,507 @@
+{
+    "search_metadata": {
+        "completed_in": 0.158,
+        "count": 100,
+        "max_id": 1005277806383673344,
+        "max_id_str": "1005277806383673344",
+        "query": "grimoirelab",
+        "refresh_url": "?since_id=1005277806383673344&q=grimoirelab&result_type=mixed&include_entities=1",
+        "since_id": 0,
+        "since_id_str": "0"
+    },
+    "statuses": [
+        {
+            "contributors": null,
+            "coordinates": null,
+            "created_at": "Sat Jun 09 02:38:00 +0000 2018",
+            "entities": {
+                "hashtags": [
+                    {
+                        "indices": [
+                            54,
+                            64
+                        ],
+                        "text": "structure"
+                    },
+                    {
+                        "indices": [
+                            72,
+                            82
+                        ],
+                        "text": "community"
+                    }
+                ],
+                "symbols": [],
+                "urls": [],
+                "user_mentions": [
+                    {
+                        "id": 10368692,
+                        "id_str": "10368692",
+                        "indices": [
+                            3,
+                            14
+                        ],
+                        "name": "Daniel Izquierdo",
+                        "screen_name": "dizquierdo"
+                    }
+                ]
+            },
+            "favorite_count": 0,
+            "favorited": false,
+            "geo": null,
+            "id": 1005277806383673344,
+            "id_str": "1005277806383673344",
+            "in_reply_to_screen_name": null,
+            "in_reply_to_status_id": null,
+            "in_reply_to_status_id_str": null,
+            "in_reply_to_user_id": null,
+            "in_reply_to_user_id_str": null,
+            "is_quote_status": false,
+            "lang": "en",
+            "metadata": {
+                "iso_language_code": "en",
+                "result_type": "recent"
+            },
+            "place": null,
+            "possibly_sensitive": false,
+            "retweet_count": 9,
+            "retweeted": false,
+            "retweeted_status": {
+                "contributors": null,
+                "coordinates": null,
+                "created_at": "Thu Jun 07 07:48:00 +0000 2018",
+                "entities": {
+                    "hashtags": [
+                        {
+                            "indices": [
+                                38,
+                                48
+                            ],
+                            "text": "structure"
+                        },
+                        {
+                            "indices": [
+                                56,
+                                66
+                            ],
+                            "text": "community"
+                        }
+                    ],
+                    "symbols": [],
+                    "urls": [
+                        {
+                            "display_url": "twitter.com/i/web/status/1\u2026",
+                            "expanded_url": "https://twitter.com/i/web/status/1004631044610502657",
+                            "indices": [
+                                117,
+                                140
+                            ],
+                            "url": "https://t.co/QGrYnSw4MI"
+                        }
+                    ],
+                    "user_mentions": []
+                },
+                "favorite_count": 11,
+                "favorited": false,
+                "geo": null,
+                "id": 1004631044610502657,
+                "id_str": "1004631044610502657",
+                "in_reply_to_screen_name": null,
+                "in_reply_to_status_id": null,
+                "in_reply_to_status_id_str": null,
+                "in_reply_to_user_id": null,
+                "in_reply_to_user_id_str": null,
+                "is_quote_status": false,
+                "lang": "en",
+                "metadata": {
+                    "iso_language_code": "en",
+                    "result_type": "recent"
+                },
+                "place": null,
+                "possibly_sensitive": false,
+                "retweet_count": 9,
+                "retweeted": false,
+                "source": "<a href=\"http://twitter.com\" rel=\"nofollow\">Twitter Web Client</a>",
+                "text": "Building new panels to understand the #structure of the #community. Is the core set of developers increasing or dec\u2026 https://t.co/QGrYnSw4MI",
+                "truncated": true,
+                "user": {
+                    "contributors_enabled": false,
+                    "created_at": "Mon Nov 19 00:36:17 +0000 2007",
+                    "default_profile": true,
+                    "default_profile_image": false,
+                    "description": "@Bitergia co-founder",
+                    "entities": {
+                        "description": {
+                            "urls": []
+                        },
+                        "url": {
+                            "urls": [
+                                {
+                                    "display_url": "about.me/dizquierdo",
+                                    "expanded_url": "http://about.me/dizquierdo",
+                                    "indices": [
+                                        0,
+                                        22
+                                    ],
+                                    "url": "http://t.co/NpYcjYvaFg"
+                                }
+                            ]
+                        }
+                    },
+                    "favourites_count": 895,
+                    "follow_request_sent": null,
+                    "followers_count": 428,
+                    "following": null,
+                    "friends_count": 502,
+                    "geo_enabled": true,
+                    "has_extended_profile": false,
+                    "id": 10368692,
+                    "id_str": "10368692",
+                    "is_translation_enabled": false,
+                    "is_translator": false,
+                    "lang": "en",
+                    "listed_count": 61,
+                    "location": "",
+                    "name": "Daniel Izquierdo",
+                    "notifications": null,
+                    "profile_background_color": "C0DEED",
+                    "profile_background_image_url": "http://abs.twimg.com/images/themes/theme1/bg.png",
+                    "profile_background_image_url_https": "https://abs.twimg.com/images/themes/theme1/bg.png",
+                    "profile_background_tile": false,
+                    "profile_image_url": "http://pbs.twimg.com/profile_images/37816162/4_normal.jpg",
+                    "profile_image_url_https": "https://pbs.twimg.com/profile_images/37816162/4_normal.jpg",
+                    "profile_link_color": "1DA1F2",
+                    "profile_sidebar_border_color": "C0DEED",
+                    "profile_sidebar_fill_color": "DDEEF6",
+                    "profile_text_color": "333333",
+                    "profile_use_background_image": true,
+                    "protected": false,
+                    "screen_name": "dizquierdo",
+                    "statuses_count": 2294,
+                    "time_zone": null,
+                    "translator_type": "none",
+                    "url": "http://t.co/NpYcjYvaFg",
+                    "utc_offset": null,
+                    "verified": false
+                }
+            },
+            "source": "<a href=\"http://twitter.com\" rel=\"nofollow\">Twitter Web Client</a>",
+            "text": "RT @dizquierdo: Building new panels to understand the #structure of the #community. Is the core set of developers increasing or decreasing?\u2026",
+            "truncated": false,
+            "user": {
+                "contributors_enabled": false,
+                "created_at": "Sun Jan 23 02:07:31 +0000 2011",
+                "default_profile": true,
+                "default_profile_image": false,
+                "description": "PhD candidate. Interested in system security, binary program analysis, fuzzing and other low-level stuff.",
+                "entities": {
+                    "description": {
+                        "urls": []
+                    }
+                },
+                "favourites_count": 2889,
+                "follow_request_sent": null,
+                "followers_count": 141,
+                "following": null,
+                "friends_count": 1044,
+                "geo_enabled": false,
+                "has_extended_profile": false,
+                "id": 241752592,
+                "id_str": "241752592",
+                "is_translation_enabled": false,
+                "is_translator": false,
+                "lang": "en",
+                "listed_count": 27,
+                "location": "",
+                "name": "Maggie",
+                "notifications": null,
+                "profile_background_color": "C0DEED",
+                "profile_background_image_url": "http://abs.twimg.com/images/themes/theme1/bg.png",
+                "profile_background_image_url_https": "https://abs.twimg.com/images/themes/theme1/bg.png",
+                "profile_background_tile": false,
+                "profile_image_url": "http://pbs.twimg.com/profile_images/503271505870848000/CA4JTmOF_normal.jpeg",
+                "profile_image_url_https": "https://pbs.twimg.com/profile_images/503271505870848000/CA4JTmOF_normal.jpeg",
+                "profile_link_color": "1DA1F2",
+                "profile_sidebar_border_color": "C0DEED",
+                "profile_sidebar_fill_color": "DDEEF6",
+                "profile_text_color": "333333",
+                "profile_use_background_image": true,
+                "protected": false,
+                "screen_name": "chubbymaggie",
+                "statuses_count": 2200,
+                "time_zone": null,
+                "translator_type": "none",
+                "url": null,
+                "utc_offset": null,
+                "verified": false
+            }
+        },
+        {
+            "contributors": null,
+            "coordinates": null,
+            "created_at": "Fri Jun 08 19:02:20 +0000 2018",
+            "entities": {
+                "hashtags": [
+                    {
+                        "indices": [
+                            66,
+                            81
+                        ],
+                        "text": "openexpoeurope"
+                    }
+                ],
+                "symbols": [],
+                "urls": [],
+                "user_mentions": [
+                    {
+                        "id": 487623589,
+                        "id_str": "487623589",
+                        "indices": [
+                            3,
+                            12
+                        ],
+                        "name": "Bitergia",
+                        "screen_name": "Bitergia"
+                    },
+                    {
+                        "id": 487623589,
+                        "id_str": "487623589",
+                        "indices": [
+                            23,
+                            32
+                        ],
+                        "name": "Bitergia",
+                        "screen_name": "Bitergia"
+                    },
+                    {
+                        "id": 6440602,
+                        "id_str": "6440602",
+                        "indices": [
+                            105,
+                            116
+                        ],
+                        "name": "Manrique Lopez",
+                        "screen_name": "jsmanrique"
+                    }
+                ]
+            },
+            "favorite_count": 0,
+            "favorited": false,
+            "geo": null,
+            "id": 1005163131042193408,
+            "id_str": "1005163131042193408",
+            "in_reply_to_screen_name": null,
+            "in_reply_to_status_id": null,
+            "in_reply_to_status_id_str": null,
+            "in_reply_to_user_id": null,
+            "in_reply_to_user_id_str": null,
+            "is_quote_status": false,
+            "lang": "en",
+            "metadata": {
+                "iso_language_code": "en",
+                "result_type": "recent"
+            },
+            "place": null,
+            "retweet_count": 10,
+            "retweeted": false,
+            "retweeted_status": {
+                "contributors": null,
+                "coordinates": null,
+                "created_at": "Thu Jun 07 07:48:41 +0000 2018",
+                "entities": {
+                    "hashtags": [
+                        {
+                            "indices": [
+                                52,
+                                67
+                            ],
+                            "text": "openexpoeurope"
+                        }
+                    ],
+                    "symbols": [],
+                    "urls": [
+                        {
+                            "display_url": "twitter.com/i/web/status/1\u2026",
+                            "expanded_url": "https://twitter.com/i/web/status/1004631216908316672",
+                            "indices": [
+                                117,
+                                140
+                            ],
+                            "url": "https://t.co/z3dz6QuGgS"
+                        }
+                    ],
+                    "user_mentions": [
+                        {
+                            "id": 487623589,
+                            "id_str": "487623589",
+                            "indices": [
+                                9,
+                                18
+                            ],
+                            "name": "Bitergia",
+                            "screen_name": "Bitergia"
+                        },
+                        {
+                            "id": 6440602,
+                            "id_str": "6440602",
+                            "indices": [
+                                91,
+                                102
+                            ],
+                            "name": "Manrique Lopez",
+                            "screen_name": "jsmanrique"
+                        }
+                    ]
+                },
+                "favorite_count": 24,
+                "favorited": false,
+                "geo": null,
+                "id": 1004631216908316672,
+                "id_str": "1004631216908316672",
+                "in_reply_to_screen_name": null,
+                "in_reply_to_status_id": null,
+                "in_reply_to_status_id_str": null,
+                "in_reply_to_user_id": null,
+                "in_reply_to_user_id_str": null,
+                "is_quote_status": false,
+                "lang": "en",
+                "metadata": {
+                    "iso_language_code": "en",
+                    "result_type": "recent"
+                },
+                "place": null,
+                "possibly_sensitive": false,
+                "retweet_count": 10,
+                "retweeted": false,
+                "source": "<a href=\"http://twitter.com\" rel=\"nofollow\">Twitter Web Client</a>",
+                "text": "Round 2! @Bitergia team ready for our second day at #openexpoeurope!! From 11:10 to 11:40, @jsmanrique  will show u\u2026 https://t.co/z3dz6QuGgS",
+                "truncated": true,
+                "user": {
+                    "contributors_enabled": false,
+                    "created_at": "Thu Feb 09 15:25:57 +0000 2012",
+                    "default_profile": false,
+                    "default_profile_image": false,
+                    "description": "Software development analytics to better understand and improve development processes in InnerSource & OpenSource teams. We \u2764 Free/Libre Open Source Software!",
+                    "entities": {
+                        "description": {
+                            "urls": []
+                        },
+                        "url": {
+                            "urls": [
+                                {
+                                    "display_url": "bitergia.com",
+                                    "expanded_url": "http://bitergia.com",
+                                    "indices": [
+                                        0,
+                                        23
+                                    ],
+                                    "url": "https://t.co/z7cRLOfz89"
+                                }
+                            ]
+                        }
+                    },
+                    "favourites_count": 5172,
+                    "follow_request_sent": null,
+                    "followers_count": 1093,
+                    "following": null,
+                    "friends_count": 650,
+                    "geo_enabled": true,
+                    "has_extended_profile": false,
+                    "id": 487623589,
+                    "id_str": "487623589",
+                    "is_translation_enabled": false,
+                    "is_translator": false,
+                    "lang": "en",
+                    "listed_count": 208,
+                    "location": "Madrid, Spain",
+                    "name": "Bitergia",
+                    "notifications": null,
+                    "profile_background_color": "FFA500",
+                    "profile_background_image_url": "http://abs.twimg.com/images/themes/theme1/bg.png",
+                    "profile_background_image_url_https": "https://abs.twimg.com/images/themes/theme1/bg.png",
+                    "profile_background_tile": false,
+                    "profile_banner_url": "https://pbs.twimg.com/profile_banners/487623589/1398254668",
+                    "profile_image_url": "http://pbs.twimg.com/profile_images/458938585555562496/Pzsyz0ix_normal.png",
+                    "profile_image_url_https": "https://pbs.twimg.com/profile_images/458938585555562496/Pzsyz0ix_normal.png",
+                    "profile_link_color": "FF9900",
+                    "profile_sidebar_border_color": "FFFFFF",
+                    "profile_sidebar_fill_color": "DDEEF6",
+                    "profile_text_color": "333333",
+                    "profile_use_background_image": true,
+                    "protected": false,
+                    "screen_name": "Bitergia",
+                    "statuses_count": 5519,
+                    "time_zone": null,
+                    "translator_type": "none",
+                    "url": "https://t.co/z7cRLOfz89",
+                    "utc_offset": null,
+                    "verified": false
+                }
+            },
+            "source": "<a href=\"http://twitter.com\" rel=\"nofollow\">Twitter Web Client</a>",
+            "text": "RT @Bitergia: Round 2! @Bitergia team ready for our second day at #openexpoeurope!! From 11:10 to 11:40, @jsmanrique  will show us a short\u2026",
+            "truncated": false,
+            "user": {
+                "contributors_enabled": false,
+                "created_at": "Fri Jan 15 19:48:18 +0000 2010",
+                "default_profile": false,
+                "default_profile_image": false,
+                "description": "Empresa dedicada a ayudar a otras empresas en la #Transformaci\u00f3ndigital, #Gesti\u00f3ndocumental, #Digitalizaci\u00f3n, CMS, #Repositorios, #Metadatos",
+                "entities": {
+                    "description": {
+                        "urls": []
+                    },
+                    "url": {
+                        "urls": [
+                            {
+                                "display_url": "t-organiza.es",
+                                "expanded_url": "http://www.t-organiza.es/",
+                                "indices": [
+                                    0,
+                                    23
+                                ],
+                                "url": "https://t.co/xtRYwghuIV"
+                            }
+                        ]
+                    }
+                },
+                "favourites_count": 2721,
+                "follow_request_sent": null,
+                "followers_count": 1839,
+                "following": null,
+                "friends_count": 4737,
+                "geo_enabled": true,
+                "has_extended_profile": false,
+                "id": 105237750,
+                "id_str": "105237750",
+                "is_translation_enabled": false,
+                "is_translator": false,
+                "lang": "es",
+                "listed_count": 157,
+                "location": "Murcia",
+                "name": "T-Organiza",
+                "notifications": null,
+                "profile_background_color": "1A1B1F",
+                "profile_background_image_url": "http://abs.twimg.com/images/themes/theme9/bg.gif",
+                "profile_background_image_url_https": "https://abs.twimg.com/images/themes/theme9/bg.gif",
+                "profile_background_tile": false,
+                "profile_banner_url": "https://pbs.twimg.com/profile_banners/105237750/1442949844",
+                "profile_image_url": "http://pbs.twimg.com/profile_images/645509287201099776/Vm-NMtI4_normal.jpg",
+                "profile_image_url_https": "https://pbs.twimg.com/profile_images/645509287201099776/Vm-NMtI4_normal.jpg",
+                "profile_link_color": "4893C8",
+                "profile_sidebar_border_color": "EC972E",
+                "profile_sidebar_fill_color": "252429",
+                "profile_text_color": "666666",
+                "profile_use_background_image": true,
+                "protected": false,
+                "screen_name": "T_Organiza",
+                "statuses_count": 18608,
+                "time_zone": null,
+                "translator_type": "none",
+                "url": "https://t.co/xtRYwghuIV",
+                "utc_offset": null,
+                "verified": false
+            }
+        }
+    ]
+}
