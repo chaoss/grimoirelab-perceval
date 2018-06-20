@@ -1,0 +1,13 @@
+{
+    "search_metadata": {
+        "completed_in": 0.158,
+        "count": 100,
+        "max_id": 1005277806383673344,
+        "max_id_str": "1005277806383673344",
+        "query": "grimoirelab",
+        "refresh_url": "?since_id=1005277806383673345&q=grimoirelab&result_type=mixed&include_entities=1",
+        "since_id": 0,
+        "since_id_str": "0"
+    },
+    "statuses": []
+}

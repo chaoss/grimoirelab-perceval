@@ -37,6 +37,7 @@ are:
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server
+    twitter          Fetch tweets from the Twitter Search API
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -283,6 +284,16 @@ please read the [Telegram Bots docs pages](https://core.telegram.org/bots).
 
 ```
 $ perceval telegram mybot -t 12345678abcdefgh --chats 1 2 -10
+```
+
+### Twitter
+
+Twitter backend needs a bearer token to authenticate the requests. It can be obtained
+using the code available on GistGitHub:
+https://gist.github.com/valeriocos/7d4d28f72f53fbce49f1512ba77ef5f6
+
+```
+$ perceval twitter grimoirelab -t 12345678abcdefgh
 ```
 
 ## Running tests
