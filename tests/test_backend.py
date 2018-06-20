@@ -830,9 +830,9 @@ class TestMetadata(unittest.TestCase):
 
     def test_decorator(self):
         backend = MockedBackend('test', 'mytag')
-        before = datetime.datetime.utcnow().timestamp()
+        before = datetime_utcnow().timestamp()
         items = [item for item in backend.fetch()]
-        after = datetime.datetime.utcnow().timestamp()
+        after = datetime_utcnow().timestamp()
 
         for x in range(5):
             item = items[x]
