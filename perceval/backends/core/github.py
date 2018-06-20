@@ -80,7 +80,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.17.0'
+    version = '0.17.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
 
@@ -476,9 +476,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """
 
         time_to_reset = self.rate_limit_reset_ts - (datetime_utcnow().replace(microsecond=0).timestamp() + 1)
-
-        if time_to_reset < 0:
-            time_to_reset = 0
+        time_to_reset = 0 if time_to_reset < 0 else time_to_reset
 
         return time_to_reset
 
