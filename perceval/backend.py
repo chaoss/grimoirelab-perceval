@@ -322,6 +322,8 @@ class BackendCommandArgumentParser:
         group.add_argument('-o', '--output', type=argparse.FileType('w'),
                            dest='outfile', default=sys.stdout,
                            help="output file")
+        group.add_argument('--json-line', dest='json_line', action='store_true',
+                           help="produce a JSON line for each output item")
 
 
 class BackendCommand:
@@ -352,6 +354,7 @@ class BackendCommand:
         self._post_init()
 
         self.outfile = self.parsed_args.outfile
+        self.json_line = self.parsed_args.json_line
 
     def run(self):
         """Fetch and write items.
@@ -380,7 +383,10 @@ class BackendCommand:
 
         try:
             for item in items:
-                obj = json.dumps(item, indent=4, sort_keys=True)
+                if self.json_line:
+                    obj = json.dumps(item, separators=(',', ':'), sort_keys=True)
+                else:
+                    obj = json.dumps(item, indent=4, sort_keys=True)
                 self.outfile.write(obj)
                 self.outfile.write('\n')
         except IOError as e:

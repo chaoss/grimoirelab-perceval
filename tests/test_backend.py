@@ -824,6 +824,34 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
 
+    def test_run_json_line(self):
+        """Test run method with --json-line"""
+
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--archive-path', self.test_path,
+                '--from-date', '2015-01-01', '--tag', 'test',
+                '--output', self.fout_path, 'http://example.com/',
+                '--json-line']
+
+        cmd = MockedBackendCommand(*args)
+        cmd.run()
+        cmd.outfile.close()
+
+        with open(self.fout_path) as fout:
+            items = fout.readlines()
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = json.loads(items[x])
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['category'], MockedBackend.DEFAULT_CATEGORY)
+
 
 class TestMetadata(unittest.TestCase):
     """Test metadata decorator"""
