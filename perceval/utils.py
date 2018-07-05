@@ -62,7 +62,8 @@ def check_compressed_file_type(filepath):
     def compressed_file_type(content):
         magic_dict = {
             b'\x1f\x8b\x08': 'gz',
-            b'\x42\x5a\x68': 'bz2'
+            b'\x42\x5a\x68': 'bz2',
+            b'PK\x03\x04': 'zip'
         }
 
         for magic, filetype in magic_dict.items():
