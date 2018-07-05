@@ -30,12 +30,14 @@ import shutil
 import tempfile
 import unittest
 import unittest.mock
+import zipfile
 
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME
-from perceval.backends.core.mbox import (MBox,
+from perceval.backends.core.mbox import (logger,
+                                         MBox,
                                          MBoxCommand,
                                          MBoxArchive,
                                          MailingList)
@@ -50,19 +52,28 @@ class TestBaseMBox(unittest.TestCase):
 
         cls.cfiles = {
             'bz2': os.path.join(cls.tmp_path, 'bz2'),
-            'gz': os.path.join(cls.tmp_path, 'gz')
+            'gz': os.path.join(cls.tmp_path, 'gz'),
+            'zip': os.path.join(cls.tmp_path, 'zip')
         }
 
         # Copy compressed files
         for ftype, fname in cls.cfiles.items():
             if ftype == 'bz2':
                 mod = bz2
-            else:
+            elif ftype == 'gz':
                 mod = gzip
+            else:
+                mod = zipfile
 
-            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_single.mbox'), 'rb') as f_in:
-                with mod.open(fname, 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+            if mod == zipfile:
+                with zipfile.ZipFile(fname, 'w') as f_out:
+                    f_out.write(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                             'data/mbox/mbox_single.mbox'))
+            else:
+                with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                       'data/mbox/mbox_single.mbox'), 'rb') as f_in:
+                    with mod.open(fname, 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
 
         # Copy a plain file
         cls.files = {
@@ -112,6 +123,10 @@ class TestMBoxArchive(TestBaseMBox):
         self.assertEqual(mbox.compressed_type, 'gz')
         self.assertEqual(mbox.is_compressed(), True)
 
+        mbox = MBoxArchive(self.cfiles['zip'])
+        self.assertEqual(mbox.compressed_type, 'zip')
+        self.assertEqual(mbox.is_compressed(), True)
+
     def test_not_compressed(self):
         """Check the properties of a non-compressed archive"""
 
@@ -122,21 +137,46 @@ class TestMBoxArchive(TestBaseMBox):
     def test_container(self):
         """Check the type of the container of an archive"""
 
+        import _io
+        mbox = MBoxArchive(self.files['single'])
+        container = mbox.container
+        self.assertIsInstance(container, _io.BufferedReader)
+        container.close()
+
+    def test_container_bz2(self):
+        """Check the type bz2 of the container of an archive"""
+
         mbox = MBoxArchive(self.cfiles['bz2'])
         container = mbox.container
         self.assertIsInstance(container, bz2.BZ2File)
         container.close()
+
+    def test_container_gz(self):
+        """Check the type gz of the container of an archive"""
 
         mbox = MBoxArchive(self.cfiles['gz'])
         container = mbox.container
         self.assertIsInstance(container, gzip.GzipFile)
         container.close()
 
-        import _io
-        mbox = MBoxArchive(self.files['single'])
+    def test_container_zip(self):
+        """Check the type zip of the container of an archive"""
+
+        mbox = MBoxArchive(self.cfiles['zip'])
         container = mbox.container
-        self.assertIsInstance(container, _io.BufferedReader)
+        self.assertIsInstance(container, zipfile.ZipExtFile)
         container.close()
+
+        with zipfile.ZipFile(self.cfiles['zip'], 'w') as f_out:
+            f_out.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_single.mbox'))
+            f_out.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_no_fields.mbox'))
+
+        mbox = MBoxArchive(self.cfiles['zip'])
+        with self.assertLogs(logger, level='ERROR') as cm:
+            container = mbox.container
+            container.close()
+            self.assertEqual(cm[-1][0], 'ERROR:perceval.backends.core.mbox:Zip %s contains more than one file, '
+                                        'only the first uncompressed' % mbox.filepath)
 
 
 class TestMailingList(TestBaseMBox):
@@ -156,7 +196,7 @@ class TestMailingList(TestBaseMBox):
         mls = MailingList('test', self.tmp_path)
 
         mboxes = mls.mboxes
-        self.assertEqual(len(mboxes), 8)
+        self.assertEqual(len(mboxes), 9)
         self.assertEqual(mboxes[0].filepath, self.cfiles['bz2'])
         self.assertEqual(mboxes[1].filepath, self.cfiles['gz'])
         self.assertEqual(mboxes[2].filepath, self.files['complex'])
@@ -165,6 +205,7 @@ class TestMailingList(TestBaseMBox):
         self.assertEqual(mboxes[5].filepath, self.files['single'])
         self.assertEqual(mboxes[6].filepath, self.files['unixfrom'])
         self.assertEqual(mboxes[7].filepath, self.files['unknown'])
+        self.assertEqual(mboxes[8].filepath, self.cfiles['zip'])
 
 
 class TestMBoxBackend(TestBaseMBox):
@@ -225,6 +266,7 @@ class TestMBoxBackend(TestBaseMBox):
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
             ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0),
             ('<20020823171132.541DB44147@example.com>', '4e255acab6442424ecbf05cb0feb1eccb587f7de', 1030123489.0),
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0)
         ]
 
         self.assertEqual(len(messages), len(expected))
@@ -253,7 +295,8 @@ class TestMBoxBackend(TestBaseMBox):
             ('<4fce8064d819e07fd80267aaecaf30ef@www.platvoet.de>', 'b25134a09996f33e94b2e191a2f9f379b11168ac', 1478544267.0),
             ('<019801ca633f$f4376140$dca623c0$@yang@example.com>', '302e314c07242bb4750351286862f49e758f3e17', 1257992964.0),
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
-            ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0)
+            ('<20150115132225.GA22378@example.org>', 'ad3116ae93c0df50436f7c84bfc94000e990996c', 1421328145.0),
+            ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0)
         ]
 
         self.assertEqual(len(messages), len(expected))

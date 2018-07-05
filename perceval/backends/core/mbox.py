@@ -371,7 +371,7 @@ class MBoxArchive(object):
         elif self.compressed_type == "zip":
             _zip = zipfile.ZipFile(self.filepath)
             if len(_zip.infolist()) > 1:
-                logger.error("Zip %s contains more than one file, only the first is analyzed", self.filepath)
+                logger.error("Zip %s contains more than one file, only the first uncompressed", self.filepath)
             return _zip.open(_zip.infolist()[0].filename)
 
     @property
