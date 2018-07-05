@@ -29,6 +29,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import zipfile
 
 from perceval.errors import ParseError
 from perceval.utils import (check_compressed_file_type,
@@ -53,20 +54,27 @@ class TestCheckCompressedFileType(unittest.TestCase):
 
         cls.files = {
             'bz2': os.path.join(cls.tmp_path, 'bz2'),
-            'gz': os.path.join(cls.tmp_path, 'gz')
+            'gz': os.path.join(cls.tmp_path, 'gz'),
+            'zip': os.path.join(cls.tmp_path, 'zip')
         }
 
         # Copy compressed files
         for ftype, fname in cls.files.items():
             if ftype == 'bz2':
                 mod = bz2
-            else:
+            elif ftype == 'gz':
                 mod = gzip
+            else:
+                mod = zipfile
 
-            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                   'data/utils/mbox_single.mbox'), 'rb') as f_in:
-                with mod.open(fname, 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+            if mod == zipfile:
+                with zipfile.ZipFile(fname, 'w') as f_out:
+                    f_out.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_single.mbox'))
+            else:
+                with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_single.mbox'),
+                          'rb') as f_in:
+                    with mod.open(fname, 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
 
         # Copy a plain file
         shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)),
