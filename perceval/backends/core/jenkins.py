@@ -25,7 +25,7 @@ import logging
 
 import requests
 
-from grimoirelab.toolkit.uris import urijoin
+from grimoirelab_toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,

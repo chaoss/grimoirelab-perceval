@@ -24,7 +24,7 @@ import logging
 
 import feedparser
 
-from grimoirelab.toolkit.datetime import str_to_datetime
+from grimoirelab_toolkit.datetime import str_to_datetime
 
 from ...backend import (Backend,
                         BackendCommand,
