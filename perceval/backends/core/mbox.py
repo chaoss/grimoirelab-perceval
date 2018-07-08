@@ -31,7 +31,7 @@ import tempfile
 import gzip
 import bz2
 
-from grimoirelab.toolkit.datetime import (InvalidDateError,
+from grimoirelab_toolkit.datetime import (InvalidDateError,
                                           datetime_to_utc,
                                           str_to_datetime)
 

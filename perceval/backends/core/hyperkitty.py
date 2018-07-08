@@ -28,8 +28,8 @@ import dateutil.parser
 import dateutil.relativedelta
 import dateutil.tz
 
-from grimoirelab.toolkit.datetime import datetime_to_utc, datetime_utcnow
-from grimoirelab.toolkit.uris import urijoin
+from grimoirelab_toolkit.datetime import datetime_to_utc, datetime_utcnow
+from grimoirelab_toolkit.uris import urijoin
 
 from .mbox import MBox, MailingList, CATEGORY_MESSAGE
 from ...backend import (BackendCommand,

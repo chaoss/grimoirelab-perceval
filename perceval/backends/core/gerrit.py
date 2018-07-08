@@ -27,7 +27,7 @@ import re
 import subprocess
 import time
 
-from grimoirelab.toolkit.datetime import datetime_to_utc
+from grimoirelab_toolkit.datetime import datetime_to_utc
 
 from ...backend import (Backend,
                         BackendCommand,

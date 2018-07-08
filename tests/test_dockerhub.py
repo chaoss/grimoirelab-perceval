@@ -30,7 +30,7 @@ import dateutil
 import httpretty
 import pkg_resources
 
-from grimoirelab.toolkit.uris import urijoin
+from grimoirelab_toolkit.uris import urijoin
 
 pkg_resources.declare_namespace('perceval.backends')
 

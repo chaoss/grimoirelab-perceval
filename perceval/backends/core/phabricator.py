@@ -23,7 +23,7 @@
 import json
 import logging
 
-from grimoirelab.toolkit.datetime import datetime_to_utc
+from grimoirelab_toolkit.datetime import datetime_to_utc
 
 from ...backend import (Backend,
                         BackendCommand,
