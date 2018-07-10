@@ -72,7 +72,7 @@ class Twitter(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.2.1'
+    version = '0.2.2'
 
     CATEGORIES = [CATEGORY_TWEET]
 
@@ -254,6 +254,22 @@ class TwitterClient(HttpClient, RateLimitHandler):
         time_to_reset = 0 if time_to_reset < 0 else time_to_reset
 
         return time_to_reset
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the token information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if 'Authorization' in headers:
+            headers.pop('Authorization')
+
+        return url, headers, payload
 
     def tweets(self, query, since_id=None, max_id=None, geocode=None, lang=None,
                include_entities=True, result_type=TWEET_TYPE_MIXED):

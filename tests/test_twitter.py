@@ -342,6 +342,22 @@ class TestTwitterClient(unittest.TestCase):
         with self.assertRaises(RateLimitError):
             [tweets for tweets in client.tweets('query')]
 
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = {'Authorization': 'Bearer my-token'}
+        payload = {'q': 'query',
+                   'count': 100,
+                   'include_entities': True,
+                   'result_type': 'mixed'}
+
+        s_url, s_headers, s_payload = TwitterClient.sanitize_for_archive(url, headers, payload)
+
+        self.assertEqual(url, s_url)
+        self.assertEqual({}, s_headers)
+        self.assertEqual(payload, s_payload)
+
 
 class TestTwitterCommand(unittest.TestCase):
     """TwitterCommand unit tests"""
