@@ -23,6 +23,7 @@
 
 import datetime
 import os
+import requests
 import time
 import unittest
 import unittest.mock
@@ -47,7 +48,7 @@ from base import TestCaseBackendArchive
 TWITTER_API_URL = 'https://api.twitter.com/1.1/search/tweets.json'
 
 
-def setup_http_server(no_tweets=False, rate_limit=None, reset_rate_limit=None):
+def setup_http_server(no_tweets=False, rate_limit=None, reset_rate_limit=None, status=200):
     """Setup a mock HTTP server"""
 
     headers = {}
@@ -73,21 +74,21 @@ def setup_http_server(no_tweets=False, rate_limit=None, reset_rate_limit=None):
                            TWITTER_API_URL +
                            "?q=query&max_id=1005163131042193407",
                            body=tweets_page_3,
-                           status=200,
+                           status=status,
                            forcing_headers=headers)
 
     httpretty.register_uri(httpretty.GET,
                            TWITTER_API_URL +
                            "?q=query",
                            body=tweets_page_1,
-                           status=200,
+                           status=status,
                            forcing_headers=headers)
 
     httpretty.register_uri(httpretty.GET,
                            TWITTER_API_URL +
                            "?q=query&max_id=1005148958111555583",
                            body=tweets_page_2,
-                           status=200,
+                           status=status,
                            forcing_headers=headers)
 
 
@@ -311,6 +312,23 @@ class TestTwitterClient(unittest.TestCase):
         diff = after - before
 
         self.assertGreaterEqual(diff, wait_to_reset)
+
+    @httpretty.activate
+    def test_too_many_requests(self):
+        """Test if a Retry error is raised"""
+
+        setup_http_server(status=429)
+
+        client = TwitterClient("aaa", max_items=2, sleep_time=0.1)
+        start = float(time.time())
+        expected = start + (sum([i * client.sleep_time for i in range(client.MAX_RETRIES)]))
+
+        events = client.tweets('query')
+        with self.assertRaises(requests.exceptions.RetryError):
+            _ = [event for event in events]
+
+        end = float(time.time())
+        self.assertGreater(end, expected)
 
     @httpretty.activate
     def test_rate_limit_error(self):

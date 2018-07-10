@@ -72,7 +72,7 @@ class Twitter(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.2.0'
+    version = '0.2.1'
 
     CATEGORIES = [CATEGORY_TWEET]
 
@@ -241,7 +241,7 @@ class TwitterClient(HttpClient, RateLimitHandler):
         self.api_key = api_key
         self.max_items = max_items
 
-        super().__init__(TWITTER_API_URL, sleep_time=sleep_time,
+        super().__init__(TWITTER_API_URL, sleep_time=sleep_time, extra_status_forcelist=[429],
                          archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep,
                                          rate_limit_header=RATE_LIMIT_HEADER,
