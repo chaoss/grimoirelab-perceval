@@ -29,7 +29,7 @@ import pickle
 import sqlite3
 import uuid
 
-from grimoirelab.toolkit.datetime import (datetime_utcnow,
+from grimoirelab_toolkit.datetime import (datetime_utcnow,
                                           datetime_to_utc,
                                           str_to_datetime)
 

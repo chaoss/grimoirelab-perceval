@@ -34,7 +34,7 @@ import unittest.mock
 
 import dateutil.tz
 
-from grimoirelab.toolkit.datetime import (InvalidDateError,
+from grimoirelab_toolkit.datetime import (InvalidDateError,
                                           datetime_utcnow,
                                           str_to_datetime)
 

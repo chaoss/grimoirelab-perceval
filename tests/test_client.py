@@ -33,7 +33,7 @@ import requests
 
 pkg_resources.declare_namespace('perceval.backends')
 
-from grimoirelab.toolkit.datetime import datetime_utcnow
+from grimoirelab_toolkit.datetime import datetime_utcnow
 
 from perceval.archive import Archive
 from perceval.client import HttpClient, RateLimitHandler

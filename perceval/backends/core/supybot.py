@@ -27,7 +27,7 @@ import re
 
 import dateutil
 
-from grimoirelab.toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab_toolkit.datetime import datetime_to_utc, str_to_datetime
 
 from ...backend import (Backend,
                         BackendCommand,
