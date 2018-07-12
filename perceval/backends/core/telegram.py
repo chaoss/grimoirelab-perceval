@@ -24,7 +24,7 @@ import json
 import logging
 import re
 
-from grimoirelab.toolkit.uris import urijoin
+from grimoirelab_toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,

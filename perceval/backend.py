@@ -29,8 +29,8 @@ import os
 import pkgutil
 import sys
 
-from grimoirelab.toolkit.introspect import find_signature_parameters
-from grimoirelab.toolkit.datetime import (datetime_utcnow,
+from grimoirelab_toolkit.introspect import find_signature_parameters
+from grimoirelab_toolkit.datetime import (datetime_utcnow,
                                           str_to_datetime)
 from .archive import Archive, ArchiveManager
 from .errors import ArchiveError, BackendError

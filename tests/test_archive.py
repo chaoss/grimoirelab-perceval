@@ -33,7 +33,7 @@ import unittest.mock
 import httpretty
 import requests
 
-from grimoirelab.toolkit.datetime import datetime_utcnow, datetime_to_utc
+from grimoirelab_toolkit.datetime import datetime_utcnow, datetime_to_utc
 
 from perceval.archive import Archive, ArchiveManager
 from perceval.errors import ArchiveError, ArchiveManagerError

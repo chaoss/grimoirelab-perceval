@@ -31,8 +31,8 @@ import bs4
 import dateutil
 import requests
 
-from grimoirelab.toolkit.datetime import datetime_to_utc
-from grimoirelab.toolkit.uris import urijoin
+from grimoirelab_toolkit.datetime import datetime_to_utc
+from grimoirelab_toolkit.uris import urijoin
 
 from .mbox import MBox, MailingList, CATEGORY_MESSAGE
 from ...backend import (BackendCommand,

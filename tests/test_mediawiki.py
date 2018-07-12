@@ -31,7 +31,7 @@ import unittest
 import urllib
 import unittest.mock
 
-from grimoirelab.toolkit.datetime import (datetime_to_utc,
+from grimoirelab_toolkit.datetime import (datetime_to_utc,
                                           str_to_datetime)
 
 pkg_resources.declare_namespace('perceval.backends')

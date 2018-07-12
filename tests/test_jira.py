@@ -29,7 +29,7 @@ import unittest
 import httpretty
 import pkg_resources
 
-from grimoirelab.toolkit.datetime import str_to_datetime
+from grimoirelab_toolkit.datetime import str_to_datetime
 
 pkg_resources.declare_namespace('perceval.backends')
 

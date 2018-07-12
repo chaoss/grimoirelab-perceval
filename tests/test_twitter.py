@@ -34,7 +34,7 @@ import pkg_resources
 
 pkg_resources.declare_namespace('perceval.backends')
 
-from grimoirelab.toolkit.datetime import str_to_datetime
+from grimoirelab_toolkit.datetime import str_to_datetime
 from perceval.backend import BackendCommandArgumentParser
 from perceval.errors import BackendError, RateLimitError
 from perceval.backends.core.twitter import (Twitter,
