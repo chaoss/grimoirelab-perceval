@@ -1530,6 +1530,18 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(client.max_retries, GitHubClient.MAX_RETRIES)
         self.assertEqual(client.base_url, 'https://api.github.com')
 
+        client = GitHubClient('zhquan_example', 'repo', 'aaa', None, False, 3, 20, 2, None, False)
+        self.assertEqual(client.owner, 'zhquan_example')
+        self.assertEqual(client.repository, 'repo')
+        self.assertEqual(client.token, 'aaa')
+        self.assertEqual(client.base_url, GITHUB_API_URL)
+        self.assertFalse(client.sleep_for_rate)
+        self.assertEqual(client.min_rate_to_sleep, 3)
+        self.assertEqual(client.sleep_time, 20)
+        self.assertEqual(client.max_retries, 2)
+        self.assertIsNone(client.archive)
+        self.assertFalse(client.from_archive)
+
         client = GitHubClient('zhquan_example', 'repo', 'aaa', min_rate_to_sleep=RateLimitHandler.MAX_RATE_LIMIT + 1)
         self.assertEqual(client.min_rate_to_sleep, RateLimitHandler.MAX_RATE_LIMIT)
 
