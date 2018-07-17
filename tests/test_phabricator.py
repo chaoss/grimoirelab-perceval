@@ -33,7 +33,9 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME
-from perceval.backends.core.phabricator import (Phabricator,
+from perceval.backends.core.phabricator import (DEFAULT_SLEEP_TIME,
+                                                MAX_RETRIES,
+                                                Phabricator,
                                                 PhabricatorCommand,
                                                 ConduitClient,
                                                 ConduitError)
@@ -180,6 +182,22 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.url, PHABRICATOR_URL)
         self.assertEqual(phab.origin, PHABRICATOR_URL)
         self.assertEqual(phab.tag, PHABRICATOR_URL)
+        self.assertEqual(phab.max_retries, MAX_RETRIES)
+        self.assertEqual(phab.sleep_time, DEFAULT_SLEEP_TIME)
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', None, None, 3, 25)
+        self.assertEqual(phab.url, PHABRICATOR_URL)
+        self.assertEqual(phab.origin, PHABRICATOR_URL)
+        self.assertEqual(phab.tag, PHABRICATOR_URL)
+        self.assertEqual(phab.max_retries, 3)
+        self.assertEqual(phab.sleep_time, 25)
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', tag='', max_retries=3, sleep_time=25)
+        self.assertEqual(phab.url, PHABRICATOR_URL)
+        self.assertEqual(phab.origin, PHABRICATOR_URL)
+        self.assertEqual(phab.tag, PHABRICATOR_URL)
+        self.assertEqual(phab.max_retries, 3)
+        self.assertEqual(phab.sleep_time, 25)
 
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
@@ -636,34 +654,6 @@ class TestPhabricatorBackendArchive(TestCaseBackendArchive):
         self._test_fetch_from_archive(from_date=from_date)
 
 
-class TestPhabricatorCommand(unittest.TestCase):
-    """Tests for PhabricatorCommand class"""
-
-    def test_backend_class(self):
-        """Test if the backend class is Phabricator"""
-
-        self.assertIs(PhabricatorCommand.BACKEND, Phabricator)
-
-    def test_setup_cmd_parser(self):
-        """Test if it parser object is correctly initialized"""
-
-        parser = PhabricatorCommand.setup_cmd_parser()
-        self.assertIsInstance(parser, BackendCommandArgumentParser)
-
-        args = ['http://example.com',
-                '--api-token', '12345678',
-                '--tag', 'test',
-                '--no-archive',
-                '--from-date', '1970-01-01']
-
-        parsed_args = parser.parse(*args)
-        self.assertEqual(parsed_args.url, 'http://example.com')
-        self.assertEqual(parsed_args.api_token, '12345678')
-        self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
-        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-
-
 class TestConduitClient(unittest.TestCase):
     """Confluence client unit tests.
 
@@ -676,6 +666,20 @@ class TestConduitClient(unittest.TestCase):
         client = ConduitClient(PHABRICATOR_URL, 'aaaa')
         self.assertEqual(client.base_url, PHABRICATOR_URL)
         self.assertEqual(client.api_token, 'aaaa')
+        self.assertEqual(client.max_retries, MAX_RETRIES)
+        self.assertEqual(client.sleep_time, DEFAULT_SLEEP_TIME)
+
+        client = ConduitClient(PHABRICATOR_URL, 'aaaa', 2, 100)
+        self.assertEqual(client.base_url, PHABRICATOR_URL)
+        self.assertEqual(client.api_token, 'aaaa')
+        self.assertEqual(client.max_retries, 2)
+        self.assertEqual(client.sleep_time, 100)
+
+        client = ConduitClient(PHABRICATOR_URL, 'aaaa', max_retries=2, sleep_time=100)
+        self.assertEqual(client.base_url, PHABRICATOR_URL)
+        self.assertEqual(client.api_token, 'aaaa')
+        self.assertEqual(client.max_retries, 2)
+        self.assertEqual(client.sleep_time, 100)
 
     @httpretty.activate
     def test_tasks(self):
@@ -832,8 +836,9 @@ class TestConduitClient(unittest.TestCase):
         body = read_file('data/phabricator/phabricator_tasks_empty.json', 'rb')
 
         responses = {
-            PHABRICATOR_TASKS_URL: [(502, 'error'), (503, 'error'), (200, body)],
-            PHABRICATOR_USERS_URL: [(503, 'error'), (503, 'error'), (503, 'error'), (503, 'error')],
+            PHABRICATOR_TASKS_URL: [(502, 'error'), (503, 'error'), (429, 'error'), (503, 'error'), (200, body)],
+            PHABRICATOR_USERS_URL: [(503, 'error'), (503, 'error'), (503, 'error'),
+                                    (503, 'error'), (503, 'error'), (503, 'error')],
             PHABRICATOR_PHIDS_URL: [(404, 'not found')]
         }
 
@@ -864,18 +869,18 @@ class TestConduitClient(unittest.TestCase):
         # These tests are based on the maximum number of retries,
         # set by default to 3. The client only retries 502 and 503
         # HTTP errors.
-        client = ConduitClient(PHABRICATOR_URL, 'aaaa')
+        client = ConduitClient(PHABRICATOR_URL, 'aaaa', sleep_time=0.1)
 
-        # After 3 tries (request + 2 retries) it gets the result
+        # After 5 tries (request + 4 retries) it gets the result
         reqs = []
         _ = [r for r in client.tasks()]
-        self.assertEqual(len(reqs), 3)
+        self.assertEqual(len(reqs), 5)
 
-        # After 4 tries (request + 3 retries) it fails
+        # After 6 tries (request + 5 retries) it fails
         reqs = []
         with self.assertRaises(requests.exceptions.RetryError):
             _ = client.users("PHID-USER-2uk52xorcqb6sjvp467y")
-            self.assertEqual(len(reqs), 4)
+            self.assertEqual(len(reqs), 5)
 
         # After 1 try if fails
         reqs = []
@@ -916,6 +921,53 @@ class TestConduitClient(unittest.TestCase):
         self.assertEqual(url, s_url)
         self.assertEqual(headers, s_headers)
         self.assertEqual(payload, s_payload)
+
+
+class TestPhabricatorCommand(unittest.TestCase):
+    """Tests for PhabricatorCommand class"""
+
+    def test_backend_class(self):
+        """Test if the backend class is Phabricator"""
+
+        self.assertIs(PhabricatorCommand.BACKEND, Phabricator)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = PhabricatorCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
+
+        args = ['http://example.com',
+                '--api-token', '12345678',
+                '--tag', 'test',
+                '--no-archive',
+                '--from-date', '1970-01-01']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'http://example.com')
+        self.assertEqual(parsed_args.api_token, '12345678')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_archive, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
+        self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
+
+        args = ['http://example.com',
+                '--api-token', '12345678',
+                '--tag', 'test',
+                '--no-archive',
+                '--from-date', '1970-01-01',
+                '--max-retries', '7',
+                '--sleep-time', '43']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'http://example.com')
+        self.assertEqual(parsed_args.api_token, '12345678')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_archive, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.max_retries, 7)
+        self.assertEqual(parsed_args.sleep_time, 43)
 
 
 if __name__ == "__main__":
