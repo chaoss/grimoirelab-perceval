@@ -80,7 +80,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.17.1'
+    version = '0.17.2'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
 
@@ -204,7 +204,7 @@ class GitHub(Backend):
 
         return GitHubClient(self.owner, self.repository, self.api_token, self.base_url,
                             self.sleep_for_rate, self.min_rate_to_sleep,
-                            self.max_retries, self.sleep_time,
+                            self.sleep_time, self.max_retries,
                             self.archive, from_archive)
 
     def __fetch_issues(self, from_date):
