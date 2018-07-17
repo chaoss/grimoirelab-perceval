@@ -34,6 +34,9 @@ from ...utils import DEFAULT_DATETIME
 
 CATEGORY_TASK = "task"
 
+DEFAULT_SLEEP_TIME = 1
+MAX_RETRIES = 5
+
 logger = logging.getLogger(__name__)
 
 
@@ -49,18 +52,26 @@ class Phabricator(Backend):
     :param api_token: token needed to use the API
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param max_retries: number of max retries to a data source
+        before raising a RetryError exception
+    :param sleep_time: time to sleep in case
+        of connection problems
     """
-    version = '0.10.0'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_TASK]
 
-    def __init__(self, url, api_token, tag=None, archive=None):
+    def __init__(self, url, api_token, tag=None, archive=None,
+                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
         origin = url
 
         super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.api_token = api_token
         self.client = None
+
+        self.max_retries = max_retries
+        self.sleep_time = sleep_time
 
         self._users = {}
         self._projects = {}
@@ -216,7 +227,9 @@ class Phabricator(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return ConduitClient(self.url, self.api_token, self.archive, from_archive)
+        return ConduitClient(self.url, self.api_token,
+                             self.max_retries, self.sleep_time,
+                             self.archive, from_archive)
 
     def __fetch_tasks(self, from_date):
         for raw_tasks in self.client.tasks(from_date=from_date):
@@ -418,26 +431,6 @@ class Phabricator(Backend):
         return [phid for phid in result]
 
 
-class PhabricatorCommand(BackendCommand):
-    """Class to run Phabricator backend from the command line."""
-
-    BACKEND = Phabricator
-
-    @staticmethod
-    def setup_cmd_parser():
-        """Returns the Phabricator argument parser."""
-
-        parser = BackendCommandArgumentParser(from_date=True,
-                                              token_auth=True,
-                                              archive=True)
-
-        # Required arguments
-        parser.parser.add_argument('url',
-                                   help="URL of the Phabricator server")
-
-        return parser
-
-
 class ConduitError(BaseError):
     """Raised when an error occurs using Conduit"""
 
@@ -454,6 +447,10 @@ class ConduitClient(HttpClient):
     :param base_url: URL of the Phabricator server
     :param api_token: token to get access to restricted methods
         of the API
+    :param max_retries: number of max retries to a data source
+        before raising a RetryError exception
+    :param sleep_time: time to sleep in case
+        of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
     """
@@ -476,8 +473,10 @@ class ConduitClient(HttpClient):
 
     VOUTDATED = 'outdated'
 
-    def __init__(self, base_url, api_token, archive=None, from_archive=False):
-        super().__init__(base_url.rstrip('/'), max_retries=3, extra_status_forcelist=[502, 503],
+    def __init__(self, base_url, api_token, max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
+                 archive=None, from_archive=False):
+        super().__init__(base_url.rstrip('/'), sleep_time=sleep_time, max_retries=max_retries,
+                         extra_status_forcelist=[429, 502, 503],
                          archive=archive, from_archive=from_archive)
         self.api_token = api_token
 
@@ -605,3 +604,32 @@ class ConduitClient(HttpClient):
                                code=result['error_code'])
 
         return r.text
+
+
+class PhabricatorCommand(BackendCommand):
+    """Class to run Phabricator backend from the command line."""
+
+    BACKEND = Phabricator
+
+    @staticmethod
+    def setup_cmd_parser():
+        """Returns the Phabricator argument parser."""
+
+        parser = BackendCommandArgumentParser(from_date=True,
+                                              token_auth=True,
+                                              archive=True)
+
+        # Phabricator options
+        group = parser.parser.add_argument_group('Phabricator arguments')
+        group.add_argument('--max-retries', dest='max_retries',
+                           default=MAX_RETRIES, type=int,
+                           help="number of API call retries")
+        group.add_argument('--sleep-time', dest='sleep_time',
+                           default=DEFAULT_SLEEP_TIME, type=int,
+                           help="sleeping time between API call retries")
+
+        # Required arguments
+        parser.parser.add_argument('url',
+                                   help="URL of the Phabricator server")
+
+        return parser
