@@ -207,6 +207,18 @@ class TestMailingList(TestBaseMBox):
         self.assertEqual(mboxes[7].filepath, self.files['unknown'])
         self.assertEqual(mboxes[8].filepath, self.cfiles['zip'])
 
+    @unittest.mock.patch('perceval.backends.core.mbox.check_compressed_file_type')
+    def test_mboxes_error(self, mock_check_compressed_file_type):
+        """Check whether OSError exceptions are properly handled"""
+
+        mock_check_compressed_file_type.side_effect = OSError
+
+        mls = MailingList('test', self.tmp_path)
+        with self.assertLogs(logger, level='WARNING') as cm:
+            _ = mls.mboxes
+            self.assertEqual(cm.output[-1], 'WARNING:perceval.backends.core.mbox:'
+                                            'Ignoring mbox_unknown_encoding.mbox mbox due to: ')
+
 
 class TestMBoxBackend(TestBaseMBox):
     """Tests for MBox backend"""
@@ -309,6 +321,17 @@ class TestMBoxBackend(TestBaseMBox):
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['category'], 'message')
             self.assertEqual(message['tag'], 'http://example.com/')
+
+    @unittest.mock.patch('perceval.backends.core.mbox.str_to_datetime')
+    def test_fetch_exception(self, mock_str_to_datetime):
+        """Test whether an exception is thrown when the the fetch_items method fails"""
+
+        mock_str_to_datetime.side_effect = Exception
+
+        backend = MBox('http://example.com/', self.tmp_path)
+
+        with self.assertRaises(Exception):
+            _ = [m for m in backend.fetch(from_date=None)]
 
     def test_ignore_messages(self):
         """Test if it ignores some messages without mandatory fields"""
