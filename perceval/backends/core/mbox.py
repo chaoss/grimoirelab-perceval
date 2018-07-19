@@ -30,6 +30,7 @@ import tempfile
 
 import gzip
 import bz2
+import zipfile
 
 from grimoirelab_toolkit.datetime import (InvalidDateError,
                                           datetime_to_utc,
@@ -61,7 +62,7 @@ class MBox(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.2'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -346,7 +347,7 @@ class MBoxArchive(object):
     """Class to access a mbox archive.
 
     MBOX archives can be stored into plain or compressed files
-    (gzip and bz2).
+    (gzip, bz2 or zip).
 
     :param filepath: path to the mbox file
     """
@@ -367,6 +368,11 @@ class MBoxArchive(object):
             return bz2.open(self.filepath, mode='rb')
         elif self.compressed_type == 'gz':
             return gzip.open(self.filepath, mode='rb')
+        elif self.compressed_type == "zip":
+            _zip = zipfile.ZipFile(self.filepath)
+            if len(_zip.infolist()) > 1:
+                logger.error("Zip %s contains more than one file, only the first uncompressed", self.filepath)
+            return _zip.open(_zip.infolist()[0].filename)
 
     @property
     def compressed_type(self):

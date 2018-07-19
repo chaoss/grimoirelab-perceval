@@ -20,6 +20,7 @@ are:
     git              Fetch commits from Git
     github           Fetch issues from GitHub
     gitlab           Fetch issues from GitLab
+    groupsio         Fetch messages from Groups.io
     hyperkitty       Fetch messages from a HyperKitty archiver
     jenkins          Fetch builds from a Jenkins server
     jira             Fetch issues from JIRA issue tracker
@@ -188,6 +189,11 @@ $ perceval github elastic logstash --from-date '2016-01-01'
 ### GitLab
 ```
 $ perceval gitlab elastic logstash --from-date '2016-01-01'
+```
+
+### Groups.io
+```
+$ perceval groupsio 'updates' -t 'abcdefghijk' --from-date '2016-01-01'
 ```
 
 ### HyperKitty
