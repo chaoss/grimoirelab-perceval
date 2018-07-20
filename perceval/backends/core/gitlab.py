@@ -73,15 +73,17 @@ class GitLab(Backend):
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
+    :param max_retries: number of max retries to a data source
+        before raising a RetryError exception
+    :param sleep_time: time to sleep in case
     """
-    version = '0.3.4'
+    version = '0.4.1'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
-
         origin = base_url if base_url else GITLAB_URL
         origin = urijoin(origin, owner, repository)
 
@@ -296,28 +298,6 @@ class GitLabClient(HttpClient, RateLimitHandler):
 
         self._init_rate_limit()
 
-    def _set_extra_headers(self):
-        """Set extra headers for session"""
-
-        headers = {}
-        if self.token:
-            headers = {'PRIVATE-TOKEN': self.token}
-
-        return headers
-
-    def _init_rate_limit(self):
-        """Initialize rate limit information"""
-
-        url = urijoin(self.base_url, 'projects', self.owner + '%2F' + self.repository)
-        try:
-            response = super().fetch(url)
-            self.update_rate_limit(response)
-        except requests.exceptions.HTTPError as error:
-            if error.response.status_code == 401:
-                raise error
-            else:
-                logger.warning("Rate limit not initialized: %s", error)
-
     def issue_notes(self, issue_id):
         """Get the issue notes from pagination"""
 
@@ -462,6 +442,44 @@ class GitLabClient(HttpClient, RateLimitHandler):
                     logger.debug("Page: %i/%i - issues after filtering %i" % (page, last_page, len(filtered_items)))
                 else:
                     logger.debug("Page: %i/%i" % (page, last_page))
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the token information
+        before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if headers and 'PRIVATE-TOKEN' in headers:
+            headers.pop('PRIVATE-TOKEN', None)
+
+        return url, headers, payload
+
+    def _set_extra_headers(self):
+        """Set extra headers for session"""
+
+        headers = {}
+        if self.token:
+            headers = {'PRIVATE-TOKEN': self.token}
+
+        return headers
+
+    def _init_rate_limit(self):
+        """Initialize rate limit information"""
+
+        url = urijoin(self.base_url, 'projects', self.owner + '%2F' + self.repository)
+        try:
+            response = super().fetch(url)
+            self.update_rate_limit(response)
+        except requests.exceptions.HTTPError as error:
+            if error.response.status_code == 401:
+                raise error
+            else:
+                logger.warning("Rate limit not initialized: %s", error)
 
 
 class GitLabCommand(BackendCommand):
