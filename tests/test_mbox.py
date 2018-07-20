@@ -217,7 +217,7 @@ class TestMailingList(TestBaseMBox):
         with self.assertLogs(logger, level='WARNING') as cm:
             _ = mls.mboxes
             self.assertEqual(cm.output[-1], 'WARNING:perceval.backends.core.mbox:'
-                                            'Ignoring mbox_unknown_encoding.mbox mbox due to: ')
+                                            'Ignoring zip mbox due to: ')
 
 
 class TestMBoxBackend(TestBaseMBox):
