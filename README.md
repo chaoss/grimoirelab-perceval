@@ -88,12 +88,17 @@ To install from the source code you will need to clone the repository first:
 $ git clone https://github.com/chaoss/grimoirelab-perceval.git
 ```
 
-In this case, [setuptools](http://setuptools.readthedocs.io/en/latest/) package will be required.
-Make sure it is installed before running the next commands:
-
+Then you can execute the following commands:
 ```
 $ pip3 install -r requirements.txt
-$ python3 setup.py install
+$ pip3 install .
+```
+
+In case you are a developer, you should execute the following commands to install Perceval in your working directory (option `-e`) and the packages of requirements_tests.txt.
+```
+$ pip3 install -r requirements.txt
+$ pip3 install -r requirements_test.txt
+$ pip3 install -e .
 ```
 
 ## Documentation
