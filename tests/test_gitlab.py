@@ -22,6 +22,7 @@
 #     Valerio Cosentino <valcos@bitergia.com>
 #
 
+import copy
 import datetime
 import json
 import os
@@ -635,6 +636,20 @@ class TestGitLabClient(unittest.TestCase):
 
         with self.assertRaises(RateLimitError):
             _ = [issues for issues in client.issues()]
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = {'PRIVATE-TOKEN': 'ABCDEF'}
+        payload = {}
+
+        s_url, s_headers, s_payload = GitLabClient.sanitize_for_archive(url, copy.deepcopy(headers), payload)
+        headers.pop('PRIVATE-TOKEN')
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
 
 
 class TestGitLabCommand(unittest.TestCase):
