@@ -40,7 +40,9 @@ from perceval.errors import RateLimitError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.gitlab import (GitLab,
                                            GitLabCommand,
-                                           GitLabClient)
+                                           GitLabClient,
+                                           MAX_RETRIES,
+                                           DEFAULT_SLEEP_TIME)
 from base import TestCaseBackendArchive
 
 GITLAB_URL = "https://gitlab.com"
@@ -196,16 +198,20 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(gitlab.origin, GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(gitlab.tag, 'test')
         self.assertIsNone(gitlab.client)
+        self.assertEqual(gitlab.max_retries, MAX_RETRIES)
+        self.assertEqual(gitlab.sleep_time, DEFAULT_SLEEP_TIME)
 
         # When tag is empty or None it will be set to
         # the value in origin
-        gitlab = GitLab('fdroid', 'fdroiddata', api_token='aaa')
+        gitlab = GitLab('fdroid', 'fdroiddata', api_token='aaa', max_retries=10, sleep_time=100)
 
         self.assertEqual(gitlab.owner, 'fdroid')
         self.assertEqual(gitlab.repository, 'fdroiddata')
         self.assertEqual(gitlab.origin, GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(gitlab.tag, GITLAB_URL + '/fdroid/fdroiddata')
         self.assertIsNone(gitlab.client)
+        self.assertEqual(gitlab.max_retries, 10)
+        self.assertEqual(gitlab.sleep_time, 100)
 
     @httpretty.activate
     def test_initialization_entreprise(self):
@@ -663,6 +669,31 @@ class TestGitLabCommand(unittest.TestCase):
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
+        self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
+        self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
+
+        args = ['--sleep-for-rate',
+                '--min-rate-to-sleep', '1',
+                '--tag', 'test', '--no-archive',
+                '--max-retries', '5',
+                '--sleep-time', '10',
+                '--api-token', 'abcdefgh',
+                '--from-date', '1970-01-01',
+                '--enterprise-url', 'https://example.com',
+                'zhquan_example', 'repo']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.owner, 'zhquan_example')
+        self.assertEqual(parsed_args.repository, 'repo')
+        self.assertEqual(parsed_args.base_url, 'https://example.com')
+        self.assertEqual(parsed_args.sleep_for_rate, True)
+        self.assertEqual(parsed_args.min_rate_to_sleep, 1)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.no_archive, True)
+        self.assertEqual(parsed_args.api_token, 'abcdefgh')
+        self.assertEqual(parsed_args.max_retries, 5)
+        self.assertEqual(parsed_args.sleep_time, 10)
 
 
 if __name__ == "__main__":

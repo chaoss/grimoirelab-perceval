@@ -73,15 +73,18 @@ class GitLab(Backend):
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
+    :param max_retries: number of max retries to a data source
+        before raising a RetryError exception
+    :param sleep_time: time to sleep in case
     """
-    version = '0.3.4'
+    version = '0.4.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None, tag=None, archive=None,
-                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT):
-
+                 sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
+                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
         origin = base_url if base_url else GITLAB_URL
         origin = urijoin(origin, owner, repository)
 
@@ -92,6 +95,8 @@ class GitLab(Backend):
         self.api_token = api_token
         self.sleep_for_rate = sleep_for_rate
         self.min_rate_to_sleep = min_rate_to_sleep
+        self.max_retries = max_retries
+        self.sleep_time = sleep_time
         self.client = None
         self._users = {}  # internal users cache
 
@@ -193,6 +198,7 @@ class GitLab(Backend):
 
         return GitLabClient(self.owner, self.repository, self.api_token, self.base_url,
                             self.sleep_for_rate, self.min_rate_to_sleep,
+                            self.sleep_time, self.max_retries,
                             self.archive, from_archive)
 
     def __get_issue_notes(self, issue_id):
@@ -488,6 +494,14 @@ class GitLabCommand(BackendCommand):
                            default=MIN_RATE_LIMIT, type=int,
                            help="sleep until reset when the rate limit \
                                reaches this value")
+
+        # Generic client options
+        group.add_argument('--max-retries', dest='max_retries',
+                           default=MAX_RETRIES, type=int,
+                           help="number of API call retries")
+        group.add_argument('--sleep-time', dest='sleep_time',
+                           default=DEFAULT_SLEEP_TIME, type=int,
+                           help="sleeping time between API call retries")
 
         # Positional arguments
         parser.parser.add_argument('owner',
