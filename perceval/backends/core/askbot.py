@@ -53,7 +53,7 @@ class Askbot(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.3'
+    version = '0.6.4'
 
     CATEGORIES = [CATEGORY_QUESTION]
 
@@ -334,16 +334,21 @@ class AskbotClient(HttpClient):
 
         try:
             response = self.fetch(path, payload=params, headers=headers)
+            raw = response.text
         except requests.exceptions.HTTPError as ex:
             if ex.response.status_code == 404:
                 logger.debug("Comments URL did not work. Using old URL schema.")
                 self._use_new_urls = False
                 path = urijoin(self.base_url, self.COMMENTS_OLD)
                 response = self.fetch(path, payload=params, headers=headers)
+                raw = response.text
+            elif ex.response.status_code == 500:
+                logger.warning("Comments not retrieved due to %s", ex)
+                raw = '[]'
             else:
                 raise ex
 
-        return response.text
+        return raw
 
 
 class AskbotParser:
