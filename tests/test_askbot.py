@@ -38,6 +38,7 @@ from perceval.backends.core.askbot import (Askbot,
                                            AskbotClient,
                                            AskbotParser,
                                            AskbotCommand)
+
 from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
 
@@ -296,8 +297,8 @@ class TestAskbotClient(unittest.TestCase):
         self.assertRegex(req.path, '/question/0')
 
     @httpretty.activate
-    def test_wrong_status_get_comments(self):
-        """Test whether, when fetching comments, an exception is thrown if HTTPError is not 404"""
+    def test_403_status_get_comments(self):
+        """Test whether, when fetching comments, an exception is thrown if HTTPError is not 403"""
 
         httpretty.register_uri(httpretty.GET,
                                ASKBOT_COMMENTS_API_URL,
@@ -307,6 +308,17 @@ class TestAskbotClient(unittest.TestCase):
 
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = client.get_comments(5)
+
+    @httpretty.activate
+    def test_500_status_get_comments(self):
+        """Test whether, when fetching comments, an exception is thrown if HTTPError is not 503"""
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL,
+                               body="", status=500)
+
+        client = AskbotClient(ASKBOT_URL)
+        self.assertEqual(client.get_comments(5), '[]')
 
     @httpretty.activate
     def test_get_comments(self):
