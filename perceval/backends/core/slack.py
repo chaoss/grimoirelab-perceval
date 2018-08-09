@@ -57,7 +57,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.4'
+    version = '0.7.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -110,7 +110,9 @@ class Slack(Backend):
                     self.channel, str(from_date))
 
         raw_info = self.client.channel_info(self.channel)
+
         channel_info = self.parse_channel_info(raw_info)
+        channel_info['num_members'] = self.client.conversation_members(self.channel)
 
         oldest = datetime_to_utc(from_date).timestamp()
 
@@ -296,6 +298,7 @@ class SlackClient(HttpClient):
     """
     URL = urijoin(SLACK_URL, 'api', '%(resource)s')
 
+    RCONVERSATION_INFO = 'conversations.members'
     RCHANNEL_INFO = 'channels.info'
     RCHANNEL_HISTORY = 'channels.history'
     RUSER_INFO = 'users.info'
@@ -311,6 +314,32 @@ class SlackClient(HttpClient):
         super().__init__(SLACK_URL, archive=archive, from_archive=from_archive)
         self.api_token = api_token
         self.max_items = max_items
+
+    def conversation_members(self, conversation):
+        """Fetch the number of members in a conversation, which is a supertype for public and
+        private ones, DM and group DM.
+
+        :param conversation: the ID of the conversation
+        """
+        members = 0
+
+        resource = self.RCONVERSATION_INFO
+
+        params = {
+            self.PCHANNEL: conversation,
+        }
+
+        raw_response = self._fetch(resource, params)
+        response = json.loads(raw_response)
+
+        members += len(response["members"])
+        while 'next_cursor' in response['response_metadata'] and response['response_metadata']['next_cursor']:
+            params['cursor'] = response['response_metadata']['next_cursor']
+            raw_response = self._fetch(resource, params)
+            response = json.loads(raw_response)
+            members += len(response["members"])
+            
+        return members
 
     def channel_info(self, channel):
         """Fetch information about a channel."""

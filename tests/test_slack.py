@@ -43,6 +43,7 @@ from base import TestCaseBackendArchive
 SLACK_API_URL = 'https://slack.com/api'
 SLACK_CHANNEL_INFO_URL = SLACK_API_URL + '/channels.info'
 SLACK_CHANNEL_HISTORY_URL = SLACK_API_URL + '/channels.history'
+SLACK_CONVERSATION_MEMBERS = SLACK_API_URL + '/conversations.members'
 SLACK_USER_INFO_URL = SLACK_API_URL + '/users.info'
 
 
@@ -60,6 +61,8 @@ def setup_http_server():
     channel_error = read_file('data/slack/slack_error.json', 'rb')
     channel_empty = read_file('data/slack/slack_history_empty.json', 'rb')
     channel_info = read_file('data/slack/slack_info.json', 'rb')
+    conversation_members_1 = read_file('data/slack/slack_members1.json', 'rb')
+    conversation_members_2 = read_file('data/slack/slack_members2.json', 'rb')
     channel_history = read_file('data/slack/slack_history.json', 'rb')
     channel_history_next = read_file('data/slack/slack_history_next.json', 'rb')
     channel_history_date = read_file('data/slack/slack_history_20150323.json', 'rb')
@@ -102,6 +105,11 @@ def setup_http_server():
                 body = user_U0002
             else:
                 body = user_U0003
+        elif uri.startswith(SLACK_CONVERSATION_MEMBERS):
+            if 'cursor' not in params:
+                body = conversation_members_1
+            else:
+                body = conversation_members_2
         else:
             raise
 
@@ -124,6 +132,12 @@ def setup_http_server():
 
     httpretty.register_uri(httpretty.GET,
                            SLACK_USER_INFO_URL,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                           ])
+
+    httpretty.register_uri(httpretty.GET,
+                           SLACK_CONVERSATION_MEMBERS,
                            responses=[
                                httpretty.Response(body=request_callback)
                            ])
@@ -227,12 +241,22 @@ class TestSlackBackend(unittest.TestCase):
                 self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
 
             self.assertEqual(message['data']['channel_info']['name'], expc[4])
+            self.assertEqual(message['data']['channel_info']['num_members'], 164)
 
         # Check requests
         expected = [
             {
                 'channel': ['C011DUKE8'],
                 'token': ['aaaa']
+            },
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa']
+            },
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa'],
+                'cursor': ['dXNlcl9pZDpVNEMwUTZGQTc=']
             },
             {
                 'channel': ['C011DUKE8'],
@@ -317,12 +341,22 @@ class TestSlackBackend(unittest.TestCase):
                 self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
 
             self.assertEqual(message['data']['channel_info']['name'], expc[4])
+            self.assertEqual(message['data']['channel_info']['num_members'], 164)
 
         # Check requests
         expected = [
             {
                 'channel': ['C011DUKE8'],
                 'token': ['aaaa']
+            },
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa']
+            },
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa'],
+                'cursor': ['dXNlcl9pZDpVNEMwUTZGQTc=']
             },
             {
                 'channel': ['C011DUKE8'],
@@ -369,6 +403,15 @@ class TestSlackBackend(unittest.TestCase):
             {
                 'channel': ['C011DUKE8'],
                 'token': ['aaaa']
+            },
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa']
+            },
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa'],
+                'cursor': ['dXNlcl9pZDpVNEMwUTZGQTc=']
             },
             {
                 'channel': ['C011DUKE8'],
@@ -495,6 +538,37 @@ class TestSlackClient(unittest.TestCase):
         client = SlackClient('aaaa', max_items=5)
         self.assertEqual(client.api_token, 'aaaa')
         self.assertEqual(client.max_items, 5)
+
+    @httpretty.activate
+    def test_conversation_members(self):
+        """Test conversation members API call"""
+
+        http_requests = setup_http_server()
+
+        client = SlackClient('aaaa', max_items=5)
+
+        num_members = client.conversation_members('C011DUKE8')
+        self.assertEqual(num_members, 164)
+
+        expected = [
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa'],
+            },
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa'],
+                'cursor': ['dXNlcl9pZDpVNEMwUTZGQTc=']
+            }]
+
+        self.assertEqual(len(http_requests), 2)
+
+        req = http_requests[0]
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/conversations.members')
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
     def test_channel_info(self):
