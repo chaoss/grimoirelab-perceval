@@ -57,7 +57,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.7.0'
+    version = '0.7.1'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -338,7 +338,7 @@ class SlackClient(HttpClient):
             raw_response = self._fetch(resource, params)
             response = json.loads(raw_response)
             members += len(response["members"])
-            
+
         return members
 
     def channel_info(self, channel):
