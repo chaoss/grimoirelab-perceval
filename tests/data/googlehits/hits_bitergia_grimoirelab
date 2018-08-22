@@ -1,0 +1,1718 @@
+<!doctype html>
+<html itemscope="" itemtype="http://schema.org/SearchResultsPage" lang="es">
+
+<head>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+    <meta content="/images/branding/googleg/1x/googleg_standard_color_128dp.png" itemprop="image">
+    <link href="/images/branding/product/ico/googleg_lodp.ico" rel="shortcut icon">
+    <title>bitergia grimoirelab - Buscar con Google</title>
+    <style>
+        #gbar,
+        #guser {
+            font-size: 13px;
+            padding-top: 1px !important;
+        }
+
+        #gbar {
+            height: 22px
+        }
+
+        #guser {
+            padding-bottom: 7px !important;
+            text-align: right
+        }
+
+        .gbh,
+        .gbd {
+            border-top: 1px solid #c9d7f1;
+            font-size: 1px
+        }
+
+        .gbh {
+            height: 0;
+            position: absolute;
+            top: 24px;
+            width: 100%
+        }
+
+        @media all {
+            .gb1 {
+                height: 22px;
+                margin-right: .5em;
+                vertical-align: top
+            }
+            #gbar {
+                float: left
+            }
+        }
+
+        a.gb1,
+        a.gb4 {
+            text-decoration: underline !important
+        }
+
+        a.gb1,
+        a.gb4 {
+            color: #00c !important
+        }
+
+        .gbi .gb4 {
+            color: #dd8e27 !important
+        }
+
+        .gbf .gb4 {
+            color: #900 !important
+        }
+    </style>
+    <style>
+        .star {
+            float: left;
+            margin-top: 1px;
+            overflow: hidden
+        }
+
+        .ybhkme {
+            font-size: 11px
+        }
+
+        .j {
+            width: 34em
+        }
+
+        body,
+        td,
+        div,
+        .p,
+        a {
+            font-family: arial, sans-serif;
+            tap-highlight-color: rgba(255, 255, 255, 0)
+        }
+
+        body {
+            margin: 0
+        }
+
+        a img {
+            border: 0
+        }
+
+        #gbar {
+            float: left;
+            height: 22px;
+            padding-left: 2px;
+            font-size: 13px
+        }
+
+        .gsfi,
+        .gsfs {
+            font-size: 17px
+        }
+
+        .w,
+        .q:active,
+        .q:visited,
+        .tbotu {
+            color: #11c
+        }
+
+        a.gl {
+            text-decoration: none
+        }
+
+        #foot {
+            padding: 0 8px
+        }
+
+        #foot a {
+            white-space: nowrap
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: normal;
+            margin: 0;
+            padding: 0
+        }
+
+        #res h3 {
+            display: inline
+        }
+
+        .hd {
+            height: 1px;
+            position: absolute;
+            top: -1000em
+        }
+
+        .g,
+        body,
+        html,
+        table,
+        .std {
+            font-size: 13px
+        }
+
+        .g {
+            margin-bottom: 23px;
+            margin-top: 0;
+            zoom: 1
+        }
+
+        ol li,
+        ul li {
+            list-style: none
+        }
+
+        h1,
+        ol,
+        ul,
+        li {
+            margin: 0;
+            padding: 0
+        }
+
+        .e {
+            margin: 2px 0 0.75em
+        }
+
+        #leftnav a {
+            text-decoration: none
+        }
+
+        #leftnav h2 {
+            color: #767676;
+            font-weight: normal;
+            margin: 0
+        }
+
+        #nav {
+            border-collapse: collapse;
+            margin-top: 17px;
+            text-align: left
+        }
+
+        #nav td {
+            text-align: center
+        }
+
+        .nobr {
+            white-space: nowrap
+        }
+
+        .ts {
+            border-collapse: collapse
+        }
+
+        .s br {
+            display: none
+        }
+
+        .csb {
+            display: block;
+            height: 40px
+        }
+
+        .images_table td {
+            line-height: 17px;
+            padding-bottom: 16px
+        }
+
+        .images_table img {
+            border: 1px solid #ccc;
+            padding: 1px
+        }
+
+        #tbd,
+        #abd {
+            display: block;
+            min-height: 1px
+        }
+
+        #abd {
+            padding-top: 3px
+        }
+
+        #tbd li {
+            display: inline
+        }
+
+        .TIrJXe,
+        .UU5df {
+            margin-bottom: 8px
+        }
+
+        #tbd .tbt li {
+            display: block;
+            font-size: 13px;
+            line-height: 1.2;
+            padding-bottom: 3px;
+            padding-left: 8px;
+            text-indent: -8px
+        }
+
+        .tbos,
+        .b {
+            font-weight: bold
+        }
+
+        em {
+            font-weight: bold;
+            font-style: normal
+        }
+
+        .mime {
+            color: #1a0dab;
+            font-weight: bold;
+            font-size: x-small
+        }
+
+        .soc a {
+            text-decoration: none
+        }
+
+        .soc {
+            color: #808080
+        }
+
+        .ul7Gbc {
+            color: #e7711b
+        }
+
+        #Db7kif {
+            border: 1px solid #e0e0e0;
+            margin-left: -8px;
+            margin-right: -8px;
+            padding: 15px 20px 5px
+        }
+
+        .mrH1y {
+            font-size: 32px
+        }
+
+        .PZ6wOb {
+            color: #777;
+            font-size: 16px;
+            margin-top: 5px
+        }
+
+        .gwrItc {
+            color: #777;
+            font-size: 14px;
+            margin-top: 5px
+        }
+
+        .SVob4e {
+            border: 1px solid #e0e0e0;
+            padding-left: 20px
+        }
+
+        .mYu5Hb {
+            border: 1px solid #e0e0e0;
+            padding: 5px 20px
+        }
+
+        #vob {
+            border: 1px solid #e0e0e0;
+            padding: 15px 15px
+        }
+
+        #ZjIC2e {
+            font-size: 22px;
+            line-height: 22px;
+            padding-bottom: 5px
+        }
+
+        #vob_st {
+            line-height: 1.24
+        }
+
+        .DfLGHd {
+            border-width: 1px;
+            border-style: solid;
+            border-color: #eee;
+            background-color: #fff;
+            position: relative;
+            margin-bottom: 26px
+        }
+
+        .uRIxYb,
+        .NjTIc,
+        .PftIHd,
+        .DXoZmb {
+            font-family: Arial;
+            font-weight: lighter
+        }
+
+        .uRIxYb {
+            margin-bottom: 5px
+        }
+
+        .uRIxYb {
+            font-size: xx-large
+        }
+
+        .NjTIc {
+            font-size: medium
+        }
+
+        .PftIHd {
+            font-size: large
+        }
+
+        .DXoZmb {
+            font-size: small
+        }
+
+        .DfLGHd {
+            margin-left: -8px;
+            margin-right: -15px;
+            padding: 20px 20px 24px
+        }
+
+        .ernfsc {
+            border-spacing: 0px 2px
+        }
+
+        .D3VFNd {
+            max-width: 380px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            padding-left: 0px
+        }
+
+        .c1Ujmc {
+            padding-left: 15px;
+            white-space: nowrap;
+            color: #666
+        }
+
+        .EjZtie {
+            padding-left: 0px
+        }
+
+        .SFt5jb {
+            color: #212121
+        }
+
+        .Pt7r9e {
+            color: #878787
+        }
+
+        .bkcGhd {
+            color: #093
+        }
+
+        .fIP9ce {
+            color: #c00
+        }
+
+        .LDBB9d {
+            padding: 1px
+        }
+
+        .gssb_a {
+            padding: 0 10px !important
+        }
+
+        .gssb_c {
+            left: 132px !important;
+            right: 295px !important;
+            top: 78px !important;
+            width: 572px !important
+        }
+
+        .gssb_c table {
+            font-size: 16px !important
+        }
+
+        .gssb_e {
+            border: 1px solid #ccc !important;
+            border-top-color: #d9d9d9 !important
+        }
+
+        .gssb_i {
+            background: #eee !important
+        }
+
+        #res {
+            padding: 0 8px
+        }
+
+        #rhs_block {
+            padding-top: 43px
+        }
+
+        #MCN7mf {
+            padding: 0 8px
+        }
+
+        #subform_ctrl {
+            font-size: 11px;
+            height: 17px;
+            margin: 5px 3px 0 17px
+        }
+
+        .taf {
+            padding-bottom: 3px
+        }
+
+        .WIkLp {
+            padding: 20px 0 3px
+        }
+
+        .FuZzl {
+            padding: 20px 0 3px
+        }
+
+        #topstuff .e {
+            padding-bottom: 6px
+        }
+
+        .slk .sld {
+            width: 250px
+        }
+
+        .slk {
+            margin-bottom: -3px
+        }
+
+        .slk .zaHRAf {
+            padding-bottom: 5px;
+            width: 250px
+        }
+
+        .ac,
+        .st {
+            line-height: 1.24
+        }
+
+        .mfr,
+        #ofr {
+            font-size: 16px;
+            margin: 1em 0;
+            padding: 0 8px
+        }
+
+        .tZz6cc {
+            padding-bottom: 25px
+        }
+
+        .s {
+            color: #545454
+        }
+
+        .ac {
+            color: #545454
+        }
+
+        a.fl,
+        .A8ul6 a,
+        .osl a {
+            color: #1a0dab;
+            text-decoration: none
+        }
+
+        a:link {
+            color: #1a0dab;
+            cursor: pointer
+        }
+
+        #tads a:link {
+            color: #1a0dab
+        }
+
+        #tads .soc a:link {
+            color: #808080
+        }
+
+        a:visited {
+            color: #61C
+        }
+
+        .blg a {
+            text-decoration: none
+        }
+
+        cite,
+        cite a:link {
+            color: #006621;
+            font-style: normal
+        }
+
+        #tads cite {
+            color: #006621
+        }
+
+        .hJND5c {
+            font-size: 15px
+        }
+
+        .kvs {
+            margin-top: 1px
+        }
+
+        .hJND5c,
+        .kvs,
+        .slp {
+            display: block;
+            margin-bottom: 1px
+        }
+
+        .kt {
+            border-spacing: 2px 0;
+            margin-top: 1px
+        }
+
+        .f {
+            color: #808080
+        }
+
+        .L4Zeue {
+            color: #093
+        }
+
+        h4.r {
+            display: inline;
+            font-size: small;
+            font-weight: normal
+        }
+
+        .g {
+            line-height: 1.2
+        }
+
+        .NpC9Hd {
+            display: inline-block;
+            vertical-align: top;
+            overflow: hidden;
+            position: relative
+        }
+
+        .COi8F {
+            margin: 0 0 2em 1.3em
+        }
+
+        .COi8F li {
+            list-style-type: disc
+        }
+
+        .osl {
+            color: #777;
+            margin-top: 4px
+        }
+
+        .r {
+            font-size: 16px;
+            margin: 0
+        }
+
+        .spell {
+            font-size: 16px
+        }
+
+        .spell_orig {
+            font-size: 13px
+        }
+
+        .spell_orig a {
+            text-decoration: none
+        }
+
+        .spell_orig b i {
+            font-style: normal;
+            font-weight: normal
+        }
+
+        .th {
+            border: 1px solid #ebebeb
+        }
+
+        .ts td {
+            padding: 0
+        }
+
+        .videobox {
+            padding-bottom: 3px
+        }
+
+        .slk a {
+            text-decoration: none
+        }
+
+        #leftnav a:hover,
+        #leftnav .tbou a:hover,
+        .slk h3 a,
+        a:hover {
+            text-decoration: underline
+        }
+
+        #mn {
+            table-layout: fixed;
+            width: 100%
+        }
+
+        #leftnav a {
+            color: #222;
+            font-size: 13px
+        }
+
+        #leftnav {
+            padding: 43px 4px 4px 0
+        }
+
+        .tbos {
+            color: #dd4b39
+        }
+
+        .tbt {
+            margin-bottom: 28px
+        }
+
+        #tbd {
+            padding: 0 0 0 16px
+        }
+
+        .tbou a {
+            color: #222
+        }
+
+        #center_col {
+            border: 0;
+            padding: 0 8px 0 0
+        }
+
+        #topstuff .e {
+            padding-top: 3px
+        }
+
+        #topstuff .sp_cnt {
+            padding-top: 6px
+        }
+
+        #ab_name {
+            color: #dd4b39;
+            font: 20px "Arial";
+            margin-left: 15px
+        }
+
+        #resultStats {
+            color: #999;
+            font-size: 13px;
+            overflow: hidden;
+            white-space: nowrap
+        }
+
+        .mslg>td {
+            padding-right: 1px;
+            padding-top: 2px
+        }
+
+        .slk .sld {
+            margin-top: 2px;
+            padding: 5px 0 5px 5px
+        }
+
+        .fmp {
+            padding-top: 3px
+        }
+
+        .close_btn {
+            overflow: hidden
+        }
+
+        #fll a,
+        #bfl a {
+            color: #1a0dab !important;
+            margin: 0 12px;
+            text-decoration: none !important
+        }
+
+        .ng {
+            color: #dd4b39
+        }
+
+        #mss {
+            margin: .33em 0 0;
+            padding: 0;
+            display: table
+        }
+
+        .NYKCib {
+            display: inline-block;
+            float: left;
+            white-space: nowrap;
+            padding-right: 16px
+        }
+
+        #mss p {
+            margin: 0;
+            padding-top: 5px
+        }
+
+        .tn {
+            border-bottom: 1px solid #ebebeb;
+            display: block;
+            float: left;
+            height: 59px;
+            line-height: 54px;
+            min-width: 980px;
+            padding: 0;
+            position: relative;
+            white-space: nowrap
+        }
+
+        .qrSWbe,
+        a.qrSWbe {
+            color: #777;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial, sans-serif;
+            font-size: small;
+            height: 54px;
+            line-height: 54px;
+            margin: 0 8px;
+            padding: 0 8px;
+            text-decoration: none;
+            white-space: nowrap
+        }
+
+        .tnuiC {
+            border-bottom: 3px solid #dd4b39;
+            color: #dd4b39;
+            font-weight: bold;
+            margin: 2px 8px 0
+        }
+
+        a.KDZjCd:hover {
+            color: black;
+            text-decoration: none;
+            white-space: nowrap
+        }
+
+        body {
+            margin: 0;
+            padding: 0
+        }
+
+        .sFTC8c {
+            display: inline-block;
+            float: left;
+            margin-top: 2px
+        }
+
+        .pqkqJe,
+        a.pqkqJe {
+            margin-left: 1px
+        }
+
+        .sd {
+            line-height: 43px;
+            padding: 0 8px 0 9px
+        }
+
+        a:active,
+        .osl a:active,
+        .tbou a:active,
+        #leftnav a:active {
+            color: #dd4b39
+        }
+
+        #bfl a:active {
+            color: #dd4b39 !important
+        }
+
+        .csb {
+            background: url(/images/nav_logo229.png) no-repeat;
+            overflow: hidden
+        }
+
+        .close_btn {
+            background: url(/images/nav_logo229.png) no-repeat -138px -84px;
+            height: 14px;
+            width: 14px;
+            display: block
+        }
+
+        .star {
+            background: url(/images/nav_logo229.png) no-repeat -94px -245px;
+            height: 13px;
+            width: 65px;
+            display: block
+        }
+
+        .star div,
+        .star span {
+            background: url(/images/nav_logo229.png) no-repeat 0 -245px;
+            height: 13px;
+            width: 65px;
+            display: block
+        }
+
+        .Pj9hGd {
+            display: inline;
+            margin: 0 3px;
+            outline-color: transparent;
+            overflow: hidden;
+            position: relative
+        }
+
+        .Pj9hGd>div {
+            outline-color: transparent
+        }
+
+        .CiacGf {
+            border-color: transparent;
+            border-style: solid dashed dashed;
+            border-top-color: green;
+            border-width: 4px 4px 0 4px;
+            cursor: pointer;
+            display: inline-block;
+            font-size: 0;
+            height: 0;
+            left: 4px;
+            line-height: 0;
+            outline-color: transparent;
+            position: relative;
+            top: -3px;
+            width: 0
+        }
+
+        .CiacGf {
+            margin-top: -4px
+        }
+
+        .am-dropdown-menu {
+            display: block;
+            background: #fff;
+            border: 1px solid #dcdcdc;
+            font-size: 13px;
+            left: 0;
+            padding: 0;
+            position: absolute;
+            right: auto;
+            white-space: nowrap;
+            z-index: 3
+        }
+
+        .mUpfKd {
+            list-style: none;
+            white-space: nowrap
+        }
+
+        .mUpfKd:hover {
+            background-color: #eee
+        }
+
+        a.imx0m {
+            color: #333;
+            cursor: pointer;
+            display: block;
+            padding: 7px 18px;
+            text-decoration: none
+        }
+
+        #tads a.imx0m {
+            color: #333
+        }
+
+        .sfbgg {
+            background: #f1f1f1;
+            border-bottom: 1px solid #e5e5e5;
+            height: 71px
+        }
+
+        #logocont {
+            z-index: 1;
+            padding-left: 4px;
+            padding-top: 4px
+        }
+
+        #logo {
+            display: block;
+            height: 49px;
+            margin-top: 12px;
+            margin-left: 12px;
+            overflow: hidden;
+            position: relative;
+            width: 137px
+        }
+
+        #logo img {
+            left: 0;
+            position: absolute;
+            top: -41px
+        }
+
+        .lst-a {
+            background: white;
+            border: 1px solid #d9d9d9;
+            border-top-color: silver;
+            width: 570px
+        }
+
+        .lst-a:hover {
+            border: 1px solid #b9b9b9;
+            border-top: 1px solid #a0a0a0;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+            -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+            -moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1)
+        }
+
+        .lst-td {
+            border: none;
+            padding: 0
+        }
+
+        .tia input {
+            border-right: none;
+            padding-right: 0
+        }
+
+        .tia {
+            padding-right: 0
+        }
+
+        .lst {
+            background: none;
+            border: none;
+            color: #000;
+            font: 16px arial, sans-serif;
+            float: left;
+            height: 22px;
+            margin: 0;
+            padding: 3px 6px 2px 9px;
+            vertical-align: top;
+            width: 100%;
+            word-break: break-all
+        }
+
+        .lst:focus {
+            outline: none
+        }
+
+        .lst-b {
+            background: none;
+            border: none;
+            height: 26px;
+            padding: 0 6px 0 12px
+        }
+
+        .ds {
+            border-right: 1px solid #e7e7e7;
+            position: relative;
+            height: 29px;
+            margin-left: 17px;
+            z-index: 100
+        }
+
+        .lsbb {
+            background-image: -moz-linear-gradient(top, #4d90fe, #4787ed);
+            background-image: -ms-linear-gradient(top, #4d90fe, #4787ed);
+            background-image: -o-linear-gradient(top, #4d90fe, #4787ed);
+            background-image: -webkit-gradient(linear, left top, left bottom, from(#4d90fe), to(#4787ed));
+            background-image: -webkit-linear-gradient(top, #4d90fe, #4787ed);
+            background-image: linear-gradient(top, #4d90fe, #4787ed);
+            border: 1px solid #3079ed;
+            border-radius: 2px;
+            background-color: #4d90fe;
+            height: 27px;
+            width: 68px
+        }
+
+        .lsbb:hover {
+            background-image: -moz-linear-gradient(top, #4d90fe, #357ae8);
+            background-image: -ms-linear-gradient(top, #4d90fe, #357ae8);
+            background-image: -o-linear-gradient(top, #4d90fe, #357ae8);
+            background-image: -webkit-gradient(linear, left top, left bottom, from(#4d90fe), to(#357ae8));
+            background-image: -webkit-linear-gradient(top, #4d90fe, #357ae8);
+            background-color: #357ae8;
+            background-image: linear-gradient(top, #4d90fe, #357ae8);
+            border: 1px solid #2f5bb7
+        }
+
+        .lsb {
+            background: transparent;
+            background-position: 0 -343px;
+            background-repeat: repeat-x;
+            border: none;
+            color: #000;
+            cursor: default;
+            font: 15px arial, sans-serif;
+            height: 29px;
+            margin: 0;
+            vertical-align: top;
+            width: 100%
+        }
+
+        .lsb:active {
+            -moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+            -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+            background: transparent;
+            color: transparent;
+            overflow: hidden;
+            position: relative;
+            width: 100%
+        }
+
+        .sbico {
+            color: transparent;
+            display: inline-block;
+            height: 15px;
+            margin: 0 auto;
+            margin-top: 2px;
+            width: 15px;
+            overflow: hidden
+        }
+    </style>
+    <script nonce="RPv4pKAXfmK5m/9in2OEIg==">
+        (function() {
+            window.google = {
+                kEI: 'bd9RW_XOJIjfgAbSwJToCg',
+                kEXPI: '0,1353747,57,1653,305,1017,280,337,158,215,1004,636,607,166,21,135,127,451,2339146,234,193,32,318990,10304,1294,12383,2349,2506,32692,2074,13173,867,317,1251,7,10826,14091,2192,369,548,664,326,1776,113,2201,3191,725,3,78,1630,136,130,5107,444,131,1119,2,578,728,310,2122,1361,1712,1376,505,730,377,1240,479,609,685,8,807,717,4,7,34,774,359,873,1015,284,2,2825,1636,525,22,604,2,153,506,737,98,805,194,3,1331,29,272,614,283,509,1587,189,25,82,1344,37,365,111,91,264,11,43,18,7,10,162,334,17,106,7,421,689,129,105,386,8,18,788,161,117,7,28,463,620,29,110,350,247,187,4,4,4,5,79,247,34,124,107,344,7,63,216,352,1,19,922,307,495,682,147,14,9,13,605,368,663,55,223,502,332,373,2323719,3685997,2554',
+                authuser: 0,
+                kscs: 'c9c918f0_bd9RW_XOJIjfgAbSwJToCg',
+                kGL: 'ES'
+            };
+            google.kHL = 'es';
+        })();
+        google.time = function() {
+            return (new Date).getTime()
+        };
+        (function() {
+            google.lc = [];
+            google.li = 0;
+            google.getEI = function(a) {
+                for (var b; a && (!a.getAttribute || !(b = a.getAttribute("eid")));) a = a.parentNode;
+                return b || google.kEI
+            };
+            google.getLEI = function(a) {
+                for (var b = null; a && (!a.getAttribute || !(b = a.getAttribute("leid")));) a = a.parentNode;
+                return b
+            };
+            google.https = function() {
+                return "https:" == window.location.protocol
+            };
+            google.ml = function() {
+                return null
+            };
+            google.wl = function(a, b) {
+                try {
+                    google.ml(Error(a), !1, b)
+                } catch (d) {}
+            };
+            google.log = function(a, b, d, c, g) {
+                if (a = google.logUrl(a, b, d, c, g)) {
+                    b = new Image;
+                    var e = google.lc,
+                        f = google.li;
+                    e[f] = b;
+                    b.onerror = b.onload = b.onabort = function() {
+                        delete e[f]
+                    };
+                    google.vel && google.vel.lu && google.vel.lu(a);
+                    b.src = a;
+                    google.li = f + 1
+                }
+            };
+            google.logUrl = function(a, b, d, c, g) {
+                var e = "",
+                    f = google.ls || "";
+                d || -1 != b.search("&ei=") || (e = "&ei=" + google.getEI(c), -1 == b.search("&lei=") && (c = google.getLEI(c)) && (e += "&lei=" + c));
+                c = "";
+                !d && google.cshid && -1 == b.search("&cshid=") && "slh" != a && (c = "&cshid=" + google.cshid);
+                a = d || "/" + (g || "gen_204") + "?atyp=i&ct=" + a + "&cad=" + b + e + f + "&zx=" + google.time() + c;
+                /^http:/i.test(a) && google.https() && (google.ml(Error("a"), !1, {
+                    src: a,
+                    glmm: 1
+                }), a = "");
+                return a
+            };
+        }).call(this);
+        (function() {
+            google.y = {};
+            google.x = function(a, b) {
+                if (a) var c = a.id;
+                else {
+                    do c = Math.random(); while (google.y[c])
+                }
+                google.y[c] = [a, b];
+                return !1
+            };
+            google.lm = [];
+            google.plm = function(a) {
+                google.lm.push.apply(google.lm, a)
+            };
+            google.lq = [];
+            google.load = function(a, b, c) {
+                google.lq.push([
+                    [a], b, c
+                ])
+            };
+            google.loadAll = function(a, b) {
+                google.lq.push([a, b])
+            };
+        }).call(this);
+        google.f = {};
+        (function() {
+            var b = {
+                gen204: "dcl",
+                clearcut: 4
+            };
+            var c = [function() {
+                google.c && google.tick("load", b)
+            }];
+            google.dclc = function(a) {
+                c.length ? c.push(a) : a()
+            };
+
+            function d() {
+                for (var a; a = c.shift();) a()
+            }
+            window.addEventListener ? (document.addEventListener("DOMContentLoaded", d, !1), window.addEventListener("load", d, !1)) : window.attachEvent && window.attachEvent("onload", d);
+        }).call(this);
+    </script>
+    <script type="text/javascript" nonce="RPv4pKAXfmK5m/9in2OEIg=="></script>
+    <script nonce="RPv4pKAXfmK5m/9in2OEIg==">
+        (function() {
+            google.sham = function(c) {
+                for (var d = c.parentElement, a = null, b = 0; b < d.childNodes.length; b++) {
+                    var e = d.childNodes[b]; - 1 < (" " + e.className + " ").indexOf(" am-dropdown-menu ") && (a = e)
+                }
+                "none" == a.style.display ? (a.style.display = "", google.log("hpam", "&ved=" + c.getAttribute("data-ved"))) : a.style.display = "none"
+            };
+        }).call(this);
+        (function() {
+            var b = [];
+            google.jsc = {
+                xx: b,
+                x: function(a) {
+                    b.push(a)
+                },
+                mm: [],
+                m: function(a) {
+                    google.jsc.mm = a
+                }
+            };
+        }).call(this);
+    </script>
+</head>
+
+<body class="hsrp" bgcolor="#ffffff" marginheight="0" marginwidth="0" topmargin="0">
+    <div id=gbar>
+        <nobr><b class=gb1>Búsqueda</b> <a class=gb1 href="https://www.google.es/search?hl=es&tbm=isch&source=og&tab=wi">Imágenes</a> <a class=gb1 href="https://maps.google.es/maps?hl=es&tab=wl">Maps</a> <a class=gb1 href="https://play.google.com/?hl=es&tab=w8">Play</a> <a class=gb1 href="https://www.youtube.com/results?gl=ES&tab=w1">YouTube</a> <a class=gb1 href="https://news.google.es/nwshp?hl=es&tab=wn">Noticias</a> <a class=gb1 href="https://mail.google.com/mail/?tab=wm">Gmail</a> <a class=gb1 href="https://drive.google.com/?tab=wo">Drive</a> <a class=gb1 style="text-decoration:none" href="https://www.google.es/intl/es/options/"><u>Más</u> &raquo;</a></nobr>
+    </div>
+    <div id=guser width=100%>
+        <nobr><span id=gbn class=gbi></span><span id=gbf class=gbf></span><span id=gbe></span><a href="http://www.google.es/history/optout?hl=es" class=gb4>Historial web</a> | <a href="/preferences?hl=es" class=gb4>Configuración</a> | <a target=_top id=gb_70 href="https://accounts.google.com/ServiceLogin?hl=es&passive=true&continue=https://www.google.com/search%3Fq%3Dbitergia%2Bgrimoirelab" class=gb4>Iniciar sesión</a></nobr>
+    </div>
+    <div class=gbh style=left:0></div>
+    <div class=gbh style=right:0></div>
+    <table id="mn" border="0" cellpadding="0" cellspacing="0" style="position:relative">
+        <tr>
+            <th width="132"></th>
+            <th width="573"></th>
+            <th width="278"></th>
+            <th></th>
+        </tr>
+        <tr>
+            <td class="sfbgg" valign="top">
+                <div id="logocont">
+                    <h1><a href="/webhp?hl=es" style="background:url(/images/nav_logo229.png) no-repeat 0 -41px;height:37px;width:95px;display:block" id="logo" title="Go to Google Home"></a></h1></div>
+            </td>
+            <td class="sfbgg" colspan="2" valign="top" style="padding-left:0px">
+                <form style="display:block;margin:0;background:none" action="/search" id="tsf" method="GET" name="gs">
+                    <table border="0" cellpadding="0" cellspacing="0" style="margin-top:20px;position:relative">
+                        <tr>
+                            <td>
+                                <div class="lst-a">
+                                    <table cellpadding="0" cellspacing="0">
+                                        <tr>
+                                            <td class="lst-td" width="555" valign="bottom">
+                                                <div style="position:relative;zoom:1">
+                                                    <input class="lst" value="bitergia grimoirelab" title="Buscar" autocomplete="off" id="sbhost" maxlength="2048" name="q" type="text">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="ds">
+                                    <div class="lsbb">
+                                        <button class="lsb" value="Buscar" name="btnG" type="submit"><span class="sbico" style="background:url(/images/nav_logo229.png) no-repeat -36px -111px;height:14px;width:13px;display:block"></span></button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </td>
+            <td class="sfbgg">&nbsp;</td>
+        </tr>
+        <tr style="position:relative">
+            <td>
+                <div style="border-bottom:1px solid #ebebeb;height:59px"></div>
+            </td>
+            <td colspan="2">
+                <div class="tn">
+                    <div class="qrSWbe tnuiC sFTC8c pqkqJe">Todo</div>
+                    <div class="sFTC8c"><a class="qrSWbe KDZjCd" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnms&amp;tbm=isch&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q_AUIBQ">Imágenes</a></div>
+                    <div class="sFTC8c"><a class="qrSWbe KDZjCd" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnms&amp;tbm=vid&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q_AUIBg">Vídeos</a></div>
+                    <div class="sFTC8c"><a class="qrSWbe KDZjCd" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnms&amp;tbm=nws&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q_AUIBw">Noticias</a></div>
+                    <div class="sFTC8c"><a class="qrSWbe KDZjCd" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnms&amp;tbm=shop&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q_AUICA">Shopping</a></div>
+                    <div class="sFTC8c"><a class="qrSWbe KDZjCd" href="https://maps.google.com/maps?q=bitergia+grimoirelab&amp;um=1&amp;ie=UTF-8&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q_AUICQ">Maps</a></div>
+                    <div class="sFTC8c"><a class="qrSWbe KDZjCd" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnms&amp;tbm=bks&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q_AUICg">Libros</a></div>
+                </div>
+                <div style="border-bottom:1px solid #ebebeb;height:59px"></div>
+            </td>
+            <td>
+                <div style="border-bottom:1px solid #ebebeb;height:59px"></div>
+            </td>
+        </tr>
+        <tbody id="desktop-search">
+            <style>
+                .pCA4Bd,
+                .pCA4Bd a:link,
+                .pCA4Bd a:visited,
+                a.pCA4Bd:link,
+                a.pCA4Bd:visited {
+                    color: #808080
+                }
+
+                .AzrInc {
+                    color: #61C
+                }
+
+                .ellip {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap
+                }
+
+                .u6RhQc {
+                    margin: 4px 10px
+                }
+
+                #k2fPW {
+                    border: 1px solid #e0e0e0;
+                    font-size: 13px;
+                    margin-right: -2px;
+                }
+
+                .FSP1Dd {
+                    border-top: 1px solid #e0e0e0;
+                    color: #000;
+                    font-size: 22px;
+                    margin-top: -5px;
+                    padding-top: 10px
+                }
+
+                .CB9G1b {
+                    color: #000;
+                    font-size: 14px
+                }
+
+                .C6ZAab {
+                    color: #000
+                }
+
+                .NWncrd {
+                    border-spacing: 0;
+                    line-height: 20px;
+                    table-layout: fixed;
+                    width: 100%
+                }
+
+                .NWncrd a:hover,
+                .NWncrd a:active {
+                    text-decoration: none
+                }
+
+                .JYQZge {
+                    color: #1a0dab
+                }
+
+                a:hover .JYQZge,
+                a:active .JYQZge {
+                    text-decoration: underline
+                }
+
+                .TyXs8d {
+                    border-top: 1px solid #e0e0e0;
+                    margin: 0 -10px;
+                    padding: 0 10px
+                }
+
+                .DBHfJe {
+                    display: block;
+                    margin: auto
+                }
+
+                .rNjNwd {
+                    padding-top: 8px;
+                    padding-bottom: 8px
+                }
+
+                .vrQIef {
+                    max-width: 198px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap
+                }
+
+                .A1t5ne {
+                    color: #777
+                }
+            </style>
+            <tr>
+                <td id="leftnav" valign="top">
+                    <div>
+                        <h2 class="hd">Search Options</h2>
+                        <ul class="med" id="tbd">
+                            <li>
+                                <ul class="tbt">
+                                    <li class="tbos" id="lr_">Cualquier idioma</li>
+                                    <li class="tbou" id="lr_lang_1es"><a class="q" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnt&amp;tbs=lr:lang_1es&amp;lr=lang_es&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QpwUIDw">Buscar solo páginas en español</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <ul class="tbt">
+                                    <li class="tbos" id="qdr_">Cualquier fecha</li>
+                                    <li class="tbou" id="qdr_h"><a class="q" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnt&amp;tbs=qdr:h&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QpwUIDw"> Última hora</a></li>
+                                    <li class="tbou" id="qdr_d"><a class="q" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnt&amp;tbs=qdr:d&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QpwUIDw"> Últimas 24 horas</a></li>
+                                    <li class="tbou" id="qdr_w"><a class="q" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnt&amp;tbs=qdr:w&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QpwUIDw"> Última semana</a></li>
+                                    <li class="tbou" id="qdr_m"><a class="q" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnt&amp;tbs=qdr:m&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QpwUIDw"> Último mes</a></li>
+                                    <li class="tbou" id="qdr_y"><a class="q" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnt&amp;tbs=qdr:y&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QpwUIDw"> Último año</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <ul class="tbt">
+                                    <li class="tbos" id="li_">Todos los resultados</li>
+                                    <li class="tbou" id="li_1"><a class="q" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;source=lnt&amp;tbs=li:1&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QpwUIDw">Verbatim</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
+                <td valign="top">
+                    <div id="center_col">
+                        <div class="sd" id="resultStats">Aproximadamente 3.140 resultados</div>
+                        <div id="res">
+                            <div id="topstuff"></div>
+                            <div id="search">
+                                <div id="ires">
+                                    <ol>
+                                        <div class="g">
+                                            <h3 class="r"><a href="/url?q=https://bitergia.com/&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QFggUMAA&amp;usg=AOvVaw14LO-J4TIs3Uf4oyF15orE"><b>Bitergia</b> Analytics for Open Source and Enterprise Software ...</a></h3>
+                                            <div class="s">
+                                                <div class="hJND5c" style="margin-bottom:2px"><cite>https://<b>bitergia</b>.com/</cite>
+                                                    <div class="Pj9hGd">
+                                                        <div style="display:inline" onclick="google.sham(this);" aria-expanded="false" aria-haspopup="true" tabindex="0" data-ved="0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q7B0IFTAA"><span class="CiacGf"></span></div>
+                                                        <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+                                                            <ul>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/url?q=http://webcache.googleusercontent.com/search%3Fq%3Dcache:-mN3rESQKD4J:https://bitergia.com/%252Bbitergia%2Bgrimoirelab%26hl%3Des%26ct%3Dclnk&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QIAgXMAA&amp;usg=AOvVaw0hpkZc0z9Jk82JNJBe_Ui6">En caché</a></li>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/search?ie=UTF-8&amp;q=related:https://bitergia.com/+bitergia+grimoirelab&amp;tbo=1&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QHwgYMAA">Similares</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><span class="st"><b>Bitergia</b> analyzes open source and inner source development processes to help <br>
+companies and organizations to understand and to manage the projects in&nbsp;...</span>
+                                                <br>
+                                            </div>
+                                        </div>
+                                        <div class="g">
+                                            <h3 class="r"><a href="/url?q=https://blog.bitergia.com/&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QFggaMAE&amp;usg=AOvVaw1XiwVwrr76pTu4RJ-c_Nkc"><b>Bitergia</b> Software Development Analytics &#8211; Software Development ...</a></h3>
+                                            <div class="s">
+                                                <div class="hJND5c" style="margin-bottom:2px"><cite>https://blog.<b>bitergia</b>.com/</cite>
+                                                    <div class="Pj9hGd">
+                                                        <div style="display:inline" onclick="google.sham(this);" aria-expanded="false" aria-haspopup="true" tabindex="0" data-ved="0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q7B0IGzAB"><span class="CiacGf"></span></div>
+                                                        <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+                                                            <ul>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/url?q=http://webcache.googleusercontent.com/search%3Fq%3Dcache:rf8vbimGo3oJ:https://blog.bitergia.com/%252Bbitergia%2Bgrimoirelab%26hl%3Des%26ct%3Dclnk&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QIAgdMAE&amp;usg=AOvVaw3dpW9IdrQ7w4Z_H3ITTBPW">En caché</a></li>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/search?ie=UTF-8&amp;q=related:https://blog.bitergia.com/+bitergia+grimoirelab&amp;tbo=1&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QHwgeMAE">Similares</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><span class="st">Once again, <b>Bitergia</b> will be at OSCON, held this time in Portland, at Oregon ... <br>
+about our 100% free, open source technology, join the <b>Grimoire Lab</b> community.</span>
+                                                <br>
+                                            </div>
+                                        </div>
+                                        <div class="g">
+                                            <h3 class="r"><a href="/url?q=https://blog.bitergia.com/category/grimoirelab/&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QFgggMAI&amp;usg=AOvVaw1qTzQt-rfDwCfR6QVYHMJg"><b>grimoirelab</b> &#8211; <b>Bitergia</b> Software Development Analytics</a></h3>
+                                            <div class="s">
+                                                <div class="hJND5c" style="margin-bottom:2px"><cite>https://blog.<b>bitergia</b>.com/category/<b>grimoirelab</b>/</cite>
+                                                    <div class="Pj9hGd">
+                                                        <div style="display:inline" onclick="google.sham(this);" aria-expanded="false" aria-haspopup="true" tabindex="0" data-ved="0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q7B0IITAC"><span class="CiacGf"></span></div>
+                                                        <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+                                                            <ul>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/url?q=http://webcache.googleusercontent.com/search%3Fq%3Dcache:ex7PSuVgASEJ:https://blog.bitergia.com/category/grimoirelab/%252Bbitergia%2Bgrimoirelab%26hl%3Des%26ct%3Dclnk&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QIAgjMAI&amp;usg=AOvVaw0Yb3VoQDVoJPfOQos-jo5j">En caché</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><span class="st">Posts about <b>grimoirelab</b> written by mafesan, anajsana, valeriocos, sanacl, and <br>
+jsmanrique.</span>
+                                                <br>
+                                            </div>
+                                        </div>
+                                        <div class="g">
+                                            <h3 class="r"><a href="/url?q=https://blog.bitergia.com/tag/grimoirelab/&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QFgglMAM&amp;usg=AOvVaw1EFZdpdwMPuyItL-ujDeoz"><b>grimoirelab</b> &#8211; <b>Bitergia</b> Software Development Analytics</a></h3>
+                                            <div class="s">
+                                                <div class="hJND5c" style="margin-bottom:2px"><cite>https://blog.<b>bitergia</b>.com/tag/<b>grimoirelab</b>/</cite>
+                                                    <div class="Pj9hGd">
+                                                        <div style="display:inline" onclick="google.sham(this);" aria-expanded="false" aria-haspopup="true" tabindex="0" data-ved="0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q7B0IJjAD"><span class="CiacGf"></span></div>
+                                                        <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+                                                            <ul>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/url?q=http://webcache.googleusercontent.com/search%3Fq%3Dcache:tMqEcFZFJTcJ:https://blog.bitergia.com/tag/grimoirelab/%252Bbitergia%2Bgrimoirelab%26hl%3Des%26ct%3Dclnk&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QIAgoMAM&amp;usg=AOvVaw36hUDd3te7v2q1FUxJmL2s">En caché</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><span class="st">Posts about <b>grimoirelab</b> written by mafesan, anajsana, and jsmanrique.</span>
+                                                <br>
+                                            </div>
+                                        </div>
+                                        <div class="g">
+                                            <h3 class="r"><a href="/url?q=https://chaoss.github.io/grimoirelab/&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QFggqMAQ&amp;usg=AOvVaw36OKRedoPip1vAsZ4RGstW"><b>GrimoireLab</b> - Software Development and Community Analytics ...</a></h3>
+                                            <div class="s">
+                                                <div class="hJND5c" style="margin-bottom:2px"><cite>https://chaoss.github.io/<b>grimoirelab</b>/</cite>
+                                                    <div class="Pj9hGd">
+                                                        <div style="display:inline" onclick="google.sham(this);" aria-expanded="false" aria-haspopup="true" tabindex="0" data-ved="0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q7B0IKzAE"><span class="CiacGf"></span></div>
+                                                        <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+                                                            <ul>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/url?q=http://webcache.googleusercontent.com/search%3Fq%3Dcache:jnW6EZInQ-gJ:https://chaoss.github.io/grimoirelab/%252Bbitergia%2Bgrimoirelab%26hl%3Des%26ct%3Dclnk&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QIAgtMAQ&amp;usg=AOvVaw2u-2-cgXDj0eJL_JNFPWd1">En caché</a></li>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/search?ie=UTF-8&amp;q=related:https://chaoss.github.io/grimoirelab/+bitergia+grimoirelab&amp;tbo=1&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QHwguMAQ">Similares</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><span class="st"><b>GrimoireLab</b> is an evolution of the work done during +10 years by <b>Bitergia</b>, <br>
+LibreSoft URJC research group and several contributors in Metrics Grimoire,&nbsp;...</span>
+                                                <br>
+                                            </div>
+                                        </div>
+                                        <div class="g">
+                                            <h3 class="r"><a href="/url?q=http://grimoirelab.github.io/con/&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QFggwMAU&amp;usg=AOvVaw3FaQt2jTnBwZ30pZx6p4Zs">CHAOSSCon + GrimoireCon Europe 2018 - <b>GrimoireLab</b></a></h3>
+                                            <div class="s">
+                                                <div class="hJND5c" style="margin-bottom:2px"><cite><b>grimoirelab</b>.github.io/con/</cite>
+                                                    <div class="Pj9hGd">
+                                                        <div style="display:inline" onclick="google.sham(this);" aria-expanded="false" aria-haspopup="true" tabindex="0" data-ved="0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q7B0IMTAF"><span class="CiacGf"></span></div>
+                                                        <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+                                                            <ul>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/url?q=http://webcache.googleusercontent.com/search%3Fq%3Dcache:CU3lZ5_jftsJ:http://grimoirelab.github.io/con/%252Bbitergia%2Bgrimoirelab%26hl%3Des%26ct%3Dclnk&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QIAgzMAU&amp;usg=AOvVaw3DoFjjv1ESTutW0y2l36WY">En caché</a></li>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/search?ie=UTF-8&amp;q=related:grimoirelab.github.io/con/+bitergia+grimoirelab&amp;tbo=1&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QHwg0MAU">Similares</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><span class="st">2 Feb 2018 <b>...</b> <b>GrimoireLab</b> is a 100% free, open source software platform for software ... 11:05 - <br>
+11:20, The State of <b>GrimoireLab</b>, J. Manrique López, <b>Bitergia</b>&nbsp;...</span>
+                                                <br>
+                                            </div>
+                                        </div>
+                                        <div class="g">
+                                            <h3 class="r"><a href="/url?q=https://twitter.com/Bitergia/status/987627512363716608&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QFgg3MAY&amp;usg=AOvVaw3PIDPfvHWT_O8C4bOs9Ny3"><b>Bitergia</b> on Twitter: &quot;Hemos presentado @<b>GrimoireLab</b> a los premios ...</a></h3>
+                                            <div class="s">
+                                                <div class="hJND5c" style="margin-bottom:2px"><cite>https://twitter.com/<b>Bitergia</b>/status/987627512363716608</cite>
+                                                    <div class="Pj9hGd">
+                                                        <div style="display:inline" onclick="google.sham(this);" aria-expanded="false" aria-haspopup="true" tabindex="0" data-ved="0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q7B0IODAG"><span class="CiacGf"></span></div>
+                                                        <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+                                                            <ul>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/url?q=http://webcache.googleusercontent.com/search%3Fq%3Dcache:G-04wFqakqUJ:https://twitter.com/Bitergia/status/987627512363716608%252Bbitergia%2Bgrimoirelab%26hl%3Des%26ct%3Dclnk&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QIAg6MAY&amp;usg=AOvVaw1aUHFwMQBkecym8YCTjM_p">En caché</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><span class="st">@<b>Bitergia</b>. Software development analytics to better understand and improve <br>
+development processes in InnerSource &amp; OpenSource teams. We &#10084; Free/Libre&nbsp;...</span>
+                                                <br>
+                                            </div>
+                                        </div>
+                                        <div class="g">
+                                            <h3 class="r"><a href="/url?q=https://github.com/chaoss/grimoirelab-manuscripts&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QFgg8MAc&amp;usg=AOvVaw1F-txKXPf6y4_MGU3JAn6d">GitHub - chaoss/<b>grimoirelab</b>-manuscripts: <b>Bitergia</b> reports engine</a></h3>
+                                            <div class="s">
+                                                <div class="hJND5c" style="margin-bottom:2px"><cite>https://github.com/chaoss/<b>grimoirelab</b>-manuscripts</cite>
+                                                    <div class="Pj9hGd">
+                                                        <div style="display:inline" onclick="google.sham(this);" aria-expanded="false" aria-haspopup="true" tabindex="0" data-ved="0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q7B0IPTAH"><span class="CiacGf"></span></div>
+                                                        <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+                                                            <ul>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/url?q=http://webcache.googleusercontent.com/search%3Fq%3Dcache:DnuCe9-EZyQJ:https://github.com/chaoss/grimoirelab-manuscripts%252Bbitergia%2Bgrimoirelab%26hl%3Des%26ct%3Dclnk&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QIAg_MAc&amp;usg=AOvVaw18163geAs5PgquukD4B6Un">En caché</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><span class="st">GitHub is where people build software. More than 28 million people use GitHub <br>
+to discover, fork, and contribute to over 85 million projects.</span>
+                                                <br>
+                                            </div>
+                                        </div>
+                                        <div class="g">
+                                            <h3 class="r"><a href="/url?q=https://speakerdeck.com/bitergia/grimoirelab-beyond-bitergia&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QFghBMAg&amp;usg=AOvVaw00L1y_n21sNZWWLwnTBSFL"><b>GrimoireLab</b>: Beyond <b>Bitergia</b> - Speaker Deck</a></h3>
+                                            <div class="s">
+                                                <div class="hJND5c" style="margin-bottom:2px"><cite>https://speakerdeck.com/<b>bitergia</b>/<b>grimoirelab</b>-beyond-<b>bitergia</b></cite>
+                                                    <div class="Pj9hGd">
+                                                        <div style="display:inline" onclick="google.sham(this);" aria-expanded="false" aria-haspopup="true" tabindex="0" data-ved="0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q7B0IQjAI"><span class="CiacGf"></span></div>
+                                                        <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+                                                            <ul>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/url?q=http://webcache.googleusercontent.com/search%3Fq%3Dcache:50eKqr8SITkJ:https://speakerdeck.com/bitergia/grimoirelab-beyond-bitergia%252Bbitergia%2Bgrimoirelab%26hl%3Des%26ct%3Dclnk&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QIAhEMAg&amp;usg=AOvVaw0U9Ox_mqDcsuPurFHj69Ul">En caché</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><span class="st">30 Nov 2017 <b>...</b> Short presentation some practical use cases where <b>GrimoireLab</b> toolset has <br>
+been used. 7dddc875546948b5b5094167c90dc10d?s=128&nbsp;...</span>
+                                                <br>
+                                            </div>
+                                        </div>
+                                        <div class="g">
+                                            <h3 class="r"><a href="/url?q=https://wiki.mozilla.org/ParticipationSystems/CommunityAnalytics&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QFghHMAk&amp;usg=AOvVaw0SMQQ2PZLII_g7schSgGo6">ParticipationSystems/CommunityAnalytics - MozillaWiki</a></h3>
+                                            <div class="s">
+                                                <div class="hJND5c" style="margin-bottom:2px"><cite>https://wiki.mozilla.org/ParticipationSystems/CommunityAnalytics</cite>
+                                                    <div class="Pj9hGd">
+                                                        <div style="display:inline" onclick="google.sham(this);" aria-expanded="false" aria-haspopup="true" tabindex="0" data-ved="0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q7B0ISDAJ"><span class="CiacGf"></span></div>
+                                                        <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+                                                            <ul>
+                                                                <li class="mUpfKd"><a class="imx0m" href="/url?q=http://webcache.googleusercontent.com/search%3Fq%3Dcache:XTKo-ZpGGP4J:https://wiki.mozilla.org/ParticipationSystems/CommunityAnalytics%252Bbitergia%2Bgrimoirelab%26hl%3Des%26ct%3Dclnk&amp;sa=U&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0QIAhKMAk&amp;usg=AOvVaw2JzR6dqj9_f2tux2u2f1KN">En caché</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><span class="st">26 Apr 2018 <b>...</b> Mozilla&#39;s Community Analytics is based on <b>Bitergia&#39;s GrimoireLab</b>. List of data <br>
+sources (and project grouping) we index with Community&nbsp;...</span>
+                                                <br>
+                                            </div>
+                                        </div>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="clear:both;margin-bottom:17px;overflow:hidden">
+                            <div style="font-size:16px;padding:0 8px 1px">Búsquedas relacionadas con <b>bitergia grimoirelab</b></div>
+                            <table border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td valign="top">
+                                        <p class="aw5cc" style="margin:3px 8px"><a href="/search?ie=UTF-8&amp;q=blog+bitergia&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q1QIITigA"><b>blog</b> bitergia</a></p>
+                                    </td>
+                                    <td valign="top" style="padding-left:10px">
+                                        <p class="aw5cc" style="margin:3px 8px"><a href="/search?ie=UTF-8&amp;q=grimoire+lab&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q1QIITygB"><b>grimoire lab</b></a></p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="foot">
+                        <table align="center" border="0" cellpadding="0" cellspacing="0" id="nav">
+                            <tr valign="top">
+                                <td align="left" class="b"><span class="csb" style="background-position:-24px 0;width:28px"></span><b></b></td>
+                                <td><span class="csb" style="background-position:-53px 0;width:20px"></span><b>1</b></td>
+                                <td><a class="fl" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;ei=bd9RW_XOJIjfgAbSwJToCg&amp;start=10&amp;sa=N"><span class="csb" style="background-position:-74px 0;width:20px"></span>2</a></td>
+                                <td><a class="fl" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;ei=bd9RW_XOJIjfgAbSwJToCg&amp;start=20&amp;sa=N"><span class="csb" style="background-position:-74px 0;width:20px"></span>3</a></td>
+                                <td><a class="fl" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;ei=bd9RW_XOJIjfgAbSwJToCg&amp;start=30&amp;sa=N"><span class="csb" style="background-position:-74px 0;width:20px"></span>4</a></td>
+                                <td><a class="fl" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;ei=bd9RW_XOJIjfgAbSwJToCg&amp;start=40&amp;sa=N"><span class="csb" style="background-position:-74px 0;width:20px"></span>5</a></td>
+                                <td><a class="fl" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;ei=bd9RW_XOJIjfgAbSwJToCg&amp;start=50&amp;sa=N"><span class="csb" style="background-position:-74px 0;width:20px"></span>6</a></td>
+                                <td><a class="fl" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;ei=bd9RW_XOJIjfgAbSwJToCg&amp;start=60&amp;sa=N"><span class="csb" style="background-position:-74px 0;width:20px"></span>7</a></td>
+                                <td><a class="fl" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;ei=bd9RW_XOJIjfgAbSwJToCg&amp;start=70&amp;sa=N"><span class="csb" style="background-position:-74px 0;width:20px"></span>8</a></td>
+                                <td><a class="fl" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;ei=bd9RW_XOJIjfgAbSwJToCg&amp;start=80&amp;sa=N"><span class="csb" style="background-position:-74px 0;width:20px"></span>9</a></td>
+                                <td><a class="fl" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;ei=bd9RW_XOJIjfgAbSwJToCg&amp;start=90&amp;sa=N"><span class="csb" style="background-position:-74px 0;width:20px"></span>10</a></td>
+                                <td class="b" style="text-align:left"><a class="fl" href="/search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns&amp;ei=bd9RW_XOJIjfgAbSwJToCg&amp;start=10&amp;sa=N" style="text-align:left"><span class="csb" style="background-position:-96px 0;width:71px"></span><span style="display:block;margin-left:53px">Siguiente</span></a></td>
+                            </tr>
+                        </table>
+                        <p class="A8ul6" id="bfl" style="margin:19px 0 0;text-align:center"><a href="/advanced_search?q=bitergia+grimoirelab&amp;ie=UTF-8&amp;prmd=ivns">Búsqueda avanzada</a><a href="/support/websearch/bin/answer.py?answer=134479&amp;hl=es">Buscar en la Ayuda</a> <a href="/tools/feedback/survey/html?productId=196&amp;query=bitergia+grimoirelab&amp;hl=es">Danos tu opinión</a></p>
+                        <div class="A8ul6" id="fll" style="margin:19px auto 19px auto;text-align:center"><a href="/">Página principal de Google</a> <a href="/intl/es/ads">Programas&nbsp;de&nbsp;Publicidad</a> <a href="/intl/es/policies/privacy/">Privacidad</a> <a href="/intl/es/policies/terms/">Condiciones</a> <a href="/intl/es/about.html">Acerca de Google</a></div>
+                    </div>
+                </td>
+                <td id="rhs_block" valign="top">
+                    <ol>
+                        <div class="g">
+                            <div id="k2fPW">
+                                <div class="u6RhQc">
+                                    <div>
+                                        <div class="CB9G1b">Ver resultados relacionados</div>
+                                    </div>
+                                </div>
+                                <div class="u6RhQc">
+                                    <div class="TyXs8d">
+                                        <table class="NWncrd">
+                                            <tr>
+                                                <td class="rNjNwd">
+                                                    <a class="fl" href="/search?ie=UTF-8&amp;q=Bitergia&amp;stick=H4sIAAAAAAAAAONgecSYyy3w8sc9YamUSWtOXmOM4-IKzsgvd80rySypFArgYoOyVLgEpXj10_UNDVMqCrOTUuLLNRik-LlQhaQUlLh4_03llRBlmnbkr5YQpyLnJPv7nY68gvd7SyfMl7jwnQcAfw_Ch3IAAAA&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q-DIIWDAL">
+                                                        <div class="JYQZge vrQIef">Bitergia (Compañía de software en Leganés)</div>
+                                                        <div class="C6ZAab vrQIef">Dirección: </div>
+                                                        <div class="C6ZAab vrQIef">: </div>
+                                                    </a>
+                                                </td>
+                                                <td width="40">
+                                                    <a href="/search?ie=UTF-8&amp;q=Bitergia&amp;stick=H4sIAAAAAAAAAONgecSYyy3w8sc9YamUSWtOXmOM4-IKzsgvd80rySypFArgYoOyVLgEpXj10_UNDVMqCrOTUuLLNRik-LlQhaQUlLh4_03llRBlmnbkr5YQpyLnJPv7nY68gvd7SyfMl7jwnQcAfw_Ch3IAAAA&amp;sa=X&amp;ved=0ahUKEwi1ufi74K3cAhWIL8AKHVIgBa0Q-DIIWzAL"><img class="DBHfJe" src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcT07uskISrNdrX8EsxsNRH2nZw1DsPfEb7mBNQBIMnlvL_MryDSDSM" height="40" width="40"></a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="g"></div>
+                    </ol>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <script type="text/javascript" nonce="RPv4pKAXfmK5m/9in2OEIg==">
+        (function() {
+            var eventid = 'bd9RW_XOJIjfgAbSwJToCg';
+            google.kEI = eventid;
+        })();
+    </script>
+    <script src="/xjs/_/js/k=xjs.hp.en.jpXjwU-iV-g.O/m=sb_he,d/rt=j/d=1/rs=ACT90oFQ2pYAyP79cS-Oe4yxXiaKdSydTA" nonce="RPv4pKAXfmK5m/9in2OEIg=="></script>
+    <script type="text/javascript" nonce="RPv4pKAXfmK5m/9in2OEIg==">
+        google.ac && google.ac.c({
+            "agen": true,
+            "cgen": true,
+            "client": "heirloom-serp",
+            "dh": true,
+            "dhqt": true,
+            "ds": "",
+            "ffql": "es",
+            "fl": true,
+            "host": "google.com",
+            "isbh": 28,
+            "jsonp": true,
+            "lm": true,
+            "msgs": {
+                "cibl": "Borrar búsqueda",
+                "dym": "Quizás quisiste decir:",
+                "lcky": "Voy a tener suerte",
+                "lml": "Más información",
+                "oskt": "Herramientas de introducción de texto",
+                "psrc": "Esta búsqueda se ha eliminado de tu \u003Ca href=\"/history\"\u003Ehistorial web\u003C/a\u003E.",
+                "psrl": "Eliminar",
+                "sbit": "Buscar por imagen",
+                "srch": "Buscar con Google"
+            },
+            "nds": true,
+            "ovr": {},
+            "pq": "bitergia grimoirelab",
+            "refpd": true,
+            "rfs": ["blog bitergia", "grimoire lab"],
+            "sbpl": 24,
+            "sbpr": 24,
+            "scd": 10,
+            "sce": 5,
+            "stok": "9Rv0fi7lavqVtyO2pyaCkP3iFBI"
+        })
+    </script>
+    <script nonce="RPv4pKAXfmK5m/9in2OEIg==">
+        (function() {
+            window.google.cdo = {
+                height: 0,
+                width: 0
+            };
+            (function() {
+                var a = window.innerWidth,
+                    b = window.innerHeight;
+                if (!a || !b) {
+                    var c = window.document,
+                        d = "CSS1Compat" == c.compatMode ? c.documentElement : c.body;
+                    a = d.clientWidth;
+                    b = d.clientHeight
+                }
+                a && b && (a != google.cdo.width || b != google.cdo.height) && google.log("", "", "/client_204?&atyp=i&biw=" + a + "&bih=" + b + "&ei=" + google.kEI);
+            }).call(this);
+        })();
+    </script>
+</body>
+
+</html>
