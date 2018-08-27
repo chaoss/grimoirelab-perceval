@@ -138,9 +138,9 @@ class TestGoogleHitsBackend(unittest.TestCase):
         self.assertEqual(len(items), 1)
         item = items[0]
         self.assertEqual(item['data']['fetched_on'], 1483228800.0)
-        self.assertEqual(item['data']['id'], '609c83af09ffe54e4d8dbe9ab7f975449aae8129')
+        self.assertEqual(item['data']['id'], '18e8f9809f9c539bfe0ac5ad2724323873931825')
         self.assertEqual(item['data']['keywords'], ['bitergia'])
-        self.assertEqual(item['uuid'], '4033fc993af3f136e3a881e046ad472ecbe0ec0f')
+        self.assertEqual(item['uuid'], '119b60909d6560e2d22a579404c30c98f5cdc33d')
         self.assertEqual(item['origin'], 'https://www.google.com/search')
         self.assertEqual(item['updated_on'], 1483228800.0)
         self.assertEqual(item['category'], CATEGORY_HITS)
@@ -151,10 +151,11 @@ class TestGoogleHitsBackend(unittest.TestCase):
 
         self.assertEqual(len(items), 1)
         item = items[0]
+
         self.assertEqual(item['data']['fetched_on'], 1483228800.0)
-        self.assertEqual(item['data']['id'], '7a188cae2eb0e35e5fde706c844099eb45470935')
+        self.assertEqual(item['data']['id'], '2aaa5f3ab512ca6c451cb3c21c77da3d4510f75c')
         self.assertEqual(item['data']['keywords'], ['bitergia', 'grimoirelab'])
-        self.assertEqual(item['uuid'], '6976278c87bd923e2a6aaa597e033c6f5cca6def')
+        self.assertEqual(item['uuid'], '3a83dfa224891986d091e708a2afd165df59576b')
         self.assertEqual(item['origin'], 'https://www.google.com/search')
         self.assertEqual(item['updated_on'], 1483228800.0)
         self.assertEqual(item['category'], CATEGORY_HITS)
@@ -178,10 +179,10 @@ class TestGoogleHitsBackend(unittest.TestCase):
         self.assertEqual(len(items), 1)
         item = items[0]
         self.assertEqual(item['data']['fetched_on'], 1483228800.0)
-        self.assertEqual(item['data']['id'], '609c83af09ffe54e4d8dbe9ab7f975449aae8129')
+        self.assertEqual(item['data']['id'], '18e8f9809f9c539bfe0ac5ad2724323873931825')
         self.assertEqual(item['data']['hits'], 0)
         self.assertEqual(item['data']['keywords'], ['bitergia'])
-        self.assertEqual(item['uuid'], '4033fc993af3f136e3a881e046ad472ecbe0ec0f')
+        self.assertEqual(item['uuid'], '119b60909d6560e2d22a579404c30c98f5cdc33d')
         self.assertEqual(item['origin'], 'https://www.google.com/search')
         self.assertEqual(item['updated_on'], 1483228800.0)
         self.assertEqual(item['category'], CATEGORY_HITS)
@@ -193,8 +194,8 @@ class TestGoogleHitsBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend_write_archive = GoogleHits('bitergia', archive=self.archive)
-        self.backend_read_archive = GoogleHits('bitergia', archive=self.archive)
+        self.backend_write_archive = GoogleHits(['bitergia'], archive=self.archive)
+        self.backend_read_archive = GoogleHits(['bitergia'], archive=self.archive)
 
     def tearDown(self):
         shutil.rmtree(self.test_path)
@@ -220,7 +221,7 @@ class TestGoogleHitsBackendArchive(TestCaseBackendArchive):
 
         with self.assertLogs() as cm:
             self._test_fetch_from_archive()
-            self.assertEqual(cm.output[-2], "WARNING:perceval.backends.core.googlehits:No hits for bitergia")
+            self.assertEqual(cm.output[-2], "WARNING:perceval.backends.core.googlehits:No hits for ['bitergia']")
 
 
 class TestGoogleHitsClient(unittest.TestCase):
@@ -274,6 +275,14 @@ class TestGoogleHitsCommand(unittest.TestCase):
 
         parser = GoogleHitsCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        args = ['', '--no-archive']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.no_archive, True)
+        self.assertEqual(parsed_args.keywords, [''])
+        self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
+        self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
+
         args = ['bitergia', '--no-archive']
 
         parsed_args = parser.parse(*args)
