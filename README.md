@@ -98,7 +98,7 @@ $ pip3 install .
 In case you are a developer, you should execute the following commands to install Perceval in your working directory (option `-e`) and the packages of requirements_tests.txt.
 ```
 $ pip3 install -r requirements.txt
-$ pip3 install -r requirements_test.txt
+$ pip3 install -r requirements_tests.txt
 $ pip3 install -e .
 ```
 
