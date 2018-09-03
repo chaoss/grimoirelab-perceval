@@ -48,6 +48,8 @@ GITHUB_API_URL = "https://api.github.com"
 MIN_RATE_LIMIT = 10
 MAX_RATE_LIMIT = 500
 
+PER_PAGE = 100
+
 # Default sleep time and retries to deal with connection/server problems
 DEFAULT_SLEEP_TIME = 1
 MAX_RETRIES = 5
@@ -80,7 +82,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.17.2'
+    version = '0.17.3'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
 
@@ -484,7 +486,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get reactions of an issue"""
 
         payload = {
-            'per_page': 30,
+            'per_page': PER_PAGE,
             'direction': 'asc',
             'sort': 'updated'
         }
@@ -496,7 +498,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get reactions of an issue comment"""
 
         payload = {
-            'per_page': 30,
+            'per_page': PER_PAGE,
             'direction': 'asc',
             'sort': 'updated'
         }
@@ -508,7 +510,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get the issue comments from pagination"""
 
         payload = {
-            'per_page': 30,
+            'per_page': PER_PAGE,
             'direction': 'asc',
             'sort': 'updated'
         }
@@ -521,7 +523,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         payload = {
             'state': 'all',
-            'per_page': 30,
+            'per_page': PER_PAGE,
             'direction': 'asc',
             'sort': 'updated'}
 
@@ -561,7 +563,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get pull request commits"""
 
         payload = {
-            'per_page': 30,
+            'per_page': PER_PAGE,
         }
 
         commit_url = urijoin("pulls", str(pr_number), "commits")
@@ -571,7 +573,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get pull request review comments"""
 
         payload = {
-            'per_page': 30,
+            'per_page': PER_PAGE,
             'direction': 'asc',
             'sort': 'updated'
         }
@@ -583,7 +585,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get reactions of a review comment"""
 
         payload = {
-            'per_page': 30,
+            'per_page': PER_PAGE,
             'direction': 'asc',
             'sort': 'updated'
         }

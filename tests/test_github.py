@@ -1605,7 +1605,7 @@ class TestGitHubClient(unittest.TestCase):
 
         # Check requests
         expected = {
-            'per_page': ['30'],
+            'per_page': ['100'],
             'state': ['all'],
             'direction': ['asc'],
             'sort': ['updated']
@@ -1760,7 +1760,7 @@ class TestGitHubClient(unittest.TestCase):
 
         # Check requests
         expected = {
-            'per_page': ['30'],
+            'per_page': ['100'],
             'state': ['all'],
             'direction': ['asc'],
             'sort': ['updated']
@@ -1833,7 +1833,7 @@ class TestGitHubClient(unittest.TestCase):
 
         # Check requests
         expected = {
-            'per_page': ['30'],
+            'per_page': ['100'],
             'state': ['all'],
             'direction': ['asc'],
             'since': ['2016-03-01T00:00:00'],
@@ -1887,7 +1887,7 @@ class TestGitHubClient(unittest.TestCase):
 
         # Check requests
         expected = {
-            'per_page': ['30'],
+            'per_page': ['100'],
             'page': ['2'],
             'state': ['all'],
             'direction': ['asc'],
@@ -2082,7 +2082,7 @@ class TestGitHubClient(unittest.TestCase):
 
         # Check requests
         expected = {
-            'per_page': ['30'],
+            'per_page': ['100'],
             'state': ['all'],
             'direction': ['asc'],
             'sort': ['updated']
@@ -2180,7 +2180,7 @@ class TestGitHubClient(unittest.TestCase):
 
         # Check requests
         expected = {
-            'per_page': ['30'],
+            'per_page': ['100'],
             'state': ['all'],
             'direction': ['asc'],
             'sort': ['updated']
@@ -2259,7 +2259,7 @@ class TestGitHubClient(unittest.TestCase):
 
         # Check requests
         expected = {
-            'per_page': ['30'],
+            'per_page': ['100'],
             'page': ['2'],
             'state': ['all'],
             'direction': ['asc'],
@@ -2303,7 +2303,7 @@ class TestGitHubClient(unittest.TestCase):
 
         # Check requests
         expected = {
-            'per_page': ['30'],
+            'per_page': ['100'],
             'state': ['all'],
             'direction': ['asc'],
             'sort': ['updated']
