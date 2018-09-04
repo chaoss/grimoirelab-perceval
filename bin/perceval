@@ -22,9 +22,7 @@
 #
 
 import argparse
-import configparser
 import logging
-import os.path
 import sys
 
 import perceval
@@ -32,7 +30,7 @@ import perceval.backend
 import perceval.backends.core
 
 PERCEVAL_USAGE_MSG = \
-"""%(prog)s [-c <file>] [-g] <backend> [<args>] | --help | --version"""
+"""%(prog)s [-g] <backend> [<args>] | --help | --version"""
 
 PERCEVAL_DESC_MSG = \
 """Send Sir Perceval on a quest to retrieve and gather data from software
@@ -74,8 +72,6 @@ are:
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         show version
-  -c FILE, --config FILE
-                        set configuration file
   -g, --debug           set debug mode on
 """
 
@@ -93,12 +89,6 @@ PERCEVAL_DEBUG_LOG_FORMAT = "[%(asctime)s - %(name)s - %(levelname)s] - %(messag
 
 def main():
     args = parse_args()
-
-    # Read default parameters from a configuration file
-    if args.config_file:
-        defaults = read_config_file(args.config_file, args.backend)
-    else:
-        defaults = {}
 
     _, PERCEVAL_CMDS = perceval.backend.find_backends(perceval.backends)
 
@@ -130,9 +120,6 @@ def parse_args():
     parser.add_argument('-v', '--version', action='version',
                         version=PERCEVAL_VERSION_MSG,
                         help=argparse.SUPPRESS)
-    parser.add_argument('-c', '--config', dest='config_file',
-                        default=os.path.expanduser('~/.perceval/perceval.cfg'),
-                        help=argparse.SUPPRESS)
     parser.add_argument('-g', '--debug', dest='debug',
                         action='store_true',
                         help=argparse.SUPPRESS)
@@ -146,31 +133,6 @@ def parse_args():
         sys.exit(1)
 
     return parser.parse_args()
-
-
-def read_config_file(filepath, backend):
-    """Read a Perceval configuration file.
-
-    This function reads common and `backend` configuration parameters
-    from the given file.
-
-    :param filepath: path to the configuration file
-    :param backend: name of the backend which its parameters will be read
-
-    :returns: a configuration parameters dictionary
-    """
-    config = configparser.SafeConfigParser()
-    config.read(filepath)
-
-    args = {}
-    sections = ['archive', backend]
-
-    for section in sections:
-        if section in config.sections():
-            d = dict(config.items(section))
-            args.update(d)
-
-    return args
 
 def configure_logging(debug=False):
     """Configure Perceval logging
