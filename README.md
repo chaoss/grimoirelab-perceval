@@ -328,6 +328,28 @@ $ cd tests
 $ python3 run_tests.py
 ```
 
+## Using a configuration file with perceval
+
+For each backend you can pass the option via a configuration file.
+
+Perceval use `configparser` https://docs.python.org/3/library/configparser.html
+
+Take a look on this example:
+```bash
+touch percerval.conf
+```
+
+Add this in the conf file
+```
+[github]
+owner = chaoss
+repository = grimoirelab-perceval
+```
+```bash
+perceval github -c perceval.conf
+```
+
+
 ## License
 
 Licensed under GNU General Public License (GPL), version 3 or later.
