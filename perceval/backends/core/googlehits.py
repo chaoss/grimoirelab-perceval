@@ -21,7 +21,6 @@
 #
 
 import bs4
-import hashlib
 import logging
 import re
 
@@ -29,7 +28,8 @@ from grimoirelab_toolkit.datetime import datetime_utcnow
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        uuid)
 from ...client import HttpClient
 from ...errors import BackendError
 
@@ -59,7 +59,7 @@ class GoogleHits(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     CATEGORIES = [CATEGORY_HITS]
 
@@ -172,42 +172,28 @@ class GoogleHits(Backend):
         hit_string = hit_string.replace(',', u'')
         hit_string = hit_string.replace('.', u'')
 
-        # Strip the hits
         fetched_on = datetime_utcnow().timestamp()
+        id_args = self.keywords[:]
+        id_args.append(str(fetched_on))
+
+        hits_json = {
+            'fetched_on': fetched_on,
+            'id': uuid(*id_args),
+            'keywords': self.keywords,
+            'type': 'googleSearchHits'
+        }
+
         if not hit_string:
             logger.warning("No hits for %s", self.keywords)
-            hits_json = {
-                'fetched_on': fetched_on,
-                'hits': 0,
-                'id': self.__uuid(*self.keywords),
-                'keywords': self.keywords,
-                'type': 'googleSearchHits'
-            }
+            hits_json['hits'] = 0
 
             return hits_json
 
         str_hits = re.search('\d+', hit_string).group(0)
         hits = int(str_hits)
-        hits_json = {
-            'fetched_on': fetched_on,
-            'hits': hits,
-            'id': self.__uuid(*self.keywords),
-            'keywords': self.keywords,
-            'type': 'googleSearchHits'
-        }
+        hits_json['hits'] = hits
 
         return hits_json
-
-    @staticmethod
-    def __uuid(*args):
-        """Generate a UUID based on the given parameters."""
-
-        s = '-'.join(args)
-
-        sha1 = hashlib.sha1(s.encode('utf-8', errors='surrogateescape'))
-        uuid_sha1 = sha1.hexdigest()
-
-        return uuid_sha1
 
 
 class GoogleHitsClient(HttpClient):
