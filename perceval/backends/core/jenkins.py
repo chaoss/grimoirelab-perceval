@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2016-2017 Bitergia
+# Copyright (C) 2016-2018 Bitergia
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #
 # Authors:
 #     Alvaro del Castillo <acs@bitergia.com>
-#
+#     Dario Maiocchi <dmaiocchi@suse.com>
 
 import json
 import logging
@@ -47,6 +47,8 @@ class Jenkins(Backend):
     The `url` will be set as the origin of the data.
 
     :param url: Jenkins url
+    :param user: Jenkins user
+    :param password: Jenkins user password
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     :param blacklist_jobs: exclude the jobs of this list while fetching
@@ -58,17 +60,30 @@ class Jenkins(Backend):
 
     CATEGORIES = [CATEGORY_BUILD]
 
-    def __init__(self, url, tag=None, archive=None,
+    def __init__(self, url, user=None, password=None, tag=None, archive=None,
                  blacklist_jobs=None, detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME):
         origin = url
 
         super().__init__(origin, tag=tag, archive=archive)
         self.url = url
+        self.user = user
+        self.password = password
         self.sleep_time = sleep_time
         self.blacklist_jobs = blacklist_jobs
         self.detail_depth = detail_depth
 
         self.client = None
+
+   
+    def login(self, user, password):
+        """Authenticate a user in the Jenkins server
+        :param user: Jenkins user
+        :param password: Jenkins user password
+        """
+        # todos ..
+
+        logger.debug("Jenkins user %s authenticated in %s",
+                     user, self.base_url)
 
     def fetch(self, category=CATEGORY_BUILD):
         """Fetch the builds from the url.

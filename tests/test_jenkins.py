@@ -188,6 +188,7 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
 
+
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
 
@@ -197,6 +198,17 @@ class TestJenkinsBackend(unittest.TestCase):
         """Test if it returns False when has_resuming is called"""
 
         self.assertEqual(Jenkins.has_resuming(), False)
+
+
+    @httpretty.activate
+    def test_init_auth(self):
+        """Test initialization with authentication"""
+
+        configure_http_server()
+
+        user = 'user'
+        pwd = 'pwd'
+        jenkins = Jenkins(JENKINS_SERVER_URL, user=user, password=pwd)
 
     @httpretty.activate
     def test_fetch_depth_1(self):
