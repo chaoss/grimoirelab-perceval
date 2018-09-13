@@ -39,9 +39,12 @@ from grimoirelab_toolkit.datetime import datetime_utcnow
 from perceval.backend import BackendCommandArgumentParser
 from perceval.errors import RateLimitError
 from perceval.utils import DEFAULT_DATETIME
-from perceval.backends.core.gitlab import (GitLab,
+from perceval.backends.core.gitlab import (logger,
+                                           GitLab,
                                            GitLabCommand,
                                            GitLabClient,
+                                           CATEGORY_ISSUE,
+                                           CATEGORY_MERGE_REQUEST,
                                            MAX_RETRIES,
                                            DEFAULT_SLEEP_TIME)
 from base import TestCaseBackendArchive
@@ -50,17 +53,21 @@ GITLAB_URL = "https://gitlab.com"
 GITLAB_API_URL = GITLAB_URL + "/api/v4"
 GITLAB_URL_PROJECT = GITLAB_API_URL + "/projects/fdroid%2Ffdroiddata"
 GITLAB_ISSUES_URL = GITLAB_API_URL + "/projects/fdroid%2Ffdroiddata/issues"
+GITLAB_MERGES_URL = GITLAB_API_URL + "/projects/fdroid%2Ffdroiddata/merge_requests"
 
 GITLAB_ENTERPRISE_URL = "https://gitlab.ow2.org"
 GITLAB_ENTERPRISE_API_URL = GITLAB_ENTERPRISE_URL + "/api/v4"
 GITLAB_ENTERPRISE_URL_PROJECT = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest"
 GITLAB_ENTERPRISE_ISSUES_URL = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest/issues"
+GITLAB_ENTERPRISE_MERGES_URL = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest/merge_requests"
 
 
-def setup_http_server(url_project, issues_url, rate_limit_headers=None):
+def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=None):
     project = read_file('data/gitlab/project')
-    page_1 = read_file('data/gitlab/issue_page_1')
-    page_2 = read_file('data/gitlab/issue_page_2')
+    page_issues_1 = read_file('data/gitlab/issue_page_1')
+    page_issues_2 = read_file('data/gitlab/issue_page_2')
+    page_merges_1 = read_file('data/gitlab/merge_page_1')
+    page_merges_2 = read_file('data/gitlab/merge_page_2')
 
     if not rate_limit_headers:
         rate_limit_headers = {}
@@ -71,55 +78,171 @@ def setup_http_server(url_project, issues_url, rate_limit_headers=None):
                            status=200,
                            forcing_headers=rate_limit_headers)
 
-    pagination_header = {'Link': '<' + issues_url +
-                         '/?&page=2>; rel="next", <' + issues_url +
-                         '/?&page=3>; rel="last"'}
+    # issue pagination
+    pagination_issue_header = {'Link': '<' + issues_url +
+                               '/?&page=2>; rel="next", <' + issues_url +
+                               '/?&page=3>; rel="last"'}
 
-    pagination_header.update(rate_limit_headers)
+    pagination_merge_header = {'Link': '<' + merges_url +
+                                       '/?&page=2>; rel="next", <' + merges_url +
+                                       '/?&page=3>; rel="last"'}
+
+    # merges paginatition
+    pagination_issue_header.update(rate_limit_headers)
     httpretty.register_uri(httpretty.GET,
                            issues_url,
-                           body=page_1,
+                           body=page_issues_1,
                            status=200,
-                           forcing_headers=pagination_header)
+                           forcing_headers=pagination_issue_header)
 
     httpretty.register_uri(httpretty.GET,
                            issues_url + '/?&page=2',
-                           body=page_2,
+                           body=page_issues_2,
                            status=200,
                            forcing_headers=rate_limit_headers)
 
-    issue_1_notes = read_file('data/gitlab/issue_1_notes')
-    issue_2_notes = read_file('data/gitlab/issue_2_notes')
-    issue_3_notes = read_file('data/gitlab/issue_3_notes')
-    issue_4_notes = read_file('data/gitlab/issue_4_notes')
+    pagination_merge_header.update(rate_limit_headers)
+    httpretty.register_uri(httpretty.GET,
+                           merges_url,
+                           body=page_merges_1,
+                           status=200,
+                           forcing_headers=pagination_merge_header)
 
     httpretty.register_uri(httpretty.GET,
+                           merges_url + '/?&page=2',
+                           body=page_merges_2,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    notes_1 = read_file('data/gitlab/notes_1')
+    notes_2 = read_file('data/gitlab/notes_2')
+    notes_3 = read_file('data/gitlab/notes_3')
+    notes_4 = read_file('data/gitlab/notes_4')
+
+    # issue notes
+    httpretty.register_uri(httpretty.GET,
                            issues_url + "/1/notes",
-                           body=issue_1_notes,
+                           body=notes_1,
                            status=200,
                            forcing_headers=rate_limit_headers)
 
     httpretty.register_uri(httpretty.GET,
                            issues_url + "/2/notes",
-                           body=issue_2_notes,
+                           body=notes_2,
                            status=200,
                            forcing_headers=rate_limit_headers)
 
     httpretty.register_uri(httpretty.GET,
                            issues_url + "/3/notes",
-                           body=issue_3_notes,
+                           body=notes_3,
                            status=200,
                            forcing_headers=rate_limit_headers)
 
     httpretty.register_uri(httpretty.GET,
                            issues_url + "/4/notes",
-                           body=issue_4_notes,
+                           body=notes_4,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    # merge notes
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1/notes",
+                           body=notes_1,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/2/notes",
+                           body=notes_2,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/3/notes",
+                           body=notes_3,
                            status=200,
                            forcing_headers=rate_limit_headers)
 
     emoji = read_file('data/gitlab/emoji')
     empty_emoji = read_file('data/gitlab/empty_emoji')
 
+    # merge details
+    merge_1 = read_file('data/gitlab/merge_1')
+    merge_2 = read_file('data/gitlab/merge_2')
+    merge_3 = read_file('data/gitlab/merge_3')
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1",
+                           body=merge_1,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/2",
+                           body=merge_2,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/3",
+                           body=merge_3,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    # merge versions
+    merge_1_versions = read_file('data/gitlab/merge_1_versions')
+    merge_2_versions = read_file('data/gitlab/merge_2_versions')
+    merge_3_versions = read_file('data/gitlab/merge_3_versions')
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1/versions",
+                           body=merge_1_versions,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/2/versions",
+                           body=merge_2_versions,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/3/versions",
+                           body=merge_3_versions,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    # merge version details
+    merge_1_version_1 = read_file('data/gitlab/merge_1_version_1')
+    merge_1_version_2 = read_file('data/gitlab/merge_1_version_2')
+    merge_2_version_1 = read_file('data/gitlab/merge_2_version_1')
+    merge_3_version_1 = read_file('data/gitlab/merge_3_version_1')
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1/versions/1",
+                           body=merge_1_version_1,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1/versions/2",
+                           body=merge_1_version_2,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/2/versions/3",
+                           body=merge_2_version_1,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/3/versions/4",
+                           body=merge_3_version_1,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    # issue emojis
     httpretty.register_uri(httpretty.GET,
                            issues_url + "/1/award_emoji",
                            body=emoji,
@@ -174,6 +297,49 @@ def setup_http_server(url_project, issues_url, rate_limit_headers=None):
                            status=200,
                            forcing_headers=rate_limit_headers)
 
+    # merge requests emojis
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1/award_emoji",
+                           body=emoji,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/2/award_emoji",
+                           body=empty_emoji,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/3/award_emoji",
+                           body=emoji,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1/notes/1/award_emoji",
+                           body=emoji,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1/notes/2/award_emoji",
+                           body=empty_emoji,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/2/notes/1/award_emoji",
+                           body=empty_emoji,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/3/notes/1/award_emoji",
+                           body=empty_emoji,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
 
 def read_file(filename, mode='r'):
     with open(os.path.join(
@@ -189,7 +355,7 @@ class TestGitLabBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         gitlab = GitLab('fdroid', 'fdroiddata', api_token='aaa', tag='test')
@@ -218,7 +384,9 @@ class TestGitLabBackend(unittest.TestCase):
     def test_initialization_entreprise(self):
         """Test whether attributes are initialized for the entreprise version"""
 
-        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT, GITLAB_ENTERPRISE_ISSUES_URL)
+        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
+                          GITLAB_ENTERPRISE_ISSUES_URL,
+                          GITLAB_ENTERPRISE_MERGES_URL)
 
         gitlab = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, tag='')
 
@@ -239,10 +407,10 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(GitLab.has_resuming(), False)
 
     @httpretty.activate
-    def test_fetch(self):
+    def test_fetch_issues(self):
         """Test whether issues are properly fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
 
         gitlab = GitLab("fdroid", "fdroiddata", "your-token")
 
@@ -250,40 +418,184 @@ class TestGitLabBackend(unittest.TestCase):
 
         self.assertEqual(len(issues), 4)
 
-        self.assertEqual(issues[0]['origin'], GITLAB_URL + '/fdroid/fdroiddata')
-        self.assertEqual(issues[0]['category'], 'issue')
-        self.assertEqual(issues[0]['tag'], GITLAB_URL + '/fdroid/fdroiddata')
-        self.assertEqual(issues[0]['data']['author']['id'], 1)
-        self.assertEqual(issues[0]['data']['author']['username'], 'redfish64')
+        issue = issues[0]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 1)
+        self.assertEqual(issue['data']['author']['username'], 'redfish64')
+
+        issue = issues[1]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 1)
+        self.assertEqual(issue['data']['author']['username'], 'redfish64')
+
+        issue = issues[2]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 2)
+        self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+
+        issue = issues[3]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 2)
+        self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
 
     @httpretty.activate
-    def test_fetch_from_date(self):
+    def test_fetch_merges(self):
+        """Test whether merges are properly fetched from GitLab"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
+
+        self.assertEqual(len(merges), 3)
+
+        merge = merges[0]
+        self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 2)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+        self.assertTrue('diffs' not in merge['data']['versions_data'][1])
+
+        merge = merges[1]
+        self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 1)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+        merge = merges[2]
+        self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 1)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+    @httpretty.activate
+    def test_fetch_issues_from_date(self):
         """Test whether issues from a given date are properly fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
 
         gitlab = GitLab("fdroid", "fdroiddata", "your-token")
         from_date = datetime.datetime(2017, 3, 18)
         issues = [issues for issues in gitlab.fetch(from_date=from_date)]
 
-        self.assertEqual(len(issues), 3)
+        self.assertEqual(len(issues), 4)
 
-        self.assertEqual(issues[0]['origin'], GITLAB_URL + '/fdroid/fdroiddata')
-        self.assertEqual(issues[0]['category'], 'issue')
-        self.assertEqual(issues[0]['tag'], GITLAB_URL + '/fdroid/fdroiddata')
-        self.assertEqual(issues[0]['data']['author']['id'], 1)
-        self.assertEqual(issues[0]['data']['author']['username'], 'redfish64')
+        issue = issues[0]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 1)
+        self.assertEqual(issue['data']['author']['username'], 'redfish64')
 
-        from_date = datetime.datetime(3019, 3, 18)
-        issues = [issues for issues in gitlab.fetch(from_date=from_date)]
+        issue = issues[1]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 1)
+        self.assertEqual(issue['data']['author']['username'], 'redfish64')
 
-        self.assertEqual(len(issues), 0)
+        issue = issues[2]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 2)
+        self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+
+        issue = issues[3]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 2)
+        self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+
+        # check that the from_date param is in the querystring
+        expected = {
+            'state': ['all'],
+            'order_by': ['updated_at'],
+            'sort': ['asc'],
+            'per_page': ['100'],
+            'updated_after': ['2017-03-18T00:00:00 00:00']
+        }
+        request = httpretty.HTTPretty.latest_requests[1]
+        self.assertDictEqual(request.querystring, expected)
 
     @httpretty.activate
-    def test_fetch_enterprise(self):
+    def test_fetch_merges_from_date(self):
+        """Test whether merge requests from a given date are properly fetched from GitLab"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+        from_date = datetime.datetime(2017, 3, 18)
+        merges = [merges for merges in gitlab.fetch(from_date=from_date, category=CATEGORY_MERGE_REQUEST)]
+
+        self.assertEqual(len(merges), 3)
+
+        merge = merges[0]
+        self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 2)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+        self.assertTrue('diffs' not in merge['data']['versions_data'][1])
+
+        merge = merges[1]
+        self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 1)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+        merge = merges[2]
+        self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 1)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+        # check that the from_date param is in the querystring
+        expected = {
+            'state': ['all'],
+            'order_by': ['updated_at'],
+            'sort': ['asc'],
+            'per_page': ['100'],
+            'updated_after': ['2017-03-18T00:00:00 00:00'],
+            'view': ['simple']
+        }
+        request = httpretty.HTTPretty.latest_requests[1]
+        self.assertDictEqual(request.querystring, expected)
+
+    @httpretty.activate
+    def test_fetch_issues_enterprise(self):
         """Test whether issues are properly fetched from GitLab Enterprise server"""
 
-        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT, GITLAB_ENTERPRISE_ISSUES_URL)
+        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
+                          GITLAB_ENTERPRISE_ISSUES_URL,
+                          GITLAB_ENTERPRISE_MERGES_URL)
 
         gitlab = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL)
 
@@ -291,14 +603,78 @@ class TestGitLabBackend(unittest.TestCase):
 
         self.assertEqual(len(issues), 4)
 
-        self.assertEqual(issues[0]['origin'], GITLAB_ENTERPRISE_URL + "/am/test")
-        self.assertEqual(issues[0]['category'], 'issue')
-        self.assertEqual(issues[0]['tag'], GITLAB_ENTERPRISE_URL + "/am/test")
-        self.assertEqual(issues[0]['data']['author']['id'], 1)
-        self.assertEqual(issues[0]['data']['author']['username'], 'redfish64')
+        issue = issues[0]
+        self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['data']['author']['id'], 1)
+        self.assertEqual(issue['data']['author']['username'], 'redfish64')
+
+        issue = issues[1]
+        self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['data']['author']['id'], 1)
+        self.assertEqual(issue['data']['author']['username'], 'redfish64')
+
+        issue = issues[2]
+        self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['data']['author']['id'], 2)
+        self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+
+        issue = issues[3]
+        self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['data']['author']['id'], 2)
+        self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
 
     @httpretty.activate
-    def test_fetch_empty(self):
+    def test_fetch_merges_enterprise(self):
+        """Test whether merges are properly fetched from GitLab Enterprise server"""
+
+        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
+                          GITLAB_ENTERPRISE_ISSUES_URL,
+                          GITLAB_ENTERPRISE_MERGES_URL)
+
+        gitlab = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL)
+
+        merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
+
+        self.assertEqual(len(merges), 3)
+
+        merge = merges[0]
+        self.assertEqual(merge['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 2)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+        self.assertTrue('diffs' not in merge['data']['versions_data'][1])
+
+        merge = merges[1]
+        self.assertEqual(merge['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 1)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+        merge = merges[2]
+        self.assertEqual(merge['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 1)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+    @httpretty.activate
+    def test_fetch_issues_empty(self):
         """Test when return empty"""
 
         page_1 = ''
@@ -319,6 +695,28 @@ class TestGitLabBackend(unittest.TestCase):
 
         self.assertEqual(len(issues), 0)
 
+    @httpretty.activate
+    def test_fetch_merges_empty(self):
+        """Test when return empty"""
+
+        page_1 = ''
+
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_URL_PROJECT,
+                               body='',
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_MERGES_URL,
+                               body=page_1,
+                               status=200)
+
+        gitlab = GitLab("fdroid", "fdroiddata", api_token="your-token")
+
+        merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
+
+        self.assertEqual(len(merges), 0)
+
 
 class TestGitHUbBackendArchive(TestCaseBackendArchive):
     """GitHub backend tests using an archive"""
@@ -329,33 +727,63 @@ class TestGitHUbBackendArchive(TestCaseBackendArchive):
         self.backend_read_archive = GitLab("fdroid", "fdroiddata", api_token="your-token", archive=self.archive)
 
     @httpretty.activate
-    def test_fetch_from_archive(self):
+    def test_fetch_issues_from_archive(self):
         """Test whether issues are properly fetched from the archive"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
         self._test_fetch_from_archive(from_date=None)
 
     @httpretty.activate
-    def test_fetch_from_date(self):
+    def test_fetch_merges_from_archive(self):
+        """Test whether merges are properly fetched from the archive"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        self._test_fetch_from_archive(category=CATEGORY_MERGE_REQUEST, from_date=None)
+
+    @httpretty.activate
+    def test_fetch_issues_from_date(self):
         """Test whether issues from a given date are properly fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
 
         from_date = datetime.datetime(2017, 3, 18)
         self._test_fetch_from_archive(from_date=from_date)
 
     @httpretty.activate
-    def test_fetch_enterprise(self):
+    def test_fetch_merges_from_date(self):
+        """Test whether merges from a given date are properly fetched from GitLab"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+
+        from_date = datetime.datetime(2017, 3, 18)
+        self._test_fetch_from_archive(category=CATEGORY_MERGE_REQUEST, from_date=from_date)
+
+    @httpretty.activate
+    def test_fetch_issues_enterprise(self):
         """Test whether issues are properly fetched from GitLab Enterprise server"""
 
-        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT, GITLAB_ENTERPRISE_ISSUES_URL)
+        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
+                          GITLAB_ENTERPRISE_ISSUES_URL,
+                          GITLAB_ENTERPRISE_MERGES_URL)
 
         self.backend_write_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
         self.backend_read_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
         self._test_fetch_from_archive()
 
     @httpretty.activate
-    def test_fetch_empty(self):
+    def test_fetch_merges_enterprise(self):
+        """Test whether merges are properly fetched from GitLab Enterprise server"""
+
+        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
+                          GITLAB_ENTERPRISE_ISSUES_URL,
+                          GITLAB_ENTERPRISE_MERGES_URL)
+
+        self.backend_write_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
+        self.backend_read_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
+        self._test_fetch_from_archive(category=CATEGORY_MERGE_REQUEST)
+
+    @httpretty.activate
+    def test_fetch_issues_empty(self):
         """Test when return empty"""
 
         page_1 = ''
@@ -372,6 +800,24 @@ class TestGitHUbBackendArchive(TestCaseBackendArchive):
 
         self._test_fetch_from_archive()
 
+    @httpretty.activate
+    def test_fetch_merges_empty(self):
+        """Test when return empty"""
+
+        page_1 = ''
+
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_URL_PROJECT,
+                               body='',
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_MERGES_URL,
+                               body=page_1,
+                               status=200)
+
+        self._test_fetch_from_archive(category=CATEGORY_MERGE_REQUEST)
+
 
 class TestGitLabClient(unittest.TestCase):
     """GitLab API client tests"""
@@ -380,7 +826,7 @@ class TestGitLabClient(unittest.TestCase):
     def test_initialization(self):
         """Test initialization for GitLab server"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
@@ -408,7 +854,9 @@ class TestGitLabClient(unittest.TestCase):
     def test_initialization_entreprise(self):
         """Test initialization for GitLab entreprise server"""
 
-        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT, GITLAB_ENTERPRISE_ISSUES_URL)
+        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
+                          GITLAB_ENTERPRISE_ISSUES_URL,
+                          GITLAB_ENTERPRISE_MERGES_URL)
 
         client = GitLabClient("am", "test", None, base_url=GITLAB_ENTERPRISE_URL)
 
@@ -424,10 +872,35 @@ class TestGitLabClient(unittest.TestCase):
         self.assertEqual(client.rate_limit_reset_ts, None)
 
     @httpretty.activate
+    def test_initialization_http_error(self):
+        """Test whether issues when initializing the rate limit are properly handled"""
+
+        project = read_file('data/gitlab/project')
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_URL_PROJECT,
+                               body=project,
+                               status=401)
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            GitLabClient("fdroid", "fdroiddata", "your-token")
+
+        project = read_file('data/gitlab/project')
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_URL_PROJECT,
+                               body=project,
+                               status=400)
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            GitLabClient("fdroid", "fdroiddata", "your-token")
+            self.assertEqual(cm[-1][0], 'WARNING:perceval.backends.core.gitlab:Rate limit not initialized: 400 '
+                                        'Client Error: Bad Request for '
+                                        'url: https://gitlab.com/api/v4/projects/fdroid%2Ffdroiddata')
+
+    @httpretty.activate
     def test_issues(self):
         """Test issues API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         page_1 = read_file('data/gitlab/issue_page_1')
@@ -446,7 +919,39 @@ class TestGitLabClient(unittest.TestCase):
             'state': ['all'],
             'sort': ['asc'],
             'order_by': ['updated_at'],
-            'page': ['2']
+            'page': ['2'],
+            'per_page': ['100']
+        }
+
+        self.assertDictEqual(httpretty.last_request().querystring, expected)
+        self.assertEqual(httpretty.last_request().headers["PRIVATE-TOKEN"], "your-token")
+
+    @httpretty.activate
+    def test_merges(self):
+        """Test merges API call"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+                          rate_limit_headers={'RateLimit-Remaining': '20'})
+
+        page_1 = read_file('data/gitlab/merge_page_1')
+        page_2 = read_file('data/gitlab/merge_page_2')
+
+        client = GitLabClient("fdroid", "fdroiddata", "your-token")
+
+        raw_merges = [merges for merges in client.merges()]
+
+        self.assertEqual(len(raw_merges), 2)
+        self.assertEqual(raw_merges[0], page_1)
+        self.assertEqual(raw_merges[1], page_2)
+
+        # Check requests
+        expected = {
+            'state': ['all'],
+            'sort': ['asc'],
+            'order_by': ['updated_at'],
+            'page': ['2'],
+            'per_page': ['100'],
+            'view': ['simple']
         }
 
         self.assertDictEqual(httpretty.last_request().querystring, expected)
@@ -456,7 +961,7 @@ class TestGitLabClient(unittest.TestCase):
     def test_issues_from_date(self):
         """Test issues API call with from date parameter"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         page_1 = read_file('data/gitlab/issue_page_1')
@@ -468,15 +973,50 @@ class TestGitLabClient(unittest.TestCase):
         raw_issues = [issues for issues in client.issues(from_date)]
 
         self.assertEqual(len(raw_issues), 2)
-        self.assertNotEqual(raw_issues[0], json.dumps(json.loads(page_1)))
-        self.assertEqual(raw_issues[1], json.dumps(json.loads(page_2)))
+        self.assertEqual(raw_issues[0], page_1)
+        self.assertEqual(raw_issues[1], page_2)
 
         # Check requests
         expected = {
             'state': ['all'],
             'sort': ['asc'],
             'order_by': ['updated_at'],
-            'page': ['2']
+            'page': ['2'],
+            'per_page': ['100'],
+            'updated_after': ['2017-01-01T00:00:00']
+        }
+
+        self.assertDictEqual(httpretty.last_request().querystring, expected)
+        self.assertEqual(httpretty.last_request().headers["PRIVATE-TOKEN"], "your-token")
+
+    @httpretty.activate
+    def test_merges_from_date(self):
+        """Test merges API call with from date parameter"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+                          rate_limit_headers={'RateLimit-Remaining': '20'})
+
+        page_1 = read_file('data/gitlab/merge_page_1')
+        page_2 = read_file('data/gitlab/merge_page_2')
+
+        from_date = datetime.datetime(2017, 1, 1)
+        client = GitLabClient("fdroid", "fdroiddata", "your-token")
+
+        raw_merges = [merges for merges in client.merges(from_date)]
+
+        self.assertEqual(len(raw_merges), 2)
+        self.assertEqual(raw_merges[0], page_1)
+        self.assertEqual(raw_merges[1], page_2)
+
+        # Check requests
+        expected = {
+            'state': ['all'],
+            'sort': ['asc'],
+            'order_by': ['updated_at'],
+            'page': ['2'],
+            'per_page': ['100'],
+            'updated_after': ['2017-01-01T00:00:00'],
+            'view': ['simple']
         }
 
         self.assertDictEqual(httpretty.last_request().querystring, expected)
@@ -507,27 +1047,102 @@ class TestGitLabClient(unittest.TestCase):
             httpretty.last_request().headers["PRIVATE-TOKEN"], "aaa")
 
     @httpretty.activate
-    def test_issue_notes(self):
-        """Test issue_notes API call"""
+    def test_merges_empty(self):
+        """Test when merges is empty API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_URL_PROJECT,
+                               body='',
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               GITLAB_MERGES_URL,
+                               body="[]",
+                               status=200
+                               )
+
+        client = GitLabClient("fdroid", "fdroiddata", "aaa")
+
+        raw_merges = [merges for merges in client.merges()]
+
+        self.assertEqual(raw_merges[0], "[]")
+
+        self.assertEqual(
+            httpretty.last_request().headers["PRIVATE-TOKEN"], "aaa")
+
+    @httpretty.activate
+    def test_notes(self):
+        """Test notes API call"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
-        raw_notes = next(client.issue_notes(1))
+        raw_notes = next(client.notes("issues", 1))
         notes = json.loads(raw_notes)
 
         self.assertEqual(len(notes), 2)
 
-    @httpretty.activate
-    def test_issue_emojis(self):
-        """Test issue_emojis API call"""
+        raw_notes = next(client.notes("merge_requests", 2))
+        notes = json.loads(raw_notes)
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+        self.assertEqual(len(notes), 1)
+
+    @httpretty.activate
+    def test_merge_versions(self):
+        """Test merge versions API call"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
-        raw_emojis = next(client.issue_emojis(1))
+        raw_versions = next(client.merge_versions(1))
+        versions = json.loads(raw_versions)
+
+        self.assertEqual(len(versions), 2)
+
+    @httpretty.activate
+    def test_merge_version(self):
+        """Test merge version API call"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+                          rate_limit_headers={'RateLimit-Remaining': '20'})
+
+        client = GitLabClient("fdroid", "fdroiddata", "your-token")
+        raw_merge_version = client.merge_version(1, 1)
+        merge_version = json.loads(raw_merge_version)
+
+        self.assertEqual(len(merge_version['commits']), 1)
+        self.assertEqual(len(merge_version['diffs']), 1)
+
+    @httpretty.activate
+    def test_merge(self):
+        """Test merge API call"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+                          rate_limit_headers={'RateLimit-Remaining': '20'})
+
+        client = GitLabClient("fdroid", "fdroiddata", "your-token")
+        raw_merge = client.merge(1)
+        merge = json.loads(raw_merge)
+
+        self.assertIsNone(merge['merged_by'])
+        self.assertIsNone(merge['merged_at'])
+
+    @httpretty.activate
+    def test_emojis(self):
+        """Test emojis API call"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+                          rate_limit_headers={'RateLimit-Remaining': '20'})
+
+        client = GitLabClient("fdroid", "fdroiddata", "your-token")
+        raw_emojis = next(client.emojis("issues", 1))
+        emojis = json.loads(raw_emojis)
+
+        self.assertEqual(len(emojis), 2)
+
+        raw_emojis = next(client.emojis("merge_requests", 1))
         emojis = json.loads(raw_emojis)
 
         self.assertEqual(len(emojis), 2)
@@ -536,14 +1151,19 @@ class TestGitLabClient(unittest.TestCase):
     def test_note_emojis(self):
         """Test note_emojis API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
-        raw_emojis = next(client.note_emojis(1, 2))
+        raw_emojis = next(client.note_emojis("issues", 1, 2))
         emojis = json.loads(raw_emojis)
 
         self.assertEqual(len(emojis), 0)
+
+        raw_emojis = next(client.note_emojis("merge_requests", 1, 1))
+        emojis = json.loads(raw_emojis)
+
+        self.assertEqual(len(emojis), 2)
 
     @httpretty.activate
     def test_http_wrong_status(self):
@@ -695,6 +1315,7 @@ class TestGitLabCommand(unittest.TestCase):
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
                 '--enterprise-url', 'https://example.com',
+                '--category', CATEGORY_MERGE_REQUEST,
                 'zhquan_example', 'repo']
 
         parsed_args = parser.parse(*args)
@@ -707,6 +1328,7 @@ class TestGitLabCommand(unittest.TestCase):
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
+        self.assertEqual(parsed_args.category, CATEGORY_MERGE_REQUEST)
         self.assertEqual(parsed_args.max_retries, 5)
         self.assertEqual(parsed_args.sleep_time, 10)
 

@@ -1,0 +1,80 @@
+{
+    "base_commit_sha": "f456bdb356c51d496809a7aaff258f126c316b2f",
+    "commits": [
+        {
+            "author_email": "marc.nause@audioattack.de",
+            "author_name": "Marc Nause",
+            "authored_date": "2018-05-04T10:26:01.000Z",
+            "committed_date": "2018-05-04T10:26:01.000Z",
+            "committer_email": "marc.nause@audioattack.de",
+            "committer_name": "Marc Nause",
+            "created_at": "2018-05-04T10:26:01.000Z",
+            "id": "b6721834f96774ce7893c873ef78b2c2ffa5b14e",
+            "message": "Shorten lines",
+            "parent_ids": [],
+            "short_id": "b6721834",
+            "title": "Shorten lines"
+        },
+        {
+            "author_email": "marc.nause@audioattack.de",
+            "author_name": "Marc Nause",
+            "authored_date": "2018-05-04T10:03:15.000Z",
+            "committed_date": "2018-05-04T10:03:15.000Z",
+            "committer_email": "marc.nause@audioattack.de",
+            "committer_name": "Marc Nause",
+            "created_at": "2018-05-04T10:03:15.000Z",
+            "id": "7d901a94f4dc67243f79e25408f3df556efaa508",
+            "message": "Remove unnecessary spaces",
+            "parent_ids": [],
+            "short_id": "7d901a94",
+            "title": "Remove unnecessary spaces"
+        },
+        {
+            "author_email": "marc.nause@audioattack.de",
+            "author_name": "Marc Nause",
+            "authored_date": "2018-05-03T21:54:40.000Z",
+            "committed_date": "2018-05-03T21:54:40.000Z",
+            "committer_email": "marc.nause@audioattack.de",
+            "committer_name": "Marc Nause",
+            "created_at": "2018-05-03T21:54:40.000Z",
+            "id": "0a3b3c8f550785127f86ab93218335662ed157c4",
+            "message": "Added linebreaks.\n",
+            "parent_ids": [],
+            "short_id": "0a3b3c8f",
+            "title": "Added linebreaks."
+        },
+        {
+            "author_email": "marc.nause@audioattack.de",
+            "author_name": "Marc Nause",
+            "authored_date": "2018-05-03T21:49:19.000Z",
+            "committed_date": "2018-05-03T21:49:19.000Z",
+            "committer_email": "marc.nause@audioattack.de",
+            "committer_name": "Marc Nause",
+            "created_at": "2018-05-03T21:49:19.000Z",
+            "id": "c2d5c97054069d3c403c22d883aafef3a6f3bd0d",
+            "message": "Updated description, added Liberapay-ID.\n",
+            "parent_ids": [],
+            "short_id": "c2d5c970",
+            "title": "Updated description, added Liberapay-ID."
+        }
+    ],
+    "created_at": "2018-05-16T16:24:12.631Z",
+    "diffs": [
+        {
+            "a_mode": "100644",
+            "b_mode": "100644",
+            "deleted_file": false,
+            "diff": "--- a/metadata/de.audioattack.openlink.txt\n+++ b/metadata/de.audioattack.openlink.txt\n@@ -6,6 +6,7 @@ Source Code:https://gitlab.com/marc.nause/openlink/tree/HEAD\n Issue Tracker:https://gitlab.com/marc.nause/openlink/issues\n Changelog:https://gitlab.com/marc.nause/openlink/raw/HEAD/changelog.txt\n Donate:https://paypal.me/nause\n+LiberapayID:12290\n \n Auto Name:Easy Open Link\n Summary:Open URLs via select and share\n@@ -21,6 +22,14 @@ allows you to open several links at the same time.\n The share function has become a common feature in more recent versions of\n Android. This app requires Android 1.5 or newer, but is most useful with Android\n 4.0 or later.\n+\n+The app does not add an icon to the launcher since this is not necessary. The\n+complete functionality of the app is accessed via the \"share\" menu. Copyright\n+information can be displayed via the \"start\" button of the F-Droid app.\n+\n+The permission RECEIVE_BOOT_COMPLETED is required to check if browser which\n+supports opening links in incognito mode (Firefox 55+, Fennec 55+, Jelly) is\n+installed.\n .\n \n Repo Type:git\n",
+            "new_file": false,
+            "new_path": "metadata/de.audioattack.openlink.txt",
+            "old_path": "metadata/de.audioattack.openlink.txt",
+            "renamed_file": false
+        }
+    ],
+    "head_commit_sha": "b6721834f96774ce7893c873ef78b2c2ffa5b14e",
+    "id": 14582237,
+    "merge_request_id": 9620987,
+    "real_size": "1",
+    "start_commit_sha": "244abb939aec67941ec1ef06321c9e3ac74aab04",
+    "state": "collected"
+}

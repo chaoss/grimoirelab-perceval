@@ -1,0 +1,38 @@
+{
+    "base_commit_sha": "37d3c34581625b04e8268bfc89ff9bbc2a959c52",
+    "commits": [
+        {
+            "author_email": "t@grobox.de",
+            "author_name": "Torsten Grote",
+            "authored_date": "2018-05-09T16:58:08.000Z",
+            "committed_date": "2018-05-09T20:51:44.000Z",
+            "committer_email": "t@grobox.de",
+            "committer_name": "Torsten Grote",
+            "created_at": "2018-05-09T20:51:44.000Z",
+            "id": "140aca9f2a00638ceb29671174c60a043736d188",
+            "message": "Update Briar to 1.0 release\n",
+            "parent_ids": [],
+            "short_id": "140aca9f",
+            "title": "Update Briar to 1.0 release"
+        }
+    ],
+    "created_at": "2018-05-09T20:52:04.823Z",
+    "diffs": [
+        {
+            "a_mode": "100644",
+            "b_mode": "100644",
+            "deleted_file": false,
+            "diff": "--- a/metadata/org.briarproject.briar.beta.txt\n+++ b/metadata/org.briarproject.briar.android.txt\n@@ -4,6 +4,7 @@ Web Site:https://briarproject.org/\n Source Code:https://code.briarproject.org/akwizgran/briar\n Issue Tracker:https://code.briarproject.org/akwizgran/briar/issues\n FlattrID:592836\n+LiberapayID:34745\n Bitcoin:1NZCKkUCtJV2U2Y9hDb9uq8S7ksFCFGR6K\n \n Auto Name:Briar Beta\n@@ -20,52 +21,16 @@ Tor network, protecting users and their relationships from surveillance.\n \n Repo Type:git\n Repo:https://code.briarproject.org/akwizgran/briar.git\n-Binaries:https://briarproject.org/fdroid/repo/briar-beta-%v.apk\n+Binaries:https://briarproject.org/fdroid/repo/briar-%v.apk\n \n-Build:0.16.15,1615\n-    disable=https://briarproject.org/fdroid/repo/briar-beta-0.16.15.apk is not found\n-    commit=beta-0.16.15\n+Build:1.0.2,10002\n+    commit=release-1.0.2\n     subdir=briar-android\n     gradle=yes\n     rm=bramble-j2se\n \n-Build:0.16.16,1616\n-    disable=https://briarproject.org/fdroid/repo/briar-beta-0.16.16.apk is not found\n-    commit=beta-0.16.16\n-    subdir=briar-android\n-    gradle=yes\n-    rm=bramble-j2se\n-\n-Build:0.16.18,1618\n-    disable=verification fails\n-    commit=beta-0.16.18\n-    subdir=briar-android\n-    gradle=yes\n-    rm=bramble-j2se\n-\n-Build:0.16.19,1619\n-    disable=verification fails\n-    commit=beta-0.16.19\n-    subdir=briar-android\n-    gradle=yes\n-    rm=bramble-j2se\n-\n-Build:0.16.20,1620\n-    disable=https://briarproject.org/fdroid/repo/briar-beta-0.16.20.apk is not found\n-    commit=beta-0.16.20\n-    subdir=briar-android\n-    gradle=yes\n-    rm=bramble-j2se\n-\n-Build:0.16.21,1621\n-    disable=https://briarproject.org/fdroid/repo/briar-beta-0.16.21.apk is not found\n-    commit=beta-0.16.21\n-    subdir=briar-android\n-    gradle=yes\n-    rm=bramble-j2se\n-\n-Archive Policy:0 versions\n-Auto Update Mode:Version beta-%v\n+Archive Policy:3 versions\n+Auto Update Mode:Version release-%v\n Update Check Mode:Tags\n-Current Version:0.16.21\n-Current Version Code:1621\n+Current Version:1.0.2\n+Current Version Code:10002\n",
+            "new_file": false,
+            "new_path": "metadata/org.briarproject.briar.android.txt",
+            "old_path": "metadata/org.briarproject.briar.beta.txt",
+            "renamed_file": true
+        }
+    ],
+    "head_commit_sha": "140aca9f2a00638ceb29671174c60a043736d188",
+    "id": 14310138,
+    "merge_request_id": 9737425,
+    "real_size": "1",
+    "start_commit_sha": "e98f17c485a374c013e42c6a2903b18058388865",
+    "state": "collected"
+}

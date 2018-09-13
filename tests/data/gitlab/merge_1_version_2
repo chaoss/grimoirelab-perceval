@@ -1,0 +1,27 @@
+{
+    "base_commit_sha": "37d3c34581625b04e8268bfc89ff9bbc2a959c52",
+    "commits": [
+        {
+            "author_email": "t@grobox.de",
+            "author_name": "Torsten Grote",
+            "authored_date": "2018-05-09T16:58:08.000Z",
+            "committed_date": "2018-05-09T17:13:07.000Z",
+            "committer_email": "t@grobox.de",
+            "committer_name": "Torsten Grote",
+            "created_at": "2018-05-09T17:13:07.000Z",
+            "id": "c53a50a89785149eb0a7014756e1f0368b694d27",
+            "message": "Update Briar to 1.0 release\n",
+            "parent_ids": [],
+            "short_id": "c53a50a8",
+            "title": "Update Briar to 1.0 release"
+        }
+    ],
+    "created_at": "2018-05-09T17:15:35.476Z",
+    "diffs": [],
+    "head_commit_sha": "c53a50a89785149eb0a7014756e1f0368b694d27",
+    "id": 14304614,
+    "merge_request_id": 9737425,
+    "real_size": "1",
+    "start_commit_sha": "a69090b4257d4531fb1d42241f7788d2fe243b19",
+    "state": "without_files"
+}
