@@ -82,7 +82,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.17.3'
+    version = '0.17.4'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
 
@@ -110,9 +110,9 @@ class GitHub(Backend):
         self._users = {}  # internal users cache
 
     def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
-        """Fetch the issues from the repository.
+        """Fetch the issues/pull requests from the repository.
 
-        The method retrieves, from a GitHub repository, the issues
+        The method retrieves, from a GitHub repository, the issues/pull requests
         updated since the given date.
 
         :param category: the category of items to fetch
