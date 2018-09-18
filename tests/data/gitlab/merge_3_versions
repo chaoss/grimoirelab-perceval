@@ -1,0 +1,12 @@
+[
+    {
+        "base_commit_sha": "f456bdb356c51d496809a7aaff258f126c316b2f",
+        "created_at": "2018-05-16T16:24:12.631Z",
+        "head_commit_sha": "b6721834f96774ce7893c873ef78b2c2ffa5b14e",
+        "id": 4,
+        "merge_request_id": 9620987,
+        "real_size": "1",
+        "start_commit_sha": "244abb939aec67941ec1ef06321c9e3ac74aab04",
+        "state": "collected"
+    }
+]

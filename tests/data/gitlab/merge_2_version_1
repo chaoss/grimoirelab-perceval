@@ -1,0 +1,38 @@
+{
+    "base_commit_sha": "573ca4c7b292ad5edb6247854093964c4663f712",
+    "commits": [
+        {
+            "author_email": "contact@rudloff.pro",
+            "author_name": "Pierre Rudloff",
+            "authored_date": "2018-05-16T13:07:24.000Z",
+            "committed_date": "2018-05-16T13:07:24.000Z",
+            "committer_email": "contact@rudloff.pro",
+            "committer_name": "Pierre Rudloff",
+            "created_at": "2018-05-16T13:07:24.000Z",
+            "id": "61e44ba9a650402545d9cd27a6b7f9aadfd1b8ba",
+            "message": "New app: Werewolf\n",
+            "parent_ids": [],
+            "short_id": "61e44ba9",
+            "title": "New app: Werewolf"
+        }
+    ],
+    "created_at": "2018-05-16T13:10:12.247Z",
+    "diffs": [
+        {
+            "a_mode": "0",
+            "b_mode": "100644",
+            "deleted_file": false,
+            "diff": "--- /dev/null\n+++ b/metadata/org.secuso.privacyfriendlycardgameone.txt\n@@ -0,0 +1,33 @@\n+Categories:Games\n+License:GPL-3.0+\n+Web Site:https://www.secuso.informatik.tu-darmstadt.de/index.php?id=11404&L=0\n+Source Code:https://github.com/SecUSo/privacy-friendly-werewolf\n+Issue Tracker:https://github.com/SecUSo/privacy-friendly-werewolf/issues\n+\n+Auto Name:Werewolf\n+Summary:Play Werewolf with your friends\n+Description:\n+Privacy Friendly Werewolf is an open source Android implementation of the famous\n+Werewolf card game. You can play it with your friends inside a local network, so\n+that everyone can use their own phone. Play in the role of innocent citizen, a\n+deadly werewolf, a magical witch or a mystical seer. The game master phone, with\n+own voice output, will guide you through the different phases of the game, where\n+you can play out different actions, according to your role. Witches can use\n+healing or poison potions, seers can see the roles of other people, and of\n+course there is the big voting, where the fate of one player is decided. In the\n+end, it is your skill which decides who is going to win - werewolves or\n+citizens!\n+.\n+\n+Repo Type:git\n+Repo:https://github.com/SecUSo/privacy-friendly-werewolf.git\n+\n+Build:1.0,1\n+    commit=v1.0\n+    subdir=app\n+    gradle=yes\n+\n+Auto Update Mode:Version v%v\n+Update Check Mode:Tags\n+Current Version:1.0\n+Current Version Code:1\n",
+            "new_file": true,
+            "new_path": "metadata/org.secuso.privacyfriendlycardgameone.txt",
+            "old_path": "metadata/org.secuso.privacyfriendlycardgameone.txt",
+            "renamed_file": false
+        }
+    ],
+    "head_commit_sha": "61e44ba9a650402545d9cd27a6b7f9aadfd1b8ba",
+    "id": 14572101,
+    "merge_request_id": 9909637,
+    "real_size": "1",
+    "start_commit_sha": "573ca4c7b292ad5edb6247854093964c4663f712",
+    "state": "collected"
+}

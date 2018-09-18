@@ -1,0 +1,22 @@
+[
+    {
+        "base_commit_sha": "37d3c34581625b04e8268bfc89ff9bbc2a959c52",
+        "created_at": "2018-05-09T20:52:04.823Z",
+        "head_commit_sha": "140aca9f2a00638ceb29671174c60a043736d188",
+        "id": 1,
+        "merge_request_id": 9737425,
+        "real_size": "1",
+        "start_commit_sha": "e98f17c485a374c013e42c6a2903b18058388865",
+        "state": "collected"
+    },
+    {
+        "base_commit_sha": "37d3c34581625b04e8268bfc89ff9bbc2a959c52",
+        "created_at": "2018-05-09T17:15:35.476Z",
+        "head_commit_sha": "c53a50a89785149eb0a7014756e1f0368b694d27",
+        "id": 2,
+        "merge_request_id": 9737425,
+        "real_size": "1",
+        "start_commit_sha": "a69090b4257d4531fb1d42241f7788d2fe243b19",
+        "state": "without_files"
+    }
+]
