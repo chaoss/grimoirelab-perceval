@@ -9,20 +9,49 @@
                 "pageid": 592384,
                 "timestamp": "2016-06-23T15:42:38Z",
                 "title": "Technical Collaboration Guideline/Translation",
-                "type": "edit"
+                "type": "edit",
+                "revid": 291919,
+                "oldrevid": 210234
+            },
+            {
+                "ns": 0,
+                "pageid": 476583,
+                "timestamp": "2016-06-23T15:38:23Z",
+                "title": "VisualEditor:Test",
+                "type": "edit",
+                "revid": 291920,
+                "oldrevid": 210235
+            },
+            {
+                "ns": 0,
+                "pageid": 476589,
+                "timestamp": "2016-06-23T15:37:23Z",
+                "title": "OldEditor:Test",
+                "type": "edit",
+                "revid": 0,
+                "oldrevid": 0
+            },
+            {
+                "ns": 0,
+                "pageid": 476583,
+                "timestamp": "2016-06-23T15:36:23Z",
+                "title": "VisualEditor:Test",
+                "type": "edit",
+                "revid": 291923,
+                "oldrevid": 210237
             },
             {
                 "ns": 0,
                 "pageid": 476583,
                 "timestamp": "2016-06-23T15:27:23Z",
                 "title": "VisualEditor:Test",
-                "type": "edit"
+                "type": "edit",
+                "revid": 291923,
+                "oldrevid": 210237
             }
         ]
     },
-    "query-continue": {
-        "recentchanges": {
-            "rccontinue": "20160614151314|2402770"
-        }
+    "continue": {
+        "rccontinue": "20160614151314|2402770"
     }
 }

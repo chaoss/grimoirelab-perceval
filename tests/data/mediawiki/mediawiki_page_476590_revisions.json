@@ -1,0 +1,18 @@
+{
+    "continue": {
+        "continue": "||",
+        "rvcontinue": "20160226140047|2062172"
+    },
+    "limits": {
+        "revisions": 500
+    },
+    "query": {
+        "pages": {
+            "476599": {
+                "ns": 0,
+                "pageid": 476590,
+                "title": "OldEditor:Test"
+            }
+        }
+    }
+}
