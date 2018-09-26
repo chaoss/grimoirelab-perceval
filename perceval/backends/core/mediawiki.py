@@ -211,6 +211,7 @@ class MediaWiki(Backend):
         logger.info("Looking for pages at url '%s'", self.url)
 
         npages = 0  # number of pages processed
+        tpages = 0  # number of total pages
         pages_done = []  # pages already retrieved in reviews API
 
         namespaces_contents = self.__get_namespaces_contents()
@@ -219,23 +220,30 @@ class MediaWiki(Backend):
         while arvcontinue is not None:
             raw_pages = self.client.get_pages_from_allrevisions(namespaces_contents, from_date, arvcontinue)
             data_json = json.loads(raw_pages)
-            if 'continue' in data_json:
-                arvcontinue = data_json['continue']['arvcontinue']
-            else:
-                arvcontinue = None
+            arvcontinue = data_json['continue']['arvcontinue'] if 'continue' in data_json else None
             pages_json = data_json['query']['allrevisions']
             for page in pages_json:
+
                 if page['pageid'] in pages_done:
-                    # The page was already returned for previous revisions
+                    logger.debug("Page %s already processed; skipped", page['pageid'])
                     continue
+
+                tpages += 1
                 pages_done.append(page['pageid'])
-                yield self.__get_page_reviews(page)
+                page_reviews = self.__get_page_reviews(page)
+
+                if not page_reviews:
+                    logger.warning("Revisions not found in %s [page id: %s], page skipped",
+                                   page['title'], page['pageid'])
+                    continue
+
+                yield page_reviews
                 npages += 1
 
-        logger.info("Total number of pages: %i", npages)
+        logger.info("Total number of pages: %i, skipped %i", tpages, tpages - npages)
 
     def __get_page_reviews(self, page):
-        revisions_raw = self.client.get_revisions(page['title'])
+        revisions_raw = self.client.get_revisions(page['pageid'])
         page_reviews = self.__build_page_reviews(page, json.loads(revisions_raw))
         return page_reviews
 
@@ -251,11 +259,15 @@ class MediaWiki(Backend):
         def fetch_incremental_changes(namespaces_contents):
             # Use recent changes API to get the pages from date
             npages = 0  # number of pages processed
+            tpages = 0  # number of total pages
+            pages_done = []  # pages already retrieved in reviews API
+
             rccontinue = ''
             hole_created = True  # To detect that incremental is not complete
             while rccontinue is not None:
                 raw_pages = self.client.get_recent_pages(namespaces_contents, rccontinue)
                 data_json = json.loads(raw_pages)
+
                 if 'query-continue' in data_json:
                     # < 1.27
                     rccontinue = data_json['query-continue']['recentchanges']['rccontinue']
@@ -264,8 +276,10 @@ class MediaWiki(Backend):
                     rccontinue = data_json['continue']['rccontinue']
                 else:
                     rccontinue = None
+
                 pages_json = data_json['query']['recentchanges']
                 for page in pages_json:
+
                     page_ts = dateutil.parser.parse(page['timestamp'])
                     if from_date >= page_ts:
                         # The rest of recent changes are older than from_date
@@ -273,19 +287,31 @@ class MediaWiki(Backend):
                         rccontinue = None
                         hole_created = False
                         break
-                    page_reviews = self.__get_page_reviews(page)
-                    if not page_reviews:
-                        # Page without reviews are not managed
+
+                    if page['pageid'] in pages_done:
+                        logger.debug("Page %s already processed; skipped", page['pageid'])
                         continue
+
+                    tpages += 1
+                    pages_done.append(page['pageid'])
+                    page_reviews = self.__get_page_reviews(page)
+
+                    if not page_reviews:
+                        logger.warning("Revisions not found in %s [page id: %s], page skipped",
+                                       page['title'], page['pageid'])
+                        continue
+
                     yield page_reviews
                     npages += 1
             if hole_created:
                 logger.error("Incremental update NOT completed. Hole in history created.")
-            logger.info("Total number of pages: %i", npages)
+            logger.info("Total number of pages: %i, skipped %i", tpages, tpages - npages)
 
         def fetch_all_pages(namespaces_contents):
             # Use get all pages API to get pages
             npages = 0  # number of pages processed
+            tpages = 0  # number of total pages
+            pages_done = []  # pages already retrieved in reviews API
 
             for ns in namespaces_contents:
                 apcontinue = ''  # pagination for getting pages
@@ -303,9 +329,23 @@ class MediaWiki(Backend):
                         apcontinue = None
                     pages_json = data_json['query']['allpages']
                     for page in pages_json:
-                        yield self.__get_page_reviews(page)
+
+                        if page['pageid'] in pages_done:
+                            logger.debug("Page %s already processed; skipped", page['pageid'])
+                            continue
+
+                        tpages += 1
+                        pages_done.append(page['pageid'])
+                        page_reviews = self.__get_page_reviews(page)
+
+                        if not page_reviews:
+                            logger.warning("Revisions not found in %s [page id: %s], page skipped",
+                                           page['title'], page['pageid'])
+                            continue
+
+                        yield page_reviews
                         npages += 1
-            logger.info("Total number of pages: %i", npages)
+            logger.info("Total number of pages: %i, skipped %i", tpages, tpages - npages)
 
         logger.info("Looking for pages at url '%s'", self.url)
 
@@ -331,9 +371,11 @@ class MediaWiki(Backend):
             if 'revisions' in reviews_json:
                 page["revisions"] = reviews_json['revisions']
                 page['update'] = self.__get_max_date(page['revisions'])
+            else:
+                page = None
         else:
-            logger.warning("Revisions not found in %s", reviews["query"]["pages"])
-            logger.warning("for page: %s", page)
+            logger.warning("Revisions not found in %s [page id: %s], page skipped",
+                           page['title'], page['pageid'])
             page = None
         return page
 
@@ -434,7 +476,7 @@ class MediaWikiClient(HttpClient):
 
         return self.call(params)
 
-    def get_revisions(self, title, last_date=None):
+    def get_revisions(self, pageid, last_date=None):
         # TODO: Iterate if more than self.max reviews (500)
 
         if last_date:
@@ -443,7 +485,7 @@ class MediaWikiClient(HttpClient):
         params = {
             "action": "query",
             "prop": "revisions",
-            "titles": title,
+            "pageids": pageid,
             "rvdir": "newer",
             "rvlimit": self.limit,
             "format": "json"
