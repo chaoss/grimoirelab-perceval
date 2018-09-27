@@ -37,6 +37,7 @@ from grimoirelab_toolkit.datetime import (datetime_to_utc,
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
+from perceval.errors import BackendError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.mediawiki import (MediaWiki,
                                               MediaWikiCommand,
@@ -61,7 +62,7 @@ class HTTPServer():
     requests_http = []  # requests done to the server
 
     @classmethod
-    def routes(cls, version="1.28", empty=False):
+    def routes(cls, version="1.28", empty=False, response_num=200):
         """Configure in http the routes to be served"""
 
         assert(version in TESTED_VERSIONS)
@@ -111,7 +112,7 @@ class HTTPServer():
 
             HTTPServer.requests_http.append(httpretty.last_request())
 
-            return (200, headers, body)
+            return (response_num, headers, body)
 
         httpretty.register_uri(httpretty.GET,
                                MEDIAWIKI_API,
@@ -328,8 +329,10 @@ class TestMediaWikiClient(unittest.TestCase):
         self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
-    def __test_get_version(self, version):
-        if version == "1.23":
+    def __test_get_version(self, version, response_num=200):
+        if response_num != 200:
+            HTTPServer.routes('1.28', response_num=response_num)
+        elif version == "1.23":
             HTTPServer.routes('1.23')
             body = read_file('data/mediawiki/mediawiki_siteinfo_1.23.json')
             response_ok = [1, 23]
@@ -360,6 +363,11 @@ class TestMediaWikiClient(unittest.TestCase):
     @httpretty.activate
     def test_get_version_1_28(self):
         self.__test_get_version('1.28')
+
+    @httpretty.activate
+    def test_get_version_exception(self):
+        with self.assertRaises(BackendError):
+            self.__test_get_version('1.28', response_num=401)
 
     @httpretty.activate
     def test_get_pages(self):
