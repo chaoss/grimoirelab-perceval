@@ -71,7 +71,7 @@ class MediaWiki(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.4'
+    version = '0.9.5'
 
     CATEGORIES = [CATEGORY_PAGE]
 
@@ -390,8 +390,8 @@ class MediaWikiClient(HttpClient):
             res = self.call(params)
             siteinfo = json.loads(res)
             siteinfo = siteinfo["query"]["general"]
-        except Exception:
-            logger.error(res)
+        except Exception as ex:
+            logger.error(ex)
             cause = "Wrong MediaWiki API: " + self.base_url
             raise BackendError(cause=cause)
 
