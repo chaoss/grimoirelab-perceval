@@ -80,7 +80,7 @@ class GitLab(Backend):
         before raising a RetryError exception
     :param sleep_time: time to sleep in case
     """
-    version = '0.5.0'
+    version = '0.5.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
@@ -246,8 +246,9 @@ class GitLab(Backend):
             for merge in merges:
                 merge_id = merge['iid']
 
-                # the single merge_request API call returns a more complete merge request,
-                # thus we inflate it with other data (e.g., notes, emojis, commits)
+                # The single merge_request API call returns a more
+                # complete merge request, thus we inflate it with
+                # other data (e.g., notes, emojis, versions)
                 merge_full_raw = self.client.merge(merge_id)
                 merge_full = json.loads(merge_full_raw)
 
@@ -337,7 +338,7 @@ class GitLab(Backend):
 
         merge['notes_data'] = []
         merge['award_emoji_data'] = []
-        merge['commits_data'] = []
+        merge['versions_data'] = []
 
 
 class GitLabClient(HttpClient, RateLimitHandler):
