@@ -892,9 +892,9 @@ class TestGitLabClient(unittest.TestCase):
 
         with self.assertLogs(logger, level='WARNING') as cm:
             GitLabClient("fdroid", "fdroiddata", "your-token")
-            self.assertEqual(cm[-1][0], 'WARNING:perceval.backends.core.gitlab:Rate limit not initialized: 400 '
-                                        'Client Error: Bad Request for '
-                                        'url: https://gitlab.com/api/v4/projects/fdroid%2Ffdroiddata')
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.gitlab:Rate limit not initialized: 400 '
+                                           'Client Error: Bad Request for '
+                                           'url: https://gitlab.com/api/v4/projects/fdroid%2Ffdroiddata')
 
     @httpretty.activate
     def test_issues(self):
