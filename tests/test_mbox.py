@@ -175,8 +175,8 @@ class TestMBoxArchive(TestBaseMBox):
         with self.assertLogs(logger, level='ERROR') as cm:
             container = mbox.container
             container.close()
-            self.assertEqual(cm[-1][0], 'ERROR:perceval.backends.core.mbox:Zip %s contains more than one file, '
-                                        'only the first uncompressed' % mbox.filepath)
+            self.assertEqual(cm.output[0], 'ERROR:perceval.backends.core.mbox:Zip %s contains more than one file, '
+                                           'only the first uncompressed' % mbox.filepath)
 
 
 class TestMailingList(TestBaseMBox):
