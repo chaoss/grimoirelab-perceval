@@ -34,6 +34,35 @@
                     }
                 ],
                 "title": "VisualEditor:Test"
+            },
+            {
+                "ns": 0,
+                "pageid": 476583,
+                "revisions": [
+                    {
+                        "parentid": 2169554,
+                        "revid": 2169844
+                    },
+                    {
+                        "parentid": 2169844,
+                        "revid": 2170296
+                    }
+                ],
+                "title": "VisualEditor:Test"
+            },
+            {
+                "ns": 0,
+                "pageid": 476589,
+                "revid": 0,
+                "oldrevid": 0,
+                "title": "NewEditor:Test"
+            },
+            {
+                "ns": 0,
+                "pageid": 476590,
+                "revid": 0,
+                "oldrevid": 0,
+                "title": "NewEditor:Test"
             }
         ]
     }

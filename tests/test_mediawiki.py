@@ -41,7 +41,8 @@ from perceval.errors import BackendError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.mediawiki import (MediaWiki,
                                               MediaWikiCommand,
-                                              MediaWikiClient)
+                                              MediaWikiClient,
+                                              logger)
 from base import TestCaseBackendArchive
 
 
@@ -88,6 +89,8 @@ class HTTPServer():
         # Pages with revisions
         mediawiki_page_476583 = read_file('data/mediawiki/mediawiki_page_476583_revisions.json')
         mediawiki_page_592384 = read_file('data/mediawiki/mediawiki_page_592384_revisions.json')
+        mediawiki_page_476589 = read_file('data/mediawiki/mediawiki_page_476589_revisions.json')
+        mediawiki_page_476590 = read_file('data/mediawiki/mediawiki_page_476590_revisions.json')
 
         def request_callback(method, uri, headers):
             params = urllib.parse.parse_qs(urllib.parse.urlparse(uri).query)
@@ -102,11 +105,15 @@ class HTTPServer():
                     body = mediawiki_pages_recent_changes
                 elif 'allrevisions' in params['list']:
                     body = mediawiki_pages_allrevisions
-            elif 'titles' in params:
-                if 'VisualEditor' in params['titles'][0]:
+            elif 'pageids' in params:
+                if params['pageids'][0] == '476583':
                     body = mediawiki_page_476583
-                elif 'Technical' in params['titles'][0]:
+                elif params['pageids'][0] == '592384':
                     body = mediawiki_page_592384
+                elif params['pageids'][0] == '476589':
+                    body = mediawiki_page_476589
+                elif params['pageids'][0] == '476590':
+                    body = mediawiki_page_476590
             else:
                 raise
 
@@ -177,6 +184,23 @@ class TestMediaWikiBackend(unittest.TestCase):
 
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.mediawiki.datetime_utcnow')
+    def test_fetch_max_recent_days(self, mock_utcnow):
+        """Test whether the pages with their reviews are returned"""
+
+        HTTPServer.routes("1.23")
+        mock_utcnow.return_value = datetime.datetime(2100, 6, 10,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        from_date = dateutil.parser.parse("2016-06-23 15:35")
+        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
+
+        mediawiki._test_mode = True
+
+        with self.assertRaises(BackendError):
+            _ = [page for page in mediawiki.fetch(from_date=from_date)]
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.mediawiki.datetime_utcnow')
     def _test_fetch_version(self, version, mock_utcnow, from_date=None, reviews_api=False):
         """Test whether the pages with their reviews are returned"""
 
@@ -201,10 +225,10 @@ class TestMediaWikiBackend(unittest.TestCase):
         elif version == "1.23" or not reviews_api:
             if not from_date:
                 # 2 pages per each of the 5 name spaces
-                self.assertEqual(len(pages), 10)
+                self.assertEqual(len(pages), 2)
             else:
                 # 1 page in recent changes
-                self.assertEqual(len(pages), 1)
+                self.assertEqual(len(pages), 2)
 
         HTTPServer.check_pages_contents(self, pages)
 
@@ -213,13 +237,27 @@ class TestMediaWikiBackend_1_23(TestMediaWikiBackend):
     """MediaWiki backend tests for MediaWiki 1.23 version"""
 
     def test_fetch(self):
-        self._test_fetch_version("1.23")
-        self._test_fetch_version("1.23", reviews_api=True)
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_fetch_version("1.23")
+            self.assertEqual(cm.output[0],
+                             'WARNING:perceval.backends.core.mediawiki:Revisions not found in NewEditor:Test '
+                             '[page id: 476589], page skipped')
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_fetch_version("1.23", reviews_api=True)
+            self.assertEqual(cm.output[2],
+                             'WARNING:perceval.backends.core.mediawiki:Revisions not found in NewEditor:Test '
+                             '[page id: 476589], page skipped')
 
     @httpretty.activate
     def test_fetch_from_date(self):
         from_date = dateutil.parser.parse("2016-06-23 15:35")
-        self._test_fetch_version("1.23", from_date=from_date)
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_fetch_version("1.23", from_date=from_date)
+            self.assertEqual(cm.output[0],
+                             'WARNING:perceval.backends.core.mediawiki:Revisions not found in OldEditor:Test '
+                             '[page id: 476589], page skipped')
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -237,14 +275,33 @@ class TestMediaWikiBackend_1_28(TestMediaWikiBackend):
     """MediaWiki backend tests for MediaWiki 1.28 version"""
 
     def test_fetch(self):
-        self._test_fetch_version("1.28")
-        self._test_fetch_version("1.28", reviews_api=True)
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_fetch_version("1.28")
+            self.assertEqual(cm.output[0],
+                             'WARNING:perceval.backends.core.mediawiki:Revisions not found in NewEditor:Test '
+                             '[page id: 476589], page skipped')
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_fetch_version("1.28", reviews_api=True)
+            self.assertEqual(cm.output[0],
+                             'WARNING:perceval.backends.core.mediawiki:Revisions not found in NewEditor:Test '
+                             '[page id: 476589], page skipped')
 
     @httpretty.activate
     def test_fetch_from_date(self):
         from_date = dateutil.parser.parse("2016-06-23 15:35")
-        self._test_fetch_version("1.28", from_date=from_date)
-        self._test_fetch_version("1.28", from_date=from_date, reviews_api=True)
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_fetch_version("1.28", from_date=from_date)
+            self.assertEqual(cm.output[0],
+                             'WARNING:perceval.backends.core.mediawiki:Revisions not found in OldEditor:Test '
+                             '[page id: 476589], page skipped')
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_fetch_version("1.28", from_date=from_date, reviews_api=True)
+            self.assertEqual(cm.output[0],
+                             'WARNING:perceval.backends.core.mediawiki:Revisions not found in NewEditor:Test '
+                             '[page id: 476589], page skipped')
 
     @httpretty.activate
     def test_fetch_empty_1_28(self):
@@ -287,7 +344,11 @@ class TestMediaWikiBackendArchive1_23(TestMediaWikiBackendArchive):
     def test_fetch_from_archive(self):
         """Test whether the archive works"""
 
-        self._test_version("1.23")
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_version("1.23")
+            self.assertEqual(cm.output[0],
+                             'WARNING:perceval.backends.core.mediawiki:Revisions not found in OldEditor:Test '
+                             '[page id: 476589], page skipped')
 
 
 class TestMediaWikiBackendArchive1_28(TestMediaWikiBackendArchive):
@@ -297,13 +358,21 @@ class TestMediaWikiBackendArchive1_28(TestMediaWikiBackendArchive):
     def test_fetch_from_archive(self):
         """Test whether the archive works"""
 
-        self._test_version("1.28")
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_version("1.28")
+            self.assertEqual(cm.output[0],
+                             'WARNING:perceval.backends.core.mediawiki:Revisions not found in OldEditor:Test '
+                             '[page id: 476589], page skipped')
 
     @httpretty.activate
     def test_fetch_from_archive_reviews(self):
         """Test whether the archive works"""
 
-        self._test_version("1.28", reviews_api=True)
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_version("1.28", reviews_api=True)
+            self.assertEqual(cm.output[0],
+                             'WARNING:perceval.backends.core.mediawiki:Revisions not found in NewEditor:Test '
+                             '[page id: 476589], page skipped')
 
 
 class TestMediaWikiClient(unittest.TestCase):
@@ -391,6 +460,28 @@ class TestMediaWikiClient(unittest.TestCase):
         self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
+    def test_get_pages_apcontinue(self):
+        HTTPServer.routes()
+        body = read_file('data/mediawiki/mediawiki_pages_all.json')
+        client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
+        namespace = '0'
+        response = client.get_pages(namespace, apcontinue="xxx")
+        req = HTTPServer.requests_http[-1]
+        self.assertEqual(response, body)
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/api.php')
+        # Check request params
+        expected = {
+            'action': ['query'],
+            'list': ['allpages'],
+            'apnamespace': ['0'],
+            'aplimit': ['max'],
+            'format': ['json'],
+            'apcontinue': ['xxx']
+        }
+        self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
     def test_get_recent_pages(self):
         HTTPServer.routes()
         body = read_file('data/mediawiki/mediawiki_pages_recent_changes.json')
@@ -413,11 +504,34 @@ class TestMediaWikiClient(unittest.TestCase):
         self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
+    def test_get_recent_pages_rccontinue(self):
+        HTTPServer.routes()
+        body = read_file('data/mediawiki/mediawiki_pages_recent_changes.json')
+        client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
+        namespaces = ['0']
+        response = client.get_recent_pages(namespaces, rccontinue="xxx")
+        req = HTTPServer.requests_http[-1]
+        self.assertEqual(response, body)
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/api.php')
+        # Check request params
+        expected = {
+            'action': ['query'],
+            'list': ['recentchanges'],
+            'format': ['json'],
+            'rclimit': ['max'],
+            'rcnamespace': ['0'],
+            'rcprop': ['title|timestamp|ids'],
+            'rccontinue': ['xxx']
+        }
+        self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
     def test_get_revisions(self):
         HTTPServer.routes()
         body = read_file('data/mediawiki/mediawiki_page_476583_revisions.json')
         client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
-        response = client.get_revisions('VisualEditor')
+        response = client.get_revisions(476583)
         req = HTTPServer.requests_http[-1]
         self.assertEqual(response, body)
         self.assertEqual(req.method, 'GET')
@@ -426,10 +540,35 @@ class TestMediaWikiClient(unittest.TestCase):
         expected = {
             'action': ['query'],
             'prop': ['revisions'],
-            'titles': ['VisualEditor'],
+            'pageids': ['476583'],
             'format': ['json'],
             'rvlimit': ['max'],
             'rvdir': ['newer']
+        }
+        self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_get_revisions_last_date(self):
+        HTTPServer.routes()
+        body = read_file('data/mediawiki/mediawiki_page_476583_revisions.json')
+        client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
+
+        str_date = '2016-01-01 00:00'
+        dt = str_to_datetime(str_date)
+        response = client.get_revisions(476583, last_date=dt)
+        req = HTTPServer.requests_http[-1]
+        self.assertEqual(response, body)
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/api.php')
+        # Check request params
+        expected = {
+            'action': ['query'],
+            'prop': ['revisions'],
+            'pageids': ['476583'],
+            'format': ['json'],
+            'rvlimit': ['max'],
+            'rvdir': ['newer'],
+            'rvstart': ['2016-01-01T00:00:00 00:00']
         }
         self.assertDictEqual(req.querystring, expected)
 
@@ -487,6 +626,30 @@ class TestMediaWikiClient(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             _ = client.get_pages_from_allrevisions(namespaces, from_date)
+
+    @httpretty.activate
+    def test_get_pages_from_allrevisions_arvcontinue(self):
+        HTTPServer.routes()
+        body = read_file('data/mediawiki/mediawiki_pages_allrevisions.json')
+        client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
+        namespaces = ['0']
+        response = client.get_pages_from_allrevisions(namespaces, arvcontinue="xxx")
+        req = HTTPServer.requests_http[-1]
+        self.assertEqual(response, body)
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/api.php')
+        # Check request params
+        expected = {
+            'action': ['query'],
+            'list': ['allrevisions'],
+            'arvnamespace': ['0'],
+            'arvdir': ['newer'],
+            'arvlimit': ['max'],
+            'format': ['json'],
+            'arvprop': ['ids'],
+            'arvcontinue': ['xxx']
+        }
+        self.assertDictEqual(req.querystring, expected)
 
 
 class TestMediaWikiCommand(unittest.TestCase):
