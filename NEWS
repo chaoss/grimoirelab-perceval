@@ -1,5 +1,31 @@
 # Releases
 
+## Perceval 0.12 - (2018-10-02)
+
+** New features and improvements: **
+
+ * So far, the JSON items written to the defined output (standard output
+   by default) were difficult to parse. With the option `--json-line`, each
+   item will be written in one line, making easier their consumption by
+   other processes.
+ * New set of backends added:
+   - **GoogleHits**
+   - **Twitter**
+ * Minor bugs were fixed and test coverage was improved.
+
+** Backend improvements: **
+
+ * **gitlab**
+   - add merge request category
+ * **github**
+   - increase the number of items retrieved per page
+   - add the list of commits hashed included in pull requests
+ * **mediawiki**
+   - optimize the number of API calls
+ * **pipermail**
+   - disable SSL verification
+
+
 ## Perceval 0.11 - (2018-05-21)
 
 ** New features improvements: **
