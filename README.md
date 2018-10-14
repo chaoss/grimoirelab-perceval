@@ -106,6 +106,30 @@ $ pip3 install -e .
 
 Documentation is generated automagically in the [ReadTheDocs Perceval site](http://perceval.readthedocs.org/).
 
+## References
+
+If you use Perceval in your research papers, please refer to [Perceval: software project data at your will](https://dl.acm.org/citation.cfm?id=3183475) -- [Pre-print](https://www.researchgate.net/profile/Valerio_Cosentino/publication/325334393_Perceval_Software_Project_Data_at_Your_Will/links/5b066c9fa6fdcc8c2522b07c/Perceval-Software-Project-Data-at-Your-Will.pdf):
+
+### APA style
+
+```
+Dueñas, S., Cosentino, V., Robles, G., & Gonzalez-Barahona, J. M. (2018, May). Perceval: software project data at your will. In Proceedings of the 40th International Conference on Software Engineering: Companion Proceeedings (pp. 1-4). ACM.
+```
+
+### BibTeX
+
+```
+@inproceedings{duenas2018perceval,
+  title={Perceval: software project data at your will},
+  author={Due{\~n}as, Santiago and Cosentino, Valerio and Robles, Gregorio and Gonzalez-Barahona, Jesus M},
+  booktitle={Proceedings of the 40th International Conference on Software Engineering: Companion Proceeedings},
+  pages={1--4},
+  year={2018},
+  organization={ACM}
+}
+```
+
+
 ## Examples
 
 ### Askbot
