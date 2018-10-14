@@ -30,12 +30,15 @@ from grimoirelab_toolkit.uris import urijoin
 from .mbox import MBox, MailingList, CATEGORY_MESSAGE
 from ...backend import (BackendCommand,
                         BackendCommandArgumentParser)
+from ...errors import BackendError
 from ...utils import DEFAULT_DATETIME
 
 MBOX_FILE = 'messages.zip'
 
 GROUPSIO_URL = 'https://groups.io/'
 GROUPSIO_API_URL = 'https://api.groups.io/v1/'
+
+PER_PAGE = 100
 
 
 logger = logging.getLogger(__name__)
@@ -57,7 +60,7 @@ class Groupsio(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -136,11 +139,16 @@ class GroupsioClient(MailingList):
     :param api_token: GitHub auth token to access the API
     :param verify: allows to disable SSL verification
     """
+
+    DOWNLOAD_ARCHIVES = 'downloadarchives'
+    GET_SUBSCRIPTIONS = 'getsubs'
+
     def __init__(self, group_name, dirpath, api_token, verify=True):
         url = urijoin(GROUPSIO_URL, 'g', group_name)
         super().__init__(url, dirpath)
         self.group_name = group_name
         self.api_token = api_token
+        self.auth = HTTPBasicAuth(self.api_token, '')
         self.verify = verify
 
     def fetch(self):
@@ -162,18 +170,45 @@ class GroupsioClient(MailingList):
         if not os.path.exists(self.dirpath):
             os.makedirs(self.dirpath)
 
-        url = urijoin(GROUPSIO_API_URL, 'downloadarchives')
-        payload = {'group_name': self.group_name}
-        auth = HTTPBasicAuth(self.api_token, '')
+        group_id = self.__find_group_id()
 
+        url = urijoin(GROUPSIO_API_URL, self.DOWNLOAD_ARCHIVES)
+        payload = {'group_id': group_id}
         filepath = os.path.join(self.dirpath, MBOX_FILE)
-        success = self._download_archive(url, payload, auth, filepath)
+        success = self._download_archive(url, payload, filepath)
 
         return success
 
-    def _download_archive(self, url, payload, auth, filepath):
+    def subscriptions(self, per_page=PER_PAGE):
+        """Fetch the groupsio paginated subscriptions for a given token
+
+        :param per_page: number of subscriptions per page
+
+        :returns: an iterator of subscriptions
+        """
+        url = urijoin(GROUPSIO_API_URL, self.GET_SUBSCRIPTIONS)
+        logger.debug("Get groupsio paginated subscriptions from " + url)
+
+        keep_fetching = True
+        payload = {
+            "limit": per_page
+        }
+
+        while keep_fetching:
+            r = self.__fetch(url, payload)
+            response_raw = r.json()
+            subscriptions = response_raw['data']
+            yield subscriptions
+
+            total_subscriptions = response_raw['total_count']
+            logger.debug("Subscriptions: %i/%i" % (response_raw['end_item'], total_subscriptions))
+
+            payload['page_token'] = response_raw['next_page_token']
+            keep_fetching = response_raw['has_more']
+
+    def _download_archive(self, url, payload, filepath):
+        r = requests.get(url, params=payload, auth=self.auth, stream=True, verify=self.verify)
         try:
-            r = requests.get(url, params=payload, auth=auth, stream=True, verify=self.verify)
             r.raise_for_status()
             self._write_archive(r, filepath)
         except requests.exceptions.HTTPError as e:
@@ -190,6 +225,30 @@ class GroupsioClient(MailingList):
     def _write_archive(r, filepath):
         with open(filepath, 'wb') as fd:
             fd.write(r.raw.read())
+
+    def __find_group_id(self):
+        """Find the id of a group given its name by iterating on the list of subscriptions"""
+
+        group_subscriptions = self.subscriptions(self.auth)
+
+        for subscriptions in group_subscriptions:
+            for sub in subscriptions:
+                if sub['group_name'] == self.group_name:
+                    return sub['group_id']
+
+        msg = "Group id not found for group name %s" % self.group_name
+        raise BackendError(cause=msg)
+
+    def __fetch(self, url, payload):
+        """Fetch requests from groupsio API"""
+
+        r = requests.get(url, params=payload, auth=self.auth, verify=self.verify)
+        try:
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise e
+
+        return r
 
 
 class GroupsioCommand(BackendCommand):
