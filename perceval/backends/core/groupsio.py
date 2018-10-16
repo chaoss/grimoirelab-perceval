@@ -60,7 +60,7 @@ class Groupsio(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.1.1'
+    version = '0.1.2'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -273,6 +273,10 @@ class GroupsioCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               token_auth=True)
+
+        # Backend token is required
+        action = parser.parser._option_string_actions['--api-token']
+        action.required = True
 
         # Optional arguments
         group = parser.parser.add_argument_group('Groupsio arguments')
