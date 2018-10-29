@@ -365,12 +365,14 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(gitlab.origin, GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(gitlab.tag, 'test')
         self.assertIsNone(gitlab.client)
+        self.assertIsNone(gitlab.blacklist_ids)
         self.assertEqual(gitlab.max_retries, MAX_RETRIES)
         self.assertEqual(gitlab.sleep_time, DEFAULT_SLEEP_TIME)
 
         # When tag is empty or None it will be set to
         # the value in origin
-        gitlab = GitLab('fdroid', 'fdroiddata', api_token='aaa', max_retries=10, sleep_time=100)
+        gitlab = GitLab('fdroid', 'fdroiddata', api_token='aaa', max_retries=10,
+                        sleep_time=100, blacklist_ids=[1, 2, 3])
 
         self.assertEqual(gitlab.owner, 'fdroid')
         self.assertEqual(gitlab.repository, 'fdroiddata')
@@ -379,6 +381,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertIsNone(gitlab.client)
         self.assertEqual(gitlab.max_retries, 10)
         self.assertEqual(gitlab.sleep_time, 100)
+        self.assertEqual(gitlab.blacklist_ids, [1, 2, 3])
 
     @httpretty.activate
     def test_initialization_entreprise(self):
@@ -447,6 +450,29 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
 
     @httpretty.activate
+    def test_fetch_issues_blacklisted(self):
+        """Test whether blacklist issues are not fetched from GitLab"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token", blacklist_ids=[1, 2, 3])
+
+        with self.assertLogs(level='WARNING') as cm:
+            issues = [issues for issues in gitlab.fetch()]
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.gitlab:Skipping blacklisted issue 1')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.gitlab:Skipping blacklisted issue 2')
+            self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.gitlab:Skipping blacklisted issue 3')
+
+        self.assertEqual(len(issues), 1)
+
+        issue = issues[0]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 2)
+        self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+
+    @httpretty.activate
     def test_fetch_merges(self):
         """Test whether merges are properly fetched from GitLab"""
 
@@ -478,6 +504,32 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
 
         merge = merges[2]
+        self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 1)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+    @httpretty.activate
+    def test_fetch_merges_blacklisted(self):
+        """Test whether blacklist merge requests are not fetched from GitLab"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token", blacklist_ids=[1, 2])
+
+        with self.assertLogs(level='WARNING') as cm:
+            merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.gitlab:'
+                                           'Skipping blacklisted merge request 1')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.gitlab:'
+                                           'Skipping blacklisted merge request 2')
+
+        self.assertEqual(len(merges), 1)
+
+        merge = merges[0]
         self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
         self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
@@ -1314,6 +1366,7 @@ class TestGitLabCommand(unittest.TestCase):
                 '--sleep-time', '10',
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
+                '--blacklist-ids', '1', '2', '3',
                 '--enterprise-url', 'https://example.com',
                 '--category', CATEGORY_MERGE_REQUEST,
                 'zhquan_example', 'repo']
@@ -1329,6 +1382,7 @@ class TestGitLabCommand(unittest.TestCase):
         self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
         self.assertEqual(parsed_args.category, CATEGORY_MERGE_REQUEST)
+        self.assertEqual(parsed_args.blacklist_ids, [1, 2, 3])
         self.assertEqual(parsed_args.max_retries, 5)
         self.assertEqual(parsed_args.sleep_time, 10)
 

@@ -79,15 +79,17 @@ class GitLab(Backend):
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
     :param sleep_time: time to sleep in case
+    :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.5.1'
+    version = '0.6.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
-                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
+                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
+                 blacklist_ids=None):
         origin = base_url if base_url else GITLAB_URL
         origin = urijoin(origin, owner, repository)
 
@@ -100,6 +102,7 @@ class GitLab(Backend):
         self.min_rate_to_sleep = min_rate_to_sleep
         self.max_retries = max_retries
         self.sleep_time = sleep_time
+        self.blacklist_ids = blacklist_ids
         self.client = None
         self._users = {}  # internal users cache
 
@@ -210,12 +213,18 @@ class GitLab(Backend):
         for raw_issues in issues_groups:
             issues = json.loads(raw_issues)
             for issue in issues:
+                issue_id = issue['iid']
+
+                if self.blacklist_ids and issue_id in self.blacklist_ids:
+                    logger.warning("Skipping blacklisted issue %s", issue_id)
+                    continue
+
                 self.__init_issue_extra_fields(issue)
 
                 issue['notes_data'] = \
-                    self.__get_issue_notes(issue['iid'])
+                    self.__get_issue_notes(issue_id)
                 issue['award_emoji_data'] = \
-                    self.__get_award_emoji(GitLabClient.ISSUES, issue['iid'])
+                    self.__get_award_emoji(GitLabClient.ISSUES, issue_id)
 
                 yield issue
 
@@ -245,6 +254,10 @@ class GitLab(Backend):
             merges = json.loads(raw_merges)
             for merge in merges:
                 merge_id = merge['iid']
+
+                if self.blacklist_ids and merge_id in self.blacklist_ids:
+                    logger.warning("Skipping blacklisted merge request %s", merge_id)
+                    continue
 
                 # The single merge_request API call returns a more
                 # complete merge request, thus we inflate it with
@@ -633,6 +646,9 @@ class GitLabCommand(BackendCommand):
                            default=MIN_RATE_LIMIT, type=int,
                            help="sleep until reset when the rate limit \
                                reaches this value")
+        group.add_argument('--blacklist-ids', dest='blacklist_ids',
+                           nargs='*', type=int,
+                           help="Ids of items that must not be retrieved.")
 
         # Generic client options
         group.add_argument('--max-retries', dest='max_retries',
