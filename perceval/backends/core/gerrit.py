@@ -59,7 +59,7 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.11.0'
+    version = '0.11.1'
 
     CATEGORIES = [CATEGORY_REVIEW]
 
@@ -396,7 +396,7 @@ class GerritClient():
 
         :returns the sanitized cmd
         """
-        sanitized_cmd = re.sub(" \S*@", ' xxxxx@', cmd)
+        sanitized_cmd = re.sub(r" \S*@", ' xxxxx@', cmd)
 
         return sanitized_cmd
 

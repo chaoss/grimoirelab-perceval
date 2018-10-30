@@ -53,7 +53,7 @@ class Askbot(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.4'
+    version = '0.6.5'
 
     CATEGORIES = [CATEGORY_QUESTION]
 
@@ -496,7 +496,7 @@ class AskbotParser:
             # information, second one (if exists), the website of the user.
             elements = update_info.select("div.user-info")[0].find_all("a")
             href = elements[0].attrs["href"]
-            user_info['id'] = re.search('\d+', href).group(0)
+            user_info['id'] = re.search(r'\d+', href).group(0)
             user_info['username'] = elements[0].text
             user_info['reputation'] = update_info.select('span.reputation-score')[0].text
             user_info['badges'] = update_info.select("span.badges")[0].attrs["title"]
