@@ -59,7 +59,7 @@ class GoogleHits(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.2.0'
+    version = '0.2.1'
 
     CATEGORIES = [CATEGORY_HITS]
 
@@ -189,7 +189,7 @@ class GoogleHits(Backend):
 
             return hits_json
 
-        str_hits = re.search('\d+', hit_string).group(0)
+        str_hits = re.search(r'\d+', hit_string).group(0)
         hits = int(str_hits)
         hits_json['hits'] = hits
 
