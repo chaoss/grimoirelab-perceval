@@ -34,7 +34,8 @@ import pkg_resources
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
-from perceval.backends.core.jenkins import (Jenkins,
+from perceval.backends.core.jenkins import (logger,
+                                            Jenkins,
                                             JenkinsCommand,
                                             JenkinsClient,
                                             SLEEP_TIME, DETAIL_DEPTH)
@@ -206,7 +207,17 @@ class TestJenkinsBackend(unittest.TestCase):
 
         # Test fetch builds from jobs list
         jenkins = Jenkins(JENKINS_SERVER_URL)
-        builds = [build for build in jenkins.fetch()]
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            builds = [build for build in jenkins.fetch()]
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
+                                           'Internal Server Error for url: '
+                                           'http://example.com/ci/job/500-error-job/api/json?depth=1')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.jenkins:Unable to fetch builds from job '
+                                           'http://example.com/ci/job/500-error-job/; skipping')
+            self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
+                                           'http://example.com/ci/job/invalid-json-job/; skipping')
+
         self.assertEqual(len(builds), 64)
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
@@ -252,7 +263,17 @@ class TestJenkinsBackend(unittest.TestCase):
 
         # Test fetch builds from jobs list
         jenkins = Jenkins(JENKINS_SERVER_URL, detail_depth=2)
-        builds = [build for build in jenkins.fetch()]
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            builds = [build for build in jenkins.fetch()]
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
+                                           'Internal Server Error for url: '
+                                           'http://example.com/ci/job/500-error-job/api/json?depth=2')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.jenkins:Unable to fetch builds from job '
+                                           'http://example.com/ci/job/500-error-job/; skipping')
+            self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
+                                           'http://example.com/ci/job/invalid-json-job/; skipping')
+
         self.assertEqual(len(builds), 64)
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
@@ -314,7 +335,11 @@ class TestJenkinsBackend(unittest.TestCase):
 
         jenkins = Jenkins(JENKINS_SERVER_URL, blacklist_jobs=blacklist)
         nrequests = len(requests_http)
-        builds = [build for build in jenkins.fetch()]
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            builds = [build for build in jenkins.fetch()]
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:'
+                                           'Not getting blacklisted job: apex-build-brahmaputra')
 
         # No HTTP calls at all must be done for JENKINS_JOB_BUILDS_1
         # Just the first call for all jobs and one for each job,
@@ -338,7 +363,23 @@ class TestJenkinsBackendArchive(TestCaseBackendArchive):
         """Test whether a list of builds is returned from an archive"""
 
         configure_http_server()
-        self._test_fetch_from_archive()
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_fetch_from_archive()
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
+                                           'Internal Server Error for url: '
+                                           'http://example.com/ci/job/500-error-job/api/json?depth=1')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.jenkins:Unable to fetch builds from job '
+                                           'http://example.com/ci/job/500-error-job/; skipping')
+            self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
+                                           'http://example.com/ci/job/invalid-json-job/; skipping')
+            self.assertEqual(cm.output[3], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
+                                           'Internal Server Error for url: '
+                                           'http://example.com/ci/job/500-error-job/api/json?depth=1')
+            self.assertEqual(cm.output[4], 'WARNING:perceval.backends.core.jenkins:Unable to fetch builds from job '
+                                           'http://example.com/ci/job/500-error-job/; skipping')
+            self.assertEqual(cm.output[5], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
+                                           'http://example.com/ci/job/invalid-json-job/; skipping')
 
     @httpretty.activate
     def test_fetch_empty_from_archive(self):
@@ -358,7 +399,29 @@ class TestJenkinsBackendArchive(TestCaseBackendArchive):
         blacklist = [JENKINS_JOB_BUILDS_1]
 
         configure_http_server()
-        self._test_fetch_from_archive()
+        self.backend_write_archive = Jenkins(JENKINS_SERVER_URL, blacklist_jobs=blacklist, archive=self.archive)
+        self.backend_read_archive = Jenkins(JENKINS_SERVER_URL, blacklist_jobs=blacklist, archive=self.archive)
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            self._test_fetch_from_archive()
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:'
+                                           'Not getting blacklisted job: apex-build-brahmaputra')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
+                                           'Internal Server Error for url: '
+                                           'http://example.com/ci/job/500-error-job/api/json?depth=1')
+            self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.jenkins:Unable to fetch builds from job '
+                                           'http://example.com/ci/job/500-error-job/; skipping')
+            self.assertEqual(cm.output[3], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
+                                           'http://example.com/ci/job/invalid-json-job/; skipping')
+            self.assertEqual(cm.output[4], 'WARNING:perceval.backends.core.jenkins:'
+                                           'Not getting blacklisted job: apex-build-brahmaputra')
+            self.assertEqual(cm.output[5], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
+                                           'Internal Server Error for url: '
+                                           'http://example.com/ci/job/500-error-job/api/json?depth=1')
+            self.assertEqual(cm.output[6], 'WARNING:perceval.backends.core.jenkins:Unable to fetch builds from job '
+                                           'http://example.com/ci/job/500-error-job/; skipping')
+            self.assertEqual(cm.output[7], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
+                                           'http://example.com/ci/job/invalid-json-job/; skipping')
 
 
 class TestJenkinsCommand(unittest.TestCase):

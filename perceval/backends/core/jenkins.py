@@ -54,7 +54,7 @@ class Jenkins(Backend):
     :param sleep_time: minimun waiting time due to a timeout connection exception
     :param archive: collect builds already retrieved from an archive
     """
-    version = '0.11.0'
+    version = '0.11.1'
 
     CATEGORIES = [CATEGORY_BUILD]
 
@@ -228,7 +228,7 @@ class JenkinsClient(HttpClient):
         """ Retrieve all builds from a job"""
 
         if self.blacklist_jobs and job_name in self.blacklist_jobs:
-            logging.info("Not getting blacklisted job: %s", job_name)
+            logger.warning("Not getting blacklisted job: %s", job_name)
             return
 
         payload = {'depth': self.detail_depth}
