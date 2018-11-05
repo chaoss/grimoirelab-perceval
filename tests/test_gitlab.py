@@ -407,7 +407,7 @@ class TestGitLabBackend(unittest.TestCase):
     def test_has_resuming(self):
         """Test if it returns False when has_resuming is called"""
 
-        self.assertEqual(GitLab.has_resuming(), False)
+        self.assertEqual(GitLab.has_resuming(), True)
 
     @httpretty.activate
     def test_fetch_issues(self):
