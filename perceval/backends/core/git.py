@@ -64,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.10.2'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_COMMIT]
 
@@ -229,13 +229,14 @@ class Git(Backend):
                 yield commit
 
     @staticmethod
-    def parse_git_log_from_iter(iterator):
+    def parse_git_log_from_iter(repo, iterator):
         """Parse a Git log obtained from an iterator.
 
         The method parses the Git log fetched from an iterator, where
         each item is a line of the log. It returns and iterator of
         dictionaries. Each dictionary contains a commit.
 
+        :param repo: GitRepository object
         :param iterator: iterator of Git log lines
 
         :raises ParseError: raised when the format of the Git log
@@ -244,6 +245,8 @@ class Git(Backend):
         parser = GitParser(iterator)
 
         for commit in parser.parse():
+            commit['branches'] = repo.branch(commit['commit'])
+            commit['tags'] = repo.tag(commit['commit'])
             yield commit
 
     def _init_client(self, from_archive=False):
@@ -294,7 +297,7 @@ class Git(Backend):
         repo.update()
 
         gitlog = repo.log(from_date, to_date, branches)
-        return self.parse_git_log_from_iter(gitlog)
+        return self.parse_git_log_from_iter(repo, gitlog)
 
     def __fetch_newest_commits_from_repo(self, repo):
         logger.info("Fetching latest commits: '%s' git repository",
@@ -305,7 +308,7 @@ class Git(Backend):
             return []
 
         gitshow = repo.show(hashes)
-        return self.parse_git_log_from_iter(gitshow)
+        return self.parse_git_log_from_iter(repo, gitshow)
 
     def __create_git_repository(self):
         if not os.path.exists(self.gitpath):
@@ -813,6 +816,34 @@ class GitRepository:
                      uri, dirpath)
 
         return cls(uri, dirpath)
+
+    def branch(self, sha):
+        """Get list of branches where the commit appears
+
+        :param sha: sha of the commit
+        :return: a list of branches
+        """
+        cmd_branch = ['git', 'branch', '-a', '--contains', sha]
+        outs = self._exec(cmd_branch, cwd=self.dirpath, env=self.gitenv)
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+
+        branches = [r.strip('*').strip() for r in outs.split('\n')] if outs else []
+
+        return branches
+
+    def tag(self, sha):
+        """Get list of tags where the commit appears
+
+        :param sha: sha of the commit
+        :return: a list of tags
+        """
+        cmd_tag = ['git', 'tag', '--contains', sha]
+        outs = self._exec(cmd_tag, cwd=self.dirpath, env=self.gitenv)
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+
+        tags = [r.strip() for r in outs.split('\n')] if outs else []
+
+        return tags
 
     def count_objects(self):
         """Count the objects of a repository.

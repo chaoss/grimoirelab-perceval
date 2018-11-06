@@ -68,6 +68,7 @@ class TestGitBackend(TestCaseGit):
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
         cls.git_submodules_path = os.path.join(cls.tmp_path, 'gittest-sub')
         cls.git_top_submodules_path = os.path.join(cls.tmp_path, 'gittest-top-sub')
+        cls.git_path_tag = os.path.join(cls.tmp_path, 'gittest-tag')
 
         data_path = os.path.dirname(os.path.abspath(__file__))
         data_path = os.path.join(data_path, 'data/git')
@@ -77,7 +78,8 @@ class TestGitBackend(TestCaseGit):
             ('gitdetached', cls.git_detached_path),
             ('gittestempty', cls.git_empty_path),
             ('gittest-sub', cls.git_submodules_path),
-            ('gittest-top-sub', cls.git_top_submodules_path)
+            ('gittest-top-sub', cls.git_top_submodules_path),
+            ('gittest-tag', cls.git_path_tag)
         ]
 
         fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
@@ -666,7 +668,7 @@ class TestGitBackend(TestCaseGit):
         """Test if the static method parses a git log from a repository"""
 
         repo = GitRepository(self.git_path, self.git_path)
-        commits = Git.parse_git_log_from_iter(repo.log())
+        commits = Git.parse_git_log_from_iter(repo, repo.log())
         result = [commit['commit'] for commit in commits]
 
         expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
@@ -1147,6 +1149,7 @@ class TestGitRepository(TestCaseGit):
         cls.git_detached_path = os.path.join(cls.tmp_path, 'gitdetached')
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
         cls.git_no_refs_path = os.path.join(cls.tmp_path, 'gitnorefs')
+        cls.git_tag_path = os.path.join(cls.tmp_path, 'gittest-tag')
 
         data_path = os.path.dirname(os.path.abspath(__file__))
         data_path = os.path.join(data_path, 'data/git')
@@ -1155,7 +1158,8 @@ class TestGitRepository(TestCaseGit):
             ('gittest', cls.git_path),
             ('gitdetached', cls.git_detached_path),
             ('gittestempty', cls.git_empty_path),
-            ('gittest_no_refs', cls.git_no_refs_path)
+            ('gittest_no_refs', cls.git_no_refs_path),
+            ('gittest-tag', cls.git_tag_path),
         ]
 
         fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
@@ -1255,6 +1259,32 @@ class TestGitRepository(TestCaseGit):
 
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository.clone(self.git_path, self.tmp_path)
+
+    def test_branch(self):
+        """Test if the git branch command is executed and the result is aligned with what is expected"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_tag_path, new_path)
+
+        branches = repo.branch('51a3b65')
+
+        self.assertListEqual(branches, ['lzp', 'master'])
+
+        shutil.rmtree(new_path)
+
+    def test_tag(self):
+        """Test if the git tag command is executed and the result is aligned with what is expected"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_tag_path, new_path)
+
+        tags = repo.tag('bc57a92')
+        self.assertListEqual(tags, ['v1.0.0', 'v2.0.0'])
+
+        tags = repo.tag('51a3b65')
+        self.assertListEqual(tags, [])
+
+        shutil.rmtree(new_path)
 
     def test_count_objects(self):
         """Test if it gets the number of objects in a repository"""
