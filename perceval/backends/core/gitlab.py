@@ -81,7 +81,7 @@ class GitLab(Backend):
     :param sleep_time: time to sleep in case
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.6.0'
+    version = '0.6.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
@@ -158,7 +158,7 @@ class GitLab(Backend):
 
         :returns: this backend does not support items resuming
         """
-        return False
+        return True
 
     @staticmethod
     def metadata_id(item):
