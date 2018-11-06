@@ -76,7 +76,7 @@ class Git(Backend):
         self.gitpath = gitpath
 
     def fetch(self, category=CATEGORY_COMMIT, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
-              branches=None, latest_items=False):
+              branches=None, latest_items=False, branches_info=False, tags_info=False):
         """Fetch commits.
 
         The method retrieves from a Git repository or a log file
@@ -108,6 +108,8 @@ class Git(Backend):
         :param branches: names of branches to fetch from (default: None)
         :param latest_items: sync with the repository to fetch only the
             newest commits
+        :param branches_info: add branch names where the commit appears
+        :param tags_info: add tag names where the commit appears
 
         :returns: a generator of commits
         """
@@ -120,7 +122,9 @@ class Git(Backend):
             'from_date': from_date,
             'to_date': to_date,
             'branches': branches,
-            'latest_items': latest_items
+            'latest_items': latest_items,
+            'branches_info': branches_info,
+            'tags_info': tags_info
         }
         items = super().fetch(category, **kwargs)
 
@@ -138,6 +142,8 @@ class Git(Backend):
         to_date = kwargs['to_date']
         branches = kwargs['branches']
         latest_items = kwargs['latest_items']
+        branches_info = kwargs['branches_info']
+        tags_info = kwargs['tags_info']
 
         ncommits = 0
 
@@ -146,7 +152,7 @@ class Git(Backend):
                 commits = self.__fetch_from_log()
             else:
                 commits = self.__fetch_from_repo(from_date, to_date, branches,
-                                                 latest_items)
+                                                 latest_items, branches_info, tags_info)
 
             for commit in commits:
                 yield commit
@@ -229,7 +235,7 @@ class Git(Backend):
                 yield commit
 
     @staticmethod
-    def parse_git_log_from_iter(repo, iterator):
+    def parse_git_log_from_iter(repo, iterator, branches_info, tags_info):
         """Parse a Git log obtained from an iterator.
 
         The method parses the Git log fetched from an iterator, where
@@ -238,6 +244,10 @@ class Git(Backend):
 
         :param repo: GitRepository object
         :param iterator: iterator of Git log lines
+        :param branches_info: if enabled, it includes the branches where
+            the commit appears
+        :param tags_info: if enabled, it includes the tags where
+            the commit appears
 
         :raises ParseError: raised when the format of the Git log
             is invalid
@@ -245,8 +255,14 @@ class Git(Backend):
         parser = GitParser(iterator)
 
         for commit in parser.parse():
-            commit['branches'] = repo.branch(commit['commit'])
-            commit['tags'] = repo.tag(commit['commit'])
+            commit['branches'] = []
+            commit['tags'] = []
+
+            if branches_info:
+                commit['branches'] = repo.branch(commit['commit'])
+            if tags_info:
+                commit['tags'] = repo.tag(commit['commit'])
+
             yield commit
 
     def _init_client(self, from_archive=False):
@@ -257,7 +273,8 @@ class Git(Backend):
                     self.uri, self.gitpath)
         return self.parse_git_log_from_file(self.gitpath)
 
-    def __fetch_from_repo(self, from_date, to_date, branches, latest_items=False):
+    def __fetch_from_repo(self, from_date, to_date, branches, latest_items=False,
+                          branches_info=False, tags_info=False):
         # When no latest items are set or the repository has not
         # been cloned use the default mode
         default_mode = not latest_items or not os.path.exists(self.gitpath)
@@ -265,13 +282,14 @@ class Git(Backend):
         repo = self.__create_git_repository()
 
         if default_mode:
-            commits = self.__fetch_commits_from_repo(repo, from_date, to_date, branches)
+            commits = self.__fetch_commits_from_repo(repo, from_date, to_date, branches,
+                                                     branches_info, tags_info)
         else:
-            commits = self.__fetch_newest_commits_from_repo(repo)
+            commits = self.__fetch_newest_commits_from_repo(repo, branches_info, tags_info)
 
         return commits
 
-    def __fetch_commits_from_repo(self, repo, from_date, to_date, branches):
+    def __fetch_commits_from_repo(self, repo, from_date, to_date, branches, branches_info, tags_info):
         if branches is None:
             branches_text = "all"
         elif len(branches) == 0:
@@ -297,9 +315,9 @@ class Git(Backend):
         repo.update()
 
         gitlog = repo.log(from_date, to_date, branches)
-        return self.parse_git_log_from_iter(repo, gitlog)
+        return self.parse_git_log_from_iter(repo, gitlog, branches_info, tags_info)
 
-    def __fetch_newest_commits_from_repo(self, repo):
+    def __fetch_newest_commits_from_repo(self, repo, branches_info, tags_info):
         logger.info("Fetching latest commits: '%s' git repository",
                     self.uri)
 
@@ -308,7 +326,7 @@ class Git(Backend):
             return []
 
         gitshow = repo.show(hashes)
-        return self.parse_git_log_from_iter(repo, gitshow)
+        return self.parse_git_log_from_iter(repo, gitshow, branches_info, tags_info)
 
     def __create_git_repository(self):
         if not os.path.exists(self.gitpath):
@@ -351,6 +369,12 @@ class GitCommand(BackendCommand):
         group.add_argument('--latest-items', dest='latest_items',
                            action='store_true',
                            help="Fetch latest commits added to the repository")
+        group.add_argument('--branches-info', dest='branches_info',
+                           action='store_true',
+                           help="Include branch names where the commits appear")
+        group.add_argument('--tags-info', dest='tags_info',
+                           action='store_true',
+                           help="Include tags names where the commits appear")
 
         # Mutual exclusive parameters
         exgroup = group.add_mutually_exclusive_group()
@@ -827,7 +851,8 @@ class GitRepository:
         outs = self._exec(cmd_branch, cwd=self.dirpath, env=self.gitenv)
         outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
 
-        branches = [r.strip('*').strip() for r in outs.split('\n')] if outs else []
+        branches = [r.strip('*').strip() for r in outs.split('\n')
+                    if '(no branch)' not in r.strip()] if outs else []
 
         return branches
 

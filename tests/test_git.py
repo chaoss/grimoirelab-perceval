@@ -474,6 +474,29 @@ class TestGitBackend(TestCaseGit):
             self.assertEqual(commit['category'], 'commit')
             self.assertEqual(commit['tag'], self.git_detached_path)
 
+        commits = [commit for commit in git.fetch(branches_info=True)]
+
+        self.assertEqual(len(commits), 9)
+
+        commit = commits[0]
+        self.assertListEqual(commit['data']['branches'], ['lzp', 'master'])
+        commit = commits[1]
+        self.assertListEqual(commit['data']['branches'], ['lzp', 'master'])
+        commit = commits[2]
+        self.assertListEqual(commit['data']['branches'], ['lzp', 'master'])
+        commit = commits[3]
+        self.assertListEqual(commit['data']['branches'], ['lzp', 'master'])
+        commit = commits[4]
+        self.assertListEqual(commit['data']['branches'], ['lzp', 'master'])
+        commit = commits[5]
+        self.assertListEqual(commit['data']['branches'], ['lzp', 'master'])
+        commit = commits[6]
+        self.assertListEqual(commit['data']['branches'], ['master'])
+        commit = commits[7]
+        self.assertListEqual(commit['data']['branches'], ['lzp', 'master'])
+        commit = commits[8]
+        self.assertListEqual(commit['data']['branches'], ['master'])
+
         shutil.rmtree(new_path)
 
     def test_fetch_from_empty_repository(self):
@@ -668,7 +691,10 @@ class TestGitBackend(TestCaseGit):
         """Test if the static method parses a git log from a repository"""
 
         repo = GitRepository(self.git_path, self.git_path)
-        commits = Git.parse_git_log_from_iter(repo, repo.log())
+        branches_info = False
+        tags_info = False
+
+        commits = Git.parse_git_log_from_iter(repo, repo.log(), branches_info, tags_info)
         result = [commit['commit'] for commit in commits]
 
         expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
@@ -680,6 +706,24 @@ class TestGitBackend(TestCaseGit):
                     'ce8e0b86a1e9877f42fe9453ede418519115f367',
                     '51a3b654f252210572297f47597b31527c475fb8',
                     '456a68ee1407a77f3e804a30dff245bb6c6b872f']
+
+        self.assertListEqual(result, expected)
+
+        repo = GitRepository(self.git_path_tag, self.git_path_tag)
+        branches_info = True
+        tags_info = True
+        commits = Git.parse_git_log_from_iter(repo, repo.log(), branches_info, tags_info)
+        result = [(commit['branches'], commit['tags']) for commit in commits]
+
+        expected = [(['lzp', 'master'], ['v1.0.0', 'v2.0.0']),
+                    (['lzp', 'master'], ['v1.0.0', 'v2.0.0']),
+                    (['lzp', 'master'], ['v2.0.0']),
+                    (['lzp', 'master'], ['v2.0.0']),
+                    (['lzp', 'master'], ['v2.0.0']),
+                    (['lzp', 'master'], []),
+                    (['master'], []),
+                    (['lzp', 'master'], []),
+                    (['master'], [])]
 
         self.assertListEqual(result, expected)
 
