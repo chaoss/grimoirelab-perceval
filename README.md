@@ -308,7 +308,7 @@ $ perceval slack C0001 --from-date 2016-01-12 -t abcedefghijk
 
 ### StackExchange
 ```
-$ perceval stackexchange --site stackoverflow --tagged python --from-date '2016-01-01' --token abcdabcdabcdabcd
+$ perceval stackexchange --site stackoverflow --tagged python --from-date '2016-01-01' -t abcdabcdabcdabcd
 ```
 
 ### Supybot
