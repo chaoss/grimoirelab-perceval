@@ -81,7 +81,7 @@ class GitLab(Backend):
     :param sleep_time: time to sleep in case
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.6.1'
+    version = '0.6.2'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
@@ -403,7 +403,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
             base_url = GITLAB_API_URL
 
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
-                         extra_headers=self._set_extra_headers(), extra_retry_after_status=[502],
+                         extra_headers=self._set_extra_headers(), extra_retry_after_status=[502, 503],
                          archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(rate_limit_header=self.RATE_LIMIT_HEADER,
                                          rate_limit_reset_header=self.RATE_LIMIT_RESET_HEADER,
