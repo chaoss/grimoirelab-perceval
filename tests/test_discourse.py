@@ -112,7 +112,7 @@ class TestDiscourseBackend(unittest.TestCase):
                     uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
+                raise Exception
 
             requests_http.append(httpretty.last_request())
 
@@ -212,7 +212,7 @@ class TestDiscourseBackend(unittest.TestCase):
                     uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
+                raise Exception
 
             requests_http.append(httpretty.last_request())
 
@@ -312,7 +312,7 @@ class TestDiscourseBackend(unittest.TestCase):
                     uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
+                raise Exception
             return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
@@ -386,7 +386,7 @@ class TestDiscourseBackend(unittest.TestCase):
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
             else:
-                raise
+                raise Exception
             return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
@@ -450,7 +450,7 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
             elif uri.startswith(DISCOURSE_POST_URL_1) or uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
+                raise Exception
 
             requests_http.append(httpretty.last_request())
 
@@ -508,7 +508,7 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
                     uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
+                raise Exception
 
             requests_http.append(httpretty.last_request())
 
@@ -580,7 +580,7 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
                     uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
+                raise Exception
             return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
@@ -634,7 +634,7 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
             else:
-                raise
+                raise Exception
             return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
