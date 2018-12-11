@@ -116,7 +116,7 @@ class TestDiscourseBackend(unittest.TestCase):
 
             requests_http.append(httpretty.last_request())
 
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -216,7 +216,7 @@ class TestDiscourseBackend(unittest.TestCase):
 
             requests_http.append(httpretty.last_request())
 
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -313,7 +313,7 @@ class TestDiscourseBackend(unittest.TestCase):
                 body = body_post
             else:
                 raise
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -387,7 +387,7 @@ class TestDiscourseBackend(unittest.TestCase):
                 body = body_topic_1149
             else:
                 raise
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -454,7 +454,7 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
 
             requests_http.append(httpretty.last_request())
 
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -512,7 +512,7 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
 
             requests_http.append(httpretty.last_request())
 
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -581,7 +581,7 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
                 body = body_post
             else:
                 raise
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -635,7 +635,7 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
                 body = body_topic_1149
             else:
                 raise
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
