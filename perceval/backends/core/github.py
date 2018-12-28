@@ -36,7 +36,7 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser)
 from ...client import HttpClient, RateLimitHandler
 
-from ...utils import DEFAULT_DATETIME
+from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 
 CATEGORY_ISSUE = "issue"
 CATEGORY_PULL_REQUEST = "pull_request"
@@ -82,7 +82,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.17.4'
+    version = '0.18.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
 
@@ -109,23 +109,30 @@ class GitHub(Backend):
         self.client = None
         self._users = {}  # internal users cache
 
-    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME):
         """Fetch the issues/pull requests from the repository.
 
         The method retrieves, from a GitHub repository, the issues/pull requests
         updated since the given date.
 
         :param category: the category of items to fetch
-        :param from_date: obtain issues updated since this date
+        :param from_date: obtain issues/pull requests updated since this date
+        :param to_date: obtain issues/pull requests until a specific date (included)
 
         :returns: a generator of issues
         """
         if not from_date:
             from_date = DEFAULT_DATETIME
+        if not to_date:
+            to_date = DEFAULT_LAST_DATETIME
 
         from_date = datetime_to_utc(from_date)
+        to_date = datetime_to_utc(to_date)
 
-        kwargs = {'from_date': from_date}
+        kwargs = {
+            'from_date': from_date,
+            'to_date': to_date
+        }
         items = super().fetch(category, **kwargs)
 
         return items
@@ -139,11 +146,12 @@ class GitHub(Backend):
         :returns: a generator of items
         """
         from_date = kwargs['from_date']
+        to_date = kwargs['to_date']
 
         if category == CATEGORY_ISSUE:
-            items = self.__fetch_issues(from_date)
+            items = self.__fetch_issues(from_date, to_date)
         else:
-            items = self.__fetch_pull_requests(from_date)
+            items = self.__fetch_pull_requests(from_date, to_date)
 
         return items
 
@@ -209,7 +217,7 @@ class GitHub(Backend):
                             self.sleep_time, self.max_retries,
                             self.archive, from_archive)
 
-    def __fetch_issues(self, from_date):
+    def __fetch_issues(self, from_date, to_date):
         """Fetch the issues"""
 
         issues_groups = self.client.issues(from_date=from_date)
@@ -217,6 +225,10 @@ class GitHub(Backend):
         for raw_issues in issues_groups:
             issues = json.loads(raw_issues)
             for issue in issues:
+
+                if str_to_datetime(issue['updated_at']) > to_date:
+                    return
+
                 self.__init_extra_issue_fields(issue)
                 for field in TARGET_ISSUE_FIELDS:
 
@@ -237,12 +249,16 @@ class GitHub(Backend):
 
                 yield issue
 
-    def __fetch_pull_requests(self, from_date):
+    def __fetch_pull_requests(self, from_date, to_date):
         """Fetch the pull requests"""
 
         raw_pulls = self.client.pulls(from_date=from_date)
         for raw_pull in raw_pulls:
             pull = json.loads(raw_pull)
+
+            if str_to_datetime(pull['updated_at']) > to_date:
+                return
+
             self.__init_extra_pull_fields(pull)
             for field in TARGET_PULL_FIELDS:
 
@@ -722,6 +738,7 @@ class GitHubCommand(BackendCommand):
         """Returns the GitHub argument parser."""
 
         parser = BackendCommandArgumentParser(from_date=True,
+                                              to_date=True,
                                               token_auth=True,
                                               archive=True)
 

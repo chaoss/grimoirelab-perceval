@@ -363,7 +363,7 @@
     "state": "closed",
     "statuses_url": "https://api.github.com/repos/zhquan_example/repo/statuses/53b970ee04bbc435842c14a2cbfdd623faf74a65",
     "title": "Config files for a documentation, using Sphinx.",
-    "updated_at": "2016-01-04T17:42:23Z",
+    "updated_at": "2016-03-04T17:42:23Z",
     "url": "https://api.github.com/repos/zhquan_example/repo/pulls/2",
     "user": {
         "avatar_url": "https://avatars3.githubusercontent.com/u/2?v=4",
