@@ -51,23 +51,29 @@ from base import TestCaseBackendArchive
 
 GITLAB_URL = "https://gitlab.com"
 GITLAB_API_URL = GITLAB_URL + "/api/v4"
+GITLAB_USERS_URL = GITLAB_API_URL + "/users"
 GITLAB_URL_PROJECT = GITLAB_API_URL + "/projects/fdroid%2Ffdroiddata"
 GITLAB_ISSUES_URL = GITLAB_API_URL + "/projects/fdroid%2Ffdroiddata/issues"
 GITLAB_MERGES_URL = GITLAB_API_URL + "/projects/fdroid%2Ffdroiddata/merge_requests"
 
 GITLAB_ENTERPRISE_URL = "https://gitlab.ow2.org"
 GITLAB_ENTERPRISE_API_URL = GITLAB_ENTERPRISE_URL + "/api/v4"
+GITLAB_ENTERPRISE_USERS_URL = GITLAB_ENTERPRISE_API_URL + "/users"
 GITLAB_ENTERPRISE_URL_PROJECT = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest"
 GITLAB_ENTERPRISE_ISSUES_URL = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest/issues"
 GITLAB_ENTERPRISE_MERGES_URL = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest/merge_requests"
 
 
-def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=None):
+def setup_http_server(url_project, issues_url, merges_url, user_url,
+                      rate_limit_headers=None, no_id_user=False,
+                      emojis_http_error=False):
     project = read_file('data/gitlab/project')
     page_issues_1 = read_file('data/gitlab/issue_page_1')
     page_issues_2 = read_file('data/gitlab/issue_page_2')
     page_merges_1 = read_file('data/gitlab/merge_page_1')
     page_merges_2 = read_file('data/gitlab/merge_page_2')
+    user_1 = read_file('data/gitlab/user_1')
+    user_2 = read_file('data/gitlab/user_2')
 
     if not rate_limit_headers:
         rate_limit_headers = {}
@@ -117,7 +123,11 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
     notes_1 = read_file('data/gitlab/notes_1')
     notes_2 = read_file('data/gitlab/notes_2')
     notes_3 = read_file('data/gitlab/notes_3')
-    notes_4 = read_file('data/gitlab/notes_4')
+
+    if no_id_user:
+        notes_4 = read_file('data/gitlab/notes_4_no_id_user')
+    else:
+        notes_4 = read_file('data/gitlab/notes_4')
 
     # issue notes
     httpretty.register_uri(httpretty.GET,
@@ -267,11 +277,18 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
                            status=200,
                            forcing_headers=rate_limit_headers)
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/1/notes/1/award_emoji",
-                           body=emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    if emojis_http_error:
+        httpretty.register_uri(httpretty.GET,
+                               issues_url + "/1/notes/1/award_emoji",
+                               body=emoji,
+                               status=404,
+                               forcing_headers=rate_limit_headers)
+    else:
+        httpretty.register_uri(httpretty.GET,
+                               issues_url + "/1/notes/1/award_emoji",
+                               body=emoji,
+                               status=200,
+                               forcing_headers=rate_limit_headers)
 
     httpretty.register_uri(httpretty.GET,
                            issues_url + "/1/notes/2/award_emoji",
@@ -340,6 +357,19 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
                            status=200,
                            forcing_headers=rate_limit_headers)
 
+    # users
+    httpretty.register_uri(httpretty.GET,
+                           user_url + "/1",
+                           body=user_1,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
+    httpretty.register_uri(httpretty.GET,
+                           user_url + "/2",
+                           body=user_2,
+                           status=200,
+                           forcing_headers=rate_limit_headers)
+
 
 def read_file(filename, mode='r'):
     with open(os.path.join(
@@ -355,7 +385,8 @@ class TestGitLabBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         gitlab = GitLab('fdroid', 'fdroiddata', api_token='aaa', tag='test')
@@ -389,7 +420,8 @@ class TestGitLabBackend(unittest.TestCase):
 
         setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
                           GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+                          GITLAB_ENTERPRISE_MERGES_URL,
+                          GITLAB_ENTERPRISE_USERS_URL)
 
         gitlab = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, tag='')
 
@@ -413,7 +445,8 @@ class TestGitLabBackend(unittest.TestCase):
     def test_fetch_issues(self):
         """Test whether issues are properly fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL)
 
         gitlab = GitLab("fdroid", "fdroiddata", "your-token")
 
@@ -427,6 +460,10 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(issue['data']['author']['id'], 1)
         self.assertEqual(issue['data']['author']['username'], 'redfish64')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitLab')
+        notes_data = issue['data']['notes_data'][0]
+        self.assertEqual(notes_data['author']['username'], 'redfish64')
+        self.assertEqual(notes_data['author_data']['organization'], 'GitLab')
 
         issue = issues[1]
         self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
@@ -434,6 +471,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(issue['data']['author']['id'], 1)
         self.assertEqual(issue['data']['author']['username'], 'redfish64')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitLab')
 
         issue = issues[2]
         self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
@@ -441,6 +479,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(issue['data']['author']['id'], 2)
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitHub')
 
         issue = issues[3]
         self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
@@ -448,12 +487,48 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(issue['data']['author']['id'], 2)
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitHub')
+
+    @httpretty.activate
+    def test_fetch_issues_no_id_user(self):
+        """Test whether a warning is thrown when an user doesn't have an id"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL, no_id_user=True)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        with self.assertLogs(logger, level="WARNING") as cm:
+            issues = [issues for issues in gitlab.fetch()]
+            self.assertEqual(cm.output[0],
+                             "WARNING:perceval.backends.core.gitlab:User "
+                             "{'name': 'Ghost'} has no ID")
+
+        self.assertEqual(len(issues), 4)
+
+    @httpretty.activate
+    def test_fetch_issues_http_error_emojis(self):
+        """Test whether a warning is thrown when an HTTP 404 error appears when fetching emojis"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL, emojis_http_error=True)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        with self.assertLogs(logger, level="WARNING") as cm:
+            issues = [issues for issues in gitlab.fetch()]
+            self.assertEqual(cm.output[0],
+                             "WARNING:perceval.backends.core.gitlab:Emojis not available for "
+                             "issues/1/notes/1/award_emoji")
+
+        self.assertEqual(len(issues), 4)
 
     @httpretty.activate
     def test_fetch_issues_blacklisted(self):
         """Test whether blacklist issues are not fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL)
 
         gitlab = GitLab("fdroid", "fdroiddata", "your-token", blacklist_ids=[1, 2, 3])
 
@@ -476,7 +551,8 @@ class TestGitLabBackend(unittest.TestCase):
     def test_fetch_merges(self):
         """Test whether merges are properly fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL)
 
         gitlab = GitLab("fdroid", "fdroiddata", "your-token")
 
@@ -490,9 +566,13 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(merge['data']['author_data']['organization'], 'GitLab')
         self.assertEqual(len(merge['data']['versions_data']), 2)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
         self.assertTrue('diffs' not in merge['data']['versions_data'][1])
+        notes_data = merge['data']['notes_data'][0]
+        self.assertEqual(notes_data['author']['username'], 'redfish64')
+        self.assertEqual(notes_data['author_data']['organization'], 'GitLab')
 
         merge = merges[1]
         self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
@@ -500,6 +580,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(merge['data']['author_data']['organization'], 'GitLab')
         self.assertEqual(len(merge['data']['versions_data']), 1)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
 
@@ -509,6 +590,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(merge['data']['author_data']['organization'], 'GitLab')
         self.assertEqual(len(merge['data']['versions_data']), 1)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
 
@@ -516,7 +598,8 @@ class TestGitLabBackend(unittest.TestCase):
     def test_fetch_merges_blacklisted(self):
         """Test whether blacklist merge requests are not fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL)
 
         gitlab = GitLab("fdroid", "fdroiddata", "your-token", blacklist_ids=[1, 2])
 
@@ -542,7 +625,8 @@ class TestGitLabBackend(unittest.TestCase):
     def test_fetch_issues_from_date(self):
         """Test whether issues from a given date are properly fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL)
 
         gitlab = GitLab("fdroid", "fdroiddata", "your-token")
         from_date = datetime.datetime(2017, 3, 18)
@@ -556,6 +640,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(issue['data']['author']['id'], 1)
         self.assertEqual(issue['data']['author']['username'], 'redfish64')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitLab')
 
         issue = issues[1]
         self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
@@ -563,6 +648,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(issue['data']['author']['id'], 1)
         self.assertEqual(issue['data']['author']['username'], 'redfish64')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitLab')
 
         issue = issues[2]
         self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
@@ -570,6 +656,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(issue['data']['author']['id'], 2)
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitHub')
 
         issue = issues[3]
         self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
@@ -577,6 +664,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(issue['data']['author']['id'], 2)
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitHub')
 
         # check that the from_date param is in the querystring
         expected = {
@@ -593,7 +681,8 @@ class TestGitLabBackend(unittest.TestCase):
     def test_fetch_merges_from_date(self):
         """Test whether merge requests from a given date are properly fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL)
 
         gitlab = GitLab("fdroid", "fdroiddata", "your-token")
         from_date = datetime.datetime(2017, 3, 18)
@@ -607,6 +696,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(merge['data']['author_data']['organization'], 'GitLab')
         self.assertEqual(len(merge['data']['versions_data']), 2)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
         self.assertTrue('diffs' not in merge['data']['versions_data'][1])
@@ -617,6 +707,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(merge['data']['author_data']['organization'], 'GitLab')
         self.assertEqual(len(merge['data']['versions_data']), 1)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
 
@@ -626,6 +717,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(merge['data']['author_data']['organization'], 'GitLab')
         self.assertEqual(len(merge['data']['versions_data']), 1)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
 
@@ -647,7 +739,8 @@ class TestGitLabBackend(unittest.TestCase):
 
         setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
                           GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+                          GITLAB_ENTERPRISE_MERGES_URL,
+                          GITLAB_ENTERPRISE_USERS_URL)
 
         gitlab = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL)
 
@@ -661,6 +754,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
         self.assertEqual(issue['data']['author']['id'], 1)
         self.assertEqual(issue['data']['author']['username'], 'redfish64')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitLab')
 
         issue = issues[1]
         self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
@@ -668,6 +762,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
         self.assertEqual(issue['data']['author']['id'], 1)
         self.assertEqual(issue['data']['author']['username'], 'redfish64')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitLab')
 
         issue = issues[2]
         self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
@@ -675,6 +770,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
         self.assertEqual(issue['data']['author']['id'], 2)
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitHub')
 
         issue = issues[3]
         self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
@@ -682,6 +778,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
         self.assertEqual(issue['data']['author']['id'], 2)
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+        self.assertEqual(issue['data']['author_data']['organization'], 'GitHub')
 
     @httpretty.activate
     def test_fetch_merges_enterprise(self):
@@ -689,7 +786,8 @@ class TestGitLabBackend(unittest.TestCase):
 
         setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
                           GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+                          GITLAB_ENTERPRISE_MERGES_URL,
+                          GITLAB_ENTERPRISE_USERS_URL)
 
         gitlab = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL)
 
@@ -703,6 +801,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(merge['data']['author_data']['organization'], 'GitLab')
         self.assertEqual(len(merge['data']['versions_data']), 2)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
         self.assertTrue('diffs' not in merge['data']['versions_data'][1])
@@ -713,6 +812,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(merge['data']['author_data']['organization'], 'GitLab')
         self.assertEqual(len(merge['data']['versions_data']), 1)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
 
@@ -722,6 +822,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(merge['data']['author_data']['organization'], 'GitLab')
         self.assertEqual(len(merge['data']['versions_data']), 1)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
 
@@ -782,21 +883,24 @@ class TestGitHUbBackendArchive(TestCaseBackendArchive):
     def test_fetch_issues_from_archive(self):
         """Test whether issues are properly fetched from the archive"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL)
         self._test_fetch_from_archive(from_date=None)
 
     @httpretty.activate
     def test_fetch_merges_from_archive(self):
         """Test whether merges are properly fetched from the archive"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL)
         self._test_fetch_from_archive(category=CATEGORY_MERGE_REQUEST, from_date=None)
 
     @httpretty.activate
     def test_fetch_issues_from_date(self):
         """Test whether issues from a given date are properly fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL)
 
         from_date = datetime.datetime(2017, 3, 18)
         self._test_fetch_from_archive(from_date=from_date)
@@ -805,7 +909,8 @@ class TestGitHUbBackendArchive(TestCaseBackendArchive):
     def test_fetch_merges_from_date(self):
         """Test whether merges from a given date are properly fetched from GitLab"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL)
 
         from_date = datetime.datetime(2017, 3, 18)
         self._test_fetch_from_archive(category=CATEGORY_MERGE_REQUEST, from_date=from_date)
@@ -816,7 +921,8 @@ class TestGitHUbBackendArchive(TestCaseBackendArchive):
 
         setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
                           GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+                          GITLAB_ENTERPRISE_MERGES_URL,
+                          GITLAB_ENTERPRISE_USERS_URL)
 
         self.backend_write_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
         self.backend_read_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
@@ -828,7 +934,8 @@ class TestGitHUbBackendArchive(TestCaseBackendArchive):
 
         setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
                           GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+                          GITLAB_ENTERPRISE_MERGES_URL,
+                          GITLAB_ENTERPRISE_USERS_URL)
 
         self.backend_write_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
         self.backend_read_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
@@ -878,7 +985,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_initialization(self):
         """Test initialization for GitLab server"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
@@ -908,7 +1016,8 @@ class TestGitLabClient(unittest.TestCase):
 
         setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
                           GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+                          GITLAB_ENTERPRISE_MERGES_URL,
+                          GITLAB_ENTERPRISE_USERS_URL)
 
         client = GitLabClient("am", "test", None, base_url=GITLAB_ENTERPRISE_URL)
 
@@ -952,7 +1061,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_issues(self):
         """Test issues API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         page_1 = read_file('data/gitlab/issue_page_1')
@@ -982,7 +1092,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_merges(self):
         """Test merges API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         page_1 = read_file('data/gitlab/merge_page_1')
@@ -1013,7 +1124,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_issues_from_date(self):
         """Test issues API call with from date parameter"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         page_1 = read_file('data/gitlab/issue_page_1')
@@ -1045,7 +1157,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_merges_from_date(self):
         """Test merges API call with from date parameter"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         page_1 = read_file('data/gitlab/merge_page_1')
@@ -1126,7 +1239,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_notes(self):
         """Test notes API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
@@ -1144,7 +1258,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_merge_versions(self):
         """Test merge versions API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
@@ -1157,7 +1272,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_merge_version(self):
         """Test merge version API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
@@ -1171,7 +1287,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_merge(self):
         """Test merge API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
@@ -1185,7 +1302,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_emojis(self):
         """Test emojis API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
@@ -1203,7 +1321,8 @@ class TestGitLabClient(unittest.TestCase):
     def test_note_emojis(self):
         """Test note_emojis API call"""
 
-        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token")
@@ -1216,6 +1335,21 @@ class TestGitLabClient(unittest.TestCase):
         emojis = json.loads(raw_emojis)
 
         self.assertEqual(len(emojis), 2)
+
+    @httpretty.activate
+    def test_user(self):
+        """Test user API call"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL,
+                          GITLAB_MERGES_URL, GITLAB_USERS_URL,
+                          rate_limit_headers={'RateLimit-Remaining': '20'})
+
+        client = GitLabClient("fdroid", "fdroiddata", "your-token")
+        raw_user = client.user(1)
+        user = json.loads(raw_user)
+
+        self.assertEqual(user['username'], 'redfish64')
+        self.assertEqual(user['organization'], 'GitLab')
 
     @httpretty.activate
     def test_http_wrong_status(self):
