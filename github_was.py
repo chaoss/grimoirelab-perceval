@@ -21,6 +21,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #     Alberto Martín <alberto.martin@bitergia.com>
 #
+
 import json
 import logging
 
@@ -35,7 +36,7 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser)
 from ...client import HttpClient, RateLimitHandler
 
-from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
+from ...utils import DEFAULT_DATETIME
 
 CATEGORY_ISSUE = "issue"
 CATEGORY_PULL_REQUEST = "pull_request"
@@ -45,8 +46,7 @@ GITHUB_API_URL = "https://api.github.com"
 
 # Range before sleeping until rate limit reset
 MIN_RATE_LIMIT = 10
-# GitHub tokens are refreshed every hour, so 3601 seconds is 1 s more than worst case
-MAX_RATE_LIMIT = 3601
+MAX_RATE_LIMIT = 500
 
 PER_PAGE = 100
 
@@ -68,8 +68,7 @@ class GitHub(Backend):
 
     :param owner: GitHub owner
     :param repository: GitHub repository from the owner
-    :param api_token: GitHub auth token(s) to access the API.
-        can be single token or comma separated list of tokens
+    :param api_token: GitHub auth token to access the API
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitHub public site.
@@ -83,7 +82,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.18.1'
+    version = '0.17.4'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
 
@@ -99,7 +98,7 @@ class GitHub(Backend):
 
         self.owner = owner
         self.repository = repository
-        self.api_token = api_token.split(',') if len(api_token) > 0 else []
+        self.api_token = api_token
         self.base_url = base_url
 
         self.sleep_for_rate = sleep_for_rate
@@ -110,30 +109,23 @@ class GitHub(Backend):
         self.client = None
         self._users = {}  # internal users cache
 
-    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME):
+    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
         """Fetch the issues/pull requests from the repository.
 
         The method retrieves, from a GitHub repository, the issues/pull requests
         updated since the given date.
 
         :param category: the category of items to fetch
-        :param from_date: obtain issues/pull requests updated since this date
-        :param to_date: obtain issues/pull requests until a specific date (included)
+        :param from_date: obtain issues updated since this date
 
         :returns: a generator of issues
         """
         if not from_date:
             from_date = DEFAULT_DATETIME
-        if not to_date:
-            to_date = DEFAULT_LAST_DATETIME
 
         from_date = datetime_to_utc(from_date)
-        to_date = datetime_to_utc(to_date)
 
-        kwargs = {
-            'from_date': from_date,
-            'to_date': to_date
-        }
+        kwargs = {'from_date': from_date}
         items = super().fetch(category, **kwargs)
 
         return items
@@ -147,12 +139,11 @@ class GitHub(Backend):
         :returns: a generator of items
         """
         from_date = kwargs['from_date']
-        to_date = kwargs['to_date']
 
         if category == CATEGORY_ISSUE:
-            items = self.__fetch_issues(from_date, to_date)
+            items = self.__fetch_issues(from_date)
         else:
-            items = self.__fetch_pull_requests(from_date, to_date)
+            items = self.__fetch_pull_requests(from_date)
 
         return items
 
@@ -218,7 +209,7 @@ class GitHub(Backend):
                             self.sleep_time, self.max_retries,
                             self.archive, from_archive)
 
-    def __fetch_issues(self, from_date, to_date):
+    def __fetch_issues(self, from_date):
         """Fetch the issues"""
 
         issues_groups = self.client.issues(from_date=from_date)
@@ -226,10 +217,6 @@ class GitHub(Backend):
         for raw_issues in issues_groups:
             issues = json.loads(raw_issues)
             for issue in issues:
-
-                if str_to_datetime(issue['updated_at']) > to_date:
-                    return
-
                 self.__init_extra_issue_fields(issue)
                 for field in TARGET_ISSUE_FIELDS:
 
@@ -250,16 +237,12 @@ class GitHub(Backend):
 
                 yield issue
 
-    def __fetch_pull_requests(self, from_date, to_date):
+    def __fetch_pull_requests(self, from_date):
         """Fetch the pull requests"""
 
         raw_pulls = self.client.pulls(from_date=from_date)
         for raw_pull in raw_pulls:
             pull = json.loads(raw_pull)
-
-            if str_to_datetime(pull['updated_at']) > to_date:
-                return
-
             self.__init_extra_pull_fields(pull)
             for field in TARGET_PULL_FIELDS:
 
@@ -452,8 +435,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     :param owner: GitHub owner
     :param repository: GitHub repository from the owner
-    :param token: GitHub auth token(s) to access the API
-        either a single token or a comma separated list of tokens
+    :param token: GitHub auth token to access the API
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitHub public site.
@@ -467,7 +449,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
     :param archive: collect issues already retrieved from an archive
     :param from_archive: it tells whether to write/read the archive
     """
-    EXTRA_STATUS_FORCELIST = [403, 500, 502, 503]
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
@@ -479,8 +460,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
         self.owner = owner
         self.repository = repository
         self.token = token
-        self.current_token = None
-        self.last_checked = None
 
         if base_url:
             base_url = urijoin(base_url, 'api', 'v3')
@@ -488,10 +467,9 @@ class GitHubClient(HttpClient, RateLimitHandler):
             base_url = GITHUB_API_URL
 
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
-                         extra_headers=self._set_extra_headers(),
-                         extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
-                         archive=archive, from_archive=from_archive)
+                         extra_headers=self._set_extra_headers(), archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
+
         self._init_rate_limit()
 
     def calculate_time_to_reset(self):
@@ -617,6 +595,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     def user(self, login):
         """Get the user information and update the user cache"""
+
         user = None
 
         if login in self._users:
@@ -634,6 +613,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     def user_orgs(self, login):
         """Get the user public organizations"""
+
         if login in self._users_orgs:
             return self._users_orgs[login]
 
@@ -670,8 +650,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
         response = super().fetch(url, payload, headers, method, stream, verify)
 
         if not self.from_archive:
-            if self._need_check_tokens():
-                self._choose_best_api_token()
             self.update_rate_limit(response)
 
         return response
@@ -711,65 +689,17 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     def _set_extra_headers(self):
         """Set extra headers for session"""
+
         headers = {}
         headers.update({'Accept': 'application/vnd.github.squirrel-girl-preview'})
+
+        if self.token:
+            headers.update({'Authorization': 'token ' + self.token})
+
         return headers
-
-    def _choose_best_api_token(self):
-        """Check all API tokles defined and choose one with most remaining API points"""
-        url = urijoin(self.base_url, "rate_limit")
-        hdrs = [0] * len(self.token)
-        # Turn off archiving when checking rates, because that would cause
-        # archive key conflict (the same URLs giving different responses)
-        arch = self.archive
-        self.archive = False
-        for idx, tok in enumerate(self.token):
-            self.session.headers.update({'Authorization': 'token ' + tok})
-            try:
-                hdrs[idx] = super().fetch(url).headers
-            except requests.exceptions.HTTPError as error:
-                if error.response.status_code == 404:
-                    logger.warning("Rate limit not initialized: %s", error)
-                else:
-                    # Restore archiving to whatever state it was
-                    self.archive = arch
-                    raise error
-        # Restore archiving to whatever state it was
-        self.archive = arch
-        rls = [0] * len(self.token)
-        for idx, hdr in enumerate(hdrs):
-            if self.rate_limit_header in hdr:
-                rls[idx] = int(hdr[self.rate_limit_header])
-            else:
-                rls[idx] = 0
-        max_idx = rls.index(max(rls))
-        self.current_token = self.token[max_idx]
-        self.session.headers.update({'Authorization': 'token ' + self.current_token})
-        self.last_checked = self.rate_limit
-        logger.debug("Remaining API points: {}, choosen index: {}".format(rls, max_idx))
-
-    def _need_check_tokens(self):
-        """We need to consider changing token when last rate limit failed or allow using 10% of current token"""
-        """Only need to check rate again when used >10% of the last remaining rate"""
-        if self.rate_limit is None:
-            return True
-        if self.last_checked is None:
-            self.last_checked = self.rate_limit
-            return True
-        ratio = float(self.rate_limit) / float(self.last_checked)
-        if ratio < 0.9:
-            self.last_checked = self.rate_limit
-            return True
-        elif ratio > 1.0:
-            self.last_checked = self.rate_limit
-            return False
-        else:
-            logger.debug("Allowing {} <-- {}, ratio: {}".format(self.rate_limit, self.last_checked, ratio))
-            return False
 
     def _init_rate_limit(self):
         """Initialize rate limit information"""
-        self._choose_best_api_token()
 
         url = urijoin(self.base_url, "rate_limit")
         try:
@@ -792,7 +722,6 @@ class GitHubCommand(BackendCommand):
         """Returns the GitHub argument parser."""
 
         parser = BackendCommandArgumentParser(from_date=True,
-                                              to_date=True,
                                               token_auth=True,
                                               archive=True)
 
