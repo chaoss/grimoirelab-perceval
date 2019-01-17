@@ -59,7 +59,7 @@ class GoogleHits(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.2.1'
+    version = '0.2.2'
 
     CATEGORIES = [CATEGORY_HITS]
 
@@ -208,9 +208,11 @@ class GoogleHitsClient(HttpClient):
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
     """
+    EXTRA_STATUS_FORCELIST = [429]
+
     def __init__(self, sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
                  archive=None, from_archive=False):
-        super().__init__(GOOGLE_SEARCH_URL, extra_status_forcelist=[429],
+        super().__init__(GOOGLE_SEARCH_URL, extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          sleep_time=sleep_time, max_retries=max_retries,
                          archive=archive, from_archive=from_archive)
 
