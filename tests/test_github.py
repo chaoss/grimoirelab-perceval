@@ -2435,7 +2435,7 @@ class TestGitHubClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ISSUES_URL,
                                body=issue,
-                               status=500,
+                               status=501,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
@@ -2456,6 +2456,37 @@ class TestGitHubClient(unittest.TestCase):
 
         self.assertDictEqual(httpretty.last_request().querystring, expected)
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
+
+    @httpretty.activate
+    def test_http_retry_error(self):
+        """Test if a retry error is raised when the http error is one of
+        the extra_status_forcelist [403, 500, 502, 503]"""
+
+        issue = ""
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=issue,
+                               status=502,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_time=1, max_retries=1)
+
+        with self.assertRaises(requests.exceptions.RetryError):
+            _ = [issues for issues in client.issues()]
 
     @httpretty.activate
     def test_calculate_time_to_reset(self):
