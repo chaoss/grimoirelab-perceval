@@ -21,6 +21,7 @@
 #     Santiago Dueñas <sduenas@bitergia.com>
 #     Alberto Martín <alberto.martin@bitergia.com>
 #
+
 import json
 import logging
 
@@ -45,7 +46,7 @@ GITHUB_API_URL = "https://api.github.com"
 
 # Range before sleeping until rate limit reset
 MIN_RATE_LIMIT = 10
-# GitHub tokens are refreshed every hour, so 3601 seconds is 1 s more than worst case
+# GitHub tokens are refreshed every hour, so 3601 seconds is 1s more than worst case
 MAX_RATE_LIMIT = 3601
 
 PER_PAGE = 100
@@ -489,6 +490,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_headers=self._set_extra_headers(), archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
+
         self._init_rate_limit()
 
     def calculate_time_to_reset(self):
@@ -710,12 +712,14 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     def _set_extra_headers(self):
         """Set extra headers for session"""
+
         headers = {}
         headers.update({'Accept': 'application/vnd.github.squirrel-girl-preview'})
         return headers
 
     def _choose_best_api_token(self):
         """Check all API tokles defined and choose one with most remaining API points"""
+
         url = urijoin(self.base_url, "rate_limit")
         hdrs = [0] * len(self.token)
         # Turn off archiving when checking rates, because that would cause
@@ -750,6 +754,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def _need_check_tokens(self):
         """We need to consider changing token when last rate limit failed or allow using 10% of current token"""
         """Only need to check rate again when used >10% of the last remaining rate"""
+
         if self.rate_limit is None:
             return True
         if self.last_checked is None:
