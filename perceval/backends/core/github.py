@@ -482,7 +482,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         if isinstance(token, list):
             self.token = token
         else:
-            self.token = [token]
+            self.token = token.split(',') if len(token) > 0 else []
         self.current_token = None
         self.last_checked = None
 

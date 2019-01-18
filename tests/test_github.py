@@ -1802,6 +1802,7 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(client.owner, 'zhquan_example')
         self.assertEqual(client.repository, 'repo')
         self.assertEqual(client.token, ['aaa'])
+        self.assertEqual(client.current_token, 'aaa')
         self.assertEqual(client.base_url, GITHUB_API_URL)
         self.assertFalse(client.sleep_for_rate)
         self.assertEqual(client.min_rate_to_sleep, 3)
@@ -1818,11 +1819,12 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient('zhquan_example', 'repo', ['aaa'])
         self.assertEqual(client.token, ['aaa'])
-
-        client = GitHubClient('zhquan_example', 'repo', ['aaa', 'bbb'])
-        self.assertEqual(client.token, ['aaa', 'bbb'])
+        self.assertEqual(client.current_token, 'aaa')
 
         client = GitHubClient('zhquan_example', 'repo', 'aaa,bbb')
+        self.assertEqual(client.token, ['aaa', 'bbb'])
+
+        client = GitHubClient('zhquan_example', 'repo', ['aaa', 'bbb'])
         self.assertEqual(client.token, ['aaa', 'bbb'])
 
     @httpretty.activate
