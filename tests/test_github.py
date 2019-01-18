@@ -1789,9 +1789,6 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient('zhquan_example', 'repo', 'aaa,bbb')
-        self.assertEqual(client.token, ['aaa', 'bbb'])
-
         client = GitHubClient('zhquan_example', 'repo', 'aaa')
 
         self.assertEqual(client.owner, 'zhquan_example')
