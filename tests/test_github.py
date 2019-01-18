@@ -1827,6 +1827,10 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient('zhquan_example', 'repo', ['aaa', 'bbb'])
         self.assertEqual(client.token, ['aaa', 'bbb'])
 
+        client = GitHubClient('zhquan_example', 'repo', None)
+        self.assertEqual(client.token, None)
+        self.assertEqual(client.current_token, None)
+
     @httpretty.activate
     def test_api_url_initialization(self):
         """Test API URL initialization for both basic and enterprise servers"""

@@ -100,7 +100,11 @@ class GitHub(Backend):
 
         self.owner = owner
         self.repository = repository
-        self.api_token = api_token.split(',') if len(api_token) > 0 else []
+        self.api_token = []
+        if isinstance(api_token, list):
+            self.api_token = api_token
+        elif isinstance(api_token, str):
+            self.api_token = api_token.split(',') if len(api_token) > 0 else []
         self.base_url = base_url
 
         self.sleep_for_rate = sleep_for_rate
@@ -479,9 +483,10 @@ class GitHubClient(HttpClient, RateLimitHandler):
                  archive=None, from_archive=False):
         self.owner = owner
         self.repository = repository
+        self.token = []
         if isinstance(token, list):
             self.token = token
-        else:
+        elif isinstance(token, str):
             self.token = token.split(',') if len(token) > 0 else []
         self.current_token = None
         self.last_checked = None
