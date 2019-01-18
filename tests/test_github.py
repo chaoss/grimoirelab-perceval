@@ -1816,6 +1816,15 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient('zhquan_example', 'repo', 'aaa', min_rate_to_sleep=RateLimitHandler.MAX_RATE_LIMIT - 1)
         self.assertEqual(client.min_rate_to_sleep, RateLimitHandler.MAX_RATE_LIMIT - 1)
 
+        client = GitHubClient('zhquan_example', 'repo', ['aaa'])
+        self.assertEqual(client.token, ['aaa'])
+
+        client = GitHubClient('zhquan_example', 'repo', ['aaa', 'bbb'])
+        self.assertEqual(client.token, ['aaa', 'bbb'])
+
+        client = GitHubClient('zhquan_example', 'repo', 'aaa,bbb')
+        self.assertEqual(client.token, ['aaa', 'bbb'])
+
     @httpretty.activate
     def test_api_url_initialization(self):
         """Test API URL initialization for both basic and enterprise servers"""
