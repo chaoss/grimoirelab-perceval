@@ -1789,6 +1789,9 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
+        client = GitHubClient('zhquan_example', 'repo', 'aaa,bbb')
+        self.assertEqual(client.token, ['aaa', 'bbb'])
+
         client = GitHubClient('zhquan_example', 'repo', 'aaa')
 
         self.assertEqual(client.owner, 'zhquan_example')
@@ -1801,7 +1804,7 @@ class TestGitHubClient(unittest.TestCase):
         client = GitHubClient('zhquan_example', 'repo', 'aaa', None, False, 3, 20, 2, None, False)
         self.assertEqual(client.owner, 'zhquan_example')
         self.assertEqual(client.repository, 'repo')
-        self.assertEqual(client.token, 'aaa')
+        self.assertEqual(client.token, ['aaa'])
         self.assertEqual(client.base_url, GITHUB_API_URL)
         self.assertFalse(client.sleep_for_rate)
         self.assertEqual(client.min_rate_to_sleep, 3)
