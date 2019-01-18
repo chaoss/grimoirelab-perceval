@@ -84,7 +84,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.18.0'
+    version = '0.18.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
 
@@ -468,6 +468,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
     :param archive: collect issues already retrieved from an archive
     :param from_archive: it tells whether to write/read the archive
     """
+    EXTRA_STATUS_FORCELIST = [403, 500, 502, 503]
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
@@ -488,7 +489,9 @@ class GitHubClient(HttpClient, RateLimitHandler):
             base_url = GITHUB_API_URL
 
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
-                         extra_headers=self._set_extra_headers(), archive=archive, from_archive=from_archive)
+                         extra_headers=self._set_extra_headers(),
+                         extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
+                         archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 
         self._init_rate_limit()
@@ -616,7 +619,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     def user(self, login):
         """Get the user information and update the user cache"""
-
         user = None
 
         if login in self._users:
@@ -634,7 +636,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     def user_orgs(self, login):
         """Get the user public organizations"""
-
         if login in self._users_orgs:
             return self._users_orgs[login]
 
@@ -710,51 +711,52 @@ class GitHubClient(HttpClient, RateLimitHandler):
                 items = response.text
                 logger.debug("Page: %i/%i" % (page, last_page))
 
-    def _set_extra_headers(self):
-        """Set extra headers for session"""
-
-        headers = {}
-        headers.update({'Accept': 'application/vnd.github.squirrel-girl-preview'})
-        return headers
-
     def _choose_best_api_token(self):
         """Check all API tokles defined and choose one with most remaining API points"""
 
         url = urijoin(self.base_url, "rate_limit")
-        hdrs = [0] * len(self.token)
-        # Turn off archiving when checking rates, because that would cause
-        # archive key conflict (the same URLs giving different responses)
-        arch = self.archive
-        self.archive = False
-        for idx, tok in enumerate(self.token):
-            self.session.headers.update({'Authorization': 'token ' + tok})
-            try:
-                hdrs[idx] = super().fetch(url).headers
-            except requests.exceptions.HTTPError as error:
-                if error.response.status_code == 404:
-                    logger.warning("Rate limit not initialized: %s", error)
+        max_idx = 0
+        # If only one token given
+        if len(self.token) > 1:
+            hdrs = [0] * len(self.token)
+            # Turn off archiving when checking rates, because that would cause
+            # archive key conflict (the same URLs giving different responses)
+            arch = self.archive
+            self.archive = False
+            for idx, tok in enumerate(self.token):
+                self.session.headers.update({'Authorization': 'token ' + tok})
+                try:
+                    hdrs[idx] = super().fetch(url).headers
+                except requests.exceptions.HTTPError as error:
+                    if error.response.status_code == 404:
+                        logger.warning("Rate limit not initialized: %s", error)
+                    else:
+                        # Restore archiving to whatever state it was
+                        self.archive = arch
+                        raise error
+            # Restore archiving to whatever state it was
+            self.archive = arch
+            rls = [0] * len(self.token)
+            for idx, hdr in enumerate(hdrs):
+                if self.rate_limit_header in hdr:
+                    rls[idx] = int(hdr[self.rate_limit_header])
                 else:
-                    # Restore archiving to whatever state it was
-                    self.archive = arch
-                    raise error
-        # Restore archiving to whatever state it was
-        self.archive = arch
-        rls = [0] * len(self.token)
-        for idx, hdr in enumerate(hdrs):
-            if self.rate_limit_header in hdr:
-                rls[idx] = int(hdr[self.rate_limit_header])
-            else:
-                rls[idx] = 0
-        max_idx = rls.index(max(rls))
-        self.current_token = self.token[max_idx]
-        self.session.headers.update({'Authorization': 'token ' + self.current_token})
-        self.last_checked = self.rate_limit
-        logger.debug("Remaining API points: {}, choosen index: {}".format(rls, max_idx))
+                    rls[idx] = 0
+            max_idx = rls.index(max(rls))
+            self.last_checked = self.rate_limit
+            logger.debug("Remaining API points: {}, choosen index: {}".format(rls, max_idx))
+
+        # If we have any tokens use best of them
+        if len(self.token) > 0:
+            self.current_token = self.token[max_idx]
+            self.session.headers.update({'Authorization': 'token ' + self.current_token})
 
     def _need_check_tokens(self):
         """We need to consider changing token when last rate limit failed or allow using 10% of current token"""
         """Only need to check rate again when used >10% of the last remaining rate"""
 
+        if len(self.token) <= 1:
+            return False
         if self.rate_limit is None:
             return True
         if self.last_checked is None:
@@ -770,6 +772,13 @@ class GitHubClient(HttpClient, RateLimitHandler):
         else:
             logger.debug("Allowing {} <-- {}, ratio: {}".format(self.rate_limit, self.last_checked, ratio))
             return False
+
+    def _set_extra_headers(self):
+        """Set extra headers for session"""
+
+        headers = {}
+        headers.update({'Accept': 'application/vnd.github.squirrel-girl-preview'})
+        return headers
 
     def _init_rate_limit(self):
         """Initialize rate limit information"""
