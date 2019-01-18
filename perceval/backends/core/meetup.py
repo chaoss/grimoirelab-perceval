@@ -68,7 +68,7 @@ class Meetup(Backend):
     :param sleep_time: minimun waiting time to avoid too many request
          exception
     """
-    version = '0.11.5'
+    version = '0.11.6'
 
     CATEGORIES = [CATEGORY_EVENT]
 
@@ -307,6 +307,7 @@ class MeetupClient(HttpClient, RateLimitHandler):
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
     """
+    EXTRA_STATUS_FORCELIST = [429]
     RCOMMENTS = 'comments'
     REVENTS = 'events'
     RRSVPS = 'rsvps'
@@ -335,7 +336,8 @@ class MeetupClient(HttpClient, RateLimitHandler):
         self.api_key = api_key
         self.max_items = max_items
 
-        super().__init__(MEETUP_API_URL, sleep_time=sleep_time, extra_status_forcelist=[429],
+        super().__init__(MEETUP_API_URL, sleep_time=sleep_time,
+                         extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 

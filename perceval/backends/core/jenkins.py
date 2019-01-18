@@ -54,7 +54,7 @@ class Jenkins(Backend):
     :param sleep_time: minimun waiting time due to a timeout connection exception
     :param archive: collect builds already retrieved from an archive
     """
-    version = '0.11.1'
+    version = '0.11.2'
 
     CATEGORIES = [CATEGORY_BUILD]
 
@@ -207,11 +207,12 @@ class JenkinsClient(HttpClient):
 
     :raises HTTPError: when an error occurs doing the request
     """
+    EXTRA_STATUS_FORCELIST = [410, 502, 503]
     MAX_RETRIES = 5
 
     def __init__(self, url, blacklist_jobs=None, detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME,
                  archive=None, from_archive=False):
-        super().__init__(url, sleep_time=sleep_time, extra_status_forcelist=[410, 502, 503],
+        super().__init__(url, sleep_time=sleep_time, extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          archive=archive, from_archive=from_archive)
         self.blacklist_jobs = blacklist_jobs
         self.detail_depth = detail_depth

@@ -83,7 +83,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.18.0'
+    version = '0.18.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
 
@@ -467,6 +467,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
     :param archive: collect issues already retrieved from an archive
     :param from_archive: it tells whether to write/read the archive
     """
+    EXTRA_STATUS_FORCELIST = [403, 500, 502, 503]
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
@@ -487,7 +488,9 @@ class GitHubClient(HttpClient, RateLimitHandler):
             base_url = GITHUB_API_URL
 
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
-                         extra_headers=self._set_extra_headers(), archive=archive, from_archive=from_archive)
+                         extra_headers=self._set_extra_headers(),
+                         extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
+                         archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
         self._init_rate_limit()
 
@@ -614,7 +617,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     def user(self, login):
         """Get the user information and update the user cache"""
-
         user = None
 
         if login in self._users:
@@ -632,7 +634,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     def user_orgs(self, login):
         """Get the user public organizations"""
-
         if login in self._users_orgs:
             return self._users_orgs[login]
 

@@ -57,7 +57,7 @@ class Phabricator(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.11.0'
+    version = '0.11.1'
 
     CATEGORIES = [CATEGORY_TASK]
 
@@ -454,6 +454,7 @@ class ConduitClient(HttpClient):
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
     """
+    EXTRA_STATUS_FORCELIST = [429, 502, 503]
     URL = '%(base)s/api/%(method)s'
 
     # Methods
@@ -476,7 +477,7 @@ class ConduitClient(HttpClient):
     def __init__(self, base_url, api_token, max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
                  archive=None, from_archive=False):
         super().__init__(base_url.rstrip('/'), sleep_time=sleep_time, max_retries=max_retries,
-                         extra_status_forcelist=[429, 502, 503],
+                         extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          archive=archive, from_archive=from_archive)
         self.api_token = api_token
 
