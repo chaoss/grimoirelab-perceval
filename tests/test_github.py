@@ -1828,7 +1828,7 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(client.token, ['aaa', 'bbb'])
 
         client = GitHubClient('zhquan_example', 'repo', None)
-        self.assertEqual(client.token, None)
+        self.assertEqual(client.token, [])
         self.assertEqual(client.current_token, None)
 
     @httpretty.activate
