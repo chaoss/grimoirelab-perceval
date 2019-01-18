@@ -479,7 +479,10 @@ class GitHubClient(HttpClient, RateLimitHandler):
                  archive=None, from_archive=False):
         self.owner = owner
         self.repository = repository
-        self.token = token
+        if isinstance(token, list):
+            self.token = token
+        else:
+            self.token = [token]
         self.current_token = None
         self.last_checked = None
 
