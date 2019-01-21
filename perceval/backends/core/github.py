@@ -69,8 +69,8 @@ class GitHub(Backend):
 
     :param owner: GitHub owner
     :param repository: GitHub repository from the owner
-    :param api_token: GitHub auth token(s) to access the API.
-        can be single token or comma separated list of tokens
+    :param api_token: GitHub auth token(s) to access the API
+        either a single token or a comma separated list of tokens
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitHub public site.
@@ -724,7 +724,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         url = urijoin(self.base_url, "rate_limit")
         max_idx = 0
-        # If only one token given
+        # If multiple tokens given, choose best
         if len(self.token) > 1:
             hdrs = [0] * len(self.token)
             # Turn off archiving when checking rates, because that would cause
@@ -763,11 +763,9 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """We need to consider changing token when last rate limit failed or allow using 10% of current token"""
         """Only need to check rate again when used >10% of the last remaining rate"""
 
-        if len(self.token) <= 1:
+        if len(self.token) <= 1 or self.rate_limit is None:
             return False
-        if self.rate_limit is None:
-            return True
-        if self.last_checked is None:
+        elif self.last_checked is None:
             self.last_checked = self.rate_limit
             return True
         ratio = float(self.rate_limit) / float(self.last_checked)
