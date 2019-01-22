@@ -939,6 +939,46 @@ class GitRepository:
 
         return commits
 
+    def rev_list(self, branches=None):
+        """Read the list commits from the repository
+
+        The list of branches is a list of strings, with the names of the
+        branches to fetch. If the list of branches is empty, no commit
+        is fetched. If the list of branches is None, all commits
+        for all branches will be fetched.
+
+        The method returns the Git rev-list of the repository using the
+        following options:
+
+            git rev-list --topo-order
+
+        :param branches: names of branches to fetch from (default: None)
+
+        :raises EmptyRepositoryError: when the repository is empty and
+            the action cannot be performed
+        :raises RepositoryError: when an error occurs executing the command
+        """
+        if self.is_empty():
+            logger.warning("Git %s repository is empty; unable to get the rev-list",
+                           self.uri)
+            raise EmptyRepositoryError(repository=self.uri)
+
+        cmd_rev_list = ['git', 'rev-list', '--topo-order']
+
+        if branches is None:
+            cmd_rev_list.extend(['--branches', '--tags', '--remotes=origin'])
+        elif len(branches) == 0:
+            cmd_rev_list.append('--max-count=0')
+        else:
+            branches = ['refs/heads/' + branch for branch in branches]
+            cmd_rev_list.extend(branches)
+
+        for line in self._exec_nb(cmd_rev_list, cwd=self.dirpath, env=self.gitenv):
+            yield line.rstrip('\n')
+
+        logger.debug("Git rev-list fetched from %s repository (%s)",
+                     self.uri, self.dirpath)
+
     def log(self, from_date=None, to_date=None, branches=None, encoding='utf-8'):
         """Read the commit log from the repository.
 
