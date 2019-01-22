@@ -584,6 +584,81 @@ class TestGitBackend(TestCaseGit):
 
         shutil.rmtree(new_path)
 
+    def test_fetch_no_update(self):
+        """Test whether new commits aren't fetched when no_update flag is set"""
+
+        origin_path = os.path.join(self.tmp_repo_path, 'gittest')
+        editable_path = os.path.join(self.tmp_path, 'editgit')
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        new_file = os.path.join(editable_path, 'newfile')
+
+        shutil.copytree(origin_path, editable_path)
+
+        git = Git(editable_path, new_path)
+        commits = [commit for commit in git.fetch()]
+
+        # Count the number of commits before adding some new
+        expected = [('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0),
+                    ('87783129c3f00d2c81a3a8e585eb86a47e39891a', 1344965535.0),
+                    ('7debcf8a2f57f86663809c58b5c07a398be7674c', 1344965607.0),
+                    ('c0d66f92a95e31c77be08dc9d0f11a16715d1885', 1344965702.0),
+                    ('c6ba8f7a1058db3e6b4bc6f1090e932b107605fb', 1344966351.0),
+                    ('589bb080f059834829a2a5955bebfd7c2baa110a', 1344967441.0),
+                    ('ce8e0b86a1e9877f42fe9453ede418519115f367', 1392185269.0),
+                    ('51a3b654f252210572297f47597b31527c475fb8', 1392185366.0),
+                    ('456a68ee1407a77f3e804a30dff245bb6c6b872f', 1392185439.0)]
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(editable_path, expected[x][0])
+            commit = commits[x]
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+            self.assertEqual(commit['origin'], editable_path)
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['updated_on'], expected[x][1])
+            self.assertEqual(commit['category'], 'commit')
+            self.assertEqual(commit['tag'], editable_path)
+
+        # Create some new commits
+        cmd = ['git', 'checkout', '-b', 'mybranch']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        with open(new_file, 'w') as f:
+            f.write("Testing sync method")
+
+        cmd = ['git', 'add', new_file]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', '-c', 'user.name="mock"',
+               '-c', 'user.email="mock@example.com"',
+               'commit', '-m', 'Testing sync']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', 'rm', new_file]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', '-c', 'user.name="mock"',
+               '-c', 'user.email="mock@example.com"',
+               'commit', '-m', 'Removing testing file for sync']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        # Two new commits are added to the repo but are not fetched
+        commits = [commit for commit in git.fetch(no_update=True)]
+        self.assertEqual(len(commits), 9)
+
+        commits = [commit for commit in git.fetch()]
+        self.assertEqual(len(commits), 11)
+
+        # Cleanup
+        shutil.rmtree(editable_path)
+        shutil.rmtree(new_path)
+
     def test_fetch_from_file(self):
         """Test whether commits are fetched from a Git log file"""
 
@@ -739,7 +814,8 @@ class TestGitCommand(TestCaseGit):
                 '--git-log', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/git/git_log.txt'),
                 '--tag', 'test',
                 '--from-date', '1970-01-01',
-                '--to-date', '2100-01-01']
+                '--to-date', '2100-01-01',
+                '--no-update']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.uri, 'http://example.com/')
@@ -749,6 +825,7 @@ class TestGitCommand(TestCaseGit):
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.to_date, DEFAULT_LAST_DATETIME)
         self.assertEqual(parsed_args.branches, None)
+        self.assertTrue(parsed_args.no_update)
 
         args = ['http://example.com/',
                 '--git-path', '/tmp/gitpath',
@@ -758,6 +835,19 @@ class TestGitCommand(TestCaseGit):
         self.assertEqual(parsed_args.git_path, '/tmp/gitpath')
         self.assertEqual(parsed_args.uri, 'http://example.com/')
         self.assertEqual(parsed_args.branches, ['master', 'testing'])
+        self.assertFalse(parsed_args.no_update)
+
+    def test_mutual_exclusive_update(self):
+        """Test whether an exception is thrown when no-update and latest-items flags are set"""
+
+        parser = GitCommand.setup_cmd_parser()
+        args = ['http://example.com/',
+                '--git-path', '/tmp/gitpath',
+                '--branches', 'master', 'testing',
+                '--no-update', '--latest-items']
+
+        with self.assertRaises(SystemExit):
+            _ = parser.parse(*args)
 
 
 class TestGitParser(TestCaseGit):
