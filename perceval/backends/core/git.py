@@ -64,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.10.2'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_COMMIT]
 
@@ -76,7 +76,7 @@ class Git(Backend):
         self.gitpath = gitpath
 
     def fetch(self, category=CATEGORY_COMMIT, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
-              branches=None, latest_items=False):
+              branches=None, latest_items=False, no_update=False):
         """Fetch commits.
 
         The method retrieves from a Git repository or a log file
@@ -94,6 +94,9 @@ class Git(Backend):
         The parameter `latest_items` returns only those commits which
         are new since the last time this method was called.
 
+        The parameter `no_update` returns all commits without performing
+        an update of the repository before.
+
         Take into account that `from_date` and `branches` are ignored
         when the commits are fetched from a Git log file or when
         `latest_items` flag is set.
@@ -108,6 +111,7 @@ class Git(Backend):
         :param branches: names of branches to fetch from (default: None)
         :param latest_items: sync with the repository to fetch only the
             newest commits
+        :param no_update: if enabled, don't update the repo with the latest changes
 
         :returns: a generator of commits
         """
@@ -120,7 +124,8 @@ class Git(Backend):
             'from_date': from_date,
             'to_date': to_date,
             'branches': branches,
-            'latest_items': latest_items
+            'latest_items': latest_items,
+            'no_update': no_update
         }
         items = super().fetch(category, **kwargs)
 
@@ -138,6 +143,7 @@ class Git(Backend):
         to_date = kwargs['to_date']
         branches = kwargs['branches']
         latest_items = kwargs['latest_items']
+        no_update = kwargs['no_update']
 
         ncommits = 0
 
@@ -146,7 +152,7 @@ class Git(Backend):
                 commits = self.__fetch_from_log()
             else:
                 commits = self.__fetch_from_repo(from_date, to_date, branches,
-                                                 latest_items)
+                                                 latest_items, no_update)
 
             for commit in commits:
                 yield commit
@@ -254,7 +260,7 @@ class Git(Backend):
                     self.uri, self.gitpath)
         return self.parse_git_log_from_file(self.gitpath)
 
-    def __fetch_from_repo(self, from_date, to_date, branches, latest_items=False):
+    def __fetch_from_repo(self, from_date, to_date, branches, latest_items=False, no_update=False):
         # When no latest items are set or the repository has not
         # been cloned use the default mode
         default_mode = not latest_items or not os.path.exists(self.gitpath)
@@ -262,13 +268,13 @@ class Git(Backend):
         repo = self.__create_git_repository()
 
         if default_mode:
-            commits = self.__fetch_commits_from_repo(repo, from_date, to_date, branches)
+            commits = self.__fetch_commits_from_repo(repo, from_date, to_date, branches, no_update)
         else:
             commits = self.__fetch_newest_commits_from_repo(repo)
 
         return commits
 
-    def __fetch_commits_from_repo(self, repo, from_date, to_date, branches):
+    def __fetch_commits_from_repo(self, repo, from_date, to_date, branches, no_update):
         if branches is None:
             branches_text = "all"
         elif len(branches) == 0:
@@ -291,7 +297,8 @@ class Git(Backend):
         else:
             from_date = datetime_to_utc(from_date)
 
-        repo.update()
+        if not no_update:
+            repo.update()
 
         gitlog = repo.log(from_date, to_date, branches)
         return self.parse_git_log_from_iter(gitlog)
@@ -345,9 +352,6 @@ class GitCommand(BackendCommand):
         group.add_argument('--branches', dest='branches',
                            nargs='+', type=str, default=None,
                            help="Fetch commits only from these branches")
-        group.add_argument('--latest-items', dest='latest_items',
-                           action='store_true',
-                           help="Fetch latest commits added to the repository")
 
         # Mutual exclusive parameters
         exgroup = group.add_mutually_exclusive_group()
@@ -355,6 +359,14 @@ class GitCommand(BackendCommand):
                              help="Path where the Git repository will be cloned")
         exgroup.add_argument('--git-log', dest='git_log',
                              help="Path to the Git log file")
+
+        exgroup_fetch = group.add_mutually_exclusive_group()
+        exgroup_fetch.add_argument('--latest-items', dest='latest_items',
+                                   action='store_true',
+                                   help="Fetch latest commits added to the repository")
+        exgroup_fetch.add_argument('--no-update', dest='no_update',
+                                   action='store_true',
+                                   help="Fetch all commits without updating the repository")
 
         # Required arguments
         parser.parser.add_argument('uri',
