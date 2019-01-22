@@ -64,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.10.2'
+    version = '0.11.1'
 
     CATEGORIES = [CATEGORY_COMMIT]
 
@@ -173,6 +173,21 @@ class Git(Backend):
         """
         return True
 
+    @classmethod
+    def create_git_repository(cls, uri, gitpath):
+        """Initialize the GitRepository class
+
+        :param uri: URI of the Git repository
+        :param gitpath: path to the repository or to the log file
+        """
+
+        if not os.path.exists(gitpath):
+            repo = GitRepository.clone(uri, gitpath)
+        elif os.path.isdir(gitpath):
+            repo = GitRepository(uri, gitpath)
+
+        return repo
+
     @staticmethod
     def metadata_id(item):
         """Extracts the identifier from a Git item."""
@@ -259,7 +274,7 @@ class Git(Backend):
         # been cloned use the default mode
         default_mode = not latest_items or not os.path.exists(self.gitpath)
 
-        repo = self.__create_git_repository()
+        repo = self.create_git_repository(self.uri, self.gitpath)
 
         if default_mode:
             commits = self.__fetch_commits_from_repo(repo, from_date, to_date, branches)
@@ -306,13 +321,6 @@ class Git(Backend):
 
         gitshow = repo.show(hashes)
         return self.parse_git_log_from_iter(gitshow)
-
-    def __create_git_repository(self):
-        if not os.path.exists(self.gitpath):
-            repo = GitRepository.clone(self.uri, self.gitpath)
-        elif os.path.isdir(self.gitpath):
-            repo = GitRepository(self.uri, self.gitpath)
-        return repo
 
 
 class GitCommand(BackendCommand):

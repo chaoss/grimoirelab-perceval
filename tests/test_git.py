@@ -124,6 +124,16 @@ class TestGitBackend(TestCaseGit):
 
         self.assertEqual(Git.has_resuming(), True)
 
+    def test_create_git_repository(self):
+        """Test whether the GitRepository is initialized"""
+
+        repo = Git.create_git_repository('http://example.com', self.git_path)
+        self.assertIsInstance(repo, GitRepository)
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = Git.create_git_repository(self.git_path, new_path)
+        self.assertIsInstance(repo, GitRepository)
+
     def test_fetch_submodules(self):
         """Test whether repositories with submodules are correctly fetched"""
 
