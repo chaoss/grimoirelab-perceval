@@ -47,6 +47,9 @@ GITHUB_API_URL = "https://api.github.com"
 # Range before sleeping until rate limit reset
 MIN_RATE_LIMIT = 10
 MAX_RATE_LIMIT = 500
+# Use this factor of the current token's remaining API points before switching to the next token
+TOKEN_USAGE_BEFORE_SWITCH = 0.1
+
 
 PER_PAGE = 100
 
@@ -68,7 +71,7 @@ class GitHub(Backend):
 
     :param owner: GitHub owner
     :param repository: GitHub repository from the owner
-    :param api_token: GitHub auth token to access the API
+    :param api_token: list of GitHub auth tokens to access the API
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitHub public site.
@@ -82,7 +85,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.19.0'
+    version = '0.20.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -91,6 +94,8 @@ class GitHub(Backend):
                  tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
+        if api_token is None:
+            api_token = []
         origin = base_url if base_url else GITHUB_URL
         origin = urijoin(origin, owner, repository)
 
@@ -472,7 +477,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     :param owner: GitHub owner
     :param repository: GitHub repository from the owner
-    :param token: GitHub auth token to access the API
+    :param tokens: list of GitHub auth tokens to access the API
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitHub public site.
@@ -491,13 +496,16 @@ class GitHubClient(HttpClient, RateLimitHandler):
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
-    def __init__(self, owner, repository, token,
+    def __init__(self, owner, repository, tokens,
                  base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
                  archive=None, from_archive=False):
         self.owner = owner
         self.repository = repository
-        self.token = token
+        self.tokens = tokens
+        self.n_tokens = len(self.tokens)
+        self.current_token = None
+        self.last_rate_limit_checked = None
 
         if base_url:
             base_url = urijoin(base_url, 'api', 'v3')
@@ -510,7 +518,9 @@ class GitHubClient(HttpClient, RateLimitHandler):
                          archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 
-        self._init_rate_limit()
+        # Choose best API token (with maximum API points remaining)
+        if not self.from_archive:
+            self._choose_best_api_token()
 
     def calculate_time_to_reset(self):
         """Calculate the seconds to reset the token requests, by obtaining the different
@@ -698,7 +708,10 @@ class GitHubClient(HttpClient, RateLimitHandler):
         response = super().fetch(url, payload, headers, method, stream, verify)
 
         if not self.from_archive:
-            self.update_rate_limit(response)
+            if self._need_check_tokens():
+                self._choose_best_api_token()
+            else:
+                self.update_rate_limit(response)
 
         return response
 
@@ -735,29 +748,107 @@ class GitHubClient(HttpClient, RateLimitHandler):
                 items = response.text
                 logger.debug("Page: %i/%i" % (page, last_page))
 
-    def _set_extra_headers(self):
-        """Set extra headers for session"""
+    def _get_token_rate_limit(self, token):
+        """Return token's remaining API points"""
 
-        headers = {}
-        headers.update({'Accept': 'application/vnd.github.squirrel-girl-preview'})
+        rate_url = urijoin(self.base_url, "rate_limit")
+        self.session.headers.update({'Authorization': 'token ' + token})
+        remaining = 0
+        try:
+            headers = super().fetch(rate_url).headers
+            if self.rate_limit_header in headers:
+                remaining = int(headers[self.rate_limit_header])
+        except requests.exceptions.HTTPError as error:
+            logger.warning("Rate limit not initialized: %s", error)
+        return remaining
 
-        if self.token:
-            headers.update({'Authorization': 'token ' + self.token})
+    def _get_tokens_rate_limits(self):
+        """Return array of all tokens remaining API points"""
 
-        return headers
+        remainings = [0] * self.n_tokens
+        # Turn off archiving when checking rates, because that would cause
+        # archive key conflict (the same URLs giving different responses)
+        arch = self.archive
+        self.archive = None
+        for idx, token in enumerate(self.tokens):
+            # Pass flag to skip disabling archiving because this function doies it
+            remainings[idx] = self._get_token_rate_limit(token)
+        # Restore archiving to whatever state it was
+        self.archive = arch
+        logger.debug("Remaining API points: {}".format(remainings))
+        return remainings
 
-    def _init_rate_limit(self):
-        """Initialize rate limit information"""
+    def _choose_best_api_token(self):
+        """Check all API tokens defined and choose one with most remaining API points"""
+
+        # Return if no tokens given
+        if self.n_tokens == 0:
+            return
+
+        # If multiple tokens given, choose best
+        token_idx = 0
+        if self.n_tokens > 1:
+            remainings = self._get_tokens_rate_limits()
+            token_idx = remainings.index(max(remainings))
+            logger.debug("Remaining API points: {}, choosen index: {}".format(remainings, token_idx))
+
+        # If we have any tokens - use best of them
+        self.current_token = self.tokens[token_idx]
+        self.session.headers.update({'Authorization': 'token ' + self.current_token})
+        # Update rate limit data for the current token
+        self._update_current_rate_limit()
+
+    def _need_check_tokens(self):
+        """Check if we need to switch GitHub API tokens"""
+
+        if self.n_tokens <= 1 or self.rate_limit is None:
+            return False
+        elif self.last_rate_limit_checked is None:
+            self.last_rate_limit_checked = self.rate_limit
+            return True
+
+        # If approaching minimum rate limit for sleep
+        approaching_limit = float(self.min_rate_to_sleep) * (1.0 + TOKEN_USAGE_BEFORE_SWITCH) + 1
+        if self.rate_limit <= approaching_limit:
+            self.last_rate_limit_checked = self.rate_limit
+            return True
+
+        # Only switch token when used predefined factor of the current token's remaining API points
+        ratio = float(self.rate_limit) / float(self.last_rate_limit_checked)
+        if ratio < 1.0 - TOKEN_USAGE_BEFORE_SWITCH:
+            self.last_rate_limit_checked = self.rate_limit
+            return True
+        elif ratio > 1.0:
+            self.last_rate_limit_checked = self.rate_limit
+            return False
+        else:
+            return False
+
+    def _update_current_rate_limit(self):
+        """Update rate limits data for the current token"""
 
         url = urijoin(self.base_url, "rate_limit")
         try:
+            # Turn off archiving when checking rates, because that would cause
+            # archive key conflict (the same URLs giving different responses)
+            arch = self.archive
+            self.archive = None
             response = super().fetch(url)
+            self.archive = arch
             self.update_rate_limit(response)
+            self.last_rate_limit_checked = self.rate_limit
         except requests.exceptions.HTTPError as error:
             if error.response.status_code == 404:
                 logger.warning("Rate limit not initialized: %s", error)
             else:
                 raise error
+
+    def _set_extra_headers(self):
+        """Set extra headers for session"""
+
+        headers = {}
+        headers.update({'Accept': 'application/vnd.github.squirrel-girl-preview'})
+        return headers
 
 
 class GitHubCommand(BackendCommand):
@@ -771,9 +862,8 @@ class GitHubCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(from_date=True,
                                               to_date=True,
-                                              token_auth=True,
+                                              token_auth=False,
                                               archive=True)
-
         # GitHub options
         group = parser.parser.add_argument_group('GitHub arguments')
         group.add_argument('--enterprise-url', dest='base_url',
@@ -784,6 +874,11 @@ class GitHubCommand(BackendCommand):
         group.add_argument('--min-rate-to-sleep', dest='min_rate_to_sleep',
                            default=MIN_RATE_LIMIT, type=int,
                            help="sleep until reset when the rate limit reaches this value")
+        # GitHub token(s)
+        group.add_argument('-t', '--api-token', dest='api_token',
+                           nargs='+',
+                           default=[],
+                           help="list of GitHub API tokens")
 
         # Generic client options
         group.add_argument('--max-retries', dest='max_retries',
