@@ -22,9 +22,11 @@
 #
 
 import datetime
+import dateutil
 import os
 import time
 import unittest
+import unittest.mock
 
 import httpretty
 import pkg_resources
@@ -41,14 +43,16 @@ from perceval.backends.core.github import (GitHub,
                                            GitHubCommand,
                                            GitHubClient,
                                            CATEGORY_ISSUE,
-                                           CATEGORY_PULL_REQUEST)
+                                           CATEGORY_PULL_REQUEST,
+                                           CATEGORY_REPO)
 from base import TestCaseBackendArchive
 
 
 GITHUB_API_URL = "https://api.github.com"
 GITHUB_RATE_LIMIT = GITHUB_API_URL + "/rate_limit"
-GITHUB_ISSUES_URL = GITHUB_API_URL + "/repos/zhquan_example/repo/issues"
-GITHUB_PULL_REQUEST_URL = GITHUB_API_URL + "/repos/zhquan_example/repo/pulls"
+GITHUB_REPO_URL = GITHUB_API_URL + "/repos/zhquan_example/repo"
+GITHUB_ISSUES_URL = GITHUB_REPO_URL + "/issues"
+GITHUB_PULL_REQUEST_URL = GITHUB_REPO_URL + "/pulls"
 GITHUB_ISSUE_1_COMMENTS_URL = GITHUB_ISSUES_URL + "/1/comments"
 GITHUB_ISSUE_COMMENT_1_REACTION_URL = GITHUB_ISSUES_URL + "/comments/1/reactions"
 GITHUB_ISSUE_2_REACTION_URL = GITHUB_ISSUES_URL + "/2/reactions"
@@ -70,8 +74,9 @@ GITHUB_COMMAND_URL = GITHUB_API_URL + "/command"
 GITHUB_ENTERPRISE_URL = "https://example.com"
 GITHUB_ENTERPRISE_API_URL = "https://example.com/api/v3"
 GITHUB_ENTREPRISE_RATE_LIMIT = GITHUB_ENTERPRISE_API_URL + "/rate_limit"
-GITHUB_ENTERPRISE_ISSUES_URL = GITHUB_ENTERPRISE_API_URL + "/repos/zhquan_example/repo/issues"
-GITHUB_ENTERPRISE_PULL_REQUESTS_URL = GITHUB_ENTERPRISE_API_URL + "/repos/zhquan_example/repo/pulls"
+GITHUB_ENTREPRISE_REPO_URL = GITHUB_ENTERPRISE_API_URL + "/repos/zhquan_example/repo"
+GITHUB_ENTERPRISE_ISSUES_URL = GITHUB_ENTREPRISE_REPO_URL + "/issues"
+GITHUB_ENTERPRISE_PULL_REQUESTS_URL = GITHUB_ENTREPRISE_REPO_URL + "/pulls"
 GITHUB_ENTERPRISE_ISSUE_1_COMMENTS_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/1/comments"
 GITHUB_ENTERPRISE_ISSUE_COMMENT_1_REACTION_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/comments/1/reactions"
 GITHUB_ENTERPRISE_ISSUE_2_REACTION_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/2/reactions"
@@ -116,10 +121,9 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.origin, 'https://github.com/zhquan_example/repo')
         self.assertEqual(github.tag, 'test')
 
-        self.assertEqual(github.categories, [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST])
+        self.assertEqual(github.categories, [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO])
 
-        # When tag is empty or None it will be set to
-        # the value in origin
+        # When tag is empty or None it will be set to the value in origin
         github = GitHub('zhquan_example', 'repo', 'aaa')
         self.assertEqual(github.owner, 'zhquan_example')
         self.assertEqual(github.repository, 'repo')
@@ -327,6 +331,53 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
         self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
         self.assertEqual(len(pull['data']['commits_data']), 1)
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.github.datetime_utcnow')
+    def test_fetch_repo(self, mock_utcnow):
+        """Test whether repo information is returned"""
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        body = read_file('data/github/github_repo')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_REPO_URL,
+                               body=body,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", "aaa")
+        repo = [repo for repo in github.fetch(category=CATEGORY_REPO)]
+
+        self.assertEqual(len(repo), 1)
+
+        repo_info = repo[0]
+
+        self.assertEqual(repo_info['origin'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(repo_info['uuid'], '7b352ce00a800d755d34be63b09cf2840d45a8b8')
+        self.assertEqual(repo_info['updated_on'], 1483228800.0)
+        self.assertEqual(repo_info['category'], CATEGORY_REPO)
+        self.assertEqual(repo_info['tag'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(repo_info['data']['forks'], 16687)
+        self.assertEqual(repo_info['data']['stargazers_count'], 48188)
+        self.assertEqual(repo_info['data']['subscribers_count'], 2904)
+        self.assertEqual(repo_info['data']['updated_at'], "2019-02-14T16:21:58Z")
+        self.assertEqual(repo_info['data']['fetched_on'], 1483228800.0)
 
     @httpretty.activate
     def test_fetch_more_issues(self):
@@ -1219,9 +1270,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
-        github = GitHub("zhquan_example", "repo", "aaa",
-                        base_url=GITHUB_ENTERPRISE_URL)
-
+        github = GitHub("zhquan_example", "repo", "aaa", base_url=GITHUB_ENTERPRISE_URL)
         pulls = [pulls for pulls in github.fetch(category=CATEGORY_PULL_REQUEST)]
 
         self.assertEqual(len(pulls), 1)
@@ -1240,6 +1289,53 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
         self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
         self.assertEqual(len(pull['data']['commits_data']), 1)
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.github.datetime_utcnow')
+    def test_fetch_repo_enterprise(self, mock_utcnow):
+        """Test whether repo information is returned"""
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        body = read_file('data/github/github_repo')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTREPRISE_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTREPRISE_REPO_URL,
+                               body=body,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", "aaa", base_url=GITHUB_ENTERPRISE_URL)
+        repo = [repo for repo in github.fetch(category=CATEGORY_REPO)]
+
+        self.assertEqual(len(repo), 1)
+
+        repo_info = repo[0]
+
+        self.assertEqual(repo_info['origin'], 'https://example.com/zhquan_example/repo')
+        self.assertEqual(repo_info['uuid'], 'b5dfd8cc4be38cdd123b7bd044197d6a13d8f29c')
+        self.assertEqual(repo_info['updated_on'], 1483228800.0)
+        self.assertEqual(repo_info['category'], CATEGORY_REPO)
+        self.assertEqual(repo_info['tag'], 'https://example.com/zhquan_example/repo')
+        self.assertEqual(repo_info['data']['forks'], 16687)
+        self.assertEqual(repo_info['data']['stargazers_count'], 48188)
+        self.assertEqual(repo_info['data']['subscribers_count'], 2904)
+        self.assertEqual(repo_info['data']['updated_at'], "2019-02-14T16:21:58Z")
+        self.assertEqual(repo_info['data']['fetched_on'], 1483228800.0)
 
     @httpretty.activate
     def test_fetch_from_date(self):
@@ -2007,6 +2103,36 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
 
     @httpretty.activate
+    def test_repo(self):
+        """Test repo API call"""
+
+        repo = read_file('data/github/github_repo')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_REPO_URL,
+                               body=repo, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '5',
+                                   'X-RateLimit-Reset': '5'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", "aaa")
+        raw_repo = client.repo()
+        self.assertEqual(raw_repo, repo)
+
+        self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
+
+    @httpretty.activate
     def test_enterprise_issues(self):
         """Test fetching issues from enterprise"""
 
@@ -2060,11 +2186,40 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa",
-                              base_url=GITHUB_ENTERPRISE_URL)
+        client = GitHubClient("zhquan_example", "repo", "aaa", base_url=GITHUB_ENTERPRISE_URL)
 
         raw_pulls = [pulls for pulls in client.pulls()]
         self.assertEqual(raw_pulls[0], pull_request)
+
+        self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
+
+    @httpretty.activate
+    def test_enterprise_repo(self):
+        """Test repo API call from enterprise"""
+
+        repo = read_file('data/github/github_repo')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTREPRISE_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTREPRISE_REPO_URL,
+                               body=repo, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '5',
+                                   'X-RateLimit-Reset': '5'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", "aaa", base_url=GITHUB_ENTERPRISE_URL)
+        raw_repo = client.repo()
+        self.assertEqual(raw_repo, repo)
 
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
 

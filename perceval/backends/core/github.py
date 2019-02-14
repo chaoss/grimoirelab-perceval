@@ -35,11 +35,11 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser)
 from ...client import HttpClient, RateLimitHandler
-
 from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 
 CATEGORY_ISSUE = "issue"
 CATEGORY_PULL_REQUEST = "pull_request"
+CATEGORY_REPO = 'repository'
 
 GITHUB_URL = "https://github.com/"
 GITHUB_API_URL = "https://api.github.com"
@@ -82,9 +82,9 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.18.1'
+    version = '0.19.0'
 
-    CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST]
+    CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -150,8 +150,10 @@ class GitHub(Backend):
 
         if category == CATEGORY_ISSUE:
             items = self.__fetch_issues(from_date, to_date)
-        else:
+        elif category == CATEGORY_PULL_REQUEST:
             items = self.__fetch_pull_requests(from_date, to_date)
+        else:
+            items = self.__fetch_repo_info()
 
         return items
 
@@ -175,7 +177,10 @@ class GitHub(Backend):
     def metadata_id(item):
         """Extracts the identifier from a GitHub item."""
 
-        return str(item['id'])
+        if "forks_count" in item:
+            return str(item['fetched_on'])
+        else:
+            return str(item['id'])
 
     @staticmethod
     def metadata_updated_on(item):
@@ -189,10 +194,13 @@ class GitHub(Backend):
 
         :returns: a UNIX timestamp
         """
-        ts = item['updated_at']
-        ts = str_to_datetime(ts)
+        if "forks_count" in item:
+            return item['fetched_on']
+        else:
+            ts = item['updated_at']
+            ts = str_to_datetime(ts)
 
-        return ts.timestamp()
+            return ts.timestamp()
 
     @staticmethod
     def metadata_category(item):
@@ -204,6 +212,8 @@ class GitHub(Backend):
 
         if "base" in item:
             category = CATEGORY_PULL_REQUEST
+        elif "forks_count" in item:
+            category = CATEGORY_REPO
         else:
             category = CATEGORY_ISSUE
 
@@ -277,6 +287,17 @@ class GitHub(Backend):
                     pull[field + '_data'] = self.__get_pull_commits(pull['number'])
 
             yield pull
+
+    def __fetch_repo_info(self):
+        """Get repo info about stars, watchers and forks"""
+
+        raw_repo = self.client.repo()
+        repo = json.loads(raw_repo)
+
+        fetched_on = datetime_utcnow()
+        repo['fetched_on'] = fetched_on.timestamp()
+
+        yield repo
 
     def __get_issue_reactions(self, issue_number, total_count):
         """Get issue reactions"""
@@ -553,7 +574,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         return self.fetch_items(path, payload)
 
     def pulls(self, from_date=None):
-        """Get ony pull requests"""
+        """Get the pull requests from pagination"""
 
         issues_groups = self.issues(from_date=from_date)
 
@@ -571,6 +592,16 @@ class GitHubClient(HttpClient, RateLimitHandler):
                 pull = r.text
 
                 yield pull
+
+    def repo(self):
+        """Get repository data"""
+
+        path = urijoin(self.base_url, 'repos', self.owner, self.repository)
+
+        r = self.fetch(path)
+        repo = r.text
+
+        return repo
 
     def pull_requested_reviewers(self, pr_number):
         """Get pull requested reviewers"""
