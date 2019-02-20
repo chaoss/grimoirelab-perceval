@@ -1569,6 +1569,34 @@ class TestGitRepository(TestCaseGit):
 
         shutil.rmtree(new_path)
 
+    def test_for_each_ref(self):
+        """Test for-each-ref command"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        gitfor = [line for line in repo.for_each_ref('456a68ee1407a77f3e804a30dff245bb6c6b872f')]
+
+        self.assertTrue(len(gitfor), 1)
+        commit, ref = gitfor[0].split('\t')
+
+        self.assertEqual(commit, '456a68ee1407a77f3e804a30dff245bb6c6b872f commit')
+        self.assertEqual(ref, 'refs/heads/master')
+
+        shutil.rmtree(new_path)
+
+    def test_for_each_ref_not_existing_commit(self):
+        """Test whether an exception is thrown when the commit does not exist"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_empty_path, new_path)
+
+        with self.assertRaises(RepositoryError):
+            _ = [line for line in repo.for_each_ref('456a68ee1407a77f3e804a30dff245bb6c6b872f')]
+
+        shutil.rmtree(new_path)
+
     def test_rev_list(self):
         """Test rev-list command"""
 

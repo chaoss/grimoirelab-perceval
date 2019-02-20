@@ -64,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.11.0'
+    version = '0.11.1'
 
     CATEGORIES = [CATEGORY_COMMIT]
 
@@ -938,6 +938,25 @@ class GitRepository:
                      self.uri, self.dirpath)
 
         return commits
+
+    def for_each_ref(self, commit):
+        """List the references (branches and tags) which contain the specified commit.
+
+        The methods executes the Git for-each-ref command with the option `--contains`:
+
+            git for-each-ref --contains
+
+        :param commit: hash of the target commit
+
+        :raises RepositoryError: when an error occurs executing the command
+        """
+        cmd_for_each_ref = ['git', 'for-each-ref', '--contains', commit]
+
+        for line in self._exec_nb(cmd_for_each_ref, cwd=self.dirpath, env=self.gitenv):
+            yield line.rstrip('\n')
+
+        logger.debug("Git for-each-ref executed on %s repository (%s)",
+                     self.uri, self.dirpath)
 
     def rev_list(self, branches=None):
         """Read the list commits from the repository
