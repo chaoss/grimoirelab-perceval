@@ -18,6 +18,7 @@
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
+#     Maurizio Pillitu <maoo@apache.org>
 #
 
 import logging
@@ -52,7 +53,7 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.2'
+    version = '0.10.0'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 
@@ -86,7 +87,10 @@ class Confluence(Backend):
 
         from_date = datetime_to_utc(from_date)
 
-        kwargs = {'from_date': from_date}
+        kwargs = {
+            'from_date': from_date
+        }
+
         items = super().fetch(category, **kwargs)
 
         return items
@@ -118,6 +122,8 @@ class Confluence(Backend):
 
             for hc in hcs:
                 hc['content_url'] = content_url
+                hc['ancestors'] = content.get('ancestors', [])
+
                 yield hc
                 nhcs += 1
 
@@ -309,6 +315,7 @@ class ConfluenceClient(HttpClient):
     PSTART = 'start'
     PSTATUS = 'status'
     PVERSION = 'version'
+    PANCESTORS = 'ancestors'
 
     # Common values
     VCQL = "lastModified>='%(date)s' order by lastModified"
@@ -340,7 +347,8 @@ class ConfluenceClient(HttpClient):
         # Set parameters
         params = {
             self.PCQL: cql,
-            self.PLIMIT: max_contents
+            self.PLIMIT: max_contents,
+            self.PEXPAND: self.PANCESTORS
         }
 
         if offset:
