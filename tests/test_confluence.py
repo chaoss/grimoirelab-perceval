@@ -190,7 +190,8 @@ class TestConfluenceBackend(unittest.TestCase):
         expected = [
             {
                 'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                'limit': ['200']
+                'limit': ['200'],
+                'expand': ['ancestors']
             },
             {
                 'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
@@ -264,7 +265,8 @@ class TestConfluenceBackend(unittest.TestCase):
         expected = [
             {
                 'cql': ["lastModified>='2016-06-16 00:00' order by lastModified"],
-                'limit': ['200']
+                'limit': ['200'],
+                'expand': ['ancestors']
             },
             {
                 # Hardcoded in JSON dataset
@@ -337,7 +339,8 @@ class TestConfluenceBackend(unittest.TestCase):
         expected = [
             {
                 'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                'limit': ['200']
+                'limit': ['200'],
+                'expand': ['ancestors']
             },
             {
                 'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
@@ -377,7 +380,8 @@ class TestConfluenceBackend(unittest.TestCase):
         # Check requests
         expected = {
             'cql': ["lastModified>='2016-07-08 00:00' order by lastModified"],
-            'limit': ['200']
+            'limit': ['200'],
+            'expand': ['ancestors']
         }
 
         self.assertEqual(len(http_requests), 1)
@@ -519,7 +523,8 @@ class TestConfluenceClient(unittest.TestCase):
         expected = {
             'cql': ["lastModified>='2016-07-08 00:00' order by lastModified"],
             'start': ['10'],
-            'limit': ['2']
+            'limit': ['2'],
+            'expand': ['ancestors']
         }
 
         self.assertEqual(len(http_requests), 1)
@@ -541,7 +546,8 @@ class TestConfluenceClient(unittest.TestCase):
         expected = [
             {
                 'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
-                'limit': ['2']
+                'limit': ['2'],
+                'expand': ['ancestors']
             },
             {
                 'cql': ["lastModified>='1970-01-01 00:00' order by lastModified"],
