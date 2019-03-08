@@ -16,6 +16,7 @@ are:
     confluence       Fetch contents from a Confluence server
     discourse        Fetch posts from Discourse site
     dockerhub        Fetch repository data from Docker Hub site
+    finos-meetings   Fetch entries from a CSV file with FINOS meetings attendance format
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from Git
     github           Fetch issues from GitHub
@@ -158,6 +159,27 @@ $ perceval bugzillarest 'https://bugzilla.mozilla.org/' --backend-user user --ba
 ```
 $ perceval confluence 'https://wiki.opnfv.org/' --from-date '2016-01-01'
 ```
+
+### Finos Meetings
+
+#### Locating a CSV file via URL
+```
+$ perceval finosmeetings https://gist.githubusercontent.com/maoo/27db80e0dba349caf95cd3f2af909fe8/raw/d8bdc91ed1ac2c0e5b8e0dc95d5248527c88260d/finos-meetings.csv
+```
+
+#### Locating a CSV file via file path
+Here's an example for FINOS meeting attendance
+```
+$ perceval finosmeetings file:///Users/m/w/projects/metadata-tool/roster-data.csv
+```
+
+#### Optional parameters
+- `--csv_header` - Comma-separated list of CSV columns, which also defines the names of the document fields
+- `--id_columns` - Comma-separated list of CSV columns that compose the document key
+- `--date_column` - Name of the field that contains the date of the entry
+- `--date_formats`, Comma-separated list of supported date formats; defaults to `%a %b %d %H:%M:%S EDT %Y, %Y-%m-%d`
+- `--separator`, delimiter used in the CSV file; defaults to `,`
+- `--skip_header`, if true, the first row of the document (ie the header) is skipped; defaults to `True`
 
 ### Discourse
 ```
