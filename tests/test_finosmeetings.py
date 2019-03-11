@@ -28,7 +28,7 @@ import unittest
 
 pkg_resources.declare_namespace('perceval.backends')
 
-from perceval.backend import BackendCommandArgumentParser
+from perceval.backend import BackendCommandArgumentParser, uuid
 from perceval.backends.core.finosmeetings import FinosMeetings, FinosMeetingsCommand, FinosMeetingsClient
 
 
@@ -81,22 +81,9 @@ class TestFinosMeetingsBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        finosmeetings = FinosMeetings(
-            MEETINGS_URL,
-            csv_header='email,name,org,githubid,program,activity,date',
-            separator=',',
-            date_formats='%a %b %d %H:%M:%S EDT %Y, %Y-%m-%d,%Y-%m-%d,%Y-%m,%Y',
-            skip_header='true',
-            id_columns='email,name,date',
-            date_column='date')
+        finosmeetings = FinosMeetings(MEETINGS_URL)
 
         self.assertTrue(finosmeetings.origin, MEETINGS_URL)
-        self.assertEqual(finosmeetings.csv_header, 'email,name,org,githubid,program,activity,date')
-        self.assertEqual(finosmeetings.separator, ',')
-        self.assertEqual(finosmeetings.date_formats, '%a %b %d %H:%M:%S EDT %Y, %Y-%m-%d,%Y-%m-%d,%Y-%m,%Y')
-        self.assertEqual(finosmeetings.skip_header, True)
-        self.assertEqual(finosmeetings.id_columns, 'email,name,date')
-        self.assertEqual(finosmeetings.date_column, 'date')
         self.assertIsNone(finosmeetings.client)
 
     def test_has_archiving(self):
@@ -115,14 +102,7 @@ class TestFinosMeetingsBackend(unittest.TestCase):
 
         http_requests = configure_http_server()
 
-        finosmeetings = FinosMeetings(
-            MEETINGS_URL,
-            csv_header='email,name,org,githubid,program,activity,date',
-            separator=',',
-            date_formats='%a %b %d %H:%M:%S EDT %Y, %Y-%m-%d,%Y-%m-%d,%Y-%m,%Y',
-            skip_header='true',
-            id_columns='email,name,date',
-            date_column='date')
+        finosmeetings = FinosMeetings(MEETINGS_URL)
 
         entries = [entry for entry in finosmeetings.fetch()]
         self.assertEqual(len(entries), 3)
@@ -133,10 +113,14 @@ class TestFinosMeetingsBackend(unittest.TestCase):
                     ('tosha.ellison@finos.org', 'Tosha Ellison', '', 'Data Tech', 'Security Reference Data', '2018-12-11'),
                     ('maoo@finos.org', 'Maurizio Pillitu', 'maoo', 'FDC3', 'FDC3 PMC', '2018-10-19')]
 
+
+        print("UUID: "+uuid('rob.underwood@finos.org-Rob Underwood-2018-09-28-'))
+
         for x in range(len(expected)):
             entry = entries[x]['data']
-            self.assertIsNotNone(entries[x]['uuid'])
-            self.assertIsNotNone(entries[x]['updated_on'])
+            print(entries[x])
+            self.assertEqual(entries[x]['uuid'], uuid(FinosMeetings.metadata_id(entry)))
+            self.assertEqual(entries[x]['updated_on'], FinosMeetings.metadata_updated_on(entry))
             self.assertEqual(entry['email'], expected[x][0])
             self.assertEqual(entry['name'], expected[x][1])
             self.assertEqual(entry['org'], 'FINOS')
@@ -150,16 +134,31 @@ class TestFinosMeetingsBackend(unittest.TestCase):
         """Test whether a list of entries is returned from a file definition"""
 
         finosmeetings = FinosMeetings(
-            "file://" + file_abs_path('data/finosmeetings/finosmeetings_entries.csv'),
-            csv_header='email,name,org,githubid,program,activity,date',
-            separator=',',
-            date_formats='%a %b %d %H:%M:%S EDT %Y, %Y-%m-%d,%Y-%m-%d,%Y-%m,%Y',
-            skip_header='true',
-            id_columns='email,name,date',
-            date_column='date')
+            "file://" + file_abs_path('data/finosmeetings/finosmeetings_entries.csv'))
 
         entries = [entry for entry in finosmeetings.fetch()]
         self.assertEqual(len(entries), 3)
+
+        # Test metadata
+        expected = [('rob.underwood@finos.org', 'Rob Underwood', 'brooklynrob', 'Data Tech', 'Data Tech PMC', '2018-09-28'),
+                    ('tosha.ellison@finos.org', 'Tosha Ellison', '', 'Data Tech', 'Security Reference Data', '2018-12-11'),
+                    ('maoo@finos.org', 'Maurizio Pillitu', 'maoo', 'FDC3', 'FDC3 PMC', '2018-10-19')]
+
+
+        print("UUID: "+uuid('rob.underwood@finos.org-Rob Underwood-2018-09-28-'))
+        
+        for x in range(len(expected)):
+            entry = entries[x]['data']
+            print(entries[x])
+            self.assertEqual(entries[x]['uuid'], uuid(FinosMeetings.metadata_id(entry)))
+            self.assertEqual(entries[x]['updated_on'], FinosMeetings.metadata_updated_on(entry))
+            self.assertEqual(entry['email'], expected[x][0])
+            self.assertEqual(entry['name'], expected[x][1])
+            self.assertEqual(entry['org'], 'FINOS')
+            self.assertEqual(entry['githubid'], expected[x][2])
+            self.assertEqual(entry['program'], expected[x][3])
+            self.assertEqual(entry['activity'], expected[x][4])
+            self.assertEqual(entry['date'], expected[x][5])
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -171,13 +170,7 @@ class TestFinosMeetingsBackend(unittest.TestCase):
                                body=body, status=200)
 
         finosmeetings = FinosMeetings(
-            MEETINGS_URL,
-            csv_header='email,name,org,githubid,program,activity,date',
-            separator=',',
-            date_formats='%a %b %d %H:%M:%S EDT %Y, %Y-%m-%d,%Y-%m-%d,%Y-%m,%Y',
-            skip_header='true',
-            id_columns='email,name,date',
-            date_column='date')
+            MEETINGS_URL)
 
         entries = [entry for entry in finosmeetings.fetch()]
 
@@ -202,12 +195,6 @@ class TestFinosMeetingsCommand(unittest.TestCase):
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.uri, MEETINGS_URL)
-        self.assertEqual(parsed_args.csv_header, 'email,name,org,githubid,program,activity,date')
-        self.assertEqual(parsed_args.separator, ',')
-        self.assertEqual(parsed_args.date_formats, '%a %b %d %H:%M:%S EDT %Y, %Y-%m-%d,%Y-%m-%d,%Y-%m,%Y')
-        self.assertEqual(parsed_args.skip_header, True)
-        self.assertEqual(parsed_args.id_columns, 'email,name,date')
-        self.assertEqual(parsed_args.date_column, 'date')
 
 
 class TestFinosMeetingsClient(unittest.TestCase):
