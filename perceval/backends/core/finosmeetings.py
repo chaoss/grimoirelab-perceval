@@ -151,8 +151,6 @@ class FinosMeetings(Backend):
         string = ""
         for column in item['_id_columns'].split(','):
             string = string + item[column] + "-"
-        # return str(base64.b64encode(string.encode()))
-        # print("returning id: "+string)
         return string
 
     @staticmethod

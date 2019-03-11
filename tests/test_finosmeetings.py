@@ -113,13 +113,9 @@ class TestFinosMeetingsBackend(unittest.TestCase):
                     ('tosha.ellison@finos.org', 'Tosha Ellison', '', 'Data Tech', 'Security Reference Data', '2018-12-11'),
                     ('maoo@finos.org', 'Maurizio Pillitu', 'maoo', 'FDC3', 'FDC3 PMC', '2018-10-19')]
 
-
-        print("UUID: "+uuid('rob.underwood@finos.org-Rob Underwood-2018-09-28-'))
-
         for x in range(len(expected)):
             entry = entries[x]['data']
-            print(entries[x])
-            self.assertEqual(entries[x]['uuid'], uuid(FinosMeetings.metadata_id(entry)))
+            self.assertEqual(entries[x]['uuid'], uuid(finosmeetings.origin, FinosMeetings.metadata_id(entry)))
             self.assertEqual(entries[x]['updated_on'], FinosMeetings.metadata_updated_on(entry))
             self.assertEqual(entry['email'], expected[x][0])
             self.assertEqual(entry['name'], expected[x][1])
@@ -143,14 +139,10 @@ class TestFinosMeetingsBackend(unittest.TestCase):
         expected = [('rob.underwood@finos.org', 'Rob Underwood', 'brooklynrob', 'Data Tech', 'Data Tech PMC', '2018-09-28'),
                     ('tosha.ellison@finos.org', 'Tosha Ellison', '', 'Data Tech', 'Security Reference Data', '2018-12-11'),
                     ('maoo@finos.org', 'Maurizio Pillitu', 'maoo', 'FDC3', 'FDC3 PMC', '2018-10-19')]
-
-
-        print("UUID: "+uuid('rob.underwood@finos.org-Rob Underwood-2018-09-28-'))
         
         for x in range(len(expected)):
             entry = entries[x]['data']
-            print(entries[x])
-            self.assertEqual(entries[x]['uuid'], uuid(FinosMeetings.metadata_id(entry)))
+            self.assertEqual(entries[x]['uuid'], uuid(finosmeetings.origin, FinosMeetings.metadata_id(entry)))
             self.assertEqual(entries[x]['updated_on'], FinosMeetings.metadata_updated_on(entry))
             self.assertEqual(entry['email'], expected[x][0])
             self.assertEqual(entry['name'], expected[x][1])
