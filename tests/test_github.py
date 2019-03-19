@@ -102,7 +102,7 @@ class TestGitHubBackend(unittest.TestCase):
 
     @httpretty.activate
     def test_initialization(self):
-        """Test whether attributes are initializated"""
+        """Test whether attributes are initialized"""
 
         rate_limit = read_file('data/github/rate_limit')
         httpretty.register_uri(httpretty.GET,
@@ -114,7 +114,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        github = GitHub('zhquan_example', 'repo', 'aaa', tag='test')
+        github = GitHub('zhquan_example', 'repo', ['aaa'], tag='test')
 
         self.assertEqual(github.owner, 'zhquan_example')
         self.assertEqual(github.repository, 'repo')
@@ -124,17 +124,44 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.categories, [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO])
 
         # When tag is empty or None it will be set to the value in origin
-        github = GitHub('zhquan_example', 'repo', 'aaa')
+        github = GitHub('zhquan_example', 'repo', ['aaa'])
         self.assertEqual(github.owner, 'zhquan_example')
         self.assertEqual(github.repository, 'repo')
         self.assertEqual(github.origin, 'https://github.com/zhquan_example/repo')
         self.assertEqual(github.tag, 'https://github.com/zhquan_example/repo')
 
-        github = GitHub('zhquan_example', 'repo', 'aaa', tag='')
+        github = GitHub('zhquan_example', 'repo', ['aaa'], tag='')
         self.assertEqual(github.owner, 'zhquan_example')
         self.assertEqual(github.repository, 'repo')
         self.assertEqual(github.origin, 'https://github.com/zhquan_example/repo')
         self.assertEqual(github.tag, 'https://github.com/zhquan_example/repo')
+
+    def test_pool_of_tokens_initialization(self):
+        """Test whether tokens parameter is initialized"""
+
+        rate_limit = read_file('data/github/rate_limit')
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        # Empty values generate an empty list of tokens
+        github = GitHub('zhquan_example', 'repo', tag='test')
+        self.assertListEqual(github.api_token, [])
+
+        github = GitHub('zhquan_example', 'repo', api_token=[], tag='test')
+        self.assertListEqual(github.api_token, [])
+
+        # Initialize the tokens with a list
+        github = GitHub('zhquan_example', 'repo', api_token=['aaa'], tag='test')
+        self.assertListEqual(github.api_token, ['aaa'])
+
+        github = GitHub('zhquan_example', 'repo', api_token=['aaa', 'bbb'], tag='')
+        self.assertListEqual(github.api_token, ['aaa', 'bbb'])
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -204,7 +231,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
         issues = [issues for issues in github.fetch(from_date=None, to_date=None)]
 
         self.assertEqual(len(issues), 1)
@@ -312,7 +339,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
         pulls = [pulls for pulls in github.fetch(category=CATEGORY_PULL_REQUEST, from_date=None, to_date=None)]
 
         self.assertEqual(len(pulls), 1)
@@ -471,7 +498,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '5'
                                })
 
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
         issues = [issues for issues in github.fetch()]
 
         self.assertEqual(len(issues), 2)
@@ -636,7 +663,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '5'
                                })
 
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
         pulls = [pulls for pulls in github.fetch(category=CATEGORY_PULL_REQUEST, from_date=None)]
 
         self.assertEqual(len(pulls), 2)
@@ -766,7 +793,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '5'
                                })
 
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
         pulls = [pulls for pulls in github.fetch(category=CATEGORY_PULL_REQUEST)]
 
         self.assertEqual(len(pulls), 1)
@@ -879,7 +906,7 @@ class TestGitHubBackend(unittest.TestCase):
                                })
 
         to_date = datetime.datetime(2016, 3, 16)
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
         issues = [issues for issues in github.fetch(to_date=to_date)]
 
         self.assertEqual(len(issues), 1)
@@ -1032,7 +1059,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '5'
                                })
 
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
         to_date = datetime.datetime(2016, 3, 1)
         pulls = [pulls for pulls in github.fetch(category=CATEGORY_PULL_REQUEST, to_date=to_date)]
 
@@ -1104,7 +1131,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
         issues = [issues for issues in github.fetch()]
 
         issue = issues[0]
@@ -1162,7 +1189,7 @@ class TestGitHubBackend(unittest.TestCase):
                                GITHUB_ENTERPRISE_ORGS_URL,
                                body=orgs, status=200)
 
-        github = GitHub("zhquan_example", "repo", "aaa",
+        github = GitHub("zhquan_example", "repo", ["aaa"],
                         base_url=GITHUB_ENTERPRISE_URL)
         issues = [issues for issues in github.fetch()]
 
@@ -1270,7 +1297,8 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
-        github = GitHub("zhquan_example", "repo", "aaa", base_url=GITHUB_ENTERPRISE_URL)
+        github = GitHub("zhquan_example", "repo", ["aaa"], base_url=GITHUB_ENTERPRISE_URL)
+
         pulls = [pulls for pulls in github.fetch(category=CATEGORY_PULL_REQUEST)]
 
         self.assertEqual(len(pulls), 1)
@@ -1406,7 +1434,7 @@ class TestGitHubBackend(unittest.TestCase):
                                })
 
         from_date = datetime.datetime(2016, 3, 1)
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
 
         issues = [issues for issues in github.fetch(from_date=from_date)]
 
@@ -1463,7 +1491,7 @@ class TestGitHubBackend(unittest.TestCase):
                                })
 
         from_date = datetime.datetime(2016, 1, 1)
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
 
         issues = [issues for issues in github.fetch(from_date=from_date)]
 
@@ -1537,7 +1565,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
         _ = [issues for issues in github.fetch()]
 
         # Check that a no 402 exception getting user orgs is raised
@@ -1550,7 +1578,7 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        github = GitHub("zhquan_example", "repo", "aaa")
+        github = GitHub("zhquan_example", "repo", ["aaa"])
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = [issues for issues in github.fetch()]
 
@@ -1560,8 +1588,8 @@ class TestGitHubBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend_write_archive = GitHub("zhquan_example", "repo", "aaa", archive=self.archive)
-        self.backend_read_archive = GitHub("zhquan_example", "repo", "aaa", archive=self.archive)
+        self.backend_write_archive = GitHub("zhquan_example", "repo", ["aaa"], archive=self.archive)
+        self.backend_read_archive = GitHub("zhquan_example", "repo", ["aaa"], archive=self.archive)
 
     @httpretty.activate
     def test_fetch_issues_from_archive(self):
@@ -1885,7 +1913,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient('zhquan_example', 'repo', 'aaa')
+        client = GitHubClient('zhquan_example', 'repo', ['aaa'])
 
         self.assertEqual(client.owner, 'zhquan_example')
         self.assertEqual(client.repository, 'repo')
@@ -1894,10 +1922,12 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(client.max_retries, GitHubClient.MAX_RETRIES)
         self.assertEqual(client.base_url, 'https://api.github.com')
 
-        client = GitHubClient('zhquan_example', 'repo', 'aaa', None, False, 3, 20, 2, None, False)
+        client = GitHubClient('zhquan_example', 'repo', ['aaa'], None, False, 3, 20, 2, None, False)
         self.assertEqual(client.owner, 'zhquan_example')
         self.assertEqual(client.repository, 'repo')
-        self.assertEqual(client.token, 'aaa')
+        self.assertEqual(client.tokens, ['aaa'])
+        self.assertEqual(client.n_tokens, 1)
+        self.assertEqual(client.current_token, 'aaa')
         self.assertEqual(client.base_url, GITHUB_API_URL)
         self.assertFalse(client.sleep_for_rate)
         self.assertEqual(client.min_rate_to_sleep, 3)
@@ -1906,11 +1936,25 @@ class TestGitHubClient(unittest.TestCase):
         self.assertIsNone(client.archive)
         self.assertFalse(client.from_archive)
 
-        client = GitHubClient('zhquan_example', 'repo', 'aaa', min_rate_to_sleep=RateLimitHandler.MAX_RATE_LIMIT + 1)
+        client = GitHubClient('zhquan_example', 'repo', ['aaa'], min_rate_to_sleep=RateLimitHandler.MAX_RATE_LIMIT + 1)
         self.assertEqual(client.min_rate_to_sleep, RateLimitHandler.MAX_RATE_LIMIT)
 
-        client = GitHubClient('zhquan_example', 'repo', 'aaa', min_rate_to_sleep=RateLimitHandler.MAX_RATE_LIMIT - 1)
+        client = GitHubClient('zhquan_example', 'repo', ['aaa'], min_rate_to_sleep=RateLimitHandler.MAX_RATE_LIMIT - 1)
         self.assertEqual(client.min_rate_to_sleep, RateLimitHandler.MAX_RATE_LIMIT - 1)
+
+        client = GitHubClient('zhquan_example', 'repo', ['aaa'])
+        self.assertEqual(client.tokens, ['aaa'])
+        self.assertEqual(client.n_tokens, 1)
+        self.assertEqual(client.current_token, 'aaa')
+
+        client = GitHubClient('zhquan_example', 'repo', ['aaa', 'bbb'])
+        self.assertEqual(client.tokens, ['aaa', 'bbb'])
+        self.assertEqual(client.n_tokens, 2)
+
+        client = GitHubClient('zhquan_example', 'repo', [])
+        self.assertEqual(client.tokens, [])
+        self.assertEqual(client.current_token, None)
+        self.assertEqual(client.n_tokens, 0)
 
     @httpretty.activate
     def test_api_url_initialization(self):
@@ -1932,10 +1976,10 @@ class TestGitHubClient(unittest.TestCase):
                                body="",
                                status=404)
 
-        client = GitHubClient("zhquan_example", "repo", "aaa")
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
         self.assertEqual(client.base_url, GITHUB_API_URL)
 
-        client = GitHubClient("zhquan_example", "repo", "aaa",
+        client = GitHubClient("zhquan_example", "repo", ["aaa"],
                               base_url=GITHUB_ENTERPRISE_URL)
         self.assertEqual(client.base_url, GITHUB_ENTERPRISE_API_URL)
 
@@ -1963,7 +2007,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '5'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", None)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], None)
         raw_issues = [issues for issues in client.issues()]
         self.assertEqual(raw_issues[0], issues)
 
@@ -2002,7 +2046,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa")
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
         pull_requested_reviewers_raw = [rev for rev in client.issue_comments(2)]
         self.assertEqual(pull_requested_reviewers_raw[0], issue_comments)
@@ -2030,7 +2074,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa")
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
         pull_requested_reviewers_raw = [rev for rev in client.issue_reactions(2)]
         self.assertEqual(pull_requested_reviewers_raw[0], issue_reactions)
@@ -2059,7 +2103,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa")
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
         pull_requested_reviewers_raw = [rev for rev in client.issue_comment_reactions(1)]
         self.assertEqual(pull_requested_reviewers_raw[0], issue_comment_reactions)
@@ -2096,7 +2140,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", None)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], None)
         raw_pulls = [pulls for pulls in client.pulls()]
         self.assertEqual(raw_pulls[0], pull_request)
 
@@ -2126,7 +2170,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '5'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa")
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
         raw_repo = client.repo()
         self.assertEqual(raw_repo, repo)
 
@@ -2146,7 +2190,7 @@ class TestGitHubClient(unittest.TestCase):
                                GITHUB_ENTERPRISE_ISSUES_URL,
                                body=issue, status=200)
 
-        client = GitHubClient("zhquan_example", "repo", "aaa",
+        client = GitHubClient("zhquan_example", "repo", ["aaa"],
                               base_url=GITHUB_ENTERPRISE_URL)
 
         raw_issues = [issues for issues in client.issues()]
@@ -2186,7 +2230,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", base_url=GITHUB_ENTERPRISE_URL)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], base_url=GITHUB_ENTERPRISE_URL)
 
         raw_pulls = [pulls for pulls in client.pulls()]
         self.assertEqual(raw_pulls[0], pull_request)
@@ -2217,7 +2261,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '5'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", base_url=GITHUB_ENTERPRISE_URL)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], base_url=GITHUB_ENTERPRISE_URL)
         raw_repo = client.repo()
         self.assertEqual(raw_repo, repo)
 
@@ -2249,7 +2293,7 @@ class TestGitHubClient(unittest.TestCase):
                                })
 
         from_date = datetime.datetime(2016, 3, 1)
-        client = GitHubClient("zhquan_example", "repo", "aaa", None)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], None)
 
         raw_issues = [issues for issues in client.issues(from_date=from_date)]
         self.assertEqual(raw_issues[0], issues)
@@ -2300,7 +2344,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa")
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
         issues = [issues for issues in client.issues()]
 
@@ -2343,7 +2387,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa")
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
         pull_requested_reviewers_raw = [rev for rev in client.pull_requested_reviewers(1)]
         self.assertEqual(pull_requested_reviewers_raw[0], pull_requested_reviewers)
@@ -2372,7 +2416,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa")
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
         pull_review_comments_raw = [rev for rev in client.pull_review_comments(1)]
         self.assertEqual(pull_review_comments_raw[0], pull_request_comments)
@@ -2401,7 +2445,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa")
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
         pull_commits_raw = [rev for rev in client.pull_commits(1)]
         self.assertEqual(pull_commits_raw[0], pull_request_commits)
@@ -2430,7 +2474,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa")
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
         pull_comment_reactions_raw = [rev for rev in client.pull_review_comment_reactions(2)]
         self.assertEqual(pull_comment_reactions_raw[0], pull_comment_reactions)
@@ -2463,7 +2507,7 @@ class TestGitHubClient(unittest.TestCase):
                                })
 
         GitHubClient.MAX_RETRIES_ON_READ = 2
-        client = GitHubClient("zhquan_example", "repo", "aaa", None)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], None)
 
         before = int(time.time())
         expected = before + (retry_after_value * client.max_retries_on_status)
@@ -2498,7 +2542,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", None)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], None)
 
         raw_issues = [issues for issues in client.issues()]
         self.assertEqual(raw_issues[0], issue)
@@ -2538,7 +2582,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", None)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], None)
         response = client.user("zhquan_example")
         self.assertEqual(response, login)
 
@@ -2566,7 +2610,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", None)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], None)
         response = client.user_orgs("zhquan_example")
 
         self.assertEqual(response, orgs)
@@ -2596,7 +2640,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_time=1, max_retries=1)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], sleep_time=1, max_retries=1)
 
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = [issues for issues in client.issues()]
@@ -2638,10 +2682,129 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': '15'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_time=1, max_retries=1)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], sleep_time=1, max_retries=1)
 
         with self.assertRaises(requests.exceptions.RetryError):
             _ = [issues for issues in client.issues()]
+
+    @httpretty.activate
+    def test_choose_best_token_on_init(self):
+        """Test if the client chooses the best token when there are several available"""
+
+        # Token selection is based on the headers returned
+        # by the server to each request made with different tokens
+        forcing_headers_aaa = {
+            'X-RateLimit-Remaining': '10',
+            'X-RateLimit-Reset': '15'
+        }
+        forcing_headers_bbb = {
+            'X-RateLimit-Remaining': '20',
+            'X-RateLimit-Reset': '15'
+        }
+        forcing_headers_bbb_updated = {
+            'X-RateLimit-Remaining': '19',
+            'X-RateLimit-Reset': '15'
+        }
+
+        # Body of the response is ignored. Rate limit is got
+        # from the headers
+        rate_limit_body_aaa = read_file('data/github/rate_limit_aaa')
+        rate_limit_body_bbb = read_file('data/github/rate_limit_bbb')
+
+        # The client request the rate limit for tokens 'aaa' and 'bbb'.
+        # Once it has selected the best token, it makes a new request
+        # with that token to update the rate limit
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               responses=[
+                                   httpretty.Response(rate_limit_body_aaa, forcing_headers=forcing_headers_aaa),
+                                   httpretty.Response(rate_limit_body_bbb, forcing_headers=forcing_headers_bbb),
+                                   httpretty.Response(rate_limit_body_bbb, forcing_headers=forcing_headers_bbb_updated)
+                               ])
+
+        client = GitHubClient("zhquan_example", "repo", ["aaa", "bbb"],
+                              sleep_for_rate=True)
+        self.assertEqual(client.current_token, 'bbb')
+        self.assertEqual(client.rate_limit, 19)
+
+    @httpretty.activate
+    def test_choose_best_token_when_approaching_limit(self):
+        """Test if the client chooses the best token when the current one approaches the limit"""
+
+        # The process will be as follows. The client request the rate limit
+        # for tokens 'aaa', 'bbb' and 'ccc'. Once it has selected the best token,
+        # in this case 'bbb', it makes a new request with that token to update
+        # the rate limit.
+        #
+        # When it performs a query to get user data, first checks whether the
+        # token is reaching to its limit. In this case it is, so it asks for
+        # new tokens. Tokens 'aaa' and 'ccc' are refreshed so it gets the best
+        # one, in this case 'aaa'.
+
+        # Token selection is based on the headers returned
+        # by the server to each request made with different tokens
+        forcing_headers_aaa_init = {
+            'X-RateLimit-Remaining': '10',
+            'X-RateLimit-Reset': '15'
+        }
+        forcing_headers_bbb_init = {
+            'X-RateLimit-Remaining': '20',
+            'X-RateLimit-Reset': '15'
+        }
+        forcing_headers_ccc_init = {
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': '15'
+        }
+        forcing_headers_bbb_updated = {
+            'X-RateLimit-Remaining': '19',
+            'X-RateLimit-Reset': '15'
+        }
+        forcing_headers_aaa_reset = {
+            'X-RateLimit-Remaining': '200',
+            'X-RateLimit-Reset': '15'
+        }
+        forcing_headers_ccc_reset = {
+            'X-RateLimit-Remaining': '100',
+            'X-RateLimit-Reset': '15'
+        }
+        forcing_headers_user = {
+            'X-RateLimit-Remaining': '199',
+            'X-RateLimit-Reset': '15'
+        }
+
+        # Body of the response is ignored. Rate limit is got
+        # from the headers
+        rate_limit_body_aaa = read_file('data/github/rate_limit_aaa')
+        rate_limit_body_bbb = read_file('data/github/rate_limit_bbb')
+        repo_body = read_file('data/github/github_repo')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               responses=[
+                                   httpretty.Response(rate_limit_body_aaa, forcing_headers=forcing_headers_aaa_init),
+                                   httpretty.Response(rate_limit_body_bbb, forcing_headers=forcing_headers_bbb_init),
+                                   httpretty.Response(rate_limit_body_bbb, forcing_headers=forcing_headers_ccc_init),
+                                   httpretty.Response(rate_limit_body_bbb, forcing_headers=forcing_headers_bbb_updated),
+                                   httpretty.Response(rate_limit_body_aaa, forcing_headers=forcing_headers_aaa_reset),
+                                   httpretty.Response(rate_limit_body_bbb, forcing_headers=forcing_headers_bbb_updated),
+                                   httpretty.Response(rate_limit_body_aaa, forcing_headers=forcing_headers_ccc_reset),
+                                   httpretty.Response(rate_limit_body_aaa, forcing_headers=forcing_headers_aaa_reset),
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_REPO_URL,
+                               body=repo_body, status=200,
+                               forcing_headers=forcing_headers_user)
+
+        client = GitHubClient("zhquan_example", "repo", ["aaa", "bbb", "ccc"],
+                              sleep_for_rate=True, min_rate_to_sleep=18)
+
+        self.assertEqual(client.current_token, 'bbb')
+        self.assertEqual(client.rate_limit, 19)
+
+        client.repo()
+
+        self.assertEqual(client.current_token, 'aaa')
+        self.assertEqual(client.rate_limit, 200)
 
     @httpretty.activate
     def test_calculate_time_to_reset(self):
@@ -2657,7 +2820,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': int(datetime_utcnow().replace(microsecond=0).timestamp())
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=True)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], sleep_for_rate=True)
         time_to_reset = client.calculate_time_to_reset()
 
         self.assertEqual(time_to_reset, 0)
@@ -2701,7 +2864,7 @@ class TestGitHubClient(unittest.TestCase):
                                    'X-RateLimit-Reset': reset
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=True)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], sleep_for_rate=True)
 
         issues = [issues for issues in client.issues()]
         after = int(time.time())
@@ -2750,7 +2913,7 @@ class TestGitHubClient(unittest.TestCase):
                                            GITHUB_ISSUES_URL + '/?&page=3>; rel="last"'
                                })
 
-        client = GitHubClient("zhquan_example", "repo", "aaa", sleep_for_rate=False)
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], sleep_for_rate=False)
 
         with self.assertRaises(RateLimitError):
             _ = [issues for issues in client.issues()]
@@ -2786,7 +2949,7 @@ class TestGitHubCommand(unittest.TestCase):
                 '--max-retries', '5',
                 '--sleep-time', '10',
                 '--tag', 'test', '--no-archive',
-                '--api-token', 'abcdefgh',
+                '--api-token', 'abcdefgh', 'ijklmnop',
                 '--from-date', '1970-01-01',
                 '--to-date', '2100-01-01',
                 '--enterprise-url', 'https://example.com',
@@ -2803,7 +2966,7 @@ class TestGitHubCommand(unittest.TestCase):
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.to_date, DEFAULT_LAST_DATETIME)
         self.assertEqual(parsed_args.no_archive, True)
-        self.assertEqual(parsed_args.api_token, 'abcdefgh')
+        self.assertEqual(parsed_args.api_token, ['abcdefgh', 'ijklmnop'])
 
 
 if __name__ == "__main__":
