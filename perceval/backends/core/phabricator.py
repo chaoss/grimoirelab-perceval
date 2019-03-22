@@ -54,7 +54,7 @@ class Phabricator(Backend):
     :param archive: archive to store/retrieve items
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
-    :param sleep_time: time to sleep in case
+    :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
     version = '0.11.1'
@@ -449,7 +449,7 @@ class ConduitClient(HttpClient):
         of the API
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
-    :param sleep_time: time to sleep in case
+    :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive

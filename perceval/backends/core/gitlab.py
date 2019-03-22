@@ -78,7 +78,8 @@ class GitLab(Backend):
          it will be reset
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
-    :param sleep_time: time to sleep in case
+    :param sleep_time: time (in seconds) to sleep in case
+        of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
     version = '0.6.2'
@@ -366,8 +367,8 @@ class GitLabClient(HttpClient, RateLimitHandler):
      :param sleep_for_rate: sleep until rate limit is reset
      :param min_rate_to_sleep: minimun rate needed to sleep until
           it will be reset
-     :param sleep_time: time to sleep in case
-         of connection problems
+     :param sleep_time: time (in seconds) to sleep in case
+        of connection problems
     :param max_retries: number of max retries to a data source
          before raising a RetryError exception
     :param archive: an archive to store/read fetched data

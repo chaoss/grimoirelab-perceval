@@ -51,7 +51,8 @@ class Jenkins(Backend):
     :param archive: archive to store/retrieve items
     :param blacklist_jobs: exclude the jobs of this list while fetching
     :param detail_depth: control the detail level of the data returned by the API
-    :param sleep_time: minimun waiting time due to a timeout connection exception
+    :param sleep_time: time (in seconds) to sleep in case
+        of connection problems
     :param archive: collect builds already retrieved from an archive
     """
     version = '0.11.2'
@@ -201,7 +202,8 @@ class JenkinsClient(HttpClient):
     :param url: URL of jenkins node: https://build.opnfv.org/ci
     :param blacklist_jobs: exclude the jobs of this list while fetching
     :param detail_depth: set the detail level of the data returned by the API
-    :param sleep_time: minimun waiting time due to a timeout connection exception
+    :param sleep_time: time (in seconds) to sleep in case
+        of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
 
