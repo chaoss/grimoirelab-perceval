@@ -56,7 +56,7 @@ class GoogleHits(Backend):
     :param archive: archive to store/retrieve items
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
-    :param sleep_time: time to sleep in case
+    :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
     version = '0.2.2'
@@ -201,7 +201,7 @@ class GoogleHitsClient(HttpClient):
 
     Client for fetching hits data from Google API.
 
-    :param sleep_time: time to sleep in case
+    :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception

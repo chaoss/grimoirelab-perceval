@@ -67,8 +67,8 @@ class Mattermost(Backend):
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
-    :param sleep_time: minimun waiting time to avoid too many request
-         exception
+    :param sleep_time: time (in seconds) to sleep in case
+        of connection problems
     """
     version = '0.1.0'
 
@@ -266,7 +266,7 @@ class MattermostClient(HttpClient, RateLimitHandler):
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
-    :param sleep_time: time to sleep in case
+    :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive

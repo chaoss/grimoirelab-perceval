@@ -54,7 +54,8 @@ class Launchpad(Backend):
     :param distribution: Launchpad distribution
     :param package: Distribution package
     :param items_per_page: number of items in a retrieved page
-    :param sleep_time: time to sleep in case of connection problems
+    :param sleep_time: time (in seconds) to sleep in case
+        of connection problems
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
@@ -276,7 +277,8 @@ class LaunchpadClient(HttpClient):
     :param distribution: Launchpad distribution
     :param package: Distribution package
     :param items_per_page: number of items in a retrieved page
-    :param sleep_time: time to sleep in case of connection problems
+    :param sleep_time: time (in seconds) to sleep in case
+        of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
     """

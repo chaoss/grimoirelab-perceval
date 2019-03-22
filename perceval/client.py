@@ -50,7 +50,7 @@ class HttpClient:
     :param base_url: base URL of the data source
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
-    :param sleep_time: time to sleep in case
+    :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
     version = '0.1.5'
