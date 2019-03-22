@@ -36,7 +36,9 @@ from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.discourse import (Discourse,
                                               DiscourseCommand,
-                                              DiscourseClient)
+                                              DiscourseClient,
+                                              MAX_RETRIES,
+                                              DEFAULT_SLEEP_TIME)
 from base import TestCaseBackendArchive
 
 DISCOURSE_SERVER_URL = 'http://example.com'
@@ -66,6 +68,8 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.tag, 'test')
         self.assertIsNone(discourse.client)
+        self.assertEqual(discourse.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertEqual(discourse.max_retries, MAX_RETRIES)
 
         # When origin is empty or None it will be set to
         # the value in url
@@ -78,6 +82,13 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(discourse.url, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.tag, DISCOURSE_SERVER_URL)
+
+        discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=60, max_retries=30)
+        self.assertEqual(discourse.url, DISCOURSE_SERVER_URL)
+        self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
+        self.assertEqual(discourse.tag, DISCOURSE_SERVER_URL)
+        self.assertEqual(discourse.sleep_time, 60)
+        self.assertEqual(discourse.max_retries, 30)
 
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
@@ -112,11 +123,11 @@ class TestDiscourseBackend(unittest.TestCase):
                     uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
+                raise Exception
 
             requests_http.append(httpretty.last_request())
 
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -146,7 +157,7 @@ class TestDiscourseBackend(unittest.TestCase):
                                ])
 
         # Test fetch topics
-        discourse = Discourse(DISCOURSE_SERVER_URL)
+        discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
         topics = [topic for topic in discourse.fetch()]
 
         self.assertEqual(len(topics), 2)
@@ -212,11 +223,11 @@ class TestDiscourseBackend(unittest.TestCase):
                     uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
+                raise Exception
 
             requests_http.append(httpretty.last_request())
 
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -248,7 +259,7 @@ class TestDiscourseBackend(unittest.TestCase):
         # On this tests only one topic will be retrieved
         from_date = datetime.datetime(2016, 5, 25, 2, 0, 0)
 
-        discourse = Discourse(DISCOURSE_SERVER_URL)
+        discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
         topics = [topic for topic in discourse.fetch(from_date=from_date)]
 
         self.assertEqual(len(topics), 1)
@@ -283,7 +294,7 @@ class TestDiscourseBackend(unittest.TestCase):
                                DISCOURSE_TOPICS_URL,
                                body=body, status=200)
 
-        discourse = Discourse(DISCOURSE_SERVER_URL)
+        discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
         topics = [topic for topic in discourse.fetch()]
 
         self.assertEqual(len(topics), 0)
@@ -312,8 +323,8 @@ class TestDiscourseBackend(unittest.TestCase):
                     uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
-            return (200, headers, body)
+                raise Exception
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -351,7 +362,7 @@ class TestDiscourseBackend(unittest.TestCase):
         # One of them was pinned but the date is in range.
         from_date = datetime.datetime(2016, 5, 25, 2, 0, 0)
 
-        discourse = Discourse(DISCOURSE_SERVER_URL)
+        discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
         topics = [topic for topic in discourse.fetch(from_date=from_date)]
 
         self.assertEqual(len(topics), 2)
@@ -386,8 +397,8 @@ class TestDiscourseBackend(unittest.TestCase):
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
             else:
-                raise
-            return (200, headers, body)
+                raise Exception
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -403,7 +414,7 @@ class TestDiscourseBackend(unittest.TestCase):
 
         # On this tests two topics will be retrieved.
         # One of them has last_posted_at with null
-        discourse = Discourse(DISCOURSE_SERVER_URL)
+        discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
         topics = [topic for topic in discourse.fetch(from_date=None)]
 
         self.assertEqual(len(topics), 1)
@@ -422,8 +433,10 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend_write_archive = Discourse(DISCOURSE_SERVER_URL, api_token="aaaaa", archive=self.archive)
-        self.backend_read_archive = Discourse(DISCOURSE_SERVER_URL, archive=self.archive)
+        self.backend_write_archive = Discourse(DISCOURSE_SERVER_URL,
+                                               sleep_time=0, api_token="aaaaa", archive=self.archive)
+        self.backend_read_archive = Discourse(DISCOURSE_SERVER_URL,
+                                              sleep_time=0, archive=self.archive)
 
     def tearDown(self):
         shutil.rmtree(self.test_path)
@@ -450,11 +463,11 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
             elif uri.startswith(DISCOURSE_POST_URL_1) or uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
+                raise Exception
 
             requests_http.append(httpretty.last_request())
 
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -508,11 +521,11 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
                     uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
+                raise Exception
 
             requests_http.append(httpretty.last_request())
 
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -580,8 +593,8 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
                     uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
-                raise
-            return (200, headers, body)
+                raise Exception
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -634,8 +647,8 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
             else:
-                raise
-            return (200, headers, body)
+                raise Exception
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                DISCOURSE_TOPICS_URL,
@@ -671,6 +684,15 @@ class TestDiscourseClient(unittest.TestCase):
 
         self.assertEqual(client.base_url, DISCOURSE_SERVER_URL)
         self.assertEqual(client.api_key, 'aaaa')
+        self.assertEqual(client.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertEqual(client.max_retries, MAX_RETRIES)
+
+        client = DiscourseClient(DISCOURSE_SERVER_URL,
+                                 api_key='aaaa', sleep_time=60, max_retries=30)
+        self.assertEqual(client.base_url, DISCOURSE_SERVER_URL)
+        self.assertEqual(client.api_key, 'aaaa')
+        self.assertEqual(client.sleep_time, 60)
+        self.assertEqual(client.max_retries, 30)
 
     @httpretty.activate
     def test_topics_page(self):
@@ -683,7 +705,7 @@ class TestDiscourseClient(unittest.TestCase):
                                body=body, status=200)
 
         # Call API without args
-        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa')
+        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa', sleep_time=0)
         response = client.topics_page()
 
         self.assertEqual(response, body)
@@ -725,7 +747,7 @@ class TestDiscourseClient(unittest.TestCase):
                                body=body, status=200)
 
         # Call API
-        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa')
+        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa', sleep_time=0)
         response = client.topic(1148)
 
         self.assertEqual(response, body)
@@ -752,7 +774,7 @@ class TestDiscourseClient(unittest.TestCase):
                                body=body, status=200)
 
         # Call API
-        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa')
+        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa', sleep_time=0)
         response = client.post(21)
 
         self.assertEqual(response, body)
@@ -816,6 +838,22 @@ class TestDiscourseCommand(unittest.TestCase):
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
+
+        args = ['--tag', 'test', '--no-archive',
+                '--from-date', '1970-01-01',
+                '--max-retries', '60',
+                '--sleep-time', '30',
+                DISCOURSE_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, DISCOURSE_SERVER_URL)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.no_archive, True)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.sleep_time, 30)
+        self.assertEqual(parsed_args.max_retries, 60)
 
 
 if __name__ == "__main__":

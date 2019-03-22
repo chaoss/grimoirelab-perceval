@@ -35,6 +35,9 @@ from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
 
+DEFAULT_SLEEP_TIME = 5
+MAX_RETRIES = 10
+
 CATEGORY_TOPIC = "topic"
 
 logger = logging.getLogger(__name__)
@@ -51,17 +54,25 @@ class Discourse(Backend):
     :param api_token: Discourse API access token
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param max_retries: number of max retries to a data source
+        before raising a RetryError exception
+    :param sleep_time: time (in seconds) to sleep in case
+        of connection problems
     """
-    version = '0.9.3'
+    version = '0.10.0'
 
     CATEGORIES = [CATEGORY_TOPIC]
 
-    def __init__(self, url, api_token=None, tag=None, archive=None):
+    def __init__(self, url, api_token=None, tag=None, archive=None,
+                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
         origin = url
 
         super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.api_token = api_token
+        self.max_retries = max_retries
+        self.sleep_time = sleep_time
+
         self.client = None
 
     def fetch(self, category=CATEGORY_TOPIC, from_date=DEFAULT_DATETIME):
@@ -162,7 +173,9 @@ class Discourse(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return DiscourseClient(self.url, self.api_token, archive=self.archive, from_archive=from_archive)
+        return DiscourseClient(self.url, self.api_token,
+                               self.sleep_time, self.max_retries,
+                               archive=self.archive, from_archive=from_archive)
 
     def __fetch_and_parse_topics_ids(self, from_date):
         logger.debug("Fetching and parsing topics ids from %s",
@@ -265,13 +278,19 @@ class DiscourseClient(HttpClient):
     This class implements a simple client to retrieve topics from
     any Discourse board.
 
-    :param url: URL of the Discourse site
+    :param base_url: URL of the Discourse site
     :param api_key: Discourse API access token
-    :param archive: an archive to store/read fetched data
+    :param sleep_time: time (in seconds) to sleep in case
+        of connection problems
+    :param max_retries: number of max retries to a data source
+        before raising a RetryError exception
+    :param archive: collect issues already retrieved from an archive
     :param from_archive: it tells whether to write/read the archive
 
     :raises HTTPError: when an error occurs doing the request
     """
+    EXTRA_STATUS_FORCELIST = [429]
+
     # Static resources
     ALL_TOPICS = None  # Topics do not need a resource
     TOPICS_SUMMARY = 'latest'
@@ -285,8 +304,11 @@ class DiscourseClient(HttpClient):
     # Data type
     TJSON = '.json'
 
-    def __init__(self, base_url, api_key=None, archive=None, from_archive=False):
-        super().__init__(base_url, archive=archive, from_archive=from_archive)
+    def __init__(self, base_url, api_key=None, sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
+                 archive=None, from_archive=False):
+        super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
+                         extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
+                         archive=archive, from_archive=from_archive)
         self.api_key = api_key
 
     def topics_page(self, page=None):
@@ -369,7 +391,6 @@ class DiscourseClient(HttpClient):
                      res, res_id, str(params))
 
         r = self.fetch(url, payload=params)
-
         return r.text
 
 
@@ -389,5 +410,15 @@ class DiscourseCommand(BackendCommand):
         # Required arguments
         parser.parser.add_argument('url',
                                    help="URL of the Discourse server")
+
+        # Discourse options
+        group = parser.parser.add_argument_group('Discourse arguments')
+        # Generic client options
+        group.add_argument('--max-retries', dest='max_retries',
+                           default=MAX_RETRIES, type=int,
+                           help="number of API call retries")
+        group.add_argument('--sleep-time', dest='sleep_time',
+                           default=DEFAULT_SLEEP_TIME, type=int,
+                           help="sleeping time between API call retries")
 
         return parser
