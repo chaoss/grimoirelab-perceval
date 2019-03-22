@@ -63,6 +63,7 @@ def setup_http_server():
     body_contents_empty = read_file('data/confluence/confluence_contents_empty.json', 'rb')
     body_content_1_v1 = read_file('data/confluence/confluence_content_1_v1.json', 'rb')
     body_content_1_v2 = read_file('data/confluence/confluence_content_1_v2.json', 'rb')
+    body_content_1_v3 = read_file('data/confluence/confluence_content_1_v3.json', 'rb')
     body_content_2 = read_file('data/confluence/confluence_content_2_v1.json', 'rb')
     body_content_att = read_file('data/confluence/confluence_content_att_v1.json', 'rb')
 
@@ -72,6 +73,8 @@ def setup_http_server():
 
             if 'start' in params and params['start'] == ['2']:
                 body = body_contents_next
+            elif 'start' in params and params['start'] == ['3']:
+                body = body_contents_empty
             elif params['cql'][0].startswith("lastModified>='2016-07-08 00:00'"):
                 body = body_contents_empty
             else:
@@ -81,8 +84,10 @@ def setup_http_server():
 
             if params['version'] == ['1']:
                 body = body_content_1_v1
-            else:
+            elif params['version'] == ['2']:
                 body = body_content_1_v2
+            else:
+                body = body_content_1_v3
         elif uri.startswith(CONFLUENCE_HISTORICAL_CONTENT_2):
             body = body_content_2
         elif uri.startswith(CONFLUENCE_HISTORICAL_CONTENT_ATT):
@@ -92,7 +97,7 @@ def setup_http_server():
 
         http_requests.append(httpretty.last_request())
 
-        return (200, headers, body)
+        return 200, headers, body
 
     httpretty.register_uri(httpretty.GET,
                            CONFLUENCE_CONTENTS_URL,
@@ -160,6 +165,7 @@ class TestConfluenceBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         confluence = Confluence(CONFLUENCE_URL)
+
         hcs = [hc for hc in confluence.fetch()]
 
         expected = [
@@ -207,6 +213,11 @@ class TestConfluenceBackend(unittest.TestCase):
                 'expand': ['body.storage,history,version'],
                 'status': ['historical'],
                 'version': ['2']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['3']
             },
             {
                 'expand': ['body.storage,history,version'],
@@ -283,6 +294,11 @@ class TestConfluenceBackend(unittest.TestCase):
                 'expand': ['body.storage,history,version'],
                 'status': ['historical'],
                 'version': ['2']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['3']
             },
             {
                 'expand': ['body.storage,history,version'],
