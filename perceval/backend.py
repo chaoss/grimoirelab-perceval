@@ -223,7 +223,7 @@ class BackendCommandArgumentParser:
 
         group = self.parser.add_argument_group('general arguments')
         group.add_argument('--category', dest='category',
-                           help="type of the items to fetch")
+                           help="type of the items to fetch. Note that issues contain also pull requests.")
         group.add_argument('--tag', dest='tag',
                            help="tag the items generated during the fetching process")
 
