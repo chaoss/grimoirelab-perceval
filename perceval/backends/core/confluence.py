@@ -244,7 +244,7 @@ class Confluence(Backend):
             except requests.exceptions.HTTPError as e:
                 code = e.response.status_code
 
-                # Common problems found: removed and privated contents
+                # Common problems found: removed and private contents
                 if code not in (404, 500):
                     raise e
 
