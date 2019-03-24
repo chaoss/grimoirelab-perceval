@@ -304,6 +304,9 @@ class BackendCommandArgumentParser:
                            help="type of the items to fetch")
         group.add_argument('--tag', dest='tag',
                            help="tag the items generated during the fetching process")
+        group.add_argument('--filter-classified', dest='filter_classified',
+                           action='store_true',
+                           help="filter classified fields, if any, from fetched items")
 
         if (from_date or to_date) and offset:
             raise AttributeError("date and offset parameters are incompatible")

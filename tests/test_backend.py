@@ -539,13 +539,24 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
     def test_parse_default_args(self):
         """Test if the default configured arguments are parsed"""
 
-        args = ['--tag', 'test']
+        args = ['--tag', 'test', '--filter-classified']
 
         parser = BackendCommandArgumentParser()
         parsed_args = parser.parse(*args)
 
         self.assertIsInstance(parsed_args, argparse.Namespace)
         self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.filter_classified, True)
+
+    def test_parse_default_filter_classified(self):
+        """Test default value of filter-classified options"""
+
+        args = []
+
+        parser = BackendCommandArgumentParser()
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.filter_classified, False)
 
     def test_parse_with_aliases(self):
         """Test if a set of aliases is created after parsing"""
