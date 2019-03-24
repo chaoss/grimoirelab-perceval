@@ -533,7 +533,8 @@ def uuid(*args):
     return uuid_sha1
 
 
-def fetch(backend_class, backend_args, category, manager=None):
+def fetch(backend_class, backend_args, category, filter_classified=False,
+          manager=None):
     """Fetch items using the given backend.
 
     Generator to get items using the given backend class. When
@@ -548,6 +549,7 @@ def fetch(backend_class, backend_args, category, manager=None):
     :param backend_args: dict of arguments needed to fetch the items
     :param category: category of the items to retrieve.
        If None, it will use the default backend category
+    :param filter_classified: remove classified fields from the resulting items
     :param manager: archive manager needed to store the items
 
     :returns: a generator of items
@@ -561,6 +563,8 @@ def fetch(backend_class, backend_args, category, manager=None):
 
     if category:
         backend_args['category'] = category
+    if filter_classified:
+        backend_args['filter_classified'] = filter_classified
 
     fetch_args = find_signature_parameters(backend.fetch,
                                            backend_args)

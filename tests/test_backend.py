@@ -1188,6 +1188,7 @@ class TestFetch(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
         filepaths = manager.search('http://example.com/', 'CommandBackend',
                                    'mock_item', str_to_datetime('1970-01-01'))
@@ -1196,6 +1197,44 @@ class TestFetch(unittest.TestCase):
 
         archive = Archive(filepaths[0])
         self.assertEqual(archive._count_table_rows('archive'), 5)
+
+    def test_filter_classified_fields(self):
+        """Test whether classified fields are removed from the items"""
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        items = fetch(ClassifiedFieldsBackend, args, category,
+                      filter_classified=True, manager=None)
+        items = [item for item in items]
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+
+            expected_uuid = uuid('http://example.com/', str(x))
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'],
+                             ['my.classified.field', 'classified'])
+
+            # Fields in CLASSIFIED_FIELDS are deleted
+            expected = {
+                'category': 'mock_item',
+                'item': x,
+                'my': {
+                    'classified': {},
+                    'field': x,
+                }
+            }
+            self.assertDictEqual(item['data'], expected)
 
     def test_remove_archive_on_error(self):
         """Test whether an archive is removed when an unhandled exception occurs"""
@@ -1270,6 +1309,7 @@ class TestFetchFromArchive(unittest.TestCase):
                 self.assertEqual(item['origin'], 'http://example.com/')
                 self.assertEqual(item['uuid'], expected_uuid)
                 self.assertEqual(item['tag'], 'test')
+                self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_archived_after(self):
         """Test if only those items archived after a date are returned"""
@@ -1384,6 +1424,7 @@ class TestFetchFromArchive(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
 
 if __name__ == "__main__":
