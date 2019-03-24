@@ -8,14 +8,6 @@
         "operations": "",
         "space": "/rest/api/space/DEV"
     },
-    "_links": {
-        "base": "http://example.com",
-        "collection": "/rest/api/content",
-        "context": "",
-        "self": "http://example.com/rest/api/content/1",
-        "tinyui": "/x/zB5o",
-        "webui": "/display/DEV/Steady+State+Project+-+2016-06-17+Goals"
-    },
     "body": {
         "_expandable": {
             "anonymous_export_view": "",

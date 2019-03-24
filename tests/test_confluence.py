@@ -28,6 +28,7 @@ import urllib
 
 import httpretty
 import pkg_resources
+import requests
 
 pkg_resources.declare_namespace('perceval.backends')
 
@@ -46,6 +47,9 @@ CONFLUENCE_HISTORICAL_CONTENT_1 = CONFLUENCE_API_URL + '/content/1'
 CONFLUENCE_HISTORICAL_CONTENT_2 = CONFLUENCE_API_URL + '/content/2'
 CONFLUENCE_HISTORICAL_CONTENT_ATT = CONFLUENCE_API_URL + '/content/att1'
 
+STATUS_CODE_SUCCESS = 200
+STATUS_CODE_NOT_HANDLED = 503
+
 
 def read_file(filename, mode='r'):
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
@@ -53,7 +57,7 @@ def read_file(filename, mode='r'):
     return content
 
 
-def setup_http_server():
+def setup_http_server(not_handle_status_code=False):
     """Setup a mock HTTP server"""
 
     http_requests = []
@@ -68,6 +72,9 @@ def setup_http_server():
     body_content_att = read_file('data/confluence/confluence_content_att_v1.json', 'rb')
 
     def request_callback(method, uri, headers):
+
+        status_code = STATUS_CODE_SUCCESS
+
         if uri.startswith(CONFLUENCE_CONTENTS_URL):
             params = urllib.parse.parse_qs(urllib.parse.urlparse(uri).query)
 
@@ -90,14 +97,18 @@ def setup_http_server():
                 body = body_content_1_v3
         elif uri.startswith(CONFLUENCE_HISTORICAL_CONTENT_2):
             body = body_content_2
+
+            if not_handle_status_code:
+                status_code = STATUS_CODE_NOT_HANDLED
+
         elif uri.startswith(CONFLUENCE_HISTORICAL_CONTENT_ATT):
             body = body_content_att
         else:
-            raise
+            raise Exception
 
         http_requests.append(httpretty.last_request())
 
-        return 200, headers, body
+        return status_code, headers, body
 
     httpretty.register_uri(httpretty.GET,
                            CONFLUENCE_CONTENTS_URL,
@@ -316,6 +327,18 @@ class TestConfluenceBackend(unittest.TestCase):
 
         for i in range(len(expected)):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_status_code_not_handled(self):
+        """Test whether an exception is thrown when the API returns a HTTP status code
+        different from 404 and 500 when fetching historical contents.
+        """
+        setup_http_server(not_handle_status_code=True)
+
+        confluence = Confluence(CONFLUENCE_URL)
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            _ = [hc for hc in confluence.fetch(from_date=None)]
 
     @httpretty.activate
     def test_fetch_removed_content(self):
