@@ -450,16 +450,17 @@ class BackendCommand:
         """
         backend_args = vars(self.parsed_args)
         category = backend_args.pop('category', None)
+        filter_classified = backend_args.pop('filter_classified', False)
         archived_since = backend_args.pop('archived_since', None)
 
         if self.archive_manager and self.parsed_args.fetch_archive:
-
             items = fetch_from_archive(self.BACKEND, backend_args,
                                        self.archive_manager,
                                        category,
                                        archived_since)
         else:
             items = fetch(self.BACKEND, backend_args, category,
+                          filter_classified=filter_classified,
                           manager=self.archive_manager)
 
         try:

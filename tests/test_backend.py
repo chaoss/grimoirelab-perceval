@@ -175,6 +175,12 @@ class MockedBackendCommand(BackendCommand):
         return parser
 
 
+class ClassifiedFieldsBackendCommand(MockedBackendCommand):
+    """Mocked backend command for testing classified fields filtering"""
+
+    BACKEND = ClassifiedFieldsBackend
+
+
 class NoArchiveBackendCommand(BackendCommand):
     """Mocked backend command class used for testing which does not support archive"""
 
@@ -769,7 +775,8 @@ class TestBackendCommand(unittest.TestCase):
         """Test if the arguments are parsed when the class is initialized"""
 
         args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
-                '--category', 'mock_item', '--archive-path', self.test_path,
+                '--category', 'mock_item', '--filter-classified',
+                '--archive-path', self.test_path,
                 '--fetch-archive', '--archived-since', '2015-01-01',
                 '--from-date', '2015-01-01', '--tag', 'test',
                 '--output', self.fout_path, 'http://example.com/']
@@ -788,6 +795,7 @@ class TestBackendCommand(unittest.TestCase):
         self.assertEqual(cmd.parsed_args.archived_since, dt_expected)
         self.assertEqual(cmd.parsed_args.from_date, dt_expected)
         self.assertEqual(cmd.parsed_args.tag, 'test')
+        self.assertEqual(cmd.parsed_args.filter_classified, True)
 
         self.assertIsInstance(cmd.outfile, io.TextIOWrapper)
         self.assertEqual(cmd.outfile.name, self.fout_path)
@@ -872,6 +880,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['category'], MockedBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_other_category(self):
         """Test whether when the category (different from the default one) is properly set"""
@@ -899,6 +908,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['category'], MockedBackend.OTHER_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_no_category(self):
         """Test whether when the category is not passed, the default one is used"""
@@ -926,6 +936,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['category'], MockedBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_fetch_from_archive(self):
         """Test whether the command runs when fetch from archive is set"""
@@ -968,6 +979,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_no_archive(self):
         """Test whether the command runs when archive is not set"""
@@ -993,6 +1005,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_not_supported_archive(self):
         """Test whether the comand runs when archive is not supported"""
@@ -1018,6 +1031,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_json_line(self):
         """Test run method with --json-line"""
@@ -1046,6 +1060,47 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['category'], MockedBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'], None)
+
+    def test_filter_classified_fields(self):
+        """Test if fields are filtered with filter-classified option is active"""
+
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--category', ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                '--subtype', 'mocksubtype',
+                '--from-date', '2015-01-01', '--tag', 'test',
+                '--filter-classified', '--no-archive',
+                '--output', self.fout_path, 'http://example.com/']
+
+        cmd = ClassifiedFieldsBackendCommand(*args)
+        cmd.run()
+        cmd.outfile.close()
+
+        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['category'], ClassifiedFieldsBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'],
+                             ['my.classified.field', 'classified'])
+
+            expected = {
+                'category': 'mock_item',
+                'item': x,
+                'my': {
+                    'classified': {},
+                    'field': x,
+                },
+            }
+            self.assertDictEqual(item['data'], expected)
 
 
 class TestMetadata(unittest.TestCase):
