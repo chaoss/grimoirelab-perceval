@@ -148,18 +148,18 @@ class Telegram(Backend):
         logger.info("Fetch process completed: %s messages fetched",
                     nmsgs)
 
-    def metadata(self, item):
+    def metadata(self, item, filter_classified=False):
         """Telegram metadata.
 
-        The metod takes an item and overrides the `metadata` information
+        The method takes an item and overrides the `metadata` information
         to add extra information related to Telegram.
 
         Currently, it adds the 'offset' keyword.
 
         :param item: an item fetched by a backend
+        :param filter_classified: sets if classified fields were filtered
         """
-
-        item = super().metadata(item)
+        item = super().metadata(item, filter_classified=filter_classified)
         item['offset'] = item['data']['update_id']
 
         return item
