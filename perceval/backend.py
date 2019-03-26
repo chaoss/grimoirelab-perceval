@@ -39,6 +39,7 @@ from ._version import __version__
 
 logger = logging.getLogger(__name__)
 
+
 ARCHIVES_DEFAULT_PATH = '~/.perceval/archives/'
 
 
@@ -63,6 +64,17 @@ class Backend:
     process, this class provides a `version` attribute that each backend
     may override.
 
+    Each backend should implement a class attribute named `CLASSIFIED_FIELDS`.
+    It will allow to filter from items those fields that may be considered
+    sensible or confidential. This attribute is a list of lists.
+    As items returned are dicts that may contain nested dicts, each entry
+    is a list which stores the "path" or nested dicts keys to the field to
+    remove. For example, `['my', 'classified', 'field']` will remove `field`
+    from `item['data']['my']['classified']` dict.
+
+    Classified data filtering and archiving are not compatible to prevent
+    data leaks or security issues.
+
     :param origin: identifier of the repository
     :param tag: tag items using this label
     :param archive: archive to store/retrieve data
@@ -70,9 +82,10 @@ class Backend:
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
     CATEGORIES = []
+    CLASSIFIED_FIELDS = []
 
     def __init__(self, origin, tag=None, archive=None):
         self._origin = origin
@@ -100,22 +113,44 @@ class Backend:
     def categories(self):
         return self.CATEGORIES
 
+    @property
+    def classified_fields(self):
+        cfs = ['.'.join(cf) for cf in self.CLASSIFIED_FIELDS]
+        return cfs
+
     def fetch_items(self, category, **kwargs):
         raise NotImplementedError
 
-    def fetch(self, category, **kwargs):
+    def fetch(self, category, filter_classified=False, **kwargs):
         """Fetch items from the repository.
 
         The method retrieves items from a repository.
 
+        To removed classified fields from the resulting items, set
+        the parameter `filter_classified`. Take into account this
+        parameter is incompatible with archiving items. Raw client
+        data are archived before any other process. Therefore,
+        classified data  are stored within the archive. To prevent
+        from possible data leaks or security issues when users do
+        not need these fields, archiving and filtering are not
+        compatible.
+
         :param category: the category of the items fetched
+        :param filter_classified: remove classified fields from the resulting items
         :param kwargs: a list of other parameters (e.g., from_date, offset, etc.
         specific for each backend)
 
         :returns: a generator of items
+
+        :raises BackendError: either when the category is not valid or
+            'filter_classified' and 'archive' are active at the same time.
         """
         if category not in self.categories:
             cause = "%s category not valid for %s" % (category, self.__class__.__name__)
+            raise BackendError(cause=cause)
+
+        if filter_classified and self.archive:
+            cause = "classified fields filtering is not compatible with archiving items"
             raise BackendError(cause=cause)
 
         if self.archive:
@@ -125,7 +160,10 @@ class Backend:
         self.client = self._init_client()
 
         for item in self.fetch_items(category, **kwargs):
-            yield self.metadata(item)
+            if filter_classified:
+                item = self.filter_classified_data(item)
+
+            yield self.metadata(item, filter_classified=filter_classified)
 
     def fetch_from_archive(self):
         """Fetch the questions from an archive.
@@ -134,6 +172,7 @@ class Backend:
         no archive was provided, the method will raise a `ArchiveError` exception.
 
         :returns: a generator of items
+
         :raises ArchiveError: raised when an error occurs accessing an archive
         """
         if not self.archive:
@@ -144,7 +183,32 @@ class Backend:
         for item in self.fetch_items(self.archive.category, **self.archive.backend_params):
             yield self.metadata(item)
 
-    def metadata(self, item):
+    def filter_classified_data(self, item):
+        """Remove classified or confidential data from an item.
+
+        It removes those fields that contain data considered as classified.
+        Classified fields are defined in `CLASSIFIED_FIELDS` class attribute.
+
+        :param item: fields will be removed from this item
+
+        :returns: the same item but with confidential data filtered
+        """
+        item_uuid = uuid(self.origin, self.metadata_id(item))
+
+        logger.debug("Filtering classified data for item %s", item_uuid)
+
+        for cf in self.CLASSIFIED_FIELDS:
+            try:
+                _remove_key_from_nested_dict(item, cf)
+            except KeyError:
+                logger.debug("Classified field '%s' not found for item %s; field ignored",
+                             '.'.join(cf), item_uuid)
+
+        logger.debug("Classified data filtered for item %s", item_uuid)
+
+        return item
+
+    def metadata(self, item, filter_classified=False):
         """Add metadata to an item.
 
         It adds metadata to a given item such as how and
@@ -152,6 +216,7 @@ class Backend:
         be stored under the 'data' keyword.
 
         :param item: an item fetched by a backend
+        :param filter_classified: sets if classified fields were filtered
         """
         item = {
             'backend_name': self.__class__.__name__,
@@ -161,6 +226,7 @@ class Backend:
             'origin': self.origin,
             'uuid': uuid(self.origin, self.metadata_id(item)),
             'updated_on': self.metadata_updated_on(item),
+            'classified_fields_filtered': self.classified_fields if filter_classified else None,
             'category': self.metadata_category(item),
             'tag': self.tag,
             'data': item,
@@ -190,6 +256,18 @@ class Backend:
 
     def _init_client(self, from_archive=False):
         raise NotImplementedError
+
+
+def _remove_key_from_nested_dict(nested_dict, path_to_field):
+    if len(path_to_field) == 0:
+        return
+
+    key = path_to_field[0]
+
+    if len(path_to_field) == 1:
+        nested_dict.pop(key)
+    else:
+        _remove_key_from_nested_dict(nested_dict[key], path_to_field[1:])
 
 
 class BackendCommandArgumentParser:
@@ -226,6 +304,9 @@ class BackendCommandArgumentParser:
                            help="type of the items to fetch")
         group.add_argument('--tag', dest='tag',
                            help="tag the items generated during the fetching process")
+        group.add_argument('--filter-classified', dest='filter_classified',
+                           action='store_true',
+                           help="filter classified fields, if any, from fetched items")
 
         if (from_date or to_date) and offset:
             raise AttributeError("date and offset parameters are incompatible")
@@ -369,16 +450,17 @@ class BackendCommand:
         """
         backend_args = vars(self.parsed_args)
         category = backend_args.pop('category', None)
+        filter_classified = backend_args.pop('filter_classified', False)
         archived_since = backend_args.pop('archived_since', None)
 
         if self.archive_manager and self.parsed_args.fetch_archive:
-
             items = fetch_from_archive(self.BACKEND, backend_args,
                                        self.archive_manager,
                                        category,
                                        archived_since)
         else:
             items = fetch(self.BACKEND, backend_args, category,
+                          filter_classified=filter_classified,
                           manager=self.archive_manager)
 
         try:
@@ -455,7 +537,8 @@ def uuid(*args):
     return uuid_sha1
 
 
-def fetch(backend_class, backend_args, category, manager=None):
+def fetch(backend_class, backend_args, category, filter_classified=False,
+          manager=None):
     """Fetch items using the given backend.
 
     Generator to get items using the given backend class. When
@@ -470,6 +553,7 @@ def fetch(backend_class, backend_args, category, manager=None):
     :param backend_args: dict of arguments needed to fetch the items
     :param category: category of the items to retrieve.
        If None, it will use the default backend category
+    :param filter_classified: remove classified fields from the resulting items
     :param manager: archive manager needed to store the items
 
     :returns: a generator of items
@@ -483,6 +567,8 @@ def fetch(backend_class, backend_args, category, manager=None):
 
     if category:
         backend_args['category'] = category
+    if filter_classified:
+        backend_args['filter_classified'] = filter_classified
 
     fetch_args = find_signature_parameters(backend.fetch,
                                            backend_args)

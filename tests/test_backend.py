@@ -45,7 +45,8 @@ from perceval.backend import (Backend,
                               BackendCommand,
                               uuid,
                               fetch,
-                              fetch_from_archive)
+                              fetch_from_archive,
+                              logger as backend_logger)
 from perceval.errors import ArchiveError, BackendError
 from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
@@ -64,6 +65,9 @@ class MockedBackend(Backend):
         super().__init__(origin, tag=tag, archive=archive)
         self._fetch_from_archive = False
 
+    def fetch(self, category=DEFAULT_CATEGORY, filter_classified=False):
+        return super().fetch(category, filter_classified=filter_classified)
+
     def fetch_items(self, category, **kwargs):
         for x in range(MockedBackend.ITEMS):
             if self._fetch_from_archive:
@@ -74,9 +78,6 @@ class MockedBackend(Backend):
                 if self.archive:
                     self.archive.store(str(x), None, None, item)
                 yield item
-
-    def fetch(self, category=DEFAULT_CATEGORY):
-        return super().fetch(category)
 
     def _init_client(self, from_archive=False):
         self._fetch_from_archive = from_archive
@@ -93,6 +94,40 @@ class MockedBackend(Backend):
     @staticmethod
     def metadata_category(item):
         return item['category']
+
+
+class ClassifiedFieldsBackend(MockedBackend):
+    """Mocked backend for testing classified fields filtering"""
+
+    CLASSIFIED_FIELDS = [
+        ['my', 'classified', 'field'],
+        ['classified']
+    ]
+
+    def fetch(self, category, filter_classified=False):
+        return super().fetch(category, filter_classified=filter_classified)
+
+    def fetch_items(self, category, **kwargs):
+        i = 0
+        for item in super().fetch_items(category, **kwargs):
+            item['my'] = {
+                'classified': {'field': i},
+                'field': i
+            }
+            item['classified'] = i
+            i += 1
+            yield item
+
+
+class NotFoundClassifiedFieldBackend(MockedBackend):
+    """Mocked backend for testing classified fields not found while filtering"""
+
+    CLASSIFIED_FIELDS = [
+        ['classified_field']
+    ]
+
+    def fetch(self, category, filter_classified=False):
+        return super().fetch(category, filter_classified=filter_classified)
 
 
 class CommandBackend(MockedBackend):
@@ -140,6 +175,12 @@ class MockedBackendCommand(BackendCommand):
         return parser
 
 
+class ClassifiedFieldsBackendCommand(MockedBackendCommand):
+    """Mocked backend command for testing classified fields filtering"""
+
+    BACKEND = ClassifiedFieldsBackend
+
+
 class NoArchiveBackendCommand(BackendCommand):
     """Mocked backend command class used for testing which does not support archive"""
 
@@ -184,6 +225,15 @@ class TestBackend(unittest.TestCase):
 
         b = Backend('test')
         self.assertEqual(b.origin, 'test')
+
+    def test_classified_fields(self):
+        """Test whether classified fields property returns a list with fields"""
+
+        b = Backend('test')
+        self.assertListEqual(b.classified_fields, [])
+
+        b = ClassifiedFieldsBackend('test')
+        self.assertListEqual(b.classified_fields, ['my.classified.field', 'classified'])
 
     def test_has_archiving(self):
         """Test whether an NotImplementedError exception is thrown"""
@@ -310,6 +360,146 @@ class TestBackend(unittest.TestCase):
             b.fetch_items(MockedBackend.DEFAULT_CATEGORY)
 
 
+class TestClassifiedFieldsFiltering(unittest.TestCase):
+    """Unit tests for Backend filtering classified fields"""
+
+    def setUp(self):
+        self.test_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
+
+    def test_fetch_filtering_classified_fields(self):
+        """Test whether classified fields are removed from the items"""
+
+        backend = ClassifiedFieldsBackend('http://example.com/', tag='test')
+
+        items = [item for item in backend.fetch(category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                                                filter_classified=True)]
+
+        for x in range(5):
+            item = items[x]
+
+            expected_uuid = uuid('http://example.com/', str(x))
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['category'], ClassifiedFieldsBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'],
+                             ['my.classified.field', 'classified'])
+
+            # Fields in CLASSIFIED_FIELDS are deleted
+            expected = {
+                'category': 'mock_item',
+                'item': x,
+                'my': {
+                    'classified': {},
+                    'field': x,
+                }
+            }
+            self.assertDictEqual(item['data'], expected)
+
+    def test_fetch_filtering_not_active(self):
+        """Test whether classified fields are not removed from the items"""
+
+        backend = ClassifiedFieldsBackend('http://example.com/', tag='test')
+
+        items = [item for item in backend.fetch(category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                                                filter_classified=False)]
+
+        for x in range(5):
+            item = items[x]
+
+            expected_uuid = uuid('http://example.com/', str(x))
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['category'], ClassifiedFieldsBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'], None)
+
+            # Fields in CLASSIFIED_FIELDS are not deleted
+            expected = {
+                'category': 'mock_item',
+                'classified': x,
+                'item': x,
+                'my': {
+                    'classified': {'field': x},
+                    'field': x,
+                },
+            }
+            self.assertDictEqual(item['data'], expected)
+
+    def test_fetch_filtering_empty_list(self):
+        """Test whether no data is removed when classified fields list is empty"""
+
+        backend = ClassifiedFieldsBackend('http://example.com/', tag='test')
+        backend.CLASSIFIED_FIELDS = []
+
+        items = [item for item in backend.fetch(category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                                                filter_classified=True)]
+
+        for x in range(5):
+            item = items[x]
+
+            expected_uuid = uuid('http://example.com/', str(x))
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['category'], ClassifiedFieldsBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'], [])
+
+            expected = {
+                'category': 'mock_item',
+                'classified': x,
+                'item': x,
+                'my': {
+                    'classified': {'field': x},
+                    'field': x,
+                },
+            }
+            self.assertDictEqual(item['data'], expected)
+
+    def test_error_archive_and_filter_classified(self):
+        """Check if an error is raised when archive and classified fields filtering are both active"""
+
+        archive_path = os.path.join(self.test_path, 'myarchive')
+        archive = Archive.create(archive_path)
+
+        backend = ClassifiedFieldsBackend('http://example.com/', archive=archive)
+
+        msg_error = "classified fields filtering is not compatible with archiving items"
+
+        with self.assertRaisesRegex(BackendError, msg_error):
+            _ = [item for item in backend.fetch(category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                                                filter_classified=True)]
+
+    def test_not_found_field(self):
+        """Check if items are fetched when a classified field does not exist"""
+
+        backend = NotFoundClassifiedFieldBackend('http://example.com/', tag='test')
+
+        with self.assertLogs(backend_logger, level='DEBUG') as cm:
+            items = [item for item in backend.fetch(category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                                                    filter_classified=True)]
+
+            for x in range(5):
+                item = items[x]
+
+                # Classified fields are deleted; those not found are ignored
+                expected = {
+                    'category': 'mock_item',
+                    'item': x
+                }
+                self.assertDictEqual(item['data'], expected)
+
+                # Check logger output
+                # Each filter message appears after 3 debug messages
+                # because there are other debug messages
+                expected_uuid = uuid('http://example.com/', str(x))
+                exp = "Classified field 'classified_field' not found for item " + expected_uuid
+                self.assertRegex(cm.output[x * 3 + 1], exp)
+
+
 class TestBackendArchive(TestCaseBackendArchive):
     """Unit tests for Backend using the archive"""
 
@@ -355,13 +545,24 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
     def test_parse_default_args(self):
         """Test if the default configured arguments are parsed"""
 
-        args = ['--tag', 'test']
+        args = ['--tag', 'test', '--filter-classified']
 
         parser = BackendCommandArgumentParser()
         parsed_args = parser.parse(*args)
 
         self.assertIsInstance(parsed_args, argparse.Namespace)
         self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.filter_classified, True)
+
+    def test_parse_default_filter_classified(self):
+        """Test default value of filter-classified options"""
+
+        args = []
+
+        parser = BackendCommandArgumentParser()
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.filter_classified, False)
 
     def test_parse_with_aliases(self):
         """Test if a set of aliases is created after parsing"""
@@ -574,7 +775,8 @@ class TestBackendCommand(unittest.TestCase):
         """Test if the arguments are parsed when the class is initialized"""
 
         args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
-                '--category', 'mock_item', '--archive-path', self.test_path,
+                '--category', 'mock_item', '--filter-classified',
+                '--archive-path', self.test_path,
                 '--fetch-archive', '--archived-since', '2015-01-01',
                 '--from-date', '2015-01-01', '--tag', 'test',
                 '--output', self.fout_path, 'http://example.com/']
@@ -593,6 +795,7 @@ class TestBackendCommand(unittest.TestCase):
         self.assertEqual(cmd.parsed_args.archived_since, dt_expected)
         self.assertEqual(cmd.parsed_args.from_date, dt_expected)
         self.assertEqual(cmd.parsed_args.tag, 'test')
+        self.assertEqual(cmd.parsed_args.filter_classified, True)
 
         self.assertIsInstance(cmd.outfile, io.TextIOWrapper)
         self.assertEqual(cmd.outfile.name, self.fout_path)
@@ -677,6 +880,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['category'], MockedBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_other_category(self):
         """Test whether when the category (different from the default one) is properly set"""
@@ -704,6 +908,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['category'], MockedBackend.OTHER_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_no_category(self):
         """Test whether when the category is not passed, the default one is used"""
@@ -731,6 +936,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['category'], MockedBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_fetch_from_archive(self):
         """Test whether the command runs when fetch from archive is set"""
@@ -773,6 +979,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_no_archive(self):
         """Test whether the command runs when archive is not set"""
@@ -798,6 +1005,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_not_supported_archive(self):
         """Test whether the comand runs when archive is not supported"""
@@ -823,6 +1031,7 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_run_json_line(self):
         """Test run method with --json-line"""
@@ -851,12 +1060,53 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['category'], MockedBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'], None)
+
+    def test_filter_classified_fields(self):
+        """Test if fields are filtered with filter-classified option is active"""
+
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--category', ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                '--subtype', 'mocksubtype',
+                '--from-date', '2015-01-01', '--tag', 'test',
+                '--filter-classified', '--no-archive',
+                '--output', self.fout_path, 'http://example.com/']
+
+        cmd = ClassifiedFieldsBackendCommand(*args)
+        cmd.run()
+        cmd.outfile.close()
+
+        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['category'], ClassifiedFieldsBackend.DEFAULT_CATEGORY)
+            self.assertEqual(item['classified_fields_filtered'],
+                             ['my.classified.field', 'classified'])
+
+            expected = {
+                'category': 'mock_item',
+                'item': x,
+                'my': {
+                    'classified': {},
+                    'field': x,
+                },
+            }
+            self.assertDictEqual(item['data'], expected)
 
 
 class TestMetadata(unittest.TestCase):
-    """Test metadata decorator"""
+    """Test metadata method"""
 
-    def test_decorator(self):
+    def test_metadata(self):
         backend = MockedBackend('test', 'mytag')
         before = datetime_utcnow().timestamp()
         items = [item for item in backend.fetch()]
@@ -875,6 +1125,33 @@ class TestMetadata(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['updated_on'], '2016-01-01')
             self.assertEqual(item['category'], 'mock_item')
+            self.assertEqual(item['classified_fields_filtered'], None)
+            self.assertEqual(item['tag'], 'mytag')
+            self.assertGreater(item['timestamp'], before)
+            self.assertLess(item['timestamp'], after)
+
+            before = item['timestamp']
+
+    def test_metadata_classified_fields(self):
+        backend = MockedBackend('test', 'mytag')
+        before = datetime_utcnow().timestamp()
+        items = [item for item in backend.fetch(filter_classified=True)]
+        after = datetime_utcnow().timestamp()
+
+        for x in range(5):
+            item = items[x]
+
+            expected_uuid = uuid('test', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['backend_name'], 'MockedBackend')
+            self.assertEqual(item['backend_version'], '0.2.0')
+            self.assertEqual(item['perceval_version'], __version__)
+            self.assertEqual(item['origin'], 'test')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['updated_on'], '2016-01-01')
+            self.assertEqual(item['category'], 'mock_item')
+            self.assertEqual(item['classified_fields_filtered'], [])
             self.assertEqual(item['tag'], 'mytag')
             self.assertGreater(item['timestamp'], before)
             self.assertLess(item['timestamp'], after)
@@ -949,6 +1226,7 @@ class TestFetch(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_items_storing_archive(self):
         """Test whether items are stored in an archive"""
@@ -976,6 +1254,7 @@ class TestFetch(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
         filepaths = manager.search('http://example.com/', 'CommandBackend',
                                    'mock_item', str_to_datetime('1970-01-01'))
@@ -984,6 +1263,44 @@ class TestFetch(unittest.TestCase):
 
         archive = Archive(filepaths[0])
         self.assertEqual(archive._count_table_rows('archive'), 5)
+
+    def test_filter_classified_fields(self):
+        """Test whether classified fields are removed from the items"""
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        items = fetch(ClassifiedFieldsBackend, args, category,
+                      filter_classified=True, manager=None)
+        items = [item for item in items]
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+
+            expected_uuid = uuid('http://example.com/', str(x))
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'],
+                             ['my.classified.field', 'classified'])
+
+            # Fields in CLASSIFIED_FIELDS are deleted
+            expected = {
+                'category': 'mock_item',
+                'item': x,
+                'my': {
+                    'classified': {},
+                    'field': x,
+                }
+            }
+            self.assertDictEqual(item['data'], expected)
 
     def test_remove_archive_on_error(self):
         """Test whether an archive is removed when an unhandled exception occurs"""
@@ -1058,6 +1375,7 @@ class TestFetchFromArchive(unittest.TestCase):
                 self.assertEqual(item['origin'], 'http://example.com/')
                 self.assertEqual(item['uuid'], expected_uuid)
                 self.assertEqual(item['tag'], 'test')
+                self.assertEqual(item['classified_fields_filtered'], None)
 
     def test_archived_after(self):
         """Test if only those items archived after a date are returned"""
@@ -1172,6 +1490,7 @@ class TestFetchFromArchive(unittest.TestCase):
             self.assertEqual(item['origin'], 'http://example.com/')
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
 
 
 if __name__ == "__main__":

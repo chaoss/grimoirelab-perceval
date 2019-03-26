@@ -68,9 +68,10 @@ class Meetup(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.11.6'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_EVENT]
+    CLASSIFIED_FIELDS = [['group', 'topics']]
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, archive=None,
@@ -88,7 +89,8 @@ class Meetup(Backend):
 
         self.client = None
 
-    def fetch(self, category=CATEGORY_EVENT, from_date=DEFAULT_DATETIME, to_date=None):
+    def fetch(self, category=CATEGORY_EVENT, from_date=DEFAULT_DATETIME, to_date=None,
+              filter_classified=False):
         """Fetch the events from the server.
 
         This method fetches those events of a group stored on the server
@@ -98,6 +100,7 @@ class Meetup(Backend):
         :param category: the category of items to fetch
         :param from_date: obtain events updated since this date
         :param to_date: obtain events updated before this date
+        :param filter_classified: remove classified fields from the resulting items
 
         :returns: a generator of events
         """
@@ -107,7 +110,9 @@ class Meetup(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {"from_date": from_date, "to_date": to_date}
-        items = super().fetch(category, **kwargs)
+        items = super().fetch(category,
+                              filter_classified=filter_classified,
+                              **kwargs)
 
         return items
 

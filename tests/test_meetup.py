@@ -229,6 +229,8 @@ class TestMeetupBackend(unittest.TestCase):
             self.assertEqual(event['updated_on'], expc[2])
             self.assertEqual(event['category'], 'event')
             self.assertEqual(event['tag'], 'https://meetup.com/')
+            self.assertEqual(event['classified_fields_filtered'], None)
+            self.assertIn('topics', event['data']['group'])
             self.assertEqual(len(event['data']['comments']), expc[3])
             self.assertEqual(len(event['data']['rsvps']), expc[4])
 
@@ -314,6 +316,7 @@ class TestMeetupBackend(unittest.TestCase):
             self.assertEqual(event['updated_on'], expc[2])
             self.assertEqual(event['category'], 'event')
             self.assertEqual(event['tag'], 'https://meetup.com/')
+            self.assertEqual(event['classified_fields_filtered'], None)
             self.assertEqual(len(event['data']['comments']), expc[3])
             self.assertEqual(len(event['data']['rsvps']), expc[4])
 
@@ -372,6 +375,7 @@ class TestMeetupBackend(unittest.TestCase):
             self.assertEqual(event['updated_on'], expc[2])
             self.assertEqual(event['category'], 'event')
             self.assertEqual(event['tag'], 'https://meetup.com/')
+            self.assertEqual(event['classified_fields_filtered'], None)
             self.assertEqual(len(event['data']['comments']), expc[3])
             self.assertEqual(len(event['data']['rsvps']), expc[4])
 
@@ -455,6 +459,7 @@ class TestMeetupBackend(unittest.TestCase):
         self.assertEqual(event['updated_on'], 1465503498.0)
         self.assertEqual(event['category'], 'event')
         self.assertEqual(event['tag'], 'https://meetup.com/')
+        self.assertEqual(event['classified_fields_filtered'], None)
         self.assertEqual(len(event['data']['comments']), 2)
         self.assertEqual(len(event['data']['rsvps']), 3)
 
@@ -468,6 +473,93 @@ class TestMeetupBackend(unittest.TestCase):
                 'scroll': ['since:2016-04-08T00:00:00.000Z'],
                 'sign': ['true'],
                 'status': ['cancelled,upcoming,past,proposed,suggested']
+            },
+            {
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
+            },
+            {
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_filtering_classified_fields(self):
+        """Test it it removes classified fields from a set of fetched items"""
+
+        http_requests = setup_http_server()
+
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
+        events = [event for event in meetup.fetch(from_date=None, filter_classified=True)]
+
+        expected = [('1', '0d07fe36f994a6c78dfcf60fb73674bcf158cb5a', 1460065164.0, 2, 3),
+                    ('2', '24b47b622eb33965676dd951b18eea7689b1d81c', 1465503498.0, 2, 3),
+                    ('3', 'a42b7cf556c17b17f05b951e2eb5e07a7cb0a731', 1474842748.0, 2, 3)]
+
+        self.assertEqual(len(events), len(expected))
+
+        for x in range(len(events)):
+            event = events[x]
+            expc = expected[x]
+            self.assertEqual(event['data']['id'], expc[0])
+            self.assertEqual(event['uuid'], expc[1])
+            self.assertEqual(event['origin'], 'https://meetup.com/')
+            self.assertEqual(event['updated_on'], expc[2])
+            self.assertEqual(event['category'], 'event')
+            self.assertEqual(event['tag'], 'https://meetup.com/')
+            self.assertEqual(event['classified_fields_filtered'], ['group.topics'])
+            self.assertNotIn('topics', event['data']['group'])
+            self.assertEqual(len(event['data']['comments']), expc[3])
+            self.assertEqual(len(event['data']['rsvps']), expc[4])
+
+        # Check requests
+        expected = [
+            {
+                'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
+                'key': ['aaaa'],
+                'order': ['updated'],
+                'page': ['2'],
+                'scroll': ['since:1970-01-01T00:00:00.000Z'],
+                'sign': ['true'],
+                'status': ['cancelled,upcoming,past,proposed,suggested']
+            },
+            {
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
+            },
+            {
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
+            },
+            {
+                'key': ['aaaa'],
+                'page': ['2'],
+                'sign': ['true']
+            },
+            {
+                'fields': ['attendance_status'],
+                'key': ['aaaa'],
+                'page': ['2'],
+                'response': ['yes,no'],
+                'sign': ['true']
+            },
+            {
+                'key': ['aaaa'],
+                'sign': ['true']
             },
             {
                 'key': ['aaaa'],
@@ -613,7 +705,8 @@ class TestMeetupCommand(unittest.TestCase):
                 '--to-date', '2016-01-01',
                 '--sleep-for-rate',
                 '--min-rate-to-sleep', '10',
-                '--sleep-time', '10']
+                '--sleep-time', '10',
+                '--filter-classified']
 
         expected_ts = datetime.datetime(2016, 1, 1, 0, 0, 0,
                                         tzinfo=dateutil.tz.tzutc())
@@ -629,6 +722,7 @@ class TestMeetupCommand(unittest.TestCase):
         self.assertEqual(parsed_args.sleep_for_rate, True)
         self.assertEqual(parsed_args.min_rate_to_sleep, 10)
         self.assertEqual(parsed_args.sleep_time, 10)
+        self.assertEqual(parsed_args.filter_classified, True)
 
 
 class TestMeetupClient(unittest.TestCase):

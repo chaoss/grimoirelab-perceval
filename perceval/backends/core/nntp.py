@@ -131,15 +131,16 @@ class NNTP(Backend):
             yield article
             narts += 1
 
-    def metadata(self, item):
+    def metadata(self, item, filter_classified=False):
         """NNTP metadata.
 
         This method takes items, overriding `metadata` decorator,
         to add extra information related to NNTP.
 
         :param item: an item fetched by a backend
+        :param filter_classified: sets if classified fields were filtered
         """
-        item = super().metadata(item)
+        item = super().metadata(item, filter_classified=filter_classified)
         item['offset'] = item['data']['offset']
 
         return item
