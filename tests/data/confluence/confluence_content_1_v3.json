@@ -1,0 +1,75 @@
+{
+    "_expandable": {
+        "ancestors": "",
+        "children": "/rest/api/content/1/child",
+        "container": "/rest/api/space/DEV",
+        "descendants": "/rest/api/content/1/descendant",
+        "metadata": "",
+        "operations": "",
+        "space": "/rest/api/space/DEV"
+    },
+    "body": {
+        "_expandable": {
+            "anonymous_export_view": "",
+            "editor": "",
+            "export_view": "",
+            "styled_view": "",
+            "view": ""
+        },
+        "storage": {
+            "_expandable": {
+                "content": "/rest/api/content/1"
+            },
+            "representation": "storage",
+            "value": "<p>CENGN currently follows a 3 week iteration cycle ..."
+        }
+    },
+    "extensions": {
+        "position": "none"
+    },
+    "history": {
+        "_expandable": {
+            "lastUpdated": "",
+            "nextVersion": "",
+            "previousVersion": ""
+        },
+        "_links": {
+            "self": "http://example.com/rest/api/content/6823628/history"
+        },
+        "createdBy": {
+            "displayName": "John Doe",
+            "profilePicture": {
+                "height": 48,
+                "isDefault": false,
+                "path": "/s/en_GB/6210/1/_/download/attachments/1/user-avatar?version=1&modificationDate=1452188900000&api=v2",
+                "width": 48
+            },
+            "type": "known",
+            "userKey": "2c9e48d5521d22bb01521d2fd9110002",
+            "username": "jdoe"
+        },
+        "createdDate": "2016-06-10T20:05:21.000Z",
+        "latest": true
+    },
+    "id": "1",
+    "status": "current",
+    "title": "Steady State Project - 2016-06-17 Goals",
+    "type": "page",
+    "version": {
+        "by": {
+            "displayName": "John Smith",
+            "profilePicture": {
+                "height": 48,
+                "isDefault": false,
+                "path": "/s/en_GB/6210/1/_/download/attachments/1/user-avatar?version=1&modificationDate=1464975020000&api=v2",
+                "width": 48
+            },
+            "type": "known",
+            "userKey": "2c9e48d553c3b7db015516fa640b00bd",
+            "username": "jsmith"
+        },
+        "message": "Task marked complete",
+        "minorEdit": false,
+        "number": 3
+    }
+}

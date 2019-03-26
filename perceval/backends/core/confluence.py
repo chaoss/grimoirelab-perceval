@@ -53,7 +53,7 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.0'
+    version = '0.10.1'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 
@@ -244,7 +244,7 @@ class Confluence(Backend):
             except requests.exceptions.HTTPError as e:
                 code = e.response.status_code
 
-                # Common problems found: removed and privated contents
+                # Common problems found: removed and private contents
                 if code not in (404, 500):
                     raise e
 
@@ -255,9 +255,17 @@ class Confluence(Backend):
 
             hc = self.parse_historical_content(raw_hc)
 
+            # if 'when' attribute is not present, the historical content is skipped
+            if 'when' not in hc['version']:
+                logger.debug("Content %s v%s skipped due to missing 'when' attribute",
+                             hc['id'], str(hc['version']['number']))
+
+                fetching = not hc['history']['latest']
+                version += 1
+                continue
+
             # Return those versions that were created after 'from_date'
             when = str_to_datetime(hc['version']['when'])
-
             if when >= from_date:
                 yield hc
             else:

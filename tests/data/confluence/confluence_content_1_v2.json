@@ -57,7 +57,7 @@
             "username": "jdoe"
         },
         "createdDate": "2016-06-10T20:05:21.000Z",
-        "latest": true
+        "latest": false
     },
     "id": "1",
     "status": "current",
