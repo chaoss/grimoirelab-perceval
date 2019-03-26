@@ -64,7 +64,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.11.0'
+    version = '0.11.1'
 
     CATEGORIES = [CATEGORY_COMMIT]
 
@@ -968,7 +968,7 @@ class GitRepository:
         if branches is None:
             cmd_rev_list.extend(['--branches', '--tags', '--remotes=origin'])
         elif len(branches) == 0:
-            cmd_rev_list.append('--max-count=0')
+            cmd_rev_list.extend(['--branches', '--tags', '--max-count=0'])
         else:
             branches = ['refs/heads/' + branch for branch in branches]
             cmd_rev_list.extend(branches)

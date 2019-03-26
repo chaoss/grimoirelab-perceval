@@ -1595,6 +1595,43 @@ class TestGitRepository(TestCaseGit):
 
         shutil.rmtree(new_path)
 
+    def test_rev_list_branch(self):
+        """Test whether the rev-list command returns the commits of a branch, when the latter is given"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        gitrev = repo.rev_list(branches=['lzp'])
+        gitrev = [line for line in gitrev]
+
+        expected = ['51a3b654f252210572297f47597b31527c475fb8',
+                    '589bb080f059834829a2a5955bebfd7c2baa110a',
+                    'c6ba8f7a1058db3e6b4bc6f1090e932b107605fb',
+                    'c0d66f92a95e31c77be08dc9d0f11a16715d1885',
+                    '7debcf8a2f57f86663809c58b5c07a398be7674c',
+                    '87783129c3f00d2c81a3a8e585eb86a47e39891a',
+                    'bc57a9209f096a130dcc5ba7089a8663f758a703']
+
+        self.assertTrue(len(gitrev), len(expected))
+        for i in range(len(gitrev)):
+            self.assertEqual(gitrev[i], expected[i])
+
+        shutil.rmtree(new_path)
+
+    def test_rev_list_no_branch(self):
+        """Test whether the rev-list command returns an empty list when no branch is given"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+        gitrev = repo.rev_list(branches=[])
+        gitrev = [line for line in gitrev]
+
+        expected = []
+
+        self.assertListEqual(gitrev, expected)
+        shutil.rmtree(new_path)
+
     def test_rev_list_from_empty_repository(self):
         """Test if an exception is raised when the repository is empty"""
 
