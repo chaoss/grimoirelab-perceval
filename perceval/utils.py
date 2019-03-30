@@ -30,7 +30,6 @@ import sys
 
 import xml.etree.ElementTree
 
-import dateutil.parser
 import dateutil.rrule
 import dateutil.tz
 

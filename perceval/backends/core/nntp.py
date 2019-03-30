@@ -23,8 +23,7 @@
 import io
 import logging
 import nntplib
-
-import email.parser
+import email
 
 from grimoirelab_toolkit.datetime import str_to_datetime
 
@@ -55,7 +54,7 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.5.2'
+    version = '0.5.3'
 
     CATEGORIES = [CATEGORY_ARTICLE]
 
