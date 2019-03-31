@@ -18,8 +18,8 @@ are:
     dockerhub        Fetch repository data from Docker Hub site
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from Git
-    github           Fetch issues from GitHub
-    gitlab           Fetch issues from GitLab
+    github           Fetch issues, pull requests and repository information from GitHub
+    gitlab           Fetch issues, merge requests from GitLab
     googlehits       Fetch hits from Google API
     groupsio         Fetch messages from Groups.io
     hyperkitty       Fetch messages from a HyperKitty archiver
@@ -214,6 +214,12 @@ $ perceval git '/tmp/gitlog.log'
 ### GitHub
 ```
 $ perceval github elastic logstash --from-date '2016-01-01'
+```
+
+The GitHub backend accepts the categories `issue`, `pull_request` and `repository` which allow to fetch the specific data.
+
+```
+$ perceval github --category issue elastic logstash
 ```
 
 ### GitLab

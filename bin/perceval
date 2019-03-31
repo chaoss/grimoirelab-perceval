@@ -47,8 +47,8 @@ are:
     dockerhub        Fetch repository data from Docker Hub site
     gerrit           Fetch reviews from a Gerrit server
     git              Fetch commits from Git
-    github           Fetch issues from GitHub
-    gitlab           Fetch issues from GitLab
+    github           Fetch issues, pull requests and repository information from GitHub
+    gitlab           Fetch issues, merge requests from GitLab
     googlehits       Fetch hits from Google API
     groupsio         Fetch messages from Groups.io
     hyperkitty       Fetch messages from a HyperKitty archiver
