@@ -15,7 +15,6 @@
 
 import sys
 import os
-import shlex
 
 os.system("sphinx-apidoc -f -o . ../perceval")
 
