@@ -517,10 +517,15 @@ class TestMeetupBackend(unittest.TestCase):
             self.assertEqual(event['updated_on'], expc[2])
             self.assertEqual(event['category'], 'event')
             self.assertEqual(event['tag'], 'https://meetup.com/')
-            self.assertEqual(event['classified_fields_filtered'], ['group.topics'])
-            self.assertNotIn('topics', event['data']['group'])
             self.assertEqual(len(event['data']['comments']), expc[3])
-            self.assertEqual(len(event['data']['rsvps']), expc[4])
+
+            # Check classified items filtering
+            self.assertEqual(event['classified_fields_filtered'],
+                             ['group.topics', 'event_hosts', 'rsvps', 'venue'])
+            self.assertNotIn('topics', event['data']['group'])
+            self.assertNotIn('event_hosts', event['data'])
+            self.assertNotIn('rsvps', event['data'])
+            self.assertNotIn('venue', event['data'])
 
         # Check requests
         expected = [
