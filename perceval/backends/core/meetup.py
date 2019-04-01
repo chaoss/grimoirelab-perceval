@@ -68,10 +68,15 @@ class Meetup(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.12.0'
+    version = '0.13.0'
 
     CATEGORIES = [CATEGORY_EVENT]
-    CLASSIFIED_FIELDS = [['group', 'topics']]
+    CLASSIFIED_FIELDS = [
+        ['group', 'topics'],
+        ['event_hosts'],
+        ['rsvps'],
+        ['venue']
+    ]
 
     def __init__(self, group, api_token, max_items=MAX_ITEMS,
                  tag=None, archive=None,
