@@ -67,14 +67,14 @@ class Jenkins(Backend):
 
         super().__init__(origin, tag=tag, archive=archive)
         self.url = url
-        if username != None:
-            if password != None:
+        if username is not None:
+            if password is not None:
                 if (url.startswith("http://")):
-                    self.url = url.replace('http://','http://'+username+':'+password+'@')
+                    self.url = url.replace('http://', 'http://' + username + ':' + password + '@')
                 elif (url.startswith("https://")):
-                    self.url = url.replace('https://','https://'+username+':'+password+'@')
+                    self.url = url.replace('https://', 'https://' + username + ':' + password + '@')
             else:
-                logger.error("perceval: error:required argument --password is missing for user=%s",username)
+                logger.error("perceval: error:required argument --password is missing for user=%s", username)
                 exit(1)
         self.sleep_time = sleep_time
         self.blacklist_jobs = blacklist_jobs
@@ -276,16 +276,11 @@ class JenkinsCommand(BackendCommand):
         group.add_argument('--sleep-time', dest='sleep_time',
                            type=int, default=SLEEP_TIME,
                            help="Minimun time to wait after a Timeout connection error.")
-        parser.parser.add_argument('--username',dest='username',
-                                    type=str, default=None,
-                                   help="Jenkins HTTP username")
-        parser.parser.add_argument('--password',dest='password',
-                                  type=str, default=None,
-				   help="Jenkins HTTP password")
+        parser.parser.add_argument('--username', dest='username', type=str, default=None, help="Jenkins HTTP username")
+        parser.parser.add_argument('--password', dest='password', type=str, default=None, help="Jenkins HTTP password")
 
         # Required arguments
         parser.parser.add_argument('url',
                                    help="URL of the Jenkins server")
 
         return parser
-
