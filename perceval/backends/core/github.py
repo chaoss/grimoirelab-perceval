@@ -85,7 +85,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.20.0'
+    version = '0.20.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -412,7 +412,14 @@ class GitHub(Backend):
 
             for comment in json.loads(raw_comments):
                 comment_id = comment.get('id')
-                comment['user_data'] = self.__get_user(comment['user']['login'])
+
+                user = comment.get('user', None)
+                if not user:
+                    logger.warning("Missing user info for %s", comment['url'])
+                    comment['user_data'] = None
+                else:
+                    comment['user_data'] = self.__get_user(user['login'])
+
                 comment['reactions_data'] = \
                     self.__get_pull_review_comment_reactions(comment_id, comment['reactions']['total_count'])
                 comments.append(comment)

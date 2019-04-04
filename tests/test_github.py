@@ -39,7 +39,7 @@ from perceval.backend import BackendCommandArgumentParser
 from perceval.client import RateLimitHandler
 from perceval.errors import RateLimitError
 from perceval.utils import (DEFAULT_DATETIME, DEFAULT_LAST_DATETIME)
-from perceval.backends.core.github import (GitHub,
+from perceval.backends.core.github import (logger, GitHub,
                                            GitHubCommand,
                                            GitHubClient,
                                            CATEGORY_ISSUE,
@@ -664,37 +664,49 @@ class TestGitHubBackend(unittest.TestCase):
                                })
 
         github = GitHub("zhquan_example", "repo", ["aaa"])
-        pulls = [pulls for pulls in github.fetch(category=CATEGORY_PULL_REQUEST, from_date=None)]
 
-        self.assertEqual(len(pulls), 2)
+        with self.assertLogs(logger) as cm:
+            pulls = [pulls for pulls in github.fetch(category=CATEGORY_PULL_REQUEST, from_date=None)]
 
-        pull = pulls[0]
-        self.assertEqual(pull['origin'], 'https://github.com/zhquan_example/repo')
-        self.assertEqual(pull['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
-        self.assertEqual(pull['updated_on'], 1451929343.0)
-        self.assertEqual(pull['category'], CATEGORY_PULL_REQUEST)
-        self.assertEqual(pull['tag'], 'https://github.com/zhquan_example/repo')
-        self.assertEqual(pull['data']['merged_by_data']['login'], 'zhquan_example')
-        self.assertEqual(len(pull['data']['requested_reviewers_data']), 1)
-        self.assertEqual(pull['data']['requested_reviewers_data'][0]['login'], 'zhquan_example')
-        self.assertEqual(len(pull['data']['review_comments_data']), 2)
-        self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
-        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
-        self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
-        self.assertEqual(len(pull['data']['commits_data']), 1)
+            self.assertEqual(len(pulls), 2)
 
-        pull = pulls[1]
-        self.assertEqual(pull['origin'], 'https://github.com/zhquan_example/repo')
-        self.assertEqual(pull['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
-        self.assertEqual(pull['updated_on'], 1457113343.0)
-        self.assertEqual(pull['category'], CATEGORY_PULL_REQUEST)
-        self.assertEqual(pull['tag'], 'https://github.com/zhquan_example/repo')
-        self.assertEqual(pull['data']['merged_by_data']['login'], 'zhquan_example')
-        self.assertEqual(pull['data']['requested_reviewers_data'], [])
-        self.assertEqual(len(pull['data']['review_comments_data']), 2)
-        self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
-        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 0)
-        self.assertEqual(len(pull['data']['commits_data']), 1)
+            pull = pulls[0]
+            self.assertEqual(pull['origin'], 'https://github.com/zhquan_example/repo')
+            self.assertEqual(pull['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
+            self.assertEqual(pull['updated_on'], 1451929343.0)
+            self.assertEqual(pull['category'], CATEGORY_PULL_REQUEST)
+            self.assertEqual(pull['tag'], 'https://github.com/zhquan_example/repo')
+            self.assertEqual(pull['data']['merged_by_data']['login'], 'zhquan_example')
+            self.assertEqual(len(pull['data']['requested_reviewers_data']), 1)
+            self.assertEqual(pull['data']['requested_reviewers_data'][0]['login'], 'zhquan_example')
+            self.assertEqual(len(pull['data']['review_comments_data']), 2)
+            self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
+            self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
+            self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
+            self.assertEqual(len(pull['data']['commits_data']), 1)
+
+            pull = pulls[1]
+            self.assertEqual(pull['origin'], 'https://github.com/zhquan_example/repo')
+            self.assertEqual(pull['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
+            self.assertEqual(pull['updated_on'], 1457113343.0)
+            self.assertEqual(pull['category'], CATEGORY_PULL_REQUEST)
+            self.assertEqual(pull['tag'], 'https://github.com/zhquan_example/repo')
+            self.assertEqual(pull['data']['merged_by_data']['login'], 'zhquan_example')
+            self.assertEqual(pull['data']['requested_reviewers_data'], [])
+            self.assertEqual(len(pull['data']['review_comments_data']), 4)
+            self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
+            self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 0)
+            self.assertEqual(len(pull['data']['commits_data']), 1)
+
+            self.assertEqual(pull['data']['review_comments_data'][0]['user_data']['login'], "zhquan_example")
+            self.assertIsNone(pull['data']['review_comments_data'][2]['user_data'])
+
+            self.assertEqual(cm.output[0],
+                             'WARNING:perceval.backends.core.github:'
+                             'Missing user info for https://api.github.com/repos/zhquan_example/repo/pulls/comments/2')
+            self.assertEqual(cm.output[1],
+                             'WARNING:perceval.backends.core.github:'
+                             'Missing user info for https://api.github.com/repos/zhquan_example/repo/pulls/comments/2')
 
     @httpretty.activate
     def test_fetch_pulls_from_issues(self):
