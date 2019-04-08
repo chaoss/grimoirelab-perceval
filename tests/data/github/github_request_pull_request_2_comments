@@ -112,5 +112,82 @@
             "type": "User",
             "url": "https://api.github.com/users/zhquan_example"
         }
+    }, 
+    {
+        "_links": {
+            "html": {
+                "href": "https://github.com/zhquan_example/repo/pull/1#discussion_r46719268"
+            },
+            "pull_request": {
+                "href": "https://api.github.com/repos/zhquan_example/repo/pulls/2"
+            },
+            "self": {
+                "href": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/2"
+            }
+        },
+        "author_association": "OWNER",
+        "body": "It shouldn't be there any spaces around keywords and assignments.\nFor instance : `url=None`. The same mistake can be found in other parts of this code.\n",
+        "commit_id": "cc134f32fa8c518abe5f0501836af69741b25a64",
+        "created_at": "2015-12-04T19:09:29Z",
+        "diff_hunk": "...",
+        "html_url": "https://github.com/zhquan_example/repo/pull/1#discussion_r46719268",
+        "id": 5,
+        "original_commit_id": "b030dbf53d3ecaae2f080018073c9bdafb6b4166",
+        "original_position": 46,
+        "path": "perceval/backends/gerrit.py",
+        "position": null,
+        "pull_request_review_id": null,
+        "pull_request_url": "https://api.github.com/repos/zhquan_example/repo/pulls/2",
+        "reactions": {
+            "+1": 0,
+            "-1": 0,
+            "confused": 0,
+            "heart": 0,
+            "hooray": 0,
+            "laugh": 0,
+            "total_count": 0,
+            "url": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/2/reactions"
+        },
+        "updated_at": "2015-12-22T12:03:01Z",
+        "url": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/2",
+        "user": {}
+    },
+    {
+        "_links": {
+            "html": {
+                "href": "https://github.com/zhquan_example/repo/pull/1#discussion_r46719268"
+            },
+            "pull_request": {
+                "href": "https://api.github.com/repos/zhquan_example/repo/pulls/2"
+            },
+            "self": {
+                "href": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/2"
+            }
+        },
+        "author_association": "OWNER",
+        "body": "It shouldn't be there any spaces around keywords and assignments.\nFor instance : `url=None`. The same mistake can be found in other parts of this code.\n",
+        "commit_id": "cc134f32fa8c518abe5f0501836af69741b25a64",
+        "created_at": "2015-12-04T19:09:29Z",
+        "diff_hunk": "...",
+        "html_url": "https://github.com/zhquan_example/repo/pull/1#discussion_r46719268",
+        "id": 6,
+        "original_commit_id": "b030dbf53d3ecaae2f080018073c9bdafb6b4166",
+        "original_position": 46,
+        "path": "perceval/backends/gerrit.py",
+        "position": null,
+        "pull_request_review_id": null,
+        "pull_request_url": "https://api.github.com/repos/zhquan_example/repo/pulls/2",
+        "reactions": {
+            "+1": 0,
+            "-1": 0,
+            "confused": 0,
+            "heart": 0,
+            "hooray": 0,
+            "laugh": 0,
+            "total_count": 0,
+            "url": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/2/reactions"
+        },
+        "updated_at": "2015-12-22T12:03:01Z",
+        "url": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/2"
     }
 ]
