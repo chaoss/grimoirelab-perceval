@@ -569,8 +569,15 @@ class GitHubClient(HttpClient, RateLimitHandler):
         return self.fetch_items(path, payload)
 
     def issues(self, from_date=None):
-        """Get the issues from pagination. Note that issues contain also pull requests."""
+        """Fetch the issues from the repository.
 
+        The method retrieves, from a GitHub repository, the issues
+        updated since the given date.
+
+        :param from_date: obtain issues updated since this date
+
+        :returns: a generator of issues
+        """
         payload = {
             'state': 'all',
             'per_page': PER_PAGE,
@@ -584,8 +591,15 @@ class GitHubClient(HttpClient, RateLimitHandler):
         return self.fetch_items(path, payload)
 
     def pulls(self, from_date=None):
-        """Get the pull requests from pagination"""
+        """Fetch the pull requests from the repository.
 
+        The method retrieves, from a GitHub repository, the pull requests
+        updated since the given date.
+
+        :param from_date: obtain pull requests updated since this date
+
+        :returns: a generator of pull requests
+        """
         issues_groups = self.issues(from_date=from_date)
 
         for raw_issues in issues_groups:
