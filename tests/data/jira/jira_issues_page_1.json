@@ -127,7 +127,7 @@
                 },
                 "workratio": -1
             },
-            "id": "35851",
+            "id": "1",
             "key": "HELP-6043",
             "self": "https://jira.fiware.org/rest/api/2/issue/35851"
         },
@@ -262,7 +262,7 @@
                 },
                 "workratio": -1
             },
-            "id": "35850",
+            "id": "2",
             "key": "HELP-6042",
             "self": "https://jira.fiware.org/rest/api/2/issue/35850"
         }

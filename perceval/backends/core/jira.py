@@ -39,7 +39,7 @@ from ...utils import DEFAULT_DATETIME
 
 CATEGORY_ISSUE = "issue"
 
-MAX_ISSUES = 100  # Maximum number of issues per query
+MAX_RESULTS = 100  # Maximum number of results per query
 
 logger = logging.getLogger(__name__)
 
@@ -93,18 +93,18 @@ class Jira(Backend):
     :param password: Jira user password
     :param verify: allows to disable SSL verification
     :param cert: SSL certificate path (PEM)
-    :param max_issues: max number of issues per query
+    :param max_results: max number of results per query
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.11.4'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
     def __init__(self, url, project=None,
                  user=None, password=None,
                  verify=True, cert=None,
-                 max_issues=MAX_ISSUES, tag=None,
+                 max_results=MAX_RESULTS, tag=None,
                  archive=None):
         origin = url
 
@@ -115,7 +115,7 @@ class Jira(Backend):
         self.password = password
         self.verify = verify
         self.cert = cert
-        self.max_issues = max_issues
+        self.max_results = max_results
         self.client = None
 
     def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
@@ -163,6 +163,10 @@ class Jira(Backend):
                 mapping = map_custom_field(custom_fields, issue['fields'])
                 for k, v in mapping.items():
                     issue['fields'][k] = v
+
+                comments_data = self.__get_issue_comments(issue['id'])
+                issue['comments_data'] = comments_data
+
                 yield issue
 
     @classmethod
@@ -233,8 +237,21 @@ class Jira(Backend):
         """Init client"""
 
         return JiraClient(self.url, self.project, self.user, self.password,
-                          self.verify, self.cert, self.max_issues,
+                          self.verify, self.cert, self.max_results,
                           self.archive, from_archive)
+
+    def __get_issue_comments(self, issue_id):
+        """Get issue comments"""
+
+        comments = []
+        page_comments = self.client.get_comments(issue_id)
+
+        for page_comment in page_comments:
+            raw_comments = json.loads(page_comment)
+
+            comments.extend(raw_comments['comments'])
+
+        return comments
 
 
 class JiraClient(HttpClient):
@@ -249,7 +266,7 @@ class JiraClient(HttpClient):
     :param password: JIRA's password
     :param verify: allows to disable SSL verification
     :param cert: SSL certificate
-    :param max_issues: max number of issues per query
+    :param max_results: max number of results per query
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
 
@@ -259,8 +276,10 @@ class JiraClient(HttpClient):
     EXPAND = 'renderedFields,transitions,operations,changelog'
     VERSION_API = '2'
     RESOURCE = 'rest/api'
+    ISSUE = 'issue'
+    COMMENT = 'comment'
 
-    def __init__(self, url, project, user, password, verify, cert, max_issues=MAX_ISSUES,
+    def __init__(self, url, project, user, password, verify, cert, max_results=MAX_RESULTS,
                  archive=None, from_archive=False):
         super().__init__(url, archive=archive, from_archive=from_archive)
         self.project = project
@@ -268,40 +287,61 @@ class JiraClient(HttpClient):
         self.password = password
         self.verify = verify
         self.cert = cert
-        self.max_issues = max_issues
+        self.max_results = max_results
 
         if not from_archive:
             self.__init_session()
+
+    def get_items(self, from_date, url, expand_fields=True):
+        """Retrieve all the items from a given date.
+
+        :param url: endpoint API url
+        :param from_date: obtain items updated since this date
+        :param expand_fields: if True, it includes the expand fields in the payload
+        """
+        start_at = 0
+
+        req = self.fetch(url, payload=self.__build_payload(start_at, from_date, expand_fields))
+        issues = req.text
+
+        data = req.json()
+        titems = data['total']
+        nitems = data['maxResults']
+
+        start_at += min(nitems, titems)
+        self.__log_status(start_at, titems, url)
+
+        while issues:
+            yield issues
+            issues = None
+
+            if data['startAt'] + nitems < titems:
+                req = self.fetch(url, payload=self.__build_payload(start_at, from_date, expand_fields))
+
+                data = req.json()
+                start_at += nitems
+                issues = req.text
+                self.__log_status(start_at, titems, url)
 
     def get_issues(self, from_date):
         """Retrieve all the issues from a given date.
 
         :param from_date: obtain issues updated since this date
         """
-        start_at = 0
-
         url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, 'search')
-        req = self.fetch(url, payload=self.__build_payload(start_at, from_date))
-        issues = req.text
+        issues = self.get_items(from_date, url)
 
-        data = req.json()
-        tissues = data['total']
-        nissues = data['maxResults']
+        return issues
 
-        start_at += min(nissues, tissues)
-        self.__log_status(start_at, tissues)
+    def get_comments(self, issue_id):
+        """Retrieve all the comments of a given issue.
 
-        while issues:
-            yield issues
-            issues = None
+        :param issue_id: ID of the issue
+        """
+        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, self.ISSUE, issue_id, self.COMMENT)
+        comments = self.get_items(DEFAULT_DATETIME, url, expand_fields=False)
 
-            if data['startAt'] + nissues < tissues:
-                req = self.fetch(url, payload=self.__build_payload(start_at, from_date))
-
-                data = req.json()
-                start_at += nissues
-                issues = req.text
-                self.__log_status(start_at, tissues)
+        return comments
 
     def get_fields(self):
         """Retrieve all the fields available."""
@@ -332,22 +372,25 @@ class JiraClient(HttpClient):
 
         return jql_query
 
-    def __build_payload(self, start_at, from_date):
+    def __build_payload(self, start_at, from_date, expand=True):
         payload = {
             'jql': self.__build_jql_query(from_date),
             'startAt': start_at,
             'expand': self.EXPAND,
-            'maxResults': self.max_issues
+            'maxResults': self.max_results
         }
+
+        if not expand:
+            payload.pop('expand')
+
         return payload
 
-    def __log_status(self, max_issues, total):
-        if (total != 0):
-            nissues = min(max_issues, total)
-            logger.info("Fetching issues: %s/%s" % (nissues,
-                                                    total))
+    def __log_status(self, max_items, total, url):
+        if total != 0:
+            nitems = min(max_items, total)
+            logger.info("Fetching %s/%s items from %s" % (nitems, total, url))
         else:
-            logger.info("No issues were found.")
+            logger.info("No items were found for %s." % url)
 
     def __init_session(self):
         if (self.user and self.password) is not None:
@@ -382,9 +425,9 @@ class JiraCommand(BackendCommand):
                            help="Value 'False' disables SSL verification")
         group.add_argument('--cert',
                            help="SSL certificate path (PEM)")
-        group.add_argument('--max-issues', dest='max_issues',
-                           type=int, default=MAX_ISSUES,
-                           help="Maximum number of issues requested in the same query")
+        group.add_argument('--max-results', dest='max_results',
+                           type=int, default=MAX_RESULTS,
+                           help="Maximum number of results requested in the same query")
 
         # Required arguments
         parser.parser.add_argument('url',
