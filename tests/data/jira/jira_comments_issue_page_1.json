@@ -1,0 +1,87 @@
+{
+    "comments": [
+        {
+            "author": {
+                "accountId": "557058:887ce97e-9fbd-4873-8b09-669ce3b1e696",
+                "accountType": "atlassian",
+                "active": true,
+                "avatarUrls": {
+                    "16x16": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=16&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D16%26noRedirect%3Dtrue",
+                    "24x24": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=24&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D24%26noRedirect%3Dtrue",
+                    "32x32": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=32&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D32%26noRedirect%3Dtrue",
+                    "48x48": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=48&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D48%26noRedirect%3Dtrue"
+                },
+                "displayName": "Peter Monks",
+                "key": "peter",
+                "name": "peter",
+                "self": "https://finosfoundation.atlassian.net/rest/api/2/user?accountId=557058%3A887ce97e-9fbd-4873-8b09-669ce3b1e696",
+                "timeZone": "America/Los_Angeles"
+            },
+            "body": "G'day [~leo.papadopoulos]!\r\n\r\nCongratulations on receiving the first contribution proposal to the Voice Program!  Next steps are [documented on the wiki|https://finosfoundation.atlassian.net/wiki/spaces/FINOS/pages/92963520/Approving+new+Projects+and+Working+Groups#ApprovingnewProjectsandWorkingGroups-ApprovalProcess], and basically involve you coordinating the Voice PMC to make a [decision|https://finosfoundation.atlassian.net/wiki/spaces/FINOS/pages/75530351/Decision+Making] to approve (or not), this contribution.\r\n\r\nIf you have any questions whatsoever, please don't hesitate to reach out to me, either here in this issue, via email, or on Symphony chat.\r\n\r\nCheers,\r\nPeter",
+            "created": "2018-05-24T23:35:30.742+0200",
+            "id": "10022",
+            "jsdPublic": true,
+            "self": "https://finosfoundation.atlassian.net/rest/api/2/issue/10016/comment/10022",
+            "updateAuthor": {
+                "accountId": "557058:887ce97e-9fbd-4873-8b09-669ce3b1e696",
+                "accountType": "atlassian",
+                "active": true,
+                "avatarUrls": {
+                    "16x16": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=16&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D16%26noRedirect%3Dtrue",
+                    "24x24": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=24&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D24%26noRedirect%3Dtrue",
+                    "32x32": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=32&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D32%26noRedirect%3Dtrue",
+                    "48x48": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=48&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D48%26noRedirect%3Dtrue"
+                },
+                "displayName": "Peter Monks",
+                "key": "peter",
+                "name": "peter",
+                "self": "https://finosfoundation.atlassian.net/rest/api/2/user?accountId=557058%3A887ce97e-9fbd-4873-8b09-669ce3b1e696",
+                "timeZone": "America/Los_Angeles"
+            },
+            "updated": "2018-05-24T23:35:30.742+0200"
+        },
+        {
+            "author": {
+                "accountId": "557058:887ce97e-9fbd-4873-8b09-669ce3b1e696",
+                "accountType": "atlassian",
+                "active": true,
+                "avatarUrls": {
+                    "16x16": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=16&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D16%26noRedirect%3Dtrue",
+                    "24x24": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=24&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D24%26noRedirect%3Dtrue",
+                    "32x32": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=32&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D32%26noRedirect%3Dtrue",
+                    "48x48": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=48&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D48%26noRedirect%3Dtrue"
+                },
+                "displayName": "Jack Monks",
+                "key": "jack",
+                "name": "jack",
+                "self": "https://finosfoundation.atlassian.net/rest/api/2/user?accountId=557058%3A887ce97e-9fbd-4873-8b09-669ce3b1e696",
+                "timeZone": "America/Los_Angeles"
+            },
+            "body": "Approved - see [the approval email|https://groups.google.com/a/finos.org/d/msg/voice-pmc/Qw-h8KnCndI/d5Zr23p5AAAJ].",
+            "created": "2018-05-25T18:21:23.212+0200",
+            "id": "10024",
+            "jsdPublic": true,
+            "self": "https://finosfoundation.atlassian.net/rest/api/2/issue/10016/comment/10024",
+            "updateAuthor": {
+                "accountId": "557058:887ce97e-9fbd-4873-8b09-669ce3b1e696",
+                "accountType": "atlassian",
+                "active": true,
+                "avatarUrls": {
+                    "16x16": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=16&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D16%26noRedirect%3Dtrue",
+                    "24x24": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=24&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D24%26noRedirect%3Dtrue",
+                    "32x32": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=32&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D32%26noRedirect%3Dtrue",
+                    "48x48": "https://avatar-cdn.atlassian.com/891a2dced9e970d0c4eca30ac0d281b7?s=48&d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F891a2dced9e970d0c4eca30ac0d281b7%3Fd%3Dmm%26s%3D48%26noRedirect%3Dtrue"
+                },
+                "displayName": "Jack Monks",
+                "key": "jack",
+                "name": "jack",
+                "self": "https://finosfoundation.atlassian.net/rest/api/2/user?accountId=557058%3A887ce97e-9fbd-4873-8b09-669ce3b1e696",
+                "timeZone": "America/Los_Angeles"
+            },
+            "updated": "2018-05-25T18:21:23.212+0200"
+        }
+    ],
+    "maxResults": 2,
+    "startAt": 0,
+    "total": 3
+}

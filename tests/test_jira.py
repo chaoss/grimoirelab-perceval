@@ -46,6 +46,9 @@ from base import TestCaseBackendArchive
 JIRA_SERVER_URL = 'http://example.com'
 JIRA_SEARCH_URL = JIRA_SERVER_URL + '/rest/api/2/search'
 JIRA_FIELDS_URL = JIRA_SERVER_URL + '/rest/api/2/field'
+JIRA_ISSUE_1_COMMENTS_URL = JIRA_SERVER_URL + '/rest/api/2/issue/1/comment'
+JIRA_ISSUE_2_COMMENTS_URL = JIRA_SERVER_URL + '/rest/api/2/issue/2/comment'
+JIRA_ISSUE_3_COMMENTS_URL = JIRA_SERVER_URL + '/rest/api/2/issue/3/comment'
 
 
 def read_file(filename, mode='r'):
@@ -132,15 +135,15 @@ class TestJiraBackend(unittest.TestCase):
     """Jira backend tests"""
 
     def test_initialization(self):
-        """Test whether attributes are initializated"""
+        """Test whether attributes are initialized"""
 
         jira = Jira(JIRA_SERVER_URL, tag='test',
-                    max_issues=5)
+                    max_results=5)
 
         self.assertEqual(jira.url, JIRA_SERVER_URL)
         self.assertEqual(jira.origin, JIRA_SERVER_URL)
         self.assertEqual(jira.tag, 'test')
-        self.assertEqual(jira.max_issues, 5)
+        self.assertEqual(jira.max_results, 5)
         self.assertIsNone(jira.client)
 
         # When tag is empty or None it will be set to
@@ -173,18 +176,35 @@ class TestJiraBackend(unittest.TestCase):
 
         bodies_json = [read_file('data/jira/jira_issues_page_1.json'),
                        read_file('data/jira/jira_issues_page_2.json')]
+        comment_json = read_file('data/jira/jira_comments_issue_page_2.json')
+        empty_comment = read_file('data/jira/jira_comments_issue_empty.json')
 
         body = read_file('data/jira/jira_fields.json')
 
         def request_callback(method, uri, headers):
             body = bodies_json.pop(0)
             requests.append(httpretty.last_request())
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                JIRA_SEARCH_URL,
                                responses=[httpretty.Response(body=request_callback)
                                           for _ in range(2)])
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_1_COMMENTS_URL,
+                               body=empty_comment,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_2_COMMENTS_URL,
+                               body=comment_json,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_3_COMMENTS_URL,
+                               body=empty_comment,
+                               status=200)
 
         httpretty.register_uri(httpretty.GET,
                                JIRA_FIELDS_URL,
@@ -220,86 +240,94 @@ class TestJiraBackend(unittest.TestCase):
 
         self.assertEqual(len(issues), 3)
 
-        self.assertEqual(issues[0]['origin'], 'http://example.com')
-        self.assertEqual(issues[0]['uuid'], 'dfe008e19e2b720d1d377607680e90c250134164')
-        self.assertEqual(issues[0]['updated_on'], 1457015567)
-        self.assertEqual(issues[0]['category'], 'issue')
-        self.assertEqual(issues[0]['tag'], 'http://example.com')
-        self.assertEqual(issues[0]['data']['key'], 'HELP-6043')
-        self.assertEqual(issues[0]['data']['fields']['issuetype']['name'], 'extRequest')
-        self.assertEqual(issues[0]['data']['fields']['creator']['name'], 'user2')
-        self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
-        self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
-        self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
-        self.assertEqual(issues[0]['data']['fields']['assignee']['name'], 'user1')
-        self.assertEqual(issues[0]['data']['fields']['customfield_10301']['id'],
+        issue = issues[0]
+        self.assertEqual(issue['origin'], 'http://example.com')
+        self.assertEqual(issue['uuid'], '6a7ba2a01aee56603b9d8a5f6b40c843fc089b2f')
+        self.assertEqual(issue['updated_on'], 1457015567)
+        self.assertEqual(issue['category'], 'issue')
+        self.assertEqual(issue['tag'], 'http://example.com')
+        self.assertEqual(issue['data']['key'], 'HELP-6043')
+        self.assertEqual(issue['data']['fields']['issuetype']['name'], 'extRequest')
+        self.assertEqual(issue['data']['fields']['creator']['name'], 'user2')
+        self.assertEqual(issue['data']['fields']['assignee']['name'], 'user1')
+        self.assertEqual(issue['data']['fields']['assignee']['name'], 'user1')
+        self.assertEqual(issue['data']['fields']['assignee']['name'], 'user1')
+        self.assertEqual(issue['data']['fields']['assignee']['name'], 'user1')
+        self.assertEqual(issue['data']['fields']['customfield_10301']['id'],
                          custom_fields['customfield_10301']['id'])
-        self.assertEqual(issues[0]['data']['fields']['customfield_10301']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10301']['name'],
                          custom_fields['customfield_10301']['name'])
-        self.assertEqual(issues[0]['data']['fields']['customfield_10400']['id'],
+        self.assertEqual(issue['data']['fields']['customfield_10400']['id'],
                          custom_fields['customfield_10400']['id'])
-        self.assertEqual(issues[0]['data']['fields']['customfield_10400']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10400']['name'],
                          custom_fields['customfield_10400']['name'])
-        self.assertEqual(issues[0]['data']['fields']['customfield_10600']['id'],
+        self.assertEqual(issue['data']['fields']['customfield_10600']['id'],
                          custom_fields['customfield_10600']['id'])
-        self.assertEqual(issues[0]['data']['fields']['customfield_10600']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10600']['name'],
                          custom_fields['customfield_10600']['name'])
-        self.assertEqual(issues[0]['data']['fields']['customfield_10603']['id'],
+        self.assertEqual(issue['data']['fields']['customfield_10603']['id'],
                          custom_fields['customfield_10603']['id'])
-        self.assertEqual(issues[0]['data']['fields']['customfield_10603']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10603']['name'],
                          custom_fields['customfield_10603']['name'])
+        self.assertEqual(issue['data']['comments_data'], [])
 
-        self.assertEqual(issues[1]['origin'], 'http://example.com')
-        self.assertEqual(issues[1]['uuid'], '830747ed8cc9af800fcd6284e9dccfdb11daf15b')
-        self.assertEqual(issues[1]['updated_on'], 1457015417)
-        self.assertEqual(issues[1]['category'], 'issue')
-        self.assertEqual(issues[1]['tag'], 'http://example.com')
-        self.assertEqual(issues[1]['data']['key'], 'HELP-6042')
-        self.assertEqual(issues[1]['data']['fields']['issuetype']['name'], 'extRequest')
-        self.assertEqual(issues[1]['data']['fields']['creator']['name'], 'user2')
-        self.assertEqual(issues[1]['data']['fields']['assignee']['name'], 'user1')
-        self.assertEqual(issues[1]['data']['fields']['customfield_10301']['id'],
+        issue = issues[1]
+        self.assertEqual(issue['origin'], 'http://example.com')
+        self.assertEqual(issue['uuid'], '3c3d67925b108a37f88cc6663f7f7dd493fa818c')
+        self.assertEqual(issue['updated_on'], 1457015417)
+        self.assertEqual(issue['category'], 'issue')
+        self.assertEqual(issue['tag'], 'http://example.com')
+        self.assertEqual(issue['data']['key'], 'HELP-6042')
+        self.assertEqual(issue['data']['fields']['issuetype']['name'], 'extRequest')
+        self.assertEqual(issue['data']['fields']['creator']['name'], 'user2')
+        self.assertEqual(issue['data']['fields']['assignee']['name'], 'user1')
+        self.assertEqual(issue['data']['fields']['customfield_10301']['id'],
                          custom_fields['customfield_10301']['id'])
-        self.assertEqual(issues[1]['data']['fields']['customfield_10301']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10301']['name'],
                          custom_fields['customfield_10301']['name'])
-        self.assertEqual(issues[1]['data']['fields']['customfield_10400']['id'],
+        self.assertEqual(issue['data']['fields']['customfield_10400']['id'],
                          custom_fields['customfield_10400']['id'])
-        self.assertEqual(issues[1]['data']['fields']['customfield_10400']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10400']['name'],
                          custom_fields['customfield_10400']['name'])
-        self.assertEqual(issues[1]['data']['fields']['customfield_10600']['id'],
+        self.assertEqual(issue['data']['fields']['customfield_10600']['id'],
                          custom_fields['customfield_10600']['id'])
-        self.assertEqual(issues[1]['data']['fields']['customfield_10600']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10600']['name'],
                          custom_fields['customfield_10600']['name'])
-        self.assertEqual(issues[1]['data']['fields']['customfield_10603']['id'],
+        self.assertEqual(issue['data']['fields']['customfield_10603']['id'],
                          custom_fields['customfield_10603']['id'])
-        self.assertEqual(issues[1]['data']['fields']['customfield_10603']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10603']['name'],
                          custom_fields['customfield_10603']['name'])
+        self.assertEqual(len(issue['data']['comments_data']), 2)
+        self.assertEqual(issue['data']['comments_data'][0]['author']['displayName'], 'Tim Monks')
+        self.assertEqual(issue['data']['comments_data'][1]['author']['displayName'], 'Scott Monks')
 
-        self.assertEqual(issues[2]['origin'], 'http://example.com')
-        self.assertEqual(issues[2]['uuid'], '2e988d555915991228d81144b018c8321d628265')
-        self.assertEqual(issues[2]['updated_on'], 1457006245)
-        self.assertEqual(issues[2]['category'], 'issue')
-        self.assertEqual(issues[2]['tag'], 'http://example.com')
-        self.assertEqual(issues[2]['data']['key'], 'HELP-6041')
-        self.assertEqual(issues[2]['data']['fields']['issuetype']['name'], 'extRequest')
-        self.assertEqual(issues[2]['data']['fields']['creator']['name'], 'user2')
-        self.assertEqual(issues[2]['data']['fields']['assignee']['name'], 'user3')
-        self.assertEqual(issues[2]['data']['fields']['customfield_10301']['id'],
+        issue = issues[2]
+        self.assertEqual(issue['origin'], 'http://example.com')
+        self.assertEqual(issue['uuid'], '1c7765e2a5d27495cf389f5f951c544693c4655f')
+        self.assertEqual(issue['updated_on'], 1457006245)
+        self.assertEqual(issue['category'], 'issue')
+        self.assertEqual(issue['tag'], 'http://example.com')
+        self.assertEqual(issue['data']['key'], 'HELP-6041')
+        self.assertEqual(issue['data']['fields']['issuetype']['name'], 'extRequest')
+        self.assertEqual(issue['data']['fields']['creator']['name'], 'user2')
+        self.assertEqual(issue['data']['fields']['assignee']['name'], 'user3')
+        self.assertEqual(issue['data']['fields']['customfield_10301']['id'],
                          custom_fields['customfield_10301']['id'])
-        self.assertEqual(issues[2]['data']['fields']['customfield_10301']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10301']['name'],
                          custom_fields['customfield_10301']['name'])
-        self.assertEqual(issues[2]['data']['fields']['customfield_10400']['id'],
+        self.assertEqual(issue['data']['fields']['customfield_10400']['id'],
                          custom_fields['customfield_10400']['id'])
-        self.assertEqual(issues[2]['data']['fields']['customfield_10400']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10400']['name'],
                          custom_fields['customfield_10400']['name'])
-        self.assertEqual(issues[2]['data']['fields']['customfield_10600']['id'],
+        self.assertEqual(issue['data']['fields']['customfield_10600']['id'],
                          custom_fields['customfield_10600']['id'])
-        self.assertEqual(issues[2]['data']['fields']['customfield_10600']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10600']['name'],
                          custom_fields['customfield_10600']['name'])
-        self.assertEqual(issues[2]['data']['fields']['customfield_10603']['id'],
+        self.assertEqual(issue['data']['fields']['customfield_10603']['id'],
                          custom_fields['customfield_10603']['id'])
-        self.assertEqual(issues[2]['data']['fields']['customfield_10603']['name'],
+        self.assertEqual(issue['data']['fields']['customfield_10603']['name'],
                          custom_fields['customfield_10603']['name'])
+        self.assertEqual(issue['data']['comments_data'], [])
 
     @httpretty.activate
     def test_fetch_from_date(self):
@@ -308,6 +336,7 @@ class TestJiraBackend(unittest.TestCase):
         from_date = str_to_datetime('2015-01-01')
 
         bodies_json = read_file('data/jira/jira_issues_page_2.json')
+        empty_comment = read_file('data/jira/jira_comments_issue_empty.json')
 
         body = read_file('data/jira/jira_fields.json')
 
@@ -319,10 +348,27 @@ class TestJiraBackend(unittest.TestCase):
                                JIRA_FIELDS_URL,
                                body=body, status=200)
 
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_3_COMMENTS_URL,
+                               body=empty_comment,
+                               status=200)
+
         jira = Jira(JIRA_SERVER_URL)
 
         issues = [issue for issue in jira.fetch(from_date=from_date)]
 
+        self.assertEqual(len(issues), 1)
+
+        issue = issues[0]
+        self.assertEqual(issue['origin'], 'http://example.com')
+        self.assertEqual(issue['uuid'], '1c7765e2a5d27495cf389f5f951c544693c4655f')
+        self.assertEqual(issue['updated_on'], 1457006245)
+        self.assertEqual(issue['category'], 'issue')
+        self.assertEqual(issue['tag'], 'http://example.com')
+        self.assertEqual(issue['data']['comments_data'], [])
+
+        requests = httpretty.HTTPretty.latest_requests
+        request = requests[-2]
         expected_req = {
             'expand': ['renderedFields,transitions,operations,changelog'],
             'jql': ['updated > 1420070400000 order by updated asc'],
@@ -330,17 +376,19 @@ class TestJiraBackend(unittest.TestCase):
             'maxResults': ['100']
         }
 
-        self.assertEqual(len(issues), 1)
-
-        self.assertEqual(issues[0]['origin'], 'http://example.com')
-        self.assertEqual(issues[0]['uuid'], '2e988d555915991228d81144b018c8321d628265')
-        self.assertEqual(issues[0]['updated_on'], 1457006245)
-        self.assertEqual(issues[0]['category'], 'issue')
-        self.assertEqual(issues[0]['tag'], 'http://example.com')
-
-        request = httpretty.last_request()
         self.assertEqual(request.method, 'GET')
         self.assertRegex(request.path, '/rest/api/2/search')
+        self.assertDictEqual(request.querystring, expected_req)
+
+        request = requests[-1]
+        expected_req = {
+            'jql': ['updated > 0 order by updated asc'],
+            'startAt': ['0'],
+            'maxResults': ['100']
+        }
+
+        self.assertEqual(request.method, 'GET')
+        self.assertRegex(request.path, '/rest/api/2/issue/3/comment')
         self.assertDictEqual(request.querystring, expected_req)
 
     @httpretty.activate
@@ -394,18 +442,34 @@ class TestJiraBackendArchive(TestCaseBackendArchive):
 
         bodies_json = [read_file('data/jira/jira_issues_page_1.json'),
                        read_file('data/jira/jira_issues_page_2.json')]
-
+        comment_json = read_file('data/jira/jira_comments_issue_page_2.json')
+        empty_comment = read_file('data/jira/jira_comments_issue_empty.json')
         body = read_file('data/jira/jira_fields.json')
 
         def request_callback(method, uri, headers):
             body = bodies_json.pop(0)
             requests.append(httpretty.last_request())
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                JIRA_SEARCH_URL,
                                responses=[httpretty.Response(body=request_callback)
                                           for _ in range(2)])
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_1_COMMENTS_URL,
+                               body=empty_comment,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_2_COMMENTS_URL,
+                               body=comment_json,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_3_COMMENTS_URL,
+                               body=empty_comment,
+                               status=200)
 
         httpretty.register_uri(httpretty.GET,
                                JIRA_FIELDS_URL,
@@ -421,12 +485,18 @@ class TestJiraBackendArchive(TestCaseBackendArchive):
         """Test whether a list of issues is returned from a given date from archive"""
 
         bodies_json = read_file('data/jira/jira_issues_page_2.json')
+        empty_comment = read_file('data/jira/jira_comments_issue_empty.json')
 
         body = read_file('data/jira/jira_fields.json')
 
         httpretty.register_uri(httpretty.GET,
                                JIRA_SEARCH_URL,
                                body=bodies_json, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_3_COMMENTS_URL,
+                               body=empty_comment,
+                               status=200)
 
         httpretty.register_uri(httpretty.GET,
                                JIRA_FIELDS_URL,
@@ -471,7 +541,7 @@ class TestJiraBackendParsers(unittest.TestCase):
 
         self.assertTrue(len(result), 2)
 
-        self.assertEqual(result[0]["id"], "35851")
+        self.assertEqual(result[0]["id"], "1")
         self.assertEqual(result[0]["key"], "HELP-6043")
         self.assertEqual(result[0]["self"], "https://jira.fiware.org/rest/api/2/issue/35851")
         self.assertEqual(result[0]["expand"],
@@ -479,7 +549,7 @@ class TestJiraBackendParsers(unittest.TestCase):
         self.assertEqual(len(result[0]["fields"]), 27)
         self.assertDictEqual(result[0]["fields"], parse[0]["fields"])
 
-        self.assertEqual(result[1]["id"], "35850")
+        self.assertEqual(result[1]["id"], "2")
         self.assertEqual(result[1]["key"], "HELP-6042")
         self.assertEqual(result[1]["self"], "https://jira.fiware.org/rest/api/2/issue/35850")
         self.assertEqual(result[1]["expand"],
@@ -496,7 +566,7 @@ class TestJiraClient(unittest.TestCase):
 
         client = JiraClient(url='http://example.com', project='perceval',
                             user='user', password='password',
-                            verify=False, cert=None, max_issues=100)
+                            verify=False, cert=None, max_results=100)
 
         self.assertEqual(client.base_url, 'http://example.com')
         self.assertEqual(client.project, 'perceval')
@@ -504,7 +574,19 @@ class TestJiraClient(unittest.TestCase):
         self.assertEqual(client.password, 'password')
         self.assertEqual(client.verify, False)
         self.assertEqual(client.cert, None)
-        self.assertEqual(client.max_issues, 100)
+        self.assertEqual(client.max_results, 100)
+
+        client = JiraClient(url='http://example.com', project='perceval',
+                            user='user', password='password',
+                            verify=False, cert="cert", max_results=100)
+
+        self.assertEqual(client.base_url, 'http://example.com')
+        self.assertEqual(client.project, 'perceval')
+        self.assertEqual(client.user, 'user')
+        self.assertEqual(client.password, 'password')
+        self.assertEqual(client.verify, False)
+        self.assertEqual(client.cert, "cert")
+        self.assertEqual(client.max_results, 100)
 
     @httpretty.activate
     def test_get_issues(self):
@@ -523,7 +605,7 @@ class TestJiraClient(unittest.TestCase):
         def request_callback(method, uri, headers):
             body = bodies.pop(0)
             requests.append(httpretty.last_request())
-            return (200, headers, body)
+            return 200, headers, body
 
         httpretty.register_uri(httpretty.GET,
                                JIRA_SEARCH_URL,
@@ -532,7 +614,7 @@ class TestJiraClient(unittest.TestCase):
 
         client = JiraClient(url='http://example.com', project='perceval',
                             user='user', password='password',
-                            verify=False, cert=None, max_issues=2)
+                            verify=False, cert=None, max_results=2)
 
         pages = [page for page in client.get_issues(from_date)]
 
@@ -565,6 +647,60 @@ class TestJiraClient(unittest.TestCase):
         self.assertEqual(pages[1], bodies_json[1])
 
     @httpretty.activate
+    def test_get_comments(self):
+        """Test get comments API call"""
+
+        bodies_json = [read_file('data/jira/jira_comments_issue_page_1.json'),
+                       read_file('data/jira/jira_comments_issue_page_2.json')]
+
+        bodies = bodies_json[:]
+        bodies = list(bodies_json)
+
+        def request_callback(method, uri, headers):
+            body = bodies.pop(0)
+            return 200, headers, body
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_1_COMMENTS_URL,
+                               responses=[httpretty.Response(body=request_callback)
+                                          for _ in range(2)])
+
+        client = JiraClient(url='http://example.com', project='perceval',
+                            user='user', password='password',
+                            verify=False, cert=None, max_results=2)
+
+        pages = [page for page in client.get_comments("1")]
+
+        expected_req = [
+            {
+                'jql': ['project = perceval AND updated > 0 order by updated asc'],
+                'maxResults': ['2'],
+                'startAt': ['0']
+            },
+            {
+                'jql': ['project = perceval AND updated > 0 order by updated asc'],
+                'maxResults': ['2'],
+                'startAt': ['2']
+            }
+        ]
+
+        self.assertEqual(len(pages), 2)
+
+        requests = httpretty.HTTPretty.latest_requests
+        request = requests[0]
+        self.assertEqual(request.method, 'GET')
+        self.assertRegex(request.path, '/rest/api/2/issue/1/comment')
+        self.assertDictEqual(request.querystring, expected_req[0])
+
+        request = requests[1]
+        self.assertEqual(request.method, 'GET')
+        self.assertRegex(request.path, '/rest/api/2/issue/1/comment')
+        self.assertDictEqual(request.querystring, expected_req[1])
+
+        self.assertEqual(pages[0], bodies_json[0])
+        self.assertEqual(pages[1], bodies_json[1])
+
+    @httpretty.activate
     def test_get_fields(self):
         """Test get fields API call"""
 
@@ -576,7 +712,7 @@ class TestJiraClient(unittest.TestCase):
 
         client = JiraClient(url='http://example.com', project=None,
                             user='user', password='password',
-                            verify=False, cert=None, max_issues=None)
+                            verify=False, cert=None, max_results=None)
 
         page = client.get_fields()
 
@@ -599,7 +735,7 @@ class TestJiraClient(unittest.TestCase):
 
         client = JiraClient(url='http://example.com', project='perceval',
                             user='user', password='password',
-                            verify=False, cert=None, max_issues=1)
+                            verify=False, cert=None, max_results=1)
 
         pages = [page for page in client.get_issues(from_date)]
 
@@ -636,7 +772,7 @@ class TestJiraCommand(unittest.TestCase):
                 '--project', 'Perceval Jira',
                 '--verify', False,
                 '--cert', 'aaaa',
-                '--max-issues', '1',
+                '--max-results', '1',
                 '--tag', 'test',
                 '--no-archive',
                 '--from-date', '1970-01-01',
@@ -648,7 +784,7 @@ class TestJiraCommand(unittest.TestCase):
         self.assertEqual(parsed_args.project, 'Perceval Jira')
         self.assertEqual(parsed_args.verify, False)
         self.assertEqual(parsed_args.cert, 'aaaa')
-        self.assertEqual(parsed_args.max_issues, 1)
+        self.assertEqual(parsed_args.max_results, 1)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
