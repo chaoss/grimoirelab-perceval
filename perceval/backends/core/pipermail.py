@@ -144,11 +144,12 @@ class PipermailCommand(BackendCommand):
 
         setattr(self.parsed_args, 'dirpath', dirpath)
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the Pipermail argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True)
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True)
 
         # Optional arguments
         group = parser.parser.add_argument_group('Pipermail arguments')

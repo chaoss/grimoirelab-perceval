@@ -176,11 +176,12 @@ class RSSCommand(BackendCommand):
 
     BACKEND = RSS
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the RSS argument parser."""
 
-        parser = BackendCommandArgumentParser(archive=True)
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              archive=True)
 
         # Required arguments
         parser.parser.add_argument('url',

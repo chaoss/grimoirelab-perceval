@@ -278,6 +278,7 @@ class BackendCommandArgumentParser:
     types of authentication can be set during the initialization
     of the instance.
 
+    :param categories: set category argument
     :param from_date: set from_date argument
     :param to_date: set to_date argument
     :param offset: set offset argument
@@ -290,19 +291,20 @@ class BackendCommandArgumentParser:
         to `True`
     """
 
-    def __init__(self, from_date=False, to_date=False, offset=False,
+    def __init__(self, categories, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False, archive=False,
                  aliases=None):
         self._from_date = from_date
         self._to_date = to_date
         self._archive = archive
+        self._categories = categories
 
         self.aliases = aliases or {}
         self.parser = argparse.ArgumentParser()
 
         group = self.parser.add_argument_group('general arguments')
         group.add_argument('--category', dest='category',
-                           help="type of the items to fetch")
+                           help="type of the items to fetch (%s)" % ','.join(self._categories))
         group.add_argument('--tag', dest='tag',
                            help="tag the items generated during the fetching process")
         group.add_argument('--filter-classified', dest='filter_classified',
@@ -504,8 +506,8 @@ class BackendCommand:
 
         self.archive_manager = manager
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         raise NotImplementedError
 
 

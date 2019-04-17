@@ -328,11 +328,12 @@ class MBoxCommand(BackendCommand):
 
     BACKEND = MBox
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the MBox argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True)
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True)
 
         # Required arguments
         parser.parser.add_argument('uri',

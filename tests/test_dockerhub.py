@@ -204,6 +204,7 @@ class TestDockerHubCommand(unittest.TestCase):
 
         parser = DockerHubCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._categories, DockerHub.CATEGORIES)
 
         args = ['grimoirelab', 'perceval', '--no-archive']
 

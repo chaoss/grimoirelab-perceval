@@ -227,6 +227,7 @@ class TestRSSCommand(unittest.TestCase):
 
         parser = RSSCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._categories, RSS.CATEGORIES)
 
         args = ['--tag', 'test',
                 '--no-archive',

@@ -238,11 +238,12 @@ class GoogleHitsCommand(BackendCommand):
 
     BACKEND = GoogleHits
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the GoogleHits argument parser."""
 
-        parser = BackendCommandArgumentParser(archive=True)
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              archive=True)
 
         group = parser.parser.add_argument_group('GoogleHits arguments')
         # Generic client options

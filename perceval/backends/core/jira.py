@@ -409,11 +409,12 @@ class JiraCommand(BackendCommand):
 
     BACKEND = Jira
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the Jira argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True,
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True,
                                               basic_auth=True,
                                               archive=True)
 

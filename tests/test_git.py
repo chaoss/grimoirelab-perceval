@@ -809,6 +809,7 @@ class TestGitCommand(TestCaseGit):
 
         parser = GitCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._categories, Git.CATEGORIES)
 
         args = ['http://example.com/',
                 '--git-log', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/git/git_log.txt'),

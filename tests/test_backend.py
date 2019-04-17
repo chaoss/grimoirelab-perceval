@@ -163,9 +163,10 @@ class MockedBackendCommand(BackendCommand):
     def _post_init(self):
         setattr(self.parsed_args, 'post_init', True)
 
-    @staticmethod
-    def setup_cmd_parser():
-        parser = BackendCommandArgumentParser(from_date=True,
+    @classmethod
+    def setup_cmd_parser(cls):
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True,
                                               basic_auth=True,
                                               token_auth=True,
                                               archive=True)
@@ -195,9 +196,10 @@ class NoArchiveBackendCommand(BackendCommand):
     def _post_init(self):
         setattr(self.parsed_args, 'post_init', True)
 
-    @staticmethod
-    def setup_cmd_parser():
-        parser = BackendCommandArgumentParser(from_date=True,
+    @classmethod
+    def setup_cmd_parser(cls):
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True,
                                               archive=False)
         parser.parser.add_argument('origin')
         parser.parser.add_argument('--subtype', dest='subtype')
@@ -539,15 +541,22 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
     def test_argument_parser(self):
         """Test if an argument parser object is created on initialization"""
 
-        parser = BackendCommandArgumentParser()
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES)
         self.assertIsInstance(parser.parser, argparse.ArgumentParser)
+
+    def test_categories(self):
+        """Test whether _categories is initialized"""
+
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES)
+        self.assertEqual(parser._categories, MockedBackendCommand.BACKEND.CATEGORIES)
 
     def test_parse_default_args(self):
         """Test if the default configured arguments are parsed"""
 
         args = ['--tag', 'test', '--filter-classified']
 
-        parser = BackendCommandArgumentParser()
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES)
+
         parsed_args = parser.parse(*args)
 
         self.assertIsInstance(parsed_args, argparse.Namespace)
@@ -559,7 +568,7 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
 
         args = []
 
-        parser = BackendCommandArgumentParser()
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES)
         parsed_args = parser.parse(*args)
 
         self.assertEqual(parsed_args.filter_classified, False)
@@ -574,7 +583,8 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
             'from_date': 'tag',
             'notfound': 'backend_token'
         }
-        parser = BackendCommandArgumentParser(from_date=True,
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                              from_date=True,
                                               aliases=aliases)
 
         args = ['--tag', 'test', '--from-date', '2015-01-01']
@@ -596,7 +606,8 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
     def test_parse_date_args(self):
         """Test if date parameters are parsed"""
 
-        parser = BackendCommandArgumentParser(from_date=True,
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                              from_date=True,
                                               to_date=True)
 
         # Check default value
@@ -646,7 +657,8 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
     def test_parse_offset_arg(self):
         """Test if offset parameter is parsed"""
 
-        parser = BackendCommandArgumentParser(offset=True)
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                              offset=True)
 
         # Check default value
         args = []
@@ -664,13 +676,16 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         """Test if date and offset arguments are incompatible"""
 
         with self.assertRaises(AttributeError):
-            _ = BackendCommandArgumentParser(from_date=True,
+            _ = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                             from_date=True,
                                              offset=True)
         with self.assertRaises(AttributeError):
-            _ = BackendCommandArgumentParser(to_date=True,
+            _ = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                             to_date=True,
                                              offset=True)
         with self.assertRaises(AttributeError):
-            _ = BackendCommandArgumentParser(from_date=True,
+            _ = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                             from_date=True,
                                              to_date=True,
                                              offset=True)
 
@@ -679,7 +694,8 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
 
         args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd']
 
-        parser = BackendCommandArgumentParser(basic_auth=True,
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                              basic_auth=True,
                                               token_auth=True)
         parsed_args = parser.parse(*args)
 
@@ -696,7 +712,8 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
                 '--archived-since', '2016-01-01',
                 '--category', 'mocked']
 
-        parser = BackendCommandArgumentParser(archive=True)
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                              archive=True)
         parsed_args = parser.parse(*args)
 
         expected_dt = datetime.datetime(2016, 1, 1, 0, 0,
@@ -712,7 +729,8 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         """Test if fetch-archive and no-archive arguments are incompatible"""
 
         args = ['--fetch-archive', '--no-archive']
-        parser = BackendCommandArgumentParser(archive=True)
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                              archive=True)
 
         with self.assertRaises(AttributeError):
             _ = parser.parse(*args)
@@ -721,7 +739,8 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         """Test if fetch-archive needs a category"""
 
         args = ['--fetch-archive']
-        parser = BackendCommandArgumentParser(archive=True)
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                              archive=True)
 
         with self.assertRaises(AttributeError):
             _ = parser.parse(*args)
@@ -730,7 +749,8 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         """Test whether category argument is removed when no value is given"""
 
         args = []
-        parser = BackendCommandArgumentParser(archive=True)
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                              archive=True)
         parsed_args = parser.parse(*args)
 
         with self.assertRaises(AttributeError):
@@ -738,7 +758,8 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
 
         # An empty string is parsed
         args = ['--category', '']
-        parser = BackendCommandArgumentParser(archive=True)
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                              archive=True)
         parsed_args = parser.parse(*args)
 
         self.assertEqual(parsed_args.category, '')
