@@ -85,7 +85,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.21.0'
+    version = '0.22.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -391,18 +391,39 @@ class GitHub(Backend):
         return requested_reviewers
 
     def __get_pull_commits(self, pr_number):
-        """Get pull request commit hashes"""
+        """Get pull request commit hashes and comments"""
 
-        hashes = []
+        commits = []
         group_pull_commits = self.client.pull_commits(pr_number)
 
         for raw_pull_commits in group_pull_commits:
 
             for commit in json.loads(raw_pull_commits):
-                commit_hash = commit['sha']
-                hashes.append(commit_hash)
 
-        return hashes
+                commit_info = {
+                    'hash': commit['sha'],
+                    'commit_comments': self.__get_commit_comments(commit['sha'])
+                }
+
+                commits.append(commit_info)
+
+        return commits
+
+    def __get_commit_comments(self, commit_sha):
+        """Get pull request commit comments"""
+
+        comments = []
+
+        raw_comments = self.client.pull_commit_comments(commit_sha)
+        for comment in json.loads(raw_comments):
+
+            user = comment.get('user', None)
+            comment_info = {
+                'user_data': self.__get_user(user['login']),
+                'body': comment.get('body', None)
+            }
+            comments.append(comment_info)
+        return comments
 
     def __get_pull_review_comments(self, pr_number):
         """Get pull request review comments"""
@@ -475,8 +496,7 @@ class GitHub(Backend):
 
         user_raw = self.client.user(login)
         user = json.loads(user_raw)
-        user_orgs_raw = \
-            self.client.user_orgs(login)
+        user_orgs_raw = self.client.user_orgs(login)
         user['organizations'] = json.loads(user_orgs_raw)
 
         return user
@@ -524,6 +544,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
+    _commit_comments = {}  # commit_comments cache
 
     def __init__(self, owner, repository, tokens,
                  base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
@@ -693,6 +714,23 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         reviews_url = urijoin("pulls", str(pr_number), "reviews")
         return self.fetch_items(reviews_url, payload)
+
+    def pull_commit_comments(self, commit_sha):
+        """Get pull request commit comments"""
+
+        if commit_sha in self._commit_comments:
+            return self._commit_comments[commit_sha]
+
+        payload = {
+            'per_page': PER_PAGE,
+            'direction': 'asc',
+            'sort': 'updated'
+        }
+
+        path = urijoin("commits", commit_sha, "comments")
+        items = [items for items in self.fetch_items(path, payload)]
+        self._commit_comments[commit_sha] = items[0]
+        return items[0]
 
     def pull_review_comment_reactions(self, comment_id):
         """Get reactions of a review comment"""

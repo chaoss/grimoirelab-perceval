@@ -20,14 +20,14 @@
             "type": "User",
             "url": "https://api.github.com/users/jgbarah"
         },
-        "comments_url": "https://api.github.com/repos/chaoss/grimoirelab-perceval/commits/53b970ee04bbc435842c14a2cbfdd623faf74a65/comments",
+        "comments_url": "https://api.github.com/repos/zhquan_example/repo/commits/53b970ee04bbc435842c14a2cbfdd623faf74a66/comments",
         "commit": {
             "author": {
                 "date": "2015-12-31T18:16:25Z",
                 "email": "jgb@gsyc.es",
                 "name": "Jesus M. Gonzalez-Barahona"
             },
-            "comment_count": 0,
+            "comment_count": 2,
             "committer": {
                 "date": "2016-01-03T23:26:58Z",
                 "email": "jgb@gsyc.es",
@@ -75,7 +75,7 @@
                 "url": "https://api.github.com/repos/chaoss/grimoirelab-perceval/commits/ab693f022341598d68648d525dee26456bd3f601"
             }
         ],
-        "sha": "53b970ee04bbc435842c14a2cbfdd623faf74a65",
+        "sha": "53b970ee04bbc435842c14a2cbfdd623faf74a66",
         "url": "https://api.github.com/repos/chaoss/grimoirelab-perceval/commits/53b970ee04bbc435842c14a2cbfdd623faf74a65"
     }
 ]
