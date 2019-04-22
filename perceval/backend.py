@@ -289,6 +289,7 @@ class BackendCommandArgumentParser:
     :raises AttributeArror: when both `from_date` and `offset` are set
         to `True`
     """
+
     def __init__(self, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False, archive=False,
                  aliases=None):
@@ -314,10 +315,12 @@ class BackendCommandArgumentParser:
         if from_date:
             group.add_argument('--from-date', dest='from_date',
                                default='1970-01-01',
-                               help="fetch items updated since this date")
+                               help="fetch items updated since this \
+                                     date (in any ISO 8601 format, e.g., 'YYYY-MM-DD HH:mm:SS +|-HH:MM')")
         if to_date:
             group.add_argument('--to-date', dest='to_date',
-                               help="fetch items updated before this date")
+                               help="fetch items updated before this \
+                                    date (in any ISO 8601 format, e.g., 'YYYY-MM-DD HH:mm:SS +|-HH:MM')")
         if offset:
             group.add_argument('--offset', dest='offset',
                                type=int, default=0,
