@@ -343,11 +343,12 @@ class TwitterCommand(BackendCommand):
 
     BACKEND = Twitter
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the Twitter argument parser."""
 
-        parser = BackendCommandArgumentParser(token_auth=True,
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              token_auth=True,
                                               archive=True)
 
         # Backend token is required

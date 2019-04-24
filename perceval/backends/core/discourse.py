@@ -399,11 +399,12 @@ class DiscourseCommand(BackendCommand):
 
     BACKEND = Discourse
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the Discourse argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True,
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True,
                                               token_auth=True,
                                               archive=True)
 

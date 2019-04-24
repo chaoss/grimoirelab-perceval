@@ -521,6 +521,7 @@ class TestConfluenceCommand(unittest.TestCase):
 
         parser = ConfluenceCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._categories, Confluence.CATEGORIES)
 
         args = ['http://example.com',
                 '--tag', 'test', '--no-archive',

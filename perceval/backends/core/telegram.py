@@ -259,14 +259,15 @@ class TelegramCommand(BackendCommand):
 
     BACKEND = Telegram
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the Telegram argument parser."""
 
         aliases = {
             'bot_token': 'api_token'
         }
-        parser = BackendCommandArgumentParser(offset=True,
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              offset=True,
                                               token_auth=True,
                                               archive=True,
                                               aliases=aliases)

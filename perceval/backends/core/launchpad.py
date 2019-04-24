@@ -451,11 +451,12 @@ class LaunchpadCommand(BackendCommand):
 
     BACKEND = Launchpad
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the Launchpad argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True,
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True,
                                               archive=True,
                                               token_auth=False)
 

@@ -264,14 +264,15 @@ class SupybotCommand(BackendCommand):
 
     BACKEND = Supybot
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the Supybot argument parser."""
 
         aliases = {
             'dirpath': 'ircdir'
         }
-        parser = BackendCommandArgumentParser(from_date=True,
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True,
                                               aliases=aliases)
 
         # Required arguments

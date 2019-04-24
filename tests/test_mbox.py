@@ -556,6 +556,7 @@ class TestMBoxCommand(unittest.TestCase):
 
         parser = MBoxCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._categories, MBox.CATEGORIES)
 
         args = ['http://example.com/', '/tmp/perceval/',
                 '--tag', 'test',

@@ -700,6 +700,7 @@ class TestMeetupCommand(unittest.TestCase):
 
         parser = MeetupCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._categories, Meetup.CATEGORIES)
 
         args = ['sqlpass-es',
                 '--api-token', 'aaaa',

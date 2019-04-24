@@ -282,11 +282,12 @@ class ConfluenceCommand(BackendCommand):
 
     BACKEND = Confluence
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the Bugzilla argument parser."""
 
-        parser = BackendCommandArgumentParser(from_date=True,
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True,
                                               archive=True)
 
         # Required arguments

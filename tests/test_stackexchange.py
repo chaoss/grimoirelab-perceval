@@ -451,6 +451,7 @@ class TestStackExchangeCommand(unittest.TestCase):
 
         parser = StackExchangeCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._categories, StackExchange.CATEGORIES)
 
         args = ['--site', 'stackoverflow',
                 '--tagged', 'python',

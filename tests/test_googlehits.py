@@ -275,6 +275,7 @@ class TestGoogleHitsCommand(unittest.TestCase):
 
         parser = GoogleHitsCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._categories, GoogleHits.CATEGORIES)
         args = ['', '--no-archive']
 
         parsed_args = parser.parse(*args)

@@ -372,6 +372,7 @@ class TestTwitterCommand(unittest.TestCase):
 
         parser = TwitterCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._categories, Twitter.CATEGORIES)
 
         args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',

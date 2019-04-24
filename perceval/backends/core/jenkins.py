@@ -246,11 +246,12 @@ class JenkinsCommand(BackendCommand):
 
     BACKEND = Jenkins
 
-    @staticmethod
-    def setup_cmd_parser():
+    @classmethod
+    def setup_cmd_parser(cls):
         """Returns the Jenkins argument parser."""
 
-        parser = BackendCommandArgumentParser(archive=True)
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              archive=True)
 
         # Jenkins options
         group = parser.parser.add_argument_group('Jenkins arguments')

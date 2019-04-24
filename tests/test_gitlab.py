@@ -1337,6 +1337,7 @@ class TestGitLabCommand(unittest.TestCase):
 
         parser = GitLabCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._categories, GitLab.CATEGORIES)
 
         args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',
