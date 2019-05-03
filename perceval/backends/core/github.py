@@ -85,7 +85,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.20.1'
+    version = '0.21.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -275,8 +275,10 @@ class GitHub(Backend):
                 return
 
             self.__init_extra_pull_fields(pull)
-            for field in TARGET_PULL_FIELDS:
 
+            pull['reviews_data'] = self.__get_pull_reviews(pull['number'])
+
+            for field in TARGET_PULL_FIELDS:
                 if not pull[field]:
                     continue
 
@@ -426,6 +428,25 @@ class GitHub(Backend):
 
         return comments
 
+    def __get_pull_reviews(self, pr_number):
+        """Get pull request reviews"""
+
+        reviews = []
+        group_reviews = self.client.pull_reviews(pr_number)
+
+        for raw_reviews in group_reviews:
+
+            for review in json.loads(raw_reviews):
+                user = review.get('user', None)
+                if not user:
+                    logger.warning("Missing user info for %s", review['html_url'])
+                    review['user_data'] = None
+                else:
+                    review['user_data'] = self.__get_user(user['login'])
+
+                reviews.append(review)
+        return reviews
+
     def __get_pull_review_comment_reactions(self, comment_id, total_count):
         """Get pull review comment reactions"""
 
@@ -474,6 +495,7 @@ class GitHub(Backend):
 
         pull['user_data'] = {}
         pull['review_comments_data'] = {}
+        pull['reviews_data'] = []
         pull['requested_reviewers_data'] = []
         pull['merged_by_data'] = []
         pull['commits_data'] = []
@@ -618,10 +640,8 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
                 pull_number = issue["number"]
                 path = urijoin(self.base_url, 'repos', self.owner, self.repository, "pulls", pull_number)
-
                 r = self.fetch(path)
                 pull = r.text
-
                 yield pull
 
     def repo(self):
@@ -661,6 +681,18 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         comments_url = urijoin("pulls", str(pr_number), "comments")
         return self.fetch_items(comments_url, payload)
+
+    def pull_reviews(self, pr_number):
+        """Get pull request reviews"""
+
+        payload = {
+            'per_page': PER_PAGE,
+            'direction': 'asc',
+            'sort': 'updated'
+        }
+
+        reviews_url = urijoin("pulls", str(pr_number), "reviews")
+        return self.fetch_items(reviews_url, payload)
 
     def pull_review_comment_reactions(self, comment_id):
         """Get reactions of a review comment"""
@@ -742,7 +774,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
         page = 0  # current page
         last_page = None  # last page
         url_next = urijoin(self.base_url, 'repos', self.owner, self.repository, path)
-
         logger.debug("Get GitHub paginated items from " + url_next)
 
         response = self.fetch(url_next, payload=payload)
