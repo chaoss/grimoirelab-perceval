@@ -82,7 +82,7 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.6.2'
+    version = '0.7.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
@@ -222,12 +222,24 @@ class GitLab(Backend):
 
                 self.__init_issue_extra_fields(issue)
 
+                issue['author_data'] = self.__get_user(issue['author'])
+                issue['assignee_data'] = self.__get_user(issue['assignee'])
+                issue['assignees_data'] = self.__get_issue_assignees(issue['assignees'])
                 issue['notes_data'] = \
                     self.__get_issue_notes(issue_id)
                 issue['award_emoji_data'] = \
                     self.__get_award_emoji(GitLabClient.ISSUES, issue_id)
 
                 yield issue
+
+    def __get_issue_assignees(self, raw_assignees):
+        """Get issue assignees"""
+
+        assignees = []
+        for ra in raw_assignees:
+            assignees.append(self.__get_user(ra))
+
+        return assignees
 
     def __get_issue_notes(self, issue_id):
         """Get issue notes"""
@@ -240,6 +252,7 @@ class GitLab(Backend):
 
             for note in json.loads(raw_notes):
                 note_id = note['id']
+                note['author_data'] = self.__get_user(note['author'])
                 note['award_emoji_data'] = \
                     self.__get_note_award_emoji(GitLabClient.ISSUES, issue_id, note_id)
                 notes.append(note)
@@ -268,6 +281,9 @@ class GitLab(Backend):
 
                 self.__init_merge_extra_fields(merge_full)
 
+                merge_full['author_data'] = self.__get_user(merge_full['author'])
+                merge_full['assignee_data'] = self.__get_user(merge_full['assignee'])
+
                 merge_full['notes_data'] = self.__get_merge_notes(merge_id)
                 merge_full['award_emoji_data'] = self.__get_award_emoji(GitLabClient.MERGES, merge_id)
                 merge_full['versions_data'] = self.__get_merge_versions(merge_id)
@@ -284,6 +300,7 @@ class GitLab(Backend):
         for raw_notes in group_notes:
             for note in json.loads(raw_notes):
                 note_id = note['id']
+                note['author_data'] = self.__get_user(note['author'])
                 note['award_emoji_data'] = \
                     self.__get_note_award_emoji(GitLabClient.MERGES, merge_id, note_id)
                 notes.append(note)
@@ -334,22 +351,45 @@ class GitLab(Backend):
                     emojis.append(emoji)
         except requests.exceptions.HTTPError as error:
             if error.response.status_code == 404:
-                logger.warning("Emojis not available for %s ",
+                logger.warning("Emojis not available for %s",
                                urijoin(item_type, str(item_id), GitLabClient.NOTES,
                                        str(note_id), GitLabClient.EMOJI))
                 return emojis
 
         return emojis
 
+    def __get_user(self, user):
+        """Fetch user data"""
+
+        found = {}
+
+        if not user:
+            return found
+
+        if 'id' not in user:
+            logger.warning("User %s has no ID", user)
+            return found
+
+        user_raw = self.client.user(user['id'])
+        found = json.loads(user_raw)
+
+        return found
+
     def __init_issue_extra_fields(self, issue):
         """Add fields to an issue"""
 
+        issue['author_data'] = {}
+        issue['assignee_data'] = {}
+        issue['assignees_data'] = []
+        issue['notes_data'] = []
         issue['notes_data'] = []
         issue['award_emoji_data'] = []
 
     def __init_merge_extra_fields(self, merge):
         """Add fields to a merge requests"""
 
+        merge['author_data'] = {}
+        merge['assignee_data'] = {}
         merge['notes_data'] = []
         merge['award_emoji_data'] = []
         merge['versions_data'] = []
@@ -385,7 +425,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
     PROJECTS = "projects"
     VERSIONS = "versions"
 
-    _users = {}       # users cache
+    _users = {}  # users cache
 
     def __init__(self, owner, repository, token, base_url=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
@@ -517,6 +557,22 @@ class GitLabClient(HttpClient, RateLimitHandler):
                        str(note_id), GitLabClient.EMOJI)
 
         return self.fetch_items(path, payload)
+
+    def user(self, user_id):
+        """Get the user information and update the user cache"""
+
+        if user_id in self._users:
+            return self._users[user_id]
+
+        url_user = urijoin(self.base_url, 'users', user_id)
+
+        logging.info("Getting info for %s" % url_user)
+
+        r = self.fetch(url_user)
+        user = r.text
+        self._users[user_id] = user
+
+        return user
 
     def calculate_time_to_reset(self):
         """Calculate the seconds to reset the token requests, by obtaining the different
