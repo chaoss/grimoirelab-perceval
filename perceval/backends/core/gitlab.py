@@ -37,6 +37,7 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser)
 from ...client import HttpClient, RateLimitHandler
 from ...utils import DEFAULT_DATETIME
+from ...errors import BackendError
 
 CATEGORY_ISSUE = "issue"
 CATEGORY_MERGE_REQUEST = "merge_request"
@@ -68,6 +69,7 @@ class GitLab(Backend):
     :param owner: GitLab owner
     :param repository: GitLab repository from the owner
     :param api_token: GitLab auth token to access the API
+    :param is_oauth_token: True if the token is OAuth (default False)
     :param base_url: GitLab URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitLab public site.
@@ -82,23 +84,27 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.6.3'
+    version = '0.7.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
-    def __init__(self, owner=None, repository=None,
-                 api_token=None, base_url=None, tag=None, archive=None,
+    def __init__(self, owner=None, repository=None, api_token=None,
+                 is_oauth_token=False, base_url=None, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
                  blacklist_ids=None):
         origin = base_url if base_url else GITLAB_URL
         origin = urijoin(origin, owner, repository)
 
+        if not api_token and is_oauth_token:
+            raise BackendError(cause="is_oauth_token is True but api_token is None")
+
         super().__init__(origin, tag=tag, archive=archive)
         self.base_url = base_url
         self.owner = owner
         self.repository = repository
         self.api_token = api_token
+        self.is_oauth_token = is_oauth_token
         self.sleep_for_rate = sleep_for_rate
         self.min_rate_to_sleep = min_rate_to_sleep
         self.max_retries = max_retries
@@ -201,7 +207,8 @@ class GitLab(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return GitLabClient(self.owner, self.repository, self.api_token, self.base_url,
+        return GitLabClient(self.owner, self.repository, self.api_token,
+                            self.is_oauth_token, self.base_url,
                             self.sleep_for_rate, self.min_rate_to_sleep,
                             self.sleep_time, self.max_retries,
                             self.archive, from_archive)
@@ -361,6 +368,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
     :param owner: GitLab owner
     :param repository: GitLab owner's repository
     :param token: GitLab auth token to access the API
+    :param is_oauth_token: True if the token is OAuth (default False)
     :param base_url: GitLab URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitLab public site.
@@ -387,13 +395,14 @@ class GitLabClient(HttpClient, RateLimitHandler):
 
     _users = {}       # users cache
 
-    def __init__(self, owner, repository, token, base_url=None,
+    def __init__(self, owner, repository, token, is_oauth_token=False, base_url=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
                  archive=None, from_archive=False):
         self.owner = owner
         self.repository = repository
         self.token = token
+        self.is_oauth_token = is_oauth_token
         self.rate_limit = None
         self.sleep_for_rate = sleep_for_rate
 
@@ -599,8 +608,13 @@ class GitLabClient(HttpClient, RateLimitHandler):
 
         :returns url, headers and the sanitized payload
         """
-        if headers and 'PRIVATE-TOKEN' in headers:
+        if not headers:
+            return url, headers, payload
+
+        if 'PRIVATE-TOKEN' in headers:
             headers.pop('PRIVATE-TOKEN', None)
+        elif 'Authorization' in headers:
+            headers.pop('Authorization', None)
 
         return url, headers, payload
 
@@ -608,7 +622,13 @@ class GitLabClient(HttpClient, RateLimitHandler):
         """Set extra headers for session"""
 
         headers = {}
-        if self.token:
+
+        if not self.token:
+            return headers
+
+        if self.is_oauth_token:
+            headers = {'Authorization': "Bearer %s" % self.token}
+        else:
             headers = {'PRIVATE-TOKEN': self.token}
 
         return headers
@@ -655,6 +675,9 @@ class GitLabCommand(BackendCommand):
         group.add_argument('--blacklist-ids', dest='blacklist_ids',
                            nargs='*', type=int,
                            help="Ids of items that must not be retrieved.")
+        group.add_argument('--is-oauth-token', dest='is_oauth_token',
+                           action='store_true',
+                           help="True if the token is oauth")
 
         # Generic client options
         group.add_argument('--max-retries', dest='max_retries',

@@ -37,7 +37,7 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from grimoirelab_toolkit.datetime import datetime_utcnow
 from perceval.backend import BackendCommandArgumentParser
-from perceval.errors import RateLimitError
+from perceval.errors import RateLimitError, BackendError
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.gitlab import (logger,
                                            GitLab,
@@ -390,6 +390,29 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(gitlab.max_retries, 10)
         self.assertEqual(gitlab.sleep_time, 100)
         self.assertEqual(gitlab.blacklist_ids, [1, 2, 3])
+        self.assertEqual(gitlab.is_oauth_token, False)
+
+    @httpretty.activate
+    def test_initialization_oauth_token(self):
+        """Test whether attributes are initialized with an Oauth Token"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+                          rate_limit_headers={'RateLimit-Remaining': '20'})
+
+        gitlab = GitLab('fdroid', 'fdroiddata', api_token='aaa', is_oauth_token=True, tag='test')
+
+        self.assertEqual(gitlab.owner, 'fdroid')
+        self.assertEqual(gitlab.repository, 'fdroiddata')
+        self.assertEqual(gitlab.origin, GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(gitlab.tag, 'test')
+        self.assertIsNone(gitlab.client)
+        self.assertIsNone(gitlab.blacklist_ids)
+        self.assertEqual(gitlab.max_retries, MAX_RETRIES)
+        self.assertEqual(gitlab.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertEqual(gitlab.is_oauth_token, True)
+
+        with self.assertRaises(BackendError):
+            _ = GitLab('fdroid', 'fdroiddata', is_oauth_token=True, tag='test')
 
     @httpretty.activate
     def test_initialization_entreprise(self):
@@ -973,6 +996,7 @@ class TestGitLabClient(unittest.TestCase):
         self.assertEqual(client.owner, "fdroid")
         self.assertEqual(client.repository, "fdroiddata")
         self.assertEqual(client.token, "your-token")
+        self.assertEqual(client.is_oauth_token, False)
         self.assertEqual(client.sleep_for_rate, False)
         self.assertEqual(client.base_url, GITLAB_API_URL)
         self.assertEqual(client.min_rate_to_sleep, GitLabClient.MIN_RATE_LIMIT)
@@ -980,15 +1004,18 @@ class TestGitLabClient(unittest.TestCase):
         self.assertEqual(client.max_retries, GitLabClient.MAX_RETRIES)
         self.assertEqual(client.rate_limit, 20)
         self.assertEqual(client.rate_limit_reset_ts, None)
+        self.assertEqual(client.headers['PRIVATE-TOKEN'], "your-token")
 
-        client = GitLabClient("fdroid", "fdroiddata", "your-token", sleep_for_rate=True,
-                              min_rate_to_sleep=100, max_retries=10, sleep_time=100)
+        client = GitLabClient("fdroid", "fdroiddata", "your-token", is_oauth_token=True,
+                              sleep_for_rate=True, min_rate_to_sleep=100, max_retries=10, sleep_time=100)
 
         self.assertEqual(client.sleep_for_rate, True)
         self.assertEqual(client.base_url, GITLAB_API_URL)
         self.assertEqual(client.min_rate_to_sleep, 100)
         self.assertEqual(client.sleep_time, 100)
         self.assertEqual(client.max_retries, 10)
+        self.assertEqual(client.is_oauth_token, True)
+        self.assertEqual(client.headers['Authorization'], "Bearer your-token")
 
     @httpretty.activate
     def test_initialization_entreprise(self):
@@ -1462,8 +1489,8 @@ class TestGitLabClient(unittest.TestCase):
         with self.assertRaises(RateLimitError):
             _ = [issues for issues in client.issues()]
 
-    def test_sanitize_for_archive(self):
-        """Test whether the sanitize method works properly"""
+    def test_sanitize_for_archive_private_token(self):
+        """Test whether the sanitize method works properly with a private token"""
 
         url = "http://example.com"
         headers = {'PRIVATE-TOKEN': 'ABCDEF'}
@@ -1471,6 +1498,20 @@ class TestGitLabClient(unittest.TestCase):
 
         s_url, s_headers, s_payload = GitLabClient.sanitize_for_archive(url, copy.deepcopy(headers), payload)
         headers.pop('PRIVATE-TOKEN')
+
+        self.assertEqual(url, s_url)
+        self.assertEqual(headers, s_headers)
+        self.assertEqual(payload, s_payload)
+
+    def test_sanitize_for_archive_oauth_token(self):
+        """Test whether the sanitize method works properly with an oauth token"""
+
+        url = "http://example.com"
+        headers = {'Authorization': 'Bearer ABCDEF'}
+        payload = {}
+
+        s_url, s_headers, s_payload = GitLabClient.sanitize_for_archive(url, copy.deepcopy(headers), payload)
+        headers.pop('Authorization')
 
         self.assertEqual(url, s_url)
         self.assertEqual(headers, s_headers)
@@ -1512,6 +1553,7 @@ class TestGitLabCommand(unittest.TestCase):
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
         self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
         self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertEqual(parsed_args.is_oauth_token, False)
 
         args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',
@@ -1523,6 +1565,7 @@ class TestGitLabCommand(unittest.TestCase):
                 '--blacklist-ids', '1', '2', '3',
                 '--enterprise-url', 'https://example.com',
                 '--category', CATEGORY_MERGE_REQUEST,
+                '--is-oauth-token',
                 'zhquan_example', 'repo']
 
         parsed_args = parser.parse(*args)
@@ -1539,6 +1582,7 @@ class TestGitLabCommand(unittest.TestCase):
         self.assertEqual(parsed_args.blacklist_ids, [1, 2, 3])
         self.assertEqual(parsed_args.max_retries, 5)
         self.assertEqual(parsed_args.sleep_time, 10)
+        self.assertEqual(parsed_args.is_oauth_token, True)
 
 
 if __name__ == "__main__":
