@@ -44,7 +44,8 @@ from perceval.backends.core.github import (logger, GitHub,
                                            GitHubClient,
                                            CATEGORY_ISSUE,
                                            CATEGORY_PULL_REQUEST,
-                                           CATEGORY_REPO)
+                                           CATEGORY_REPO,
+                                           MAX_CATEGORY_ITEMS_PER_PAGE)
 from base import TestCaseBackendArchive
 
 
@@ -123,6 +124,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.repository, 'repo')
         self.assertEqual(github.origin, 'https://github.com/zhquan_example/repo')
         self.assertEqual(github.tag, 'test')
+        self.assertEqual(github.max_items, MAX_CATEGORY_ITEMS_PER_PAGE)
 
         self.assertEqual(github.categories, [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO])
 
@@ -2026,7 +2028,10 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(client.max_retries, GitHubClient.MAX_RETRIES)
         self.assertEqual(client.base_url, 'https://api.github.com')
 
-        client = GitHubClient('zhquan_example', 'repo', ['aaa'], None, False, 3, 20, 2, None, False)
+        client = GitHubClient('zhquan_example', 'repo', ['aaa'], base_url=None,
+                              sleep_for_rate=False, min_rate_to_sleep=3,
+                              sleep_time=20, max_retries=2, max_items=1,
+                              archive=None, from_archive=False)
         self.assertEqual(client.owner, 'zhquan_example')
         self.assertEqual(client.repository, 'repo')
         self.assertEqual(client.tokens, ['aaa'])
@@ -2037,6 +2042,7 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(client.min_rate_to_sleep, 3)
         self.assertEqual(client.sleep_time, 20)
         self.assertEqual(client.max_retries, 2)
+        self.assertEqual(client.max_items, 1)
         self.assertIsNone(client.archive)
         self.assertFalse(client.from_archive)
 
@@ -3081,6 +3087,7 @@ class TestGitHubCommand(unittest.TestCase):
         args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',
                 '--max-retries', '5',
+                '--max-items', '10',
                 '--sleep-time', '10',
                 '--tag', 'test', '--no-archive',
                 '--api-token', 'abcdefgh', 'ijklmnop',
@@ -3095,6 +3102,7 @@ class TestGitHubCommand(unittest.TestCase):
         self.assertEqual(parsed_args.base_url, 'https://example.com')
         self.assertEqual(parsed_args.sleep_for_rate, True)
         self.assertEqual(parsed_args.max_retries, 5)
+        self.assertEqual(parsed_args.max_items, 10)
         self.assertEqual(parsed_args.sleep_time, 10)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
