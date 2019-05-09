@@ -1321,7 +1321,7 @@ class TestGitHubBackend(unittest.TestCase):
         pull_request_reviews = read_file('data/github/github_request_pull_request_1_reviews')
         pull_request_commits = read_file('data/github/github_request_pull_request_1_commits')
         pull_request_comment_2_reactions = read_file('data/github/github_request_pull_request_1_comment_2_reactions')
-        pull_requested_reviewers = read_file('data/github/github_request_requested_reviewers')
+        pull_requested_reviewers = read_file('data/github/github_enterprise_request_requested_reviewers')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTREPRISE_RATE_LIMIT,
