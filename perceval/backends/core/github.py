@@ -50,7 +50,7 @@ MAX_RATE_LIMIT = 500
 # Use this factor of the current token's remaining API points before switching to the next token
 TOKEN_USAGE_BEFORE_SWITCH = 0.1
 
-
+MAX_CATEGORY_ITEMS_PER_PAGE = 100
 PER_PAGE = 100
 
 # Default sleep time and retries to deal with connection/server problems
@@ -82,10 +82,12 @@ class GitHub(Backend):
          it will be reset
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
+    :param max_items: max number of category items (e.g., issues,
+        pull requests) per query
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.21.0'
+    version = '0.22.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -93,7 +95,8 @@ class GitHub(Backend):
                  api_token=None, base_url=None,
                  tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
-                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
+                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
+                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE):
         if api_token is None:
             api_token = []
         origin = base_url if base_url else GITHUB_URL
@@ -110,6 +113,7 @@ class GitHub(Backend):
         self.min_rate_to_sleep = min_rate_to_sleep
         self.max_retries = max_retries
         self.sleep_time = sleep_time
+        self.max_items = max_items
 
         self.client = None
         self._users = {}  # internal users cache
@@ -229,7 +233,7 @@ class GitHub(Backend):
 
         return GitHubClient(self.owner, self.repository, self.api_token, self.base_url,
                             self.sleep_for_rate, self.min_rate_to_sleep,
-                            self.sleep_time, self.max_retries,
+                            self.sleep_time, self.max_retries, self.max_items,
                             self.archive, from_archive)
 
     def __fetch_issues(self, from_date, to_date):
@@ -517,6 +521,8 @@ class GitHubClient(HttpClient, RateLimitHandler):
         of connection problems
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
+    :param max_items: max number of category items (e.g., issues,
+        pull requests) per query
     :param archive: collect issues already retrieved from an archive
     :param from_archive: it tells whether to write/read the archive
     """
@@ -528,13 +534,14 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def __init__(self, owner, repository, tokens,
                  base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
-                 archive=None, from_archive=False):
+                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE, archive=None, from_archive=False):
         self.owner = owner
         self.repository = repository
         self.tokens = tokens
         self.n_tokens = len(self.tokens)
         self.current_token = None
         self.last_rate_limit_checked = None
+        self.max_items = max_items
 
         if base_url:
             base_url = urijoin(base_url, 'api', 'v3')
@@ -609,7 +616,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """
         payload = {
             'state': 'all',
-            'per_page': PER_PAGE,
+            'per_page': self.max_items,
             'direction': 'asc',
             'sort': 'updated'}
 
@@ -934,6 +941,9 @@ class GitHubCommand(BackendCommand):
                            help="list of GitHub API tokens")
 
         # Generic client options
+        group.add_argument('--max-items', dest='max_items',
+                           default=MAX_CATEGORY_ITEMS_PER_PAGE, type=int,
+                           help="Max number of category items per query.")
         group.add_argument('--max-retries', dest='max_retries',
                            default=MAX_RETRIES, type=int,
                            help="number of API call retries")
