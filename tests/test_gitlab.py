@@ -62,7 +62,7 @@ GITLAB_ENTERPRISE_ISSUES_URL = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest/
 GITLAB_ENTERPRISE_MERGES_URL = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest/merge_requests"
 
 
-def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=None):
+def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=None, no_attr_last=False):
     project = read_file('data/gitlab/project')
     page_issues_1 = read_file('data/gitlab/issue_page_1')
     page_issues_2 = read_file('data/gitlab/issue_page_2')
@@ -78,16 +78,24 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
                            status=200,
                            forcing_headers=rate_limit_headers)
 
-    # issue pagination
-    pagination_issue_header = {'Link': '<' + issues_url +
-                               '/?&page=2>; rel="next", <' + issues_url +
-                               '/?&page=3>; rel="last"'}
+    if no_attr_last:
+        pagination_issue_header = {'Link': '<' + issues_url +
+                                           '/?&page=2>; rel="next", <' + issues_url +
+                                           '/?&page=3>;'}
 
-    pagination_merge_header = {'Link': '<' + merges_url +
-                                       '/?&page=2>; rel="next", <' + merges_url +
-                                       '/?&page=3>; rel="last"'}
+        pagination_merge_header = {'Link': '<' + merges_url +
+                                           '/?&page=2>; rel="next", <' + merges_url +
+                                           '/?&page=3>;'}
+    else:
+        pagination_issue_header = {'Link': '<' + issues_url +
+                                   '/?&page=2>; rel="next", <' + issues_url +
+                                   '/?&page=3>; rel="last"'}
 
-    # merges paginatition
+        pagination_merge_header = {'Link': '<' + merges_url +
+                                           '/?&page=2>; rel="next", <' + merges_url +
+                                           '/?&page=3>; rel="last"'}
+
+    # pagination
     pagination_issue_header.update(rate_limit_headers)
     httpretty.register_uri(httpretty.GET,
                            issues_url,
@@ -450,6 +458,46 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
 
     @httpretty.activate
+    def test_fetch_issues_no_attr_last(self):
+        """Test whether issues are properly fetched from GitLab when `last` is not in the pagination response"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL, no_attr_last=True)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        issues = [issues for issues in gitlab.fetch()]
+
+        self.assertEqual(len(issues), 4)
+
+        issue = issues[0]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 1)
+        self.assertEqual(issue['data']['author']['username'], 'redfish64')
+
+        issue = issues[1]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 1)
+        self.assertEqual(issue['data']['author']['username'], 'redfish64')
+
+        issue = issues[2]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 2)
+        self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+
+        issue = issues[3]
+        self.assertEqual(issue['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(issue['data']['author']['id'], 2)
+        self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+
+    @httpretty.activate
     def test_fetch_issues_blacklisted(self):
         """Test whether blacklist issues are not fetched from GitLab"""
 
@@ -477,6 +525,46 @@ class TestGitLabBackend(unittest.TestCase):
         """Test whether merges are properly fetched from GitLab"""
 
         setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
+
+        self.assertEqual(len(merges), 3)
+
+        merge = merges[0]
+        self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 2)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+        self.assertTrue('diffs' not in merge['data']['versions_data'][1])
+
+        merge = merges[1]
+        self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 1)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+        merge = merges[2]
+        self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+        self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(merge['data']['author']['id'], 1)
+        self.assertEqual(merge['data']['author']['username'], 'redfish64')
+        self.assertEqual(len(merge['data']['versions_data']), 1)
+        self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+    @httpretty.activate
+    def test_fetch_merges_no_attr_last(self):
+        """Test whether merges are properly fetched from GitLab when `last` is not in the pagination response"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL, no_attr_last=True)
 
         gitlab = GitLab("fdroid", "fdroiddata", "your-token")
 
@@ -979,11 +1067,76 @@ class TestGitLabClient(unittest.TestCase):
         self.assertEqual(httpretty.last_request().headers["PRIVATE-TOKEN"], "your-token")
 
     @httpretty.activate
+    def test_issues_no_attr_last(self):
+        """Test issues API call when `last` is not in the pagination response"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+                          rate_limit_headers={'RateLimit-Remaining': '20'},
+                          no_attr_last=True)
+
+        page_1 = read_file('data/gitlab/issue_page_1')
+        page_2 = read_file('data/gitlab/issue_page_2')
+
+        client = GitLabClient("fdroid", "fdroiddata", "your-token")
+
+        raw_issues = [issues for issues in client.issues()]
+
+        self.assertEqual(len(raw_issues), 2)
+        self.assertEqual(raw_issues[0], page_1)
+        self.assertEqual(raw_issues[1], page_2)
+
+        # Check requests
+        expected = {
+            'state': ['all'],
+            'sort': ['asc'],
+            'order_by': ['updated_at'],
+            'page': ['2'],
+            'per_page': ['100']
+        }
+
+        x = httpretty.last_request()
+
+        self.assertDictEqual(httpretty.last_request().querystring, expected)
+        self.assertEqual(httpretty.last_request().headers["PRIVATE-TOKEN"], "your-token")
+
+    @httpretty.activate
     def test_merges(self):
         """Test merges API call"""
 
         setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
                           rate_limit_headers={'RateLimit-Remaining': '20'})
+
+        page_1 = read_file('data/gitlab/merge_page_1')
+        page_2 = read_file('data/gitlab/merge_page_2')
+
+        client = GitLabClient("fdroid", "fdroiddata", "your-token")
+
+        raw_merges = [merges for merges in client.merges()]
+
+        self.assertEqual(len(raw_merges), 2)
+        self.assertEqual(raw_merges[0], page_1)
+        self.assertEqual(raw_merges[1], page_2)
+
+        # Check requests
+        expected = {
+            'state': ['all'],
+            'sort': ['asc'],
+            'order_by': ['updated_at'],
+            'page': ['2'],
+            'per_page': ['100'],
+            'view': ['simple']
+        }
+
+        self.assertDictEqual(httpretty.last_request().querystring, expected)
+        self.assertEqual(httpretty.last_request().headers["PRIVATE-TOKEN"], "your-token")
+
+    @httpretty.activate
+    def test_merges_no_attr_last(self):
+        """Test merges API call when `last` is not in the pagination response"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+                          rate_limit_headers={'RateLimit-Remaining': '20'},
+                          no_attr_last=True)
 
         page_1 = read_file('data/gitlab/merge_page_1')
         page_2 = read_file('data/gitlab/merge_page_2')
