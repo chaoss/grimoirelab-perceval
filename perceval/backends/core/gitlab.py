@@ -82,7 +82,7 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.6.2'
+    version = '0.6.3'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
@@ -582,7 +582,11 @@ class GitLabClient(HttpClient, RateLimitHandler):
                 page += 1
 
                 items = response.text
-                logger.debug("Page: %i/%i" % (page, last_page))
+
+                if not last_page:
+                    logger.debug("Page: %i" % page)
+                else:
+                    logger.debug("Page: %i/%i" % (page, last_page))
 
     @staticmethod
     def sanitize_for_archive(url, headers, payload):
