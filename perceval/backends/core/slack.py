@@ -37,6 +37,7 @@ CATEGORY_MESSAGE = "message"
 
 SLACK_URL = 'https://slack.com/'
 MAX_ITEMS = 1000
+FLOAT_FORMAT = '{:.6f}'
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.7.1'
+    version = '0.7.2'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -115,18 +116,6 @@ class Slack(Backend):
         channel_info['num_members'] = self.client.conversation_members(self.channel)
 
         oldest = datetime_to_utc(from_date).timestamp()
-
-        # Minimum value supported by Slack is 0 not 0.0
-        if oldest == 0.0:
-            oldest = 0
-
-        # Slack does not include on its result the lower limit
-        # of the search if it has the same date of 'oldest'. To get
-        # this messages too, we substract a low value to be sure
-        # the dates are not the same. To avoid precision problems
-        # it is substracted by five decimals and not by six.
-        if oldest > 0.0:
-            oldest -= .00001
 
         fetching = True
         nmsgs = 0
@@ -365,9 +354,11 @@ class SlackClient(HttpClient):
         }
 
         if oldest is not None:
-            params[self.POLDEST] = oldest
+            formatted_oldest = self.__format_timestamp(oldest, subtract=True)
+            params[self.POLDEST] = formatted_oldest
         if latest is not None:
-            params[self.PLATEST] = latest
+            formatted_latest = self.__format_timestamp(latest)
+            params[self.PLATEST] = formatted_latest
 
         response = self._fetch(resource, params)
 
@@ -424,6 +415,30 @@ class SlackClient(HttpClient):
             raise SlackClientError(error=result['error'])
 
         return r.text
+
+    def __format_timestamp(self, ts, subtract=False):
+        """Handle the timestamp value to be passed to the channels.history API endpoint. In
+        particular, two cases are covered:
+
+        - Since the minimum value supported by Slack is 0, the value 0.0 must be converted.
+        - Slack does not include in its result the lower limit of the search if it has
+          the same date of 'oldest'. To get this messages too, we subtract a low value to
+          be sure the dates are not the same. To avoid precision problems it is subtracted
+          by five decimals and not by six.
+
+        :param ts: timestamp float value
+        :param subtract: if True, `ts` is decreased by 0.00001
+        """
+        if ts == 0.0:
+            return "0"
+
+        processed = ts
+        if processed > 0.0 and subtract:
+            processed -= .00001
+
+        processed = FLOAT_FORMAT.format(processed)
+
+        return processed
 
 
 class SlackCommand(BackendCommand):

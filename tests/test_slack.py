@@ -83,21 +83,23 @@ def setup_http_server():
                 body = channel_error
             elif 'latest' not in params:
                 body = channel_history
-            elif (params['oldest'][0] == '1' and
+            elif (params['oldest'][0] == '0.999990' and
                   params['latest'][0] == '1427135733.000068'):
                 body = channel_history_next
             elif (params['oldest'][0] == '0' and
-                  params['latest'][0] == '1483228800.0'):
+                  params['latest'][0] == '1483228800.000000'):
                 body = channel_history
             elif (params['oldest'][0] == '0' and
                   params['latest'][0] == '1427135733.000068'):
                 body = channel_history_next
             elif (params['oldest'][0] == '1427135740.000059' and
-                  params['latest'][0] == '1483228800.0'):
+                  params['latest'][0] == '1483228800.000000'):
                 body = channel_history_date
-            elif (params['oldest'][0] == '1451606399.99999' and
-                  params['latest'][0] == '1483228800.0'):
+            elif (params['oldest'][0] == '1451606399.999990' and
+                  params['latest'][0] == '1483228800.000000'):
                 body = channel_empty
+            else:
+                raise Exception
         elif uri.startswith(SLACK_USER_INFO_URL):
             if params['user'][0] == 'U0001':
                 body = user_U0001
@@ -115,7 +117,7 @@ def setup_http_server():
 
         http_requests.append(last_request)
 
-        return (status, headers, body)
+        return status, headers, body
 
     httpretty.register_uri(httpretty.GET,
                            SLACK_CHANNEL_INFO_URL,
@@ -261,7 +263,7 @@ class TestSlackBackend(unittest.TestCase):
             {
                 'channel': ['C011DUKE8'],
                 'oldest': ['0'],
-                'latest': ['1483228800.0'],
+                'latest': ['1483228800.000000'],
                 'token': ['aaaa'],
                 'count': ['5']
             },
@@ -361,7 +363,7 @@ class TestSlackBackend(unittest.TestCase):
             {
                 'channel': ['C011DUKE8'],
                 'oldest': ['1427135740.000059'],
-                'latest': ['1483228800.0'],
+                'latest': ['1483228800.000000'],
                 'token': ['aaaa'],
                 'count': ['5']
             },
@@ -415,8 +417,8 @@ class TestSlackBackend(unittest.TestCase):
             },
             {
                 'channel': ['C011DUKE8'],
-                'oldest': ['1451606399.99999'],
-                'latest': ['1483228800.0'],
+                'oldest': ['1451606399.999990'],
+                'latest': ['1483228800.000000'],
                 'token': ['aaaa'],
                 'count': ['5']
             }
@@ -606,7 +608,34 @@ class TestSlackClient(unittest.TestCase):
 
         expected = {
             'channel': ['C011DUKE8'],
-            'oldest': ['1'],
+            'oldest': ['0.999990'],
+            'latest': ['1427135733.000068'],
+            'token': ['aaaa'],
+            'count': ['5']
+        }
+
+        self.assertEqual(len(http_requests), 1)
+
+        req = http_requests[0]
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/channels.history')
+        self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_history_format_latest(self):
+        """Test channel history API call with latest timestamp longer than 6 decimals"""
+
+        http_requests = setup_http_server()
+
+        client = SlackClient('aaaa', max_items=5)
+
+        # Call API
+        _ = client.history('C011DUKE8',
+                           oldest=1, latest=1427135733.00006771)
+
+        expected = {
+            'channel': ['C011DUKE8'],
+            'oldest': ['0.999990'],
             'latest': ['1427135733.000068'],
             'token': ['aaaa'],
             'count': ['5']
