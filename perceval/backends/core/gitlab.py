@@ -84,7 +84,7 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.7.0'
+    version = '0.7.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
@@ -570,6 +570,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
         logger.debug("Get GitLab paginated items from " + url_next)
 
         response = self.fetch(url_next, payload=payload)
+        response.encoding = 'utf-8'
 
         items = response.text
         page += 1
