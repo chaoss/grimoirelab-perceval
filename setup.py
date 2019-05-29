@@ -103,11 +103,11 @@ setup(name="perceval",
       ],
       install_requires=[
           'python-dateutil>=2.6.0',
-          'requests>=2.7.0',
+          'requests==2.18.2',
           'beautifulsoup4>=4.3.2',
           'feedparser>=5.1.3',
           'dulwich>=0.18.5, <0.19',
-          'urllib3>=1.22',
+          'urllib3==1.22',
           'grimoirelab-toolkit>=0.1.4'
       ],
       scripts=[
