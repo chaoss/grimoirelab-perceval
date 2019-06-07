@@ -164,6 +164,30 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(response.text, output)
 
     @httpretty.activate
+    def test_fetch_auth(self):
+        """Test fetch method with auth"""
+
+        output = "success"
+        user = 'user01'
+        password = 'pwd01'
+
+        httpretty.register_uri(httpretty.GET,
+                               CLIENT_SPIDERMAN_URL,
+                               body=output,
+                               status=200)
+
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1)
+        auth = (user, password)
+        response = client.fetch(CLIENT_SPIDERMAN_URL, auth=auth)
+
+        req = httpretty.last_request()
+        authorization = [h for h in req.headers._headers if h[0] == 'Authorization'][0]
+
+        self.assertEqual(response.request.method, HttpClient.GET)
+        self.assertEqual(response.text, output)
+        self.assertIn('Basic', authorization[1])
+
+    @httpretty.activate
     def test_fetch_http_error(self):
         """Test fetch method"""
 

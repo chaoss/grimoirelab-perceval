@@ -53,7 +53,7 @@ class HttpClient:
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.1.5'
+    version = '0.2.0'
 
     DEFAULT_SLEEP_TIME = 1
 
@@ -114,7 +114,7 @@ class HttpClient:
     def __del__(self):
         self._close_http_session()
 
-    def fetch(self, url, payload=None, headers=None, method=GET, stream=False, verify=True):
+    def fetch(self, url, payload=None, headers=None, method=GET, stream=False, verify=True, auth=None):
         """Fetch the data from a given URL.
 
         :param url: link to the resource
@@ -123,13 +123,14 @@ class HttpClient:
         :param method: type of request call (GET or POST)
         :param stream: defer downloading the response body until the response content is available
         :param verify: verifying the SSL certificate
+        :param auth: auth of the request
 
         :returns a response object
         """
         if self.from_archive:
             response = self._fetch_from_archive(url, payload, headers)
         else:
-            response = self._fetch_from_remote(url, payload, headers, method, stream, verify)
+            response = self._fetch_from_remote(url, payload, headers, method, stream, verify, auth)
 
         return response
 
@@ -157,12 +158,12 @@ class HttpClient:
 
         return response
 
-    def _fetch_from_remote(self, url, payload, headers, method, stream, verify):
+    def _fetch_from_remote(self, url, payload, headers, method, stream, verify, auth):
 
         if method == self.GET:
-            response = self.session.get(url, params=payload, headers=headers, stream=stream, verify=verify)
+            response = self.session.get(url, params=payload, headers=headers, stream=stream, verify=verify, auth=auth)
         else:
-            response = self.session.post(url, data=payload, headers=headers, stream=stream, verify=verify)
+            response = self.session.post(url, data=payload, headers=headers, stream=stream, verify=verify, auth=auth)
 
         try:
             response.raise_for_status()
