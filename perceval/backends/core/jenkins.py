@@ -47,6 +47,8 @@ class Jenkins(Backend):
     The `url` will be set as the origin of the data.
 
     :param url: Jenkins url
+    :param user: Jenkins user
+    :param password: Jenkins password
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     :param blacklist_jobs: exclude the jobs of this list while fetching
@@ -55,16 +57,18 @@ class Jenkins(Backend):
         of connection problems
     :param archive: collect builds already retrieved from an archive
     """
-    version = '0.11.2'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_BUILD]
 
-    def __init__(self, url, tag=None, archive=None,
+    def __init__(self, url, user=None, password=None, tag=None, archive=None,
                  blacklist_jobs=None, detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME):
         origin = url
 
         super().__init__(origin, tag=tag, archive=archive)
         self.url = url
+        self.user = user
+        self.password = password
         self.sleep_time = sleep_time
         self.blacklist_jobs = blacklist_jobs
         self.detail_depth = detail_depth
@@ -185,8 +189,8 @@ class Jenkins(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return JenkinsClient(self.url, self.blacklist_jobs, self.detail_depth,
-                             self.sleep_time,
+        return JenkinsClient(self.url, self.user, self.password,
+                             self.blacklist_jobs, self.detail_depth, self.sleep_time,
                              archive=self.archive, from_archive=from_archive)
 
 
@@ -195,11 +199,13 @@ class JenkinsClient(HttpClient):
 
     This class implements a simple client to retrieve jobs/builds from
     projects in a Jenkins node. The amount of data returned for each request
-    depends on the detail_depth value selected (minimun and default is 1).
+    depends on the detail_depth value selected (minimum and default is 1).
     Note that increasing the detail_depth may considerably slow down the
     fetch operation and cause connection broken errors.
 
     :param url: URL of jenkins node: https://build.opnfv.org/ci
+    :param user: Jenkins user
+    :param password: Jenkins password
     :param blacklist_jobs: exclude the jobs of this list while fetching
     :param detail_depth: set the detail level of the data returned by the API
     :param sleep_time: time (in seconds) to sleep in case
@@ -212,10 +218,16 @@ class JenkinsClient(HttpClient):
     EXTRA_STATUS_FORCELIST = [410, 502, 503]
     MAX_RETRIES = 5
 
-    def __init__(self, url, blacklist_jobs=None, detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME,
+    def __init__(self, url, user=None, password=None, blacklist_jobs=None,
+                 detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME,
                  archive=None, from_archive=False):
         super().__init__(url, sleep_time=sleep_time, extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          archive=archive, from_archive=from_archive)
+
+        self.auth = None
+        if user is not None and password is not None:
+            self.auth = (user, password)
+
         self.blacklist_jobs = blacklist_jobs
         self.detail_depth = detail_depth
 
@@ -224,7 +236,7 @@ class JenkinsClient(HttpClient):
 
         url_jenkins = urijoin(self.base_url, "api", "json")
 
-        response = self.fetch(url_jenkins)
+        response = self.fetch(url_jenkins, auth=self.auth)
         return response.text
 
     def get_builds(self, job_name):
@@ -237,7 +249,7 @@ class JenkinsClient(HttpClient):
         payload = {'depth': self.detail_depth}
         url_build = urijoin(self.base_url, "job", job_name, "api", "json")
 
-        response = self.fetch(url_build, payload=payload)
+        response = self.fetch(url_build, payload=payload, auth=self.auth)
         return response.text
 
 
@@ -251,6 +263,7 @@ class JenkinsCommand(BackendCommand):
         """Returns the Jenkins argument parser."""
 
         parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              basic_auth=True,
                                               archive=True)
 
         # Jenkins options
