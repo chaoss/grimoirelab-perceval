@@ -60,7 +60,7 @@ class Groupsio(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.1.2'
+    version = '0.1.3'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -229,7 +229,7 @@ class GroupsioClient(MailingList):
     def __find_group_id(self):
         """Find the id of a group given its name by iterating on the list of subscriptions"""
 
-        group_subscriptions = self.subscriptions(self.auth)
+        group_subscriptions = self.subscriptions()
 
         for subscriptions in group_subscriptions:
             for sub in subscriptions:
