@@ -256,6 +256,27 @@ class TestGroupsioClient(unittest.TestCase):
         client = GroupsioClient('beta+api', self.tmp_path, 'aaaaa', verify=False)
         success = client.fetch()
 
+        # Check requests
+        expected = [
+            {
+                'limit': ['100'],
+            },
+            {
+                'limit': ['100'],
+                'page_token': ['1']
+            },
+            {
+                'group_id': ['7769']
+            }
+        ]
+
+        http_requests = httpretty.httpretty.latest_requests
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
         self.assertEqual(client.mboxes[0].filepath, os.path.join(self.tmp_path, MBOX_FILE))
         self.assertTrue(success)
 
