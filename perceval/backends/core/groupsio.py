@@ -53,6 +53,17 @@ class Groupsio(MBox):
     stored. The origin of the data will be set to the url of the
     group on Groups.io.
 
+    In order to get an `api_token`, you should first subscribe to
+    a group via the Groups.io website and then execute the
+    following command:
+    `curl "https://api.groups.io/v1/login"
+          -u 123456:
+          -d "email=<your email address>&password=<your password>"`
+
+    In order to know the group names where your token is subscribed,
+    you can use the following script:
+    https://gist.github.com/valeriocos/676d90c58c56e2b17b882f2603283d39
+
     :param group_name: Name of the group
     :param dirpath: directory path where the mboxes are stored
     :param api_token: Groupsio auth token to access the API
@@ -60,7 +71,7 @@ class Groupsio(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.1.4'
+    version = '0.1.5'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
