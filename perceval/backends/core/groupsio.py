@@ -55,12 +55,12 @@ class Groupsio(MBox):
 
     :param group_name: Name of the group
     :param dirpath: directory path where the mboxes are stored
-    :param api_token: GitHub auth token to access the API
+    :param api_token: Groupsio auth token to access the API
     :param verify: allows to disable SSL verification
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.1.3'
+    version = '0.1.4'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -136,7 +136,7 @@ class GroupsioClient(MailingList):
 
     :param group_name: Name of the group
     :param dirpath: directory path where the mboxes are stored
-    :param api_token: GitHub auth token to access the API
+    :param api_token: Groupsio auth token to access the API
     :param verify: allows to disable SSL verification
     """
 
