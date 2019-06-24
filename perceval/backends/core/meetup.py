@@ -23,6 +23,7 @@
 import json
 import logging
 import requests
+import warnings
 
 from grimoirelab_toolkit.datetime import datetime_to_utc
 from grimoirelab_toolkit.uris import urijoin
@@ -33,6 +34,9 @@ from ...backend import (Backend,
 from ...client import HttpClient, RateLimitHandler
 from ...errors import RepositoryError
 from ...utils import DEFAULT_DATETIME
+
+warnings.simplefilter('always', DeprecationWarning)
+
 
 CATEGORY_EVENT = "event"
 
@@ -59,6 +63,7 @@ class Meetup(Backend):
 
     :param group: name of the group where data will be fetched
     :param api_token: token or key needed to use the API
+    :param is_oauth_token: True if the token is OAuth (default False)
     :param max_items:  maximum number of issues requested on the same query
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
@@ -68,7 +73,7 @@ class Meetup(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.13.0'
+    version = '0.14.0'
 
     CATEGORIES = [CATEGORY_EVENT]
     CLASSIFIED_FIELDS = [
@@ -78,8 +83,8 @@ class Meetup(Backend):
         ['venue']
     ]
 
-    def __init__(self, group, api_token, max_items=MAX_ITEMS,
-                 tag=None, archive=None,
+    def __init__(self, group, api_token, is_oauth_token=False,
+                 max_items=MAX_ITEMS, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=SLEEP_TIME):
         origin = MEETUP_URL
@@ -88,9 +93,16 @@ class Meetup(Backend):
         self.group = group
         self.max_items = max_items
         self.api_token = api_token
+        self.is_oauth_token = is_oauth_token
         self.sleep_for_rate = sleep_for_rate
         self.min_rate_to_sleep = min_rate_to_sleep
         self.sleep_time = sleep_time
+
+        if not self.is_oauth_token:
+            warnings.warn(
+                "API keys are no longer actively supported by Meetup. Use OAuth2 tokens instead",
+                DeprecationWarning
+            )
 
         self.client = None
 
@@ -232,7 +244,7 @@ class Meetup(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return MeetupClient(self.api_token, self.max_items,
+        return MeetupClient(self.api_token, self.is_oauth_token, self.max_items,
                             self.sleep_for_rate, self.min_rate_to_sleep, self.sleep_time,
                             self.archive, from_archive)
 
@@ -294,6 +306,9 @@ class MeetupCommand(BackendCommand):
         group.add_argument('--sleep-time', dest='sleep_time',
                            default=SLEEP_TIME, type=int,
                            help="minimun sleeping time to avoid too many request exception")
+        group.add_argument('--is-oauth-token', dest='is_oauth_token',
+                           action='store_true',
+                           help="Set when using OAuth2")
 
         # Required arguments
         parser.parser.add_argument('group',
@@ -309,6 +324,7 @@ class MeetupClient(HttpClient, RateLimitHandler):
     using its REST API v3.
 
     :param api_key: key needed to use the API
+    :param is_oauth_token: True if the token is OAuth (default False)
     :param max_items: maximum number of items per request
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
@@ -324,12 +340,13 @@ class MeetupClient(HttpClient, RateLimitHandler):
     RRSVPS = 'rsvps'
 
     PFIELDS = 'fields'
+    PKEY_OAUTH = 'access_token'
     PKEY = 'key'
+    PSIGN = 'sign'
     PORDER = 'order'
     PPAGE = 'page'
     PRESPONSE = 'response'
     PSCROLL = 'scroll'
-    PSIGN = 'sign'
     PSTATUS = 'status'
 
     VEVENT_FIELDS = ['event_hosts', 'featured', 'group_topics',
@@ -341,10 +358,11 @@ class MeetupClient(HttpClient, RateLimitHandler):
     VSTATUS = ['cancelled', 'upcoming', 'past', 'proposed', 'suggested']
     VUPDATED = 'updated'
 
-    def __init__(self, api_key, max_items=MAX_ITEMS,
+    def __init__(self, api_key, is_oauth_token=False, max_items=MAX_ITEMS,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT, sleep_time=SLEEP_TIME,
                  archive=None, from_archive=False):
         self.api_key = api_key
+        self.is_oauth_token = is_oauth_token
         self.max_items = max_items
 
         super().__init__(MEETUP_API_URL, sleep_time=sleep_time,
@@ -432,6 +450,9 @@ class MeetupClient(HttpClient, RateLimitHandler):
 
         :returns url, headers and the sanitized payload
         """
+        if MeetupClient.PKEY_OAUTH in payload:
+            payload.pop(MeetupClient.PKEY_OAUTH)
+
         if MeetupClient.PKEY in payload:
             payload.pop(MeetupClient.PKEY)
 
@@ -454,8 +475,11 @@ class MeetupClient(HttpClient, RateLimitHandler):
         """
         url = urijoin(self.base_url, resource)
 
-        params[self.PKEY] = self.api_key
-        params[self.PSIGN] = 'true',
+        if self.is_oauth_token:
+            params[self.PKEY_OAUTH] = self.api_key
+        else:
+            params[self.PKEY] = self.api_key
+            params[self.PSIGN] = 'true'
 
         do_fetch = True
 
@@ -475,9 +499,15 @@ class MeetupClient(HttpClient, RateLimitHandler):
 
             if r.links and 'next' in r.links:
                 url = r.links['next']['url']
-                params = {
-                    self.PKEY: self.api_key,
-                    self.PSIGN: 'true'
-                }
+
+                if self.is_oauth_token:
+                    params = {
+                        self.PKEY_OAUTH: self.api_key,
+                    }
+                else:
+                    params = {
+                        self.PKEY: self.api_key,
+                        self.PSIGN: 'true'
+                    }
             else:
                 do_fetch = False
