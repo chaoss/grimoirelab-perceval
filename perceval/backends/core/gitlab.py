@@ -84,7 +84,7 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.7.1'
+    version = '0.7.2'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
@@ -678,7 +678,7 @@ class GitLabCommand(BackendCommand):
                            help="Ids of items that must not be retrieved.")
         group.add_argument('--is-oauth-token', dest='is_oauth_token',
                            action='store_true',
-                           help="True if the token is oauth")
+                           help="Set when using OAuth2")
 
         # Generic client options
         group.add_argument('--max-retries', dest='max_retries',
