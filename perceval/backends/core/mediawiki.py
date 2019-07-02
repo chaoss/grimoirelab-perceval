@@ -71,7 +71,7 @@ class MediaWiki(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.5'
+    version = '0.9.6'
 
     CATEGORIES = [CATEGORY_PAGE]
 
@@ -119,7 +119,7 @@ class MediaWiki(Backend):
         logger.info("MediaWiki version: %s", mediawiki_version)
 
         if reviews_api:
-            if ((mediawiki_version[0] == 1 and mediawiki_version[1] >= 27) or mediawiki_version[0] > 1):
+            if (mediawiki_version[0] == 1 and mediawiki_version[1] >= 27) or mediawiki_version[0] > 1:
                 fetcher = self.__fetch_1_27(from_date)
             else:
                 logger.warning("Reviews API only available in MediaWiki >= 1.27")
@@ -287,6 +287,10 @@ class MediaWiki(Backend):
                         rccontinue = None
                         hole_created = False
                         break
+
+                    if 'pageid' not in page:
+                        logger.warning("Missing pageid in page %s; skipped", page)
+                        continue
 
                     if page['pageid'] in pages_done:
                         logger.debug("Page %s already processed; skipped", page['pageid'])

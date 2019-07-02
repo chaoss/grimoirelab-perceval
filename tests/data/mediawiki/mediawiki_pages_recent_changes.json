@@ -33,6 +33,13 @@
             },
             {
                 "ns": 0,
+                "timestamp": "2016-06-23T15:37:13Z",
+                "type": "log",
+                "revid": 0,
+                "oldrevid": 0
+            },
+            {
+                "ns": 0,
                 "pageid": 476583,
                 "timestamp": "2016-06-23T15:36:23Z",
                 "title": "VisualEditor:Test",
