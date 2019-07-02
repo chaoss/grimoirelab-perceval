@@ -258,6 +258,7 @@ class TestMediaWikiBackend_1_23(TestMediaWikiBackend):
             self.assertEqual(cm.output[0],
                              'WARNING:perceval.backends.core.mediawiki:Revisions not found in OldEditor:Test '
                              '[page id: 476589], page skipped')
+            self.assertIn('WARNING:perceval.backends.core.mediawiki:Missing pageid in page', cm.output[1])
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -296,6 +297,7 @@ class TestMediaWikiBackend_1_28(TestMediaWikiBackend):
             self.assertEqual(cm.output[0],
                              'WARNING:perceval.backends.core.mediawiki:Revisions not found in OldEditor:Test '
                              '[page id: 476589], page skipped')
+            self.assertIn('WARNING:perceval.backends.core.mediawiki:Missing pageid in page', cm.output[1])
 
         with self.assertLogs(logger, level='WARNING') as cm:
             self._test_fetch_version("1.28", from_date=from_date, reviews_api=True)
@@ -349,6 +351,7 @@ class TestMediaWikiBackendArchive1_23(TestMediaWikiBackendArchive):
             self.assertEqual(cm.output[0],
                              'WARNING:perceval.backends.core.mediawiki:Revisions not found in OldEditor:Test '
                              '[page id: 476589], page skipped')
+            self.assertIn('WARNING:perceval.backends.core.mediawiki:Missing pageid in page', cm.output[1])
 
 
 class TestMediaWikiBackendArchive1_28(TestMediaWikiBackendArchive):
@@ -363,6 +366,7 @@ class TestMediaWikiBackendArchive1_28(TestMediaWikiBackendArchive):
             self.assertEqual(cm.output[0],
                              'WARNING:perceval.backends.core.mediawiki:Revisions not found in OldEditor:Test '
                              '[page id: 476589], page skipped')
+            self.assertIn('WARNING:perceval.backends.core.mediawiki:Missing pageid in page', cm.output[1])
 
     @httpretty.activate
     def test_fetch_from_archive_reviews(self):
