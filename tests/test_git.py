@@ -1276,6 +1276,9 @@ class TestGitRepository(TestCaseGit):
         expected = {
             'LANG': 'C',
             'PAGER': '',
+            'HTTP_PROXY': '',
+            'HTTPS_PROXY': '',
+            'NO_PROXY': '',
             'HOME': ''
         }
         self.assertDictEqual(repo.gitenv, expected)

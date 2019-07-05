@@ -797,6 +797,9 @@ class GitRepository:
         self.gitenv = {
             'LANG': 'C',
             'PAGER': '',
+            'HTTP_PROXY': os.getenv('HTTP_PROXY', ''),
+            'HTTPS_PROXY': os.getenv('HTTPS_PROXY', ''),
+            'NO_PROXY': os.getenv('NO_PROXY', ''),
             'HOME': os.getenv('HOME', '')
         }
 
