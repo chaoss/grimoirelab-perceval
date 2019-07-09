@@ -30,6 +30,7 @@ from grimoirelab_toolkit.uris import urijoin
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser)
+from ...errors import BackendError
 from ...client import HttpClient
 
 CATEGORY_BUILD = "build"
@@ -49,6 +50,7 @@ class Jenkins(Backend):
     :param url: Jenkins url
     :param user: Jenkins user
     :param password: Jenkins password
+    :param api_token: Jenkins auth token to access the API
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     :param blacklist_jobs: exclude the jobs of this list while fetching
@@ -57,18 +59,29 @@ class Jenkins(Backend):
         of connection problems
     :param archive: collect builds already retrieved from an archive
     """
-    version = '0.12.0'
+    version = '0.13.0'
 
     CATEGORIES = [CATEGORY_BUILD]
 
-    def __init__(self, url, user=None, password=None, tag=None, archive=None,
+    def __init__(self, url, user=None, password=None, api_token=None, tag=None, archive=None,
                  blacklist_jobs=None, detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME):
-        origin = url
 
+        if user:
+            if password and api_token:
+                msg = "Choose only one authentication method: (user, password) or (user, API token)"
+                logger.error(msg)
+                raise BackendError(cause=msg)
+            elif not password and not api_token:
+                msg = "Authentication method misses password/API token"
+                logger.error(msg)
+                raise BackendError(cause=msg)
+
+        origin = url
         super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.user = user
         self.password = password
+        self.api_token = api_token
         self.sleep_time = sleep_time
         self.blacklist_jobs = blacklist_jobs
         self.detail_depth = detail_depth
@@ -189,7 +202,7 @@ class Jenkins(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return JenkinsClient(self.url, self.user, self.password,
+        return JenkinsClient(self.url, self.user, self.password, self.api_token,
                              self.blacklist_jobs, self.detail_depth, self.sleep_time,
                              archive=self.archive, from_archive=from_archive)
 
@@ -206,6 +219,7 @@ class JenkinsClient(HttpClient):
     :param url: URL of jenkins node: https://build.opnfv.org/ci
     :param user: Jenkins user
     :param password: Jenkins password
+    :param api_token: Jenkins auth token to access the API
     :param blacklist_jobs: exclude the jobs of this list while fetching
     :param detail_depth: set the detail level of the data returned by the API
     :param sleep_time: time (in seconds) to sleep in case
@@ -218,15 +232,18 @@ class JenkinsClient(HttpClient):
     EXTRA_STATUS_FORCELIST = [410, 502, 503]
     MAX_RETRIES = 5
 
-    def __init__(self, url, user=None, password=None, blacklist_jobs=None,
+    def __init__(self, url, user=None, password=None, api_token=None, blacklist_jobs=None,
                  detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME,
                  archive=None, from_archive=False):
         super().__init__(url, sleep_time=sleep_time, extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          archive=archive, from_archive=from_archive)
 
-        self.auth = None
-        if user is not None and password is not None:
+        if user and password:
             self.auth = (user, password)
+        elif user and api_token:
+            self.auth = (user, api_token)
+        else:
+            self.auth = None
 
         self.blacklist_jobs = blacklist_jobs
         self.detail_depth = detail_depth
@@ -264,6 +281,7 @@ class JenkinsCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
                                               basic_auth=True,
+                                              token_auth=True,
                                               archive=True)
 
         # Jenkins options
