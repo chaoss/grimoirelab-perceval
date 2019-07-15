@@ -33,7 +33,8 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME
-from perceval.backends.core.slack import (Slack,
+from perceval.backends.core.slack import (logger,
+                                          Slack,
                                           SlackClient,
                                           SlackClientError,
                                           SlackCommand)
@@ -53,14 +54,19 @@ def read_file(filename, mode='r'):
     return content
 
 
-def setup_http_server():
+def setup_http_server(archived_channel=False):
     """Setup a mock HTTP server"""
 
     http_requests = []
 
     channel_error = read_file('data/slack/slack_error.json', 'rb')
     channel_empty = read_file('data/slack/slack_history_empty.json', 'rb')
-    channel_info = read_file('data/slack/slack_info.json', 'rb')
+
+    if archived_channel:
+        channel_info = read_file('data/slack/slack_info_archived.json', 'rb')
+    else:
+        channel_info = read_file('data/slack/slack_info.json', 'rb')
+
     conversation_members_1 = read_file('data/slack/slack_members1.json', 'rb')
     conversation_members_2 = read_file('data/slack/slack_members2.json', 'rb')
     channel_history = read_file('data/slack/slack_history.json', 'rb')
@@ -259,6 +265,113 @@ class TestSlackBackend(unittest.TestCase):
                 'channel': ['C011DUKE8'],
                 'token': ['aaaa'],
                 'cursor': ['dXNlcl9pZDpVNEMwUTZGQTc=']
+            },
+            {
+                'channel': ['C011DUKE8'],
+                'oldest': ['0'],
+                'latest': ['1483228800.000000'],
+                'token': ['aaaa'],
+                'count': ['5']
+            },
+            {
+                'user': ['U0003'],
+                'token': ['aaaa']
+            },
+            {
+                'user': ['U0002'],
+                'token': ['aaaa']
+            },
+            {
+                'user': ['U0001'],
+                'token': ['aaaa']
+            },
+            {
+                'channel': ['C011DUKE8'],
+                'oldest': ['0'],
+                'latest': ['1427135733.000068'],
+                'token': ['aaaa'],
+                'count': ['5']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
+    def test_fetch_archived_channel(self, mock_utcnow):
+        """Test if it fetches a list of messages from an archived channel"""
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        http_requests = setup_http_server(archived_channel=True)
+
+        slack = Slack('C011DUKE8', 'aaaa', max_items=5)
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            messages = [msg for msg in slack.fetch(from_date=None)]
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.slack:'
+                                           'channel_info.num_members is None for archived channels C011DUKE8')
+
+        expected = [
+            ("<@U0003|dizquierdo> commented on <@U0002|acs> file>: Thanks.",
+             'cc2338c23bf5293308d596629c598cd5ec37d14b',
+             1486999900.000000, 'dizquierdo@example.com', 'test channel'),
+            ("There are no events this week.",
+             'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
+             1486969200.000136, 'B0001', 'test channel'),
+            ("<@U0003|dizquierdo> has joined the channel",
+             'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
+             1427799888.0, 'dizquierdo@example.com', 'test channel'),
+            ("tengo el m\u00f3vil",
+             'f8668de6fadeb5730e0a80d4c8e5d3f8d175f4d5',
+             1427135890.000071, 'jsmanrique@example.com', 'test channel'),
+            ("hey acs",
+             '29c2942a704c4e0b067daeb76edb2f826376cecf',
+             1427135835.000070, 'jsmanrique@example.com', 'test channel'),
+            ("¿vale?",
+             '757e88ea008db0fff739dd261179219aedb84a95',
+             1427135740.000069, 'acs@example.com', 'test channel'),
+            ("jsmanrique: tenemos que dar m\u00e9tricas super chulas",
+             'e92555381bc431a53c0b594fc118850eafd6e212',
+             1427135733.000068, 'acs@example.com', 'test channel'),
+            ("hi!",
+             'b92892e7b65add0e83d0839de20b2375a42014e8',
+             1427135689.000067, 'jsmanrique@example.com', 'test channel'),
+            ("hi!",
+             'e59d9ca0d9a2ba1c747dc60a0904edd22d69e20e',
+             1427135634.000066, 'acs@example.com', 'test channel')
+        ]
+
+        self.assertEqual(len(messages), len(expected))
+
+        for x in range(len(messages)):
+            message = messages[x]
+            expc = expected[x]
+            self.assertEqual(message['data']['text'], expc[0])
+            self.assertEqual(message['uuid'], expc[1])
+            self.assertEqual(message['origin'], 'https://slack.com/C011DUKE8')
+            self.assertEqual(message['updated_on'], expc[2])
+            self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'https://slack.com/C011DUKE8')
+
+            # The second message was sent by a bot
+            if x == 1:
+                self.assertEqual(message['data']['bot_id'], expc[3])
+            else:
+                self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
+
+            self.assertEqual(message['data']['channel_info']['name'], expc[4])
+            self.assertIsNone(message['data']['channel_info']['num_members'])
+
+        # Check requests
+        expected = [
+            {
+                'channel': ['C011DUKE8'],
+                'token': ['aaaa']
             },
             {
                 'channel': ['C011DUKE8'],
