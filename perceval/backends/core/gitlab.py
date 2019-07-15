@@ -28,7 +28,8 @@ import urllib.parse
 
 from grimoirelab_toolkit.datetime import (datetime_to_utc,
                                           datetime_utcnow,
-                                          str_to_datetime)
+                                          str_to_datetime,
+                                          unixtime_to_datetime)
 from grimoirelab_toolkit.uris import urijoin
 
 from ...backend import (Backend,
@@ -83,7 +84,7 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.7.2'
+    version = '0.8.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
@@ -253,8 +254,25 @@ class GitLab(Backend):
         return notes
 
     def __fetch_merge_requests(self, from_date):
-        """Fetch the merge requests"""
+        """Fetch the merge requests."""
 
+        fetch_completed = False
+        fetch_from_date = from_date
+        last_date = fetch_from_date
+
+        while not fetch_completed:
+            try:
+                for mr_item in self.__fetch_merge_requests_data(fetch_from_date):
+                    last_date = unixtime_to_datetime(self.metadata_updated_on(mr_item))
+                    yield mr_item
+            except _OutdatedMRsList:
+                fetch_from_date = last_date
+                logger.debug("MRs list is outdated. Recalculating MR list starting on %s",
+                             fetch_from_date)
+            else:
+                fetch_completed = True
+
+    def __fetch_merge_requests_data(self, from_date):
         merges_groups = self.client.merges(from_date=from_date)
 
         for raw_merges in merges_groups:
@@ -271,6 +289,16 @@ class GitLab(Backend):
                 # other data (e.g., notes, emojis, versions)
                 merge_full_raw = self.client.merge(merge_id)
                 merge_full = json.loads(merge_full_raw)
+
+                # If during the fetching process a MR is updated,
+                # the current process should be canceled because the
+                # list of MRs is outdated. It is not ordered from the
+                # first updated to the last one.
+                updated_on_merge = self.metadata_updated_on(merge)
+                updated_on_merge_full = self.metadata_updated_on(merge_full)
+
+                if updated_on_merge != updated_on_merge_full:
+                    raise _OutdatedMRsList()
 
                 self.__init_merge_extra_fields(merge_full)
 
@@ -359,6 +387,12 @@ class GitLab(Backend):
         merge['notes_data'] = []
         merge['award_emoji_data'] = []
         merge['versions_data'] = []
+
+
+class _OutdatedMRsList(BackendError):
+    """Exception raised when the list of MRs is outdated."""
+
+    message = "MRs list is outdated; you should fetch a new one."
 
 
 class GitLabClient(HttpClient, RateLimitHandler):

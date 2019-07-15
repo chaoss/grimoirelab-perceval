@@ -1,0 +1,24 @@
+[
+    {
+        "created_at": "2014-04-03T15:27:02.000Z",
+        "description": "",
+        "id": 11225,
+        "iid": 1,
+        "project_id": 36528,
+        "state": "merged",
+        "title": "Update OpenWLANMap/Mini & Vespucci",
+        "updated_at": "2012-04-03T16:50:32.000Z",
+        "web_url": "https://gitlab.com/fdroid/fdroiddata/merge_requests/1"
+    },
+    {
+        "created_at": "2014-04-04T11:49:22.000Z",
+        "description": "I'm not very familiar with F-Droid yet, but reading the docu and other metadata, I think this should work with my repository again.",
+        "id": 11321,
+        "iid": 2,
+        "project_id": 36528,
+        "state": "merged",
+        "title": "Update APG to work with latest versions",
+        "updated_at": "2013-04-04T12:20:45.000Z",
+        "web_url": "https://gitlab.com/fdroid/fdroiddata/merge_requests/2"
+    }
+]
