@@ -349,6 +349,76 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
                            forcing_headers=rate_limit_headers)
 
 
+def setup_gitlab_outdated_mrs_server(url_project, merges_url):
+    """This server sends outdated lists of MRs."""
+
+    project = read_file('data/gitlab/project')
+    page_merges_outdated = read_file('data/gitlab/merge_page_outdated')
+    page_merges_updated = read_file('data/gitlab/merge_page_updated')
+    empty_notes = read_file('data/gitlab/empty_response')
+    merge_1 = read_file('data/gitlab/merge_1')
+    merge_2 = read_file('data/gitlab/merge_2')
+    empty_versions = read_file('data/gitlab/empty_response')
+    empty_emoji = read_file('data/gitlab/empty_response')
+
+    pagination_merge_header = {'Link': '<' + merges_url +
+                               '/?&page=2>; rel="next", <' + merges_url +
+                               '/?&page=2>; rel="last"'}
+
+    httpretty.register_uri(httpretty.GET,
+                           url_project,
+                           body=project,
+                           status=200,
+                           forcing_headers=None)
+    httpretty.register_uri(httpretty.GET,
+                           merges_url,
+                           responses=[
+                               httpretty.Response(body=page_merges_outdated),
+                               httpretty.Response(body=page_merges_updated)
+                           ],
+                           forcing_headers=pagination_merge_header)
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1/notes",
+                           body=empty_notes,
+                           status=200,
+                           forcing_headers=None)
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/2/notes",
+                           body=empty_notes,
+                           status=200,
+                           forcing_headers=None)
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1",
+                           body=merge_1,
+                           status=200,
+                           forcing_headers=None)
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/2",
+                           body=merge_2,
+                           status=200,
+                           forcing_headers=None)
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1/versions",
+                           body=empty_versions,
+                           status=200,
+                           forcing_headers=None)
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/2/versions",
+                           body=empty_versions,
+                           status=200,
+                           forcing_headers=None)
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/1/award_emoji",
+                           body=empty_emoji,
+                           status=200,
+                           forcing_headers=None)
+    httpretty.register_uri(httpretty.GET,
+                           merges_url + "/2/award_emoji",
+                           body=empty_emoji,
+                           status=200,
+                           forcing_headers=None)
+
+
 def read_file(filename, mode='r'):
     with open(os.path.join(
             os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
@@ -378,7 +448,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(gitlab.sleep_time, DEFAULT_SLEEP_TIME)
 
         # When tag is empty or None it will be set to
-        # the value in origin
+        # the value in originTestGitLabBackend
         gitlab = GitLab('fdroid', 'fdroiddata', api_token='aaa', max_retries=10,
                         sleep_time=100, blacklist_ids=[1, 2, 3])
 
@@ -835,6 +905,48 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
         self.assertEqual(len(merge['data']['versions_data']), 1)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+    @httpretty.activate
+    def test_fetch_merges_outdated_list(self):
+        """Test if a new MR list is requested when the original is outdated"""
+
+        setup_gitlab_outdated_mrs_server(GITLAB_URL_PROJECT, GITLAB_MERGES_URL)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        with self.assertLogs(logger, level='DEBUG') as cm:
+            merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
+
+            self.assertRegex(cm.output[1], "MRs list is outdated. Recalculating")
+            self.assertEqual(len(merges), 2)
+
+            merge = merges[0]
+            self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+            self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+            self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+            self.assertEqual(merge['data']['iid'], 1)
+            self.assertEqual(merge['data']['updated_at'], '2014-04-03T16:50:32.000Z')
+
+            merge = merges[1]
+            self.assertEqual(merge['origin'], GITLAB_URL + '/fdroid/fdroiddata')
+            self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
+            self.assertEqual(merge['tag'], GITLAB_URL + '/fdroid/fdroiddata')
+            self.assertEqual(merge['data']['iid'], 2)
+            self.assertEqual(merge['data']['updated_at'], '2014-04-04T12:20:45.000Z')
+
+            # After the first petition, the backend ask for the list of MRs.
+            # It starts to process it retrieving info from the first MR.
+            # When it checks dates have changed, it requests an updated MRs list.
+            expected = [
+                '/api/v4/projects/fdroid%2Ffdroiddata/merge_requests',
+                '/api/v4/projects/fdroid%2Ffdroiddata/merge_requests/1',
+                '/api/v4/projects/fdroid%2Ffdroiddata/merge_requests'
+            ]
+
+            latest_requests = httpretty.httpretty.latest_requests
+            paths = [request.path.split('?')[0] for request in latest_requests[1:4]]
+
+            self.assertListEqual(paths, expected)
 
     @httpretty.activate
     def test_fetch_issues_empty(self):
