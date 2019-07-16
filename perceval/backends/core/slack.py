@@ -58,7 +58,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.7.2'
+    version = '0.7.3'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -113,7 +113,12 @@ class Slack(Backend):
         raw_info = self.client.channel_info(self.channel)
 
         channel_info = self.parse_channel_info(raw_info)
-        channel_info['num_members'] = self.client.conversation_members(self.channel)
+
+        if channel_info['is_archived']:
+            channel_info['num_members'] = None
+            logger.warning("channel_info.num_members is None for archived channels %s", self.channel)
+        else:
+            channel_info['num_members'] = self.client.conversation_members(self.channel)
 
         oldest = datetime_to_utc(from_date).timestamp()
 
