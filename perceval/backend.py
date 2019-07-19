@@ -74,6 +74,19 @@ class Backend:
     Classified data filtering and archiving are not compatible to prevent
     data leaks or security issues.
 
+    Each backend can also provides a set of search terms to simplify query
+    operations (avoiding the manual inspection of the items). The search
+    terms are included in a dict with the following shape:
+        {
+            'term-1': 'value-1',
+            'term-2': 'value-2',
+            'term-3': 'value-3',
+        }
+
+    The search terms are added to the metadata information of each
+    Perceval item in `search_terms` attributes. If `search_terms` is not set,
+    it will be set to `None` .
+
     :param origin: identifier of the repository
     :param tag: tag items using this label
     :param archive: archive to store/retrieve data
@@ -81,7 +94,7 @@ class Backend:
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     CATEGORIES = []
     CLASSIFIED_FIELDS = []
@@ -227,6 +240,7 @@ class Backend:
             'updated_on': self.metadata_updated_on(item),
             'classified_fields_filtered': self.classified_fields if filter_classified else None,
             'category': self.metadata_category(item),
+            'search_terms': self.search_terms(item),
             'tag': self.tag,
             'data': item,
         }
@@ -252,6 +266,10 @@ class Backend:
     @staticmethod
     def metadata_category(item):
         raise NotImplementedError
+
+    @staticmethod
+    def search_terms(item):
+        return None
 
     def _init_client(self, from_archive=False):
         raise NotImplementedError

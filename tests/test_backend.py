@@ -95,6 +95,18 @@ class MockedBackend(Backend):
         return item['category']
 
 
+class SearchTermsBackend(MockedBackend):
+    """Mocked backend for testing search terms"""
+
+    @staticmethod
+    def search_terms(item):
+        terms = {
+            'pos': item['item']
+        }
+
+        return terms
+
+
 class ClassifiedFieldsBackend(MockedBackend):
     """Mocked backend for testing classified fields filtering"""
 
@@ -275,6 +287,22 @@ class TestBackend(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             b.metadata_category(None)
+
+    def test_search_terms_none(self):
+        """Test whether the search_terms is None when it is not defined"""
+
+        b = MockedBackend('test')
+
+        for item in b.fetch():
+            self.assertIsNone(item['search_terms'])
+
+    def test_search_terms(self):
+        """Test whether the search_terms is properly set"""
+
+        b = SearchTermsBackend('test')
+
+        for item in b.fetch():
+            self.assertEqual(item['data']['item'], item['search_terms']['pos'])
 
     def test_tag(self):
         """Test whether tag value is initializated"""
