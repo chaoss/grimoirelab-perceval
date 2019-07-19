@@ -37,7 +37,6 @@ from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
 CATEGORY_ISSUE = "issue"
-
 MAX_RESULTS = 100  # Maximum number of results per query
 
 logger = logging.getLogger(__name__)
@@ -96,9 +95,15 @@ class Jira(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.12.0'
+    version = '0.13.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
+    EXTRA_SEARCH_FIELDS = {
+        'project_id': ['fields', 'project', 'id'],
+        'project_key': ['fields', 'project', 'key'],
+        'project_name': ['fields', 'project', 'name'],
+        'issue_key': ['key']
+    }
 
     def __init__(self, url, project=None,
                  user=None, password=None,
