@@ -96,7 +96,7 @@ class Jira(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.12.0'
+    version = '0.13.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -215,6 +215,22 @@ class Jira(Backend):
         'issue'.
         """
         return CATEGORY_ISSUE
+
+    @staticmethod
+    def search_terms(item):
+        """Set the search terms of a Jira items."""
+
+        project_id = item['fields']['project']['id']
+        project_key = item['fields']['project']['key']
+        project_name = item['fields']['project']['name']
+
+        terms = {
+            'project_id': project_id,
+            'project_key': project_key,
+            'project_name': project_name
+        }
+
+        return terms
 
     @staticmethod
     def parse_issues(raw_page):
