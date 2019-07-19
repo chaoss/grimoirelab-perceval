@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 ARCHIVES_DEFAULT_PATH = '~/.perceval/archives/'
+DEFAULT_SEARCH_FIELD = 'item_id'
 
 
 class Backend:
@@ -74,6 +75,33 @@ class Backend:
     Classified data filtering and archiving are not compatible to prevent
     data leaks or security issues.
 
+    Each backend can also provide a set of search fields to simplify query
+    operations (avoiding the manual inspection of the items). The search
+    fields are included in a dict with the following shape:
+
+        {
+            'key-1': value-1,
+            'key-2': value-2,
+            'key-3': value-3
+        }
+
+    These fields are added to the item metadata information in the
+    `search_fields` attribute. By default, `search_fields` contains
+    the id of the item ('item_id': item_id_value), obtained via the
+    method `metadata_id`. However each backend can set extra search
+    fields using the dict EXTRA_SEARCH_FIELDS. An example of
+    EXTRA_SEARCH_FIELDS is provided below:
+
+        {
+            'project_id': ['fields', 'project', 'id'],
+            'project_key': ['fields', 'project', 'key'],
+            'project_name': ['fields', 'project', 'name']
+        }
+
+    Each key in the dict is a search field to be included in the item
+    metadata information, while the corresponding value is a list that
+    stores the "path" of the search field value within the item.
+
     :param origin: identifier of the repository
     :param tag: tag items using this label
     :param archive: archive to store/retrieve data
@@ -81,10 +109,11 @@ class Backend:
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     CATEGORIES = []
     CLASSIFIED_FIELDS = []
+    EXTRA_SEARCH_FIELDS = {}
 
     def __init__(self, origin, tag=None, archive=None):
         self._origin = origin
@@ -207,6 +236,42 @@ class Backend:
 
         return item
 
+    def search_fields(self, item):
+        """Add search fields to an item.
+
+        It adds the values of the fields defined in `SEARCH_FIELDS` class attribute with
+        their corresponding keys.
+
+        :param item: the item to extract the search fields values
+
+        :returns: a dict of search fields
+        """
+        item_uuid = uuid(self.origin, self.metadata_id(item))
+
+        logger.debug("Adding search fields to item %s", item_uuid)
+
+        logger.debug("Adding default `item_id` search field to item %s", item_uuid)
+        search_fields = {
+            DEFAULT_SEARCH_FIELD: self.metadata_id(item)
+        }
+
+        logger.debug("Adding extra search fields to item %s", item_uuid)
+        for sf in self.EXTRA_SEARCH_FIELDS:
+            try:
+                search_field = self.EXTRA_SEARCH_FIELDS[sf]
+                field_value = _find_value_from_nested_dict(item, search_field)
+                search_fields[sf] = field_value
+            except KeyError:
+                logger.warning("Extra search field '%s' not found for item %s; field ignored",
+                               sf, item_uuid)
+            except IndexError:
+                logger.warning("Extra search field '%s' is empty %s; field ignored",
+                               sf, item_uuid)
+
+        logger.debug("Search fields added for item %s", item_uuid)
+
+        return search_fields
+
     def metadata(self, item, filter_classified=False):
         """Add metadata to an item.
 
@@ -227,6 +292,7 @@ class Backend:
             'updated_on': self.metadata_updated_on(item),
             'classified_fields_filtered': self.classified_fields if filter_classified else None,
             'category': self.metadata_category(item),
+            'search_fields': self.search_fields(item),
             'tag': self.tag,
             'data': item,
         }
@@ -255,6 +321,19 @@ class Backend:
 
     def _init_client(self, from_archive=False):
         raise NotImplementedError
+
+
+def _find_value_from_nested_dict(nested_dict, path_to_field):
+    if len(path_to_field) == 0:
+        raise IndexError
+
+    key = path_to_field[0]
+
+    if len(path_to_field) == 1:
+        value = nested_dict[key] if nested_dict else None
+        return value
+    else:
+        return _find_value_from_nested_dict(nested_dict[key], path_to_field[1:])
 
 
 def _remove_key_from_nested_dict(nested_dict, path_to_field):
