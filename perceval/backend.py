@@ -30,7 +30,8 @@ import sys
 
 from grimoirelab_toolkit.introspect import find_signature_parameters
 from grimoirelab_toolkit.datetime import (datetime_utcnow,
-                                          str_to_datetime)
+                                          str_to_datetime,
+                                          unixtime_to_datetime)
 from .archive import Archive, ArchiveManager
 from .errors import ArchiveError, BackendError
 from ._version import __version__
@@ -508,6 +509,54 @@ class BackendCommand:
     @classmethod
     def setup_cmd_parser(cls):
         raise NotImplementedError
+
+
+class Summary:
+    """Summary class for fetch executions.
+
+    This class models the summary of a fetch execution. It includes
+    the last UUID, number of items fetched, skipped and their sum,
+    plus the min, max and last updated_on times. Furthermore, for
+    backends using offsets, the corresponding summary contains the
+    min, max and last offsets retrieved. Finally, the summary also
+    includes some extra fields, which can be used by any backend
+    to include fetch-specific information.
+    """
+
+    def __init__(self):
+        self.fetched = 0
+        self.skipped = 0
+        self.min_updated_on = None
+        self.max_updated_on = None
+        self.last_updated_on = None
+        self.last_uuid = None
+        self.min_offset = None
+        self.max_offset = None
+        self.last_offset = None
+        self.extras = None
+
+    @property
+    def total(self):
+        return self.fetched + self.skipped
+
+    def update(self, item):
+        """Update the summary attributes by accessing the item data
+
+        :param item: a Perceval item
+        """
+        self.fetched += 1
+        self.last_uuid = item['uuid']
+
+        updated_on = unixtime_to_datetime(item['updated_on'])
+        self.min_updated_on = updated_on if not self.min_updated_on else min(self.min_updated_on, updated_on)
+        self.max_updated_on = updated_on if not self.max_updated_on else max(self.max_updated_on, updated_on)
+        self.last_updated_on = updated_on
+
+        offset = item.get('offset', None)
+        if offset is not None:
+            self.last_offset = offset
+            self.min_offset = offset if self.min_offset is None else min(self.min_offset, offset)
+            self.max_offset = offset if self.max_offset is None else max(self.max_offset, offset)
 
 
 def uuid(*args):
