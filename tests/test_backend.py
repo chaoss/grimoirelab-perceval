@@ -88,7 +88,7 @@ class MockedBackend(Backend):
 
     @staticmethod
     def metadata_updated_on(item):
-        return '2016-01-01'
+        return str_to_datetime('2016-01-01').timestamp()
 
     @staticmethod
     def metadata_category(item):
@@ -1143,7 +1143,7 @@ class TestMetadata(unittest.TestCase):
             self.assertEqual(item['perceval_version'], __version__)
             self.assertEqual(item['origin'], 'test')
             self.assertEqual(item['uuid'], expected_uuid)
-            self.assertEqual(item['updated_on'], '2016-01-01')
+            self.assertEqual(item['updated_on'], 1451606400.0)
             self.assertEqual(item['category'], 'mock_item')
             self.assertEqual(item['classified_fields_filtered'], None)
             self.assertEqual(item['tag'], 'mytag')
@@ -1169,7 +1169,7 @@ class TestMetadata(unittest.TestCase):
             self.assertEqual(item['perceval_version'], __version__)
             self.assertEqual(item['origin'], 'test')
             self.assertEqual(item['uuid'], expected_uuid)
-            self.assertEqual(item['updated_on'], '2016-01-01')
+            self.assertEqual(item['updated_on'], 1451606400.0)
             self.assertEqual(item['category'], 'mock_item')
             self.assertEqual(item['classified_fields_filtered'], [])
             self.assertEqual(item['tag'], 'mytag')
