@@ -1463,6 +1463,35 @@ class TestFetch(unittest.TestCase):
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['classified_fields_filtered'], None)
 
+    @unittest.mock.patch('perceval.backend.sys.stderr')
+    def test_items_summary(self, mock_stderr):
+        """Test whether a summary is returned to stderr when fetching items"""
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        items = fetch(CommandBackend, args, category, manager=None)
+        items = [item for item in items]
+
+        self.assertEqual(len(items), 5)
+
+        expected = "[summary]\n" \
+                   "total: 5\n" \
+                   "fetched: 5\n" \
+                   "skipped: 0\n" \
+                   "min_updated_on: 2016-01-01T00:00:00+00:00\n" \
+                   "max_updated_on: 2016-01-01T00:00:00+00:00\n" \
+                   "last_updated_on: 2016-01-01T00:00:00+00:00\n" \
+                   "last_uuid: 6130c145435d661565bd7d402be403bea7cfb6b5\n"
+
+        output = mock_stderr.mock_calls[0][1][0]
+        self.assertEqual(output, expected)
+
     def test_items_storing_archive(self):
         """Test whether items are stored in an archive"""
 
@@ -1646,6 +1675,43 @@ class TestFetchFromArchive(unittest.TestCase):
                                    category, archived_dt)
         items = [item for item in items]
         self.assertEqual(len(items), 5)
+
+    @unittest.mock.patch('perceval.backend.sys.stderr')
+    def test_archive_summary(self, mock_stderr):
+        """Test whether a summary is returned to stderr when fetching items from the archive"""
+
+        manager = ArchiveManager(self.test_path)
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        items = fetch(CommandBackend, args, category, manager=manager)
+        items = [item for item in items]
+        self.assertEqual(len(items), 5)
+
+        # Fetch items from the archive
+        items = fetch_from_archive(CommandBackend, args, manager,
+                                   category, str_to_datetime('1970-01-01'))
+        items = [item for item in items]
+
+        self.assertEqual(len(items), 5)
+
+        expected = "[summary]\n" \
+                   "total: 5\n" \
+                   "fetched: 5\n" \
+                   "skipped: 0\n" \
+                   "min_updated_on: 2016-01-01T00:00:00+00:00\n" \
+                   "max_updated_on: 2016-01-01T00:00:00+00:00\n" \
+                   "last_updated_on: 2016-01-01T00:00:00+00:00\n" \
+                   "last_uuid: 6130c145435d661565bd7d402be403bea7cfb6b5\n"
+
+        output = mock_stderr.mock_calls[0][1][0]
+        self.assertEqual(output, expected)
 
     def test_no_archived_items(self):
         """Test when no archived items are available"""

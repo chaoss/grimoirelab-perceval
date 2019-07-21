@@ -75,6 +75,14 @@ class Backend:
     Classified data filtering and archiving are not compatible to prevent
     data leaks or security issues.
 
+    Each fetch operation generates a summary, available via the property
+    `summary`. By default, it includes the last UUID generated, number
+    of items fetched, skipped and their sum, plus the min, max and last
+    updated_on times. Furthermore, for backends using offsets, the
+    corresponding summary contains the min and max offsets retrieved. Finally,
+    the summary also includes some extra fields, which can be used by any
+    backend to include fetch-specific information.
+
     :param origin: identifier of the repository
     :param tag: tag items using this label
     :param archive: archive to store/retrieve data
@@ -82,7 +90,7 @@ class Backend:
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     CATEGORIES = []
     CLASSIFIED_FIELDS = []
@@ -91,10 +99,15 @@ class Backend:
         self._origin = origin
         self.tag = tag if tag else origin
         self.archive = archive or None
+        self._summary = None
 
     @property
     def origin(self):
         return self._origin
+
+    @property
+    def summary(self):
+        return self._summary
 
     @property
     def archive(self):
@@ -145,6 +158,8 @@ class Backend:
         :raises BackendError: either when the category is not valid or
             'filter_classified' and 'archive' are active at the same time.
         """
+        self._summary = Summary()
+
         if category not in self.categories:
             cause = "%s category not valid for %s" % (category, self.__class__.__name__)
             raise BackendError(cause=cause)
@@ -163,7 +178,10 @@ class Backend:
             if filter_classified:
                 item = self.filter_classified_data(item)
 
-            yield self.metadata(item, filter_classified=filter_classified)
+            metadata_item = self.metadata(item, filter_classified=filter_classified)
+            self.summary.update(metadata_item)
+
+            yield metadata_item
 
     def fetch_from_archive(self):
         """Fetch the questions from an archive.
@@ -178,10 +196,14 @@ class Backend:
         if not self.archive:
             raise ArchiveError(cause="archive instance was not provided")
 
+        self._summary = Summary()
         self.client = self._init_client(from_archive=True)
 
         for item in self.fetch_items(self.archive.category, **self.archive.backend_params):
-            yield self.metadata(item)
+            metadata_item = self.metadata(item)
+            self.summary.update(metadata_item)
+
+            yield metadata_item
 
     def filter_classified_data(self, item):
         """Remove classified or confidential data from an item.
@@ -522,7 +544,6 @@ class Summary:
     some extra fields, which can be used by any backend to include
     fetch-specific information.
     """
-
     def __init__(self):
         self.fetched = 0
         self.skipped = 0
@@ -643,6 +664,8 @@ def fetch(backend_class, backend_args, category, filter_classified=False,
     The parameters needed to initialize the `backend` class and
     get the items are given using `backend_args` dict parameter.
 
+    The summary of the fetch execution is sent to stderr.
+
     :param backend_class: backend class to fetch items
     :param backend_args: dict of arguments needed to fetch the items
     :param category: category of the items to retrieve.
@@ -671,6 +694,9 @@ def fetch(backend_class, backend_args, category, filter_classified=False,
     try:
         for item in items:
             yield item
+
+        summary = repr(backend.summary)
+        sys.stderr.write(summary)
     except Exception as e:
         if manager:
             archive_path = archive.archive_path
@@ -688,6 +714,8 @@ def fetch_from_archive(backend_class, backend_args, manager,
 
     The parameters needed to initialize `backend` and get the
     items are given using `backend_args` dict parameter.
+
+    The summary of the fetch execution is sent to stderr.
 
     :param backend_class: backend class to retrive items
     :param backend_args: dict of arguments needed to retrieve the items
@@ -713,6 +741,9 @@ def fetch_from_archive(backend_class, backend_args, manager,
         try:
             for item in items:
                 yield item
+
+            summary = repr(backend.summary)
+            sys.stderr.write(summary)
         except ArchiveError as e:
             logger.warning("Ignoring %s archive due to: %s", filepath, str(e))
 
