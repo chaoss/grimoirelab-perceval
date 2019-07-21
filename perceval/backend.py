@@ -30,7 +30,8 @@ import sys
 
 from grimoirelab_toolkit.introspect import find_signature_parameters
 from grimoirelab_toolkit.datetime import (datetime_utcnow,
-                                          str_to_datetime)
+                                          str_to_datetime,
+                                          unixtime_to_datetime)
 from .archive import Archive, ArchiveManager
 from .errors import ArchiveError, BackendError
 from ._version import __version__
@@ -508,6 +509,95 @@ class BackendCommand:
     @classmethod
     def setup_cmd_parser(cls):
         raise NotImplementedError
+
+
+class Summary:
+    """Summary class for fetch executions.
+
+    This class models the summary of a fetch execution. It includes
+    the last UUID, number of items fetched, skipped and their sum,
+    plus the min, max and last updated_on times. Furthermore, for
+    backends using offsets, the corresponding summary contains the
+    min and max offsets retrieved. Finally, the summary also includes
+    some extra fields, which can be used by any backend to include
+    fetch-specific information.
+    """
+
+    def __init__(self):
+        self.fetched = 0
+        self.skipped = 0
+        self.min_updated_on = None
+        self.max_updated_on = None
+        self.last_updated_on = None
+        self.last_uuid = None
+        self.min_offset = None
+        self.max_offset = None
+        self.extras = None
+
+    @property
+    def total(self):
+        return self.fetched + self.skipped
+
+    def update(self, item):
+        """Update the summary attributes by accessing the item data
+
+        :param item: a Perceval item
+        """
+        self.fetched += 1
+        self.last_uuid = item['uuid']
+
+        updated_on = unixtime_to_datetime(item['updated_on'])
+        self.min_updated_on = updated_on if not self.min_updated_on else min(self.min_updated_on, updated_on)
+        self.max_updated_on = updated_on if not self.max_updated_on else max(self.max_updated_on, updated_on)
+        self.last_updated_on = updated_on
+
+        offset = item.get('offset', None)
+        if offset is not None:
+            self.min_offset = offset if self.min_offset is None else min(self.min_offset, offset)
+            self.max_offset = offset if self.max_offset is None else max(self.max_offset, offset)
+
+    def to_dict(self):
+        """Convert the summary object to a dict"""
+
+        summary = {
+            'summary': {
+                'total': self.total,
+                'fetched': self.fetched,
+                'skipped': self.skipped,
+                'min_updated_on': self.min_updated_on.isoformat() if self.min_updated_on else None,
+                'max_updated_on': self.max_updated_on.isoformat() if self.max_updated_on else None,
+                'last_updated_on': self.last_updated_on.isoformat() if self.last_updated_on else None,
+                'last_uuid': self.last_uuid,
+                'min_offset': self.min_offset,
+                'max_offset': self.max_offset,
+                'extras': self.extras
+            }
+        }
+
+        return summary
+
+    def __repr__(self):
+        def dict2text(d):
+            text = ""
+            for k, v in d.items():
+                if v is None:
+                    continue
+
+                if isinstance(v, dict):
+                    text += dict2text(v)
+                elif isinstance(v, list):
+                    text += '{}: {}\n'.format(k, ','.join(v))
+                else:
+                    text += "{}: {}\n".format(k, v)
+
+            return text
+
+        summary_dict = self.to_dict()['summary']
+
+        text = "[summary]\n"
+        text += dict2text(summary_dict)
+
+        return text
 
 
 def uuid(*args):

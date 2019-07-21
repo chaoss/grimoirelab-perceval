@@ -42,12 +42,14 @@ from perceval.archive import Archive, ArchiveManager
 from perceval.backend import (Backend,
                               BackendCommandArgumentParser,
                               BackendCommand,
+                              Summary,
                               uuid,
                               fetch,
                               fetch_from_archive,
                               logger as backend_logger)
 from perceval.errors import ArchiveError, BackendError
-from perceval.utils import DEFAULT_DATETIME
+from perceval.utils import (DEFAULT_DATETIME,
+                            DEFAULT_LAST_DATETIME)
 from base import TestCaseBackendArchive
 
 
@@ -1121,6 +1123,219 @@ class TestBackendCommand(unittest.TestCase):
                 },
             }
             self.assertDictEqual(item['data'], expected)
+
+
+class TestSummary(unittest.TestCase):
+    """Unit tests for Summary"""
+
+    def test_init(self):
+        """Test whether the attributes are correctly initialized"""
+
+        summary = Summary()
+
+        self.assertEqual(summary.fetched, 0)
+        self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.total, 0)
+        self.assertIsNone(summary.min_updated_on)
+        self.assertIsNone(summary.max_updated_on)
+        self.assertIsNone(summary.last_updated_on)
+        self.assertIsNone(summary.last_uuid)
+        self.assertIsNone(summary.min_offset)
+        self.assertIsNone(summary.max_offset)
+        self.assertIsNone(summary.extras)
+
+    def test_update(self):
+        """Test whether the method update properly works"""
+
+        items = [
+            {
+                "updated_on": 1483228800.0,
+                "uuid": "0fa16dc4edab9130a14914a8d797f634d13b4ff4"
+            },
+            {
+                "updated_on": 1483228900.0,
+                "uuid": "0fa16dc4edab9130a14914a8d797f634d13b4aa4"
+            },
+            {
+                "updated_on": 1483228700.0,
+                "uuid": "0fa16dc4edab9130a14914a8d797f634d13b4bb4"
+            }
+        ]
+
+        summary = Summary()
+
+        item = items[0]
+        summary.update(item)
+        self.assertEqual(summary.fetched, 1)
+        self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.total, 1)
+        self.assertEqual(summary.min_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.max_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.last_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.last_uuid, "0fa16dc4edab9130a14914a8d797f634d13b4ff4")
+        self.assertIsNone(summary.min_offset)
+        self.assertIsNone(summary.max_offset)
+
+        item = items[1]
+        summary.update(item)
+        self.assertEqual(summary.fetched, 2)
+        self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.total, 2)
+        self.assertEqual(summary.min_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.max_updated_on.timestamp(), 1483228900.0)
+        self.assertEqual(summary.last_updated_on.timestamp(), 1483228900.0)
+        self.assertEqual(summary.last_uuid, "0fa16dc4edab9130a14914a8d797f634d13b4aa4")
+        self.assertIsNone(summary.min_offset)
+        self.assertIsNone(summary.max_offset)
+
+        item = items[2]
+        summary.update(item)
+        self.assertEqual(summary.fetched, 3)
+        self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.total, 3)
+        self.assertEqual(summary.min_updated_on.timestamp(), 1483228700.0)
+        self.assertEqual(summary.max_updated_on.timestamp(), 1483228900.0)
+        self.assertEqual(summary.last_updated_on.timestamp(), 1483228700.0)
+        self.assertEqual(summary.last_uuid, "0fa16dc4edab9130a14914a8d797f634d13b4bb4")
+        self.assertIsNone(summary.min_offset)
+        self.assertIsNone(summary.max_offset)
+
+    def test_update_offset(self):
+        """Test whether the method update properly works on offset attributes"""
+
+        items = [
+            {
+                "updated_on": 1483228800.0,
+                "uuid": "0fa16dc4edab9130a14914a8d797f634d13b4ff4",
+                "offset": 0
+            },
+            {
+                "updated_on": 1483228900.0,
+                "uuid": "0fa16dc4edab9130a14914a8d797f634d13b4aa4",
+                "offset": 2
+            },
+            {
+                "updated_on": 1483228700.0,
+                "uuid": "0fa16dc4edab9130a14914a8d797f634d13b4bb4",
+                "offset": 1
+            },
+        ]
+
+        summary = Summary()
+
+        item = items[0]
+        summary.update(item)
+        self.assertEqual(summary.fetched, 1)
+        self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.total, 1)
+        self.assertEqual(summary.min_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.max_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.last_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.last_uuid, "0fa16dc4edab9130a14914a8d797f634d13b4ff4")
+        self.assertEqual(summary.min_offset, 0)
+        self.assertEqual(summary.max_offset, 0)
+
+        item = items[1]
+        summary.update(item)
+        self.assertEqual(summary.fetched, 2)
+        self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.total, 2)
+        self.assertEqual(summary.min_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.max_updated_on.timestamp(), 1483228900.0)
+        self.assertEqual(summary.last_updated_on.timestamp(), 1483228900.0)
+        self.assertEqual(summary.last_uuid, "0fa16dc4edab9130a14914a8d797f634d13b4aa4")
+        self.assertEqual(summary.min_offset, 0)
+        self.assertEqual(summary.max_offset, 2)
+
+        item = items[2]
+        summary.update(item)
+        self.assertEqual(summary.fetched, 3)
+        self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.total, 3)
+        self.assertEqual(summary.min_updated_on.timestamp(), 1483228700.0)
+        self.assertEqual(summary.max_updated_on.timestamp(), 1483228900.0)
+        self.assertEqual(summary.last_updated_on.timestamp(), 1483228700.0)
+        self.assertEqual(summary.last_uuid, "0fa16dc4edab9130a14914a8d797f634d13b4bb4")
+        self.assertEqual(summary.min_offset, 0)
+        self.assertEqual(summary.max_offset, 2)
+
+    def test_to_dict(self):
+        """Test whether the method to_dict properly works"""
+
+        summary = Summary()
+        summary.fetched = 100
+        summary.skipped = 10
+        summary.min_updated_on = DEFAULT_DATETIME
+        summary.max_updated_on = DEFAULT_LAST_DATETIME
+        summary.last_updated_on = DEFAULT_LAST_DATETIME
+        summary.last_uuid = "0fa16dc4edab9130a14914a8d797f634d13b4bb4"
+        summary.extras = {'test': 'x'}
+
+        expected = {
+            "summary": {
+                "extras": {
+                    "test": "x"
+                },
+                "fetched": 100,
+                "last_updated_on": "2100-01-01T00:00:00+00:00",
+                "last_uuid": "0fa16dc4edab9130a14914a8d797f634d13b4bb4",
+                "max_offset": None,
+                "max_updated_on": "2100-01-01T00:00:00+00:00",
+                "min_offset": None,
+                "min_updated_on": "1970-01-01T00:00:00+00:00",
+                "skipped": 10,
+                "total": 110
+            }
+        }
+
+        self.assertDictEqual(summary.to_dict(), expected)
+
+    def test_repr(self):
+        """Test whether the summary information is correctly converted to text"""
+
+        # Check that attributes with `None` values are not shown
+        summary = Summary()
+        summary.fetched = 100
+        summary.skipped = 10
+        summary.min_updated_on = DEFAULT_DATETIME
+        summary.max_updated_on = DEFAULT_LAST_DATETIME
+        summary.last_updated_on = DEFAULT_LAST_DATETIME
+        summary.last_uuid = "0fa16dc4edab9130a14914a8d797f634d13b4bb4"
+
+        expected = "[summary]\n" \
+                   "total: 110\n" \
+                   "fetched: 100\n" \
+                   "skipped: 10\n" \
+                   "min_updated_on: 1970-01-01T00:00:00+00:00\n" \
+                   "max_updated_on: 2100-01-01T00:00:00+00:00\n" \
+                   "last_updated_on: 2100-01-01T00:00:00+00:00\n" \
+                   "last_uuid: 0fa16dc4edab9130a14914a8d797f634d13b4bb4\n"
+
+        summary_str = repr(summary)
+        self.assertEqual(summary_str, expected)
+        self.assertIsNone(summary.min_offset)
+        self.assertNotIn('min_offset', summary_str)
+        self.assertIsNone(summary.max_offset)
+        self.assertNotIn('max_offset', summary_str)
+
+        # Check that the attribute extras is correctly shown
+        summary = Summary()
+        summary.fetched = 100
+        summary.skipped = 10
+        summary.extras = {
+            "new_branches": ["dev", "deployment"],
+            "total_branches": 100
+        }
+
+        expected = "[summary]\n" \
+                   "total: 110\n" \
+                   "fetched: 100\n" \
+                   "skipped: 10\n" \
+                   "new_branches: dev,deployment\n" \
+                   "total_branches: 100\n"
+
+        summary_str = repr(summary)
+        self.assertEqual(summary_str, expected)
 
 
 class TestMetadata(unittest.TestCase):
