@@ -703,6 +703,19 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         self.assertEqual(parsed_args.password, '1234')
         self.assertEqual(parsed_args.api_token, 'abcd')
 
+    def test_parse_blacklist_ids(self):
+        """Test if the blacklist argument is parsed"""
+
+        args = ['--blacklist-ids', '1'
+                '--category', 'mocked']
+
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND.CATEGORIES,
+                                              blacklist=True)
+        parsed_args = parser.parse(*args)
+
+        self.assertIsInstance(parsed_args, argparse.Namespace)
+        self.assertTrue(parsed_args.blacklist_ids)
+
     def test_parse_archive_args(self):
         """Test if achiving arguments are parsed"""
 

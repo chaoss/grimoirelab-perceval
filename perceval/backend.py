@@ -81,7 +81,7 @@ class Backend:
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     CATEGORIES = []
     CLASSIFIED_FIELDS = []
@@ -285,6 +285,7 @@ class BackendCommandArgumentParser:
     :param token_auth: set token/key authentication arguments
     :param archive: set archiving arguments
     :param aliases: define aliases for parsed arguments
+    :param blacklist: set a list of items IDs to be filtered out
 
     :raises AttributeArror: when both `from_date` and `offset` are set
         to `True`
@@ -292,7 +293,7 @@ class BackendCommandArgumentParser:
 
     def __init__(self, categories, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False, archive=False,
-                 aliases=None):
+                 aliases=None, blacklist=False):
         self._from_date = from_date
         self._to_date = to_date
         self._archive = archive
@@ -326,6 +327,11 @@ class BackendCommandArgumentParser:
             group.add_argument('--offset', dest='offset',
                                type=int, default=0,
                                help="offset to start fetching items")
+
+        if blacklist:
+            group.add_argument('--blacklist-ids', dest='blacklist_ids',
+                               nargs='*', type=str,
+                               help="Ids of items that must not be retrieved.")
 
         if basic_auth or token_auth:
             self._set_auth_arguments(basic_auth=basic_auth,
