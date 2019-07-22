@@ -354,16 +354,7 @@ $ perceval twitter grimoirelab -t 12345678abcdefgh
 
 Perceval comes with a comprehensive list of unit tests.
 To run them, in addition to the dependencies installed with Perceval,
-you need version 0.8.6 of  `httpretty`.
-Currently, latest version in pypi is 0.8.14,
-which seems to have a bug exposed by some Perceval tests.
-So, ensure you install 0.8.6, which is known to work with them:
-
-```
-$ pip install httpretty==0.8.6
-$ cd tests
-$ python3 run_tests.py
-```
+you need `httpretty`.
 
 ## License
 
