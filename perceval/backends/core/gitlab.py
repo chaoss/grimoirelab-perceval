@@ -84,7 +84,7 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.8.0'
+    version = '0.8.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
@@ -221,7 +221,7 @@ class GitLab(Backend):
         for raw_issues in issues_groups:
             issues = json.loads(raw_issues)
             for issue in issues:
-                issue_id = issue['iid']
+                issue_id = str(issue['iid'])
 
                 if self.blacklist_ids and issue_id in self.blacklist_ids:
                     logger.warning("Skipping blacklisted issue %s", issue_id)
@@ -278,7 +278,7 @@ class GitLab(Backend):
         for raw_merges in merges_groups:
             merges = json.loads(raw_merges)
             for merge in merges:
-                merge_id = merge['iid']
+                merge_id = str(merge['iid'])
 
                 if self.blacklist_ids and merge_id in self.blacklist_ids:
                     logger.warning("Skipping blacklisted merge request %s", merge_id)
@@ -693,7 +693,8 @@ class GitLabCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
                                               from_date=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              blacklist=True)
 
         # GitLab options
         group = parser.parser.add_argument_group('GitLab arguments')
@@ -706,9 +707,6 @@ class GitLabCommand(BackendCommand):
                            default=MIN_RATE_LIMIT, type=int,
                            help="sleep until reset when the rate limit \
                                reaches this value")
-        group.add_argument('--blacklist-ids', dest='blacklist_ids',
-                           nargs='*', type=int,
-                           help="Ids of items that must not be retrieved.")
         group.add_argument('--is-oauth-token', dest='is_oauth_token',
                            action='store_true',
                            help="Set when using OAuth2")

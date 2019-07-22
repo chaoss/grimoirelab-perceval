@@ -449,7 +449,7 @@ class TestGitLabBackend(unittest.TestCase):
         # When tag is empty or None it will be set to
         # the value in originTestGitLabBackend
         gitlab = GitLab('fdroid', 'fdroiddata', api_token='aaa', max_retries=10,
-                        sleep_time=100, blacklist_ids=[1, 2, 3])
+                        sleep_time=100, blacklist_ids=['1', '2', '3'])
 
         self.assertEqual(gitlab.owner, 'fdroid')
         self.assertEqual(gitlab.repository, 'fdroiddata')
@@ -458,7 +458,7 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertIsNone(gitlab.client)
         self.assertEqual(gitlab.max_retries, 10)
         self.assertEqual(gitlab.sleep_time, 100)
-        self.assertEqual(gitlab.blacklist_ids, [1, 2, 3])
+        self.assertEqual(gitlab.blacklist_ids, ['1', '2', '3'])
         self.assertEqual(gitlab.is_oauth_token, False)
 
     @httpretty.activate
@@ -595,7 +595,7 @@ class TestGitLabBackend(unittest.TestCase):
 
         setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
 
-        gitlab = GitLab("fdroid", "fdroiddata", "your-token", blacklist_ids=[1, 2, 3])
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token", blacklist_ids=['1', '2', '3'])
 
         with self.assertLogs(level='WARNING') as cm:
             issues = [issues for issues in gitlab.fetch()]
@@ -698,7 +698,7 @@ class TestGitLabBackend(unittest.TestCase):
 
         setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
 
-        gitlab = GitLab("fdroid", "fdroiddata", "your-token", blacklist_ids=[1, 2])
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token", blacklist_ids=['1', '2'])
 
         with self.assertLogs(level='WARNING') as cm:
             merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
@@ -1690,7 +1690,7 @@ class TestGitLabCommand(unittest.TestCase):
         self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
         self.assertEqual(parsed_args.category, CATEGORY_MERGE_REQUEST)
-        self.assertEqual(parsed_args.blacklist_ids, [1, 2, 3])
+        self.assertEqual(parsed_args.blacklist_ids, ['1', '2', '3'])
         self.assertEqual(parsed_args.max_retries, 5)
         self.assertEqual(parsed_args.sleep_time, 10)
         self.assertEqual(parsed_args.is_oauth_token, True)
