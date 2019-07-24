@@ -90,7 +90,7 @@ setup(name="perceval",
           'pandoc'
       ],
       tests_require=[
-          'httpretty==0.8.6'
+          'httpretty>=0.9.6'
       ],
       install_requires=[
           'python-dateutil>=2.6.0',
