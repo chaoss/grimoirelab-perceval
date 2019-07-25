@@ -221,6 +221,106 @@ class TestBugzillaBackend(unittest.TestCase):
             self.assertDictEqual(requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        requests = []
+        bodies_csv = [read_file('data/bugzilla/bugzilla_buglist.csv'),
+                      read_file('data/bugzilla/bugzilla_buglist_next.csv'),
+                      ""]
+        bodies_xml = [read_file('data/bugzilla/bugzilla_version.xml', mode='rb'),
+                      read_file('data/bugzilla/bugzilla_bugs_details.xml', mode='rb'),
+                      read_file('data/bugzilla/bugzilla_bugs_details_next.xml', mode='rb')]
+        bodies_html = [read_file('data/bugzilla/bugzilla_bug_activity.html', mode='rb'),
+                       read_file('data/bugzilla/bugzilla_bug_activity_empty.html', mode='rb')]
+
+        def request_callback(method, uri, headers):
+            if uri.startswith(BUGZILLA_BUGLIST_URL):
+                body = bodies_csv.pop(0)
+            elif uri.startswith(BUGZILLA_BUG_URL):
+                body = bodies_xml.pop(0)
+            else:
+                body = bodies_html[len(requests) % 2]
+
+            requests.append(httpretty.last_request())
+
+            return 200, headers, body
+
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGLIST_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(3)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUG_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUG_ACTIVITY_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(7)
+                               ])
+
+        bg = Bugzilla(BUGZILLA_SERVER_URL,
+                      max_bugs=5, max_bugs_csv=500)
+        bugs = [bug for bug in bg.fetch()]
+
+        self.assertEqual(len(bugs), 7)
+
+        bug = bugs[0]
+        self.assertEqual(bg.metadata_id(bug['data']), bug['search_fields']['item_id'])
+        self.assertEqual(bug['data']['product'][0]['__text__'], 'LibreGeoSocial (Android)')
+        self.assertEqual(bug['data']['product'][0]['__text__'], bug['search_fields']['product'])
+        self.assertEqual(bug['data']['component'][0]['__text__'], 'general')
+        self.assertEqual(bug['data']['component'][0]['__text__'], bug['search_fields']['component'])
+
+        bug = bugs[1]
+        self.assertEqual(bg.metadata_id(bug['data']), bug['search_fields']['item_id'])
+        self.assertEqual(bug['data']['product'][0]['__text__'], 'LibreGeoSocial (Android)')
+        self.assertEqual(bug['data']['product'][0]['__text__'], bug['search_fields']['product'])
+        self.assertEqual(bug['data']['component'][0]['__text__'], 'general')
+        self.assertEqual(bug['data']['component'][0]['__text__'], bug['search_fields']['component'])
+
+        bug = bugs[2]
+        self.assertEqual(bg.metadata_id(bug['data']), bug['search_fields']['item_id'])
+        self.assertEqual(bug['data']['product'][0]['__text__'], 'Bicho')
+        self.assertEqual(bug['data']['product'][0]['__text__'], bug['search_fields']['product'])
+        self.assertEqual(bug['data']['component'][0]['__text__'], 'General')
+        self.assertEqual(bug['data']['component'][0]['__text__'], bug['search_fields']['component'])
+
+        bug = bugs[3]
+        self.assertEqual(bg.metadata_id(bug['data']), bug['search_fields']['item_id'])
+        self.assertEqual(bug['data']['product'][0]['__text__'], 'LibreGeoSocial (server)')
+        self.assertEqual(bug['data']['product'][0]['__text__'], bug['search_fields']['product'])
+        self.assertEqual(bug['data']['component'][0]['__text__'], 'general')
+        self.assertEqual(bug['data']['component'][0]['__text__'], bug['search_fields']['component'])
+
+        bug = bugs[4]
+        self.assertEqual(bg.metadata_id(bug['data']), bug['search_fields']['item_id'])
+        self.assertEqual(bug['data']['product'][0]['__text__'], 'CVSAnalY')
+        self.assertEqual(bug['data']['product'][0]['__text__'], bug['search_fields']['product'])
+        self.assertEqual(bug['data']['component'][0]['__text__'], 'general')
+        self.assertEqual(bug['data']['component'][0]['__text__'], bug['search_fields']['component'])
+
+        bug = bugs[5]
+        self.assertEqual(bg.metadata_id(bug['data']), bug['search_fields']['item_id'])
+        self.assertEqual(bug['data']['product'][0]['__text__'], 'Bicho')
+        self.assertEqual(bug['data']['product'][0]['__text__'], bug['search_fields']['product'])
+        self.assertEqual(bug['data']['component'][0]['__text__'], 'General')
+        self.assertEqual(bug['data']['component'][0]['__text__'], bug['search_fields']['component'])
+
+        bug = bugs[6]
+        self.assertEqual(bg.metadata_id(bug['data']), bug['search_fields']['item_id'])
+        self.assertEqual(bug['data']['product'][0]['__text__'], 'CVSAnalY')
+        self.assertEqual(bug['data']['product'][0]['__text__'], bug['search_fields']['product'])
+        self.assertEqual(bug['data']['component'][0]['__text__'], 'general')
+        self.assertEqual(bug['data']['component'][0]['__text__'], bug['search_fields']['component'])
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test whether a list of bugs is returned from a given date"""
 
