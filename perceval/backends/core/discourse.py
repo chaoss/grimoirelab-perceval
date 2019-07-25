@@ -58,9 +58,12 @@ class Discourse(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.10.0'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_TOPIC]
+    EXTRA_SEARCH_FIELDS = {
+        'category_id': ['category_id']
+    }
 
     def __init__(self, url, api_token=None, tag=None, archive=None,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):

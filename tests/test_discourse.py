@@ -200,6 +200,72 @@ class TestDiscourseBackend(unittest.TestCase):
             self.assertDictEqual(requests_http[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        bodies_topics = [read_file('data/discourse/discourse_topics.json'),
+                         read_file('data/discourse/discourse_topics_empty.json')]
+        body_topic_1148 = read_file('data/discourse/discourse_topic_1148.json')
+        body_topic_1149 = read_file('data/discourse/discourse_topic_1149.json')
+        body_post = read_file('data/discourse/discourse_post.json')
+
+        def request_callback(method, uri, headers):
+            if uri.startswith(DISCOURSE_TOPICS_URL):
+                body = bodies_topics.pop(0)
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1148):
+                body = body_topic_1148
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
+                body = body_topic_1149
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                    uri.startswith(DISCOURSE_POST_URL_2):
+                body = body_post
+            else:
+                raise Exception
+
+            return 200, headers, body
+
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPICS_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1148,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1149,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_1,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_2,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+
+        # Test fetch topics
+        discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
+        topics = [topic for topic in discourse.fetch()]
+
+        topic = topics[0]
+        self.assertEqual(discourse.metadata_id(topic['data']), topic['search_fields']['item_id'])
+        self.assertEqual(topic['data']['category_id'], 111)
+        self.assertEqual(topic['data']['category_id'], topic['search_fields']['category_id'])
+
+        topic = topics[1]
+        self.assertEqual(discourse.metadata_id(topic['data']), topic['search_fields']['item_id'])
+        self.assertEqual(topic['data']['category_id'], 111)
+        self.assertEqual(topic['data']['category_id'], topic['search_fields']['category_id'])
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test whether a list of topics is returned from a given date"""
 
