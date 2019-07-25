@@ -176,6 +176,53 @@ class TestGerritBackend(unittest.TestCase):
         self.assertEqual(len(review['data']['patchSets']), 3)
 
     @unittest.mock.patch('subprocess.check_output', mock_check_ouput)
+    def test_serch_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        mock_check_ouput.side_effect = mock_check_ouput
+
+        gerrit = Gerrit(GERRIT_REPO, user=GERRIT_USER, port=29418, max_reviews=2)
+        reviews = [review for review in gerrit.fetch(from_date=None)]
+
+        self.assertIsNotNone(gerrit.client)
+        self.assertEqual(len(reviews), 5)
+
+        review = reviews[0]
+        self.assertEqual(gerrit.metadata_id(review['data']), review['search_fields']['item_id'])
+        self.assertEqual(review['data']['project'], 'operations/puppet')
+        self.assertEqual(review['data']['project'], review['search_fields']['project_name'])
+        self.assertEqual(review['data']['id'], 'I99a07b8e55560db3ddc00e0c8c30c62b65136556')
+        self.assertEqual(review['data']['id'], review['search_fields']['review_hash'])
+
+        review = reviews[1]
+        self.assertEqual(gerrit.metadata_id(review['data']), review['search_fields']['item_id'])
+        self.assertEqual(review['data']['project'], 'mediawiki/extensions/Wikibase')
+        self.assertEqual(review['data']['project'], review['search_fields']['project_name'])
+        self.assertEqual(review['data']['id'], 'I9ad743250f37c3be369888b1b9be80d8d332f62f')
+        self.assertEqual(review['data']['id'], review['search_fields']['review_hash'])
+
+        review = reviews[2]
+        self.assertEqual(gerrit.metadata_id(review['data']), review['search_fields']['item_id'])
+        self.assertEqual(review['data']['project'], 'operations/mediawiki-config')
+        self.assertEqual(review['data']['project'], review['search_fields']['project_name'])
+        self.assertEqual(review['data']['id'], 'I9992907ef53f122b54ef2c64146da513477db025')
+        self.assertEqual(review['data']['id'], review['search_fields']['review_hash'])
+
+        review = reviews[3]
+        self.assertEqual(gerrit.metadata_id(review['data']), review['search_fields']['item_id'])
+        self.assertEqual(review['data']['project'], 'operations/puppet')
+        self.assertEqual(review['data']['project'], review['search_fields']['project_name'])
+        self.assertEqual(review['data']['id'], 'I3d8e4685095da4b6a53e826c8a73ec13e4d562d2')
+        self.assertEqual(review['data']['id'], review['search_fields']['review_hash'])
+
+        review = reviews[4]
+        self.assertEqual(gerrit.metadata_id(review['data']), review['search_fields']['item_id'])
+        self.assertEqual(review['data']['project'], 'operations/mediawiki-config')
+        self.assertEqual(review['data']['project'], review['search_fields']['project_name'])
+        self.assertEqual(review['data']['id'], 'I9992907ef53f122b54ef2c64146da513477db025')
+        self.assertEqual(review['data']['id'], review['search_fields']['review_hash'])
+
+    @unittest.mock.patch('subprocess.check_output', mock_check_ouput)
     def test_fetch_from_date(self):
         """Test fetch method with from date"""
 
