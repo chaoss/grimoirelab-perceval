@@ -30,12 +30,17 @@ from grimoirelab_toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
 CATEGORY_HISTORICAL_CONTENT = "historical content"
+NO_ANCESTOR_TITLE = "NO_TITLE"
 MAX_CONTENTS = 200
+SEARCH_ANCESTOR_TITLES = 'ancestors_titles'
+SEARCH_ANCESTOR_LINKS = 'ancestors_links'
+
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +57,7 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.1'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 
@@ -62,6 +67,40 @@ class Confluence(Backend):
         super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.client = None
+
+    def search_fields(self, item):
+        """Add search fields to an item.
+
+        It adds the values of `metadata_id` plus the page ancestor.
+
+        :param item: the item to extract the search fields values
+
+        :returns: a dict of search fields
+        """
+        search_fields = {
+            DEFAULT_SEARCH_FIELD: self.metadata_id(item),
+            SEARCH_ANCESTOR_LINKS: None,
+            SEARCH_ANCESTOR_TITLES: None
+        }
+
+        ancestors_titles = []
+        ancestors_links = []
+
+        ancestors = item.get('ancestors', None)
+        if ancestors:
+            if isinstance(ancestors, list):
+                for ancestor in ancestors:
+                    if 'title' in ancestor:
+                        ancestors_titles.append(ancestor['title'])
+                    else:
+                        ancestors_titles.append(NO_ANCESTOR_TITLE)
+
+                    ancestors_links.append(ancestor['_links']['webui'])
+
+        search_fields[SEARCH_ANCESTOR_LINKS] = ancestors_links
+        search_fields[SEARCH_ANCESTOR_TITLES] = ancestors_titles
+
+        return search_fields
 
     def fetch(self, category=CATEGORY_HISTORICAL_CONTENT, from_date=DEFAULT_DATETIME):
         """Fetch the contents by version from the server.

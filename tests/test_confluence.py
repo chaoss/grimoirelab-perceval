@@ -35,7 +35,10 @@ from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.confluence import (Confluence,
                                                ConfluenceClient,
-                                               ConfluenceCommand)
+                                               ConfluenceCommand,
+                                               NO_ANCESTOR_TITLE,
+                                               SEARCH_ANCESTOR_TITLES,
+                                               SEARCH_ANCESTOR_LINKS)
 from base import TestCaseBackendArchive
 
 
@@ -245,6 +248,38 @@ class TestConfluenceBackend(unittest.TestCase):
 
         for i in range(len(expected)):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server()
+
+        confluence = Confluence(CONFLUENCE_URL)
+
+        hcs = [hc for hc in confluence.fetch()]
+
+        hc = hcs[0]
+        self.assertEqual(confluence.metadata_id(hc['data']), hc['search_fields']['item_id'])
+        self.assertListEqual(hc['search_fields'][SEARCH_ANCESTOR_LINKS],
+                             ['/spaces/TEST/title1', '/spaces/TEST/title2', '/spaces/TEST/title3'])
+        self.assertListEqual(hc['search_fields'][SEARCH_ANCESTOR_TITLES], [NO_ANCESTOR_TITLE, 'Title 2', 'Title 3'])
+
+        hc = hcs[1]
+        self.assertEqual(confluence.metadata_id(hc['data']), hc['search_fields']['item_id'])
+        self.assertListEqual(hc['search_fields'][SEARCH_ANCESTOR_LINKS],
+                             ['/spaces/TEST/title1', '/spaces/TEST/title2', '/spaces/TEST/title3'])
+        self.assertListEqual(hc['search_fields'][SEARCH_ANCESTOR_TITLES], [NO_ANCESTOR_TITLE, 'Title 2', 'Title 3'])
+
+        hc = hcs[2]
+        self.assertEqual(confluence.metadata_id(hc['data']), hc['search_fields']['item_id'])
+        self.assertListEqual(hc['search_fields'][SEARCH_ANCESTOR_LINKS], [])
+        self.assertListEqual(hc['search_fields'][SEARCH_ANCESTOR_TITLES], [])
+
+        hc = hcs[3]
+        self.assertEqual(confluence.metadata_id(hc['data']), hc['search_fields']['item_id'])
+        self.assertListEqual(hc['search_fields'][SEARCH_ANCESTOR_LINKS], [])
+        self.assertListEqual(hc['search_fields'][SEARCH_ANCESTOR_TITLES], [])
 
     @httpretty.activate
     def test_fetch_from_date(self):
