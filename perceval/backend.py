@@ -600,7 +600,8 @@ class Summary:
     def __repr__(self):
         def dict2text(d):
             text = ""
-            for k, v in d.items():
+            items = sorted(d.items())
+            for k, v in items:
                 if v is None:
                     continue
 

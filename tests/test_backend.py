@@ -1303,13 +1303,13 @@ class TestSummary(unittest.TestCase):
         summary.last_uuid = "0fa16dc4edab9130a14914a8d797f634d13b4bb4"
 
         expected = "[summary]\n" \
-                   "total: 110\n" \
                    "fetched: 100\n" \
-                   "skipped: 10\n" \
-                   "min_updated_on: 1970-01-01T00:00:00+00:00\n" \
-                   "max_updated_on: 2100-01-01T00:00:00+00:00\n" \
                    "last_updated_on: 2100-01-01T00:00:00+00:00\n" \
-                   "last_uuid: 0fa16dc4edab9130a14914a8d797f634d13b4bb4\n"
+                   "last_uuid: 0fa16dc4edab9130a14914a8d797f634d13b4bb4\n" \
+                   "max_updated_on: 2100-01-01T00:00:00+00:00\n" \
+                   "min_updated_on: 1970-01-01T00:00:00+00:00\n" \
+                   "skipped: 10\n" \
+                   "total: 110\n"
 
         summary_str = repr(summary)
         self.assertEqual(summary_str, expected)
@@ -1328,11 +1328,11 @@ class TestSummary(unittest.TestCase):
         }
 
         expected = "[summary]\n" \
-                   "total: 110\n" \
+                   "new_branches: dev,deployment\n" \
+                   "total_branches: 100\n" \
                    "fetched: 100\n" \
                    "skipped: 10\n" \
-                   "new_branches: dev,deployment\n" \
-                   "total_branches: 100\n"
+                   "total: 110\n"
 
         summary_str = repr(summary)
         self.assertEqual(summary_str, expected)
@@ -1481,13 +1481,13 @@ class TestFetch(unittest.TestCase):
         self.assertEqual(len(items), 5)
 
         expected = "[summary]\n" \
-                   "total: 5\n" \
                    "fetched: 5\n" \
-                   "skipped: 0\n" \
-                   "min_updated_on: 2016-01-01T00:00:00+00:00\n" \
-                   "max_updated_on: 2016-01-01T00:00:00+00:00\n" \
                    "last_updated_on: 2016-01-01T00:00:00+00:00\n" \
-                   "last_uuid: 6130c145435d661565bd7d402be403bea7cfb6b5\n"
+                   "last_uuid: 6130c145435d661565bd7d402be403bea7cfb6b5\n" \
+                   "max_updated_on: 2016-01-01T00:00:00+00:00\n" \
+                   "min_updated_on: 2016-01-01T00:00:00+00:00\n" \
+                   "skipped: 0\n" \
+                   "total: 5\n"
 
         output = mock_stderr.mock_calls[0][1][0]
         self.assertEqual(output, expected)
@@ -1702,13 +1702,13 @@ class TestFetchFromArchive(unittest.TestCase):
         self.assertEqual(len(items), 5)
 
         expected = "[summary]\n" \
-                   "total: 5\n" \
                    "fetched: 5\n" \
-                   "skipped: 0\n" \
-                   "min_updated_on: 2016-01-01T00:00:00+00:00\n" \
-                   "max_updated_on: 2016-01-01T00:00:00+00:00\n" \
                    "last_updated_on: 2016-01-01T00:00:00+00:00\n" \
-                   "last_uuid: 6130c145435d661565bd7d402be403bea7cfb6b5\n"
+                   "last_uuid: 6130c145435d661565bd7d402be403bea7cfb6b5\n" \
+                   "max_updated_on: 2016-01-01T00:00:00+00:00\n" \
+                   "min_updated_on: 2016-01-01T00:00:00+00:00\n" \
+                   "skipped: 0\n" \
+                   "total: 5\n"
 
         output = mock_stderr.mock_calls[0][1][0]
         self.assertEqual(output, expected)
