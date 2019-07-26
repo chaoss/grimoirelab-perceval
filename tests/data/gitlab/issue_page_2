@@ -56,8 +56,23 @@
         "due_date": null,
         "id": 4,
         "iid": 4,
-        "labels": [],
-        "milestone": null,
+        "labels": [
+            "CI/CD",
+            "Deliverable"
+        ],
+        "milestone": {
+            "id": 134231,
+            "iid": 34,
+            "project_id": 13083,
+            "title": "8.17",
+            "description": "",
+            "state": "closed",
+            "created_at": "2016-12-01T19:53:27.790Z",
+            "updated_at": "2017-04-26T16:33:27.884Z",
+            "due_date": "2017-02-21",
+            "start_date": "2017-01-07",
+            "web_url": "https://gitlab.com/gitlab-org/gitlab-ce/milestones/34"
+        },
         "project_id": 1,
         "state": "closed",
         "time_stats": {

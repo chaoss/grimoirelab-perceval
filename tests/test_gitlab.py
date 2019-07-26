@@ -50,15 +50,24 @@ from base import TestCaseBackendArchive
 
 GITLAB_URL = "https://gitlab.com"
 GITLAB_API_URL = GITLAB_URL + "/api/v4"
-GITLAB_URL_PROJECT = GITLAB_API_URL + "/projects/fdroid%2Ffdroiddata"
-GITLAB_ISSUES_URL = GITLAB_API_URL + "/projects/fdroid%2Ffdroiddata/issues"
-GITLAB_MERGES_URL = GITLAB_API_URL + "/projects/fdroid%2Ffdroiddata/merge_requests"
+
+GITLAB_PRJ = "fdroid%2Ffdroiddata"
+GITLAB_URL_PROJECT = "{}/projects/{}".format(GITLAB_API_URL, GITLAB_PRJ)
+GITLAB_ISSUES_URL = "{}/projects/{}/issues".format(GITLAB_API_URL, GITLAB_PRJ)
+GITLAB_MERGES_URL = "{}/projects/{}/merge_requests".format(GITLAB_API_URL, GITLAB_PRJ)
+
+GITLAB_PRJ_GRP = "fdroid%2Ffdroiddata%2Futils"
+GITLAB_URL_PROJECT_GRP = "{}/projects/{}".format(GITLAB_API_URL, GITLAB_PRJ_GRP)
+GITLAB_ISSUES_URL_GRP = "{}/projects/{}/issues".format(GITLAB_API_URL, GITLAB_PRJ_GRP)
+GITLAB_MERGES_URL_GRP = "{}/projects/{}/merge_requests".format(GITLAB_API_URL, GITLAB_PRJ_GRP)
 
 GITLAB_ENTERPRISE_URL = "https://gitlab.ow2.org"
 GITLAB_ENTERPRISE_API_URL = GITLAB_ENTERPRISE_URL + "/api/v4"
-GITLAB_ENTERPRISE_URL_PROJECT = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest"
-GITLAB_ENTERPRISE_ISSUES_URL = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest/issues"
-GITLAB_ENTERPRISE_MERGES_URL = GITLAB_ENTERPRISE_API_URL + "/projects/am%2Ftest/merge_requests"
+
+GITLAB_ENT_PRJ = "am%2Ftest"
+GITLAB_ENTERPRISE_URL_PROJECT = "{}/projects/{}".format(GITLAB_ENTERPRISE_API_URL, GITLAB_ENT_PRJ)
+GITLAB_ENTERPRISE_ISSUES_URL = "{}/projects/{}/issues".format(GITLAB_ENTERPRISE_API_URL, GITLAB_ENT_PRJ)
+GITLAB_ENTERPRISE_MERGES_URL = "{}/projects/{}/merge_requests".format(GITLAB_ENTERPRISE_API_URL, GITLAB_ENT_PRJ)
 
 
 def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=None, no_attr_last=False):
@@ -550,6 +559,90 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
 
     @httpretty.activate
+    def test_search_fields_issues(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        issues = [issues for issues in gitlab.fetch()]
+
+        issue = issues[0]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 1)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['iid'])
+        self.assertEqual(gitlab.owner, issue['search_fields']['owner'])
+        self.assertEqual(gitlab.repository, issue['search_fields']['project'])
+        self.assertIsNone(issue['search_fields']['groups'])
+
+        issue = issues[1]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 2)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['iid'])
+        self.assertEqual(gitlab.owner, issue['search_fields']['owner'])
+        self.assertEqual(gitlab.repository, issue['search_fields']['project'])
+        self.assertIsNone(issue['search_fields']['groups'])
+
+        issue = issues[2]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 3)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['iid'])
+        self.assertEqual(gitlab.owner, issue['search_fields']['owner'])
+        self.assertEqual(gitlab.repository, issue['search_fields']['project'])
+        self.assertIsNone(issue['search_fields']['groups'])
+
+        issue = issues[3]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 4)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['iid'])
+        self.assertEqual(gitlab.owner, issue['search_fields']['owner'])
+        self.assertEqual(gitlab.repository, issue['search_fields']['project'])
+        self.assertIsNone(issue['search_fields']['groups'])
+
+    @httpretty.activate
+    def test_search_fields_issues_groups(self):
+        """Test whether the search_fields is properly set when the project is in a group"""
+
+        setup_http_server(GITLAB_URL_PROJECT_GRP, GITLAB_ISSUES_URL_GRP, GITLAB_MERGES_URL_GRP)
+
+        gitlab = GitLab("fdroid", "fdroiddata%2Futils", "your-token")
+
+        issues = [issues for issues in gitlab.fetch()]
+
+        issue = issues[0]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 1)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['iid'])
+        self.assertEqual(issue['search_fields']['owner'], gitlab.owner)
+        self.assertEqual(issue['search_fields']['project'], 'utils')
+        self.assertListEqual(issue['search_fields']['groups'], ['fdroiddata'])
+
+        issue = issues[1]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 2)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['iid'])
+        self.assertEqual(issue['search_fields']['owner'], gitlab.owner)
+        self.assertEqual(issue['search_fields']['project'], 'utils')
+        self.assertListEqual(issue['search_fields']['groups'], ['fdroiddata'])
+
+        issue = issues[2]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 3)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['iid'])
+        self.assertEqual(issue['search_fields']['owner'], gitlab.owner)
+        self.assertEqual(issue['search_fields']['project'], 'utils')
+        self.assertListEqual(issue['search_fields']['groups'], ['fdroiddata'])
+
+        issue = issues[3]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 4)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['iid'])
+        self.assertEqual(issue['search_fields']['owner'], gitlab.owner)
+        self.assertEqual(issue['search_fields']['project'], 'utils')
+        self.assertListEqual(issue['search_fields']['groups'], ['fdroiddata'])
+
+    @httpretty.activate
     def test_fetch_issues_no_attr_last(self):
         """Test whether issues are properly fetched from GitLab when `last` is not in the pagination response"""
 
@@ -651,6 +744,78 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
         self.assertEqual(len(merge['data']['versions_data']), 1)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+    @httpretty.activate
+    def test_search_fields_merges(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
+
+        self.assertEqual(len(merges), 3)
+
+        merge = merges[0]
+        self.assertEqual(gitlab.metadata_id(merge['data']), merge['search_fields']['item_id'])
+        self.assertEqual(merge['data']['iid'], 1)
+        self.assertEqual(merge['data']['iid'], merge['search_fields']['iid'])
+        self.assertEqual(gitlab.owner, merge['search_fields']['owner'])
+        self.assertEqual(gitlab.repository, merge['search_fields']['project'])
+        self.assertIsNone(merge['search_fields']['groups'])
+
+        merge = merges[1]
+        self.assertEqual(gitlab.metadata_id(merge['data']), merge['search_fields']['item_id'])
+        self.assertEqual(merge['data']['iid'], 2)
+        self.assertEqual(merge['data']['iid'], merge['search_fields']['iid'])
+        self.assertEqual(gitlab.owner, merge['search_fields']['owner'])
+        self.assertEqual(gitlab.repository, merge['search_fields']['project'])
+        self.assertIsNone(merge['search_fields']['groups'])
+
+        merge = merges[2]
+        self.assertEqual(gitlab.metadata_id(merge['data']), merge['search_fields']['item_id'])
+        self.assertEqual(merge['data']['iid'], 3)
+        self.assertEqual(merge['data']['iid'], merge['search_fields']['iid'])
+        self.assertEqual(gitlab.owner, merge['search_fields']['owner'])
+        self.assertEqual(gitlab.repository, merge['search_fields']['project'])
+        self.assertIsNone(merge['search_fields']['groups'])
+
+    @httpretty.activate
+    def test_search_fields_merges_groups(self):
+        """Test whether the search_fields is properly set when the project is in a group"""
+
+        setup_http_server(GITLAB_URL_PROJECT_GRP, GITLAB_ISSUES_URL_GRP, GITLAB_MERGES_URL_GRP)
+
+        gitlab = GitLab("fdroid", "fdroiddata%2Futils", "your-token")
+
+        merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
+
+        self.assertEqual(len(merges), 3)
+
+        merge = merges[0]
+        self.assertEqual(gitlab.metadata_id(merge['data']), merge['search_fields']['item_id'])
+        self.assertEqual(merge['data']['iid'], 1)
+        self.assertEqual(merge['data']['iid'], merge['search_fields']['iid'])
+        self.assertEqual(merge['search_fields']['owner'], gitlab.owner)
+        self.assertEqual(merge['search_fields']['project'], 'utils')
+        self.assertListEqual(merge['search_fields']['groups'], ['fdroiddata'])
+
+        merge = merges[1]
+        self.assertEqual(gitlab.metadata_id(merge['data']), merge['search_fields']['item_id'])
+        self.assertEqual(merge['data']['iid'], 2)
+        self.assertEqual(merge['data']['iid'], merge['search_fields']['iid'])
+        self.assertEqual(merge['search_fields']['owner'], gitlab.owner)
+        self.assertEqual(merge['search_fields']['project'], 'utils')
+        self.assertListEqual(merge['search_fields']['groups'], ['fdroiddata'])
+
+        merge = merges[2]
+        self.assertEqual(gitlab.metadata_id(merge['data']), merge['search_fields']['item_id'])
+        self.assertEqual(merge['data']['iid'], 3)
+        self.assertEqual(merge['data']['iid'], merge['search_fields']['iid'])
+        self.assertEqual(merge['search_fields']['owner'], gitlab.owner)
+        self.assertEqual(merge['search_fields']['project'], 'utils')
+        self.assertListEqual(merge['search_fields']['groups'], ['fdroiddata'])
 
     @httpretty.activate
     def test_fetch_merges_no_attr_last(self):
