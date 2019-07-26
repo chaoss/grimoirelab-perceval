@@ -57,9 +57,14 @@ class DockerHub(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.4.2'
+    version = '0.5.0'
 
     CATEGORIES = [CATEGORY_DOCKERHUB_DATA]
+    EXTRA_SEARCH_FIELDS = {
+        'name': ['name'],
+        'namespace': ['namespace'],
+        'repository_type': ['repository_type']
+    }
 
     def __init__(self, owner, repository, tag=None, archive=None):
         if owner == DOCKER_SHORTCUT_OWNER:

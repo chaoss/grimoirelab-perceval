@@ -132,6 +132,28 @@ class TestDockerHubBackend(unittest.TestCase):
         # Check requests
         self.assertEqual(len(httpretty.httpretty.latest_requests), 1)
 
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.dockerhub.datetime_utcnow')
+    def test_search_fields(self, mock_utcnow):
+        """Test whether the search_fields is properly set"""
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+        setup_http_server()
+
+        dockerhub = DockerHub('grimoirelab', 'perceval')
+        items = [item for item in dockerhub.fetch()]
+
+        self.assertEqual(len(items), 1)
+        item = items[0]
+        self.assertEqual(dockerhub.metadata_id(item['data']), item['search_fields']['item_id'])
+        self.assertEqual(item['data']['name'], 'perceval')
+        self.assertEqual(item['data']['name'], item['search_fields']['name'])
+        self.assertEqual(item['data']['namespace'], 'grimoirelab')
+        self.assertEqual(item['data']['namespace'], item['search_fields']['namespace'])
+        self.assertEqual(item['data']['repository_type'], 'image')
+        self.assertEqual(item['data']['repository_type'], item['search_fields']['repository_type'])
+
     def test_parse_json(self):
         """Test if it parses a JSON stream"""
 
