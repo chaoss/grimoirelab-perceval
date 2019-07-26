@@ -256,6 +256,78 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issue['data']['comments_data'][0]['reactions_data'][0]['user_data']['login'], 'zhquan_example')
 
     @httpretty.activate
+    def test_search_fields_issues(self):
+        """Test whether the search_fields is properly set"""
+
+        body = read_file('data/github/github_request')
+        login = read_file('data/github/github_login')
+        orgs = read_file('data/github/github_orgs')
+        comments = read_file('data/github/github_issue_comments_1')
+        reactions = read_file('data/github/github_issue_comment_1_reactions')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=body,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_1_COMMENTS_URL,
+                               body=comments, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_1_REACTION_URL,
+                               body=reactions, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_USER_URL,
+                               body=login, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body=orgs, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", ["aaa"])
+        issues = [issues for issues in github.fetch(from_date=None, to_date=None)]
+
+        issue = issues[0]
+        self.assertEqual(github.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['number'], 1)
+        self.assertEqual(issue['data']['number'], issue['search_fields']['number'])
+        self.assertListEqual(issue['data']['labels'], [])
+        self.assertListEqual(issue['data']['labels'], issue['search_fields']['labels'])
+        self.assertEqual(issue['data']['state'], 'closed')
+        self.assertEqual(issue['data']['state'], issue['search_fields']['state'])
+        self.assertIsNone(issue['data']['milestone'])
+        self.assertEqual(issue['data']['milestone'], issue['search_fields']['milestone'])
+
+    @httpretty.activate
     def test_fetch_pulls(self):
         """Test whether a list of pull requests is returned"""
 
@@ -377,6 +449,119 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(pull['data']['reviews_data'][0]['user_data']['login'], 'zhquan_example')
 
     @httpretty.activate
+    def test_search_fields_pulls(self):
+        """Test whether the search_fields is properly set"""
+
+        body = read_file('data/github/github_request')
+        login = read_file('data/github/github_login')
+        orgs = read_file('data/github/github_orgs')
+        pull = read_file('data/github/github_request_pull_request_1')
+        pull_comments = read_file('data/github/github_request_pull_request_1_comments')
+        pull_reviews_1 = read_file('data/github/github_request_pull_request_1_reviews')
+        pull_commits = read_file('data/github/github_request_pull_request_1_commits')
+        pull_comment_2_reactions = read_file('data/github/github_request_pull_request_1_comment_2_reactions')
+        pull_requested_reviewers = read_file('data/github/github_request_requested_reviewers')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=body,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_URL,
+                               body=pull,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_COMMENTS,
+                               body=pull_comments,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_REVIEWS,
+                               body=pull_reviews_1,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_COMMITS,
+                               body=pull_commits,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_COMMENTS_2_REACTIONS,
+                               body=pull_comment_2_reactions,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_REQUESTED_REVIEWERS_URL,
+                               body=pull_requested_reviewers, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_USER_URL,
+                               body=login, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body=orgs, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", ["aaa"])
+        pulls = [pulls for pulls in github.fetch(category=CATEGORY_PULL_REQUEST, from_date=None, to_date=None)]
+
+        pull = pulls[0]
+        self.assertEqual(github.metadata_id(pull['data']), pull['search_fields']['item_id'])
+        self.assertEqual(pull['data']['number'], 1)
+        self.assertEqual(pull['data']['number'], pull['search_fields']['number'])
+        self.assertListEqual([label['name'] for label in pull['data']['labels']], ['bug', 'feature'])
+        self.assertListEqual([label['name'] for label in pull['data']['labels']], pull['search_fields']['labels'])
+        self.assertEqual(pull['data']['state'], 'closed')
+        self.assertEqual(pull['data']['state'], pull['search_fields']['state'])
+        self.assertEqual(pull['data']['milestone']['title'], 'v1.0')
+        self.assertEqual(pull['data']['milestone']['title'], pull['search_fields']['milestone'])
+
+    @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.github.datetime_utcnow')
     def test_fetch_repo(self, mock_utcnow):
         """Test whether repo information is returned"""
@@ -422,6 +607,45 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(repo_info['data']['subscribers_count'], 2904)
         self.assertEqual(repo_info['data']['updated_at'], "2019-02-14T16:21:58Z")
         self.assertEqual(repo_info['data']['fetched_on'], 1483228800.0)
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.github.datetime_utcnow')
+    def test_search_fields_repo(self, mock_utcnow):
+        """Test whether the search_fields is properly set"""
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        body = read_file('data/github/github_repo')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_REPO_URL,
+                               body=body,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", "aaa")
+        repo = [repo for repo in github.fetch(category=CATEGORY_REPO)]
+
+        repo_info = repo[0]
+        self.assertEqual(github.metadata_id(repo_info['data']), repo_info['search_fields']['item_id'])
+        self.assertEqual(repo_info['data']['license']['name'], 'Apache License 2.0')
+        self.assertEqual(repo_info['data']['license']['name'], repo_info['search_fields']['license'])
+        self.assertEqual(repo_info['data']['language'], 'Go')
+        self.assertEqual(repo_info['data']['language'], repo_info['search_fields']['language'])
 
     @httpretty.activate
     def test_fetch_more_issues(self):

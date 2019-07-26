@@ -32,7 +32,8 @@ from grimoirelab_toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient, RateLimitHandler
 from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 
@@ -86,7 +87,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.22.1'
+    version = '0.23.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -116,6 +117,34 @@ class GitHub(Backend):
 
         self.client = None
         self._users = {}  # internal users cache
+
+    def search_fields(self, item):
+        """Add search fields to an item.
+
+        It adds the values of `metadata_id` plus additional values depending on the
+        item category. For the categories `issue` and `pull_request`, the search
+        fields include the issue/pull request number, labels, state and the name of
+        the milestone. For the category `repository`, license and language are set
+        as search fields.
+
+        :param item: the item to extract the search fields values
+
+        :returns: a dict of search fields
+        """
+        search_fields = {
+            DEFAULT_SEARCH_FIELD: self.metadata_id(item)
+        }
+
+        if 'forks_count' in item:
+            search_fields['license'] = item['license']['name'] if item.get('license', None) else None
+            search_fields['language'] = item['language']
+        else:
+            search_fields['number'] = item['number']
+            search_fields['labels'] = [label['name'] for label in item.get('labels', [])]
+            search_fields['state'] = item['state']
+            search_fields['milestone'] = item['milestone']['title'] if item.get('milestone', None) else None
+
+        return search_fields
 
     def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME):
         """Fetch the issues/pull requests from the repository.
