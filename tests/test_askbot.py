@@ -501,6 +501,54 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(questions[1]['category'], backend.metadata_category(questions[1]))
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        question_api_1 = read_file('data/askbot/askbot_api_questions.json')
+        question_api_2 = read_file('data/askbot/askbot_api_questions_2.json')
+        question_html_1 = read_file('data/askbot/askbot_question.html')
+        question_html_2 = read_file('data/askbot/askbot_question_multipage_1.html')
+        question_html_2_2 = read_file('data/askbot/askbot_question_multipage_2.html')
+        comments = read_file('data/askbot/askbot_2481_multicomments.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_1, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTIONS_API_URL,
+                               body=question_api_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2481_URL,
+                               body=question_html_1, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_QUESTION_2488_URL,
+                               body=question_html_2_2, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               ASKBOT_COMMENTS_API_URL,
+                               body=comments, status=200)
+
+        backend = Askbot(ASKBOT_URL)
+
+        questions = [question for question in backend.fetch()]
+
+        question = questions[0]
+        self.assertEqual(backend.metadata_id(question['data']), question['search_fields']['item_id'])
+        self.assertListEqual(question['data']['tags'], ['askbot-sites'])
+        self.assertEqual(question['data']['tags'], question['search_fields']['tags'])
+
+        question = questions[1]
+        self.assertEqual(backend.metadata_id(question['data']), question['search_fields']['item_id'])
+        self.assertListEqual(question['data']['tags'], ['feature-request', 'messaging'])
+        self.assertEqual(question['data']['tags'], question['search_fields']['tags'])
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test whether a list of questions is returned from a given date."""
 
