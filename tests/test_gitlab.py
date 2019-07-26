@@ -550,6 +550,60 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
 
     @httpretty.activate
+    def test_search_fields_issues(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        issues = [issues for issues in gitlab.fetch()]
+
+        issue = issues[0]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 1)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['number'])
+        self.assertListEqual(issue['data']['labels'], [])
+        self.assertListEqual(issue['data']['labels'], issue['search_fields']['labels'])
+        self.assertEqual(issue['data']['state'], 'closed')
+        self.assertEqual(issue['data']['state'], issue['search_fields']['state'])
+        self.assertIsNone(issue['data']['milestone'])
+        self.assertEqual(issue['data']['milestone'], issue['search_fields']['milestone'])
+
+        issue = issues[1]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 2)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['number'])
+        self.assertListEqual(issue['data']['labels'], [])
+        self.assertListEqual(issue['data']['labels'], issue['search_fields']['labels'])
+        self.assertEqual(issue['data']['state'], 'closed')
+        self.assertEqual(issue['data']['state'], issue['search_fields']['state'])
+        self.assertIsNone(issue['data']['milestone'])
+        self.assertEqual(issue['data']['milestone'], issue['search_fields']['milestone'])
+
+        issue = issues[2]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 3)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['number'])
+        self.assertListEqual(issue['data']['labels'], [])
+        self.assertListEqual(issue['data']['labels'], issue['search_fields']['labels'])
+        self.assertEqual(issue['data']['state'], 'closed')
+        self.assertEqual(issue['data']['state'], issue['search_fields']['state'])
+        self.assertIsNone(issue['data']['milestone'])
+        self.assertEqual(issue['data']['milestone'], issue['search_fields']['milestone'])
+
+        issue = issues[3]
+        self.assertEqual(gitlab.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['iid'], 4)
+        self.assertEqual(issue['data']['iid'], issue['search_fields']['number'])
+        self.assertListEqual(issue['data']['labels'], ['CI/CD', 'Deliverable'])
+        self.assertListEqual(issue['data']['labels'], issue['search_fields']['labels'])
+        self.assertEqual(issue['data']['state'], 'closed')
+        self.assertEqual(issue['data']['state'], issue['search_fields']['state'])
+        self.assertEqual(issue['data']['milestone']['title'], '8.17')
+        self.assertEqual(issue['data']['milestone']['title'], issue['search_fields']['milestone'])
+
+    @httpretty.activate
     def test_fetch_issues_no_attr_last(self):
         """Test whether issues are properly fetched from GitLab when `last` is not in the pagination response"""
 
@@ -651,6 +705,51 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
         self.assertEqual(len(merge['data']['versions_data']), 1)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
+
+    @httpretty.activate
+    def test_search_fields_merges(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL)
+
+        gitlab = GitLab("fdroid", "fdroiddata", "your-token")
+
+        merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
+
+        self.assertEqual(len(merges), 3)
+
+        merge = merges[0]
+        self.assertEqual(gitlab.metadata_id(merge['data']), merge['search_fields']['item_id'])
+        self.assertEqual(merge['data']['iid'], 1)
+        self.assertEqual(merge['data']['iid'], merge['search_fields']['number'])
+        self.assertListEqual(merge['data']['labels'], [])
+        self.assertListEqual(merge['data']['labels'], merge['search_fields']['labels'])
+        self.assertEqual(merge['data']['state'], 'merged')
+        self.assertEqual(merge['data']['state'], merge['search_fields']['state'])
+        self.assertIsNone(merge['data']['milestone'])
+        self.assertEqual(merge['data']['milestone'], merge['search_fields']['milestone'])
+
+        merge = merges[1]
+        self.assertEqual(gitlab.metadata_id(merge['data']), merge['search_fields']['item_id'])
+        self.assertEqual(merge['data']['iid'], 2)
+        self.assertEqual(merge['data']['iid'], merge['search_fields']['number'])
+        self.assertListEqual(merge['data']['labels'], [])
+        self.assertListEqual(merge['data']['labels'], merge['search_fields']['labels'])
+        self.assertEqual(merge['data']['state'], 'merged')
+        self.assertEqual(merge['data']['state'], merge['search_fields']['state'])
+        self.assertIsNone(merge['data']['milestone'])
+        self.assertEqual(merge['data']['milestone'], merge['search_fields']['milestone'])
+
+        merge = merges[2]
+        self.assertEqual(gitlab.metadata_id(merge['data']), merge['search_fields']['item_id'])
+        self.assertEqual(merge['data']['iid'], 3)
+        self.assertEqual(merge['data']['iid'], merge['search_fields']['number'])
+        self.assertListEqual(merge['data']['labels'], ['CI/CD', 'Deliverable'])
+        self.assertListEqual(merge['data']['labels'], merge['search_fields']['labels'])
+        self.assertEqual(merge['data']['state'], 'merged')
+        self.assertEqual(merge['data']['state'], merge['search_fields']['state'])
+        self.assertEqual(merge['data']['milestone']['title'], '8.17')
+        self.assertEqual(merge['data']['milestone']['title'], merge['search_fields']['milestone'])
 
     @httpretty.activate
     def test_fetch_merges_no_attr_last(self):

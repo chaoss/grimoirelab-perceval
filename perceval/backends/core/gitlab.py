@@ -84,9 +84,15 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
+    EXTRA_SEARCH_FIELDS = {
+        'milestone': ['milestone', 'title'],
+        'labels': ['labels'],
+        'state': ['state'],
+        'number': ['iid']
+    }
 
     def __init__(self, owner=None, repository=None, api_token=None,
                  is_oauth_token=False, base_url=None, tag=None, archive=None,
