@@ -1,0 +1,18 @@
+{
+    "create_at": 1502177267593,
+    "creator_id": "abcdef3ywfyqpym5fbsidg25ca",
+    "delete_at": 0,
+    "display_name": "GrimoireLab channel",
+    "extra_update_at": 1540874407361,
+    "header": "the secret header",
+    "id": "abcdef4ut3dij8gywe38ktn51a",
+    "last_post_at": 1564408427459,
+    "name": "grimoirelab",
+    "props": null,
+    "purpose": "",
+    "scheme_id": null,
+    "team_id": "abcdef8bdmdeq41ji99qgjja",
+    "total_msg_count": 10,
+    "type": "O",
+    "update_at": 154834100229
+}

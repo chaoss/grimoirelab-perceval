@@ -69,7 +69,7 @@ class Mattermost(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     CATEGORIES = [CATEGORY_POST]
 
@@ -129,6 +129,9 @@ class Mattermost(Backend):
         page = 0
         nposts = 0
 
+        channel_info_raw = self.client.channel(self.channel)
+        channel_info = self.parse_json(channel_info_raw)
+
         # Convert timestamp to integer for comparing
         since = int(from_date.timestamp() * 1000)
 
@@ -146,6 +149,7 @@ class Mattermost(Backend):
                 user_id = post['user_id']
                 user = self._get_or_fetch_user(user_id)
                 post['user_data'] = user
+                post['channel_data'] = channel_info
 
                 yield post
                 nposts += 1
@@ -276,6 +280,7 @@ class MattermostClient(HttpClient, RateLimitHandler):
     RPOSTS = 'posts'
     RUSERS = 'users'
 
+    PCHANNEL_ID = 'channel_id'
     PPAGE = 'page'
     PPER_PAGE = 'per_page'
 
@@ -292,6 +297,19 @@ class MattermostClient(HttpClient, RateLimitHandler):
                          archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate,
                                          min_rate_to_sleep=min_rate_to_sleep)
+
+    def channel(self, channel):
+        """Fetch the channel information"""
+
+        entrypoint = self.RCHANNELS + '/' + channel
+
+        params = {
+            self.PCHANNEL_ID: channel
+        }
+
+        response = self._fetch(entrypoint, params)
+
+        return response
 
     def posts(self, channel, page=None):
         """Fetch the history of a channel."""
