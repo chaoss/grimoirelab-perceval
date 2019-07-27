@@ -72,7 +72,7 @@ class Meetup(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.14.0'
+    version = '0.15.0'
 
     CATEGORIES = [CATEGORY_EVENT]
     CLASSIFIED_FIELDS = [
@@ -81,6 +81,9 @@ class Meetup(Backend):
         ['rsvps'],
         ['venue']
     ]
+    EXTRA_SEARCH_FIELDS = {
+        'group_name': ['group', 'name']
+    }
 
     def __init__(self, group, api_token, is_oauth_token=False,
                  max_items=MAX_ITEMS, tag=None, archive=None,

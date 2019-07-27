@@ -318,6 +318,30 @@ class TestMeetupBackend(unittest.TestCase):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        http_requests = setup_http_server()
+
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
+        events = [event for event in meetup.fetch(from_date=None)]
+
+        event = events[0]
+        self.assertEqual(meetup.metadata_id(event['data']), event['search_fields']['item_id'])
+        self.assertEqual(event['data']['group']['name'], 'sqlpass.es')
+        self.assertEqual(event['data']['group']['name'], event['search_fields']['group_name'])
+
+        event = events[1]
+        self.assertEqual(meetup.metadata_id(event['data']), event['search_fields']['item_id'])
+        self.assertEqual(event['data']['group']['name'], 'sqlpass.es')
+        self.assertEqual(event['data']['group']['name'], event['search_fields']['group_name'])
+
+        event = events[2]
+        self.assertEqual(meetup.metadata_id(event['data']), event['search_fields']['item_id'])
+        self.assertEqual(event['data']['group']['name'], 'sqlpass.es')
+        self.assertEqual(event['data']['group']['name'], event['search_fields']['group_name'])
+
+    @httpretty.activate
     def test_fetch_oauth_token(self):
         """Test whether it fetches a set of events when using an oauth token"""
 
