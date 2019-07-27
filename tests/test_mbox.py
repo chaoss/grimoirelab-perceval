@@ -291,6 +291,15 @@ class TestMBoxBackend(TestBaseMBox):
             self.assertEqual(message['category'], 'message')
             self.assertEqual(message['tag'], 'http://example.com/')
 
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        backend = MBox('http://example.com/', self.tmp_path)
+        messages = [m for m in backend.fetch(from_date=None)]
+
+        for message in messages:
+            self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
+
     def test_fetch_from_date(self):
         """Test whether a list of messages is returned since a given date"""
 
