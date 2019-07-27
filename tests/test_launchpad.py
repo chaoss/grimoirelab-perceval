@@ -250,6 +250,150 @@ class TestLaunchpadBackend(unittest.TestCase):
         self.assertDictEqual(issues[2]['data'], issue_3_expected)
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        issues_page_1 = read_file('data/launchpad/launchpad_issues_page_1')
+        issues_page_2 = read_file('data/launchpad/launchpad_issues_page_2')
+        issues_page_3 = read_file('data/launchpad/launchpad_issues_page_3')
+
+        issue_1 = read_file('data/launchpad/launchpad_issue_1')
+        issue_2 = read_file('data/launchpad/launchpad_issue_2')
+        issue_3 = read_file('data/launchpad/launchpad_issue_3')
+
+        issue_1_comments = read_file('data/launchpad/launchpad_issue_1_comments')
+        issue_1_attachments = read_file('data/launchpad/launchpad_issue_1_attachments')
+        issue_1_activities = read_file('data/launchpad/launchpad_issue_1_activities')
+
+        issue_2_activities = read_file('data/launchpad/launchpad_issue_2_activities')
+        issue_2_comments = read_file('data/launchpad/launchpad_issue_2_comments')
+
+        user_1 = read_file('data/launchpad/launchpad_user_1')
+
+        empty_issue_comments = read_file('data/launchpad/launchpad_empty_issue_comments')
+        empty_issue_attachments = read_file('data/launchpad/launchpad_empty_issue_attachments')
+        empty_issue_activities = read_file('data/launchpad/launchpad_empty_issue_activities')
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_PACKAGE_PROJECT_URL +
+                               "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
+                               "&ws.size=1&memo=2&ws.start=2",
+                               body=issues_page_3,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_PACKAGE_PROJECT_URL +
+                               "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
+                               "&ws.size=1&memo=1&ws.start=1",
+                               body=issues_page_2,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_PACKAGE_PROJECT_URL +
+                               "?modified_since=1970-01-01T00%3A00%3A00%2B00%3A00&ws.op=searchTasks"
+                               "&omit_duplicates=false&order_by=date_last_updated&status=Confirmed&status=Expired"
+                               "&status=Fix+Committed&status=Fix+Released"
+                               "&status=In+Progress&status=Incomplete&status=Incomplete+%28with+response%29"
+                               "&status=Incomplete+%28without+response%29"
+                               "&status=Invalid&status=New&status=Opinion&status=Triaged"
+                               "&status=Won%27t+Fix"
+                               "&ws.size=1",
+                               body=issues_page_1,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1",
+                               body=issue_1,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/2",
+                               body=issue_2,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/3",
+                               body=issue_3,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1/messages",
+                               body=issue_1_comments,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/2/messages",
+                               body=issue_2_comments,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/3/messages",
+                               body=empty_issue_comments,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
+                               body=issue_1_attachments,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/2/attachments",
+                               body=empty_issue_attachments,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/3/attachments",
+                               body=empty_issue_attachments,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/1/activity",
+                               body=issue_1_activities,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/2/activity",
+                               body=issue_2_activities,
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/bugs/3/activity",
+                               body=empty_issue_activities,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               LAUNCHPAD_API_URL + "/~user",
+                               body=user_1,
+                               status=200)
+
+        launchpad = Launchpad('mydistribution', package="mypackage",
+                              items_per_page=2)
+        issues = [issues for issues in launchpad.fetch(from_date=None)]
+
+        issue = issues[0]
+        self.assertEqual(launchpad.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['importance'], 'High')
+        self.assertEqual(issue['data']['importance'], issue['search_fields']['importance'])
+        self.assertEqual(issue['data']['status'], 'Triaged')
+        self.assertEqual(issue['data']['status'], issue['search_fields']['status'])
+
+        issue = issues[1]
+        self.assertEqual(launchpad.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['importance'], 'Medium')
+        self.assertEqual(issue['data']['importance'], issue['search_fields']['importance'])
+        self.assertEqual(issue['data']['status'], 'Confirmed')
+        self.assertEqual(issue['data']['status'], issue['search_fields']['status'])
+
+        issue = issues[2]
+        self.assertEqual(launchpad.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['importance'], 'Medium')
+        self.assertEqual(issue['data']['importance'], issue['search_fields']['importance'])
+        self.assertEqual(issue['data']['status'], 'Confirmed')
+        self.assertEqual(issue['data']['status'], issue['search_fields']['status'])
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test when return from date"""
 
