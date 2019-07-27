@@ -69,9 +69,12 @@ class Mattermost(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.1.0'
+    version = '0.2.0'
 
     CATEGORIES = [CATEGORY_POST]
+    EXTRA_SEARCH_FIELDS = {
+        'channel_id': ['channel_id']
+    }
 
     def __init__(self, url, channel, api_token, max_items=MAX_ITEMS,
                  tag=None, archive=None,

@@ -208,6 +208,31 @@ class TestMattermostBackend(unittest.TestCase):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        http_requests = setup_http_server()
+
+        mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa',
+                                max_items=5)
+        posts = [post for post in mattermost.fetch()]
+
+        post = posts[0]
+        self.assertEqual(mattermost.metadata_id(post['data']), post['search_fields']['item_id'])
+        self.assertEqual(post['data']['channel_id'], 'cf6axeehstft9eq4nq5uk5jqby')
+        self.assertEqual(post['data']['channel_id'], post['search_fields']['channel_id'])
+
+        post = posts[1]
+        self.assertEqual(mattermost.metadata_id(post['data']), post['search_fields']['item_id'])
+        self.assertEqual(post['data']['channel_id'], 'cf6axeehstft9eq4nq5uk5jqby')
+        self.assertEqual(post['data']['channel_id'], post['search_fields']['channel_id'])
+
+        post = posts[2]
+        self.assertEqual(mattermost.metadata_id(post['data']), post['search_fields']['item_id'])
+        self.assertEqual(post['data']['channel_id'], 'cf6axeehstft9eq4nq5uk5jqby')
+        self.assertEqual(post['data']['channel_id'], post['search_fields']['channel_id'])
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test whether if fetches a set of posts from the given date"""
 
