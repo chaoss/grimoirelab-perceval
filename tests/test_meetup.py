@@ -545,6 +545,36 @@ class TestMeetupBackend(unittest.TestCase):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        http_requests = setup_http_server()
+
+        meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
+        events = [event for event in meetup.fetch(from_date=None)]
+
+        event = events[0]
+        self.assertEqual(meetup.metadata_id(event['data']), event['search_fields']['item_id'])
+        self.assertEqual(event['data']['group']['name'], 'sqlpass.es')
+        self.assertEqual(event['data']['group']['name'], event['search_fields']['group_name'])
+        self.assertEqual(event['data']['group']['id'], 19734270)
+        self.assertEqual(event['data']['group']['id'], event['search_fields']['group_id'])
+
+        event = events[1]
+        self.assertEqual(meetup.metadata_id(event['data']), event['search_fields']['item_id'])
+        self.assertEqual(event['data']['group']['name'], 'sqlpass.es')
+        self.assertEqual(event['data']['group']['name'], event['search_fields']['group_name'])
+        self.assertEqual(event['data']['group']['id'], 19734270)
+        self.assertEqual(event['data']['group']['id'], event['search_fields']['group_id'])
+
+        event = events[2]
+        self.assertEqual(meetup.metadata_id(event['data']), event['search_fields']['item_id'])
+        self.assertEqual(event['data']['group']['name'], 'sqlpass.es')
+        self.assertEqual(event['data']['group']['name'], event['search_fields']['group_name'])
+        self.assertEqual(event['data']['group']['id'], 19734270)
+        self.assertEqual(event['data']['group']['id'], event['search_fields']['group_id'])
+
+    @httpretty.activate
     def test_fetch_empty(self):
         """Test if nothing is returned when there are no events"""
 
