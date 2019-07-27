@@ -340,6 +340,32 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        configure_http_server()
+
+        # Test fetch builds from jobs list
+        jenkins = Jenkins(JENKINS_SERVER_URL)
+
+        builds = [build for build in jenkins.fetch()]
+
+        build = builds[0]
+        self.assertEqual(jenkins.metadata_id(build['data']), build['search_fields']['item_id'])
+        self.assertEqual(build['data']['number'], 107)
+        self.assertEqual(build['data']['number'], build['search_fields']['number'])
+
+        build = builds[1]
+        self.assertEqual(jenkins.metadata_id(build['data']), build['search_fields']['item_id'])
+        self.assertEqual(build['data']['number'], 106)
+        self.assertEqual(build['data']['number'], build['search_fields']['number'])
+
+        build = builds[2]
+        self.assertEqual(jenkins.metadata_id(build['data']), build['search_fields']['item_id'])
+        self.assertEqual(build['data']['number'], 105)
+        self.assertEqual(build['data']['number'], build['search_fields']['number'])
+
+    @httpretty.activate
     def test_fetch_auth_api_token(self):
         """Test whether a list of builds is returned using username and API token"""
 
