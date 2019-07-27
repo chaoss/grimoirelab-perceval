@@ -224,6 +224,37 @@ class TestMattermostBackend(unittest.TestCase):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server()
+
+        mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa',
+                                max_items=5)
+        posts = [post for post in mattermost.fetch()]
+
+        post = posts[0]
+        self.assertEqual(mattermost.metadata_id(post['data']), post['search_fields']['item_id'])
+        self.assertEqual(post['data']['channel_data']['id'], 'abcdef4ut3dij8gywe38ktn51a')
+        self.assertEqual(post['data']['channel_data']['id'], post['search_fields']['channel_id'])
+        self.assertEqual(post['data']['channel_data']['name'], 'grimoirelab')
+        self.assertEqual(post['data']['channel_data']['name'], post['search_fields']['channel_name'])
+
+        post = posts[1]
+        self.assertEqual(mattermost.metadata_id(post['data']), post['search_fields']['item_id'])
+        self.assertEqual(post['data']['channel_data']['id'], 'abcdef4ut3dij8gywe38ktn51a')
+        self.assertEqual(post['data']['channel_data']['id'], post['search_fields']['channel_id'])
+        self.assertEqual(post['data']['channel_data']['name'], 'grimoirelab')
+        self.assertEqual(post['data']['channel_data']['name'], post['search_fields']['channel_name'])
+
+        post = posts[2]
+        self.assertEqual(mattermost.metadata_id(post['data']), post['search_fields']['item_id'])
+        self.assertEqual(post['data']['channel_data']['id'], 'abcdef4ut3dij8gywe38ktn51a')
+        self.assertEqual(post['data']['channel_data']['id'], post['search_fields']['channel_id'])
+        self.assertEqual(post['data']['channel_data']['name'], 'grimoirelab')
+        self.assertEqual(post['data']['channel_data']['name'], post['search_fields']['channel_name'])
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test whether if fetches a set of posts from the given date"""
 
