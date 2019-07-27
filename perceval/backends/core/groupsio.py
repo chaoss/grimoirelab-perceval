@@ -70,7 +70,7 @@ class Groupsio(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.1.5'
+    version = '0.2.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
