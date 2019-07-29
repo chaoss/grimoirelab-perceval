@@ -26,7 +26,8 @@ from grimoirelab_toolkit.datetime import datetime_utcnow, str_to_datetime
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient, RateLimitHandler
 from ...errors import BackendError
 
@@ -71,7 +72,7 @@ class Twitter(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.2.2'
+    version = '0.3.0'
 
     CATEGORIES = [CATEGORY_TWEET]
 
@@ -94,6 +95,25 @@ class Twitter(Backend):
         self.sleep_time = sleep_time
 
         self.client = None
+
+    def search_fields(self, item):
+        """Add search fields to an item.
+
+        It adds the values of `metadata_id` plus the hashtags of a tweet.
+
+        :param item: the item to extract the search fields values
+
+        :returns: a dict of search fields
+        """
+        search_fields = {
+            DEFAULT_SEARCH_FIELD: self.metadata_id(item)
+        }
+
+        entities = item['entities']
+        if 'hashtags' in entities:
+            search_fields['hashtags'] = [h['text'] for h in entities['hashtags']]
+
+        return search_fields
 
     def fetch(self, category=CATEGORY_TWEET, since_id=None, max_id=None,
               geocode=None, lang=None,
