@@ -263,6 +263,52 @@ class TestRedmineBackend(unittest.TestCase):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server()
+
+        redmine = Redmine(REDMINE_URL, api_token='AAAA',
+                          max_issues=3)
+        issues = [issue for issue in redmine.fetch()]
+
+        issue = issues[0]
+        self.assertEqual(redmine.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['priority']['name'], 'Normal')
+        self.assertEqual(issue['data']['priority']['name'], issue['search_fields']['priority'])
+        self.assertEqual(issue['data']['status']['name'], 'Cerrada')
+        self.assertEqual(issue['data']['status']['name'], issue['search_fields']['status'])
+        self.assertEqual(issue['data']['project']['name'], 'Global')
+        self.assertEqual(issue['data']['project']['name'], issue['search_fields']['project'])
+
+        issue = issues[1]
+        self.assertEqual(redmine.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['priority']['name'], 'Normal')
+        self.assertEqual(issue['data']['priority']['name'], issue['search_fields']['priority'])
+        self.assertEqual(issue['data']['status']['name'], 'Cerrada')
+        self.assertEqual(issue['data']['status']['name'], issue['search_fields']['status'])
+        self.assertEqual(issue['data']['project']['name'], 'Global')
+        self.assertEqual(issue['data']['project']['name'], issue['search_fields']['project'])
+
+        issue = issues[2]
+        self.assertEqual(redmine.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['priority']['name'], 'Normal')
+        self.assertEqual(issue['data']['priority']['name'], issue['search_fields']['priority'])
+        self.assertEqual(issue['data']['status']['name'], 'Cerrada')
+        self.assertEqual(issue['data']['status']['name'], issue['search_fields']['status'])
+        self.assertEqual(issue['data']['project']['name'], 'Global')
+        self.assertEqual(issue['data']['project']['name'], issue['search_fields']['project'])
+
+        issue = issues[3]
+        self.assertEqual(redmine.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['priority']['name'], 'Inmediata')
+        self.assertEqual(issue['data']['priority']['name'], issue['search_fields']['priority'])
+        self.assertEqual(issue['data']['status']['name'], 'Resuelta')
+        self.assertEqual(issue['data']['status']['name'], issue['search_fields']['status'])
+        self.assertEqual(issue['data']['project']['name'], 'MAD')
+        self.assertEqual(issue['data']['project']['name'], issue['search_fields']['project'])
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test wether if fetches a set of issues from the given date"""
 
