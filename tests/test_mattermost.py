@@ -33,6 +33,7 @@ from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.mattermost import (Mattermost,
                                                MattermostClient,
                                                MattermostCommand)
+from grimoirelab_toolkit.datetime import datetime_utcnow
 
 from base import TestCaseBackendArchive
 
@@ -166,7 +167,7 @@ class TestMattermostBackend(unittest.TestCase):
 
         mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa',
                                 max_items=5)
-        posts = [post for post in mattermost.fetch()]
+        posts = [post for post in mattermost.fetch(from_date=None)]
 
         expected = [
             ('59io5i1f5bbetxtj6mbm67fouw', 'd023596f93fcd7e18838bd0adddae4e213d0ca15', 1523546846.639, 'sduenas'),
@@ -535,6 +536,27 @@ class TestMattermostClient(unittest.TestCase):
             self.assertRegex(req.path, '/api/v4/users/8tbwn7uikpdy3gpse6fgiie5co')
             self.assertDictEqual(req.querystring, expected[x])
             self.assertEqual(req.headers['Authorization'], 'Bearer aaaa')
+
+    @httpretty.activate
+    def test_calculate_time_to_reset(self):
+        """Test whether the time to reset is zero if the sleep time is negative"""
+
+        user = read_file('data/mattermost/mattermost_user_sduenas.json', 'rb')
+        httpretty.register_uri(httpretty.GET,
+                               MATTERMOST_USER_SDUENAS,
+                               body=user,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': int(datetime_utcnow().replace(microsecond=0).timestamp())
+                               })
+
+        client = MattermostClient('https://mattermost.example.com/', 'aaaa')
+        _ = client.user('8tbwn7uikpdy3gpse6fgiie5co')
+
+        time_to_reset = client.calculate_time_to_reset()
+
+        self.assertEqual(time_to_reset, 0)
 
 
 if __name__ == "__main__":
