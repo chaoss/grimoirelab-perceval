@@ -56,9 +56,13 @@ class Redmine(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.4'
+    version = '0.10.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
+    EXTRA_SEARCH_FIELDS = {
+        'project_name': ['project', 'name'],
+        'project_id': ['project', 'id']
+    }
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
                  tag=None, archive=None):
