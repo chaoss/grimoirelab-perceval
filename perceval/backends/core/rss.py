@@ -46,7 +46,7 @@ class RSS(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.5.2'
+    version = '0.6.0'
 
     CATEGORIES = [CATEGORY_ENTRY]
 

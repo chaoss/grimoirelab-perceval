@@ -138,6 +138,18 @@ class TestRSSBackend(unittest.TestCase):
             self.assertEqual(entry['data']['title'], expected[x][2])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        configure_http_server()
+
+        rss = RSS(RSS_FEED_URL)
+        entries = [entry for entry in rss.fetch()]
+
+        for entry in entries:
+            self.assertEqual(rss.metadata_id(entry['data']), entry['search_fields']['item_id'])
+
+    @httpretty.activate
     def test_fetch_empty(self):
         """Test whether it works when no entries are fetched"""
 
