@@ -153,6 +153,42 @@ class TestTelegramBackend(unittest.TestCase):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server()
+
+        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
+        messages = [msg for msg in tlg.fetch(offset=None)]
+
+        message = messages[0]
+        self.assertEqual(tlg.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertEqual(message['data']['message']['chat']['title'], 'Testing Telegram Bots')
+        self.assertEqual(message['data']['message']['chat']['title'], message['search_fields']['chat_name'])
+        self.assertEqual(message['data']['message']['chat']['id'], -1)
+        self.assertEqual(message['data']['message']['chat']['id'], message['search_fields']['chat_id'])
+
+        message = messages[1]
+        self.assertEqual(tlg.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertEqual(message['data']['message']['chat']['title'], 'A new group')
+        self.assertEqual(message['data']['message']['chat']['title'], message['search_fields']['chat_name'])
+        self.assertEqual(message['data']['message']['chat']['id'], -2)
+        self.assertEqual(message['data']['message']['chat']['id'], message['search_fields']['chat_id'])
+
+        message = messages[2]
+        self.assertEqual(tlg.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertEqual(message['data']['message']['chat']['title'], 'Testing Telegram Bots')
+        self.assertEqual(message['data']['message']['chat']['title'], message['search_fields']['chat_name'])
+        self.assertEqual(message['data']['message']['chat']['id'], -1)
+        self.assertEqual(message['data']['message']['chat']['id'], message['search_fields']['chat_id'])
+
+        message = messages[3]
+        self.assertEqual(tlg.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertNotIn('title', message['data']['message']['chat'])
+        self.assertEqual(message['data']['message']['chat']['id'], 8)
+        self.assertEqual(message['data']['message']['chat']['id'], message['search_fields']['chat_id'])
+
+    @httpretty.activate
     def test_fetch_from_offset(self):
         """Test whether it fetches and parses messages from the given offset"""
 
