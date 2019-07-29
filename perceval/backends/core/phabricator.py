@@ -56,9 +56,13 @@ class Phabricator(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.11.1'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_TASK]
+    EXTRA_SEARCH_FIELDS = {
+        'priority': ['fields', 'priority', 'name'],
+        'status': ['fields', 'status', 'name']
+    }
 
     def __init__(self, url, api_token, tag=None, archive=None,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
