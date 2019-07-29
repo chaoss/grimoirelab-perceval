@@ -60,9 +60,12 @@ class Supybot(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.2'
+    version = '0.9.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
+    EXTRA_SEARCH_FIELDS = {
+        'message_type': ['type']
+    }
 
     def __init__(self, uri, dirpath, tag=None, archive=None):
         origin = uri

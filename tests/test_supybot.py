@@ -116,6 +116,32 @@ class TestSupybotBackend(unittest.TestCase):
             self.assertEqual(message['category'], 'message')
             self.assertEqual(message['tag'], 'http://example.com/')
 
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        backend = Supybot('http://example.com/', self.tmp_path)
+        messages = [m for m in backend.fetch()]
+
+        message = messages[0]
+        self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertEqual(message['data']['type'], 'comment')
+        self.assertEqual(message['data']['type'], message['search_fields']['message_type'])
+
+        message = messages[1]
+        self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertEqual(message['data']['type'], 'comment')
+        self.assertEqual(message['data']['type'], message['search_fields']['message_type'])
+
+        message = messages[2]
+        self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertEqual(message['data']['type'], 'comment')
+        self.assertEqual(message['data']['type'], message['search_fields']['message_type'])
+
+        message = messages[3]
+        self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertEqual(message['data']['type'], 'server')
+        self.assertEqual(message['data']['type'], message['search_fields']['message_type'])
+
     def test_fetch_from_date(self):
         """Test whether a list of messages is returned since a given date"""
 
