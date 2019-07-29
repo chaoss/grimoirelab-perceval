@@ -63,7 +63,7 @@ class Pipermail(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.0'
+    version = '0.10.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 

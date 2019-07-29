@@ -122,6 +122,15 @@ class TestPipermailList(unittest.TestCase):
         self.assertEqual(mboxes[1].filepath, os.path.join(self.tmp_path, '2016-March.txt'))
         self.assertEqual(mboxes[2].filepath, os.path.join(self.tmp_path, '2016-April.txt'))
 
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        pmls = PipermailList('http://example.com/', self.tmp_path)
+        links = pmls.fetch()
+
+        for link in links:
+            self.assertEqual(pmls.metadata_id(link['data']), link['search_fields']['item_id'])
+
     @httpretty.activate
     def test_fetch_http_403_error(self):
         """Test whether 403 HTTP errors are properly handled"""
