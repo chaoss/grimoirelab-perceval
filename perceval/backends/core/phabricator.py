@@ -56,7 +56,7 @@ class Phabricator(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.11.1'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_TASK]
 
