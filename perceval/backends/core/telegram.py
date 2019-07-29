@@ -61,9 +61,13 @@ class Telegram(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.9.3'
+    version = '0.10.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
+    EXTRA_SEARCH_FIELDS = {
+        'chat_name': ['message', 'chat', 'title'],
+        'chat_type': ['message', 'chat', 'type']
+    }
 
     def __init__(self, bot, bot_token, tag=None, archive=None):
         origin = urijoin(TELEGRAM_URL, bot)
