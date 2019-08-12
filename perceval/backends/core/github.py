@@ -66,7 +66,15 @@ class GitHub(Backend):
     """GitHub backend for Perceval.
 
     This class allows the fetch the issues stored in GitHub
-    repository.
+    repository. Note that since version 0.20.0, the `api_token` accepts
+    a list of tokens, thus the backend must be initialized as follows:
+    ```
+    GitHub(
+        owner='chaoss', repository='grimoirelab',
+        api_token=[TOKEN-1, TOKEN-2, ...], sleep_for_rate=True,
+        sleep_time=300
+    )
+    ```
 
     :param owner: GitHub owner
     :param repository: GitHub repository from the owner
@@ -86,7 +94,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.22.1'
+    version = '0.22.2'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
