@@ -55,9 +55,11 @@ GITHUB_ISSUES_URL = GITHUB_REPO_URL + "/issues"
 GITHUB_PULL_REQUEST_URL = GITHUB_REPO_URL + "/pulls"
 GITHUB_ISSUE_1_COMMENTS_URL = GITHUB_ISSUES_URL + "/1/comments"
 GITHUB_ISSUE_COMMENT_1_REACTION_URL = GITHUB_ISSUES_URL + "/comments/1/reactions"
+GITHUB_ISSUE_1_EVENTS_URL = GITHUB_ISSUES_URL + "/1/events"
 GITHUB_ISSUE_2_REACTION_URL = GITHUB_ISSUES_URL + "/2/reactions"
 GITHUB_ISSUE_2_COMMENTS_URL = GITHUB_ISSUES_URL + "/2/comments"
 GITHUB_ISSUE_COMMENT_2_REACTION_URL = GITHUB_ISSUES_URL + "/comments/2/reactions"
+GITHUB_ISSUE_2_EVENTS_URL = GITHUB_ISSUES_URL + "/2/events"
 GITHUB_PULL_REQUEST_1_URL = GITHUB_PULL_REQUEST_URL + "/1"
 GITHUB_PULL_REQUEST_1_COMMENTS = GITHUB_PULL_REQUEST_1_URL + "/comments"
 GITHUB_PULL_REQUEST_1_COMMITS = GITHUB_PULL_REQUEST_1_URL + "/commits"
@@ -81,9 +83,11 @@ GITHUB_ENTERPRISE_ISSUES_URL = GITHUB_ENTREPRISE_REPO_URL + "/issues"
 GITHUB_ENTERPRISE_PULL_REQUESTS_URL = GITHUB_ENTREPRISE_REPO_URL + "/pulls"
 GITHUB_ENTERPRISE_ISSUE_1_COMMENTS_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/1/comments"
 GITHUB_ENTERPRISE_ISSUE_COMMENT_1_REACTION_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/comments/1/reactions"
+GITHUB_ENTERPRISE_ISSUE_1_EVENTS_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/1/events"
 GITHUB_ENTERPRISE_ISSUE_2_REACTION_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/2/reactions"
 GITHUB_ENTERPRISE_ISSUE_2_COMMENTS_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/2/comments"
 GITHUB_ENTERPRISE_ISSUE_COMMENT_2_REACTION_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/comments/2/reactions"
+GITHUB_ENTERPRISE_ISSUE_2_EVENTS_URL = GITHUB_ENTERPRISE_ISSUES_URL + "/2/events"
 GITHUB_ENTERPRISE_USER_URL = GITHUB_ENTERPRISE_API_URL + "/users/zhquan_example"
 GITHUB_ENTERPRISE_ORGS_URL = GITHUB_ENTERPRISE_API_URL + "/users/zhquan_example/orgs"
 GITHUB_ENTREPRISE_PULL_REQUEST_1_URL = GITHUB_ENTERPRISE_PULL_REQUESTS_URL + "/1"
@@ -184,6 +188,7 @@ class TestGitHubBackend(unittest.TestCase):
         body = read_file('data/github/github_request')
         login = read_file('data/github/github_login')
         orgs = read_file('data/github/github_orgs')
+        events = read_file('data/github/github_issue_1_events')
         comments = read_file('data/github/github_issue_comments_1')
         reactions = read_file('data/github/github_issue_comment_1_reactions')
         rate_limit = read_file('data/github/rate_limit')
@@ -234,6 +239,13 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_1_EVENTS_URL,
+                               body=events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         github = GitHub("zhquan_example", "repo", ["aaa"])
         issues = [issues for issues in github.fetch(from_date=None, to_date=None)]
@@ -254,6 +266,10 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(len(issue['data']['comments_data'][0]['reactions_data']),
                          issue['data']['comments_data'][0]['reactions']['total_count'])
         self.assertEqual(issue['data']['comments_data'][0]['reactions_data'][0]['user_data']['login'], 'zhquan_example')
+        self.assertEqual(len(issue['data']['events_data']), 3)
+        self.assertEqual(issue['data']['events_data'][0]['event'], 'closed')
+        self.assertEqual(issue['data']['events_data'][1]['event'], 'head_ref_deleted')
+        self.assertEqual(issue['data']['events_data'][2]['event'], 'referenced')
 
     @httpretty.activate
     def test_fetch_pulls(self):
@@ -433,9 +449,11 @@ class TestGitHubBackend(unittest.TestCase):
         issue_2 = read_file('data/github/github_issue_2')
         issue_2_reactions = read_file('data/github/github_issue_2_reactions')
         issue_1_comments = read_file('data/github/github_issue_comments_1')
+        issue_1_events = read_file('data/github/github_issue_1_events')
         issue_2_comments = read_file('data/github/github_issue_comments_2')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
         issue_comment_2_reactions = read_file('data/github/github_empty_request')
+        issue_2_events = read_file('data/github/github_issue_2_events')
         rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
@@ -514,6 +532,20 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '5'
                                })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_1_EVENTS_URL,
+                               body=issue_1_events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_EVENTS_URL,
+                               body=issue_2_events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         github = GitHub("zhquan_example", "repo", ["aaa"])
         issues = [issues for issues in github.fetch()]
@@ -533,6 +565,10 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issue['data']['comments_data'][0]['user_data']['login'], 'zhquan_example')
         self.assertEqual(issue['data']['comments_data'][0]['reactions']['total_count'],
                          len(issue['data']['comments_data'][0]['reactions_data']))
+        self.assertEqual(len(issue['data']['events_data']), 3)
+        self.assertEqual(issue['data']['events_data'][0]['event'], 'closed')
+        self.assertEqual(issue['data']['events_data'][1]['event'], 'head_ref_deleted')
+        self.assertEqual(issue['data']['events_data'][2]['event'], 'referenced')
 
         issue = issues[1]
         self.assertEqual(issue['origin'], 'https://github.com/zhquan_example/repo')
@@ -546,6 +582,11 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issue['data']['comments_data'][0]['user_data']['login'], 'zhquan_example')
         self.assertEqual(issue['data']['comments_data'][0]['reactions']['total_count'],
                          len(issue['data']['comments_data'][0]['reactions_data']))
+        self.assertEqual(len(issue['data']['events_data']), 4)
+        self.assertEqual(issue['data']['events_data'][0]['event'], 'head_ref_force_pushed')
+        self.assertEqual(issue['data']['events_data'][1]['event'], 'merged')
+        self.assertEqual(issue['data']['events_data'][2]['event'], 'closed')
+        self.assertEqual(issue['data']['events_data'][3]['event'], 'referenced')
 
     @httpretty.activate
     def test_fetch_more_pulls(self):
@@ -891,6 +932,8 @@ class TestGitHubBackend(unittest.TestCase):
         issue_2_comments = read_file('data/github/github_issue_comments_2')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
         issue_comment_2_reactions = read_file('data/github/github_empty_request')
+        issue_1_events = read_file('data/github/github_issue_1_events')
+        issue_2_events = read_file('data/github/github_issue_2_events')
         rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
@@ -969,6 +1012,20 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '5'
                                })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_1_EVENTS_URL,
+                               body=issue_1_events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_EVENTS_URL,
+                               body=issue_2_events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         to_date = datetime.datetime(2016, 3, 16)
         github = GitHub("zhquan_example", "repo", ["aaa"])
@@ -990,6 +1047,10 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issue['data']['comments_data'][0]['reactions']['total_count'],
                          len(issue['data']['comments_data'][0]['reactions_data']))
         self.assertEqual(issue['data']['updated_at'], '2016-03-15T09:56:22Z')
+        self.assertEqual(len(issue['data']['events_data']), 3)
+        self.assertEqual(issue['data']['events_data'][0]['event'], 'closed')
+        self.assertEqual(issue['data']['events_data'][1]['event'], 'head_ref_deleted')
+        self.assertEqual(issue['data']['events_data'][2]['event'], 'referenced')
 
     @httpretty.activate
     def test_fetch_pulls_until_date(self):
@@ -1174,6 +1235,7 @@ class TestGitHubBackend(unittest.TestCase):
         login = read_file('data/github/github_login')
         orgs = read_file('data/github/github_orgs')
         comments = read_file('data/github/github_empty_request')
+        events = read_file('data/github/github_issue_1_events')
         rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
@@ -1215,6 +1277,13 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_1_EVENTS_URL,
+                               body=events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         github = GitHub("zhquan_example", "repo", ["aaa"])
         issues = [issues for issues in github.fetch()]
@@ -1236,6 +1305,8 @@ class TestGitHubBackend(unittest.TestCase):
         issue_2_comments = read_file('data/github/github_issue_comments_2')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
         issue_comment_2_reactions = read_file('data/github/github_empty_request')
+        issue_1_events = read_file('data/github/github_issue_1_events')
+        issue_2_events = read_file('data/github/github_issue_2_events')
 
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTREPRISE_RATE_LIMIT,
@@ -1273,6 +1344,12 @@ class TestGitHubBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ENTERPRISE_ORGS_URL,
                                body=orgs, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUE_1_EVENTS_URL,
+                               body=issue_1_events, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUE_2_EVENTS_URL,
+                               body=issue_2_events, status=200)
 
         github = GitHub("zhquan_example", "repo", ["aaa"],
                         base_url=GITHUB_ENTERPRISE_URL)
@@ -1293,6 +1370,10 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issue['data']['comments_data'][0]['user_data']['login'], 'zhquan_example')
         self.assertEqual(issue['data']['comments_data'][0]['reactions']['total_count'],
                          len(issue['data']['comments_data'][0]['reactions_data']))
+        self.assertEqual(len(issue['data']['events_data']), 3)
+        self.assertEqual(issue['data']['events_data'][0]['event'], 'closed')
+        self.assertEqual(issue['data']['events_data'][1]['event'], 'head_ref_deleted')
+        self.assertEqual(issue['data']['events_data'][2]['event'], 'referenced')
 
         issue = issues[1]
         self.assertEqual(issues[1]['origin'], 'https://example.com/zhquan_example/repo')
@@ -1306,6 +1387,11 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issue['data']['comments_data'][0]['user_data']['login'], 'zhquan_example')
         self.assertEqual(issue['data']['comments_data'][0]['reactions']['total_count'],
                          len(issue['data']['comments_data'][0]['reactions_data']))
+        self.assertEqual(len(issue['data']['events_data']), 4)
+        self.assertEqual(issue['data']['events_data'][0]['event'], 'head_ref_force_pushed')
+        self.assertEqual(issue['data']['events_data'][1]['event'], 'merged')
+        self.assertEqual(issue['data']['events_data'][2]['event'], 'closed')
+        self.assertEqual(issue['data']['events_data'][3]['event'], 'referenced')
 
     @httpretty.activate
     def test_fetch_pull_enterprise(self):
@@ -1471,6 +1557,7 @@ class TestGitHubBackend(unittest.TestCase):
         comments = read_file('data/github/github_issue_comments_2')
         issue_reactions = read_file('data/github/github_issue_2_reactions')
         comment_reactions = read_file('data/github/github_empty_request')
+        events = read_file('data/github/github_issue_2_events')
         rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
@@ -1528,6 +1615,13 @@ class TestGitHubBackend(unittest.TestCase):
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
                                })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_EVENTS_URL,
+                               body=events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
 
         from_date = datetime.datetime(2016, 3, 1)
         github = GitHub("zhquan_example", "repo", ["aaa"])
@@ -1546,6 +1640,11 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(issue['data']['comments_data'][0]['user_data']['login'], 'zhquan_example')
         self.assertEqual(issue['data']['comments_data'][0]['reactions']['total_count'],
                          len(issue['data']['comments_data'][0]['reactions_data']))
+        self.assertEqual(len(issue['data']['events_data']), 4)
+        self.assertEqual(issue['data']['events_data'][0]['event'], 'head_ref_force_pushed')
+        self.assertEqual(issue['data']['events_data'][1]['event'], 'merged')
+        self.assertEqual(issue['data']['events_data'][2]['event'], 'closed')
+        self.assertEqual(issue['data']['events_data'][3]['event'], 'referenced')
 
     @httpretty.activate
     def test_fetch_empty(self):
@@ -1602,6 +1701,7 @@ class TestGitHubBackend(unittest.TestCase):
         orgs = read_file('data/github/github_orgs')
         comments = read_file('data/github/github_issue_comments_1')
         reactions = read_file('data/github/github_issue_comment_1_reactions')
+        events = read_file('data/github/github_issue_1_events')
         rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
@@ -1647,6 +1747,13 @@ class TestGitHubBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ORGS_URL,
                                body=orgs, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_1_EVENTS_URL,
+                               body=events, status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
@@ -1700,6 +1807,8 @@ class TestGitHubBackendArchive(TestCaseBackendArchive):
         issue_2_reactions = read_file('data/github/github_issue_2_reactions')
         issue_comment_1_reactions = read_file('data/github/github_issue_comment_1_reactions')
         issue_comment_2_reactions = read_file('data/github/github_empty_request')
+        issue_1_events = read_file('data/github/github_issue_1_events')
+        issue_2_events = read_file('data/github/github_issue_2_events')
         rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
@@ -1775,6 +1884,20 @@ class TestGitHubBackendArchive(TestCaseBackendArchive):
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ORGS_URL,
                                body=orgs, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_1_EVENTS_URL,
+                               body=issue_1_events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_EVENTS_URL,
+                               body=issue_2_events, status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
@@ -1901,6 +2024,7 @@ class TestGitHubBackendArchive(TestCaseBackendArchive):
         comments = read_file('data/github/github_issue_comments_2')
         issue_reactions = read_file('data/github/github_issue_2_reactions')
         comment_reactions = read_file('data/github/github_empty_request')
+        events = read_file('data/github/github_issue_2_events')
         rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
@@ -1953,6 +2077,13 @@ class TestGitHubBackendArchive(TestCaseBackendArchive):
         httpretty.register_uri(httpretty.GET,
                                GITHUB_ORGS_URL,
                                body=orgs, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_EVENTS_URL,
+                               body=events, status=200,
                                forcing_headers={
                                    'X-RateLimit-Remaining': '20',
                                    'X-RateLimit-Reset': '15'
@@ -2096,7 +2227,7 @@ class TestGitHubClient(unittest.TestCase):
     def test_issues(self):
         """Test issues API call"""
 
-        issues = read_file('data/github/github_request')
+        issues = read_file('data/github/github_issue_1')
         rate_limit = read_file('data/github/rate_limit')
 
         httpretty.register_uri(httpretty.GET,
@@ -2157,8 +2288,37 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
-        pull_requested_reviewers_raw = [rev for rev in client.issue_comments(2)]
-        self.assertEqual(pull_requested_reviewers_raw[0], issue_comments)
+        issue_comments_raw = [rev for rev in client.issue_comments(2)]
+        self.assertEqual(issue_comments_raw[0], issue_comments)
+
+    @httpretty.activate
+    def test_issue_events(self):
+        """Test issue events API call"""
+
+        issue_events = read_file('data/github/github_issue_2_events')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_2_EVENTS_URL,
+                               body=issue_events,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
+
+        issue_events_raw = [rev for rev in client.issue_events(2)]
+        self.assertEqual(issue_events_raw[0], issue_events)
 
     @httpretty.activate
     def test_issue_reactions(self):
@@ -2185,8 +2345,8 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
-        pull_requested_reviewers_raw = [rev for rev in client.issue_reactions(2)]
-        self.assertEqual(pull_requested_reviewers_raw[0], issue_reactions)
+        issue_reactions_raw = [rev for rev in client.issue_reactions(2)]
+        self.assertEqual(issue_reactions_raw[0], issue_reactions)
 
     @httpretty.activate
     def test_issue_comment_reactions(self):
@@ -2214,8 +2374,8 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
-        pull_requested_reviewers_raw = [rev for rev in client.issue_comment_reactions(1)]
-        self.assertEqual(pull_requested_reviewers_raw[0], issue_comment_reactions)
+        issue_comment_reactions_raw = [rev for rev in client.issue_comment_reactions(1)]
+        self.assertEqual(issue_comment_reactions_raw[0], issue_comment_reactions)
 
     @httpretty.activate
     def test_pulls(self):
