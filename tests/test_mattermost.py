@@ -33,11 +33,13 @@ from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.mattermost import (Mattermost,
                                                MattermostClient,
                                                MattermostCommand)
+from grimoirelab_toolkit.datetime import datetime_utcnow
 
 from base import TestCaseBackendArchive
 
 
 MATTERMOST_API_URL = 'https://mattermost.example.com/api/v4'
+MATTERMOST_CHANNEL_INFO = MATTERMOST_API_URL + '/channels/abcdefghijkl'
 MATTERMOST_CHANNEL_POSTS = MATTERMOST_API_URL + '/channels/abcdefghijkl/posts'
 MATTERMOST_USERS = MATTERMOST_API_URL + '/users'
 MATTERMOST_USER_SDUENAS = MATTERMOST_USERS + '/8tbwn7uikpdy3gpse6fgiie5co'
@@ -55,6 +57,7 @@ def setup_http_server():
 
     http_requests = []
 
+    channel_info = read_file('data/mattermost/mattermost_channel.json', 'rb')
     channel_posts = read_file('data/mattermost/mattermost_posts.json', 'rb')
     channel_posts_next = read_file('data/mattermost/mattermost_posts_next.json', 'rb')
     channel_posts_empty = read_file('data/mattermost/mattermost_posts_empty.json', 'rb')
@@ -81,13 +84,20 @@ def setup_http_server():
             else:
                 page = int(params['page'][0])
             body = full_response[page]
+        elif uri.startswith(MATTERMOST_CHANNEL_INFO):
+            body = channel_info
         else:
             raise Exception("no valid URL")
 
         http_requests.append(last_request)
 
-        return (status, headers, body)
+        return status, headers, body
 
+    httpretty.register_uri(httpretty.GET,
+                           MATTERMOST_CHANNEL_INFO,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                           ])
     httpretty.register_uri(httpretty.GET,
                            MATTERMOST_CHANNEL_POSTS,
                            responses=[
@@ -157,7 +167,7 @@ class TestMattermostBackend(unittest.TestCase):
 
         mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa',
                                 max_items=5)
-        posts = [post for post in mattermost.fetch()]
+        posts = [post for post in mattermost.fetch(from_date=None)]
 
         expected = [
             ('59io5i1f5bbetxtj6mbm67fouw', 'd023596f93fcd7e18838bd0adddae4e213d0ca15', 1523546846.639, 'sduenas'),
@@ -170,6 +180,7 @@ class TestMattermostBackend(unittest.TestCase):
             ('49ctz9ndgfd48eb5oq4xbjpfby', 'a377e2b8300f254cb2ee5c66ea532a39bbeb6745', 1523526171.280, 'valcos'),
             ('1ju85sxo7bfab8nf3yk5snn17a', '2411fc8c8cb8673ee99088d61537fe412aa17433', 1523525981.213, 'sduenas')
         ]
+        expected_channel = ('grimoirelab', 'GrimoireLab channel')
 
         self.assertEqual(len(posts), len(expected))
 
@@ -183,9 +194,14 @@ class TestMattermostBackend(unittest.TestCase):
             self.assertEqual(post['category'], 'post')
             self.assertEqual(post['tag'], 'https://mattermost.example.com/abcdefghijkl')
             self.assertEqual(post['data']['user_data']['username'], expc[3])
+            self.assertEqual(post['data']['channel_data']['name'], expected_channel[0])
+            self.assertEqual(post['data']['channel_data']['display_name'], expected_channel[1])
 
         # Check requests
         expected = [
+            {
+                'channel_id': ['abcdefghijkl']
+            },
             {
                 'per_page': ['5'],
                 'page': ['0']
@@ -227,6 +243,7 @@ class TestMattermostBackend(unittest.TestCase):
             ('shs4ujzubtffzxbshxthfcxfdw', '549db8c7e437de41a80d5e3b87dc4e3289e80e26', 1523526199.108, 'sduenas'),
             ('swqyc3ekabrjbxc5bjf6hhba3w', 'e688e59eb9c672dd995ab15f39f2947f7b35d86a', 1523526187.090, 'valcos')
         ]
+        expected_channel = ('grimoirelab', 'GrimoireLab channel')
 
         self.assertEqual(len(posts), len(expected))
 
@@ -240,9 +257,14 @@ class TestMattermostBackend(unittest.TestCase):
             self.assertEqual(post['category'], 'post')
             self.assertEqual(post['tag'], 'https://mattermost.example.com/abcdefghijkl')
             self.assertEqual(post['data']['user_data']['username'], expc[3])
+            self.assertEqual(post['data']['channel_data']['name'], expected_channel[0])
+            self.assertEqual(post['data']['channel_data']['display_name'], expected_channel[1])
 
         # Check requests
         expected = [
+            {
+                'channel_id': ['abcdefghijkl']
+            },
             {
                 'per_page': ['5'],
                 'page': ['0']
@@ -276,6 +298,9 @@ class TestMattermostBackend(unittest.TestCase):
 
         # Check requests
         expected = [
+            {
+                'channel_id': ['abcdefghijkl']
+            },
             {
                 'per_page': ['5'],
                 'page': ['0']
@@ -407,6 +432,34 @@ class TestMattermostClient(unittest.TestCase):
         self.assertEqual(client.sleep_time, 3)
 
     @httpretty.activate
+    def test_channel(self):
+        """Test channel API call"""
+
+        http_requests = setup_http_server()
+
+        client = MattermostClient('https://mattermost.example.com/', 'aaaa')
+
+        # Call API
+        channel = client.channel('abcdefghijkl')
+
+        self.assertEqual(len(http_requests), 1)
+
+        expected = [
+            {
+                'channel_id': ['abcdefghijkl']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), 1)
+
+        for x in range(0, len(http_requests)):
+            req = http_requests[x]
+            self.assertEqual(req.method, 'GET')
+            self.assertRegex(req.path, '/api/v4/channels/abcdefghijkl')
+            self.assertDictEqual(req.querystring, expected[x])
+            self.assertEqual(req.headers['Authorization'], 'Bearer aaaa')
+
+    @httpretty.activate
     def test_posts(self):
         """Test posts API call"""
 
@@ -483,6 +536,27 @@ class TestMattermostClient(unittest.TestCase):
             self.assertRegex(req.path, '/api/v4/users/8tbwn7uikpdy3gpse6fgiie5co')
             self.assertDictEqual(req.querystring, expected[x])
             self.assertEqual(req.headers['Authorization'], 'Bearer aaaa')
+
+    @httpretty.activate
+    def test_calculate_time_to_reset(self):
+        """Test whether the time to reset is zero if the sleep time is negative"""
+
+        user = read_file('data/mattermost/mattermost_user_sduenas.json', 'rb')
+        httpretty.register_uri(httpretty.GET,
+                               MATTERMOST_USER_SDUENAS,
+                               body=user,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': int(datetime_utcnow().replace(microsecond=0).timestamp())
+                               })
+
+        client = MattermostClient('https://mattermost.example.com/', 'aaaa')
+        _ = client.user('8tbwn7uikpdy3gpse6fgiie5co')
+
+        time_to_reset = client.calculate_time_to_reset()
+
+        self.assertEqual(time_to_reset, 0)
 
 
 if __name__ == "__main__":
