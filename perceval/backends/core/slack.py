@@ -57,7 +57,7 @@ class Slack(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.7.3'
+    version = '0.7.4'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -291,6 +291,7 @@ class SlackClient(HttpClient):
     """
     URL = urijoin(SLACK_URL, 'api', '%(resource)s')
 
+    AUTHORIZATION_HEADER = 'Authorization'
     RCONVERSATION_INFO = 'conversations.members'
     RCHANNEL_INFO = 'channels.info'
     RCHANNEL_HISTORY = 'channels.history'
@@ -392,8 +393,8 @@ class SlackClient(HttpClient):
 
         :returns url, headers and the sanitized payload
         """
-        if SlackClient.PTOKEN in payload:
-            payload.pop(SlackClient.PTOKEN)
+        if SlackClient.AUTHORIZATION_HEADER in headers:
+            headers.pop(SlackClient.AUTHORIZATION_HEADER)
 
         return url, headers, payload
 
@@ -405,12 +406,14 @@ class SlackClient(HttpClient):
             the given resource
         """
         url = self.URL % {'resource': resource}
-        params[self.PTOKEN] = self.api_token
+        headers = {
+            self.AUTHORIZATION_HEADER: 'Bearer {}'.format(self.api_token)
+        }
 
         logger.debug("Slack client requests: %s params: %s",
                      resource, str(params))
 
-        r = self.fetch(url, payload=params)
+        r = self.fetch(url, payload=params, headers=headers)
 
         # Check for possible API errors
         result = r.json()
