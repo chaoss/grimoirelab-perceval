@@ -253,42 +253,34 @@ class TestSlackBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-                'channel': ['C011DUKE8'],
-                'token': ['aaaa']
+                'channel': ['C011DUKE8']
+            },
+            {
+                'channel': ['C011DUKE8']
             },
             {
                 'channel': ['C011DUKE8'],
-                'token': ['aaaa']
-            },
-            {
-                'channel': ['C011DUKE8'],
-                'token': ['aaaa'],
                 'cursor': ['dXNlcl9pZDpVNEMwUTZGQTc=']
             },
             {
                 'channel': ['C011DUKE8'],
                 'oldest': ['0'],
                 'latest': ['1483228800.000000'],
-                'token': ['aaaa'],
                 'count': ['5']
             },
             {
-                'user': ['U0003'],
-                'token': ['aaaa']
+                'user': ['U0003']
             },
             {
-                'user': ['U0002'],
-                'token': ['aaaa']
+                'user': ['U0002']
             },
             {
-                'user': ['U0001'],
-                'token': ['aaaa']
+                'user': ['U0001']
             },
             {
                 'channel': ['C011DUKE8'],
                 'oldest': ['0'],
                 'latest': ['1427135733.000068'],
-                'token': ['aaaa'],
                 'count': ['5']
             }
         ]
@@ -296,6 +288,7 @@ class TestSlackBackend(unittest.TestCase):
         self.assertEqual(len(http_requests), len(expected))
 
         for i in range(len(expected)):
+            self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), http_requests[i].headers._headers)
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
@@ -369,33 +362,27 @@ class TestSlackBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-                'channel': ['C011DUKE8'],
-                'token': ['aaaa']
+                'channel': ['C011DUKE8']
             },
             {
                 'channel': ['C011DUKE8'],
                 'oldest': ['0'],
                 'latest': ['1483228800.000000'],
-                'token': ['aaaa'],
                 'count': ['5']
             },
             {
-                'user': ['U0003'],
-                'token': ['aaaa']
+                'user': ['U0003']
             },
             {
-                'user': ['U0002'],
-                'token': ['aaaa']
+                'user': ['U0002']
             },
             {
-                'user': ['U0001'],
-                'token': ['aaaa']
+                'user': ['U0001']
             },
             {
                 'channel': ['C011DUKE8'],
                 'oldest': ['0'],
                 'latest': ['1427135733.000068'],
-                'token': ['aaaa'],
                 'count': ['5']
             }
         ]
@@ -403,6 +390,7 @@ class TestSlackBackend(unittest.TestCase):
         self.assertEqual(len(http_requests), len(expected))
 
         for i in range(len(expected)):
+            self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), http_requests[i].headers._headers)
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
@@ -460,38 +448,33 @@ class TestSlackBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-                'channel': ['C011DUKE8'],
-                'token': ['aaaa']
+                'channel': ['C011DUKE8']
+            },
+            {
+                'channel': ['C011DUKE8']
             },
             {
                 'channel': ['C011DUKE8'],
-                'token': ['aaaa']
-            },
-            {
-                'channel': ['C011DUKE8'],
-                'token': ['aaaa'],
                 'cursor': ['dXNlcl9pZDpVNEMwUTZGQTc=']
             },
             {
                 'channel': ['C011DUKE8'],
                 'oldest': ['1427135740.000059'],
                 'latest': ['1483228800.000000'],
-                'token': ['aaaa'],
                 'count': ['5']
             },
             {
-                'user': ['U0003'],
-                'token': ['aaaa']
+                'user': ['U0003']
             },
             {
-                'user': ['U0002'],
-                'token': ['aaaa']
+                'user': ['U0002']
             }
         ]
 
         self.assertEqual(len(http_requests), len(expected))
 
         for i in range(len(expected)):
+            self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), http_requests[i].headers._headers)
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
@@ -515,23 +498,19 @@ class TestSlackBackend(unittest.TestCase):
         # Check requests
         expected = [
             {
-                'channel': ['C011DUKE8'],
-                'token': ['aaaa']
+                'channel': ['C011DUKE8']
+            },
+            {
+                'channel': ['C011DUKE8']
             },
             {
                 'channel': ['C011DUKE8'],
-                'token': ['aaaa']
-            },
-            {
-                'channel': ['C011DUKE8'],
-                'token': ['aaaa'],
                 'cursor': ['dXNlcl9pZDpVNEMwUTZGQTc=']
             },
             {
                 'channel': ['C011DUKE8'],
                 'oldest': ['1451606399.999990'],
                 'latest': ['1483228800.000000'],
-                'token': ['aaaa'],
                 'count': ['5']
             }
         ]
@@ -539,6 +518,7 @@ class TestSlackBackend(unittest.TestCase):
         self.assertEqual(len(http_requests), len(expected))
 
         for i in range(len(expected)):
+            self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), http_requests[i].headers._headers)
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     def test_parse_channel_info(self):
@@ -666,12 +646,10 @@ class TestSlackClient(unittest.TestCase):
 
         expected = [
             {
-                'channel': ['C011DUKE8'],
-                'token': ['aaaa'],
+                'channel': ['C011DUKE8']
             },
             {
                 'channel': ['C011DUKE8'],
-                'token': ['aaaa'],
                 'cursor': ['dXNlcl9pZDpVNEMwUTZGQTc=']
             }]
 
@@ -682,6 +660,7 @@ class TestSlackClient(unittest.TestCase):
         self.assertRegex(req.path, '/conversations.members')
 
         for i in range(len(expected)):
+            self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), http_requests[i].headers._headers)
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
@@ -695,8 +674,7 @@ class TestSlackClient(unittest.TestCase):
         _ = client.channel_info('C011DUKE8')
 
         expected = {
-            'channel': ['C011DUKE8'],
-            'token': ['aaaa'],
+            'channel': ['C011DUKE8']
         }
 
         self.assertEqual(len(http_requests), 1)
@@ -705,6 +683,7 @@ class TestSlackClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/channels.info')
         self.assertDictEqual(req.querystring, expected)
+        self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), req.headers._headers)
 
     @httpretty.activate
     def test_history(self):
@@ -722,7 +701,6 @@ class TestSlackClient(unittest.TestCase):
             'channel': ['C011DUKE8'],
             'oldest': ['0.999990'],
             'latest': ['1427135733.000068'],
-            'token': ['aaaa'],
             'count': ['5']
         }
 
@@ -732,6 +710,7 @@ class TestSlackClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/channels.history')
         self.assertDictEqual(req.querystring, expected)
+        self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), req.headers._headers)
 
     @httpretty.activate
     def test_history_format_latest(self):
@@ -749,7 +728,6 @@ class TestSlackClient(unittest.TestCase):
             'channel': ['C011DUKE8'],
             'oldest': ['0.999990'],
             'latest': ['1427135733.000068'],
-            'token': ['aaaa'],
             'count': ['5']
         }
 
@@ -759,6 +737,7 @@ class TestSlackClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/channels.history')
         self.assertDictEqual(req.querystring, expected)
+        self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), req.headers._headers)
 
     @httpretty.activate
     def test_user(self):
@@ -772,8 +751,7 @@ class TestSlackClient(unittest.TestCase):
         _ = client.user('U0001')
 
         expected = {
-            'user': ['U0001'],
-            'token': ['aaaa']
+            'user': ['U0001']
         }
 
         self.assertEqual(len(http_requests), 1)
@@ -782,6 +760,7 @@ class TestSlackClient(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/users.info')
         self.assertDictEqual(req.querystring, expected)
+        self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), req.headers._headers)
 
     @httpretty.activate
     def test_slack_error(self):
@@ -798,11 +777,15 @@ class TestSlackClient(unittest.TestCase):
         """Test whether the sanitize method works properly"""
 
         url = "http://example.com"
-        headers = "headers-information"
-        payload = {'token': 'aaaa', 'channel': 'C011DUKE8'}
+        headers = {
+            SlackClient.AUTHORIZATION_HEADER: 'Bear aaaa'
+        }
+        payload = {
+            'channel': 'C011DUKE8'
+        }
 
-        s_url, s_headers, s_payload = SlackClient.sanitize_for_archive(url, headers, copy.deepcopy(payload))
-        payload.pop("token")
+        s_url, s_headers, s_payload = SlackClient.sanitize_for_archive(url, copy.deepcopy(headers), payload)
+        headers.pop(SlackClient.AUTHORIZATION_HEADER)
 
         self.assertEqual(url, s_url)
         self.assertEqual(headers, s_headers)
