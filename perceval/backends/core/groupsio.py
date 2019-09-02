@@ -22,7 +22,6 @@
 import logging
 import os
 import requests
-from requests.auth import HTTPBasicAuth
 
 from grimoirelab_toolkit.uris import urijoin
 
@@ -35,7 +34,7 @@ from ...utils import DEFAULT_DATETIME
 MBOX_FILE = 'messages.zip'
 
 GROUPSIO_URL = 'https://groups.io/'
-GROUPSIO_API_URL = 'https://api.groups.io/v1/'
+GROUPSIO_API_URL = 'https://groups.io/api/v1'
 
 PER_PAGE = 100
 
@@ -47,38 +46,34 @@ class Groupsio(MBox):
     """Groups.io backend.
 
     This class allows the fetch the messages of a Groups.io group.
-    Initialize this class passing the name of the group and the
+    Initialize this class passing the name of the group, the
     directory path where the mbox files will be fetched and
-    stored. The origin of the data will be set to the url of the
-    group on Groups.io.
+    stored, and the email and password of the Groupsio user.
+    The origin of the data will be set to the url of the group
+    on Groups.io.
 
-    In order to get an `api_token`, you should first subscribe to
-    a group via the Groups.io website and then execute the
-    following command:
-    `curl "https://api.groups.io/v1/login"
-          -u 123456:
-          -d "email=<your email address>&password=<your password>"`
-
-    In order to know the group names where your token is subscribed,
+    In order to know the group names where you are subscribed,
     you can use the following script:
-    https://gist.github.com/valeriocos/676d90c58c56e2b17b882f2603283d39
+    https://gist.github.com/valeriocos/2e2231e17fd3052800303bf99bd0c7c4
 
     :param group_name: Name of the group
     :param dirpath: directory path where the mboxes are stored
-    :param api_token: Groupsio auth token to access the API
+    :param email: Groupsio user email
+    :param password: Groupsio user password
     :param verify: allows to disable SSL verification
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.1.5'
+    version = '0.2.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
-    def __init__(self, group_name, dirpath, api_token, verify=True, tag=None, archive=None):
+    def __init__(self, group_name, dirpath, email, password, verify=True, tag=None, archive=None):
         url = urijoin(GROUPSIO_URL, 'g', group_name)
         super().__init__(url, dirpath, tag=tag, archive=archive)
+        self.email = email
+        self.password = password
         self.group_name = group_name
-        self.api_token = api_token
         self.verify = verify
 
     def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
@@ -110,7 +105,7 @@ class Groupsio(MBox):
                     self.uri, str(from_date))
 
         mailing_list = GroupsioClient(self.group_name, self.dirpath,
-                                      self.api_token, self.verify)
+                                      self.email, self.password, self.verify)
         mailing_list.fetch()
 
         messages = self._fetch_and_parse_messages(mailing_list, from_date)
@@ -146,20 +141,23 @@ class GroupsioClient(MailingList):
 
     :param group_name: Name of the group
     :param dirpath: directory path where the mboxes are stored
-    :param api_token: Groupsio auth token to access the API
+    :param email: Groupsio user email
+    :param password: Groupsio user password
     :param verify: allows to disable SSL verification
     """
 
     DOWNLOAD_ARCHIVES = 'downloadarchives'
     GET_SUBSCRIPTIONS = 'getsubs'
+    LOGIN = 'login'
 
-    def __init__(self, group_name, dirpath, api_token, verify=True):
+    def __init__(self, group_name, dirpath, email, password, verify=True):
         url = urijoin(GROUPSIO_URL, 'g', group_name)
         super().__init__(url, dirpath)
+
+        self.session = requests.Session()
         self.group_name = group_name
-        self.api_token = api_token
-        self.auth = HTTPBasicAuth(self.api_token, '')
         self.verify = verify
+        self.__login(email, password)
 
     def fetch(self):
         """Fetch the mbox files from the remote archiver.
@@ -217,7 +215,7 @@ class GroupsioClient(MailingList):
             keep_fetching = response_raw['has_more']
 
     def _download_archive(self, url, payload, filepath):
-        r = requests.get(url, params=payload, auth=self.auth, stream=True, verify=self.verify)
+        r = self.session.get(url, params=payload, stream=True, verify=self.verify)
         try:
             r.raise_for_status()
             self._write_archive(r, filepath)
@@ -252,13 +250,30 @@ class GroupsioClient(MailingList):
     def __fetch(self, url, payload):
         """Fetch requests from groupsio API"""
 
-        r = requests.get(url, params=payload, auth=self.auth, verify=self.verify)
+        r = self.session.get(url, params=payload, verify=self.verify)
         try:
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise e
 
         return r
+
+    def __login(self, email, password):
+        """Login a user to the server based on email and password.
+
+        :param email: Groupsio user email
+        :param password: Groupsio user password
+        """
+        url = urijoin(GROUPSIO_API_URL, self.LOGIN)
+
+        payload = {
+            'email': email,
+            'password': password
+        }
+
+        self.session.post(url, params=payload)
+        logger.debug("Groupsio email %s authenticated in %s",
+                     email, GROUPSIO_API_URL)
 
 
 class GroupsioCommand(BackendCommand):
@@ -282,12 +297,7 @@ class GroupsioCommand(BackendCommand):
         """Returns the Groupsio argument parser."""
 
         parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
-                                              from_date=True,
-                                              token_auth=True)
-
-        # Backend token is required
-        action = parser.parser._option_string_actions['--api-token']
-        action.required = True
+                                              from_date=True)
 
         # Optional arguments
         group = parser.parser.add_argument_group('Groupsio arguments')
@@ -298,7 +308,8 @@ class GroupsioCommand(BackendCommand):
                            help="Value 'True' enable SSL verification")
 
         # Required arguments
-        parser.parser.add_argument('group_name',
-                                   help="Name of the group on Groups.io")
+        parser.parser.add_argument('group_name', help="Name of the group on Groups.io")
+        parser.parser.add_argument('-e', '--email', dest='email', help="Groupsio user email")
+        parser.parser.add_argument('-p', '--password', dest='password', help="Groupsio user password")
 
         return parser

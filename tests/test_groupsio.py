@@ -41,12 +41,13 @@ from perceval.backends.core.groupsio import (MBOX_FILE,
                                              GroupsioCommand)
 
 
-GROUPSIO_API_URL = 'https://api.groups.io/v1/'
+GROUPSIO_API_URL = 'https://groups.io/api/v1/'
 
 
 def setup_http_server(empty_mbox=False, http_status_download=200, http_status_subscriptions=200):
     groupsio_mbox_archive = read_file('data/groupsio/messages.zip')
     groupsio_mbox_empty = read_file('data/groupsio/empty.zip')
+    login = read_file('data/groupsio/login')
     subscriptions_page_1 = read_file('data/groupsio/subscriptions_page_1')
     subscriptions_page_2 = read_file('data/groupsio/subscriptions_page_2')
 
@@ -60,6 +61,12 @@ def setup_http_server(empty_mbox=False, http_status_download=200, http_status_su
                                GROUPSIO_API_URL + GroupsioClient.DOWNLOAD_ARCHIVES,
                                body=groupsio_mbox_archive,
                                status=http_status_download)
+
+    httpretty.register_uri(httpretty.POST,
+                           GROUPSIO_API_URL + GroupsioClient.LOGIN,
+                           body=login,
+                           params={'email': 'jsmith@example.com', 'password': 'aaaaa'},
+                           status=200)
 
     httpretty.register_uri(httpretty.GET,
                            GROUPSIO_API_URL + GroupsioClient.GET_SUBSCRIPTIONS,
@@ -99,10 +106,11 @@ class TestGroupsioBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        backend = Groupsio('beta+api', self.tmp_path, 'aaaaa', tag='test')
+        backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', tag='test')
 
         self.assertEqual(backend.group_name, 'beta+api')
-        self.assertEqual(backend.api_token, 'aaaaa')
+        self.assertEqual(backend.email, 'jsmith@example.com')
+        self.assertEqual(backend.password, "aaaaa")
         self.assertEqual(backend.uri, 'https://groups.io/g/beta+api')
         self.assertEqual(backend.dirpath, self.tmp_path)
         self.assertEqual(backend.origin, 'https://groups.io/g/beta+api')
@@ -111,15 +119,15 @@ class TestGroupsioBackend(unittest.TestCase):
 
         # When tag is empty or None it will be set to
         # the value in uri
-        backend = Groupsio('beta+api', self.tmp_path, 'aaaaa')
+        backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa')
         self.assertEqual(backend.origin, 'https://groups.io/g/beta+api')
         self.assertEqual(backend.tag, 'https://groups.io/g/beta+api')
 
-        backend = Groupsio('beta+api', self.tmp_path, 'aaaaa', tag='')
+        backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', tag='')
         self.assertEqual(backend.origin, 'https://groups.io/g/beta+api')
         self.assertEqual(backend.tag, 'https://groups.io/g/beta+api')
 
-        backend = Groupsio('beta+api', self.tmp_path, 'aaaaa', verify=False, tag='')
+        backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False, tag='')
         self.assertEqual(backend.origin, 'https://groups.io/g/beta+api')
         self.assertEqual(backend.tag, 'https://groups.io/g/beta+api')
         self.assertFalse(backend.verify)
@@ -140,7 +148,7 @@ class TestGroupsioBackend(unittest.TestCase):
 
         setup_http_server()
 
-        backend = Groupsio('beta+api', self.tmp_path, 'aaaaa')
+        backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa')
         messages = [m for m in backend.fetch()]
 
         self.assertEqual(len(messages), 49)
@@ -177,7 +185,7 @@ class TestGroupsioBackend(unittest.TestCase):
 
         from_date = datetime.datetime(2018, 5, 5)
 
-        backend = Groupsio('beta+api', self.tmp_path, 'aaaaa')
+        backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa')
         messages = [m for m in backend.fetch(from_date=from_date)]
 
         self.assertEqual(len(messages), 8)
@@ -212,7 +220,7 @@ class TestGroupsioBackend(unittest.TestCase):
 
         setup_http_server(empty_mbox=True)
 
-        backend = Groupsio('beta+api', self.tmp_path, 'aaaaa')
+        backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa')
         messages = [m for m in backend.fetch()]
 
         self.assertListEqual(messages, [])
@@ -230,16 +238,14 @@ class TestGroupsioClient(unittest.TestCase):
     def test_init(self):
         """Check attributes initialization"""
 
-        client = GroupsioClient('beta+api', self.tmp_path, 'aaaaa')
-
+        client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa')
         self.assertIsInstance(client, GroupsioClient)
         self.assertEqual(client.uri, 'https://groups.io/g/beta+api')
         self.assertEqual(client.dirpath, self.tmp_path)
         self.assertEqual(client.group_name, 'beta+api')
         self.assertTrue(client.verify)
 
-        client = GroupsioClient('beta+api', self.tmp_path, 'aaaaa', verify=False)
-
+        client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False)
         self.assertIsInstance(client, GroupsioClient)
         self.assertEqual(client.uri, 'https://groups.io/g/beta+api')
         self.assertEqual(client.dirpath, self.tmp_path)
@@ -252,11 +258,15 @@ class TestGroupsioClient(unittest.TestCase):
 
         setup_http_server(empty_mbox=True)
 
-        client = GroupsioClient('beta+api', self.tmp_path, 'aaaaa', verify=False)
+        client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False)
         success = client.fetch()
 
         # Check requests
         expected = [
+            {
+                'email': ['jsmith@example.com'],
+                'password': ['aaaaa']
+            },
             {
                 'limit': ['100'],
             },
@@ -285,7 +295,7 @@ class TestGroupsioClient(unittest.TestCase):
 
         setup_http_server(empty_mbox=True)
 
-        client = GroupsioClient('beta/api', self.tmp_path, 'aaaaa', verify=False)
+        client = GroupsioClient('beta/api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False)
         with self.assertRaises(BackendError):
             client.fetch()
 
@@ -295,7 +305,7 @@ class TestGroupsioClient(unittest.TestCase):
 
         setup_http_server(empty_mbox=True, http_status_download=400)
 
-        client = GroupsioClient('beta+api', self.tmp_path, 'aaaaa', verify=False)
+        client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False)
         with self.assertRaises(requests.exceptions.HTTPError):
             client.fetch()
 
@@ -305,7 +315,7 @@ class TestGroupsioClient(unittest.TestCase):
 
         setup_http_server(empty_mbox=True)
 
-        client = GroupsioClientMocked('beta+api', self.tmp_path, 'aaaaa', verify=False)
+        client = GroupsioClientMocked('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False)
         success = client.fetch()
 
         self.assertFalse(success)
@@ -320,7 +330,7 @@ class TestGroupsioClient(unittest.TestCase):
         os.removedirs(self.tmp_path)
 
         self.assertFalse(os.path.exists(self.tmp_path))
-        client = GroupsioClient('beta+api', self.tmp_path, 'aaaaa', verify=False)
+        client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False)
         _ = client.fetch()
         self.assertTrue(os.path.exists(self.tmp_path))
 
@@ -330,7 +340,7 @@ class TestGroupsioClient(unittest.TestCase):
 
         setup_http_server(empty_mbox=True)
 
-        client = GroupsioClient('beta+api', self.tmp_path, 'aaaaa', verify=False)
+        client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False)
         success = client.fetch()
 
         self.assertEqual(client.mboxes[0].filepath, os.path.join(self.tmp_path, MBOX_FILE))
@@ -348,7 +358,7 @@ class TestGroupsioClient(unittest.TestCase):
 
         setup_http_server()
 
-        client = GroupsioClient('beta+api', self.tmp_path, 'aaaaa', verify=False)
+        client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False)
         subs = [subs for subs in client.subscriptions(per_page=1)]
         self.assertEqual(len(subs), 2)
 
@@ -358,7 +368,7 @@ class TestGroupsioClient(unittest.TestCase):
 
         setup_http_server(http_status_subscriptions=400)
 
-        client = GroupsioClient('beta+api', self.tmp_path, 'aaaaa', verify=False)
+        client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False)
 
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = [subs for subs in client.subscriptions(per_page=1)]
@@ -385,33 +395,36 @@ class TestGroupsioCommand(unittest.TestCase):
 
         mock_expanduser.return_value = os.path.join(self.tmp_path, 'testpath')
 
-        args = ['acme_group', '-t', 'aaaaa']
+        args = ['acme_group', '-e', 'jsmith@example.com', '-p', 'aaaaa']
 
         cmd = GroupsioCommand(*args)
         self.assertEqual(cmd.parsed_args.dirpath,
                          os.path.join(self.tmp_path, 'testpath/https://groups.io/g/acme_group'))
         self.assertEqual(cmd.parsed_args.group_name, 'acme_group')
-        self.assertEqual(cmd.parsed_args.api_token, 'aaaaa')
+        self.assertEqual(cmd.parsed_args.email, 'jsmith@example.com')
+        self.assertEqual(cmd.parsed_args.password, 'aaaaa')
 
         args = ['acme_group',
-                '--mboxes-path', '/tmp/perceval/', '-t', 'aaaaa']
+                '--mboxes-path', '/tmp/perceval/', '-e', 'jsmith@example.com', '-p', 'aaaaa']
 
         cmd = GroupsioCommand(*args)
         self.assertEqual(cmd.parsed_args.dirpath, '/tmp/perceval/')
         self.assertEqual(cmd.parsed_args.group_name, 'acme_group')
-        self.assertEqual(cmd.parsed_args.api_token, 'aaaaa')
+        self.assertEqual(cmd.parsed_args.email, 'jsmith@example.com')
+        self.assertEqual(cmd.parsed_args.password, 'aaaaa')
 
     def test_parsing_on_init(self):
         """Test if the class is initialized"""
 
-        args = ['acme_group', '-t', 'aaaaa',
+        args = ['acme_group', '-e', 'jsmith@example.com', '-p', 'aaaaa',
                 '--mboxes-path', '/tmp/perceval/',
                 '--tag', 'test']
 
         cmd = GroupsioCommand(*args)
         self.assertEqual(cmd.parsed_args.mboxes_path, '/tmp/perceval/')
         self.assertEqual(cmd.parsed_args.group_name, 'acme_group')
-        self.assertEqual(cmd.parsed_args.api_token, 'aaaaa')
+        self.assertEqual(cmd.parsed_args.email, 'jsmith@example.com')
+        self.assertEqual(cmd.parsed_args.password, 'aaaaa')
         self.assertEqual(cmd.parsed_args.tag, 'test')
 
     def test_setup_cmd_parser(self):
@@ -426,7 +439,8 @@ class TestGroupsioCommand(unittest.TestCase):
                 '--tag', 'test',
                 '--from-date', '1970-01-01',
                 '--no-verify',
-                '--api-token', 'aaaaa']
+                '--email', 'jsmith@example.com',
+                '--password', 'aaaaa']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.group_name, 'acme_group')
@@ -434,7 +448,8 @@ class TestGroupsioCommand(unittest.TestCase):
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertFalse(parsed_args.verify)
-        self.assertEqual(parsed_args.api_token, 'aaaaa')
+        self.assertEqual(parsed_args.email, 'jsmith@example.com')
+        self.assertEqual(parsed_args.password, 'aaaaa')
 
 
 if __name__ == "__main__":
