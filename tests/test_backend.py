@@ -42,6 +42,7 @@ from perceval.archive import Archive, ArchiveManager
 from perceval.backend import (Backend,
                               BackendCommandArgumentParser,
                               BackendCommand,
+                              BackendItemsGenerator,
                               Summary,
                               uuid,
                               fetch,
@@ -1123,6 +1124,302 @@ class TestBackendCommand(unittest.TestCase):
                 },
             }
             self.assertDictEqual(item['data'], expected)
+
+
+class TestBackendItemsGenerator(unittest.TestCase):
+    """Unit tests for BackendItemsGenerator"""
+
+    def setUp(self):
+        self.test_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
+
+    def test_init_items(self):
+        """Test whether a set of items is returned"""
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        with BackendItemsGenerator(CommandBackend, args, category, manager=None) as big:
+            self.assertIsInstance(big, BackendItemsGenerator)
+            items = [item for item in big.items]
+
+        self.assertEqual(big.backend.origin, args['origin'])
+        self.assertEqual(big.backend.tag, args['tag'])
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
+
+    def test_init_items_from_archive(self):
+        """Test whether a set of items is fetched from the archive"""
+
+        manager = ArchiveManager(self.test_path)
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
+            self.assertIsInstance(big, BackendItemsGenerator)
+            items = [item for item in big.items]
+            self.assertEqual(big.backend.origin, args['origin'])
+            self.assertEqual(big.backend.tag, args['tag'])
+            self.assertEqual(len(items), 5)
+
+        with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
+            self.assertIsInstance(big, BackendItemsGenerator)
+            items = [item for item in big.items]
+            self.assertEqual(big.backend.origin, args['origin'])
+            self.assertEqual(big.backend.tag, args['tag'])
+            self.assertEqual(len(items), 5)
+
+        with BackendItemsGenerator(CommandBackend, args, category, fetch_archive=True, manager=manager,
+                                   archived_after=str_to_datetime('1970-01-01')) as big:
+            self.assertIsInstance(big, BackendItemsGenerator)
+            items = [item for item in big.items]
+
+        self.assertEqual(len(items), 10)
+
+        for x in range(2):
+            for y in range(5):
+                item = items[y + (x * 5)]
+                expected_uuid = uuid('http://example.com/', str(y))
+
+                self.assertEqual(item['data']['item'], y)
+                self.assertEqual(item['data']['archive'], True)
+                self.assertEqual(item['origin'], 'http://example.com/')
+                self.assertEqual(item['uuid'], expected_uuid)
+                self.assertEqual(item['tag'], 'test')
+                self.assertEqual(item['classified_fields_filtered'], None)
+
+    def test_init_items_from_archive_after(self):
+        """Test if only those items archived after a date are returned"""
+
+        manager = ArchiveManager(self.test_path)
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
+            self.assertIsInstance(big, BackendItemsGenerator)
+            items = [item for item in big.items]
+            self.assertEqual(big.backend.origin, args['origin'])
+            self.assertEqual(big.backend.tag, args['tag'])
+            self.assertEqual(len(items), 5)
+
+        archived_dt = datetime_utcnow()
+
+        with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
+            self.assertIsInstance(big, BackendItemsGenerator)
+            items = [item for item in big.items]
+            self.assertEqual(big.backend.origin, args['origin'])
+            self.assertEqual(big.backend.tag, args['tag'])
+            self.assertEqual(len(items), 5)
+
+        # Fetch items from the archive
+        with BackendItemsGenerator(CommandBackend, args, category, fetch_archive=True, manager=manager,
+                                   archived_after=str_to_datetime('1970-01-01')) as big:
+            self.assertIsInstance(big, BackendItemsGenerator)
+            items = [item for item in big.items]
+            self.assertEqual(big.backend.origin, args['origin'])
+            self.assertEqual(big.backend.tag, args['tag'])
+            self.assertEqual(len(items), 10)
+
+        # Fetch items archived after the given date
+        with BackendItemsGenerator(CommandBackend, args, category, fetch_archive=True, manager=manager,
+                                   archived_after=archived_dt) as big:
+            self.assertIsInstance(big, BackendItemsGenerator)
+            items = [item for item in big.items]
+            self.assertEqual(len(items), 5)
+
+    def test_init_items_filter_classified_fields(self):
+        """Test whether classified fields are removed from the items"""
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        with BackendItemsGenerator(ClassifiedFieldsBackend, args, category,
+                                   filter_classified=True, manager=None) as big:
+            items = [item for item in big.items]
+
+        self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+
+            expected_uuid = uuid('http://example.com/', str(x))
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'],
+                             ['my.classified.field', 'classified'])
+
+            # Fields in CLASSIFIED_FIELDS are deleted
+            expected = {
+                'category': 'mock_item',
+                'item': x,
+                'my': {
+                    'classified': {},
+                    'field': x,
+                }
+            }
+            self.assertDictEqual(item['data'], expected)
+
+    def test_init_archive_on_error(self):
+        """Test whether an archive is removed when an unhandled exception occurs"""
+
+        manager = ArchiveManager(self.test_path)
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        with self.assertRaises(BackendError):
+            big = BackendItemsGenerator(ErrorCommandBackend, args, category, manager=manager)
+            _ = [item for item in big.items]
+
+        filepaths = manager.search('http://example.com/', 'ErrorCommandBackend',
+                                   'mock_item', str_to_datetime('1970-01-01'))
+
+        self.assertEqual(len(filepaths), 0)
+
+    def test_init_no_archived_items(self):
+        """Test when no archived items are available"""
+
+        manager = ArchiveManager(self.test_path)
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
+            items = [item for item in big.items]
+
+        self.assertEqual(len(items), 5)
+
+        # There aren't items for this category
+        with BackendItemsGenerator(CommandBackend, args, 'alt_item', manager=manager,
+                                   archived_after=str_to_datetime('1970-01-01'), fetch_archive=True) as big:
+            items = [item for item in big.items]
+            self.assertEqual(len(items), 0)
+
+    def test_init_ignore_corrupted_archive(self):
+        """Check if a corrupted archive is ignored while fetching from archive"""
+
+        def delete_rows(db, table_name):
+            conn = sqlite3.connect(db)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM " + table_name)
+            cursor.close()
+            conn.commit()
+
+        manager = ArchiveManager(self.test_path)
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        # First, fetch the items twice to check if several archive
+        # are used
+        with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
+            items = [item for item in big.items]
+            self.assertEqual(len(items), 5)
+
+        with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
+            items = [item for item in big.items]
+            self.assertEqual(len(items), 5)
+
+        # Find archive names to delete the rows of one of them to make it
+        # corrupted
+        filepaths = manager.search('http://example.com/', 'CommandBackend',
+                                   category, str_to_datetime('1970-01-01'))
+        self.assertEqual(len(filepaths), 2)
+
+        to_remove = filepaths[0]
+        delete_rows(to_remove, 'archive')
+
+        # Fetch items from the archive
+        with BackendItemsGenerator(CommandBackend, args, category, manager=manager,
+                                   archived_after=str_to_datetime('1970-01-01'), fetch_archive=True) as big:
+            items = [item for item in big.items]
+            self.assertEqual(len(items), 5)
+
+        for x in range(5):
+            item = items[x]
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['data']['archive'], True)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['tag'], 'test')
+            self.assertEqual(item['classified_fields_filtered'], None)
+
+    def test_summary(self):
+        """Test whether the method summary properly works"""
+
+        category = 'mock_item'
+        args = {
+            'origin': 'http://example.com/',
+            'tag': 'test',
+            'subtype': 'mocksubtype',
+            'from-date': str_to_datetime('2015-01-01')
+        }
+
+        with BackendItemsGenerator(CommandBackend, args, category, manager=None) as big:
+            self.assertIsInstance(big, BackendItemsGenerator)
+            _ = [item for item in big.items]
+
+        summary = big.summary()
+        self.assertEqual(summary.fetched, 5)
+        self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.total, 5)
+        self.assertEqual(summary.min_updated_on.timestamp(), 1451606400.0)
+        self.assertEqual(summary.max_updated_on.timestamp(), 1451606400.0)
+        self.assertEqual(summary.last_updated_on.timestamp(), 1451606400.0)
+        self.assertEqual(summary.last_uuid, "6130c145435d661565bd7d402be403bea7cfb6b5")
+        self.assertIsNone(summary.min_offset)
+        self.assertIsNone(summary.max_offset)
 
 
 class TestSummary(unittest.TestCase):
