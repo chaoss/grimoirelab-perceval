@@ -533,6 +533,125 @@ class BackendCommand:
         raise NotImplementedError
 
 
+class BackendItemsGenerator:
+    """BackendItemsGenerator class.
+
+    This class provides a generator through the `items` attribute that will fetch
+    items from any data source and/or archive in a transparent way. A summary
+    with the result of the process can be accessed via the attribute `summary`.
+
+    To initialize an instance is necessary to pass the backend that will be used
+    to fetch data, its parameters and other useful data as the category of the items
+    to retrieve and the archive options.
+
+    This object can also be used as a context manager.
+
+    :param backend_class: backend class to fetch items
+    :param backend_args: dict of arguments needed to fetch the items
+    :param category: category of the items to retrieve
+       If None, it will use the default backend category
+    :param manager: archive manager where the items will be retrieved
+    :param fetch_archive: If enabled, items are fetched from archives
+    :param filter_classified: remove classified fields from the resulting items. Note that
+        filter classified is not supported for archived items.
+    :param archived_after: return items archived after this date
+    """
+    def __init__(self, backend_class, backend_args, category, manager=None,
+                 fetch_archive=False, filter_classified=False, archived_after=None):
+        init_args = find_signature_parameters(backend_class.__init__,
+                                              backend_args)
+
+        if not fetch_archive:
+            archive = manager.create_archive() if manager else None
+            init_args['archive'] = archive
+            self.backend = backend_class(**init_args)
+            items = self.__fetch(backend_args, category, filter_classified, manager)
+        else:
+            self.backend = backend_class(**init_args)
+            items = self.__fetch_from_archive(manager, category, archived_after)
+
+        self.items = items
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.backend = None
+        self.items = None
+
+    @property
+    def summary(self):
+        """Return the summary object of the last fetch execution"""
+
+        return self.backend.summary
+
+    def __fetch(self, backend_args, category, filter_classified=False,
+                manager=None):
+        """Fetch items using the given backend.
+
+        Generator to get items using the backend. When an archive manager
+        is given, this function will store the fetched items in an
+        `Archive`. If an exception is raised, this archive will be
+        removed to avoid corrupted archives.
+
+        The parameters needed to get the items are given using the
+        `backend_args` dict parameter.
+
+        :param backend_args: dict of arguments needed to fetch the items
+        :param category: category of the items to retrieve.
+           If None, it will use the default backend category
+        :param filter_classified: remove classified fields from the resulting items
+        :param manager: archive manager needed to store the items
+
+        :returns: a generator of items
+        """
+        if category:
+            backend_args['category'] = category
+        if filter_classified:
+            backend_args['filter_classified'] = filter_classified
+
+        fetch_args = find_signature_parameters(self.backend.fetch,
+                                               backend_args)
+        items = self.backend.fetch(**fetch_args)
+
+        try:
+            for item in items:
+                yield item
+        except Exception as e:
+            if manager:
+                archive_path = self.backend.archive.archive_path
+                manager.remove_archive(archive_path)
+            raise e
+
+    def __fetch_from_archive(self, manager, category, archived_after):
+        """Fetch items from an archive manager.
+
+        Generator to get the items of a category (previously fetched
+        by the backend) from an archive manager. Only those items
+        archived after the given date will be returned.
+
+        :param manager: archive manager where the items will be retrieved
+        :param category: category of the items to retrieve
+        :param archived_after: return items archived after this date
+
+        :returns: a generator of archived items
+        """
+        filepaths = manager.search(self.backend.origin,
+                                   self.backend.__class__.__name__,
+                                   category,
+                                   archived_after)
+
+        for filepath in filepaths:
+            self.backend.archive = Archive(filepath)
+            items = self.backend.fetch_from_archive()
+
+            try:
+                for item in items:
+                    yield item
+            except ArchiveError as e:
+                logger.warning("Ignoring %s archive due to: %s", filepath, str(e))
+
+
 class Summary:
     """Summary class for fetch executions.
 

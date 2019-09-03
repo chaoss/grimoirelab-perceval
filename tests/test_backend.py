@@ -42,6 +42,7 @@ from perceval.archive import Archive, ArchiveManager
 from perceval.backend import (Backend,
                               BackendCommandArgumentParser,
                               BackendCommand,
+                              BackendItemsGenerator,
                               Summary,
                               uuid,
                               fetch,
@@ -1439,7 +1440,6 @@ class TestBackendItemsGenerator(unittest.TestCase):
             self.assertIsNone(summary.max_offset)
 
 
->>>>>>> 08dcd13... x
 class TestSummary(unittest.TestCase):
     """Unit tests for Summary"""
 
