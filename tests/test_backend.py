@@ -177,6 +177,26 @@ class MockedBackendCommand(BackendCommand):
         return parser
 
 
+class MockedBackendCommandDefaultPrePostInit(BackendCommand):
+    """Mocked backend command class used for testing"""
+
+    BACKEND = CommandBackend
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    @classmethod
+    def setup_cmd_parser(cls):
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True,
+                                              basic_auth=True,
+                                              token_auth=True,
+                                              archive=True)
+        parser.parser.add_argument('origin')
+
+        return parser
+
+
 class ClassifiedFieldsBackendCommand(MockedBackendCommand):
     """Mocked backend command for testing classified fields filtering"""
 
@@ -811,6 +831,27 @@ class TestBackendCommand(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.test_path)
+
+    def test_init(self):
+        """Test if the arguments are parsed when the class is initialized with
+        the default `_pre_init` and `_post_init` methods
+        """
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--category', 'mock_item', '--filter-classified',
+                '--archive-path', self.test_path,
+                '--fetch-archive', '--archived-since', '2015-01-01',
+                '--from-date', '2015-01-01', '--tag', 'test',
+                '--output', self.fout_path, 'http://example.com/']
+
+        cmd = MockedBackendCommandDefaultPrePostInit(*args)
+        self.assertIsInstance(cmd.parsed_args, argparse.Namespace)
+        self.assertEqual(cmd.parsed_args.user, 'jsmith')
+        self.assertEqual(cmd.parsed_args.password, '1234')
+        self.assertEqual(cmd.parsed_args.api_token, 'abcd')
+        self.assertEqual(cmd.parsed_args.archive_path, self.test_path)
+        self.assertEqual(cmd.parsed_args.fetch_archive, True)
+        self.assertEqual(cmd.parsed_args.tag, 'test')
+        self.assertEqual(cmd.parsed_args.filter_classified, True)
 
     def test_parsing_on_init(self):
         """Test if the arguments are parsed when the class is initialized"""
