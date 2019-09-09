@@ -50,7 +50,7 @@ class Backend:
     will be named as 'origin'. During the initialization, an `Archive`
     object can be provided for archiving raw data from the repositories.
 
-    Derivated classes have to implement `fetch_items`, `has_archiving` and
+    Derived classes have to implement `fetch_items`, `has_archiving` and
     `has_resuming` methods. Otherwise, `NotImplementedError`
     exception will be raised. Metadata decorator can be used together with
     fetch methods but requires the implementation of `metadata_id`,
@@ -438,15 +438,15 @@ class BackendCommand:
     """Abstract class to run backends from the command line.
 
     When the class is initialized, it parses the given arguments using
-    the defined argument parser on `setump_cmd_parser` method. Those
+    the defined argument parser on `setup_cmd_parser` method. Those
     arguments will be stored in the attribute `parsed_args`.
 
-    The arguments will be used to inizialize and run the `Backend` object
+    The arguments will be used to initialize and run the `Backend` object
     assigned to this command. The backend used to run the command is stored
     under `BACKEND` class attributed. Any class derived from this and must
     set its own `Backend` class.
 
-    Moreover, the method `setup_cmd_parser` must be implemented to exectute
+    Moreover, the method `setup_cmd_parser` must be implemented to execute
     the backend.
     """
     BACKEND = None
@@ -512,7 +512,7 @@ class BackendCommand:
         pass
 
     def _initialize_archive(self):
-        """Initialize archive based on the parsed parameters"""
+        """Initialize archive based on the parsed parameters."""
 
         if 'archive_path' not in self.parsed_args:
             manager = None
@@ -536,13 +536,14 @@ class BackendCommand:
 class BackendItemsGenerator:
     """BackendItemsGenerator class.
 
-    This class provides a generator through the `items` attribute that will fetch
-    items from any data source and/or archive in a transparent way. A summary
-    with the result of the process can be accessed via the attribute `summary`.
+    This class provides a generator through the `items` attribute that
+    will fetch items from any data source and/or archive in a transparent
+    way. A summary with the result of the process can be accessed via
+    the attribute `summary`.
 
-    To initialize an instance is necessary to pass the backend that will be used
-    to fetch data, its parameters and other useful data as the category of the items
-    to retrieve and the archive options.
+    To initialize an instance is necessary to pass the backend that will
+    be used to fetch data, its parameters and other useful data as the
+    category of the items to retrieve and the archive options.
 
     This object can also be used as a context manager.
 
@@ -662,11 +663,13 @@ class Summary:
 
     This class models the summary of a fetch execution. It includes
     the last UUID, number of items fetched, skipped and their sum,
-    plus the min, max and last updated_on times. Furthermore, for
-    backends using offsets, the corresponding summary contains the
-    min, max and last offsets retrieved. Finally, the summary also
-    includes some extra fields, which can be used by any backend
-    to include fetch-specific information.
+    plus the minimum, maximum and last updated_on times.
+
+    Furthermore, for backends using offsets, the corresponding summary
+    contains the minimum, maximum and last offsets retrieved.
+
+    Finally, the summary also includes some extra fields, which can
+    be used by any backend to include fetch-specific information.
     """
     def __init__(self):
         self.fetched = 0
@@ -682,10 +685,12 @@ class Summary:
 
     @property
     def total(self):
+        """Number of items retrieved. This includes fetched and skipped items."""
+
         return self.fetched + self.skipped
 
     def update(self, item):
-        """Update the summary attributes by accessing the item data
+        """Update the summary attributes by accessing the item data.
 
         :param item: a Perceval item
         """
