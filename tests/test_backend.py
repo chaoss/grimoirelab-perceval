@@ -1250,7 +1250,8 @@ class TestBackendItemsGenerator(unittest.TestCase):
             self.assertEqual(big.backend.tag, args['tag'])
             self.assertEqual(len(items), 5)
 
-        with BackendItemsGenerator(CommandBackend, args, category, fetch_archive=True, manager=manager,
+        with BackendItemsGenerator(CommandBackend, args, category,
+                                   manager=manager, fetch_archive=True,
                                    archived_after=str_to_datetime('1970-01-01')) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
             items = [item for item in big.items]
@@ -1299,7 +1300,8 @@ class TestBackendItemsGenerator(unittest.TestCase):
             self.assertEqual(len(items), 5)
 
         # Fetch items from the archive
-        with BackendItemsGenerator(CommandBackend, args, category, fetch_archive=True, manager=manager,
+        with BackendItemsGenerator(CommandBackend, args, category,
+                                   manager=manager, fetch_archive=True,
                                    archived_after=str_to_datetime('1970-01-01')) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
             items = [item for item in big.items]
@@ -1308,7 +1310,8 @@ class TestBackendItemsGenerator(unittest.TestCase):
             self.assertEqual(len(items), 10)
 
         # Fetch items archived after the given date
-        with BackendItemsGenerator(CommandBackend, args, category, fetch_archive=True, manager=manager,
+        with BackendItemsGenerator(CommandBackend, args, category,
+                                   manager=manager, fetch_archive=True,
                                    archived_after=archived_dt) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
             items = [item for item in big.items]
@@ -1393,8 +1396,9 @@ class TestBackendItemsGenerator(unittest.TestCase):
         self.assertEqual(len(items), 5)
 
         # There aren't items for this category
-        with BackendItemsGenerator(CommandBackend, args, 'alt_item', manager=manager,
-                                   archived_after=str_to_datetime('1970-01-01'), fetch_archive=True) as big:
+        with BackendItemsGenerator(CommandBackend, args, 'alt_item',
+                                   manager=manager, fetch_archive=True,
+                                   archived_after=str_to_datetime('1970-01-01')) as big:
             items = [item for item in big.items]
             self.assertEqual(len(items), 0)
 
@@ -1438,8 +1442,9 @@ class TestBackendItemsGenerator(unittest.TestCase):
         delete_rows(to_remove, 'archive')
 
         # Fetch items from the archive
-        with BackendItemsGenerator(CommandBackend, args, category, manager=manager,
-                                   archived_after=str_to_datetime('1970-01-01'), fetch_archive=True) as big:
+        with BackendItemsGenerator(CommandBackend, args, category,
+                                   manager=manager, fetch_archive=True,
+                                   archived_after=str_to_datetime('1970-01-01')) as big:
             items = [item for item in big.items]
             self.assertEqual(len(items), 5)
 
