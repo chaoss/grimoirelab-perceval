@@ -90,7 +90,7 @@ class MockedBackend(Backend):
 
     @staticmethod
     def metadata_updated_on(item):
-        return str_to_datetime('2016-01-01').timestamp()
+        return str_to_datetime('2016-01-01').timestamp() + item['item']
 
     @staticmethod
     def metadata_category(item):
@@ -348,8 +348,8 @@ class TestBackend(unittest.TestCase):
         self.assertIsNone(b.summary.max_offset)
         self.assertIsNone(b.summary.last_offset)
         self.assertEqual(b.summary.min_updated_on.isoformat(), '2016-01-01T00:00:00+00:00')
-        self.assertEqual(b.summary.max_updated_on.isoformat(), '2016-01-01T00:00:00+00:00')
-        self.assertEqual(b.summary.last_updated_on.isoformat(), '2016-01-01T00:00:00+00:00')
+        self.assertEqual(b.summary.max_updated_on.isoformat(), '2016-01-01T00:00:04+00:00')
+        self.assertEqual(b.summary.last_updated_on.isoformat(), '2016-01-01T00:00:04+00:00')
         self.assertEqual(b.summary.last_uuid, '82475202a5efc42c75add425c47ac032340f4f3d')
         self.assertEqual(b.summary.skipped, 0)
         self.assertEqual(b.summary.total, 5)
@@ -1479,8 +1479,8 @@ class TestBackendItemsGenerator(unittest.TestCase):
             self.assertEqual(summary.skipped, 0)
             self.assertEqual(summary.total, 5)
             self.assertEqual(summary.min_updated_on.timestamp(), 1451606400.0)
-            self.assertEqual(summary.max_updated_on.timestamp(), 1451606400.0)
-            self.assertEqual(summary.last_updated_on.timestamp(), 1451606400.0)
+            self.assertEqual(summary.max_updated_on.timestamp(), 1451606404.0)
+            self.assertEqual(summary.last_updated_on.timestamp(), 1451606404.0)
             self.assertEqual(summary.last_uuid, "6130c145435d661565bd7d402be403bea7cfb6b5")
             self.assertIsNone(summary.min_offset)
             self.assertIsNone(summary.max_offset)
@@ -1641,6 +1641,7 @@ class TestMetadata(unittest.TestCase):
             item = items[x]
 
             expected_uuid = uuid('test', str(x))
+            expected_updated_on = 1451606400.0 + item['data']['item']
 
             self.assertEqual(item['data']['item'], x)
             self.assertEqual(item['backend_name'], 'MockedBackend')
@@ -1648,7 +1649,7 @@ class TestMetadata(unittest.TestCase):
             self.assertEqual(item['perceval_version'], __version__)
             self.assertEqual(item['origin'], 'test')
             self.assertEqual(item['uuid'], expected_uuid)
-            self.assertEqual(item['updated_on'], 1451606400.0)
+            self.assertEqual(item['updated_on'], expected_updated_on)
             self.assertEqual(item['category'], 'mock_item')
             self.assertEqual(item['classified_fields_filtered'], None)
             self.assertEqual(item['tag'], 'mytag')
@@ -1667,6 +1668,7 @@ class TestMetadata(unittest.TestCase):
             item = items[x]
 
             expected_uuid = uuid('test', str(x))
+            expected_updated_on = 1451606400.0 + item['data']['item']
 
             self.assertEqual(item['data']['item'], x)
             self.assertEqual(item['backend_name'], 'MockedBackend')
@@ -1674,7 +1676,7 @@ class TestMetadata(unittest.TestCase):
             self.assertEqual(item['perceval_version'], __version__)
             self.assertEqual(item['origin'], 'test')
             self.assertEqual(item['uuid'], expected_uuid)
-            self.assertEqual(item['updated_on'], 1451606400.0)
+            self.assertEqual(item['updated_on'], expected_updated_on)
             self.assertEqual(item['category'], 'mock_item')
             self.assertEqual(item['classified_fields_filtered'], [])
             self.assertEqual(item['tag'], 'mytag')
