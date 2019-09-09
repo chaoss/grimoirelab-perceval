@@ -469,39 +469,37 @@ class BackendCommand:
 
         This method runs the backend to fetch the items from the given
         origin. Items are converted to JSON objects and written to the
-        defined output.
+        defined output. A summary with the result is written to the log.
 
         If `fetch-archive` parameter was given as an argument during
-        the inizialization of the instance, the items will be retrieved
+        the initialization of the instance, the items will be retrieved
         using the archive manager.
         """
         backend_args = vars(self.parsed_args)
         category = backend_args.pop('category', None)
         filter_classified = backend_args.pop('filter_classified', False)
+        fetch_archive = self.archive_manager and self.parsed_args.fetch_archive
         archived_since = backend_args.pop('archived_since', None)
 
-        if self.archive_manager and self.parsed_args.fetch_archive:
-            items = fetch_from_archive(self.BACKEND, backend_args,
-                                       self.archive_manager,
-                                       category,
-                                       archived_since)
-        else:
-            items = fetch(self.BACKEND, backend_args, category,
-                          filter_classified=filter_classified,
-                          manager=self.archive_manager)
+        with BackendItemsGenerator(self.BACKEND, backend_args, category,
+                                   filter_classified=filter_classified,
+                                   manager=self.archive_manager,
+                                   fetch_archive=fetch_archive,
+                                   archived_after=archived_since) as big:
+            try:
+                for item in big.items:
+                    if self.json_line:
+                        obj = json.dumps(item, separators=(',', ':'), sort_keys=True)
+                    else:
+                        obj = json.dumps(item, indent=4, sort_keys=True)
+                    self.outfile.write(obj)
+                    self.outfile.write('\n')
 
-        try:
-            for item in items:
-                if self.json_line:
-                    obj = json.dumps(item, separators=(',', ':'), sort_keys=True)
-                else:
-                    obj = json.dumps(item, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            raise RuntimeError(str(e))
+                self._log_summary(big.summary)
+            except IOError as e:
+                raise RuntimeError(str(e))
+            except Exception as e:
+                raise RuntimeError(str(e))
 
     def _pre_init(self):
         """Override to execute before backend is initialized."""
@@ -527,6 +525,44 @@ class BackendCommand:
             manager = ArchiveManager(archive_path)
 
         self.archive_manager = manager
+
+    def _log_summary(self, summary):
+        """Write a formatted summary to the log."""
+
+        template = (
+            "Summary of results\n\n"
+            "\t   Total items: \t{total}\n"
+            "\tItems produced: \t{fetched}\n"
+            "\t Items skipped: \t{skipped}\n"
+            "\n"
+            "\tLast item UUID: \t{last_uuid}\n"
+            "\tLast item date: \t{last_updated_on}\n"
+            "\n"
+            "\tMin. item date: \t{min_updated_on}\n"
+            "\tMax. item date: \t{max_updated_on}\n"
+            "\n"
+            "\tMin. offset: \t{min_offset}"
+            "\tMax. offset: \t{max_offset}"
+            "\tLast offset: \t{last_offset}\n"
+            "\n"
+        )
+
+        values = {
+            'total': summary.total,
+            'fetched': summary.fetched,
+            'skipped': summary.skipped,
+            'last_uuid': summary.last_uuid or '-',
+            'last_updated_on': summary.last_updated_on or '-',
+            'min_updated_on': summary.min_updated_on or '-',
+            'max_updated_on': summary.max_updated_on or '-',
+            'min_offset': summary.min_offset or '-',
+            'max_offset': summary.min_offset or '-',
+            'last_offset': summary.last_offset or '-',
+
+        }
+        message = template.format(**values)
+
+        logger.info(message)
 
     @classmethod
     def setup_cmd_parser(cls):

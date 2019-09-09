@@ -53,6 +53,23 @@ from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
 
 
+SUMMARY_LOG_REPORT = """INFO:perceval.backend:Summary of results
+
+\t   Total items: \t5
+\tItems produced: \t5
+\t Items skipped: \t0
+
+\tLast item UUID: \t6130c145435d661565bd7d402be403bea7cfb6b5
+\tLast item date: \t2016-01-01 00:00:04+00:00
+
+\tMin. item date: \t2016-01-01 00:00:00+00:00
+\tMax. item date: \t2016-01-01 00:00:04+00:00
+
+\tMin. offset: \t-\tMax. offset: \t-\tLast offset: \t-
+
+"""
+
+
 class MockedBackend(Backend):
     """Mocked backend for testing"""
 
@@ -1183,6 +1200,27 @@ class TestBackendCommand(unittest.TestCase):
                 },
             }
             self.assertDictEqual(item['data'], expected)
+
+    def test_summary_logging(self):
+        """Test if the summary is written to the log"""
+
+        args = ['-u', 'jsmith', '-p', '1234', '-t', 'abcd',
+                '--archive-path', self.test_path, '--category', MockedBackend.DEFAULT_CATEGORY,
+                '--subtype', 'mocksubtype',
+                '--from-date', '2015-01-01', '--tag', 'test',
+                '--output', self.fout_path, 'http://example.com/']
+
+        with self.assertLogs('perceval.backend', level='INFO') as cm:
+            cmd = MockedBackendCommand(*args)
+            cmd.run()
+            cmd.outfile.close()
+
+            items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+
+            self.assertEqual(len(items), 5)
+
+            # The last message should be the summary output
+            self.assertEqual(cm.output[-1], SUMMARY_LOG_REPORT)
 
 
 class TestBackendItemsGenerator(unittest.TestCase):
