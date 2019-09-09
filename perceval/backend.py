@@ -30,7 +30,8 @@ import sys
 
 from grimoirelab_toolkit.introspect import find_signature_parameters
 from grimoirelab_toolkit.datetime import (datetime_utcnow,
-                                          str_to_datetime)
+                                          str_to_datetime,
+                                          unixtime_to_datetime)
 from .archive import Archive, ArchiveManager
 from .errors import ArchiveError, BackendError
 from ._version import __version__
@@ -49,7 +50,7 @@ class Backend:
     will be named as 'origin'. During the initialization, an `Archive`
     object can be provided for archiving raw data from the repositories.
 
-    Derivated classes have to implement `fetch_items`, `has_archiving` and
+    Derived classes have to implement `fetch_items`, `has_archiving` and
     `has_resuming` methods. Otherwise, `NotImplementedError`
     exception will be raised. Metadata decorator can be used together with
     fetch methods but requires the implementation of `metadata_id`,
@@ -74,6 +75,14 @@ class Backend:
     Classified data filtering and archiving are not compatible to prevent
     data leaks or security issues.
 
+    Each fetch operation generates a summary, available via the property
+    `summary`. By default, it includes the last UUID generated, number
+    of items fetched, skipped and their sum, plus the min, max and last
+    updated_on times. Furthermore, for backends using offsets, the
+    corresponding summary contains the min and max offsets retrieved. Finally,
+    the summary also includes some extra fields, which can be used by any
+    backend to include fetch-specific information.
+
     :param origin: identifier of the repository
     :param tag: tag items using this label
     :param archive: archive to store/retrieve data
@@ -81,7 +90,7 @@ class Backend:
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     CATEGORIES = []
     CLASSIFIED_FIELDS = []
@@ -90,10 +99,15 @@ class Backend:
         self._origin = origin
         self.tag = tag if tag else origin
         self.archive = archive or None
+        self._summary = None
 
     @property
     def origin(self):
         return self._origin
+
+    @property
+    def summary(self):
+        return self._summary
 
     @property
     def archive(self):
@@ -144,6 +158,8 @@ class Backend:
         :raises BackendError: either when the category is not valid or
             'filter_classified' and 'archive' are active at the same time.
         """
+        self._summary = Summary()
+
         if category not in self.categories:
             cause = "%s category not valid for %s" % (category, self.__class__.__name__)
             raise BackendError(cause=cause)
@@ -162,7 +178,10 @@ class Backend:
             if filter_classified:
                 item = self.filter_classified_data(item)
 
-            yield self.metadata(item, filter_classified=filter_classified)
+            metadata_item = self.metadata(item, filter_classified=filter_classified)
+            self.summary.update(metadata_item)
+
+            yield metadata_item
 
     def fetch_from_archive(self):
         """Fetch the questions from an archive.
@@ -177,10 +196,14 @@ class Backend:
         if not self.archive:
             raise ArchiveError(cause="archive instance was not provided")
 
+        self._summary = Summary()
         self.client = self._init_client(from_archive=True)
 
         for item in self.fetch_items(self.archive.category, **self.archive.backend_params):
-            yield self.metadata(item)
+            metadata_item = self.metadata(item)
+            self.summary.update(metadata_item)
+
+            yield metadata_item
 
     def filter_classified_data(self, item):
         """Remove classified or confidential data from an item.
@@ -415,15 +438,15 @@ class BackendCommand:
     """Abstract class to run backends from the command line.
 
     When the class is initialized, it parses the given arguments using
-    the defined argument parser on `setump_cmd_parser` method. Those
+    the defined argument parser on `setup_cmd_parser` method. Those
     arguments will be stored in the attribute `parsed_args`.
 
-    The arguments will be used to inizialize and run the `Backend` object
+    The arguments will be used to initialize and run the `Backend` object
     assigned to this command. The backend used to run the command is stored
     under `BACKEND` class attributed. Any class derived from this and must
     set its own `Backend` class.
 
-    Moreover, the method `setup_cmd_parser` must be implemented to exectute
+    Moreover, the method `setup_cmd_parser` must be implemented to execute
     the backend.
     """
     BACKEND = None
@@ -446,39 +469,37 @@ class BackendCommand:
 
         This method runs the backend to fetch the items from the given
         origin. Items are converted to JSON objects and written to the
-        defined output.
+        defined output. A summary with the result is written to the log.
 
         If `fetch-archive` parameter was given as an argument during
-        the inizialization of the instance, the items will be retrieved
+        the initialization of the instance, the items will be retrieved
         using the archive manager.
         """
         backend_args = vars(self.parsed_args)
         category = backend_args.pop('category', None)
         filter_classified = backend_args.pop('filter_classified', False)
+        fetch_archive = self.archive_manager and self.parsed_args.fetch_archive
         archived_since = backend_args.pop('archived_since', None)
 
-        if self.archive_manager and self.parsed_args.fetch_archive:
-            items = fetch_from_archive(self.BACKEND, backend_args,
-                                       self.archive_manager,
-                                       category,
-                                       archived_since)
-        else:
-            items = fetch(self.BACKEND, backend_args, category,
-                          filter_classified=filter_classified,
-                          manager=self.archive_manager)
+        with BackendItemsGenerator(self.BACKEND, backend_args, category,
+                                   filter_classified=filter_classified,
+                                   manager=self.archive_manager,
+                                   fetch_archive=fetch_archive,
+                                   archived_after=archived_since) as big:
+            try:
+                for item in big.items:
+                    if self.json_line:
+                        obj = json.dumps(item, separators=(',', ':'), sort_keys=True)
+                    else:
+                        obj = json.dumps(item, indent=4, sort_keys=True)
+                    self.outfile.write(obj)
+                    self.outfile.write('\n')
 
-        try:
-            for item in items:
-                if self.json_line:
-                    obj = json.dumps(item, separators=(',', ':'), sort_keys=True)
-                else:
-                    obj = json.dumps(item, indent=4, sort_keys=True)
-                self.outfile.write(obj)
-                self.outfile.write('\n')
-        except IOError as e:
-            raise RuntimeError(str(e))
-        except Exception as e:
-            raise RuntimeError(str(e))
+                self._log_summary(big.summary)
+            except IOError as e:
+                raise RuntimeError(str(e))
+            except Exception as e:
+                raise RuntimeError(str(e))
 
     def _pre_init(self):
         """Override to execute before backend is initialized."""
@@ -489,7 +510,7 @@ class BackendCommand:
         pass
 
     def _initialize_archive(self):
-        """Initialize archive based on the parsed parameters"""
+        """Initialize archive based on the parsed parameters."""
 
         if 'archive_path' not in self.parsed_args:
             manager = None
@@ -505,9 +526,223 @@ class BackendCommand:
 
         self.archive_manager = manager
 
+    def _log_summary(self, summary):
+        """Write a formatted summary to the log."""
+
+        template = (
+            "Summary of results\n\n"
+            "\t   Total items: \t{total}\n"
+            "\tItems produced: \t{fetched}\n"
+            "\t Items skipped: \t{skipped}\n"
+            "\n"
+            "\tLast item UUID: \t{last_uuid}\n"
+            "\tLast item date: \t{last_updated_on}\n"
+            "\n"
+            "\tMin. item date: \t{min_updated_on}\n"
+            "\tMax. item date: \t{max_updated_on}\n"
+            "\n"
+            "\tMin. offset: \t{min_offset}"
+            "\tMax. offset: \t{max_offset}"
+            "\tLast offset: \t{last_offset}\n"
+            "\n"
+        )
+
+        values = {
+            'total': summary.total,
+            'fetched': summary.fetched,
+            'skipped': summary.skipped,
+            'last_uuid': summary.last_uuid or '-',
+            'last_updated_on': summary.last_updated_on or '-',
+            'min_updated_on': summary.min_updated_on or '-',
+            'max_updated_on': summary.max_updated_on or '-',
+            'min_offset': summary.min_offset or '-',
+            'max_offset': summary.min_offset or '-',
+            'last_offset': summary.last_offset or '-',
+
+        }
+        message = template.format(**values)
+
+        logger.info(message)
+
     @classmethod
     def setup_cmd_parser(cls):
         raise NotImplementedError
+
+
+class BackendItemsGenerator:
+    """BackendItemsGenerator class.
+
+    This class provides a generator through the `items` attribute that
+    will fetch items from any data source and/or archive in a transparent
+    way. A summary with the result of the process can be accessed via
+    the attribute `summary`.
+
+    To initialize an instance is necessary to pass the backend that will
+    be used to fetch data, its parameters and other useful data as the
+    category of the items to retrieve and the archive options.
+
+    This object can also be used as a context manager.
+
+    :param backend_class: backend class to fetch items
+    :param backend_args: dict of arguments needed to fetch the items
+    :param category: category of the items to retrieve
+       If None, it will use the default backend category
+    :param filter_classified: remove classified fields from the
+        resulting items. Note that filter classified is not supported
+        for archived items.
+    :param manager: archive manager where the items will be retrieved
+    :param fetch_archive: If enabled, items are fetched from archives
+    :param archived_after: return items archived after this date
+    """
+    def __init__(self, backend_class, backend_args, category,
+                 filter_classified=False, manager=None,
+                 fetch_archive=False, archived_after=None):
+        init_args = find_signature_parameters(backend_class.__init__,
+                                              backend_args)
+
+        if not fetch_archive:
+            archive = manager.create_archive() if manager else None
+            init_args['archive'] = archive
+            self.backend = backend_class(**init_args)
+            items = self.__fetch(backend_args, category,
+                                 filter_classified=filter_classified,
+                                 manager=manager)
+        else:
+            self.backend = backend_class(**init_args)
+            items = self.__fetch_from_archive(category, manager, archived_after)
+
+        self.items = items
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.backend = None
+        self.items = None
+
+    @property
+    def summary(self):
+        """Return the summary object of the last fetch execution"""
+
+        return self.backend.summary
+
+    def __fetch(self, backend_args, category, filter_classified=False,
+                manager=None):
+        """Fetch items using the given backend.
+
+        Generator to get items using the backend. When an archive manager
+        is given, this function will store the fetched items in an `Archive`.
+        If an exception is raised, this archive will be removed to avoid
+        corrupted archives.
+
+        The parameters needed to get the items are given using the
+        `backend_args` dict parameter.
+
+        :param backend_args: dict of arguments needed to fetch the items
+        :param category: category of the items to retrieve.
+            If None, it will use the default backend category
+        :param filter_classified: remove classified fields from the resulting
+            items
+        :param manager: archive manager needed to store the items
+
+        :returns: a generator of items
+        """
+        if category:
+            backend_args['category'] = category
+        if filter_classified:
+            backend_args['filter_classified'] = filter_classified
+
+        fetch_args = find_signature_parameters(self.backend.fetch,
+                                               backend_args)
+        items = self.backend.fetch(**fetch_args)
+
+        try:
+            for item in items:
+                yield item
+        except Exception as e:
+            if manager:
+                archive_path = self.backend.archive.archive_path
+                manager.remove_archive(archive_path)
+            raise e
+
+    def __fetch_from_archive(self, category, manager, archived_after):
+        """Fetch items from an archive manager.
+
+        Generator to get the items of a category (previously fetched
+        by the backend) from an archive manager. Only those items
+        archived after the given date will be returned.
+
+        :param category: category of the items to retrieve
+        :param manager: archive manager where the items will be retrieved
+        :param archived_after: return items archived after this date
+
+        :returns: a generator of archived items
+        """
+        filepaths = manager.search(self.backend.origin,
+                                   self.backend.__class__.__name__,
+                                   category,
+                                   archived_after)
+
+        for filepath in filepaths:
+            self.backend.archive = Archive(filepath)
+            items = self.backend.fetch_from_archive()
+
+            try:
+                for item in items:
+                    yield item
+            except ArchiveError as e:
+                logger.warning("Ignoring %s archive due to: %s", filepath, str(e))
+
+
+class Summary:
+    """Summary class for fetch executions.
+
+    This class models the summary of a fetch execution. It includes
+    the last UUID, number of items fetched, skipped and their sum,
+    plus the minimum, maximum and last updated_on times.
+
+    Furthermore, for backends using offsets, the corresponding summary
+    contains the minimum, maximum and last offsets retrieved.
+
+    Finally, the summary also includes some extra fields, which can
+    be used by any backend to include fetch-specific information.
+    """
+    def __init__(self):
+        self.fetched = 0
+        self.skipped = 0
+        self.min_updated_on = None
+        self.max_updated_on = None
+        self.last_updated_on = None
+        self.last_uuid = None
+        self.min_offset = None
+        self.max_offset = None
+        self.last_offset = None
+        self.extras = None
+
+    @property
+    def total(self):
+        """Number of items retrieved. This includes fetched and skipped items."""
+
+        return self.fetched + self.skipped
+
+    def update(self, item):
+        """Update the summary attributes by accessing the item data.
+
+        :param item: a Perceval item
+        """
+        self.fetched += 1
+        self.last_uuid = item['uuid']
+
+        updated_on = unixtime_to_datetime(item['updated_on'])
+        self.min_updated_on = updated_on if not self.min_updated_on else min(self.min_updated_on, updated_on)
+        self.max_updated_on = updated_on if not self.max_updated_on else max(self.max_updated_on, updated_on)
+        self.last_updated_on = updated_on
+
+        offset = item.get('offset', None)
+        if offset is not None:
+            self.last_offset = offset
+            self.min_offset = offset if self.min_offset is None else min(self.min_offset, offset)
+            self.max_offset = offset if self.max_offset is None else max(self.max_offset, offset)
 
 
 def uuid(*args):
