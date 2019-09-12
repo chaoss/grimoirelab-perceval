@@ -32,7 +32,8 @@ from grimoirelab_toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient, RateLimitHandler
 from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 
@@ -94,7 +95,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.22.2'
+    version = '0.23.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -124,6 +125,23 @@ class GitHub(Backend):
 
         self.client = None
         self._users = {}  # internal users cache
+
+    def search_fields(self, item):
+        """Add search fields to an item.
+
+        It adds the values of `metadata_id` plus the `owner` and `repo`.
+
+        :param item: the item to extract the search fields values
+
+        :returns: a dict of search fields
+        """
+        search_fields = {
+            DEFAULT_SEARCH_FIELD: self.metadata_id(item),
+            'owner': self.owner,
+            'repo': self.repository
+        }
+
+        return search_fields
 
     def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME):
         """Fetch the issues/pull requests from the repository.
