@@ -27,7 +27,8 @@ from grimoirelab_toolkit.uris import urijoin
 
 from .mbox import MBox, MailingList, CATEGORY_MESSAGE
 from ...backend import (BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        DEFAULT_SEARCH_FIELD)
 from ...errors import BackendError
 from ...utils import DEFAULT_DATETIME
 
@@ -64,7 +65,7 @@ class Groupsio(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -75,6 +76,24 @@ class Groupsio(MBox):
         self.password = password
         self.group_name = group_name
         self.verify = verify
+
+    def search_fields(self, item):
+        """Add search fields to an item.
+
+        It adds the values of `metadata_id` plus the `group_name`
+
+        :param item: the item to extract the search fields values
+
+        :returns: a dict of search fields
+        """
+        search_fields = {
+            DEFAULT_SEARCH_FIELD: self.metadata_id(item)
+        }
+
+        origin_parts = self.origin.split('/')
+        search_fields['group_name'] = origin_parts[-1]
+
+        return search_fields
 
     def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
         """Fetch the messages from a Groups.io group.
