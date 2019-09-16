@@ -329,6 +329,96 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(issue['data']['comments_data'], [])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        bodies_json = [read_file('data/jira/jira_issues_page_1.json'),
+                       read_file('data/jira/jira_issues_page_2.json')]
+        comment_json = read_file('data/jira/jira_comments_issue_page_2.json')
+        empty_comment = read_file('data/jira/jira_comments_issue_empty.json')
+
+        body = read_file('data/jira/jira_fields.json')
+
+        def request_callback(method, uri, headers):
+            body = bodies_json.pop(0)
+            return 200, headers, body
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_SEARCH_URL,
+                               responses=[httpretty.Response(body=request_callback)
+                                          for _ in range(2)])
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_1_COMMENTS_URL,
+                               body=empty_comment,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_2_COMMENTS_URL,
+                               body=comment_json,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_ISSUE_3_COMMENTS_URL,
+                               body=empty_comment,
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               JIRA_FIELDS_URL,
+                               body=body, status=200)
+
+        jira = Jira(JIRA_SERVER_URL)
+        issues = [issue for issue in jira.fetch()]
+
+        issue = issues[0]
+        self.assertEqual(issue['origin'], 'http://example.com')
+        self.assertEqual(issue['uuid'], '6a7ba2a01aee56603b9d8a5f6b40c843fc089b2f')
+        self.assertEqual(issue['updated_on'], 1457015567)
+        self.assertEqual(issue['category'], 'issue')
+        self.assertEqual(issue['tag'], 'http://example.com')
+        self.assertEqual(jira.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['fields']['project']['id'], '10841')
+        self.assertEqual(issue['data']['fields']['project']['id'], issue['search_fields']['project_id'])
+        self.assertEqual(issue['data']['fields']['project']['key'], 'HELP')
+        self.assertEqual(issue['data']['fields']['project']['key'], issue['search_fields']['project_key'])
+        self.assertEqual(issue['data']['fields']['project']['name'], 'Help-Desk')
+        self.assertEqual(issue['data']['fields']['project']['name'], issue['search_fields']['project_name'])
+        self.assertEqual(issue['data']['key'], 'HELP-6043')
+        self.assertEqual(issue['data']['key'], issue['search_fields']['issue_key'])
+
+        issue = issues[1]
+        self.assertEqual(issue['origin'], 'http://example.com')
+        self.assertEqual(issue['uuid'], '3c3d67925b108a37f88cc6663f7f7dd493fa818c')
+        self.assertEqual(issue['updated_on'], 1457015417)
+        self.assertEqual(issue['category'], 'issue')
+        self.assertEqual(issue['tag'], 'http://example.com')
+        self.assertEqual(jira.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['fields']['project']['id'], '10841')
+        self.assertEqual(issue['data']['fields']['project']['id'], issue['search_fields']['project_id'])
+        self.assertEqual(issue['data']['fields']['project']['key'], 'HELP')
+        self.assertEqual(issue['data']['fields']['project']['key'], issue['search_fields']['project_key'])
+        self.assertEqual(issue['data']['fields']['project']['name'], 'Help-Desk')
+        self.assertEqual(issue['data']['fields']['project']['name'], issue['search_fields']['project_name'])
+        self.assertEqual(issue['data']['key'], 'HELP-6042')
+        self.assertEqual(issue['data']['key'], issue['search_fields']['issue_key'])
+
+        issue = issues[2]
+        self.assertEqual(issue['origin'], 'http://example.com')
+        self.assertEqual(issue['uuid'], '1c7765e2a5d27495cf389f5f951c544693c4655f')
+        self.assertEqual(issue['updated_on'], 1457006245)
+        self.assertEqual(issue['category'], 'issue')
+        self.assertEqual(issue['tag'], 'http://example.com')
+        self.assertEqual(jira.metadata_id(issue['data']), issue['search_fields']['item_id'])
+        self.assertEqual(issue['data']['fields']['project']['id'], '10843')
+        self.assertEqual(issue['data']['fields']['project']['id'], issue['search_fields']['project_id'])
+        self.assertEqual(issue['data']['fields']['project']['key'], 'HELP')
+        self.assertEqual(issue['data']['fields']['project']['key'], issue['search_fields']['project_key'])
+        self.assertEqual(issue['data']['fields']['project']['name'], 'Help-Desk')
+        self.assertEqual(issue['data']['fields']['project']['name'], issue['search_fields']['project_name'])
+        self.assertEqual(issue['data']['key'], 'HELP-6041')
+        self.assertEqual(issue['data']['key'], issue['search_fields']['issue_key'])
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test whether a list of issues is returned from a given date"""
 

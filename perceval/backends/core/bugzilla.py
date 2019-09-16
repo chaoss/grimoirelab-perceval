@@ -59,9 +59,13 @@ class Bugzilla(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.3'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_BUG]
+    EXTRA_SEARCH_FIELDS = {
+        'product': ['product', 0, '__text__'],
+        'component': ['component', 0, '__text__']
+    }
 
     def __init__(self, url, user=None, password=None,
                  max_bugs=MAX_BUGS, max_bugs_csv=MAX_BUGS_CSV,

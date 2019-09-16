@@ -173,6 +173,25 @@ class TestNNTPBackend(unittest.TestCase):
             self.assertEqual(article['tag'], expected_origin)
 
     @unittest.mock.patch('nntplib.NNTP')
+    def test_search_fields(self, mock_nntp):
+        """Test whether the search_fields is properly set"""
+
+        mock_nntp.return_value = MockNNTPLib()
+
+        nntp = NNTP(NNTP_SERVER, NNTP_GROUP)
+        articles = [article for article in nntp.fetch(offset=None)]
+
+        article = articles[0]
+        self.assertEqual(nntp.metadata_id(article['data']), article['search_fields']['item_id'])
+        self.assertEqual(article['data']['Newsgroups'], 'example.dev.project-link')
+        self.assertEqual(article['data']['Newsgroups'], article['search_fields']['newsgroups'])
+
+        article = articles[1]
+        self.assertEqual(nntp.metadata_id(article['data']), article['search_fields']['item_id'])
+        self.assertEqual(article['data']['Newsgroups'], 'mozilla.dev.project-link')
+        self.assertEqual(article['data']['Newsgroups'], article['search_fields']['newsgroups'])
+
+    @unittest.mock.patch('nntplib.NNTP')
     def test_fetch_from_offset(self, mock_nntp):
         """Test whether it fetches a set of articles from a given offset"""
 

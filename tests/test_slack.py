@@ -293,6 +293,40 @@ class TestSlackBackend(unittest.TestCase):
 
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
+    def test_search_fields(self, mock_utcnow):
+        """Test whether the search_fields is properly set"""
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        setup_http_server()
+
+        slack = Slack('C011DUKE8', 'aaaa', max_items=5)
+        messages = [msg for msg in slack.fetch(from_date=None)]
+
+        message = messages[0]
+        self.assertEqual(slack.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertEqual(message['data']['channel_info']['name'], 'test channel')
+        self.assertEqual(message['data']['channel_info']['name'], message['search_fields']['channel_name'])
+        self.assertEqual(message['data']['channel_info']['id'], 'C011DUKE8')
+        self.assertEqual(message['data']['channel_info']['id'], message['search_fields']['channel_id'])
+
+        message = messages[1]
+        self.assertEqual(slack.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertEqual(message['data']['channel_info']['name'], 'test channel')
+        self.assertEqual(message['data']['channel_info']['name'], message['search_fields']['channel_name'])
+        self.assertEqual(message['data']['channel_info']['id'], 'C011DUKE8')
+        self.assertEqual(message['data']['channel_info']['id'], message['search_fields']['channel_id'])
+
+        message = messages[2]
+        self.assertEqual(slack.metadata_id(message['data']), message['search_fields']['item_id'])
+        self.assertEqual(message['data']['channel_info']['name'], 'test channel')
+        self.assertEqual(message['data']['channel_info']['name'], message['search_fields']['channel_name'])
+        self.assertEqual(message['data']['channel_info']['id'], 'C011DUKE8')
+        self.assertEqual(message['data']['channel_info']['id'], message['search_fields']['channel_id'])
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.slack.datetime_utcnow')
     def test_fetch_archived_channel(self, mock_utcnow):
         """Test if it fetches a list of messages from an archived channel"""
 

@@ -235,6 +235,36 @@ class TestHyperKittyBackend(unittest.TestCase):
 
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.hyperkitty.datetime_utcnow')
+    def test_search_fields(self, mock_utcnow):
+        """Test whether the search_fields is properly set"""
+
+        mock_utcnow.return_value = datetime.datetime(2016, 4, 10,
+                                                     tzinfo=dateutil.tz.tzutc())
+
+        mbox_march = read_file('data/hyperkitty/hyperkitty_2016_march.mbox')
+        mbox_april = read_file('data/hyperkitty/hyperkitty_2016_april.mbox')
+
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL,
+                               body="")
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL + 'export/2016-03.mbox.gz',
+                               body=mbox_march)
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL + 'export/2016-04.mbox.gz',
+                               body=mbox_april)
+
+        from_date = datetime.datetime(2016, 3, 10)
+
+        backend = HyperKitty('http://example.com/archives/list/test@example.com/',
+                             self.tmp_path)
+        messages = [m for m in backend.fetch(from_date=from_date)]
+
+        for message in messages:
+            self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.hyperkitty.datetime_utcnow')
     def test_fetch_from_date_after_current_day(self, mock_utcnow):
         """Test if it does not fetch anything when from_date is a date from the future"""
 

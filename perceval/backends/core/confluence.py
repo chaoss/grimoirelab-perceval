@@ -30,12 +30,17 @@ from grimoirelab_toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
 CATEGORY_HISTORICAL_CONTENT = "historical content"
 MAX_CONTENTS = 200
+SEARCH_ANCESTOR_IDS = 'ancestor_ids'
+SEARCH_CONTENT_ID = 'content_id'
+SEARCH_CONTENT_VERSION_NUMBER = 'version_number'
+
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +57,7 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.10.1'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 
@@ -62,6 +67,37 @@ class Confluence(Backend):
         super().__init__(origin, tag=tag, archive=archive)
         self.url = url
         self.client = None
+
+    def search_fields(self, item):
+        """Add search fields to an item.
+
+        It adds the values of `metadata_id` plus the page ancestor IDs,
+        the content ID and the content version number.
+
+        :param item: the item to extract the search fields values
+
+        :returns: a dict of search fields
+        """
+        search_fields = {
+            DEFAULT_SEARCH_FIELD: self.metadata_id(item),
+            SEARCH_ANCESTOR_IDS: None,
+            SEARCH_CONTENT_ID: None,
+            SEARCH_CONTENT_VERSION_NUMBER: None
+        }
+
+        ancestors_ids = []
+
+        ancestors = item.get('ancestors', None)
+        if ancestors:
+            for ancestor in ancestors:
+                if 'id' in ancestor:
+                    ancestors_ids.append(ancestor['id'])
+
+        search_fields[SEARCH_ANCESTOR_IDS] = ancestors_ids
+        search_fields[SEARCH_CONTENT_ID] = item['id']
+        search_fields[SEARCH_CONTENT_VERSION_NUMBER] = item['version']['number']
+
+        return search_fields
 
     def fetch(self, category=CATEGORY_HISTORICAL_CONTENT, from_date=DEFAULT_DATETIME):
         """Fetch the contents by version from the server.

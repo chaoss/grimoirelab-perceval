@@ -178,6 +178,19 @@ class TestGroupsioBackend(unittest.TestCase):
         self.assertEqual(message['tag'], 'https://groups.io/g/beta+api')
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server()
+
+        backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa')
+        messages = [m for m in backend.fetch()]
+
+        for message in messages:
+            self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
+            self.assertEqual(message['search_fields']['group_name'], 'beta+api')
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test whether it fetches and parses messages since the given date"""
 

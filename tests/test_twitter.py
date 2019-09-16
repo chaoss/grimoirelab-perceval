@@ -170,6 +170,32 @@ class TestTwitterBackend(unittest.TestCase):
             self.assertEqual(tweet['tag'], 'https://twitter.com/')
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server()
+        twitter = Twitter('query', 'my-token', max_items=2)
+        tweets = [tweets for tweets in twitter.fetch()]
+
+        tweet = tweets[0]
+        hashtags = [h['text'] for h in tweet['data']['entities'].get('hashtags', [])]
+        self.assertEqual(twitter.metadata_id(tweet['data']), tweet['search_fields']['item_id'])
+        self.assertListEqual(hashtags, ['openexpoeurope'])
+        self.assertListEqual(tweet['search_fields']['hashtags'], ['openexpoeurope'])
+
+        tweet = tweets[1]
+        hashtags = [h['text'] for h in tweet['data']['entities'].get('hashtags', [])]
+        self.assertEqual(twitter.metadata_id(tweet['data']), tweet['search_fields']['item_id'])
+        self.assertListEqual(hashtags, ['OpenExpo18'])
+        self.assertListEqual(tweet['search_fields']['hashtags'], ['OpenExpo18'])
+
+        tweet = tweets[2]
+        hashtags = [h['text'] for h in tweet['data']['entities'].get('hashtags', [])]
+        self.assertEqual(twitter.metadata_id(tweet['data']), tweet['search_fields']['item_id'])
+        self.assertListEqual(hashtags, ['structure', 'community'])
+        self.assertListEqual(tweet['search_fields']['hashtags'], ['structure', 'community'])
+
+    @httpretty.activate
     def test_fetch_no_tweets(self):
         """Test whether an empty list is returned if no tweets are available"""
 

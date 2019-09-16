@@ -419,6 +419,27 @@ class TestPhabricatorBackend(unittest.TestCase):
             self.assertIn(rparams, expected)
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server()
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA')
+        tasks = [task for task in phab.fetch(from_date=None)]
+
+        task = tasks[0]
+        self.assertEqual(phab.metadata_id(task['data']), task['search_fields']['item_id'])
+
+        task = tasks[1]
+        self.assertEqual(phab.metadata_id(task['data']), task['search_fields']['item_id'])
+
+        task = tasks[2]
+        self.assertEqual(phab.metadata_id(task['data']), task['search_fields']['item_id'])
+
+        task = tasks[3]
+        self.assertEqual(phab.metadata_id(task['data']), task['search_fields']['item_id'])
+
+    @httpretty.activate
     def test_fetch_from_date(self):
         """Test wether if fetches a set of tasks from the given date"""
 

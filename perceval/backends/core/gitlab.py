@@ -34,7 +34,8 @@ from grimoirelab_toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient, RateLimitHandler
 from ...utils import DEFAULT_DATETIME
 from ...errors import BackendError
@@ -84,7 +85,7 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
 
@@ -112,6 +113,35 @@ class GitLab(Backend):
         self.blacklist_ids = blacklist_ids
         self.client = None
         self._users = {}  # internal users cache
+
+    def search_fields(self, item):
+        """Add search fields to an item.
+
+        It adds the values of `metadata_id` plus the `owner`, `project`
+        and `iid` of the issue or merge requests. Optionally, if the project
+        is part of a (nested) group, all groups are also included to the search
+        fields via the attribute `groups`.
+
+        :param item: the item to extract the search fields values
+
+        :returns: a dict of search fields
+        """
+        search_fields = {
+            DEFAULT_SEARCH_FIELD: self.metadata_id(item),
+            'owner': self.owner,
+            'iid': item['iid'],
+            'project': None,
+            'groups': None
+        }
+
+        if '%2F' in self.repository:
+            projects = self.repository.split('%2F')
+            search_fields['project'] = projects[-1]
+            search_fields['groups'] = projects[:-1]
+        else:
+            search_fields['project'] = self.repository
+
+        return search_fields
 
     def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
         """Fetch the issues/merge requests from the repository.

@@ -57,9 +57,12 @@ class Jenkins(Backend):
         of connection problems
     :param archive: collect builds already retrieved from an archive
     """
-    version = '0.12.0'
+    version = '0.13.0'
 
     CATEGORIES = [CATEGORY_BUILD]
+    EXTRA_SEARCH_FIELDS = {
+        'number': ['number']
+    }
 
     def __init__(self, url, user=None, api_token=None, tag=None, archive=None,
                  blacklist_jobs=None, detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME):

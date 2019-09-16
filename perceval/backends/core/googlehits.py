@@ -58,9 +58,12 @@ class GoogleHits(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.2.2'
+    version = '0.3.0'
 
     CATEGORIES = [CATEGORY_HITS]
+    EXTRA_SEARCH_FIELDS = {
+        'keywords': ['keywords']
+    }
 
     def __init__(self, keywords, tag=None, archive=None,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):

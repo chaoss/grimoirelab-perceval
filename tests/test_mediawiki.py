@@ -199,6 +199,23 @@ class TestMediaWikiBackend(unittest.TestCase):
             _ = [page for page in mediawiki.fetch(from_date=from_date)]
 
     @httpretty.activate
+    def _test_search_fields(self, version):
+        """Test whether the pages with their reviews are returned"""
+
+        HTTPServer.routes(version)
+
+        # Test fetch pages with their reviews
+        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
+
+        pages = [page for page in mediawiki.fetch()]
+
+        page = pages[0]
+        self.assertEqual(mediawiki.metadata_id(page['data']), page['search_fields']['item_id'])
+
+        page = pages[1]
+        self.assertEqual(mediawiki.metadata_id(page['data']), page['search_fields']['item_id'])
+
+    @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.mediawiki.datetime_utcnow')
     def _test_fetch_version(self, version, mock_utcnow, from_date=None, reviews_api=False):
         """Test whether the pages with their reviews are returned"""
@@ -248,6 +265,8 @@ class TestMediaWikiBackend_1_23(TestMediaWikiBackend):
                              'WARNING:perceval.backends.core.mediawiki:Revisions not found in NewEditor:Test '
                              '[page id: 476589], page skipped')
 
+        self._test_search_fields("1.23")
+
     @httpretty.activate
     def test_fetch_from_date(self):
         from_date = dateutil.parser.parse("2016-06-23 15:35")
@@ -286,6 +305,8 @@ class TestMediaWikiBackend_1_28(TestMediaWikiBackend):
             self.assertEqual(cm.output[0],
                              'WARNING:perceval.backends.core.mediawiki:Revisions not found in NewEditor:Test '
                              '[page id: 476589], page skipped')
+
+        self._test_search_fields("1.28")
 
     @httpretty.activate
     def test_fetch_from_date(self):

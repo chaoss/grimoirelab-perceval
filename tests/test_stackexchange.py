@@ -115,6 +115,25 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertDictEqual(questions[0]['data'], data['items'][0])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        question = read_file('data/stackexchange/stackexchange_question')
+
+        httpretty.register_uri(httpretty.GET,
+                               STACKEXCHANGE_QUESTIONS_URL,
+                               body=question, status=200)
+
+        stack = StackExchange(site="stackoverflow", tagged="python",
+                              api_token="aaa", max_questions=1)
+        questions = [question for question in stack.fetch(from_date=None)]
+
+        question = questions[0]
+        self.assertEqual(stack.metadata_id(question['data']), question['search_fields']['item_id'])
+        self.assertListEqual(question['data']['tags'], ['python', 'pandas'])
+        self.assertEqual(question['data']['tags'], question['search_fields']['tags'])
+
+    @httpretty.activate
     def test_fetch_empty(self):
         """Test whether a list of questions is returned"""
 

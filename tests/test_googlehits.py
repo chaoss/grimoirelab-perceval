@@ -162,6 +162,23 @@ class TestGoogleHitsBackend(unittest.TestCase):
 
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.googlehits.datetime_utcnow')
+    def test_search_fields(self, mock_utcnow):
+        """Test whether the search_fields is properly set"""
+
+        mock_utcnow.return_value = datetime.datetime(2017, 1, 1,
+                                                     tzinfo=dateutil.tz.tzutc())
+        setup_http_server()
+
+        backend = GoogleHits(['bitergia'])
+        items = [item for item in backend.fetch()]
+
+        item = items[0]
+        self.assertEqual(backend.metadata_id(item['data']), item['search_fields']['item_id'])
+        self.assertListEqual(item['data']['keywords'], ['bitergia'])
+        self.assertListEqual(item['data']['keywords'], item['search_fields']['keywords'])
+
+    @httpretty.activate
+    @unittest.mock.patch('perceval.backends.core.googlehits.datetime_utcnow')
     def test_fetch_no_hits(self, mock_utcnow):
         """Test whether it handles queries which have no hits"""
 

@@ -245,6 +245,38 @@ class TestBugzillaRESTBackend(unittest.TestCase):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        setup_http_server()
+
+        bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2)
+        bugs = [bug for bug in bg.fetch(from_date=None)]
+
+        self.assertEqual(len(bugs), 3)
+
+        bug = bugs[0]
+        self.assertEqual(bg.metadata_id(bug['data']), bug['search_fields']['item_id'])
+        self.assertEqual(bug['data']['product'], 'Connected Devices')
+        self.assertEqual(bug['data']['product'], bug['search_fields']['product'])
+        self.assertEqual(bug['data']['component'], 'Project Sensor Web')
+        self.assertEqual(bug['data']['component'], bug['search_fields']['component'])
+
+        bug = bugs[1]
+        self.assertEqual(bg.metadata_id(bug['data']), bug['search_fields']['item_id'])
+        self.assertEqual(bug['data']['product'], 'Connected Devices')
+        self.assertEqual(bug['data']['product'], bug['search_fields']['product'])
+        self.assertEqual(bug['data']['component'], 'Project Sensor Web')
+        self.assertEqual(bug['data']['component'], bug['search_fields']['component'])
+
+        bug = bugs[2]
+        self.assertEqual(bg.metadata_id(bug['data']), bug['search_fields']['item_id'])
+        self.assertEqual(bug['data']['product'], 'MailNews Core')
+        self.assertEqual(bug['data']['product'], bug['search_fields']['product'])
+        self.assertEqual(bug['data']['component'], 'Backend')
+        self.assertEqual(bug['data']['component'], bug['search_fields']['component'])
+
+    @httpretty.activate
     def test_fetch_empty(self):
         """Test whether it works when no bugs are fetched"""
 

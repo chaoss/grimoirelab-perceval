@@ -29,7 +29,8 @@ from grimoirelab_toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient
 from ...utils import DEFAULT_DATETIME
 
@@ -58,7 +59,7 @@ class Launchpad(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.2'
+    version = '0.7.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -76,6 +77,26 @@ class Launchpad(Backend):
 
         self.client = None
         self._users = {}  # internal users cache
+
+    def search_fields(self, item):
+        """Add search fields to an item.
+
+        It adds the values of `metadata_id` plus additional values depending on the
+        item category. For the categories `issue` and `pull_request`, the search
+        fields include the issue/pull request number, labels, state and the name of
+        the milestone. For the category `repository`, license and language are set
+        as search fields.
+
+        :param item: the item to extract the search fields values
+
+        :returns: a dict of search fields
+        """
+        search_fields = {
+            DEFAULT_SEARCH_FIELD: self.metadata_id(item),
+            'distribution': self.distribution
+        }
+
+        return search_fields
 
     def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
         """Fetch the issues from a project (distribution/package).

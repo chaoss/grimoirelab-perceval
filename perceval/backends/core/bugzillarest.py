@@ -59,9 +59,13 @@ class BugzillaREST(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.8.3'
+    version = '0.9.0'
 
     CATEGORIES = [CATEGORY_BUG]
+    EXTRA_SEARCH_FIELDS = {
+        'product': ['product'],
+        'component': ['component']
+    }
 
     def __init__(self, url, user=None, password=None, api_token=None,
                  max_bugs=MAX_BUGS, tag=None, archive=None):

@@ -77,6 +77,7 @@ class MockedBackend(Backend):
     DEFAULT_CATEGORY = "mock_item"
     OTHER_CATEGORY = "alt_item"
     CATEGORIES = [DEFAULT_CATEGORY, OTHER_CATEGORY]
+    SEARCH_FIELDS = {}
     ITEMS = 5
 
     def __init__(self, origin, tag=None, archive=None):
@@ -315,6 +316,120 @@ class TestBackend(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             b.metadata_category(None)
 
+    def test_default_search_fields(self):
+        """Test whether the default search field is `item_id`"""
+
+        b = MockedBackend('test')
+
+        expected = [
+            {
+                "item_id": "0"
+            },
+            {
+                "item_id": "1"
+            },
+            {
+                "item_id": "2"
+            },
+            {
+                "item_id": "3"
+            },
+            {
+                "item_id": "4"
+            },
+        ]
+
+        for pos, item in enumerate(b.fetch()):
+            self.assertDictEqual(item['search_fields'], expected[pos])
+
+    def test_extra_search_fields(self):
+        """Test whether the extra search fields are properly set"""
+
+        b = MockedBackend('test')
+        b.EXTRA_SEARCH_FIELDS = {
+            'pos': ['item']
+        }
+
+        expected = [
+            {
+                "item_id": "0",
+                "pos": 0
+            },
+            {
+                "item_id": "1",
+                "pos": 1
+            },
+            {
+                "item_id": "2",
+                "pos": 2
+            },
+            {
+                "item_id": "3",
+                "pos": 3
+            },
+            {
+                "item_id": "4",
+                "pos": 4
+            },
+        ]
+
+        for pos, item in enumerate(b.fetch()):
+            self.assertDictEqual(item['search_fields'], expected[pos])
+
+    def test_extra_search_fields_skipped(self):
+        """Test whether the search field is not listed if the field is not found/empty"""
+
+        b = MockedBackend('test')
+        b.EXTRA_SEARCH_FIELDS = {
+            'pos': ['unknown']
+        }
+
+        expected = [
+            {
+                "item_id": "0"
+            },
+            {
+                "item_id": "1"
+            },
+            {
+                "item_id": "2"
+            },
+            {
+                "item_id": "3"
+            },
+            {
+                "item_id": "4"
+            }
+        ]
+
+        for pos, item in enumerate(b.fetch()):
+            self.assertDictEqual(item['search_fields'], expected[pos])
+
+        b.EXTRA_SEARCH_FIELDS = {
+            'pos': []
+        }
+
+        expected = [
+            {
+                "item_id": "0"
+            },
+            {
+                "item_id": "1"
+            },
+            {
+                "item_id": "2"
+            },
+            {
+                "item_id": "3"
+            },
+            {
+                "item_id": "4"
+            }
+        ]
+
+        for pos, item in enumerate(b.fetch()):
+            self.assertDictEqual(item['search_fields'], expected[pos])
+
     def test_tag(self):
         """Test whether tag value is initializated"""
 
@@ -552,11 +667,12 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
                 self.assertDictEqual(item['data'], expected)
 
                 # Check logger output
-                # Each filter message appears after 3 debug messages
+                # Each classified-field-related message appears after 7 debug messages
                 # because there are other debug messages
+                _num_debug_msgs = 7
                 expected_uuid = uuid('http://example.com/', str(x))
                 exp = "Classified field 'classified_field' not found for item " + expected_uuid
-                self.assertRegex(cm.output[x * 3 + 1], exp)
+                self.assertRegex(cm.output[x * _num_debug_msgs + 1], exp)
 
 
 class TestBackendArchive(TestCaseBackendArchive):

@@ -172,6 +172,19 @@ class TestGitBackend(TestCaseGit):
 
         shutil.rmtree(new_path)
 
+    def test_search_fields(self):
+        """Test whether the search_fields is properly set"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        git = Git(self.git_path, new_path)
+        commits = [commit for commit in git.fetch()]
+
+        for commit in commits:
+            self.assertEqual(git.metadata_id(commit['data']), commit['search_fields']['item_id'])
+
+        shutil.rmtree(new_path)
+
     def test_fetch_till_date(self):
         """Test whether commits are fetched from a Git repository before the given date"""
 
