@@ -855,7 +855,7 @@ class TestJiraCommand(unittest.TestCase):
 
         parser = JiraCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Jira.CATEGORIES)
+        self.assertEqual(parser._backend, Jira)
 
         args = ['--backend-user', 'jsmith',
                 '--backend-password', '1234',

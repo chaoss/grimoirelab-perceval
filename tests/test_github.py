@@ -3291,7 +3291,7 @@ class TestGitHubCommand(unittest.TestCase):
 
         parser = GitHubCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, GitHub.CATEGORIES)
+        self.assertEqual(parser._backend, GitHub)
 
         args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',

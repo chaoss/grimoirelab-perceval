@@ -720,7 +720,7 @@ class GitLabCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the GitLab argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               token_auth=True,
                                               archive=True)

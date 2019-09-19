@@ -437,7 +437,7 @@ class TestGerritCommand(unittest.TestCase):
 
         parser = GerritCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Gerrit.CATEGORIES)
+        self.assertEqual(parser._backend, Gerrit)
 
         args = [GERRIT_REPO,
                 '--user', GERRIT_USER,

@@ -689,7 +689,7 @@ class TestMediaWikiCommand(unittest.TestCase):
 
         parser = MediaWikiCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, MediaWiki.CATEGORIES)
+        self.assertEqual(parser._backend, MediaWiki)
 
         args = ['--tag', 'test',
                 '--no-archive', '--from-date', '1970-01-01',

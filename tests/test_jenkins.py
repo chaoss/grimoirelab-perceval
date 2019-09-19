@@ -686,7 +686,7 @@ class TestJenkinsCommand(unittest.TestCase):
 
         parser = JenkinsCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Jenkins.CATEGORIES)
+        self.assertEqual(parser._backend, Jenkins)
 
         args = ['--tag', 'test', '--no-archive', '--sleep-time', '60',
                 '--detail-depth', '2',

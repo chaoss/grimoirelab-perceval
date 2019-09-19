@@ -468,7 +468,7 @@ class TestNNTPCommand(unittest.TestCase):
 
         parser = NNTPCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, NNTP.CATEGORIES)
+        self.assertEqual(parser._backend, NNTP)
 
         args = ['nntp.example.com',
                 'example.dev.project-link',

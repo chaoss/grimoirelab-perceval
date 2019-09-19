@@ -475,7 +475,7 @@ class LaunchpadCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the Launchpad argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               archive=True,
                                               token_auth=False)

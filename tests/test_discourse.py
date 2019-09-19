@@ -893,7 +893,7 @@ class TestDiscourseCommand(unittest.TestCase):
 
         parser = DiscourseCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Discourse.CATEGORIES)
+        self.assertEqual(parser._backend, Discourse)
 
         args = ['--tag', 'test', '--no-archive',
                 '--from-date', '1970-01-01',

@@ -666,7 +666,7 @@ class TestBugzillaRESTCommand(unittest.TestCase):
 
         parser = BugzillaRESTCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, BugzillaREST.CATEGORIES)
+        self.assertEqual(parser._backend, BugzillaREST)
 
         args = ['--backend-user', 'jsmith@example.com',
                 '--backend-password', '1234',

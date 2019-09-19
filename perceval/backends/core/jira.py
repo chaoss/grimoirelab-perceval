@@ -417,7 +417,7 @@ class JiraCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the Jira argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               basic_auth=True,
                                               archive=True)

@@ -350,7 +350,7 @@ class TestTelegramCommand(unittest.TestCase):
 
         parser = TelegramCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Telegram.CATEGORIES)
+        self.assertEqual(parser._backend, Telegram)
 
         args = ['mybot',
                 '--api-token', '12345678',

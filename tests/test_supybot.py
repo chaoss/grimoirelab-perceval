@@ -208,7 +208,7 @@ class TestSupybotCommand(unittest.TestCase):
 
         parser = SupybotCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Supybot.CATEGORIES)
+        self.assertEqual(parser._backend, Supybot)
 
         args = ['--tag', 'test',
                 '--from-date', '1970-01-01',
