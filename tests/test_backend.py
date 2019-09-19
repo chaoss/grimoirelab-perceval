@@ -43,6 +43,7 @@ from perceval.backend import (Backend,
                               BackendCommandArgumentParser,
                               BackendCommand,
                               BackendItemsGenerator,
+                              OriginUniqueField,
                               Summary,
                               uuid,
                               fetch,
@@ -78,6 +79,7 @@ class MockedBackend(Backend):
     OTHER_CATEGORY = "alt_item"
     CATEGORIES = [DEFAULT_CATEGORY, OTHER_CATEGORY]
     SEARCH_FIELDS = {}
+    ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='item', type=int)
     ITEMS = 5
 
     def __init__(self, origin, tag=None, archive=None):

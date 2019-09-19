@@ -20,6 +20,7 @@
 #
 
 import argparse
+import collections
 import hashlib
 import importlib
 import json
@@ -42,6 +43,8 @@ logger = logging.getLogger(__name__)
 
 ARCHIVES_DEFAULT_PATH = '~/.perceval/archives/'
 DEFAULT_SEARCH_FIELD = 'item_id'
+
+OriginUniqueField = collections.namedtuple('OriginUniqueField', 'name type')
 
 
 class Backend:
@@ -118,11 +121,12 @@ class Backend:
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.10.0'
+    version = '0.11.0'
 
     CATEGORIES = []
     CLASSIFIED_FIELDS = []
     EXTRA_SEARCH_FIELDS = {}
+    ORIGIN_UNIQUE_FIELD = None
 
     def __init__(self, origin, tag=None, archive=None):
         self._origin = origin
@@ -154,6 +158,10 @@ class Backend:
     @property
     def categories(self):
         return self.CATEGORIES
+
+    @property
+    def origin_unique_field(self):
+        return self.ORIGIN_UNIQUE_FIELD
 
     @property
     def classified_fields(self):
