@@ -692,9 +692,9 @@ class TestGitLabBackend(unittest.TestCase):
 
         with self.assertLogs(level='WARNING') as cm:
             issues = [issues for issues in gitlab.fetch()]
-            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.gitlab:Skipping blacklisted issue 1')
-            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.gitlab:Skipping blacklisted issue 2')
-            self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.gitlab:Skipping blacklisted issue 3')
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backend:Skipping blacklisted item iid 1')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backend:Skipping blacklisted item iid 2')
+            self.assertEqual(cm.output[2], 'WARNING:perceval.backend:Skipping blacklisted item iid 3')
 
         self.assertEqual(len(issues), 1)
 
@@ -867,10 +867,8 @@ class TestGitLabBackend(unittest.TestCase):
 
         with self.assertLogs(level='WARNING') as cm:
             merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
-            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.gitlab:'
-                                           'Skipping blacklisted merge request 1')
-            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.gitlab:'
-                                           'Skipping blacklisted merge request 2')
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backend:Skipping blacklisted item iid 1')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backend:Skipping blacklisted item iid 2')
 
         self.assertEqual(len(merges), 1)
 
