@@ -125,5 +125,14 @@ class TestParseError(unittest.TestCase):
         self.assertEqual('error on line 10', str(e))
 
 
+class TestBackendCommandArgumentParserError(unittest.TestCase):
+
+    def test_message(self):
+        """Make sure that prints the correct error"""
+
+        e = errors.BackendCommandArgumentParserError(cause='mock error on backend command argument parser')
+        self.assertEqual('mock error on backend command argument parser', str(e))
+
+
 if __name__ == "__main__":
     unittest.main()

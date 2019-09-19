@@ -83,3 +83,9 @@ class ParseError(BaseError):
     """Exception raised a parsing errors occurs"""
 
     message = "%(cause)s"
+
+
+class BackendCommandArgumentParserError(BaseError):
+    """Generic error for BackendCommandArgumentParser"""
+
+    message = "%(cause)s"
