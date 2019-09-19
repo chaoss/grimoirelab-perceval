@@ -49,7 +49,7 @@ from perceval.backend import (Backend,
                               fetch,
                               fetch_from_archive,
                               logger as backend_logger)
-from perceval.errors import ArchiveError, BackendError
+from perceval.errors import ArchiveError, BackendError, BackendCommandArgumentParserError
 from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
 
@@ -79,11 +79,10 @@ class MockedBackend(Backend):
     OTHER_CATEGORY = "alt_item"
     CATEGORIES = [DEFAULT_CATEGORY, OTHER_CATEGORY]
     SEARCH_FIELDS = {}
-    ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='item', type=int)
     ITEMS = 5
 
-    def __init__(self, origin, tag=None, archive=None):
-        super().__init__(origin, tag=tag, archive=archive)
+    def __init__(self, origin, tag=None, archive=None, blacklist_ids=None):
+        super().__init__(origin, tag=tag, archive=archive, blacklist_ids=blacklist_ids)
         self._fetch_from_archive = False
 
     def fetch(self, category=DEFAULT_CATEGORY, filter_classified=False):
@@ -115,6 +114,61 @@ class MockedBackend(Backend):
     @staticmethod
     def metadata_category(item):
         return item['category']
+
+
+class MockedBackendBlacklist(MockedBackend):
+    """Mocked backend for testing blacklist items filtering"""
+
+    ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='item', type=int)
+    DEFAULT_CATEGORY = "mock_item"
+
+    def __init__(self, origin, tag=None, archive=None, blacklist_ids=None):
+        super().__init__(origin, tag=tag, archive=archive, blacklist_ids=blacklist_ids)
+        self._fetch_from_archive = False
+
+    def fetch(self, category=DEFAULT_CATEGORY, filter_classified=False):
+        return super().fetch(category, filter_classified=filter_classified)
+
+    def fetch_items(self, category, **kwargs):
+        for x in range(MockedBackend.ITEMS):
+            if self._fetch_from_archive:
+                item = self.archive.retrieve(str(x), None, None)
+            else:
+                item = {'item': x, 'category': category}
+                if self.archive:
+                    self.archive.store(str(x), None, None, item)
+
+            if self._skip_item(item):
+                continue
+
+            yield item
+
+
+class MockedBackendBlacklistNoOriginUniqueField(MockedBackend):
+    """Mocked backend for testing blacklist items filtering"""
+
+    DEFAULT_CATEGORY = "mock_item"
+
+    def __init__(self, origin, tag=None, archive=None, blacklist_ids=None):
+        super().__init__(origin, tag=tag, archive=archive, blacklist_ids=blacklist_ids)
+        self._fetch_from_archive = False
+
+    def fetch(self, category=DEFAULT_CATEGORY, filter_classified=False):
+        return super().fetch(category, filter_classified=filter_classified)
+
+    def fetch_items(self, category, **kwargs):
+        for x in range(MockedBackend.ITEMS):
+            if self._fetch_from_archive:
+                item = self.archive.retrieve(str(x), None, None)
+            else:
+                item = {'item': x, 'category': category}
+                if self.archive:
+                    self.archive.store(str(x), None, None, item)
+
+            if self._skip_item(item):
+                continue
+
+            yield item
 
 
 class ClassifiedFieldsBackend(MockedBackend):
@@ -193,6 +247,52 @@ class MockedBackendCommand(BackendCommand):
                                               archive=True)
         parser.parser.add_argument('origin')
         parser.parser.add_argument('--subtype', dest='subtype')
+
+        return parser
+
+
+class MockedBackendBlacklistCommand(BackendCommand):
+    """Mocked backend command class used for testing"""
+
+    BACKEND = MockedBackendBlacklist
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def _pre_init(self):
+        setattr(self.parsed_args, 'pre_init', True)
+
+    def _post_init(self):
+        setattr(self.parsed_args, 'post_init', True)
+
+    @classmethod
+    def setup_cmd_parser(cls):
+        parser = BackendCommandArgumentParser(cls.BACKEND,
+                                              blacklist=True)
+        parser.parser.add_argument('origin')
+
+        return parser
+
+
+class MockedBackendBlacklistCommandNoOriginUniqueField(BackendCommand):
+    """Mocked backend command class used for testing"""
+
+    BACKEND = MockedBackendBlacklistNoOriginUniqueField
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def _pre_init(self):
+        setattr(self.parsed_args, 'pre_init', True)
+
+    def _post_init(self):
+        setattr(self.parsed_args, 'post_init', True)
+
+    @classmethod
+    def setup_cmd_parser(cls):
+        parser = BackendCommandArgumentParser(cls.BACKEND,
+                                              blacklist=True)
+        parser.parser.add_argument('origin')
 
         return parser
 
@@ -675,6 +775,42 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
                 expected_uuid = uuid('http://example.com/', str(x))
                 exp = "Classified field 'classified_field' not found for item " + expected_uuid
                 self.assertRegex(cm.output[x * _num_debug_msgs + 1], exp)
+
+
+class TestBackendBlacklist(unittest.TestCase):
+
+    def setUp(self):
+        self.test_path = tempfile.mkdtemp(prefix='perceval_')
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
+
+    def test_fetch_blacklist(self):
+        """Check whether blacklist items are filtered out"""
+
+        backend = MockedBackendBlacklist('http://example.com/')
+        items = [item for item in backend.fetch(category=MockedBackendBlacklist.DEFAULT_CATEGORY)]
+        self.assertEqual(len(items), 5)
+
+        backend = MockedBackendBlacklist('http://example.com/', blacklist_ids=[1])
+
+        with self.assertLogs(backend_logger, level='INFO') as cm:
+            items = [item for item in backend.fetch(category=MockedBackendBlacklist.DEFAULT_CATEGORY)]
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backend:Skipping blacklisted item item 1')
+
+        self.assertEqual(len(items), 4)
+        self.assertNotIn(1, [i['data']['item'] for i in items])
+
+    def test_fetch_blacklist_no_unique_field(self):
+        """Check whether no items are blacklisted if the ORIGIN_UNIQUE_FIELD is not defined"""
+
+        backend = MockedBackendBlacklist('http://example.com/')
+        items = [item for item in backend.fetch(category=MockedBackendBlacklist.DEFAULT_CATEGORY)]
+        self.assertEqual(len(items), 5)
+
+        backend = MockedBackendBlacklistNoOriginUniqueField('http://example.com/', blacklist_ids=[1])
+        items = [item for item in backend.fetch(category=MockedBackendBlacklistNoOriginUniqueField.DEFAULT_CATEGORY)]
+        self.assertEqual(len(items), 5)
 
 
 class TestBackendArchive(TestCaseBackendArchive):
@@ -1339,6 +1475,42 @@ class TestBackendCommand(unittest.TestCase):
 
             # The last message should be the summary output
             self.assertEqual(cm.output[-1], SUMMARY_LOG_REPORT)
+
+    def test_blacklist_ids(self):
+        """Test whether items are blacklisted when their IDs are passed via the command line"""
+
+        args = ['http://example.com/',
+                '--category', MockedBackendBlacklist.DEFAULT_CATEGORY,
+                '--blacklist-ids', '2', '3', '4',
+                '--output', self.fout_path]
+
+        cmd = MockedBackendBlacklistCommand(*args)
+        cmd.run()
+        cmd.outfile.close()
+
+        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+
+        self.assertEqual(len(items), 2)
+
+        for x in range(2):
+            item = items[x]
+            expected_uuid = uuid('http://example.com/', str(x))
+
+            self.assertEqual(item['data']['item'], x)
+            self.assertEqual(item['origin'], 'http://example.com/')
+            self.assertEqual(item['uuid'], expected_uuid)
+            self.assertEqual(item['category'], MockedBackendBlacklist.DEFAULT_CATEGORY)
+
+    def test_blacklist_ids_exception(self):
+        """Test whether an exception is thrown when OriginUniqueField is not defined"""
+
+        args = ['http://example.com/',
+                '--category', MockedBackendBlacklistNoOriginUniqueField.DEFAULT_CATEGORY,
+                '--blacklist-ids', '2', '3', '4',
+                '--output', self.fout_path]
+
+        with self.assertRaises(BackendCommandArgumentParserError):
+            _ = MockedBackendBlacklistCommandNoOriginUniqueField(*args)
 
 
 class TestBackendItemsGenerator(unittest.TestCase):
