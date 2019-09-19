@@ -20,6 +20,7 @@
 #
 
 import argparse
+import collections
 import hashlib
 import importlib
 import json
@@ -33,7 +34,7 @@ from grimoirelab_toolkit.datetime import (datetime_utcnow,
                                           str_to_datetime,
                                           unixtime_to_datetime)
 from .archive import Archive, ArchiveManager
-from .errors import ArchiveError, BackendError
+from .errors import ArchiveError, BackendError, BackendCommandArgumentParserError
 from ._version import __version__
 
 
@@ -42,6 +43,8 @@ logger = logging.getLogger(__name__)
 
 ARCHIVES_DEFAULT_PATH = '~/.perceval/archives/'
 DEFAULT_SEARCH_FIELD = 'item_id'
+
+OriginUniqueField = collections.namedtuple('OriginUniqueField', 'name type')
 
 
 class Backend:
@@ -123,11 +126,13 @@ class Backend:
     CATEGORIES = []
     CLASSIFIED_FIELDS = []
     EXTRA_SEARCH_FIELDS = {}
+    ORIGIN_UNIQUE_FIELD = None
 
-    def __init__(self, origin, tag=None, archive=None):
+    def __init__(self, origin, tag=None, archive=None, blacklist_ids=None):
         self._origin = origin
         self.tag = tag if tag else origin
         self.archive = archive or None
+        self.blacklist_ids = blacklist_ids or None
         self._summary = None
 
     @property
@@ -154,6 +159,10 @@ class Backend:
     @property
     def categories(self):
         return self.CATEGORIES
+
+    @property
+    def origin_unique_field(self):
+        return self.ORIGIN_UNIQUE_FIELD
 
     @property
     def classified_fields(self):
@@ -345,6 +354,17 @@ class Backend:
     def _init_client(self, from_archive=False):
         raise NotImplementedError
 
+    def _skip_item(self, item):
+        if not self.ORIGIN_UNIQUE_FIELD:
+            return False
+
+        field_name = self.ORIGIN_UNIQUE_FIELD.name
+        if self.blacklist_ids and item[field_name] in self.blacklist_ids:
+            logger.warning("Skipping blacklisted item id %s", item[field_name])
+            return True
+
+        return False
+
 
 def _find_value_from_nested_dict(nested_dict, path_to_field):
     if len(path_to_field) == 0:
@@ -379,7 +399,7 @@ class BackendCommandArgumentParser:
     types of authentication can be set during the initialization
     of the instance.
 
-    :param categories: set category argument
+    :param backend: backend object
     :param from_date: set from_date argument
     :param to_date: set to_date argument
     :param offset: set offset argument
@@ -387,18 +407,20 @@ class BackendCommandArgumentParser:
     :param token_auth: set token/key authentication arguments
     :param archive: set archiving arguments
     :param aliases: define aliases for parsed arguments
+    :param blacklist: set a list of items IDs to be filtered out
 
-    :raises AttributeArror: when both `from_date` and `offset` are set
+    :raises AttributeError: when both `from_date` and `offset` are set
         to `True`
     """
 
-    def __init__(self, categories, from_date=False, to_date=False, offset=False,
+    def __init__(self, backend, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False, archive=False,
-                 aliases=None):
+                 aliases=None, blacklist=False):
         self._from_date = from_date
         self._to_date = to_date
         self._archive = archive
-        self._categories = categories
+        self._categories = backend.CATEGORIES
+        self._origin_unique_field = backend.ORIGIN_UNIQUE_FIELD if backend.ORIGIN_UNIQUE_FIELD else None
 
         self.aliases = aliases or {}
         self.parser = argparse.ArgumentParser()
@@ -428,6 +450,15 @@ class BackendCommandArgumentParser:
             group.add_argument('--offset', dest='offset',
                                type=int, default=0,
                                help="offset to start fetching items")
+        if blacklist:
+            if not self._origin_unique_field:
+                msg = "Origin unique field not defined for {} backend".format(backend.__name__)
+                raise BackendCommandArgumentParserError(cause=msg)
+
+            group.add_argument('--blacklist-ids', dest='blacklist_ids',
+                               nargs='*', type=self._origin_unique_field.type,
+                               help="Ids (field: %s) of items that must not be retrieved." %
+                                    self._origin_unique_field.name)
 
         if basic_auth or token_auth:
             self._set_auth_arguments(basic_auth=basic_auth,
