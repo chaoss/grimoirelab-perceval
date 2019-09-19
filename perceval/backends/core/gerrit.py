@@ -30,7 +30,8 @@ from grimoirelab_toolkit.datetime import datetime_to_utc
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        OriginUniqueField)
 from ...errors import BackendError
 from ...utils import DEFAULT_DATETIME
 
@@ -53,32 +54,32 @@ class Gerrit(Backend):
     :param user: SSH user used to connect to the Gerrit server
     :param port: SSH port
     :param max_reviews: maximum number of reviews requested on the same query
-    :param blacklist_reviews: exclude the reviews of this list while fetching
     :param disable_host_key_check: disable host key controls
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param blacklist_ids: exclude the reviews while fetching
     """
-    version = '0.12.0'
+    version = '0.13.0'
 
     CATEGORIES = [CATEGORY_REVIEW]
     EXTRA_SEARCH_FIELDS = {
         'project_name': ['project'],
         'review_hash': ['id']
     }
+    ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='number', type=str)
 
     def __init__(self, hostname,
                  user=None, port=PORT, max_reviews=MAX_REVIEWS,
-                 blacklist_reviews=None,
                  disable_host_key_check=False,
-                 tag=None, archive=None):
+                 tag=None, archive=None, blacklist_ids=None):
         origin = hostname
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, blacklist_ids=blacklist_ids)
         self.hostname = hostname
         self.user = user
         self.port = port
         self.max_reviews = max(1, max_reviews)
-        self.blacklist_reviews = blacklist_reviews
+        self.blacklist_ids = blacklist_ids
         self.disable_host_key_check = disable_host_key_check
         self.archive = archive
         self.client = None
@@ -183,7 +184,7 @@ class Gerrit(Backend):
     def _init_client(self, from_archive=False):
 
         return GerritClient(self.hostname, self.user, self.max_reviews,
-                            self.blacklist_reviews, self.disable_host_key_check,
+                            self.blacklist_ids, self.disable_host_key_check,
                             self.port, self.archive, from_archive)
 
     def _fetch_gerrit28(self, from_date=DEFAULT_DATETIME):
@@ -500,7 +501,8 @@ class GerritCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
-                                              archive=True)
+                                              archive=True,
+                                              blacklist=True)
 
         # Gerrit options
         group = parser.parser.add_argument_group('Gerrit arguments')
@@ -509,9 +511,6 @@ class GerritCommand(BackendCommand):
         group.add_argument('--max-reviews', dest='max_reviews',
                            type=int, default=MAX_REVIEWS,
                            help="Max number of reviews per ssh query.")
-        group.add_argument('--blacklist-reviews', dest='blacklist_reviews',
-                           nargs='*',
-                           help="Wrong reviews that must not be retrieved.")
         group.add_argument('--disable-host-key-check', dest='disable_host_key_check', action='store_true',
                            help="Don't check remote host identity")
         group.add_argument('--ssh-port', dest='port',
