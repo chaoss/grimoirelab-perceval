@@ -33,6 +33,7 @@ from grimoirelab_toolkit.uris import urijoin
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
+                        OriginUniqueField,
                         DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient, RateLimitHandler
 from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
@@ -98,19 +99,20 @@ class GitHub(Backend):
     version = '0.23.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
+    ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='id', type=int)
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
                  tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
-                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE):
+                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE, blacklist_ids=None):
         if api_token is None:
             api_token = []
         origin = base_url if base_url else GITHUB_URL
         origin = urijoin(origin, owner, repository)
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, blacklist_ids=blacklist_ids)
 
         self.owner = owner
         self.repository = repository
@@ -272,6 +274,9 @@ class GitHub(Backend):
 
                 if str_to_datetime(issue['updated_at']) > to_date:
                     return
+
+                if self._skip_item(issue):
+                    continue
 
                 self.__init_extra_issue_fields(issue)
                 for field in TARGET_ISSUE_FIELDS:
@@ -948,11 +953,12 @@ class GitHubCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the GitHub argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               to_date=True,
                                               token_auth=False,
-                                              archive=True)
+                                              archive=True,
+                                              blacklist=True)
         # GitHub options
         group = parser.parser.add_argument_group('GitHub arguments')
         group.add_argument('--enterprise-url', dest='base_url',
