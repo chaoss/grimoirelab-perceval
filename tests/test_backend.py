@@ -36,7 +36,6 @@ import dateutil.tz
 from grimoirelab_toolkit.datetime import (InvalidDateError,
                                           datetime_utcnow,
                                           str_to_datetime)
-
 from perceval.backends.core import __version__
 from perceval.archive import Archive, ArchiveManager
 from perceval.backend import (Backend,
@@ -48,10 +47,19 @@ from perceval.backend import (Backend,
                               uuid,
                               fetch,
                               fetch_from_archive,
+                              find_backends,
                               logger as backend_logger)
 from perceval.errors import ArchiveError, BackendError, BackendCommandArgumentParserError
 from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
+import mocked_package
+from mocked_package.backend import (BackendA,
+                                    BackendCommandA)
+import mocked_package.nested_package
+from mocked_package.nested_package.nested_backend_b import (BackendB,
+                                                            BackendCommandB)
+from mocked_package.nested_package.nested_backend_c import (BackendC,
+                                                            BackendCommandC)
 
 
 SUMMARY_LOG_REPORT = """INFO:perceval.backend:Summary of results
@@ -2346,6 +2354,46 @@ class TestFetchFromArchive(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['classified_fields_filtered'], None)
+
+
+class TestFindBackends(unittest.TestCase):
+    """Unit tests for find_backends function"""
+
+    def test_find_backends(self):
+        """Check that the backends and their commands are correctly found"""
+
+        backends, backend_commands = find_backends(mocked_package)
+
+        expected_backends = {
+            'backend': BackendA,
+            'nested_backend_b': BackendB,
+            'nested_backend_c': BackendC
+        }
+        self.assertDictEqual(backends, expected_backends)
+
+        expected_backend_commands = {
+            'backend': BackendCommandA,
+            'nested_backend_b': BackendCommandB,
+            'nested_backend_c': BackendCommandC
+        }
+        self.assertDictEqual(backend_commands, expected_backend_commands)
+
+    def test_find_backends_in_module(self):
+        """Check that the backends and their commands are correctly found in a submodule"""
+
+        backends, backend_commands = find_backends(mocked_package.nested_package)
+
+        expected_backends = {
+            'nested_backend_b': BackendB,
+            'nested_backend_c': BackendC
+        }
+        self.assertDictEqual(backends, expected_backends)
+
+        expected_backend_commands = {
+            'nested_backend_b': BackendCommandB,
+            'nested_backend_c': BackendCommandC
+        }
+        self.assertDictEqual(backend_commands, expected_backend_commands)
 
 
 if __name__ == "__main__":
