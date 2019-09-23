@@ -405,7 +405,7 @@ class TestMattermostCommand(unittest.TestCase):
 
         parser = MattermostCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Mattermost.CATEGORIES)
+        self.assertEqual(parser._backend, Mattermost)
 
         args = ['https://mattermost.example.com/', 'abcdefghijkl',
                 '--api-token', 'aaaa',

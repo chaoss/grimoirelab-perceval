@@ -976,7 +976,7 @@ class TestLaunchpadCommand(unittest.TestCase):
 
         parser = LaunchpadCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Launchpad.CATEGORIES)
+        self.assertEqual(parser._backend, Launchpad)
 
         args = ['--tag', 'test', '--no-archive',
                 '--from-date', '1970-01-01',

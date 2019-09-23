@@ -445,7 +445,7 @@ class TestGroupsioCommand(unittest.TestCase):
 
         parser = GroupsioCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Groupsio.CATEGORIES)
+        self.assertEqual(parser._backend, Groupsio)
 
         args = ['acme_group',
                 '--mboxes-path', '/tmp/perceval/',

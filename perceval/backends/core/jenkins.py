@@ -28,7 +28,8 @@ from grimoirelab_toolkit.uris import urijoin
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        OriginUniqueField)
 from ...errors import BackendError
 from ...client import HttpClient
 
@@ -51,21 +52,22 @@ class Jenkins(Backend):
     :param api_token: Jenkins auth token to access the API
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
-    :param blacklist_jobs: exclude the jobs of this list while fetching
     :param detail_depth: control the detail level of the data returned by the API
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     :param archive: collect builds already retrieved from an archive
+    :param blacklist_ids: exclude the jobs ID of this list while fetching
     """
-    version = '0.13.0'
+    version = '0.14.1'
 
     CATEGORIES = [CATEGORY_BUILD]
     EXTRA_SEARCH_FIELDS = {
         'number': ['number']
     }
+    ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='url', type=str)
 
     def __init__(self, url, user=None, api_token=None, tag=None, archive=None,
-                 blacklist_jobs=None, detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME):
+                 detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME, blacklist_ids=None):
 
         if (user and not api_token) or (not user and api_token):
             msg = "Authentication method requires user and api_token"
@@ -78,7 +80,7 @@ class Jenkins(Backend):
         self.user = user
         self.api_token = api_token
         self.sleep_time = sleep_time
-        self.blacklist_jobs = blacklist_jobs
+        self.blacklist_ids = blacklist_ids
         self.detail_depth = detail_depth
 
         self.client = None
@@ -126,11 +128,13 @@ class Jenkins(Backend):
                     logger.warning(e)
                     logger.warning("Unable to fetch builds from job %s; skipping",
                                    job['url'])
+                    self.summary.skipped += 1
                     continue
                 else:
                     raise e
 
             if not raw_builds:
+                self.summary.skipped += 1
                 continue
 
             try:
@@ -138,6 +142,7 @@ class Jenkins(Backend):
             except ValueError:
                 logger.warning("Unable to parse builds from job %s; skipping",
                                job['url'])
+                self.summary.skipped += 1
                 continue
 
             builds = builds['builds']
@@ -198,7 +203,7 @@ class Jenkins(Backend):
         """Init client"""
 
         return JenkinsClient(self.url, self.user, self.api_token,
-                             self.blacklist_jobs, self.detail_depth, self.sleep_time,
+                             self.blacklist_ids, self.detail_depth, self.sleep_time,
                              archive=self.archive, from_archive=from_archive)
 
 
@@ -270,16 +275,14 @@ class JenkinsCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the Jenkins argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              blacklist=True)
 
         # Jenkins options
         group = parser.parser.add_argument_group('Jenkins arguments')
         group.add_argument('-u', '--user', dest='user', help="Jenkins user")
-        group.add_argument('--blacklist-jobs', dest='blacklist_jobs',
-                           nargs='*',
-                           help="Wrong jobs that must not be retrieved.")
 
         group.add_argument('--detail-depth', dest='detail_depth',
                            type=int, default=DETAIL_DEPTH,

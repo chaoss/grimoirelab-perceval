@@ -270,7 +270,7 @@ class SupybotCommand(BackendCommand):
         aliases = {
             'dirpath': 'ircdir'
         }
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               aliases=aliases)
 

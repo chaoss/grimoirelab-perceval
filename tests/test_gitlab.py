@@ -600,6 +600,10 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(gitlab.repository, issue['search_fields']['project'])
         self.assertIsNone(issue['search_fields']['groups'])
 
+        self.assertEqual(gitlab.summary.total, 4)
+        self.assertEqual(gitlab.summary.fetched, 4)
+        self.assertEqual(gitlab.summary.skipped, 0)
+
     @httpretty.activate
     def test_search_fields_issues_groups(self):
         """Test whether the search_fields is properly set when the project is in a group"""
@@ -692,9 +696,9 @@ class TestGitLabBackend(unittest.TestCase):
 
         with self.assertLogs(level='WARNING') as cm:
             issues = [issues for issues in gitlab.fetch()]
-            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.gitlab:Skipping blacklisted issue 1')
-            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.gitlab:Skipping blacklisted issue 2')
-            self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.gitlab:Skipping blacklisted issue 3')
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backend:Skipping blacklisted item iid 1')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backend:Skipping blacklisted item iid 2')
+            self.assertEqual(cm.output[2], 'WARNING:perceval.backend:Skipping blacklisted item iid 3')
 
         self.assertEqual(len(issues), 1)
 
@@ -704,6 +708,10 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(issue['data']['author']['id'], 2)
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+
+        self.assertEqual(gitlab.summary.total, 4)
+        self.assertEqual(gitlab.summary.fetched, 1)
+        self.assertEqual(gitlab.summary.skipped, 3)
 
     @httpretty.activate
     def test_fetch_merges(self):
@@ -867,10 +875,8 @@ class TestGitLabBackend(unittest.TestCase):
 
         with self.assertLogs(level='WARNING') as cm:
             merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
-            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.gitlab:'
-                                           'Skipping blacklisted merge request 1')
-            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.gitlab:'
-                                           'Skipping blacklisted merge request 2')
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backend:Skipping blacklisted item iid 1')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backend:Skipping blacklisted item iid 2')
 
         self.assertEqual(len(merges), 1)
 
@@ -1807,7 +1813,7 @@ class TestGitLabCommand(unittest.TestCase):
 
         parser = GitLabCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, GitLab.CATEGORIES)
+        self.assertEqual(parser._backend, GitLab)
 
         args = ['--sleep-for-rate',
                 '--min-rate-to-sleep', '1',

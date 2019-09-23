@@ -573,7 +573,7 @@ class TestPipermailCommand(unittest.TestCase):
 
         parser = PipermailCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Pipermail.CATEGORIES)
+        self.assertEqual(parser._backend, Pipermail)
 
         args = ['http://example.com/',
                 '--mboxes-path', '/tmp/perceval/',

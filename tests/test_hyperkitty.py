@@ -335,7 +335,7 @@ class TestHyperKittyCommand(unittest.TestCase):
 
         parser = HyperKittyCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, HyperKitty.CATEGORIES)
+        self.assertEqual(parser._backend, HyperKitty)
 
         args = ['http://example.com/archives/list/test@example.com/',
                 '--mboxes-path', '/tmp/perceval/',

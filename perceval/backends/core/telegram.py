@@ -269,7 +269,7 @@ class TelegramCommand(BackendCommand):
         aliases = {
             'bot_token': 'api_token'
         }
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               offset=True,
                                               token_auth=True,
                                               archive=True,

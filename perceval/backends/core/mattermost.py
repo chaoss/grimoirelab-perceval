@@ -410,7 +410,7 @@ class MattermostCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the Meetup argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               token_auth=True,
                                               archive=True)

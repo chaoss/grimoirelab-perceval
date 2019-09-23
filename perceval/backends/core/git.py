@@ -344,7 +344,7 @@ class GitCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the Git argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               to_date=True)
 

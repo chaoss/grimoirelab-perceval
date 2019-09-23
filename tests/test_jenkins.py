@@ -169,7 +169,6 @@ class TestJenkinsBackend(unittest.TestCase):
         """Test whether attributes are initializated"""
 
         jenkins = Jenkins(JENKINS_SERVER_URL, tag='test', sleep_time=60, detail_depth=2)
-
         self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
         self.assertIsNone(jenkins.user)
         self.assertIsNone(jenkins.api_token)
@@ -178,6 +177,7 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.detail_depth, 2)
         self.assertEqual(jenkins.tag, 'test')
         self.assertIsNone(jenkins.client)
+        self.assertIsNone(jenkins.blacklist_ids)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -187,11 +187,13 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.sleep_time, SLEEP_TIME)
         self.assertEqual(jenkins.detail_depth, DETAIL_DEPTH)
+        self.assertIsNone(jenkins.blacklist_ids)
 
         jenkins = Jenkins(JENKINS_SERVER_URL, tag='')
         self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
+        self.assertIsNone(jenkins.blacklist_ids)
 
         jenkins = Jenkins(JENKINS_SERVER_URL, user=JENKINS_USER, api_token=JENKINS_TOKEN)
         self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
@@ -199,6 +201,15 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
         self.assertEqual(jenkins.user, JENKINS_USER)
         self.assertEqual(jenkins.api_token, JENKINS_TOKEN)
+        self.assertIsNone(jenkins.blacklist_ids)
+
+        jenkins = Jenkins(JENKINS_SERVER_URL, blacklist_ids=[JENKINS_JOB_BUILDS_1])
+        self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
+        self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
+        self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
+        self.assertEqual(jenkins.sleep_time, SLEEP_TIME)
+        self.assertEqual(jenkins.detail_depth, DETAIL_DEPTH)
+        self.assertListEqual(jenkins.blacklist_ids, [JENKINS_JOB_BUILDS_1])
 
     def test_initialization_error(self):
         """Test whether an exeception is thrown when the user and api_token are not initialized together"""
@@ -247,6 +258,9 @@ class TestJenkinsBackend(unittest.TestCase):
                                            'http://example.com/ci/job/invalid-json-job/; skipping')
 
         self.assertEqual(len(builds), 64)
+        self.assertEqual(jenkins.summary.total, 66)
+        self.assertEqual(jenkins.summary.fetched, 64)
+        self.assertEqual(jenkins.summary.skipped, 2)
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
                 as build_json:
@@ -282,6 +296,35 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/ci/job')
         self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_fetch_depth_1_blacklist(self):
+        """Test whether blacklisted/wrong builds are not fetched from Jenkins"""
+
+        configure_http_server()
+
+        # Test fetch builds from jobs list
+        jenkins = Jenkins(JENKINS_SERVER_URL,
+                          blacklist_ids=[
+                              'apex-build-brahmaputra'
+                          ])
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            builds = [build for build in jenkins.fetch()]
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:Not getting blacklisted job: '
+                                           'apex-build-brahmaputra')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
+                                           'Internal Server Error for url: '
+                                           'http://example.com/ci/job/500-error-job/api/json?depth=1')
+            self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.jenkins:Unable to fetch builds from job '
+                                           'http://example.com/ci/job/500-error-job/; skipping')
+            self.assertEqual(cm.output[3], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
+                                           'http://example.com/ci/job/invalid-json-job/; skipping')
+
+            self.assertEqual(len(builds), 32)
+            self.assertEqual(jenkins.summary.total, 35)
+            self.assertEqual(jenkins.summary.fetched, 32)
+            self.assertEqual(jenkins.summary.skipped, 3)
 
     @httpretty.activate
     def test_fetch_depth_2(self):
@@ -438,13 +481,13 @@ class TestJenkinsBackend(unittest.TestCase):
 
     @httpretty.activate
     def test_fetch_blacklist(self):
-        """Test whether jobs in balcklist are not retrieved"""
+        """Test whether jobs in blacklist are not retrieved"""
 
         blacklist = [JENKINS_JOB_BUILDS_1]
 
         configure_http_server()
 
-        jenkins = Jenkins(JENKINS_SERVER_URL, blacklist_jobs=blacklist)
+        jenkins = Jenkins(JENKINS_SERVER_URL, blacklist_ids=blacklist)
         nrequests = len(requests_http)
 
         with self.assertLogs(logger, level='WARNING') as cm:
@@ -510,8 +553,8 @@ class TestJenkinsBackendArchive(TestCaseBackendArchive):
         blacklist = [JENKINS_JOB_BUILDS_1]
 
         configure_http_server()
-        self.backend_write_archive = Jenkins(JENKINS_SERVER_URL, blacklist_jobs=blacklist, archive=self.archive)
-        self.backend_read_archive = Jenkins(JENKINS_SERVER_URL, blacklist_jobs=blacklist, archive=self.archive)
+        self.backend_write_archive = Jenkins(JENKINS_SERVER_URL, blacklist_ids=blacklist, archive=self.archive)
+        self.backend_read_archive = Jenkins(JENKINS_SERVER_URL, blacklist_ids=blacklist, archive=self.archive)
 
         with self.assertLogs(logger, level='WARNING') as cm:
             self._test_fetch_from_archive()
@@ -686,11 +729,10 @@ class TestJenkinsCommand(unittest.TestCase):
 
         parser = JenkinsCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Jenkins.CATEGORIES)
+        self.assertEqual(parser._backend, Jenkins)
 
         args = ['--tag', 'test', '--no-archive', '--sleep-time', '60',
                 '--detail-depth', '2',
-                '--blacklist-jobs', '1', '2', '3', '4', '--',
                 JENKINS_SERVER_URL]
 
         parsed_args = parser.parse(*args)
@@ -701,11 +743,26 @@ class TestJenkinsCommand(unittest.TestCase):
         self.assertEqual(parsed_args.detail_depth, 2)
         self.assertEqual(parsed_args.sleep_time, 60)
         self.assertEqual(parsed_args.no_archive, True)
-        self.assertListEqual(parsed_args.blacklist_jobs, ['1', '2', '3', '4'])
+        self.assertIsNone(parsed_args.blacklist_ids)
+
+        args = ['--tag', 'test', '--no-archive', '--sleep-time', '60',
+                '--detail-depth', '2',
+                '--blacklist-ids', '1', '2', '3', '4', '--',
+                JENKINS_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, JENKINS_SERVER_URL)
+        self.assertIsNone(parsed_args.user)
+        self.assertIsNone(parsed_args.api_token)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.detail_depth, 2)
+        self.assertEqual(parsed_args.sleep_time, 60)
+        self.assertEqual(parsed_args.no_archive, True)
+        self.assertListEqual(parsed_args.blacklist_ids, ['1', '2', '3', '4'])
 
         args = ['--tag', 'test', '-u', JENKINS_USER, '-t', JENKINS_TOKEN,
                 '--no-archive', '--sleep-time', '60', '--detail-depth', '2',
-                '--blacklist-jobs', '1', '2', '3', '4', '--',
+                '--blacklist-ids', '1', '2', '3', '4', '--',
                 JENKINS_SERVER_URL]
 
         parsed_args = parser.parse(*args)
@@ -716,7 +773,7 @@ class TestJenkinsCommand(unittest.TestCase):
         self.assertEqual(parsed_args.detail_depth, 2)
         self.assertEqual(parsed_args.sleep_time, 60)
         self.assertEqual(parsed_args.no_archive, True)
-        self.assertListEqual(parsed_args.blacklist_jobs, ['1', '2', '3', '4'])
+        self.assertListEqual(parsed_args.blacklist_ids, ['1', '2', '3', '4'])
 
 
 if __name__ == "__main__":

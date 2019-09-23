@@ -114,6 +114,7 @@ class TestGerritBackend(unittest.TestCase):
         self.assertIsNone(gerrit.user)
         self.assertEqual(gerrit.tag, 'test')
         self.assertIsNone(gerrit.client)
+        self.assertIsNone(gerrit.blacklist_ids)
 
         gerrit = Gerrit(GERRIT_REPO, GERRIT_USER, port=1000, max_reviews=100)
         self.assertEqual(gerrit.hostname, GERRIT_REPO)
@@ -122,6 +123,15 @@ class TestGerritBackend(unittest.TestCase):
         self.assertEqual(gerrit.tag, GERRIT_REPO)
         self.assertEqual(gerrit.user, GERRIT_USER)
         self.assertIsNone(gerrit.client)
+        self.assertIsNone(gerrit.blacklist_ids)
+
+        gerrit = Gerrit(GERRIT_REPO, tag='test', blacklist_ids=['willy'])
+        self.assertEqual(gerrit.hostname, GERRIT_REPO)
+        self.assertEqual(gerrit.port, PORT)
+        self.assertEqual(gerrit.max_reviews, MAX_REVIEWS)
+        self.assertIsNone(gerrit.user)
+        self.assertEqual(gerrit.tag, 'test')
+        self.assertListEqual(gerrit.blacklist_ids, ['willy'])
 
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
@@ -437,12 +447,12 @@ class TestGerritCommand(unittest.TestCase):
 
         parser = GerritCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Gerrit.CATEGORIES)
+        self.assertEqual(parser._backend, Gerrit)
 
         args = [GERRIT_REPO,
                 '--user', GERRIT_USER,
                 '--max-reviews', '5',
-                '--blacklist-reviews', '',
+                '--blacklist-ids', '',
                 '--disable-host-key-check',
                 '--ssh-port', '1000',
                 '--tag', 'test', '--no-archive']
@@ -455,6 +465,25 @@ class TestGerritCommand(unittest.TestCase):
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.port, 1000)
+        self.assertListEqual(parsed_args.blacklist_ids, [''])
+
+        args = [GERRIT_REPO,
+                '--user', GERRIT_USER,
+                '--max-reviews', '5',
+                '--blacklist-ids', 'willy', 'wolly', 'wally',
+                '--disable-host-key-check',
+                '--ssh-port', '1000',
+                '--tag', 'test', '--no-archive']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.hostname, GERRIT_REPO)
+        self.assertEqual(parsed_args.user, GERRIT_USER)
+        self.assertEqual(parsed_args.max_reviews, 5)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.no_archive, True)
+        self.assertEqual(parsed_args.port, 1000)
+        self.assertListEqual(parsed_args.blacklist_ids, ['willy', 'wolly', 'wally'])
 
 
 if __name__ == "__main__":

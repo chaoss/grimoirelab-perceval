@@ -956,7 +956,7 @@ class TestPhabricatorCommand(unittest.TestCase):
 
         parser = PhabricatorCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Phabricator.CATEGORIES)
+        self.assertEqual(parser._backend, Phabricator)
 
         args = ['http://example.com',
                 '--api-token', '12345678',

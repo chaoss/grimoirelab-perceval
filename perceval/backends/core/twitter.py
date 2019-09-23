@@ -366,7 +366,7 @@ class TwitterCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the Twitter argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               token_auth=True,
                                               archive=True)
 

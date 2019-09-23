@@ -35,6 +35,7 @@ from grimoirelab_toolkit.uris import urijoin
 from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser,
+                        OriginUniqueField,
                         DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient, RateLimitHandler
 from ...utils import DEFAULT_DATETIME
@@ -85,9 +86,10 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.9.0'
+    version = '0.10.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
+    ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='iid', type=int)
 
     def __init__(self, owner=None, repository=None, api_token=None,
                  is_oauth_token=False, base_url=None, tag=None, archive=None,
@@ -253,8 +255,8 @@ class GitLab(Backend):
             for issue in issues:
                 issue_id = issue['iid']
 
-                if self.blacklist_ids and issue_id in self.blacklist_ids:
-                    logger.warning("Skipping blacklisted issue %s", issue_id)
+                if self._skip_item(issue):
+                    self.summary.skipped += 1
                     continue
 
                 self.__init_issue_extra_fields(issue)
@@ -310,8 +312,8 @@ class GitLab(Backend):
             for merge in merges:
                 merge_id = merge['iid']
 
-                if self.blacklist_ids and merge_id in self.blacklist_ids:
-                    logger.warning("Skipping blacklisted merge request %s", merge_id)
+                if self._skip_item(merge):
+                    self.summary.skipped += 1
                     continue
 
                 # The single merge_request API call returns a more
@@ -720,10 +722,11 @@ class GitLabCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the GitLab argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              blacklist=True)
 
         # GitLab options
         group = parser.parser.add_argument_group('GitLab arguments')
@@ -736,9 +739,6 @@ class GitLabCommand(BackendCommand):
                            default=MIN_RATE_LIMIT, type=int,
                            help="sleep until reset when the rate limit \
                                reaches this value")
-        group.add_argument('--blacklist-ids', dest='blacklist_ids',
-                           nargs='*', type=int,
-                           help="Ids of items that must not be retrieved.")
         group.add_argument('--is-oauth-token', dest='is_oauth_token',
                            action='store_true',
                            help="Set when using OAuth2")

@@ -179,7 +179,7 @@ class RSSCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the RSS argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               archive=True)
 
         # Required arguments

@@ -244,7 +244,7 @@ class GoogleHitsCommand(BackendCommand):
     def setup_cmd_parser(cls):
         """Returns the GoogleHits argument parser."""
 
-        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+        parser = BackendCommandArgumentParser(cls.BACKEND,
                                               archive=True)
 
         group = parser.parser.add_argument_group('GoogleHits arguments')

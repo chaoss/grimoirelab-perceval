@@ -499,7 +499,7 @@ class TestRedmineCommand(unittest.TestCase):
 
         parser = RedmineCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Redmine.CATEGORIES)
+        self.assertEqual(parser._backend, Redmine)
 
         args = ['http://example.com',
                 '--api-token', '12345678',

@@ -839,7 +839,7 @@ class TestSlackCommand(unittest.TestCase):
 
         parser = SlackCommand.setup_cmd_parser()
         self.assertIsInstance(parser, BackendCommandArgumentParser)
-        self.assertEqual(parser._categories, Slack.CATEGORIES)
+        self.assertEqual(parser._backend, Slack)
 
         args = ['--tag', 'test', '--no-archive',
                 '--api-token', 'abcdefgh',
