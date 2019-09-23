@@ -258,6 +258,9 @@ class TestJenkinsBackend(unittest.TestCase):
                                            'http://example.com/ci/job/invalid-json-job/; skipping')
 
         self.assertEqual(len(builds), 64)
+        self.assertEqual(jenkins.summary.total, 66)
+        self.assertEqual(jenkins.summary.fetched, 64)
+        self.assertEqual(jenkins.summary.skipped, 2)
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
                 as build_json:
@@ -293,6 +296,35 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/ci/job')
         self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_fetch_depth_1_blacklist(self):
+        """Test whether blacklisted/wrong builds are not fetched from Jenkins"""
+
+        configure_http_server()
+
+        # Test fetch builds from jobs list
+        jenkins = Jenkins(JENKINS_SERVER_URL,
+                          blacklist_ids=[
+                              'apex-build-brahmaputra'
+                          ])
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            builds = [build for build in jenkins.fetch()]
+            self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:Not getting blacklisted job: '
+                                           'apex-build-brahmaputra')
+            self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
+                                           'Internal Server Error for url: '
+                                           'http://example.com/ci/job/500-error-job/api/json?depth=1')
+            self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.jenkins:Unable to fetch builds from job '
+                                           'http://example.com/ci/job/500-error-job/; skipping')
+            self.assertEqual(cm.output[3], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
+                                           'http://example.com/ci/job/invalid-json-job/; skipping')
+
+            self.assertEqual(len(builds), 32)
+            self.assertEqual(jenkins.summary.total, 35)
+            self.assertEqual(jenkins.summary.fetched, 32)
+            self.assertEqual(jenkins.summary.skipped, 3)
 
     @httpretty.activate
     def test_fetch_depth_2(self):

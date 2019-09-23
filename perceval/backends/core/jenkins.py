@@ -58,7 +58,7 @@ class Jenkins(Backend):
     :param archive: collect builds already retrieved from an archive
     :param blacklist_ids: exclude the jobs ID of this list while fetching
     """
-    version = '0.14.0'
+    version = '0.14.1'
 
     CATEGORIES = [CATEGORY_BUILD]
     EXTRA_SEARCH_FIELDS = {
@@ -128,11 +128,13 @@ class Jenkins(Backend):
                     logger.warning(e)
                     logger.warning("Unable to fetch builds from job %s; skipping",
                                    job['url'])
+                    self.summary.skipped += 1
                     continue
                 else:
                     raise e
 
             if not raw_builds:
+                self.summary.skipped += 1
                 continue
 
             try:
@@ -140,6 +142,7 @@ class Jenkins(Backend):
             except ValueError:
                 logger.warning("Unable to parse builds from job %s; skipping",
                                job['url'])
+                self.summary.skipped += 1
                 continue
 
             builds = builds['builds']
