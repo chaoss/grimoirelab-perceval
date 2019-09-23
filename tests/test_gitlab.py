@@ -600,6 +600,10 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(gitlab.repository, issue['search_fields']['project'])
         self.assertIsNone(issue['search_fields']['groups'])
 
+        self.assertEqual(gitlab.summary.total, 4)
+        self.assertEqual(gitlab.summary.fetched, 4)
+        self.assertEqual(gitlab.summary.skipped, 0)
+
     @httpretty.activate
     def test_search_fields_issues_groups(self):
         """Test whether the search_fields is properly set when the project is in a group"""
@@ -704,6 +708,10 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(issue['tag'], GITLAB_URL + '/fdroid/fdroiddata')
         self.assertEqual(issue['data']['author']['id'], 2)
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
+
+        self.assertEqual(gitlab.summary.total, 4)
+        self.assertEqual(gitlab.summary.fetched, 1)
+        self.assertEqual(gitlab.summary.skipped, 3)
 
     @httpretty.activate
     def test_fetch_merges(self):

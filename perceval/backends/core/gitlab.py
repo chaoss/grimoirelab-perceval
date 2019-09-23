@@ -86,7 +86,7 @@ class GitLab(Backend):
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
     """
-    version = '0.10.0'
+    version = '0.10.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
     ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='iid', type=int)
@@ -256,6 +256,7 @@ class GitLab(Backend):
                 issue_id = issue['iid']
 
                 if self._skip_item(issue):
+                    self.summary.skipped += 1
                     continue
 
                 self.__init_issue_extra_fields(issue)
@@ -312,6 +313,7 @@ class GitLab(Backend):
                 merge_id = merge['iid']
 
                 if self._skip_item(merge):
+                    self.summary.skipped += 1
                     continue
 
                 # The single merge_request API call returns a more
