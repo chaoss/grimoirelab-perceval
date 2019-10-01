@@ -57,6 +57,8 @@ PER_PAGE = 100
 DEFAULT_SLEEP_TIME = 1
 MAX_RETRIES = 5
 
+DEFAULT_RETRY_AFTER_STATUS_CODES = [500, 502]
+
 TARGET_ISSUE_FIELDS = ['user_notes_count', 'award_emoji']
 
 logger = logging.getLogger(__name__)
@@ -85,8 +87,10 @@ class GitLab(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     :param blacklist_ids: ids of items that must not be retrieved
+    :param extra_retry_after_status: retry HTTP requests after status (default 500 and 502). These status complete
+        the ones (413, 429, 503) defined in the HttpClient class
     """
-    version = '0.10.1'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
     ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='iid', type=int)
@@ -95,7 +99,7 @@ class GitLab(Backend):
                  is_oauth_token=False, base_url=None, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
-                 blacklist_ids=None):
+                 blacklist_ids=None, extra_retry_after_status=None):
         origin = base_url if base_url else GITLAB_URL
         origin = urijoin(origin, owner, repository)
 
@@ -114,6 +118,8 @@ class GitLab(Backend):
         self.sleep_time = sleep_time
         self.blacklist_ids = blacklist_ids
         self.client = None
+        self.extra_retry_after_status = DEFAULT_RETRY_AFTER_STATUS_CODES if not extra_retry_after_status \
+            else extra_retry_after_status
         self._users = {}  # internal users cache
 
     def search_fields(self, item):
@@ -242,7 +248,7 @@ class GitLab(Backend):
         return GitLabClient(self.owner, self.repository, self.api_token,
                             self.is_oauth_token, self.base_url,
                             self.sleep_for_rate, self.min_rate_to_sleep,
-                            self.sleep_time, self.max_retries,
+                            self.sleep_time, self.max_retries, self.extra_retry_after_status,
                             self.archive, from_archive)
 
     def __fetch_issues(self, from_date):
@@ -438,12 +444,13 @@ class GitLabClient(HttpClient, RateLimitHandler):
         when no value is set the backend will be fetch the data
         from the GitLab public site.
      :param sleep_for_rate: sleep until rate limit is reset
-     :param min_rate_to_sleep: minimun rate needed to sleep until
+     :param min_rate_to_sleep: minimum rate needed to sleep until
           it will be reset
      :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     :param max_retries: number of max retries to a data source
          before raising a RetryError exception
+    :param extra_retry_after_status: retry HTTP requests after status
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
     """
@@ -462,7 +469,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
 
     def __init__(self, owner, repository, token, is_oauth_token=False, base_url=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
-                 sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
+                 sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES, extra_retry_after_status=None,
                  archive=None, from_archive=False):
         self.owner = owner
         self.repository = repository
@@ -478,7 +485,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
             base_url = GITLAB_API_URL
 
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
-                         extra_headers=self._set_extra_headers(), extra_retry_after_status=[502, 503],
+                         extra_headers=self._set_extra_headers(), extra_retry_after_status=extra_retry_after_status,
                          archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(rate_limit_header=self.RATE_LIMIT_HEADER,
                                          rate_limit_reset_header=self.RATE_LIMIT_RESET_HEADER,
@@ -750,6 +757,9 @@ class GitLabCommand(BackendCommand):
         group.add_argument('--sleep-time', dest='sleep_time',
                            default=DEFAULT_SLEEP_TIME, type=int,
                            help="sleeping time between API call retries")
+        group.add_argument('--extra-retry-status', dest='extra_retry_after_status',
+                           default=DEFAULT_RETRY_AFTER_STATUS_CODES, nargs="+", type=int,
+                           help="retry HTTP requests after status")
 
         # Positional arguments
         parser.parser.add_argument('owner',
