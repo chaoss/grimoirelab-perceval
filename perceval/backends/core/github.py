@@ -95,7 +95,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.23.0'
+    version = '0.23.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -751,7 +751,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         url_user = urijoin(self.base_url, 'users', login)
 
-        logging.info("Getting info for %s" % (url_user))
+        logger.debug("Getting info for %s" % url_user)
 
         r = self.fetch(url_user)
         user = r.text
