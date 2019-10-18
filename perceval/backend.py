@@ -259,7 +259,7 @@ class Backend:
 
         for cf in self.CLASSIFIED_FIELDS:
             try:
-                _remove_key_from_nested_dict(item, cf)
+                _remove_key_from_nested_dictlist(item, cf)
             except KeyError:
                 logger.debug("Classified field '%s' not found for item %s; field ignored",
                              '.'.join(cf), item_uuid)
@@ -379,16 +379,19 @@ def _find_value_from_nested_dict(nested_dict, path_to_field):
         return _find_value_from_nested_dict(nested_dict[key], path_to_field[1:])
 
 
-def _remove_key_from_nested_dict(nested_dict, path_to_field):
+def _remove_key_from_nested_dictlist(nested_dictlist, path_to_field):
     if len(path_to_field) == 0:
         return
 
-    key = path_to_field[0]
-
-    if len(path_to_field) == 1:
-        nested_dict.pop(key)
+    if isinstance(nested_dictlist, list):
+        for item in nested_dictlist:
+            _remove_key_from_nested_dictlist(item, path_to_field)
     else:
-        _remove_key_from_nested_dict(nested_dict[key], path_to_field[1:])
+        key = path_to_field[0]
+        if len(path_to_field) == 1:
+            nested_dictlist.pop(key)
+        else:
+            _remove_key_from_nested_dictlist(nested_dictlist[key], path_to_field[1:])
 
 
 class BackendCommandArgumentParser:
