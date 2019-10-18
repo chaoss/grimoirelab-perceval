@@ -183,6 +183,7 @@ class ClassifiedFieldsBackend(MockedBackend):
     """Mocked backend for testing classified fields filtering"""
 
     CLASSIFIED_FIELDS = [
+        ['my', 'list_classified', 'dict_classified', 'field'],
         ['my', 'classified', 'field'],
         ['classified']
     ]
@@ -195,7 +196,8 @@ class ClassifiedFieldsBackend(MockedBackend):
         for item in super().fetch_items(category, **kwargs):
             item['my'] = {
                 'classified': {'field': i},
-                'field': i
+                'field': i,
+                'list_classified': [{'field': i, 'dict_classified': {'field': i}}]
             }
             item['classified'] = i
             i += 1
@@ -384,7 +386,9 @@ class TestBackend(unittest.TestCase):
         self.assertListEqual(b.classified_fields, [])
 
         b = ClassifiedFieldsBackend('test')
-        self.assertListEqual(b.classified_fields, ['my.classified.field', 'classified'])
+        self.assertListEqual(b.classified_fields, ['my.list_classified.dict_classified.field',
+                                                   'my.classified.field',
+                                                   'classified'])
 
     def test_has_archiving(self):
         """Test whether an NotImplementedError exception is thrown"""
@@ -670,7 +674,8 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['category'], ClassifiedFieldsBackend.DEFAULT_CATEGORY)
             self.assertEqual(item['classified_fields_filtered'],
-                             ['my.classified.field', 'classified'])
+                             ['my.list_classified.dict_classified.field',
+                              'my.classified.field', 'classified'])
 
             # Fields in CLASSIFIED_FIELDS are deleted
             expected = {
@@ -679,6 +684,7 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
                 'my': {
                     'classified': {},
                     'field': x,
+                    'list_classified': [{'dict_classified': {}, 'field': x}]
                 }
             }
             self.assertDictEqual(item['data'], expected)
@@ -709,6 +715,7 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
                 'my': {
                     'classified': {'field': x},
                     'field': x,
+                    'list_classified': [{'dict_classified': {'field': x}, 'field': x}]
                 },
             }
             self.assertDictEqual(item['data'], expected)
@@ -739,6 +746,7 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
                 'my': {
                     'classified': {'field': x},
                     'field': x,
+                    'list_classified': [{'dict_classified': {'field': x}, 'field': x}]
                 },
             }
             self.assertDictEqual(item['data'], expected)
@@ -1451,7 +1459,8 @@ class TestBackendCommand(unittest.TestCase):
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['category'], ClassifiedFieldsBackend.DEFAULT_CATEGORY)
             self.assertEqual(item['classified_fields_filtered'],
-                             ['my.classified.field', 'classified'])
+                             ['my.list_classified.dict_classified.field',
+                              'my.classified.field', 'classified'])
 
             expected = {
                 'category': 'mock_item',
@@ -1459,6 +1468,7 @@ class TestBackendCommand(unittest.TestCase):
                 'my': {
                     'classified': {},
                     'field': x,
+                    'list_classified': [{'dict_classified': {}, 'field': x}],
                 },
             }
             self.assertDictEqual(item['data'], expected)
@@ -1678,7 +1688,8 @@ class TestBackendItemsGenerator(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['classified_fields_filtered'],
-                             ['my.classified.field', 'classified'])
+                             ['my.list_classified.dict_classified.field',
+                              'my.classified.field', 'classified'])
 
             # Fields in CLASSIFIED_FIELDS are deleted
             expected = {
@@ -1687,6 +1698,7 @@ class TestBackendItemsGenerator(unittest.TestCase):
                 'my': {
                     'classified': {},
                     'field': x,
+                    'list_classified': [{'dict_classified': {}, 'field': x}],
                 }
             }
             self.assertDictEqual(item['data'], expected)
@@ -2152,7 +2164,8 @@ class TestFetch(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['classified_fields_filtered'],
-                             ['my.classified.field', 'classified'])
+                             ['my.list_classified.dict_classified.field',
+                              'my.classified.field', 'classified'])
 
             # Fields in CLASSIFIED_FIELDS are deleted
             expected = {
@@ -2161,6 +2174,7 @@ class TestFetch(unittest.TestCase):
                 'my': {
                     'classified': {},
                     'field': x,
+                    'list_classified': [{'dict_classified': {}, 'field': x}],
                 }
             }
             self.assertDictEqual(item['data'], expected)
