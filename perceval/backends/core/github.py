@@ -86,7 +86,7 @@ class GitHub(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     :param sleep_for_rate: sleep until rate limit is reset
-    :param min_rate_to_sleep: minimun rate needed to sleep until
+    :param min_rate_to_sleep: minimum rate needed to sleep until
          it will be reset
     :param max_retries: number of max retries to a data source
         before raising a RetryError exception
@@ -95,9 +95,22 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.23.1'
+    version = '0.24.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
+
+    CLASSIFIED_FIELDS = [
+        ['user_data'],
+        ['merged_by_data'],
+        ['assignee_data'],
+        ['assignees_data'],
+        ['requested_reviewers_data'],
+        ['comments_data', 'user_data'],
+        ['comments_data', 'reactions_data', 'user_data'],
+        ['reviews_data', 'user_data'],
+        ['review_comments_data', 'user_data'],
+        ['review_comments_data', 'reactions_data', 'user_data']
+    ]
 
     def __init__(self, owner=None, repository=None,
                  api_token=None, base_url=None,
@@ -124,6 +137,7 @@ class GitHub(Backend):
         self.max_items = max_items
 
         self.client = None
+        self.exclude_user_data = False
         self._users = {}  # internal users cache
 
     def search_fields(self, item):
@@ -143,7 +157,8 @@ class GitHub(Backend):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME):
+    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
+              filter_classified=False):
         """Fetch the issues/pull requests from the repository.
 
         The method retrieves, from a GitHub repository, the issues/pull requests
@@ -152,9 +167,15 @@ class GitHub(Backend):
         :param category: the category of items to fetch
         :param from_date: obtain issues/pull requests updated since this date
         :param to_date: obtain issues/pull requests until a specific date (included)
+        :param filter_classified: remove classified fields from the resulting items
 
         :returns: a generator of issues
         """
+        self.exclude_user_data = filter_classified
+
+        if self.exclude_user_data:
+            logger.info("Excluding user data. Personal user information won't be collected from the API.")
+
         if not from_date:
             from_date = DEFAULT_DATETIME
         if not to_date:
@@ -167,7 +188,9 @@ class GitHub(Backend):
             'from_date': from_date,
             'to_date': to_date
         }
-        items = super().fetch(category, **kwargs)
+        items = super().fetch(category,
+                              filter_classified=filter_classified,
+                              **kwargs)
 
         return items
 
@@ -501,10 +524,8 @@ class GitHub(Backend):
     def __get_user(self, login):
         """Get user and org data for the login"""
 
-        user = {}
-
-        if not login:
-            return user
+        if not login or self.exclude_user_data:
+            return None
 
         user_raw = self.client.user(login)
         user = json.loads(user_raw)
