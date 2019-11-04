@@ -61,6 +61,10 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 * python3-dulwich >= 0.18.5
 * grimoirelab-toolkit >= 0.1.4
 
+Note that you should have also the following packages installed in your system:
+- git
+- build-essential
+
 ## Installation
 
 There are several ways for installing Perceval on your system: from packages,
