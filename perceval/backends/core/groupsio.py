@@ -65,7 +65,7 @@ class Groupsio(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.3.0'
+    version = '0.3.1'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -239,6 +239,8 @@ class GroupsioClient(MailingList):
             r.raise_for_status()
             self._write_archive(r, filepath)
         except requests.exceptions.HTTPError as e:
+            logger.error("Impossible to download archives from %s. Error info: %s",
+                         self.uri, str(e.response.text))
             raise e
         except OSError as e:
             logger.warning("Ignoring %s archive due to: %s", self.uri, str(e))
