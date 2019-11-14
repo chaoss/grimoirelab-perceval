@@ -3180,8 +3180,8 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
-        pull_requested_reviewers_raw = [rev for rev in client.issue_comments(2)]
-        self.assertEqual(pull_requested_reviewers_raw[0], issue_comments)
+        issue_comments_raw = [rev for rev in client.issue_comments(2)]
+        self.assertEqual(issue_comments_raw[0], issue_comments)
 
     @httpretty.activate
     def test_issue_reactions(self):
@@ -3208,8 +3208,8 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
-        pull_requested_reviewers_raw = [rev for rev in client.issue_reactions(2)]
-        self.assertEqual(pull_requested_reviewers_raw[0], issue_reactions)
+        issue_reactions_raw = [rev for rev in client.issue_reactions(2)]
+        self.assertEqual(issue_reactions_raw[0], issue_reactions)
 
     @httpretty.activate
     def test_issue_comment_reactions(self):
@@ -3237,8 +3237,8 @@ class TestGitHubClient(unittest.TestCase):
 
         client = GitHubClient("zhquan_example", "repo", ["aaa"])
 
-        pull_requested_reviewers_raw = [rev for rev in client.issue_comment_reactions(1)]
-        self.assertEqual(pull_requested_reviewers_raw[0], issue_comment_reactions)
+        issue_comment_reactions_raw = [rev for rev in client.issue_comment_reactions(1)]
+        self.assertEqual(issue_comment_reactions_raw[0], issue_comment_reactions)
 
     @httpretty.activate
     def test_pulls(self):
