@@ -95,7 +95,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     """
-    version = '0.24.0'
+    version = '0.24.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -441,8 +441,12 @@ class GitHub(Backend):
                 group_requested_reviewers = {'users': group_requested_reviewers}
 
             for requested_reviewer in group_requested_reviewers['users']:
-                user_data = self.__get_user(requested_reviewer['login'])
-                requested_reviewers.append(user_data)
+                if requested_reviewer and 'login' in requested_reviewer:
+                    user_data = self.__get_user(requested_reviewer['login'])
+                    requested_reviewers.append(user_data)
+                else:
+                    logger.warning('Impossible to identify requested reviewer for pull request %s',
+                                   pr_number)
 
         return requested_reviewers
 
