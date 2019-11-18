@@ -36,6 +36,7 @@ from ...client import HttpClient
 CATEGORY_BUILD = "build"
 SLEEP_TIME = 10
 DETAIL_DEPTH = 1
+CLASS_JOB_WORKFLOW_MULTIBRANCH = 'org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject'
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ class Jenkins(Backend):
     :param archive: collect builds already retrieved from an archive
     :param blacklist_ids: exclude the jobs ID of this list while fetching
     """
-    version = '0.14.1'
+    version = '0.15.0'
 
     CATEGORIES = [CATEGORY_BUILD]
     EXTRA_SEARCH_FIELDS = {
@@ -112,47 +113,38 @@ class Jenkins(Backend):
         logger.info("Looking for projects at url '%s'", self.url)
 
         nbuilds = 0  # number of builds processed
-        njobs = 0  # number of jobs processed
+        njobs = 0  # number of jobs with data
+        tjobs = 0  # number of jobs retrieved
 
-        projects = json.loads(self.client.get_jobs())
-        jobs = projects['jobs']
-
+        jobs = self.__get_jobs(self.url)
         for job in jobs:
-            logger.debug("Adding builds from %s (%i/%i)",
-                         job['url'], njobs, len(jobs))
+            job_class = job.get('_class', None)
+            if job_class and job_class == CLASS_JOB_WORKFLOW_MULTIBRANCH:
+                job_url = job['url']
+                for nested_job in self.__get_jobs(job_url):
+                    builds = self.__get_builds(nested_job, job_url)
 
-            try:
-                raw_builds = self.client.get_builds(job['name'])
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 500:
-                    logger.warning(e)
-                    logger.warning("Unable to fetch builds from job %s; skipping",
-                                   job['url'])
-                    self.summary.skipped += 1
-                    continue
-                else:
-                    raise e
+                    if builds:
+                        njobs += 1
 
-            if not raw_builds:
-                self.summary.skipped += 1
-                continue
+                    for build in builds:
+                        nbuilds += 1
+                        yield build
 
-            try:
-                builds = json.loads(raw_builds)
-            except ValueError:
-                logger.warning("Unable to parse builds from job %s; skipping",
-                               job['url'])
-                self.summary.skipped += 1
-                continue
+                    tjobs += 1
+            else:
+                builds = self.__get_builds(job, self.url)
 
-            builds = builds['builds']
-            for build in builds:
-                yield build
-                nbuilds += 1
+                if builds:
+                    njobs += 1
 
-            njobs += 1
+                for build in builds:
+                    nbuilds += 1
+                    yield build
 
-        logger.info("Total number of jobs: %i/%i", njobs, len(jobs))
+                tjobs += 1
+
+        logger.info("Total number of jobs: %i/%i", njobs, tjobs)
         logger.info("Total number of builds: %i", nbuilds)
 
     @classmethod
@@ -199,6 +191,45 @@ class Jenkins(Backend):
         """
         return CATEGORY_BUILD
 
+    def __get_jobs(self, url):
+        jobs_info = json.loads(self.client.get_jobs(url))
+        jobs = jobs_info['jobs']
+
+        return jobs
+
+    def __get_builds(self, job, url):
+        builds = []
+        try:
+            raw_builds = self.client.get_builds(job['name'], url)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 500:
+                logger.warning(e)
+                logger.warning("Unable to fetch builds from job %s; skipping",
+                               job['url'])
+                self.summary.skipped += 1
+                return builds
+            else:
+                raise e
+
+        if not raw_builds:
+            self.summary.skipped += 1
+            return builds
+
+        try:
+            builds = json.loads(raw_builds)
+        except ValueError:
+            logger.warning("Unable to parse builds from job %s; skipping",
+                           job['url'])
+            self.summary.skipped += 1
+            return builds
+
+        builds = builds.get('builds', [])
+        if not builds:
+            self.summary.skipped += 1
+            logger.warning("No builds for job %s", job['url'])
+
+        return builds
+
     def _init_client(self, from_archive=False):
         """Init client"""
 
@@ -244,23 +275,28 @@ class JenkinsClient(HttpClient):
         self.blacklist_jobs = blacklist_jobs
         self.detail_depth = detail_depth
 
-    def get_jobs(self):
-        """ Retrieve all jobs"""
+    def get_jobs(self, url):
+        """Retrieve all jobs
 
-        url_jenkins = urijoin(self.base_url, "api", "json")
+        :param url: target url to fetch jobs
+        """
+        url_jenkins = urijoin(url, "api", "json")
 
         response = self.fetch(url_jenkins, auth=self.auth)
         return response.text
 
-    def get_builds(self, job_name):
-        """ Retrieve all builds from a job"""
+    def get_builds(self, job_name, url):
+        """Retrieve all builds from a job
 
+        :param job_name: name of the job
+        :param url: target url to fetch builds
+        """
         if self.blacklist_jobs and job_name in self.blacklist_jobs:
             logger.warning("Not getting blacklisted job: %s", job_name)
             return
 
         payload = {'depth': self.detail_depth}
-        url_build = urijoin(self.base_url, "job", job_name, "api", "json")
+        url_build = urijoin(url, "job", job_name, "api", "json")
 
         response = self.fetch(url_build, payload=payload, auth=self.auth)
         return response.text

@@ -1,0 +1,2420 @@
+{
+    "_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+    "actions": [
+        {},
+        {},
+        {},
+        {
+            "_class": "hudson.plugins.jobConfigHistory.JobConfigHistoryProjectAction",
+            "jobConfigHistory": [
+                {
+                    "currentName": "",
+                    "date": "2019-11-14_21-57-10",
+                    "hasConfig": true,
+                    "job": "zowe-docs-site/users%2Fjack%2Flf-jenkins",
+                    "oldName": "",
+                    "operation": "Changed",
+                    "user": "SYSTEM",
+                    "userID": "SYSTEM"
+                },
+                {
+                    "currentName": "",
+                    "date": "2019-11-14_21-27-18",
+                    "hasConfig": true,
+                    "job": "zowe-docs-site/users%2Fjack%2Flf-jenkins",
+                    "oldName": "",
+                    "operation": "Changed",
+                    "user": "SYSTEM",
+                    "userID": "SYSTEM"
+                },
+                {
+                    "currentName": "",
+                    "date": "2019-11-13_21-29-20",
+                    "hasConfig": true,
+                    "job": "zowe-docs-site/users%2Fjack%2Flf-jenkins",
+                    "oldName": "",
+                    "operation": "Changed",
+                    "user": "SYSTEM",
+                    "userID": "SYSTEM"
+                },
+                {
+                    "currentName": "",
+                    "date": "2019-11-13_21-27-13",
+                    "hasConfig": true,
+                    "job": "zowe-docs-site/users%2Fjack%2Flf-jenkins",
+                    "oldName": "",
+                    "operation": "Created",
+                    "user": "SYSTEM",
+                    "userID": "SYSTEM"
+                },
+                {
+                    "currentName": "",
+                    "date": "2019-11-13_21-27-12",
+                    "hasConfig": true,
+                    "job": "zowe-docs-site/users%2Fjack%2Flf-jenkins",
+                    "oldName": "",
+                    "operation": "Changed",
+                    "user": "SYSTEM",
+                    "userID": "SYSTEM"
+                },
+                {
+                    "currentName": "",
+                    "date": "2019-11-13_21-27-11",
+                    "hasConfig": true,
+                    "job": "zowe-docs-site/users%2Fjack%2Flf-jenkins",
+                    "oldName": "",
+                    "operation": "Changed",
+                    "user": "SYSTEM",
+                    "userID": "SYSTEM"
+                },
+                {
+                    "currentName": "",
+                    "date": "2019-11-13_21-27-10",
+                    "hasConfig": true,
+                    "job": "zowe-docs-site/users%2Fjack%2Flf-jenkins",
+                    "oldName": "",
+                    "operation": "Changed",
+                    "user": "SYSTEM",
+                    "userID": "SYSTEM"
+                }
+            ]
+        },
+        {},
+        {},
+        {},
+        {},
+        {
+            "_class": "com.cloudbees.plugins.credentials.ViewCredentialsAction",
+            "stores": {}
+        }
+    ],
+    "buildable": true,
+    "builds": [
+        {
+            "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+            "actions": [
+                {
+                    "_class": "hudson.model.ParametersAction",
+                    "parameters": [
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Check for CI Skip",
+                            "value": false
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Init Generic Pipeline",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Lint",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Audit",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Prepare .deploy",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Build: Source",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Test: Broken Links",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Generate PDF",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Publish: Package",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "_class": "hudson.model.CauseAction",
+                    "causes": [
+                        {
+                            "_class": "hudson.model.Cause$UserIdCause",
+                            "shortDescription": "Started by user Daniel Pono Takamori",
+                            "userId": "takamori",
+                            "userName": "Daniel Pono Takamori"
+                        }
+                    ]
+                },
+                {},
+                {
+                    "_class": "jenkins.scm.api.SCMRevisionAction"
+                },
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+                },
+                {},
+                {},
+                {
+                    "_class": "hudson.plugins.git.util.BuildData",
+                    "buildsByBranchName": {
+                        "master": {
+                            "_class": "hudson.plugins.git.util.Build",
+                            "buildNumber": 5,
+                            "buildResult": null,
+                            "marked": {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "branch": [
+                                    {
+                                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                        "name": "master"
+                                    }
+                                ]
+                            },
+                            "revision": {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "branch": [
+                                    {
+                                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                        "name": "master"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "lastBuiltRevision": {
+                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                        "branch": [
+                            {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "name": "master"
+                            }
+                        ]
+                    },
+                    "remoteUrls": [
+                        "https://github.com/zowe/jenkins-library.git"
+                    ],
+                    "scmName": ""
+                },
+                {
+                    "_class": "hudson.plugins.git.GitTagAction"
+                },
+                {},
+                {
+                    "_class": "hudson.plugins.git.util.BuildData",
+                    "buildsByBranchName": {
+                        "users/jack/lf-jenkins": {
+                            "_class": "hudson.plugins.git.util.Build",
+                            "buildNumber": 5,
+                            "buildResult": null,
+                            "marked": {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "branch": [
+                                    {
+                                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                        "name": "users/jack/lf-jenkins"
+                                    }
+                                ]
+                            },
+                            "revision": {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "branch": [
+                                    {
+                                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                        "name": "users/jack/lf-jenkins"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "lastBuiltRevision": {
+                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                        "branch": [
+                            {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "name": "users/jack/lf-jenkins"
+                            }
+                        ]
+                    },
+                    "remoteUrls": [
+                        "https://github.com/zowe/docs-site.git"
+                    ],
+                    "scmName": ""
+                },
+                {},
+                {},
+                {},
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+                },
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+                },
+                {},
+                {}
+            ],
+            "artifacts": [],
+            "building": false,
+            "changeSets": [],
+            "culprits": [],
+            "description": null,
+            "displayName": "#5",
+            "duration": 177525,
+            "estimatedDuration": 395858,
+            "executor": null,
+            "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #5",
+            "id": "5",
+            "keepLog": false,
+            "nextBuild": null,
+            "number": 5,
+            "previousBuild": {
+                "number": 4,
+                "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/4/"
+            },
+            "queueId": 1588,
+            "result": "SUCCESS",
+            "timestamp": 1573768779979,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/5/"
+        },
+        {
+            "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+            "actions": [
+                {
+                    "_class": "hudson.model.ParametersAction",
+                    "parameters": [
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Check for CI Skip",
+                            "value": false
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Init Generic Pipeline",
+                            "value": false
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Lint",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Audit",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Prepare .deploy",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Build: Source",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Test: Broken Links",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Generate PDF",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Publish: Package",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "_class": "hudson.model.CauseAction",
+                    "causes": [
+                        {
+                            "_class": "hudson.model.Cause$UserIdCause",
+                            "shortDescription": "Started by user Daniel Pono Takamori",
+                            "userId": "takamori",
+                            "userName": "Daniel Pono Takamori"
+                        }
+                    ]
+                },
+                {},
+                {
+                    "_class": "jenkins.scm.api.SCMRevisionAction"
+                },
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+                },
+                {},
+                {},
+                {
+                    "_class": "hudson.plugins.git.util.BuildData",
+                    "buildsByBranchName": {
+                        "master": {
+                            "_class": "hudson.plugins.git.util.Build",
+                            "buildNumber": 4,
+                            "buildResult": null,
+                            "marked": {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "branch": [
+                                    {
+                                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                        "name": "master"
+                                    }
+                                ]
+                            },
+                            "revision": {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "branch": [
+                                    {
+                                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                        "name": "master"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "lastBuiltRevision": {
+                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                        "branch": [
+                            {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "name": "master"
+                            }
+                        ]
+                    },
+                    "remoteUrls": [
+                        "https://github.com/zowe/jenkins-library.git"
+                    ],
+                    "scmName": ""
+                },
+                {
+                    "_class": "hudson.plugins.git.GitTagAction"
+                },
+                {},
+                {
+                    "_class": "hudson.plugins.git.util.BuildData",
+                    "buildsByBranchName": {
+                        "users/jack/lf-jenkins": {
+                            "_class": "hudson.plugins.git.util.Build",
+                            "buildNumber": 4,
+                            "buildResult": null,
+                            "marked": {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "branch": [
+                                    {
+                                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                        "name": "users/jack/lf-jenkins"
+                                    }
+                                ]
+                            },
+                            "revision": {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "branch": [
+                                    {
+                                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                        "name": "users/jack/lf-jenkins"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "lastBuiltRevision": {
+                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                        "branch": [
+                            {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "name": "users/jack/lf-jenkins"
+                            }
+                        ]
+                    },
+                    "remoteUrls": [
+                        "https://github.com/zowe/docs-site.git"
+                    ],
+                    "scmName": ""
+                },
+                {},
+                {},
+                {},
+                {},
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+                },
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+                },
+                {},
+                {}
+            ],
+            "artifacts": [],
+            "building": false,
+            "changeSets": [],
+            "culprits": [],
+            "description": null,
+            "displayName": "#4",
+            "duration": 127885,
+            "estimatedDuration": 395858,
+            "executor": null,
+            "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #4",
+            "id": "4",
+            "keepLog": false,
+            "nextBuild": {
+                "number": 5,
+                "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/5/"
+            },
+            "number": 4,
+            "previousBuild": {
+                "number": 3,
+                "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/3/"
+            },
+            "queueId": 1586,
+            "result": "FAILURE",
+            "timestamp": 1573768516016,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/4/"
+        },
+        {
+            "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+            "actions": [
+                {
+                    "_class": "hudson.model.ParametersAction",
+                    "parameters": [
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Check for CI Skip",
+                            "value": false
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Init Generic Pipeline",
+                            "value": false
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Lint",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Audit",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Prepare .deploy",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Build: Source",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Test: Broken Links",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Generate PDF",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Publish: Package",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "_class": "hudson.model.CauseAction",
+                    "causes": [
+                        {
+                            "_class": "hudson.model.Cause$UserIdCause",
+                            "shortDescription": "Started by user Daniel Pono Takamori",
+                            "userId": "takamori",
+                            "userName": "Daniel Pono Takamori"
+                        }
+                    ]
+                },
+                {
+                    "_class": "jenkins.scm.api.SCMRevisionAction"
+                },
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+                },
+                {},
+                {},
+                {
+                    "_class": "hudson.plugins.git.util.BuildData",
+                    "buildsByBranchName": {
+                        "master": {
+                            "_class": "hudson.plugins.git.util.Build",
+                            "buildNumber": 3,
+                            "buildResult": null,
+                            "marked": {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "branch": [
+                                    {
+                                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                        "name": "master"
+                                    }
+                                ]
+                            },
+                            "revision": {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "branch": [
+                                    {
+                                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                        "name": "master"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "lastBuiltRevision": {
+                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                        "branch": [
+                            {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "name": "master"
+                            }
+                        ]
+                    },
+                    "remoteUrls": [
+                        "https://github.com/zowe/jenkins-library.git"
+                    ],
+                    "scmName": ""
+                },
+                {
+                    "_class": "hudson.plugins.git.GitTagAction"
+                },
+                {},
+                {
+                    "_class": "hudson.plugins.git.util.BuildData",
+                    "buildsByBranchName": {
+                        "users/jack/lf-jenkins": {
+                            "_class": "hudson.plugins.git.util.Build",
+                            "buildNumber": 3,
+                            "buildResult": null,
+                            "marked": {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "branch": [
+                                    {
+                                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                        "name": "users/jack/lf-jenkins"
+                                    }
+                                ]
+                            },
+                            "revision": {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "branch": [
+                                    {
+                                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                        "name": "users/jack/lf-jenkins"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "lastBuiltRevision": {
+                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                        "branch": [
+                            {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "name": "users/jack/lf-jenkins"
+                            }
+                        ]
+                    },
+                    "remoteUrls": [
+                        "https://github.com/zowe/docs-site.git"
+                    ],
+                    "scmName": ""
+                },
+                {},
+                {},
+                {},
+                {},
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+                },
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+                },
+                {},
+                {}
+            ],
+            "artifacts": [],
+            "building": false,
+            "changeSets": [],
+            "culprits": [],
+            "description": null,
+            "displayName": "#3",
+            "duration": 882163,
+            "estimatedDuration": 395858,
+            "executor": null,
+            "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #3",
+            "id": "3",
+            "keepLog": false,
+            "nextBuild": {
+                "number": 4,
+                "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/4/"
+            },
+            "number": 3,
+            "previousBuild": {
+                "number": 2,
+                "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/2/"
+            },
+            "queueId": 1584,
+            "result": "FAILURE",
+            "timestamp": 1573765972008,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/3/"
+        },
+        {
+            "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+            "actions": [
+                {
+                    "_class": "hudson.model.ParametersAction",
+                    "parameters": [
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Check for CI Skip",
+                            "value": false
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Init Generic Pipeline",
+                            "value": false
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Lint",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Audit",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Prepare .deploy",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Build: Source",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Test: Broken Links",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Generate PDF",
+                            "value": true
+                        },
+                        {
+                            "_class": "hudson.model.BooleanParameterValue",
+                            "name": "Skip Stage: Publish: Package",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "_class": "hudson.model.CauseAction",
+                    "causes": [
+                        {
+                            "_class": "hudson.model.Cause$UserIdCause",
+                            "shortDescription": "Started by user Daniel Pono Takamori",
+                            "userId": "takamori",
+                            "userName": "Daniel Pono Takamori"
+                        }
+                    ]
+                },
+                {},
+                {},
+                {},
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+                },
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+                },
+                {},
+                {}
+            ],
+            "artifacts": [],
+            "building": false,
+            "changeSets": [],
+            "culprits": [],
+            "description": null,
+            "displayName": "#2",
+            "duration": 463782,
+            "estimatedDuration": 395858,
+            "executor": null,
+            "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #2",
+            "id": "2",
+            "keepLog": false,
+            "nextBuild": {
+                "number": 3,
+                "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/3/"
+            },
+            "number": 2,
+            "previousBuild": {
+                "number": 1,
+                "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/1/"
+            },
+            "queueId": 1583,
+            "result": "FAILURE",
+            "timestamp": 1573765401166,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/2/"
+        },
+        {
+            "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+            "actions": [
+                {
+                    "_class": "hudson.model.CauseAction",
+                    "causes": [
+                        {
+                            "_class": "jenkins.branch.BranchEventCause",
+                            "shortDescription": "Push event to branch users/jack/lf-jenkins"
+                        }
+                    ]
+                },
+                {
+                    "_class": "jenkins.scm.api.SCMRevisionAction"
+                },
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+                },
+                {},
+                {},
+                {
+                    "_class": "hudson.plugins.git.util.BuildData",
+                    "buildsByBranchName": {
+                        "master": {
+                            "_class": "hudson.plugins.git.util.Build",
+                            "buildNumber": 1,
+                            "buildResult": null,
+                            "marked": {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "branch": [
+                                    {
+                                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                        "name": "master"
+                                    }
+                                ]
+                            },
+                            "revision": {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "branch": [
+                                    {
+                                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                        "name": "master"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "lastBuiltRevision": {
+                        "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                        "branch": [
+                            {
+                                "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                "name": "master"
+                            }
+                        ]
+                    },
+                    "remoteUrls": [
+                        "https://github.com/zowe/jenkins-library.git"
+                    ],
+                    "scmName": ""
+                },
+                {
+                    "_class": "hudson.plugins.git.GitTagAction"
+                },
+                {},
+                {
+                    "_class": "hudson.plugins.git.util.BuildData",
+                    "buildsByBranchName": {
+                        "users/jack/lf-jenkins": {
+                            "_class": "hudson.plugins.git.util.Build",
+                            "buildNumber": 1,
+                            "buildResult": null,
+                            "marked": {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "branch": [
+                                    {
+                                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                        "name": "users/jack/lf-jenkins"
+                                    }
+                                ]
+                            },
+                            "revision": {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "branch": [
+                                    {
+                                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                        "name": "users/jack/lf-jenkins"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "lastBuiltRevision": {
+                        "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                        "branch": [
+                            {
+                                "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                "name": "users/jack/lf-jenkins"
+                            }
+                        ]
+                    },
+                    "remoteUrls": [
+                        "https://github.com/zowe/docs-site.git"
+                    ],
+                    "scmName": ""
+                },
+                {},
+                {},
+                {},
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+                },
+                {},
+                {
+                    "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+                },
+                {},
+                {}
+            ],
+            "artifacts": [],
+            "building": false,
+            "changeSets": [],
+            "culprits": [],
+            "description": null,
+            "displayName": "#1",
+            "duration": 141256,
+            "estimatedDuration": 395858,
+            "executor": null,
+            "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #1",
+            "id": "1",
+            "keepLog": false,
+            "nextBuild": {
+                "number": 2,
+                "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/2/"
+            },
+            "number": 1,
+            "previousBuild": null,
+            "queueId": 991,
+            "result": "FAILURE",
+            "timestamp": 1573680433476,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/1/"
+        }
+    ],
+    "color": "blue",
+    "concurrentBuild": false,
+    "description": null,
+    "displayName": "users/jack/lf-jenkins",
+    "displayNameOrNull": "users/jack/lf-jenkins",
+    "firstBuild": {
+        "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+        "actions": [
+            {
+                "_class": "hudson.model.CauseAction",
+                "causes": [
+                    {
+                        "_class": "jenkins.branch.BranchEventCause",
+                        "shortDescription": "Push event to branch users/jack/lf-jenkins"
+                    }
+                ]
+            },
+            {
+                "_class": "jenkins.scm.api.SCMRevisionAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+            },
+            {},
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "master": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 1,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                    "branch": [
+                        {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "name": "master"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/jenkins-library.git"
+                ],
+                "scmName": ""
+            },
+            {
+                "_class": "hudson.plugins.git.GitTagAction"
+            },
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "users/jack/lf-jenkins": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 1,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                    "branch": [
+                        {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "name": "users/jack/lf-jenkins"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/docs-site.git"
+                ],
+                "scmName": ""
+            },
+            {},
+            {},
+            {},
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+            },
+            {},
+            {}
+        ],
+        "artifacts": [],
+        "building": false,
+        "changeSets": [],
+        "culprits": [],
+        "description": null,
+        "displayName": "#1",
+        "duration": 141256,
+        "estimatedDuration": 395858,
+        "executor": null,
+        "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #1",
+        "id": "1",
+        "keepLog": false,
+        "nextBuild": {
+            "number": 2,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/2/"
+        },
+        "number": 1,
+        "previousBuild": null,
+        "queueId": 991,
+        "result": "FAILURE",
+        "timestamp": 1573680433476,
+        "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/1/"
+    },
+    "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins",
+    "fullName": "zowe-docs-site/users%2Fjack%2Flf-jenkins",
+    "healthReport": [
+        {
+            "description": "Build stability: 4 out of the last 5 builds failed.",
+            "iconClassName": "icon-health-00to19",
+            "iconUrl": "health-00to19.png",
+            "score": 20
+        }
+    ],
+    "inQueue": false,
+    "keepDependencies": false,
+    "lastBuild": {
+        "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+        "actions": [
+            {
+                "_class": "hudson.model.ParametersAction",
+                "parameters": [
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Check for CI Skip",
+                        "value": false
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Init Generic Pipeline",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Lint",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Audit",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Prepare .deploy",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Build: Source",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Test: Broken Links",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Generate PDF",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Publish: Package",
+                        "value": true
+                    }
+                ]
+            },
+            {
+                "_class": "hudson.model.CauseAction",
+                "causes": [
+                    {
+                        "_class": "hudson.model.Cause$UserIdCause",
+                        "shortDescription": "Started by user Daniel Pono Takamori",
+                        "userId": "takamori",
+                        "userName": "Daniel Pono Takamori"
+                    }
+                ]
+            },
+            {},
+            {
+                "_class": "jenkins.scm.api.SCMRevisionAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+            },
+            {},
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "master": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 5,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                    "branch": [
+                        {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "name": "master"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/jenkins-library.git"
+                ],
+                "scmName": ""
+            },
+            {
+                "_class": "hudson.plugins.git.GitTagAction"
+            },
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "users/jack/lf-jenkins": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 5,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                    "branch": [
+                        {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "name": "users/jack/lf-jenkins"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/docs-site.git"
+                ],
+                "scmName": ""
+            },
+            {},
+            {},
+            {},
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+            },
+            {},
+            {}
+        ],
+        "artifacts": [],
+        "building": false,
+        "changeSets": [],
+        "culprits": [],
+        "description": null,
+        "displayName": "#5",
+        "duration": 177525,
+        "estimatedDuration": 395858,
+        "executor": null,
+        "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #5",
+        "id": "5",
+        "keepLog": false,
+        "nextBuild": null,
+        "number": 5,
+        "previousBuild": {
+            "number": 4,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/4/"
+        },
+        "queueId": 1588,
+        "result": "SUCCESS",
+        "timestamp": 1573768779979,
+        "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/5/"
+    },
+    "lastCompletedBuild": {
+        "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+        "actions": [
+            {
+                "_class": "hudson.model.ParametersAction",
+                "parameters": [
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Check for CI Skip",
+                        "value": false
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Init Generic Pipeline",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Lint",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Audit",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Prepare .deploy",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Build: Source",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Test: Broken Links",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Generate PDF",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Publish: Package",
+                        "value": true
+                    }
+                ]
+            },
+            {
+                "_class": "hudson.model.CauseAction",
+                "causes": [
+                    {
+                        "_class": "hudson.model.Cause$UserIdCause",
+                        "shortDescription": "Started by user Daniel Pono Takamori",
+                        "userId": "takamori",
+                        "userName": "Daniel Pono Takamori"
+                    }
+                ]
+            },
+            {},
+            {
+                "_class": "jenkins.scm.api.SCMRevisionAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+            },
+            {},
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "master": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 5,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                    "branch": [
+                        {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "name": "master"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/jenkins-library.git"
+                ],
+                "scmName": ""
+            },
+            {
+                "_class": "hudson.plugins.git.GitTagAction"
+            },
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "users/jack/lf-jenkins": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 5,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                    "branch": [
+                        {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "name": "users/jack/lf-jenkins"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/docs-site.git"
+                ],
+                "scmName": ""
+            },
+            {},
+            {},
+            {},
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+            },
+            {},
+            {}
+        ],
+        "artifacts": [],
+        "building": false,
+        "changeSets": [],
+        "culprits": [],
+        "description": null,
+        "displayName": "#5",
+        "duration": 177525,
+        "estimatedDuration": 395858,
+        "executor": null,
+        "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #5",
+        "id": "5",
+        "keepLog": false,
+        "nextBuild": null,
+        "number": 5,
+        "previousBuild": {
+            "number": 4,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/4/"
+        },
+        "queueId": 1588,
+        "result": "SUCCESS",
+        "timestamp": 1573768779979,
+        "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/5/"
+    },
+    "lastFailedBuild": {
+        "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+        "actions": [
+            {
+                "_class": "hudson.model.ParametersAction",
+                "parameters": [
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Check for CI Skip",
+                        "value": false
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Init Generic Pipeline",
+                        "value": false
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Lint",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Audit",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Prepare .deploy",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Build: Source",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Test: Broken Links",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Generate PDF",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Publish: Package",
+                        "value": true
+                    }
+                ]
+            },
+            {
+                "_class": "hudson.model.CauseAction",
+                "causes": [
+                    {
+                        "_class": "hudson.model.Cause$UserIdCause",
+                        "shortDescription": "Started by user Daniel Pono Takamori",
+                        "userId": "takamori",
+                        "userName": "Daniel Pono Takamori"
+                    }
+                ]
+            },
+            {},
+            {
+                "_class": "jenkins.scm.api.SCMRevisionAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+            },
+            {},
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "master": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 4,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                    "branch": [
+                        {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "name": "master"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/jenkins-library.git"
+                ],
+                "scmName": ""
+            },
+            {
+                "_class": "hudson.plugins.git.GitTagAction"
+            },
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "users/jack/lf-jenkins": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 4,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                    "branch": [
+                        {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "name": "users/jack/lf-jenkins"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/docs-site.git"
+                ],
+                "scmName": ""
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+            },
+            {},
+            {}
+        ],
+        "artifacts": [],
+        "building": false,
+        "changeSets": [],
+        "culprits": [],
+        "description": null,
+        "displayName": "#4",
+        "duration": 127885,
+        "estimatedDuration": 395858,
+        "executor": null,
+        "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #4",
+        "id": "4",
+        "keepLog": false,
+        "nextBuild": {
+            "number": 5,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/5/"
+        },
+        "number": 4,
+        "previousBuild": {
+            "number": 3,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/3/"
+        },
+        "queueId": 1586,
+        "result": "FAILURE",
+        "timestamp": 1573768516016,
+        "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/4/"
+    },
+    "lastStableBuild": {
+        "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+        "actions": [
+            {
+                "_class": "hudson.model.ParametersAction",
+                "parameters": [
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Check for CI Skip",
+                        "value": false
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Init Generic Pipeline",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Lint",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Audit",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Prepare .deploy",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Build: Source",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Test: Broken Links",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Generate PDF",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Publish: Package",
+                        "value": true
+                    }
+                ]
+            },
+            {
+                "_class": "hudson.model.CauseAction",
+                "causes": [
+                    {
+                        "_class": "hudson.model.Cause$UserIdCause",
+                        "shortDescription": "Started by user Daniel Pono Takamori",
+                        "userId": "takamori",
+                        "userName": "Daniel Pono Takamori"
+                    }
+                ]
+            },
+            {},
+            {
+                "_class": "jenkins.scm.api.SCMRevisionAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+            },
+            {},
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "master": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 5,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                    "branch": [
+                        {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "name": "master"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/jenkins-library.git"
+                ],
+                "scmName": ""
+            },
+            {
+                "_class": "hudson.plugins.git.GitTagAction"
+            },
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "users/jack/lf-jenkins": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 5,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                    "branch": [
+                        {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "name": "users/jack/lf-jenkins"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/docs-site.git"
+                ],
+                "scmName": ""
+            },
+            {},
+            {},
+            {},
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+            },
+            {},
+            {}
+        ],
+        "artifacts": [],
+        "building": false,
+        "changeSets": [],
+        "culprits": [],
+        "description": null,
+        "displayName": "#5",
+        "duration": 177525,
+        "estimatedDuration": 395858,
+        "executor": null,
+        "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #5",
+        "id": "5",
+        "keepLog": false,
+        "nextBuild": null,
+        "number": 5,
+        "previousBuild": {
+            "number": 4,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/4/"
+        },
+        "queueId": 1588,
+        "result": "SUCCESS",
+        "timestamp": 1573768779979,
+        "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/5/"
+    },
+    "lastSuccessfulBuild": {
+        "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+        "actions": [
+            {
+                "_class": "hudson.model.ParametersAction",
+                "parameters": [
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Check for CI Skip",
+                        "value": false
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Init Generic Pipeline",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Lint",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Audit",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Prepare .deploy",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Build: Source",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Test: Broken Links",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Generate PDF",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Publish: Package",
+                        "value": true
+                    }
+                ]
+            },
+            {
+                "_class": "hudson.model.CauseAction",
+                "causes": [
+                    {
+                        "_class": "hudson.model.Cause$UserIdCause",
+                        "shortDescription": "Started by user Daniel Pono Takamori",
+                        "userId": "takamori",
+                        "userName": "Daniel Pono Takamori"
+                    }
+                ]
+            },
+            {},
+            {
+                "_class": "jenkins.scm.api.SCMRevisionAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+            },
+            {},
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "master": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 5,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                    "branch": [
+                        {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "name": "master"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/jenkins-library.git"
+                ],
+                "scmName": ""
+            },
+            {
+                "_class": "hudson.plugins.git.GitTagAction"
+            },
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "users/jack/lf-jenkins": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 5,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                    "branch": [
+                        {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "name": "users/jack/lf-jenkins"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/docs-site.git"
+                ],
+                "scmName": ""
+            },
+            {},
+            {},
+            {},
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+            },
+            {},
+            {}
+        ],
+        "artifacts": [],
+        "building": false,
+        "changeSets": [],
+        "culprits": [],
+        "description": null,
+        "displayName": "#5",
+        "duration": 177525,
+        "estimatedDuration": 395858,
+        "executor": null,
+        "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #5",
+        "id": "5",
+        "keepLog": false,
+        "nextBuild": null,
+        "number": 5,
+        "previousBuild": {
+            "number": 4,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/4/"
+        },
+        "queueId": 1588,
+        "result": "SUCCESS",
+        "timestamp": 1573768779979,
+        "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/5/"
+    },
+    "lastUnstableBuild": null,
+    "lastUnsuccessfulBuild": {
+        "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+        "actions": [
+            {
+                "_class": "hudson.model.ParametersAction",
+                "parameters": [
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Check for CI Skip",
+                        "value": false
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Init Generic Pipeline",
+                        "value": false
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Lint",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Audit",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Prepare .deploy",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Build: Source",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Test: Broken Links",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Generate PDF",
+                        "value": true
+                    },
+                    {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Publish: Package",
+                        "value": true
+                    }
+                ]
+            },
+            {
+                "_class": "hudson.model.CauseAction",
+                "causes": [
+                    {
+                        "_class": "hudson.model.Cause$UserIdCause",
+                        "shortDescription": "Started by user Daniel Pono Takamori",
+                        "userId": "takamori",
+                        "userName": "Daniel Pono Takamori"
+                    }
+                ]
+            },
+            {},
+            {
+                "_class": "jenkins.scm.api.SCMRevisionAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.cps.EnvActionImpl"
+            },
+            {},
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "master": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 4,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "branch": [
+                                {
+                                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                                    "name": "master"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                    "branch": [
+                        {
+                            "SHA1": "d2040eb52fbb16ae0c59dc478a359df09cf818a5",
+                            "name": "master"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/jenkins-library.git"
+                ],
+                "scmName": ""
+            },
+            {
+                "_class": "hudson.plugins.git.GitTagAction"
+            },
+            {},
+            {
+                "_class": "hudson.plugins.git.util.BuildData",
+                "buildsByBranchName": {
+                    "users/jack/lf-jenkins": {
+                        "_class": "hudson.plugins.git.util.Build",
+                        "buildNumber": 4,
+                        "buildResult": null,
+                        "marked": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        },
+                        "revision": {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "branch": [
+                                {
+                                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                                    "name": "users/jack/lf-jenkins"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "lastBuiltRevision": {
+                    "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                    "branch": [
+                        {
+                            "SHA1": "2c6e06a3bf6a52ae3f8f26f11c91d9550794c161",
+                            "name": "users/jack/lf-jenkins"
+                        }
+                    ]
+                },
+                "remoteUrls": [
+                    "https://github.com/zowe/docs-site.git"
+                ],
+                "scmName": ""
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.pipeline.modeldefinition.actions.RestartDeclarativePipelineAction"
+            },
+            {},
+            {
+                "_class": "org.jenkinsci.plugins.workflow.job.views.FlowGraphAction"
+            },
+            {},
+            {}
+        ],
+        "artifacts": [],
+        "building": false,
+        "changeSets": [],
+        "culprits": [],
+        "description": null,
+        "displayName": "#4",
+        "duration": 127885,
+        "estimatedDuration": 395858,
+        "executor": null,
+        "fullDisplayName": "zowe-docs-site \u00bb users/jack/lf-jenkins #4",
+        "id": "4",
+        "keepLog": false,
+        "nextBuild": {
+            "number": 5,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/5/"
+        },
+        "number": 4,
+        "previousBuild": {
+            "number": 3,
+            "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/3/"
+        },
+        "queueId": 1586,
+        "result": "FAILURE",
+        "timestamp": 1573768516016,
+        "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/4/"
+    },
+    "name": "users%2Fjack%2Flf-jenkins",
+    "nextBuildNumber": 6,
+    "property": [
+        {
+            "_class": "org.jenkinsci.plugins.workflow.multibranch.BranchJobProperty",
+            "branch": {
+                "head": {
+                    "_class": "org.jenkinsci.plugins.github_branch_source.BranchSCMHead"
+                },
+                "scm": {
+                    "_class": "hudson.plugins.git.GitSCM"
+                }
+            }
+        },
+        {
+            "_class": "org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty"
+        },
+        {
+            "_class": "jenkins.model.BuildDiscarderProperty"
+        },
+        {
+            "_class": "hudson.model.ParametersDefinitionProperty",
+            "parameterDefinitions": [
+                {
+                    "_class": "hudson.model.BooleanParameterDefinition",
+                    "defaultParameterValue": {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Check for CI Skip",
+                        "value": false
+                    },
+                    "description": "Setting this to true will skip the stage \"Check for CI Skip\"",
+                    "name": "Skip Stage: Check for CI Skip",
+                    "type": "BooleanParameterDefinition"
+                },
+                {
+                    "_class": "hudson.model.BooleanParameterDefinition",
+                    "defaultParameterValue": {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Init Generic Pipeline",
+                        "value": false
+                    },
+                    "description": "Setting this to true will skip the stage \"Init Generic Pipeline\"",
+                    "name": "Skip Stage: Init Generic Pipeline",
+                    "type": "BooleanParameterDefinition"
+                },
+                {
+                    "_class": "hudson.model.BooleanParameterDefinition",
+                    "defaultParameterValue": {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Lint",
+                        "value": false
+                    },
+                    "description": "Setting this to true will skip the stage \"Lint\"",
+                    "name": "Skip Stage: Lint",
+                    "type": "BooleanParameterDefinition"
+                },
+                {
+                    "_class": "hudson.model.BooleanParameterDefinition",
+                    "defaultParameterValue": {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Audit",
+                        "value": false
+                    },
+                    "description": "Setting this to true will skip the stage \"Audit\"",
+                    "name": "Skip Stage: Audit",
+                    "type": "BooleanParameterDefinition"
+                },
+                {
+                    "_class": "hudson.model.BooleanParameterDefinition",
+                    "defaultParameterValue": {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Prepare .deploy",
+                        "value": false
+                    },
+                    "description": "Setting this to true will skip the stage \"Prepare .deploy\"",
+                    "name": "Skip Stage: Prepare .deploy",
+                    "type": "BooleanParameterDefinition"
+                },
+                {
+                    "_class": "hudson.model.BooleanParameterDefinition",
+                    "defaultParameterValue": {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Build: Source",
+                        "value": false
+                    },
+                    "description": "Setting this to true will skip the stage \"Build: Source\"",
+                    "name": "Skip Stage: Build: Source",
+                    "type": "BooleanParameterDefinition"
+                },
+                {
+                    "_class": "hudson.model.BooleanParameterDefinition",
+                    "defaultParameterValue": {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Test: Broken Links",
+                        "value": false
+                    },
+                    "description": "Setting this to true will skip the stage \"Test: Broken Links\"",
+                    "name": "Skip Stage: Test: Broken Links",
+                    "type": "BooleanParameterDefinition"
+                },
+                {
+                    "_class": "hudson.model.BooleanParameterDefinition",
+                    "defaultParameterValue": {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Generate PDF",
+                        "value": false
+                    },
+                    "description": "Setting this to true will skip the stage \"Generate PDF\"",
+                    "name": "Skip Stage: Generate PDF",
+                    "type": "BooleanParameterDefinition"
+                },
+                {
+                    "_class": "hudson.model.BooleanParameterDefinition",
+                    "defaultParameterValue": {
+                        "_class": "hudson.model.BooleanParameterValue",
+                        "name": "Skip Stage: Publish: Package",
+                        "value": false
+                    },
+                    "description": "Setting this to true will skip the stage \"Publish: Package\"",
+                    "name": "Skip Stage: Publish: Package",
+                    "type": "BooleanParameterDefinition"
+                }
+            ]
+        }
+    ],
+    "queueItem": null,
+    "resumeBlocked": false,
+    "url": "https://jenkins.zowe.org/job/zowe-docs-site/job/users%2Fjack%2Flf-jenkins/"
+}
