@@ -69,9 +69,13 @@ def read_file(filename, mode='r'):
     return content
 
 
-def configure_http_server(depth=1):
+def configure_http_server(depth=1, builds_job=True):
     bodies_jobs = read_file('data/jenkins/jenkins_jobs.json', mode='rb')
-    bodies_builds_job = read_file('data/jenkins/jenkins_job_builds.json')
+
+    if builds_job:
+        bodies_builds_job = read_file('data/jenkins/jenkins_job_builds.json')
+    else:
+        bodies_builds_job = read_file('data/jenkins/jenkins_job_no_builds.json')
 
     def request_callback(method, uri, headers):
         status = 200
@@ -285,6 +289,33 @@ class TestJenkinsBackend(unittest.TestCase):
             self.assertEqual(build['updated_on'], expected[x][1])
             self.assertEqual(build['category'], 'build')
             self.assertEqual(build['tag'], 'http://example.com/ci')
+
+        # Check request params
+        expected = {
+            'depth': ['1']
+        }
+
+        req = httpretty.last_request()
+
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/ci/job')
+        self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
+    def test_fetch_no_job_builds(self):
+        """Test whether a warning message is logged when no job builds exist"""
+
+        configure_http_server(builds_job=False)
+
+        # Test fetch builds from jobs list
+        jenkins = Jenkins(JENKINS_SERVER_URL)
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            builds = [build for build in jenkins.fetch()]
+            self.assertRegex(cm.output[0], 'WARNING:perceval.backends.core.jenkins:No builds for job.*')
+            self.assertRegex(cm.output[1], 'WARNING:perceval.backends.core.jenkins:No builds for job.*')
+
+        self.assertEqual(builds, [])
 
         # Check request params
         expected = {
