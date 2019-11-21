@@ -1,0 +1,59 @@
+{
+    "_class": "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject",
+    "actions": [
+        {},
+        {
+            "_class": "hudson.plugins.jobConfigHistory.JobConfigHistoryProjectAction"
+        },
+        {},
+        {},
+        {},
+        {},
+        {
+            "_class": "com.cloudbees.plugins.credentials.ViewCredentialsAction"
+        }
+    ],
+    "description": "Build, test and publish Zowe docs website<!-- Managed by Jenkins Job Builder -->",
+    "displayName": "zowe-docs-site",
+    "displayNameOrNull": null,
+    "fullDisplayName": "zowe-docs-site",
+    "fullName": "zowe-docs-site",
+    "healthReport": [
+        {
+            "description": "Worst health: zowe-docs-site \u00bb users/jack/lf-jenkins: Build stability: 4 out of the last 5 builds failed.",
+            "iconClassName": "icon-health-00to19",
+            "iconUrl": "health-00to19.png",
+            "score": 20
+        }
+    ],
+    "jobs": [
+        {
+            "_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+            "color": "blue",
+            "name": "zowe-workflow",
+            "url": "http://example.com/ci/job/zowe-docs-site/job/zowe-workflow/"
+        }
+    ],
+    "name": "zowe-docs-site",
+    "primaryView": {
+        "_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+        "name": "default",
+        "url": "http://example.com/ci/job/zowe-docs-site/"
+    },
+    "sources": [
+        {}
+    ],
+    "url": "http://example.com/ci/job/zowe-docs-site/",
+    "views": [
+        {
+            "_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+            "name": "change-requests",
+            "url": "http://example.com/ci/job/zowe-docs-site/view/change-requests/"
+        },
+        {
+            "_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+            "name": "default",
+            "url": "http://example.com/ci/job/zowe-docs-site/"
+        }
+    ]
+}

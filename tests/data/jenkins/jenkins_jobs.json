@@ -20,6 +20,11 @@
             "name": "invalid-json-job",
             "url": "http://example.com/ci/job/invalid-json-job/",
             "color": "red"
+        },
+        {
+            "_class": "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject",
+            "name": "zowe-docs-site",
+            "url": "http://example.com/ci/job/zowe-docs-site/"
         }
     ]
 }

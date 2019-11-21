@@ -42,22 +42,27 @@ from perceval.errors import BackendError
 from base import TestCaseBackendArchive
 
 
-JENKINS_USER = 'user01'
-JENKINS_TOKEN = 'token01'
-JENKINS_SERVER_URL = 'http://example.com/ci'
-JENKINS_JOBS_URL = JENKINS_SERVER_URL + '/api/json'
-JENKINS_JOB_BUILDS_1 = 'apex-build-brahmaputra'
-JENKINS_JOB_BUILDS_2 = 'apex-build-master'
-JENKINS_JOB_BUILDS_500_ERROR = '500-error-job'
-JENKINS_JOB_BUILDS_JSON_ERROR = 'invalid-json-job'
-JENKINS_JOB_BUILDS_URL_1_DEPTH_1 = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_1 + '/api/json?depth=1'
-JENKINS_JOB_BUILDS_URL_2_DEPTH_1 = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_2 + '/api/json?depth=1'
-JENKINS_JOB_BUILDS_URL_500_ERROR_DEPTH_1 = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_500_ERROR + '/api/json?depth=1'
-JENKINS_JOB_BUILDS_URL_JSON_ERROR_DEPTH_1 = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_JSON_ERROR + '/api/json?depth1'
-JENKINS_JOB_BUILDS_URL_1_DEPTH_2 = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_1 + '/api/json?depth=2'
-JENKINS_JOB_BUILDS_URL_2_DEPTH_2 = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_2 + '/api/json?depth=2'
-JENKINS_JOB_BUILDS_URL_500_ERROR_DEPTH_2 = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_500_ERROR + '/api/json?depth=2'
-JENKINS_JOB_BUILDS_URL_JSON_ERROR_DEPTH_2 = JENKINS_SERVER_URL + '/job/' + JENKINS_JOB_BUILDS_JSON_ERROR + '/api/json?depth2'
+USER = 'user01'
+TOKEN = 'token01'
+SERVER_URL = 'http://example.com/ci'
+JOBS_URL = SERVER_URL + '/api/json'
+JOB_BUILDS_1 = 'apex-build-brahmaputra'
+JOB_BUILDS_2 = 'apex-build-master'
+JOB_BUILDS_3 = 'zowe-docs-site'
+JOB_WORKFLOW = 'zowe-workflow'
+JOB_BUILDS_500_ERROR = '500-error-job'
+JOB_BUILDS_JSON_ERROR = 'invalid-json-job'
+JOB_BUILDS_URL_1_DEPTH_1 = SERVER_URL + '/job/' + JOB_BUILDS_1 + '/api/json?depth=1'
+JOB_BUILDS_URL_2_DEPTH_1 = SERVER_URL + '/job/' + JOB_BUILDS_2 + '/api/json?depth=1'
+JOB_WORKFLOW_URL = SERVER_URL + '/job/' + JOB_BUILDS_3 + '/api/json'
+JOB_WORKFLOW_BUILDS_URL_DEPTH_1 = SERVER_URL + '/job/' + JOB_BUILDS_3 + '/job/' + JOB_WORKFLOW + '/api/json?depth=1'
+JOB_BUILDS_URL_500_ERROR_DEPTH_1 = SERVER_URL + '/job/' + JOB_BUILDS_500_ERROR + '/api/json?depth=1'
+JOB_BUILDS_URL_JSON_ERROR_DEPTH_1 = SERVER_URL + '/job/' + JOB_BUILDS_JSON_ERROR + '/api/json?depth1'
+JOB_BUILDS_URL_1_DEPTH_2 = SERVER_URL + '/job/' + JOB_BUILDS_1 + '/api/json?depth=2'
+JOB_BUILDS_URL_2_DEPTH_2 = SERVER_URL + '/job/' + JOB_BUILDS_2 + '/api/json?depth=2'
+JOB_BUILDS_URL_500_ERROR_DEPTH_2 = SERVER_URL + '/job/' + JOB_BUILDS_500_ERROR + '/api/json?depth=2'
+JOB_BUILDS_URL_JSON_ERROR_DEPTH_2 = SERVER_URL + '/job/' + JOB_BUILDS_JSON_ERROR + '/api/json?depth=2'
+JOB_WORKFLOW_BUILDS_URL_DEPTH_2 = SERVER_URL + '/job/' + JOB_BUILDS_3 + '/job/' + JOB_WORKFLOW + '/api/json?depth=2'
 
 
 requests_http = []
@@ -69,31 +74,46 @@ def read_file(filename, mode='r'):
     return content
 
 
-def configure_http_server(depth=1):
+def configure_http_server(depth=1, builds_job=True):
     bodies_jobs = read_file('data/jenkins/jenkins_jobs.json', mode='rb')
-    bodies_builds_job = read_file('data/jenkins/jenkins_job_builds.json')
+    bodies_workflow_jobs = read_file('data/jenkins/jenkins_workflow_jobs.json', mode='rb')
+    bodies_workflow_job_builds = read_file('data/jenkins/jenkins_workflow_job_builds.json', mode='rb')
+
+    if builds_job:
+        bodies_builds_job = read_file('data/jenkins/jenkins_job_builds.json')
+        bodies_workflow_job_builds = read_file('data/jenkins/jenkins_workflow_job_builds.json', mode='rb')
+    else:
+        bodies_builds_job = read_file('data/jenkins/jenkins_job_no_builds.json')
+        bodies_workflow_job_builds = read_file('data/jenkins/jenkins_job_no_builds.json', mode='rb')
 
     def request_callback(method, uri, headers):
         status = 200
-
         if depth == 2:
-            if uri.startswith(JENKINS_JOBS_URL):
+            if uri.startswith(JOBS_URL):
                 body = bodies_jobs
-            elif (uri.startswith(JENKINS_JOB_BUILDS_URL_1_DEPTH_2) or
-                  uri.startswith(JENKINS_JOB_BUILDS_URL_2_DEPTH_2)):
+            elif (uri.startswith(JOB_BUILDS_URL_1_DEPTH_2) or
+                  uri.startswith(JOB_BUILDS_URL_2_DEPTH_2)):
                 body = bodies_builds_job
-            elif uri.startswith(JENKINS_JOB_BUILDS_URL_500_ERROR_DEPTH_2):
+            elif uri.startswith(JOB_WORKFLOW_BUILDS_URL_DEPTH_1):
+                body = bodies_workflow_job_builds
+            elif uri.startswith(JOB_WORKFLOW_URL):
+                body = bodies_workflow_jobs
+            elif uri.startswith(JOB_BUILDS_URL_500_ERROR_DEPTH_2):
                 status = 500
                 body = '500 Internal Server Error'
             else:
                 body = '{'
         else:
-            if uri.startswith(JENKINS_JOBS_URL):
+            if uri.startswith(JOBS_URL):
                 body = bodies_jobs
-            elif (uri.startswith(JENKINS_JOB_BUILDS_URL_1_DEPTH_1) or
-                  uri.startswith(JENKINS_JOB_BUILDS_URL_2_DEPTH_1)):
+            elif (uri.startswith(JOB_BUILDS_URL_1_DEPTH_1) or
+                  uri.startswith(JOB_BUILDS_URL_2_DEPTH_1)):
                 body = bodies_builds_job
-            elif uri.startswith(JENKINS_JOB_BUILDS_URL_500_ERROR_DEPTH_1):
+            elif uri.startswith(JOB_WORKFLOW_BUILDS_URL_DEPTH_1):
+                body = bodies_workflow_job_builds
+            elif uri.startswith(JOB_WORKFLOW_URL):
+                body = bodies_workflow_jobs
+            elif uri.startswith(JOB_BUILDS_URL_500_ERROR_DEPTH_1):
                 status = 500
                 body = '500 Internal Server Error'
             else:
@@ -104,59 +124,77 @@ def configure_http_server(depth=1):
         return status, headers, body
 
     httpretty.register_uri(httpretty.GET,
-                           JENKINS_JOBS_URL,
+                           JOBS_URL,
                            responses=[
                                httpretty.Response(body=request_callback)
                                for _ in range(3)
                            ])
     httpretty.register_uri(httpretty.GET,
-                           JENKINS_JOB_BUILDS_URL_1_DEPTH_1,
+                           JOB_WORKFLOW_URL,
                            responses=[
                                httpretty.Response(body=request_callback)
                                for _ in range(2)
                            ])
     httpretty.register_uri(httpretty.GET,
-                           JENKINS_JOB_BUILDS_URL_2_DEPTH_1,
+                           JOB_BUILDS_URL_1_DEPTH_1,
                            responses=[
                                httpretty.Response(body=request_callback)
                                for _ in range(2)
                            ])
     httpretty.register_uri(httpretty.GET,
-                           JENKINS_JOB_BUILDS_URL_500_ERROR_DEPTH_1,
+                           JOB_BUILDS_URL_2_DEPTH_1,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                               for _ in range(2)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           JOB_WORKFLOW_BUILDS_URL_DEPTH_1,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                               for _ in range(2)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           JOB_BUILDS_URL_500_ERROR_DEPTH_1,
                            responses=[
                                httpretty.Response(body=request_callback)
                            ])
     httpretty.register_uri(httpretty.GET,
-                           JENKINS_JOB_BUILDS_URL_JSON_ERROR_DEPTH_1,
+                           JOB_BUILDS_URL_JSON_ERROR_DEPTH_1,
                            responses=[
                                httpretty.Response(body=request_callback)
                            ])
 
     httpretty.register_uri(httpretty.GET,
-                           JENKINS_JOBS_URL,
+                           JOBS_URL,
                            responses=[
                                httpretty.Response(body=request_callback)
                                for _ in range(3)
                            ])
     httpretty.register_uri(httpretty.GET,
-                           JENKINS_JOB_BUILDS_URL_1_DEPTH_2,
+                           JOB_BUILDS_URL_1_DEPTH_2,
                            responses=[
                                httpretty.Response(body=request_callback)
                                for _ in range(2)
                            ])
     httpretty.register_uri(httpretty.GET,
-                           JENKINS_JOB_BUILDS_URL_2_DEPTH_2,
+                           JOB_BUILDS_URL_2_DEPTH_2,
                            responses=[
                                httpretty.Response(body=request_callback)
                                for _ in range(2)
                            ])
     httpretty.register_uri(httpretty.GET,
-                           JENKINS_JOB_BUILDS_URL_500_ERROR_DEPTH_2,
+                           JOB_WORKFLOW_BUILDS_URL_DEPTH_2,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                               for _ in range(2)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           JOB_BUILDS_URL_500_ERROR_DEPTH_2,
                            responses=[
                                httpretty.Response(body=request_callback)
                            ])
     httpretty.register_uri(httpretty.GET,
-                           JENKINS_JOB_BUILDS_URL_JSON_ERROR_DEPTH_2,
+                           JOB_BUILDS_URL_JSON_ERROR_DEPTH_2,
                            responses=[
                                httpretty.Response(body=request_callback)
                            ])
@@ -168,11 +206,11 @@ class TestJenkinsBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        jenkins = Jenkins(JENKINS_SERVER_URL, tag='test', sleep_time=60, detail_depth=2)
-        self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
+        jenkins = Jenkins(SERVER_URL, tag='test', sleep_time=60, detail_depth=2)
+        self.assertEqual(jenkins.url, SERVER_URL)
         self.assertIsNone(jenkins.user)
         self.assertIsNone(jenkins.api_token)
-        self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
+        self.assertEqual(jenkins.origin, SERVER_URL)
         self.assertEqual(jenkins.sleep_time, 60)
         self.assertEqual(jenkins.detail_depth, 2)
         self.assertEqual(jenkins.tag, 'test')
@@ -181,49 +219,49 @@ class TestJenkinsBackend(unittest.TestCase):
 
         # When tag is empty or None it will be set to
         # the value in url
-        jenkins = Jenkins(JENKINS_SERVER_URL)
-        self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
-        self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
-        self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
+        jenkins = Jenkins(SERVER_URL)
+        self.assertEqual(jenkins.url, SERVER_URL)
+        self.assertEqual(jenkins.origin, SERVER_URL)
+        self.assertEqual(jenkins.tag, SERVER_URL)
         self.assertEqual(jenkins.sleep_time, SLEEP_TIME)
         self.assertEqual(jenkins.detail_depth, DETAIL_DEPTH)
         self.assertIsNone(jenkins.blacklist_ids)
 
-        jenkins = Jenkins(JENKINS_SERVER_URL, tag='')
-        self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
-        self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
-        self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
+        jenkins = Jenkins(SERVER_URL, tag='')
+        self.assertEqual(jenkins.url, SERVER_URL)
+        self.assertEqual(jenkins.origin, SERVER_URL)
+        self.assertEqual(jenkins.tag, SERVER_URL)
         self.assertIsNone(jenkins.blacklist_ids)
 
-        jenkins = Jenkins(JENKINS_SERVER_URL, user=JENKINS_USER, api_token=JENKINS_TOKEN)
-        self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
-        self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
-        self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
-        self.assertEqual(jenkins.user, JENKINS_USER)
-        self.assertEqual(jenkins.api_token, JENKINS_TOKEN)
+        jenkins = Jenkins(SERVER_URL, user=USER, api_token=TOKEN)
+        self.assertEqual(jenkins.url, SERVER_URL)
+        self.assertEqual(jenkins.origin, SERVER_URL)
+        self.assertEqual(jenkins.tag, SERVER_URL)
+        self.assertEqual(jenkins.user, USER)
+        self.assertEqual(jenkins.api_token, TOKEN)
         self.assertIsNone(jenkins.blacklist_ids)
 
-        jenkins = Jenkins(JENKINS_SERVER_URL, blacklist_ids=[JENKINS_JOB_BUILDS_1])
-        self.assertEqual(jenkins.url, JENKINS_SERVER_URL)
-        self.assertEqual(jenkins.origin, JENKINS_SERVER_URL)
-        self.assertEqual(jenkins.tag, JENKINS_SERVER_URL)
+        jenkins = Jenkins(SERVER_URL, blacklist_ids=[JOB_BUILDS_1])
+        self.assertEqual(jenkins.url, SERVER_URL)
+        self.assertEqual(jenkins.origin, SERVER_URL)
+        self.assertEqual(jenkins.tag, SERVER_URL)
         self.assertEqual(jenkins.sleep_time, SLEEP_TIME)
         self.assertEqual(jenkins.detail_depth, DETAIL_DEPTH)
-        self.assertListEqual(jenkins.blacklist_ids, [JENKINS_JOB_BUILDS_1])
+        self.assertListEqual(jenkins.blacklist_ids, [JOB_BUILDS_1])
 
     def test_initialization_error(self):
         """Test whether an exeception is thrown when the user and api_token are not initialized together"""
 
         with self.assertLogs(logger) as cm:
             with self.assertRaises(BackendError):
-                _ = Jenkins(JENKINS_SERVER_URL, user=JENKINS_USER)
+                _ = Jenkins(SERVER_URL, user=USER)
 
             self.assertEqual(cm.output[0], 'ERROR:perceval.backends.core.jenkins:'
                                            'Authentication method requires user and api_token')
 
         with self.assertLogs(logger) as cm:
             with self.assertRaises(BackendError):
-                _ = Jenkins(JENKINS_SERVER_URL, api_token=JENKINS_TOKEN)
+                _ = Jenkins(SERVER_URL, api_token=TOKEN)
 
             self.assertEqual(cm.output[0], 'ERROR:perceval.backends.core.jenkins:'
                                            'Authentication method requires user and api_token')
@@ -245,7 +283,7 @@ class TestJenkinsBackend(unittest.TestCase):
         configure_http_server()
 
         # Test fetch builds from jobs list
-        jenkins = Jenkins(JENKINS_SERVER_URL)
+        jenkins = Jenkins(SERVER_URL)
 
         with self.assertLogs(logger, level='WARNING') as cm:
             builds = [build for build in jenkins.fetch()]
@@ -257,9 +295,9 @@ class TestJenkinsBackend(unittest.TestCase):
             self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
                                            'http://example.com/ci/job/invalid-json-job/; skipping')
 
-        self.assertEqual(len(builds), 64)
-        self.assertEqual(jenkins.summary.total, 66)
-        self.assertEqual(jenkins.summary.fetched, 64)
+        self.assertEqual(len(builds), 69)
+        self.assertEqual(jenkins.summary.total, 71)
+        self.assertEqual(jenkins.summary.fetched, 69)
         self.assertEqual(jenkins.summary.skipped, 2)
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
@@ -298,13 +336,40 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
+    def test_fetch_no_job_builds(self):
+        """Test whether a warning message is logged when no job builds exist"""
+
+        configure_http_server(builds_job=False)
+
+        # Test fetch builds from jobs list
+        jenkins = Jenkins(SERVER_URL)
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            builds = [build for build in jenkins.fetch()]
+            self.assertRegex(cm.output[0], 'WARNING:perceval.backends.core.jenkins:No builds for job.*')
+            self.assertRegex(cm.output[1], 'WARNING:perceval.backends.core.jenkins:No builds for job.*')
+
+        self.assertEqual(builds, [])
+
+        # Check request params
+        expected = {
+            'depth': ['1']
+        }
+
+        req = httpretty.last_request()
+
+        self.assertEqual(req.method, 'GET')
+        self.assertRegex(req.path, '/ci/job')
+        self.assertDictEqual(req.querystring, expected)
+
+    @httpretty.activate
     def test_fetch_depth_1_blacklist(self):
         """Test whether blacklisted/wrong builds are not fetched from Jenkins"""
 
         configure_http_server()
 
         # Test fetch builds from jobs list
-        jenkins = Jenkins(JENKINS_SERVER_URL,
+        jenkins = Jenkins(SERVER_URL,
                           blacklist_ids=[
                               'apex-build-brahmaputra'
                           ])
@@ -321,9 +386,9 @@ class TestJenkinsBackend(unittest.TestCase):
             self.assertEqual(cm.output[3], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
                                            'http://example.com/ci/job/invalid-json-job/; skipping')
 
-            self.assertEqual(len(builds), 32)
-            self.assertEqual(jenkins.summary.total, 35)
-            self.assertEqual(jenkins.summary.fetched, 32)
+            self.assertEqual(len(builds), 37)
+            self.assertEqual(jenkins.summary.total, 40)
+            self.assertEqual(jenkins.summary.fetched, 37)
             self.assertEqual(jenkins.summary.skipped, 3)
 
     @httpretty.activate
@@ -333,7 +398,7 @@ class TestJenkinsBackend(unittest.TestCase):
         configure_http_server(depth=2)
 
         # Test fetch builds from jobs list
-        jenkins = Jenkins(JENKINS_SERVER_URL, detail_depth=2)
+        jenkins = Jenkins(SERVER_URL, detail_depth=2)
 
         with self.assertLogs(logger, level='WARNING') as cm:
             builds = [build for build in jenkins.fetch()]
@@ -389,7 +454,7 @@ class TestJenkinsBackend(unittest.TestCase):
         configure_http_server()
 
         # Test fetch builds from jobs list
-        jenkins = Jenkins(JENKINS_SERVER_URL)
+        jenkins = Jenkins(SERVER_URL)
 
         builds = [build for build in jenkins.fetch()]
 
@@ -415,7 +480,7 @@ class TestJenkinsBackend(unittest.TestCase):
         configure_http_server()
 
         # Test fetch builds from jobs list
-        jenkins = Jenkins(JENKINS_SERVER_URL, user=JENKINS_USER, api_token=JENKINS_TOKEN)
+        jenkins = Jenkins(SERVER_URL, user=USER, api_token=TOKEN)
 
         with self.assertLogs(logger, level='WARNING') as cm:
             builds = [build for build in jenkins.fetch()]
@@ -427,7 +492,7 @@ class TestJenkinsBackend(unittest.TestCase):
             self.assertEqual(cm.output[2], 'WARNING:perceval.backends.core.jenkins:Unable to parse builds from job '
                                            'http://example.com/ci/job/invalid-json-job/; skipping')
 
-        self.assertEqual(len(builds), 64)
+        self.assertEqual(len(builds), 69)
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
                 as build_json:
@@ -471,10 +536,10 @@ class TestJenkinsBackend(unittest.TestCase):
 
         body = '{"jobs":[]}'
         httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOBS_URL,
+                               JOBS_URL,
                                body=body, status=200)
 
-        jenkins = Jenkins(JENKINS_SERVER_URL)
+        jenkins = Jenkins(SERVER_URL)
         builds = [build for build in jenkins.fetch()]
 
         self.assertEqual(len(builds), 0)
@@ -483,11 +548,11 @@ class TestJenkinsBackend(unittest.TestCase):
     def test_fetch_blacklist(self):
         """Test whether jobs in blacklist are not retrieved"""
 
-        blacklist = [JENKINS_JOB_BUILDS_1]
+        blacklist = [JOB_BUILDS_1]
 
         configure_http_server()
 
-        jenkins = Jenkins(JENKINS_SERVER_URL, blacklist_ids=blacklist)
+        jenkins = Jenkins(SERVER_URL, blacklist_ids=blacklist)
         nrequests = len(requests_http)
 
         with self.assertLogs(logger, level='WARNING') as cm:
@@ -495,13 +560,13 @@ class TestJenkinsBackend(unittest.TestCase):
             self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:'
                                            'Not getting blacklisted job: apex-build-brahmaputra')
 
-        # No HTTP calls at all must be done for JENKINS_JOB_BUILDS_1
+        # No HTTP calls at all must be done for JOB_BUILDS_1
         # Just the first call for all jobs and one for each job,
         # including those jobs that raise errors
-        self.assertEqual(len(requests_http) - nrequests, 4)
+        self.assertEqual(len(requests_http) - nrequests, 6)
 
-        # Builds just from JENKINS_JOB_BUILDS_2
-        self.assertEqual(len(builds), 32)
+        # Builds just from JOB_BUILDS_2
+        self.assertEqual(len(builds), 37)
 
 
 class TestJenkinsBackendArchive(TestCaseBackendArchive):
@@ -509,8 +574,8 @@ class TestJenkinsBackendArchive(TestCaseBackendArchive):
 
     def setUp(self):
         super().setUp()
-        self.backend_write_archive = Jenkins(JENKINS_SERVER_URL, archive=self.archive)
-        self.backend_read_archive = Jenkins(JENKINS_SERVER_URL, archive=self.archive)
+        self.backend_write_archive = Jenkins(SERVER_URL, archive=self.archive)
+        self.backend_read_archive = Jenkins(SERVER_URL, archive=self.archive)
 
     @httpretty.activate
     def test_fetch_from_archive(self):
@@ -541,7 +606,7 @@ class TestJenkinsBackendArchive(TestCaseBackendArchive):
 
         body = '{"jobs":[]}'
         httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOBS_URL,
+                               JOBS_URL,
                                body=body, status=200)
 
         self._test_fetch_from_archive()
@@ -550,11 +615,11 @@ class TestJenkinsBackendArchive(TestCaseBackendArchive):
     def test_fetch_blacklist_from_archive(self):
         """Test whether jobs in balcklist are not retrieved from archive"""
 
-        blacklist = [JENKINS_JOB_BUILDS_1]
+        blacklist = [JOB_BUILDS_1]
 
         configure_http_server()
-        self.backend_write_archive = Jenkins(JENKINS_SERVER_URL, blacklist_ids=blacklist, archive=self.archive)
-        self.backend_read_archive = Jenkins(JENKINS_SERVER_URL, blacklist_ids=blacklist, archive=self.archive)
+        self.backend_write_archive = Jenkins(SERVER_URL, blacklist_ids=blacklist, archive=self.archive)
+        self.backend_read_archive = Jenkins(SERVER_URL, blacklist_ids=blacklist, archive=self.archive)
 
         with self.assertLogs(logger, level='WARNING') as cm:
             self._test_fetch_from_archive()
@@ -592,34 +657,34 @@ class TestJenkinsClient(unittest.TestCase):
 
         target_sleep_time = 0.1
 
-        client = JenkinsClient(JENKINS_SERVER_URL, sleep_time=target_sleep_time)
+        client = JenkinsClient(SERVER_URL, sleep_time=target_sleep_time)
 
-        self.assertEqual(client.base_url, JENKINS_SERVER_URL)
+        self.assertEqual(client.base_url, SERVER_URL)
         self.assertEqual(client.blacklist_jobs, None)
         self.assertEqual(client.sleep_time, target_sleep_time)
         self.assertIsNone(client.auth)
 
-        client = JenkinsClient(JENKINS_SERVER_URL, user=JENKINS_USER, api_token=JENKINS_TOKEN)
+        client = JenkinsClient(SERVER_URL, user=USER, api_token=TOKEN)
 
-        self.assertEqual(client.base_url, JENKINS_SERVER_URL)
+        self.assertEqual(client.base_url, SERVER_URL)
         self.assertEqual(client.blacklist_jobs, None)
-        self.assertEqual(client.auth, (JENKINS_USER, JENKINS_TOKEN))
+        self.assertEqual(client.auth, (USER, TOKEN))
 
     @httpretty.activate
     def test_http_retry_requests(self):
         """Test whether failed requests are properly handled"""
 
         httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOBS_URL,
+                               JOBS_URL,
                                body="", status=408)
 
-        client = JenkinsClient(JENKINS_SERVER_URL, sleep_time=0.1)
+        client = JenkinsClient(SERVER_URL, sleep_time=0.1)
 
         before = float(time.time())
         expected = before + (client.sleep_time * JenkinsClient.MAX_RETRIES)
 
         with self.assertRaises(requests.exceptions.RetryError):
-            _ = client.get_jobs()
+            _ = client.get_jobs(client.base_url)
 
         after = float(time.time())
         self.assertTrue(expected <= after)
@@ -631,11 +696,11 @@ class TestJenkinsClient(unittest.TestCase):
         # Set up a mock HTTP server
         body = read_file('data/jenkins/jenkins_jobs.json')
         httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOBS_URL,
+                               JOBS_URL,
                                body=body, status=200)
 
-        client = JenkinsClient(JENKINS_SERVER_URL)
-        response = client.get_jobs()
+        client = JenkinsClient(SERVER_URL)
+        response = client.get_jobs(client.base_url)
 
         self.assertEqual(response, body)
 
@@ -646,11 +711,11 @@ class TestJenkinsClient(unittest.TestCase):
         # Set up a mock HTTP server
         body = read_file('data/jenkins/jenkins_jobs.json')
         httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOBS_URL,
+                               JOBS_URL,
                                body=body, status=200)
 
-        client = JenkinsClient(JENKINS_SERVER_URL, user=JENKINS_USER, api_token=JENKINS_TOKEN)
-        response = client.get_jobs()
+        client = JenkinsClient(SERVER_URL, user=USER, api_token=TOKEN)
+        response = client.get_jobs(client.base_url)
 
         req = httpretty.last_request()
         self.assertEqual(response, body)
@@ -666,11 +731,11 @@ class TestJenkinsClient(unittest.TestCase):
         # Set up a mock HTTP server
         body = read_file('data/jenkins/jenkins_job_builds.json')
         httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_1_DEPTH_1,
+                               JOB_BUILDS_URL_1_DEPTH_1,
                                body=body, status=200)
 
-        client = JenkinsClient(JENKINS_SERVER_URL)
-        response = client.get_builds(JENKINS_JOB_BUILDS_1)
+        client = JenkinsClient(SERVER_URL)
+        response = client.get_builds(JOB_BUILDS_1, client.base_url)
 
         self.assertEqual(response, body)
 
@@ -681,11 +746,11 @@ class TestJenkinsClient(unittest.TestCase):
         # Set up a mock HTTP server
         body = read_file('data/jenkins/jenkins_job_builds.json')
         httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_1_DEPTH_1,
+                               JOB_BUILDS_URL_1_DEPTH_1,
                                body=body, status=200)
 
-        client = JenkinsClient(JENKINS_SERVER_URL, user=JENKINS_USER, api_token=JENKINS_TOKEN)
-        response = client.get_builds(JENKINS_JOB_BUILDS_1)
+        client = JenkinsClient(SERVER_URL, user=USER, api_token=TOKEN)
+        response = client.get_builds(JOB_BUILDS_1, client.base_url)
 
         req = httpretty.last_request()
         self.assertEqual(response, body)
@@ -701,16 +766,16 @@ class TestJenkinsClient(unittest.TestCase):
         # Set up a mock HTTP server
         body = read_file('data/jenkins/jenkins_job_builds.json')
         httpretty.register_uri(httpretty.GET,
-                               JENKINS_JOB_BUILDS_URL_1_DEPTH_1,
+                               JOB_BUILDS_URL_1_DEPTH_1,
                                body=body, status=408)
 
-        client = JenkinsClient(JENKINS_SERVER_URL, sleep_time=0.1)
+        client = JenkinsClient(SERVER_URL, sleep_time=0.1)
 
         start = float(time.time())
         expected = start + (sum([i * client.sleep_time for i in range(client.MAX_RETRIES)]))
 
         with self.assertRaises(requests.exceptions.RequestException):
-            _ = client.get_builds(JENKINS_JOB_BUILDS_1)
+            _ = client.get_builds(JOB_BUILDS_1, client.base_url)
 
         end = float(time.time())
         self.assertGreater(end, expected)
@@ -733,10 +798,10 @@ class TestJenkinsCommand(unittest.TestCase):
 
         args = ['--tag', 'test', '--no-archive', '--sleep-time', '60',
                 '--detail-depth', '2',
-                JENKINS_SERVER_URL]
+                SERVER_URL]
 
         parsed_args = parser.parse(*args)
-        self.assertEqual(parsed_args.url, JENKINS_SERVER_URL)
+        self.assertEqual(parsed_args.url, SERVER_URL)
         self.assertIsNone(parsed_args.user)
         self.assertIsNone(parsed_args.api_token)
         self.assertEqual(parsed_args.tag, 'test')
@@ -748,10 +813,10 @@ class TestJenkinsCommand(unittest.TestCase):
         args = ['--tag', 'test', '--no-archive', '--sleep-time', '60',
                 '--detail-depth', '2',
                 '--blacklist-ids', '1', '2', '3', '4', '--',
-                JENKINS_SERVER_URL]
+                SERVER_URL]
 
         parsed_args = parser.parse(*args)
-        self.assertEqual(parsed_args.url, JENKINS_SERVER_URL)
+        self.assertEqual(parsed_args.url, SERVER_URL)
         self.assertIsNone(parsed_args.user)
         self.assertIsNone(parsed_args.api_token)
         self.assertEqual(parsed_args.tag, 'test')
@@ -760,15 +825,15 @@ class TestJenkinsCommand(unittest.TestCase):
         self.assertEqual(parsed_args.no_archive, True)
         self.assertListEqual(parsed_args.blacklist_ids, ['1', '2', '3', '4'])
 
-        args = ['--tag', 'test', '-u', JENKINS_USER, '-t', JENKINS_TOKEN,
+        args = ['--tag', 'test', '-u', USER, '-t', TOKEN,
                 '--no-archive', '--sleep-time', '60', '--detail-depth', '2',
                 '--blacklist-ids', '1', '2', '3', '4', '--',
-                JENKINS_SERVER_URL]
+                SERVER_URL]
 
         parsed_args = parser.parse(*args)
-        self.assertEqual(parsed_args.url, JENKINS_SERVER_URL)
-        self.assertEqual(parsed_args.user, JENKINS_USER)
-        self.assertEqual(parsed_args.api_token, JENKINS_TOKEN)
+        self.assertEqual(parsed_args.url, SERVER_URL)
+        self.assertEqual(parsed_args.user, USER)
+        self.assertEqual(parsed_args.api_token, TOKEN)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.detail_depth, 2)
         self.assertEqual(parsed_args.sleep_time, 60)
