@@ -19,6 +19,7 @@
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
 #     Alvaro del Castillo <acs@bitergia.com>
+#     Valerio Cosentino <valcos@bitergia.com>
 #
 
 import datetime
@@ -38,6 +39,7 @@ from perceval.backends.core.discourse import (Discourse,
                                               DiscourseClient,
                                               MAX_RETRIES,
                                               DEFAULT_SLEEP_TIME)
+from perceval.errors import BackendError, HttpClientError
 from base import TestCaseBackendArchive
 
 DISCOURSE_SERVER_URL = 'http://example.com'
@@ -88,6 +90,21 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(discourse.tag, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.sleep_time, 60)
         self.assertEqual(discourse.max_retries, 30)
+
+        discourse = Discourse(DISCOURSE_SERVER_URL, api_username='user', api_token='1234')
+        self.assertEqual(discourse.url, DISCOURSE_SERVER_URL)
+        self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
+        self.assertEqual(discourse.api_token, '1234')
+        self.assertEqual(discourse.api_username, 'user')
+
+    def test_missing_credentials(self):
+        """Test whether an exception is thrown when `api_username` and `api_token` aren't defined together"""
+
+        with self.assertRaises(BackendError):
+            _ = Discourse(DISCOURSE_SERVER_URL, api_token='1234')
+
+        with self.assertRaises(BackendError):
+            _ = Discourse(DISCOURSE_SERVER_URL, api_username='user')
 
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
@@ -157,6 +174,106 @@ class TestDiscourseBackend(unittest.TestCase):
 
         # Test fetch topics
         discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
+        topics = [topic for topic in discourse.fetch()]
+
+        self.assertEqual(len(topics), 2)
+
+        # Topics are returned in reverse order
+        # from oldest to newest
+        self.assertEqual(topics[0]['data']['id'], 1149)
+        self.assertEqual(len(topics[0]['data']['post_stream']['posts']), 2)
+        self.assertEqual(topics[0]['origin'], DISCOURSE_SERVER_URL)
+        self.assertEqual(topics[0]['uuid'], '18068b95de1323a84c8e11dee8f46fd137f10c86')
+        self.assertEqual(topics[0]['updated_on'], 1464134770.909)
+        self.assertEqual(topics[0]['category'], "topic")
+        self.assertEqual(topics[0]['tag'], DISCOURSE_SERVER_URL)
+
+        self.assertEqual(topics[1]['data']['id'], 1148)
+        self.assertEqual(topics[1]['origin'], DISCOURSE_SERVER_URL)
+        self.assertEqual(topics[1]['uuid'], '5298e4e8383c3f73c9fa7c9599779cbe987a48e4')
+        self.assertEqual(topics[1]['updated_on'], 1464144769.526)
+        self.assertEqual(topics[1]['category'], "topic")
+        self.assertEqual(topics[1]['tag'], DISCOURSE_SERVER_URL)
+
+        # The next assertions check the cases whether the chunk_size is
+        # less than the number of posts of a topic
+        self.assertEqual(len(topics[1]['data']['post_stream']['posts']), 22)
+        self.assertEqual(topics[1]['data']['post_stream']['posts'][0]['id'], 18952)
+        self.assertEqual(topics[1]['data']['post_stream']['posts'][20]['id'], 2500)
+
+        # Check requests
+        expected = [
+            {'page': ['0']},
+            {'page': ['1']},
+            {},
+            {},
+            {},
+            {}
+        ]
+
+        self.assertEqual(len(requests_http), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(requests_http[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_with_credentials(self):
+        """Test whether a list of topics is returned when the backend is initialized with credentials"""
+
+        requests_http = []
+
+        bodies_topics = [read_file('data/discourse/discourse_topics.json'),
+                         read_file('data/discourse/discourse_topics_empty.json')]
+        body_topic_1148 = read_file('data/discourse/discourse_topic_1148.json')
+        body_topic_1149 = read_file('data/discourse/discourse_topic_1149.json')
+        body_post = read_file('data/discourse/discourse_post.json')
+
+        def request_callback(method, uri, headers):
+            if uri.startswith(DISCOURSE_TOPICS_URL):
+                body = bodies_topics.pop(0)
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1148):
+                body = body_topic_1148
+            elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
+                body = body_topic_1149
+            elif uri.startswith(DISCOURSE_POST_URL_1) or \
+                    uri.startswith(DISCOURSE_POST_URL_2):
+                body = body_post
+            else:
+                raise Exception
+
+            requests_http.append(httpretty.last_request())
+
+            return 200, headers, body
+
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPICS_URL,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                                   for _ in range(2)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1148,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_TOPIC_URL_1149,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_1,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+        httpretty.register_uri(httpretty.GET,
+                               DISCOURSE_POST_URL_2,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+
+        # Test fetch topics
+        discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0, api_username='user', api_token='12345')
         topics = [topic for topic in discourse.fetch()]
 
         self.assertEqual(len(topics), 2)
@@ -499,7 +616,8 @@ class TestDiscourseBackendArchive(TestCaseBackendArchive):
     def setUp(self):
         super().setUp()
         self.backend_write_archive = Discourse(DISCOURSE_SERVER_URL,
-                                               sleep_time=0, api_token="aaaaa", archive=self.archive)
+                                               sleep_time=0, api_token="aaaaa", api_username="user",
+                                               archive=self.archive)
         self.backend_read_archive = Discourse(DISCOURSE_SERVER_URL,
                                               sleep_time=0, archive=self.archive)
 
@@ -744,20 +862,39 @@ class TestDiscourseClient(unittest.TestCase):
     def test_init(self):
         """Test whether attributes are initializated"""
 
-        client = DiscourseClient(DISCOURSE_SERVER_URL,
-                                 api_key='aaaa')
+        client = DiscourseClient(DISCOURSE_SERVER_URL)
 
         self.assertEqual(client.base_url, DISCOURSE_SERVER_URL)
-        self.assertEqual(client.api_key, 'aaaa')
+        self.assertIsNone(client.api_key)
+        self.assertIsNone(client.api_username)
         self.assertEqual(client.sleep_time, DEFAULT_SLEEP_TIME)
         self.assertEqual(client.max_retries, MAX_RETRIES)
 
         client = DiscourseClient(DISCOURSE_SERVER_URL,
-                                 api_key='aaaa', sleep_time=60, max_retries=30)
+                                 api_key='aaaa', api_username='user')
+
         self.assertEqual(client.base_url, DISCOURSE_SERVER_URL)
         self.assertEqual(client.api_key, 'aaaa')
+        self.assertEqual(client.api_username, 'user')
+        self.assertEqual(client.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertEqual(client.max_retries, MAX_RETRIES)
+
+        client = DiscourseClient(DISCOURSE_SERVER_URL,
+                                 api_key='aaaa', api_username='user', sleep_time=60, max_retries=30)
+        self.assertEqual(client.base_url, DISCOURSE_SERVER_URL)
+        self.assertEqual(client.api_key, 'aaaa')
+        self.assertEqual(client.api_username, 'user')
         self.assertEqual(client.sleep_time, 60)
         self.assertEqual(client.max_retries, 30)
+
+    def test_missing_credentials(self):
+        """Test whether an exception is thrown when `api_key` and `api_username` aren't defined together"""
+
+        with self.assertRaises(HttpClientError):
+            _ = DiscourseClient(DISCOURSE_SERVER_URL, api_key='1234')
+
+        with self.assertRaises(HttpClientError):
+            _ = DiscourseClient(DISCOURSE_SERVER_URL, api_username='user')
 
     @httpretty.activate
     def test_topics_page(self):
@@ -770,15 +907,13 @@ class TestDiscourseClient(unittest.TestCase):
                                body=body, status=200)
 
         # Call API without args
-        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa', sleep_time=0)
+        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa', api_username='user', sleep_time=0)
         response = client.topics_page()
 
         self.assertEqual(response, body)
 
         # Check request params
-        expected = {
-            'api_key': ['aaaa']
-        }
+        expected = {}
 
         req = httpretty.last_request()
 
@@ -793,13 +928,14 @@ class TestDiscourseClient(unittest.TestCase):
 
         # Check request params
         expected = {
-            'api_key': ['aaaa'],
             'page': ['1']
         }
 
         req = httpretty.last_request()
 
         self.assertDictEqual(req.querystring, expected)
+        self.assertEqual(req.headers[DiscourseClient.HKEY], 'aaaa')
+        self.assertEqual(req.headers[DiscourseClient.HUSER], 'user')
 
     @httpretty.activate
     def test_topic(self):
@@ -812,21 +948,18 @@ class TestDiscourseClient(unittest.TestCase):
                                body=body, status=200)
 
         # Call API
-        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa', sleep_time=0)
+        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa', api_username='user', sleep_time=0)
         response = client.topic(1148)
 
         self.assertEqual(response, body)
-
-        # Check request params
-        expected = {
-            'api_key': ['aaaa'],
-        }
 
         req = httpretty.last_request()
 
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/t/1148.json')
-        self.assertDictEqual(req.querystring, expected)
+        self.assertDictEqual(req.querystring, {})
+        self.assertEqual(req.headers[DiscourseClient.HKEY], 'aaaa')
+        self.assertEqual(req.headers[DiscourseClient.HUSER], 'user')
 
     @httpretty.activate
     def test_post(self):
@@ -839,45 +972,18 @@ class TestDiscourseClient(unittest.TestCase):
                                body=body, status=200)
 
         # Call API
-        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa', sleep_time=0)
+        client = DiscourseClient(DISCOURSE_SERVER_URL, api_key='aaaa', api_username='user', sleep_time=0)
         response = client.post(21)
 
         self.assertEqual(response, body)
-
-        # Check request params
-        expected = {
-            'api_key': ['aaaa'],
-        }
 
         req = httpretty.last_request()
 
         self.assertEqual(req.method, 'GET')
         self.assertRegex(req.path, '/posts/21.json')
-        self.assertDictEqual(req.querystring, expected)
-
-    def test_sanitize_for_archive_no_api_key(self):
-        """Test whether the sanitize method works properly when the api_key does not exist"""
-
-        url = "http://example.com"
-        headers = "headers-information"
-        payload = "payload-information"
-
-        s_url, s_headers, s_payload = DiscourseClient.sanitize_for_archive(url, headers, payload)
-
-        self.assertEqual(url, s_url)
-        self.assertEqual(headers, s_headers)
-        self.assertEqual(payload, s_payload)
-
-    def test_sanitize_for_archive(self):
-        """Test whether the sanitize method works properly"""
-
-        url = "http://example.com"
-        headers = "headers-information"
-        payload = {'api_key': 'aaaa'}
-
-        url, headers, payload = DiscourseClient.sanitize_for_archive(None, None, payload)
-        with self.assertRaises(KeyError):
-            payload.pop("api_key")
+        self.assertDictEqual(req.querystring, {})
+        self.assertEqual(req.headers[DiscourseClient.HKEY], 'aaaa')
+        self.assertEqual(req.headers[DiscourseClient.HUSER], 'user')
 
 
 class TestDiscourseCommand(unittest.TestCase):
@@ -902,7 +1008,9 @@ class TestDiscourseCommand(unittest.TestCase):
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, DISCOURSE_SERVER_URL)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertIsNone(parsed_args.api_token)
+        self.assertIsNone(parsed_args.api_username)
+        self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
         self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
@@ -916,7 +1024,27 @@ class TestDiscourseCommand(unittest.TestCase):
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, DISCOURSE_SERVER_URL)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertIsNone(parsed_args.api_token)
+        self.assertIsNone(parsed_args.api_username)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.sleep_time, 30)
+        self.assertEqual(parsed_args.max_retries, 60)
+
+        args = ['--tag', 'test', '--no-archive',
+                '--from-date', '1970-01-01',
+                '--max-retries', '60',
+                '--sleep-time', '30',
+                '--api-token', 'aaaa',
+                '--api-username', 'user',
+                DISCOURSE_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, DISCOURSE_SERVER_URL)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.api_token, 'aaaa')
+        self.assertEqual(parsed_args.api_username, 'user')
+        self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.sleep_time, 30)
         self.assertEqual(parsed_args.max_retries, 60)

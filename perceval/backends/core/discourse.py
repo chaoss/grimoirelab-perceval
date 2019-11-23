@@ -19,6 +19,7 @@
 #    Santiago Dueñas <sduenas@bitergia.com>
 #    J. Manrique López de la Fuente <jsmanrique@bitergia.com>
 #    Alvaro del Castillo San Felix <acs@bitergia.com>
+#    Valerio Cosentino <valcos@bitergia.com>
 #
 
 import json
@@ -31,6 +32,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser)
 from ...client import HttpClient
+from ...errors import BackendError, HttpClientError
 from ...utils import DEFAULT_DATETIME
 
 
@@ -50,6 +52,7 @@ class Discourse(Backend):
     will be set as the origin of the data.
 
     :param url: Discourse URL
+    :param api_username: Discourse API username
     :param api_token: Discourse API access token
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
@@ -58,19 +61,23 @@ class Discourse(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     """
-    version = '0.11.0'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_TOPIC]
     EXTRA_SEARCH_FIELDS = {
         'category_id': ['category_id']
     }
 
-    def __init__(self, url, api_token=None, tag=None, archive=None,
+    def __init__(self, url, api_username=None, api_token=None, tag=None, archive=None,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
         origin = url
 
+        if (api_username and not api_token) or (api_token and not api_username):
+            raise BackendError(cause="Api token and username must be defined together")
+
         super().__init__(origin, tag=tag, archive=archive)
         self.url = url
+        self.api_username = api_username
         self.api_token = api_token
         self.max_retries = max_retries
         self.sleep_time = sleep_time
@@ -175,7 +182,7 @@ class Discourse(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return DiscourseClient(self.url, self.api_token,
+        return DiscourseClient(self.url, self.api_username, self.api_token,
                                self.sleep_time, self.max_retries,
                                archive=self.archive, from_archive=from_archive)
 
@@ -281,6 +288,7 @@ class DiscourseClient(HttpClient):
     any Discourse board.
 
     :param base_url: URL of the Discourse site
+    :param api_username: Discourse API username
     :param api_key: Discourse API access token
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
@@ -299,19 +307,29 @@ class DiscourseClient(HttpClient):
     TOPIC = 't'
     POSTS = 'posts'
 
+    # Headers
+    HKEY = 'Api-Key'
+    HUSER = 'Api-Username'
+
     # Params
-    PKEY = 'api_key'
     PPAGE = 'page'
 
     # Data type
     TJSON = '.json'
 
-    def __init__(self, base_url, api_key=None, sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
+    def __init__(self, base_url, api_username=None, api_key=None,
+                 sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
                  archive=None, from_archive=False):
+        self.api_username = api_username
+        self.api_key = api_key
+
+        if (self.api_username and not self.api_key) or (self.api_key and not self.api_username):
+            raise HttpClientError(cause="Api key and username must be defined together")
+
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
+                         extra_headers=self._set_extra_headers(),
                          extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          archive=archive, from_archive=from_archive)
-        self.api_key = api_key
 
     def topics_page(self, page=None):
         """Retrieve the #page summaries of the latest topics.
@@ -319,7 +337,6 @@ class DiscourseClient(HttpClient):
         :param page: number of page to retrieve
         """
         params = {
-            self.PKEY: self.api_key,
             self.PPAGE: page
         }
 
@@ -334,13 +351,8 @@ class DiscourseClient(HttpClient):
 
         :param topic_id: identifier of the topic to retrieve
         """
-        params = {
-            self.PKEY: self.api_key
-        }
-
         # http://example.com/t/8.json
-        response = self._call(self.TOPIC, topic_id,
-                              params=params)
+        response = self._call(self.TOPIC, topic_id)
 
         return response
 
@@ -349,33 +361,23 @@ class DiscourseClient(HttpClient):
 
         :param post_id: identifier of the post to retrieve
         """
-        params = {
-            self.PKEY: self.api_key
-        }
-
         # http://example.com/posts/10.json
-        response = self._call(self.POSTS, post_id,
-                              params=params)
+        response = self._call(self.POSTS, post_id)
 
         return response
 
-    @staticmethod
-    def sanitize_for_archive(url, headers, payload):
-        """Sanitize payload of a HTTP request by removing the token information
-        before storing/retrieving archived items
+    def _set_extra_headers(self):
+        """Set extra headers for session"""
 
-        :param: url: HTTP url request
-        :param: headers: HTTP headers request
-        :param: payload: HTTP payload request
+        headers = {}
 
-        :returns url, headers and the sanitized payload
-        """
-        if DiscourseClient.PKEY in payload:
-            payload.pop(DiscourseClient.PKEY)
+        if self.api_key and self.api_username:
+            headers[self.HKEY] = self.api_key
+            headers[self.HUSER] = self.api_username
 
-        return url, headers, payload
+        return headers
 
-    def _call(self, res, res_id, params):
+    def _call(self, res, res_id, params=None):
         """Run an API command.
 
         :param res: type of resource to fetch
@@ -417,6 +419,8 @@ class DiscourseCommand(BackendCommand):
         # Discourse options
         group = parser.parser.add_argument_group('Discourse arguments')
         # Generic client options
+        group.add_argument('--api-username', dest='api_username',
+                           type=str, help="API username ")
         group.add_argument('--max-retries', dest='max_retries',
                            default=MAX_RETRIES, type=int,
                            help="number of API call retries")
