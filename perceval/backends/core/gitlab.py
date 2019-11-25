@@ -39,7 +39,7 @@ from ...backend import (Backend,
                         DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient, RateLimitHandler
 from ...utils import DEFAULT_DATETIME
-from ...errors import BackendError
+from ...errors import BackendError, HttpClientError
 
 CATEGORY_ISSUE = "issue"
 CATEGORY_MERGE_REQUEST = "merge_request"
@@ -90,7 +90,7 @@ class GitLab(Backend):
     :param extra_retry_after_status: retry HTTP requests after status (default 500 and 502). These status complete
         the ones (413, 429, 503) defined in the HttpClient class
     """
-    version = '0.11.0'
+    version = '0.11.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
     ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='iid', type=int)
@@ -471,6 +471,10 @@ class GitLabClient(HttpClient, RateLimitHandler):
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES, extra_retry_after_status=None,
                  archive=None, from_archive=False):
+
+        if not token and is_oauth_token:
+            raise HttpClientError(cause="is_oauth_token is True but token is None")
+
         self.owner = owner
         self.repository = repository
         self.token = token

@@ -36,7 +36,9 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from grimoirelab_toolkit.datetime import datetime_utcnow
 from perceval.backend import BackendCommandArgumentParser
-from perceval.errors import RateLimitError, BackendError
+from perceval.errors import (BackendError,
+                             HttpClientError,
+                             RateLimitError)
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.gitlab import (logger,
                                            GitLab,
@@ -1325,6 +1327,16 @@ class TestGitLabClient(unittest.TestCase):
         self.assertEqual(client.max_retries, 5)
         self.assertEqual(client.is_oauth_token, False)
         self.assertListEqual(client.retry_after_status, client.DEFAULT_RETRY_AFTER_STATUS_CODES + [404, 410])
+
+    @httpretty.activate
+    def test_initialization_error(self):
+        """Test whether an exception is thrown when `is_oauth_token` is True but `token` is None"""
+
+        setup_http_server(GITLAB_URL_PROJECT, GITLAB_ISSUES_URL, GITLAB_MERGES_URL,
+                          rate_limit_headers={'RateLimit-Remaining': '20'})
+
+        with self.assertRaises(HttpClientError):
+            _ = GitLabClient("fdroid", "fdroiddata", None, is_oauth_token=True)
 
     @httpretty.activate
     def test_initialization_entreprise(self):
