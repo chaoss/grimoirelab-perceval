@@ -85,6 +85,11 @@ class Jira(Backend):
     system. To initialize this class the URL must be provided.
     The `url` will be set as the origin of the data.
 
+    Note that when fetching data with an authenticated access (i.e.,
+    user and password), information about issue transitions and
+    operations (e.g., edit-issue, comment-issue) is included in the
+    JSON documents produced by the backend.
+
     :param url: JIRA's endpoint
     :param project: filter issues by project
     :param user: Jira user
@@ -95,7 +100,7 @@ class Jira(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.13.0'
+    version = '0.13.1'
 
     CATEGORIES = [CATEGORY_ISSUE]
     EXTRA_SEARCH_FIELDS = {
