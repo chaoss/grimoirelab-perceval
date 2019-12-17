@@ -344,10 +344,10 @@ class TestJenkinsBackend(unittest.TestCase):
         # Test fetch builds from jobs list
         jenkins = Jenkins(SERVER_URL)
 
-        with self.assertLogs(logger, level='WARNING') as cm:
+        with self.assertLogs(logger, level='DEBUG') as cm:
             builds = [build for build in jenkins.fetch()]
-            self.assertRegex(cm.output[0], 'WARNING:perceval.backends.core.jenkins:No builds for job.*')
-            self.assertRegex(cm.output[1], 'WARNING:perceval.backends.core.jenkins:No builds for job.*')
+            self.assertRegex(cm.output[1], 'DEBUG:perceval.backends.core.jenkins:No builds for job.*')
+            self.assertRegex(cm.output[2], 'DEBUG:perceval.backends.core.jenkins:No builds for job.*')
 
         self.assertEqual(builds, [])
 
