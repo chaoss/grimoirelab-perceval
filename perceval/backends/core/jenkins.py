@@ -59,7 +59,7 @@ class Jenkins(Backend):
     :param archive: collect builds already retrieved from an archive
     :param blacklist_ids: exclude the jobs ID of this list while fetching
     """
-    version = '0.15.0'
+    version = '0.15.1'
 
     CATEGORIES = [CATEGORY_BUILD]
     EXTRA_SEARCH_FIELDS = {
@@ -226,7 +226,7 @@ class Jenkins(Backend):
         builds = builds.get('builds', [])
         if not builds:
             self.summary.skipped += 1
-            logger.warning("No builds for job %s", job['url'])
+            logger.debug("No builds for job %s", job['url'])
 
         return builds
 
