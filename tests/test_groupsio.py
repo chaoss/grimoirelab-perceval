@@ -303,6 +303,45 @@ class TestGroupsioClient(unittest.TestCase):
         self.assertTrue(success)
 
     @httpretty.activate
+    def test_fetch_from_date(self):
+        """Test whether archives are fetched after a given date"""
+
+        setup_http_server()
+
+        client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', verify=False)
+        from_date = datetime.datetime(2019, 1, 1)
+        success = client.fetch(from_date=from_date)
+
+        # Check requests
+        expected = [
+            {
+                'email': ['jsmith@example.com'],
+                'password': ['aaaaa']
+            },
+            {
+                'limit': ['100'],
+            },
+            {
+                'limit': ['100'],
+                'page_token': ['1']
+            },
+            {
+                'group_id': ['7769'],
+                'start_time': ['2019-01-01T00:00:00']
+            }
+        ]
+
+        http_requests = httpretty.httpretty.latest_requests
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+        self.assertEqual(client.mboxes[0].filepath, os.path.join(self.tmp_path, MBOX_FILE))
+        self.assertTrue(success)
+
+    @httpretty.activate
     def test_fetch_group_id_not_found(self):
         """Test whether an error is thrown when the group id is not found"""
 

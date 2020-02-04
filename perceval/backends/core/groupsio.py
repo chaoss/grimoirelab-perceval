@@ -65,7 +65,7 @@ class Groupsio(MBox):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.3.1'
+    version = '0.3.2'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -125,7 +125,7 @@ class Groupsio(MBox):
 
         mailing_list = GroupsioClient(self.group_name, self.dirpath,
                                       self.email, self.password, self.verify)
-        mailing_list.fetch()
+        mailing_list.fetch(from_date)
 
         messages = self._fetch_and_parse_messages(mailing_list, from_date)
 
@@ -178,7 +178,7 @@ class GroupsioClient(MailingList):
         self.verify = verify
         self.__login(email, password)
 
-    def fetch(self):
+    def fetch(self, from_date=None):
         """Fetch the mbox files from the remote archiver.
 
         Stores the archives in the path given during the initialization
@@ -187,6 +187,8 @@ class GroupsioClient(MailingList):
 
         Groups.io archives are returned as a .zip file, which contains
         one file in mbox format.
+
+        :param from_date: fetch messages after a given date (included) expressed in ISO format
 
         :returns: a list of tuples, storing the links and paths of the
             fetched archives
@@ -200,7 +202,13 @@ class GroupsioClient(MailingList):
         group_id = self.__find_group_id()
 
         url = urijoin(GROUPSIO_API_URL, self.DOWNLOAD_ARCHIVES)
-        payload = {'group_id': group_id}
+        payload = {
+            'group_id': group_id
+        }
+
+        if from_date:
+            payload['start_time'] = from_date.isoformat()
+
         filepath = os.path.join(self.dirpath, MBOX_FILE)
         success = self._download_archive(url, payload, filepath)
 

@@ -238,14 +238,10 @@ $ perceval googlehits "bitergia grimoirelab"
 
 ### Groups.io
 ```
-$ perceval groupsio 'updates' -t 'abcdefghijk' --from-date '2016-01-01'
+$ perceval groupsio 'updates' -e '<me@example.com>' -p 'my-password' --from-date '2016-01-01'
 ```
-In order to get an `api_token`, you should first subscribe to a group via the Groups.io website and then execute the following command:
-```
-$ curl "https://api.groups.io/v1/login" -u 123456: -d "email=<your email address>&password=<your password>"
-```
-
-In case you want to know the group names where your token is subscribed, you can use the following script: https://gist.github.com/valeriocos/676d90c58c56e2b17b882f2603283d39
+In order to fetch the data from a group, you should first subscribe to it via the Groups.io website.
+In case you want to know the group names where you are subscribed, you can use the following script: https://gist.github.com/valeriocos/ad33a0b9b2d13a8336230c8c59df3c55
 
 
 ### HyperKitty
