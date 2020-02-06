@@ -146,6 +146,7 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(redmine.origin, REDMINE_URL)
         self.assertEqual(redmine.tag, 'test')
         self.assertIsNone(redmine.client)
+        self.assertTrue(redmine.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -154,10 +155,11 @@ class TestRedmineBackend(unittest.TestCase):
         self.assertEqual(redmine.origin, REDMINE_URL)
         self.assertEqual(redmine.tag, REDMINE_URL)
 
-        redmine = Redmine(REDMINE_URL, tag='')
+        redmine = Redmine(REDMINE_URL, tag='', ssl_verify=False)
         self.assertEqual(redmine.url, REDMINE_URL)
         self.assertEqual(redmine.origin, REDMINE_URL)
         self.assertEqual(redmine.tag, REDMINE_URL)
+        self.assertFalse(redmine.ssl_verify)
 
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
@@ -513,7 +515,23 @@ class TestRedmineCommand(unittest.TestCase):
         self.assertEqual(parsed_args.api_token, '12345678')
         self.assertEqual(parsed_args.max_issues, 5)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+
+        args = ['http://example.com',
+                '--api-token', '12345678',
+                '--max-issues', '5',
+                '--tag', 'test',
+                '--no-ssl-verify',
+                '--from-date', '1970-01-01']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'http://example.com')
+        self.assertEqual(parsed_args.api_token, '12345678')
+        self.assertEqual(parsed_args.max_issues, 5)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
@@ -529,6 +547,12 @@ class TestRedmineClient(unittest.TestCase):
         client = RedmineClient(REDMINE_URL, 'aaaa')
         self.assertEqual(client.base_url, REDMINE_URL)
         self.assertEqual(client.api_token, 'aaaa')
+        self.assertTrue(client.ssl_verify)
+
+        client = RedmineClient(REDMINE_URL, 'aaaa', ssl_verify=False)
+        self.assertEqual(client.base_url, REDMINE_URL)
+        self.assertEqual(client.api_token, 'aaaa')
+        self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
     def test_issues(self):
