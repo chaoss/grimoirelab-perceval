@@ -94,13 +94,13 @@ class Jira(Backend):
     :param project: filter issues by project
     :param user: Jira user
     :param password: Jira user password
-    :param verify: allows to disable SSL verification
     :param cert: SSL certificate path (PEM)
     :param max_results: max number of results per query
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.13.1'
+    version = '0.14.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
     EXTRA_SEARCH_FIELDS = {
@@ -112,17 +112,15 @@ class Jira(Backend):
 
     def __init__(self, url, project=None,
                  user=None, password=None,
-                 verify=True, cert=None,
-                 max_results=MAX_RESULTS, tag=None,
-                 archive=None):
+                 cert=None, max_results=MAX_RESULTS,
+                 tag=None, archive=None, ssl_verify=True):
         origin = url
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.project = project
         self.user = user
         self.password = password
-        self.verify = verify
         self.cert = cert
         self.max_results = max_results
         self.client = None
@@ -246,8 +244,8 @@ class Jira(Backend):
         """Init client"""
 
         return JiraClient(self.url, self.project, self.user, self.password,
-                          self.verify, self.cert, self.max_results,
-                          self.archive, from_archive)
+                          self.cert, self.max_results,
+                          self.archive, from_archive, self.ssl_verify)
 
     def __get_issue_comments(self, issue_id):
         """Get issue comments"""
@@ -273,11 +271,11 @@ class JiraClient(HttpClient):
     :param project: filter issues by project
     :param user: JIRA's username
     :param password: JIRA's password
-    :param verify: allows to disable SSL verification
     :param cert: SSL certificate
     :param max_results: max number of results per query
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
 
     :raises HTTPError: when an error occurs doing the request
     """
@@ -288,13 +286,12 @@ class JiraClient(HttpClient):
     ISSUE = 'issue'
     COMMENT = 'comment'
 
-    def __init__(self, url, project, user, password, verify, cert, max_results=MAX_RESULTS,
-                 archive=None, from_archive=False):
-        super().__init__(url, archive=archive, from_archive=from_archive)
+    def __init__(self, url, project, user, password, cert, max_results=MAX_RESULTS,
+                 archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(url, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         self.project = project
         self.user = user
         self.password = password
-        self.verify = verify
         self.cert = cert
         self.max_results = max_results
 
@@ -408,7 +405,7 @@ class JiraClient(HttpClient):
         if self.cert:
             self.session.cert = self.cert
 
-        if self.verify is not True:
+        if self.ssl_verify is not True:
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
             self.session.verify = False
 
@@ -425,14 +422,13 @@ class JiraCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               basic_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # JIRA options
         group = parser.parser.add_argument_group('JIRA arguments')
         group.add_argument('--project',
                            help="filter issues by Project")
-        group.add_argument('--verify', default=True,
-                           help="Value 'False' disables SSL verification")
         group.add_argument('--cert',
                            help="SSL certificate path (PEM)")
         group.add_argument('--max-results', dest='max_results',
