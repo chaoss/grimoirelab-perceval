@@ -68,8 +68,9 @@ class Mattermost(Backend):
          it will be reset
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     CATEGORIES = [CATEGORY_POST]
     EXTRA_SEARCH_FIELDS = {
@@ -80,10 +81,10 @@ class Mattermost(Backend):
     def __init__(self, url, channel, api_token, max_items=MAX_ITEMS,
                  tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
-                 sleep_time=DEFAULT_SLEEP_TIME):
+                 sleep_time=DEFAULT_SLEEP_TIME, ssl_verify=True):
         origin = urijoin(url, channel)
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.channel = channel
         self.api_token = api_token
@@ -236,7 +237,8 @@ class Mattermost(Backend):
                                 sleep_for_rate=self.sleep_for_rate,
                                 min_rate_to_sleep=self.min_rate_to_sleep,
                                 sleep_time=self.sleep_time,
-                                archive=self.archive, from_archive=from_archive)
+                                archive=self.archive, from_archive=from_archive,
+                                ssl_verify=self.ssl_verify)
 
     def _parse_posts(self, raw_posts):
         """Parse posts and returns in order."""
@@ -277,6 +279,7 @@ class MattermostClient(HttpClient, RateLimitHandler):
         of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     API_URL = urijoin('%(base_url)s', 'api', 'v4', '%(entrypoint)s')
 
@@ -291,14 +294,14 @@ class MattermostClient(HttpClient, RateLimitHandler):
     def __init__(self, base_url, api_token, max_items=MAX_ITEMS,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME,
-                 archive=None, from_archive=False):
+                 archive=None, from_archive=False, ssl_verify=True):
         self.api_token = api_token
         self.max_items = max_items
 
         super().__init__(base_url.rstrip('/'),
                          sleep_time=sleep_time,
                          extra_headers=self._set_extra_headers(),
-                         archive=archive, from_archive=from_archive)
+                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate,
                                          min_rate_to_sleep=min_rate_to_sleep)
 
@@ -339,23 +342,22 @@ class MattermostClient(HttpClient, RateLimitHandler):
 
         return response
 
-    def fetch(self, url, payload=None, headers=None,
-              method=HttpClient.GET, stream=False, verify=True):
+    def fetch(self, url, payload=None, headers=None, method=HttpClient.GET, stream=False, auth=None):
         """Override fetch method to handle API rate limit.
 
         :param url: link to the resource
         :param payload: payload of the request
         :param headers: headers of the request
         :param method: type of request call (GET or POST)
-        :param stream: defer downloading the response body until the response
-            content is available
+        :param stream: defer downloading the response body until the response content is available
+        :param auth: auth of the request
 
         :returns a response object
         """
         if not self.from_archive:
             self.sleep_for_rate_limit()
 
-        response = super().fetch(url, payload, headers, method, stream, verify)
+        response = super().fetch(url, payload, headers, method, stream)
 
         if not self.from_archive:
             self.update_rate_limit(response)
@@ -413,7 +415,8 @@ class MattermostCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Mattermost options
         group = parser.parser.add_argument_group('Mattermost arguments')

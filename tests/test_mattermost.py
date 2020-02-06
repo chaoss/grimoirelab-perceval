@@ -134,16 +134,18 @@ class TestMattermostBackend(unittest.TestCase):
         self.assertEqual(mattermost.api_token, 'aaaa')
         self.assertEqual(mattermost.tag, 'test')
         self.assertEqual(mattermost.max_items, 5)
-        self.assertEqual(mattermost.sleep_for_rate, True)
+        self.assertTrue(mattermost.sleep_for_rate)
+        self.assertTrue(mattermost.ssl_verify)
         self.assertEqual(mattermost.min_rate_to_sleep, 10)
         self.assertEqual(mattermost.sleep_time, 60)
         self.assertIsNone(mattermost.client)
 
         # When tag is empty or None it will be set to
         # the value in URL
-        mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa',)
+        mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa', ssl_verify=False)
         self.assertEqual(mattermost.origin, 'https://mattermost.example.com/abcdefghijkl')
         self.assertEqual(mattermost.tag, 'https://mattermost.example.com/abcdefghijkl')
+        self.assertFalse(mattermost.ssl_verify)
 
         mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa', tag='')
         self.assertEqual(mattermost.origin, 'https://mattermost.example.com/abcdefghijkl')
@@ -423,11 +425,36 @@ class TestMattermostCommand(unittest.TestCase):
         self.assertEqual(parsed_args.api_token, 'aaaa')
         self.assertEqual(parsed_args.max_items, 5)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.sleep_for_rate, True)
+        self.assertTrue(parsed_args.sleep_for_rate)
         self.assertEqual(parsed_args.min_rate_to_sleep, 10)
         self.assertEqual(parsed_args.sleep_time, 10)
+        self.assertTrue(parsed_args.ssl_verify)
+
+        args = ['https://mattermost.example.com/', 'abcdefghijkl',
+                '--api-token', 'aaaa',
+                '--max-items', '5',
+                '--tag', 'test',
+                '--no-archive',
+                '--from-date', '1970-01-01',
+                '--sleep-for-rate',
+                '--min-rate-to-sleep', '10',
+                '--sleep-time', '10',
+                '--no-ssl-verify']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'https://mattermost.example.com/')
+        self.assertEqual(parsed_args.channel, 'abcdefghijkl')
+        self.assertEqual(parsed_args.api_token, 'aaaa')
+        self.assertEqual(parsed_args.max_items, 5)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertTrue(parsed_args.no_archive)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertTrue(parsed_args.sleep_for_rate)
+        self.assertEqual(parsed_args.min_rate_to_sleep, 10)
+        self.assertEqual(parsed_args.sleep_time, 10)
+        self.assertFalse(parsed_args.ssl_verify)
 
 
 class TestMattermostClient(unittest.TestCase):
@@ -445,22 +472,24 @@ class TestMattermostClient(unittest.TestCase):
         self.assertEqual(client.base_url, 'https://mattermost.example.com')
         self.assertEqual(client.api_token, 'aaaa')
         self.assertEqual(client.max_items, 60)
-        self.assertEqual(client.sleep_for_rate, False)
+        self.assertFalse(client.sleep_for_rate)
         self.assertEqual(client.min_rate_to_sleep, 10)
         self.assertEqual(client.archive, None)
-        self.assertEqual(client.from_archive, False)
+        self.assertFalse(client.from_archive)
+        self.assertTrue(client.ssl_verify)
 
         client = MattermostClient('https://mattermost.example.com/', 'aaaa',
                                   max_items=5,
                                   sleep_for_rate=True,
                                   min_rate_to_sleep=5,
-                                  sleep_time=3)
+                                  sleep_time=3, ssl_verify=False)
         self.assertEqual(client.base_url, 'https://mattermost.example.com')
         self.assertEqual(client.api_token, 'aaaa')
         self.assertEqual(client.max_items, 5)
-        self.assertEqual(client.sleep_for_rate, True)
+        self.assertTrue(client.sleep_for_rate)
         self.assertEqual(client.min_rate_to_sleep, 5)
         self.assertEqual(client.sleep_time, 3)
+        self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
     def test_channel(self):
