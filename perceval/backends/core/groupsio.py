@@ -61,21 +61,20 @@ class Groupsio(MBox):
     :param dirpath: directory path where the mboxes are stored
     :param email: Groupsio user email
     :param password: Groupsio user password
-    :param verify: allows to disable SSL verification
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.3.2'
+    version = '0.4.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
-    def __init__(self, group_name, dirpath, email, password, verify=True, tag=None, archive=None):
+    def __init__(self, group_name, dirpath, email, password, tag=None, archive=None, ssl_verify=True):
         url = urijoin(GROUPSIO_URL, 'g', group_name)
-        super().__init__(url, dirpath, tag=tag, archive=archive)
+        super().__init__(url, dirpath, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.email = email
         self.password = password
         self.group_name = group_name
-        self.verify = verify
 
     def search_fields(self, item):
         """Add search fields to an item.
@@ -124,7 +123,7 @@ class Groupsio(MBox):
                     self.uri, str(from_date))
 
         mailing_list = GroupsioClient(self.group_name, self.dirpath,
-                                      self.email, self.password, self.verify)
+                                      self.email, self.password, self.ssl_verify)
         mailing_list.fetch(from_date)
 
         messages = self._fetch_and_parse_messages(mailing_list, from_date)
@@ -162,20 +161,20 @@ class GroupsioClient(MailingList):
     :param dirpath: directory path where the mboxes are stored
     :param email: Groupsio user email
     :param password: Groupsio user password
-    :param verify: allows to disable SSL verification
+    :param ssl_verify: enable/disable SSL verification
     """
 
     DOWNLOAD_ARCHIVES = 'downloadarchives'
     GET_SUBSCRIPTIONS = 'getsubs'
     LOGIN = 'login'
 
-    def __init__(self, group_name, dirpath, email, password, verify=True):
+    def __init__(self, group_name, dirpath, email, password, ssl_verify=True):
         url = urijoin(GROUPSIO_URL, 'g', group_name)
         super().__init__(url, dirpath)
 
         self.session = requests.Session()
         self.group_name = group_name
-        self.verify = verify
+        self.ssl_verify = ssl_verify
         self.__login(email, password)
 
     def fetch(self, from_date=None):
@@ -242,7 +241,7 @@ class GroupsioClient(MailingList):
             keep_fetching = response_raw['has_more']
 
     def _download_archive(self, url, payload, filepath):
-        r = self.session.get(url, params=payload, stream=True, verify=self.verify)
+        r = self.session.get(url, params=payload, stream=True, verify=self.ssl_verify)
         try:
             r.raise_for_status()
             self._write_archive(r, filepath)
@@ -279,7 +278,7 @@ class GroupsioClient(MailingList):
     def __fetch(self, url, payload):
         """Fetch requests from groupsio API"""
 
-        r = self.session.get(url, params=payload, verify=self.verify)
+        r = self.session.get(url, params=payload, verify=self.ssl_verify)
         try:
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
@@ -326,15 +325,13 @@ class GroupsioCommand(BackendCommand):
         """Returns the Groupsio argument parser."""
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
-                                              from_date=True)
+                                              from_date=True,
+                                              ssl_verify=True)
 
         # Optional arguments
         group = parser.parser.add_argument_group('Groupsio arguments')
         group.add_argument('--mboxes-path', dest='mboxes_path',
                            help="Path where mbox files will be stored")
-        group.add_argument('--no-verify', dest='verify',
-                           action='store_false',
-                           help="Value 'True' enable SSL verification")
 
         # Required arguments
         parser.parser.add_argument('group_name', help="Name of the group on Groups.io")
