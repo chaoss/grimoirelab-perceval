@@ -60,18 +60,19 @@ class MBox(Backend):
     :param dirpath: directory path where the mboxes are stored
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.12.0'
+    version = '0.13.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
     DATE_FIELD = 'Date'
     MESSAGE_ID_FIELD = 'Message-ID'
 
-    def __init__(self, uri, dirpath, tag=None, archive=None):
+    def __init__(self, uri, dirpath, tag=None, archive=None, ssl_verify=True):
         origin = uri
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.uri = uri
         self.dirpath = dirpath
 
@@ -332,7 +333,8 @@ class MBoxCommand(BackendCommand):
         """Returns the MBox argument parser."""
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
-                                              from_date=True)
+                                              from_date=True,
+                                              ssl_verify=True)
 
         # Required arguments
         parser.parser.add_argument('uri',
