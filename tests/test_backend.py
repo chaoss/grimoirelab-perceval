@@ -254,7 +254,8 @@ class MockedBackendCommand(BackendCommand):
                                               from_date=True,
                                               basic_auth=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
         parser.parser.add_argument('origin')
         parser.parser.add_argument('--subtype', dest='subtype')
 
@@ -321,7 +322,8 @@ class MockedBackendCommandDefaultPrePostInit(BackendCommand):
                                               from_date=True,
                                               basic_auth=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
         parser.parser.add_argument('origin')
 
         return parser
@@ -378,6 +380,12 @@ class TestBackend(unittest.TestCase):
 
         b = Backend('test')
         self.assertEqual(b.origin, 'test')
+
+    def test_ssl_verify(self):
+        """Test whether the SSL verify value is initialized"""
+
+        b = Backend('test')
+        self.assertTrue(b.ssl_verify)
 
     def test_classified_fields(self):
         """Test whether classified fields property returns a list with fields"""
@@ -998,6 +1006,24 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
         parsed_args = parser.parse(*args)
 
         self.assertEqual(parsed_args.offset, 88)
+
+    def test_parse_ssl_verify_arg(self):
+        """Test if the ssl_verify parameter is parsed"""
+
+        parser = BackendCommandArgumentParser(MockedBackendCommand.BACKEND,
+                                              ssl_verify=True)
+
+        # Check default value
+        args = []
+        parsed_args = parser.parse(*args)
+
+        self.assertTrue(parsed_args.ssl_verify)
+
+        # Check argument
+        args = ['--no-ssl-verify']
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.ssl_verify, False)
 
     def test_incompatible_date_and_offset(self):
         """Test if date and offset arguments are incompatible"""

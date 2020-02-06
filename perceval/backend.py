@@ -117,23 +117,25 @@ class Backend:
     :param origin: identifier of the repository
     :param tag: tag items using this label
     :param archive: archive to store/retrieve data
+    :param ssl_verify: enable/disable SSL verification
 
     :raises ValueError: raised when `archive` is not an instance of
         `Archive` class
     """
-    version = '0.11.0'
+    version = '0.12.0'
 
     CATEGORIES = []
     CLASSIFIED_FIELDS = []
     EXTRA_SEARCH_FIELDS = {}
     ORIGIN_UNIQUE_FIELD = None
 
-    def __init__(self, origin, tag=None, archive=None, blacklist_ids=None):
+    def __init__(self, origin, tag=None, archive=None, blacklist_ids=None, ssl_verify=True):
         self._origin = origin
         self.tag = tag if tag else origin
         self.archive = archive or None
         self.blacklist_ids = blacklist_ids or None
         self._summary = None
+        self._ssl_verify = ssl_verify
 
     @property
     def origin(self):
@@ -146,6 +148,10 @@ class Backend:
     @property
     def archive(self):
         return self._archive
+
+    @property
+    def ssl_verify(self):
+        return self._ssl_verify
 
     @archive.setter
     def archive(self, obj):
@@ -410,18 +416,20 @@ class BackendCommandArgumentParser:
     :param token_auth: set token/key authentication arguments
     :param archive: set archiving arguments
     :param aliases: define aliases for parsed arguments
+    :param ssl_verify: set SSL verify argument
 
-    :raises AttributeArror: when both `from_date` and `offset` are set
+    :raises AttributeError: when both `from_date` and `offset` are set
         to `True`
     """
 
     def __init__(self, backend, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False, archive=False,
-                 aliases=None, blacklist=False):
+                 aliases=None, blacklist=False, ssl_verify=False):
         self._from_date = from_date
         self._to_date = to_date
         self._archive = archive
         self._backend = backend
+        self._ssl_verify = ssl_verify
 
         self.aliases = aliases or {}
         self.parser = argparse.ArgumentParser()
@@ -467,6 +475,10 @@ class BackendCommandArgumentParser:
 
         if archive:
             self._set_archive_arguments()
+
+        if ssl_verify:
+            group.add_argument('--no-ssl-verify', dest='ssl_verify', action='store_false',
+                               help="disable SSL verification")
 
         self._set_output_arguments()
 
