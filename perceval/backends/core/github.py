@@ -94,8 +94,9 @@ class GitHub(Backend):
         pull requests) per query
     :param sleep_time: time to sleep in case
         of connection problems
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.24.1'
+    version = '0.25.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -117,13 +118,13 @@ class GitHub(Backend):
                  tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
-                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE):
+                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE, ssl_verify=True):
         if api_token is None:
             api_token = []
         origin = base_url if base_url else GITHUB_URL
         origin = urijoin(origin, owner, repository)
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
 
         self.owner = owner
         self.repository = repository
@@ -282,7 +283,7 @@ class GitHub(Backend):
         return GitHubClient(self.owner, self.repository, self.api_token, self.base_url,
                             self.sleep_for_rate, self.min_rate_to_sleep,
                             self.sleep_time, self.max_retries, self.max_items,
-                            self.archive, from_archive)
+                            self.archive, from_archive, self.ssl_verify)
 
     def __fetch_issues(self, from_date, to_date):
         """Fetch the issues"""
@@ -579,6 +580,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         pull requests) per query
     :param archive: collect issues already retrieved from an archive
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     EXTRA_STATUS_FORCELIST = [403, 500, 502, 503]
 
@@ -588,7 +590,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def __init__(self, owner, repository, tokens,
                  base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
-                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE, archive=None, from_archive=False):
+                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE, archive=None, from_archive=False, ssl_verify=True):
         self.owner = owner
         self.repository = repository
         self.tokens = tokens
@@ -605,7 +607,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_headers=self._set_extra_headers(),
                          extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
-                         archive=archive, from_archive=from_archive)
+                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 
         # Choose best API token (with maximum API points remaining)
@@ -805,7 +807,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         return orgs
 
-    def fetch(self, url, payload=None, headers=None, method=HttpClient.GET, stream=False, verify=True):
+    def fetch(self, url, payload=None, headers=None, method=HttpClient.GET, stream=False, auth=None):
         """Fetch the data from a given URL.
 
         :param url: link to the resource
@@ -813,13 +815,14 @@ class GitHubClient(HttpClient, RateLimitHandler):
         :param headers: headers of the request
         :param method: type of request call (GET or POST)
         :param stream: defer downloading the response body until the response content is available
+        :param auth: auth of the request
 
         :returns a response object
         """
         if not self.from_archive:
             self.sleep_for_rate_limit()
 
-        response = super().fetch(url, payload, headers, method, stream, verify)
+        response = super().fetch(url, payload, headers, method, stream, auth)
 
         if not self.from_archive:
             if self._need_check_tokens():
@@ -977,7 +980,8 @@ class GitHubCommand(BackendCommand):
                                               from_date=True,
                                               to_date=True,
                                               token_auth=False,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
         # GitHub options
         group = parser.parser.add_argument_group('GitHub arguments')
         group.add_argument('--enterprise-url', dest='base_url',

@@ -126,13 +126,15 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.max_items, MAX_CATEGORY_ITEMS_PER_PAGE)
         self.assertFalse(github.exclude_user_data)
         self.assertEqual(github.categories, [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO])
+        self.assertTrue(github.ssl_verify)
 
         # When tag is empty or None it will be set to the value in origin
-        github = GitHub('zhquan_example', 'repo', ['aaa'])
+        github = GitHub('zhquan_example', 'repo', ['aaa'], ssl_verify=False)
         self.assertEqual(github.owner, 'zhquan_example')
         self.assertEqual(github.repository, 'repo')
         self.assertEqual(github.origin, 'https://github.com/zhquan_example/repo')
         self.assertEqual(github.tag, 'https://github.com/zhquan_example/repo')
+        self.assertFalse(github.ssl_verify)
 
         github = GitHub('zhquan_example', 'repo', ['aaa'], tag='')
         self.assertEqual(github.owner, 'zhquan_example')
@@ -3049,11 +3051,12 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(client.sleep_time, GitHubClient.DEFAULT_SLEEP_TIME)
         self.assertEqual(client.max_retries, GitHubClient.MAX_RETRIES)
         self.assertEqual(client.base_url, 'https://api.github.com')
+        self.assertTrue(client.ssl_verify)
 
         client = GitHubClient('zhquan_example', 'repo', ['aaa'], base_url=None,
                               sleep_for_rate=False, min_rate_to_sleep=3,
                               sleep_time=20, max_retries=2, max_items=1,
-                              archive=None, from_archive=False)
+                              archive=None, from_archive=False, ssl_verify=False)
         self.assertEqual(client.owner, 'zhquan_example')
         self.assertEqual(client.repository, 'repo')
         self.assertEqual(client.tokens, ['aaa'])
@@ -3067,6 +3070,7 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(client.max_items, 1)
         self.assertIsNone(client.archive)
         self.assertFalse(client.from_archive)
+        self.assertFalse(client.ssl_verify)
 
         client = GitHubClient('zhquan_example', 'repo', ['aaa'], min_rate_to_sleep=RateLimitHandler.MAX_RATE_LIMIT + 1)
         self.assertEqual(client.min_rate_to_sleep, RateLimitHandler.MAX_RATE_LIMIT)
@@ -4122,14 +4126,43 @@ class TestGitHubCommand(unittest.TestCase):
         self.assertEqual(parsed_args.owner, 'zhquan_example')
         self.assertEqual(parsed_args.repository, 'repo')
         self.assertEqual(parsed_args.base_url, 'https://example.com')
-        self.assertEqual(parsed_args.sleep_for_rate, True)
+        self.assertTrue(parsed_args.sleep_for_rate)
         self.assertEqual(parsed_args.max_retries, 5)
         self.assertEqual(parsed_args.max_items, 10)
         self.assertEqual(parsed_args.sleep_time, 10)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.to_date, DEFAULT_LAST_DATETIME)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.api_token, ['abcdefgh', 'ijklmnop'])
+
+        args = ['--sleep-for-rate',
+                '--min-rate-to-sleep', '1',
+                '--max-retries', '5',
+                '--max-items', '10',
+                '--sleep-time', '10',
+                '--tag', 'test', '--no-archive',
+                '--api-token', 'abcdefgh', 'ijklmnop',
+                '--from-date', '1970-01-01',
+                '--to-date', '2100-01-01',
+                '--no-ssl-verify',
+                '--enterprise-url', 'https://example.com',
+                'zhquan_example', 'repo']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.owner, 'zhquan_example')
+        self.assertEqual(parsed_args.repository, 'repo')
+        self.assertEqual(parsed_args.base_url, 'https://example.com')
+        self.assertTrue(parsed_args.sleep_for_rate)
+        self.assertEqual(parsed_args.max_retries, 5)
+        self.assertEqual(parsed_args.max_items, 10)
+        self.assertEqual(parsed_args.sleep_time, 10)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.to_date, DEFAULT_LAST_DATETIME)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.api_token, ['abcdefgh', 'ijklmnop'])
 
 
