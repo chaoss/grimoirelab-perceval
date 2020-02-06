@@ -59,18 +59,17 @@ class Pipermail(MBox):
 
     :param url: URL to the Pipermail archiver
     :param dirpath: directory path where the mboxes are stored
-    :param verify: allows to disable SSL verification
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.10.0'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
-    def __init__(self, url, dirpath, verify=True, tag=None, archive=None):
-        super().__init__(url, dirpath, tag=tag, archive=archive)
+    def __init__(self, url, dirpath, tag=None, archive=None, ssl_verify=True):
+        super().__init__(url, dirpath, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
-        self.verify = verify
 
     def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the Pipermail archiver.
@@ -100,7 +99,7 @@ class Pipermail(MBox):
         logger.info("Looking for messages from '%s' since %s",
                     self.url, str(from_date))
 
-        mailing_list = PipermailList(self.url, self.dirpath, self.verify)
+        mailing_list = PipermailList(self.url, self.dirpath, self.ssl_verify)
         mailing_list.fetch(from_date=from_date)
 
         messages = self._fetch_and_parse_messages(mailing_list, from_date)
@@ -148,15 +147,13 @@ class PipermailCommand(BackendCommand):
         """Returns the Pipermail argument parser."""
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
-                                              from_date=True)
+                                              from_date=True,
+                                              ssl_verify=True)
 
         # Optional arguments
         group = parser.parser.add_argument_group('Pipermail arguments')
         group.add_argument('--mboxes-path', dest='mboxes_path',
                            help="Path where mbox files will be stored")
-        group.add_argument('--no-verify', dest='verify',
-                           action='store_false',
-                           help="Value 'True' enable SSL verification")
 
         # Required arguments
         parser.parser.add_argument('url',
@@ -174,12 +171,12 @@ class PipermailList(MailingList):
 
     :param url: URL to the Pipermail archiver for this list
     :param dirpath: path to the local mboxes archives
-    :param verify: allows to disable SSL verification
+    :param ssl_verify: enable/disable SSL verification
     """
-    def __init__(self, url, dirpath, verify=True):
+    def __init__(self, url, dirpath, ssl_verify=True):
         super().__init__(url, dirpath)
         self.url = url
-        self.verify = verify
+        self.ssl_verify = ssl_verify
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the mbox files from the remote archiver.
@@ -206,7 +203,7 @@ class PipermailList(MailingList):
 
         from_date = datetime_to_utc(from_date)
 
-        r = requests.get(self.url, verify=self.verify)
+        r = requests.get(self.url, verify=self.ssl_verify)
         r.raise_for_status()
 
         links = self._parse_archive_links(r.text)
@@ -298,7 +295,7 @@ class PipermailList(MailingList):
 
     def _download_archive(self, url, filepath):
         try:
-            r = requests.get(url, stream=True, verify=self.verify)
+            r = requests.get(url, stream=True, verify=self.ssl_verify)
             r.raise_for_status()
             self._write_archive(r, filepath)
         except requests.exceptions.HTTPError as e:
