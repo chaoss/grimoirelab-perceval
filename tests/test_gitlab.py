@@ -458,11 +458,12 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(gitlab.max_retries, MAX_RETRIES)
         self.assertEqual(gitlab.sleep_time, DEFAULT_SLEEP_TIME)
         self.assertListEqual(gitlab.extra_retry_after_status, DEFAULT_RETRY_AFTER_STATUS_CODES)
+        self.assertTrue(gitlab.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in originTestGitLabBackend
         gitlab = GitLab('fdroid', 'fdroiddata', api_token='aaa', max_retries=10,
-                        sleep_time=100, blacklist_ids=[1, 2, 3])
+                        sleep_time=100, blacklist_ids=[1, 2, 3], ssl_verify=False)
 
         self.assertEqual(gitlab.owner, 'fdroid')
         self.assertEqual(gitlab.repository, 'fdroiddata')
@@ -472,7 +473,8 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertEqual(gitlab.max_retries, 10)
         self.assertEqual(gitlab.sleep_time, 100)
         self.assertEqual(gitlab.blacklist_ids, [1, 2, 3])
-        self.assertEqual(gitlab.is_oauth_token, False)
+        self.assertFalse(gitlab.is_oauth_token)
+        self.assertFalse(gitlab.ssl_verify)
         self.assertListEqual(gitlab.extra_retry_after_status, DEFAULT_RETRY_AFTER_STATUS_CODES)
 
         # Test retry after status codes
@@ -1296,36 +1298,39 @@ class TestGitLabClient(unittest.TestCase):
         self.assertEqual(client.owner, "fdroid")
         self.assertEqual(client.repository, "fdroiddata")
         self.assertEqual(client.token, "your-token")
-        self.assertEqual(client.is_oauth_token, False)
-        self.assertEqual(client.sleep_for_rate, False)
+        self.assertFalse(client.is_oauth_token)
+        self.assertFalse(client.sleep_for_rate)
+        self.assertTrue(client.ssl_verify)
         self.assertEqual(client.base_url, GITLAB_API_URL)
         self.assertEqual(client.min_rate_to_sleep, GitLabClient.MIN_RATE_LIMIT)
         self.assertEqual(client.sleep_time, GitLabClient.DEFAULT_SLEEP_TIME)
         self.assertEqual(client.max_retries, GitLabClient.MAX_RETRIES)
         self.assertEqual(client.rate_limit, 20)
-        self.assertEqual(client.rate_limit_reset_ts, None)
+        self.assertIsNone(client.rate_limit_reset_ts)
         self.assertEqual(client.headers['PRIVATE-TOKEN'], "your-token")
         self.assertEqual(client.retry_after_status, client.DEFAULT_RETRY_AFTER_STATUS_CODES)
 
         client = GitLabClient("fdroid", "fdroiddata", "your-token", is_oauth_token=True,
                               sleep_for_rate=True, min_rate_to_sleep=100, max_retries=10, sleep_time=100)
 
-        self.assertEqual(client.sleep_for_rate, True)
+        self.assertTrue(client.sleep_for_rate)
         self.assertEqual(client.base_url, GITLAB_API_URL)
         self.assertEqual(client.min_rate_to_sleep, 100)
         self.assertEqual(client.sleep_time, 100)
         self.assertEqual(client.max_retries, 10)
-        self.assertEqual(client.is_oauth_token, True)
+        self.assertTrue(client.is_oauth_token)
         self.assertEqual(client.headers['Authorization'], "Bearer your-token")
         self.assertEqual(client.retry_after_status, client.DEFAULT_RETRY_AFTER_STATUS_CODES)
 
-        client = GitLabClient("fdroid", "fdroiddata", "your-token", extra_retry_after_status=[404, 410])
-        self.assertEqual(client.sleep_for_rate, False)
+        client = GitLabClient("fdroid", "fdroiddata", "your-token", extra_retry_after_status=[404, 410],
+                              ssl_verify=False)
+        self.assertFalse(client.sleep_for_rate)
         self.assertEqual(client.base_url, GITLAB_API_URL)
         self.assertEqual(client.min_rate_to_sleep, 10)
         self.assertEqual(client.sleep_time, 1)
         self.assertEqual(client.max_retries, 5)
-        self.assertEqual(client.is_oauth_token, False)
+        self.assertFalse(client.is_oauth_token)
+        self.assertFalse(client.ssl_verify)
         self.assertListEqual(client.retry_after_status, client.DEFAULT_RETRY_AFTER_STATUS_CODES + [404, 410])
 
     @httpretty.activate
@@ -1866,15 +1871,16 @@ class TestGitLabCommand(unittest.TestCase):
         self.assertEqual(parsed_args.owner, 'zhquan_example')
         self.assertEqual(parsed_args.repository, 'repo')
         self.assertEqual(parsed_args.base_url, 'https://example.com')
-        self.assertEqual(parsed_args.sleep_for_rate, True)
+        self.assertTrue(parsed_args.sleep_for_rate)
         self.assertEqual(parsed_args.min_rate_to_sleep, 1)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
         self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
         self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
-        self.assertEqual(parsed_args.is_oauth_token, False)
+        self.assertFalse(parsed_args.is_oauth_token)
         self.assertListEqual(parsed_args.extra_retry_after_status, DEFAULT_RETRY_AFTER_STATUS_CODES)
 
         args = ['--sleep-for-rate',
@@ -1888,24 +1894,25 @@ class TestGitLabCommand(unittest.TestCase):
                 '--enterprise-url', 'https://example.com',
                 '--category', CATEGORY_MERGE_REQUEST,
                 '--extra-retry-status', '404', '410',
-                '--is-oauth-token',
+                '--is-oauth-token', '--no-ssl-verify',
                 'zhquan_example', 'repo']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.owner, 'zhquan_example')
         self.assertEqual(parsed_args.repository, 'repo')
         self.assertEqual(parsed_args.base_url, 'https://example.com')
-        self.assertEqual(parsed_args.sleep_for_rate, True)
+        self.assertTrue(parsed_args.sleep_for_rate)
         self.assertEqual(parsed_args.min_rate_to_sleep, 1)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
         self.assertEqual(parsed_args.category, CATEGORY_MERGE_REQUEST)
         self.assertEqual(parsed_args.blacklist_ids, [1, 2, 3])
         self.assertEqual(parsed_args.max_retries, 5)
         self.assertEqual(parsed_args.sleep_time, 10)
-        self.assertEqual(parsed_args.is_oauth_token, True)
+        self.assertTrue(parsed_args.is_oauth_token)
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertListEqual(parsed_args.extra_retry_after_status, [404, 410])
 
 
