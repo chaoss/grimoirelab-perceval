@@ -67,8 +67,9 @@ class Meetup(Backend):
          it will be reset
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.16.0'
+    version = '0.17.0'
 
     CATEGORIES = [CATEGORY_EVENT]
     CLASSIFIED_FIELDS = [
@@ -85,10 +86,10 @@ class Meetup(Backend):
     def __init__(self, group, api_token,
                  max_items=MAX_ITEMS, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
-                 sleep_time=SLEEP_TIME):
+                 sleep_time=SLEEP_TIME, ssl_verify=True):
         origin = MEETUP_URL
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.group = group
         self.max_items = max_items
         self.api_token = api_token
@@ -238,7 +239,7 @@ class Meetup(Backend):
 
         return MeetupClient(self.api_token, self.max_items,
                             self.sleep_for_rate, self.min_rate_to_sleep, self.sleep_time,
-                            self.archive, from_archive)
+                            self.archive, from_archive, self.ssl_verify)
 
     def __fetch_and_parse_comments(self, event_id):
         logger.debug("Fetching and parsing comments from group '%s' event '%s'",
@@ -282,7 +283,8 @@ class MeetupCommand(BackendCommand):
                                               from_date=True,
                                               to_date=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Meetup options
         group = parser.parser.add_argument_group('Meetup arguments')
@@ -321,6 +323,7 @@ class MeetupClient(HttpClient, RateLimitHandler):
         of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     EXTRA_STATUS_FORCELIST = [429]
     RCOMMENTS = 'comments'
@@ -346,13 +349,13 @@ class MeetupClient(HttpClient, RateLimitHandler):
 
     def __init__(self, api_token, max_items=MAX_ITEMS,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT, sleep_time=SLEEP_TIME,
-                 archive=None, from_archive=False):
+                 archive=None, from_archive=False, ssl_verify=True):
         self.api_token = api_token
         self.max_items = max_items
 
         super().__init__(MEETUP_API_URL, sleep_time=sleep_time,
                          extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
-                         archive=archive, from_archive=from_archive)
+                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 
     def calculate_time_to_reset(self):
