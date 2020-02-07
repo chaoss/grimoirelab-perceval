@@ -148,6 +148,7 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(confluence.origin, CONFLUENCE_URL)
         self.assertEqual(confluence.tag, 'test')
         self.assertIsNone(confluence.client)
+        self.assertTrue(confluence.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -156,10 +157,11 @@ class TestConfluenceBackend(unittest.TestCase):
         self.assertEqual(confluence.origin, CONFLUENCE_URL)
         self.assertEqual(confluence.tag, CONFLUENCE_URL)
 
-        confluence = Confluence(CONFLUENCE_URL, tag='')
+        confluence = Confluence(CONFLUENCE_URL, tag='', ssl_verify=False)
         self.assertEqual(confluence.url, CONFLUENCE_URL)
         self.assertEqual(confluence.origin, CONFLUENCE_URL)
         self.assertEqual(confluence.tag, CONFLUENCE_URL)
+        self.assertFalse(confluence.ssl_verify)
 
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
@@ -566,7 +568,18 @@ class TestConfluenceCommand(unittest.TestCase):
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, 'http://example.com')
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+
+        args = ['http://example.com',
+                '--tag', 'test', '--no-ssl-verify',
+                '--from-date', '1970-01-01']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'http://example.com')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
@@ -581,6 +594,11 @@ class TestConfluenceClient(unittest.TestCase):
 
         client = ConfluenceClient(CONFLUENCE_URL)
         self.assertEqual(client.base_url, CONFLUENCE_URL)
+        self.assertTrue(client.ssl_verify)
+
+        client = ConfluenceClient(CONFLUENCE_URL, ssl_verify=False)
+        self.assertEqual(client.base_url, CONFLUENCE_URL)
+        self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
     def test_contents(self):
