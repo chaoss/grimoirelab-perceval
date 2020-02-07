@@ -90,12 +90,14 @@ class TestGoogleHitsBackend(unittest.TestCase):
         self.assertIsNone(backend.client)
         self.assertEqual(backend.max_retries, MAX_RETRIES)
         self.assertEqual(backend.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertTrue(backend.ssl_verify)
 
         # When tag is empty or None it will be set to the value in
-        backend = GoogleHits(['bitergia', 'grimoirelab'])
+        backend = GoogleHits(['bitergia', 'grimoirelab'], ssl_verify=False)
         self.assertEqual(backend.keywords, ['bitergia', 'grimoirelab'])
         self.assertEqual(backend.origin, GOOGLE_SEARCH_URL)
         self.assertEqual(backend.tag, GOOGLE_SEARCH_URL)
+        self.assertFalse(backend.ssl_verify)
 
         backend = GoogleHits(['bitergia', 'grimoirelab'], tag='')
         self.assertEqual(backend.keywords, ['bitergia', 'grimoirelab'])
@@ -295,23 +297,25 @@ class TestGoogleHitsCommand(unittest.TestCase):
         args = ['', '--no-archive']
 
         parsed_args = parser.parse(*args)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.keywords, [''])
         self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
         self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertTrue(parsed_args.ssl_verify)
 
-        args = ['bitergia', '--no-archive']
+        args = ['bitergia', '--no-archive', '--no-ssl-verify']
 
         parsed_args = parser.parse(*args)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.keywords, ['bitergia'])
         self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
         self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertFalse(parsed_args.ssl_verify)
 
         args = ['bitergia', 'grimoirelab', '--no-archive', '--max-retries', '1', '--sleep-time', '100']
 
         parsed_args = parser.parse(*args)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.keywords, ['bitergia', 'grimoirelab'])
         self.assertEqual(parsed_args.max_retries, 1)
         self.assertEqual(parsed_args.sleep_time, 100)
