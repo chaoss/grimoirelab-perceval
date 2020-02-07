@@ -122,11 +122,13 @@ class TestTwitterBackend(unittest.TestCase):
         self.assertEqual(twitter.min_rate_to_sleep, 10)
         self.assertEqual(twitter.sleep_time, 60)
         self.assertIsNone(twitter.client)
+        self.assertTrue(twitter.ssl_verify)
 
         # When tag is empty or None it will be set to the value in URL
-        twitter = Twitter('query', 'my-token')
+        twitter = Twitter('query', 'my-token', ssl_verify=False)
         self.assertEqual(twitter.origin, 'https://twitter.com/')
         self.assertEqual(twitter.tag, 'https://twitter.com/')
+        self.assertFalse(twitter.ssl_verify)
 
         twitter = Twitter('query', 'my-token', tag='')
         self.assertEqual(twitter.origin, 'https://twitter.com/')
@@ -239,22 +241,25 @@ class TestTwitterClient(unittest.TestCase):
         client = TwitterClient('aaaa', max_items=10)
         self.assertEqual(client.api_key, 'aaaa')
         self.assertEqual(client.max_items, 10)
-        self.assertEqual(client.sleep_for_rate, False)
+        self.assertFalse(client.sleep_for_rate)
         self.assertEqual(client.min_rate_to_sleep, MIN_RATE_LIMIT)
+        self.assertTrue(client.ssl_verify)
 
         client = TwitterClient('aaaa', max_items=10,
                                sleep_for_rate=True,
                                min_rate_to_sleep=4)
         self.assertEqual(client.api_key, 'aaaa')
         self.assertEqual(client.max_items, 10)
-        self.assertEqual(client.sleep_for_rate, True)
+        self.assertTrue(client.sleep_for_rate)
         self.assertEqual(client.min_rate_to_sleep, 4)
 
         # Max rate limit is never overtaken
         client = TwitterClient('aaaa', max_items=10,
                                sleep_for_rate=True,
-                               min_rate_to_sleep=100000000)
+                               min_rate_to_sleep=100000000,
+                               ssl_verify=False)
         self.assertEqual(client.min_rate_to_sleep, client.MAX_RATE_LIMIT)
+        self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
     def test_tweets_no_params(self):
@@ -420,11 +425,29 @@ class TestTwitterCommand(unittest.TestCase):
         self.assertFalse(parsed_args.include_entities)
         self.assertEqual(parsed_args.max_items, 10)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.sleep_time, 10)
-        self.assertEqual(parsed_args.sleep_for_rate, True)
+        self.assertTrue(parsed_args.sleep_for_rate)
         self.assertEqual(parsed_args.min_rate_to_sleep, 1)
+        self.assertTrue(parsed_args.ssl_verify)
+
+        args = ['--sleep-for-rate',
+                '--min-rate-to-sleep', '1',
+                '--sleep-time', '10',
+                '--tag', 'test',
+                '--no-ssl-verify',
+                '--api-token', 'abcdefgh',
+                'query']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.query, 'query')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.sleep_time, 10)
+        self.assertTrue(parsed_args.sleep_for_rate)
+        self.assertEqual(parsed_args.min_rate_to_sleep, 1)
+        self.assertFalse(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.api_token, 'abcdefgh')
 
 
 if __name__ == "__main__":
