@@ -58,18 +58,19 @@ class Launchpad(Backend):
         of connection problems
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
     def __init__(self, distribution, package=None,
                  items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME,
-                 tag=None, archive=None):
+                 tag=None, archive=None, ssl_verify=True):
 
         origin = urijoin(LAUNCHPAD_URL, distribution)
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.distribution = distribution
         self.package = package
         self.items_per_page = items_per_page
@@ -193,7 +194,7 @@ class Launchpad(Backend):
         """Init client"""
 
         return LaunchpadClient(self.distribution, self.package, self.items_per_page,
-                               self.sleep_time, self.archive, from_archive)
+                               self.sleep_time, self.archive, from_archive, self.ssl_verify)
 
     def __init_extra_issue_fields(self, issue):
         """Add fields to an issue"""
@@ -301,13 +302,14 @@ class LaunchpadClient(HttpClient):
         of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
 
     _users = {}
 
     def __init__(self, distribution, package=None,
                  items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME,
-                 archive=None, from_archive=False):
+                 archive=None, from_archive=False, ssl_verify=True):
 
         self.distribution = distribution
         self.package = package
@@ -315,7 +317,7 @@ class LaunchpadClient(HttpClient):
 
         extra_headers = self.__define_headers()
         super().__init__(LAUNCHPAD_API_URL, sleep_time=sleep_time, extra_headers=extra_headers,
-                         archive=archive, from_archive=from_archive)
+                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
 
     def issues(self, start=None):
         """Get the issues from pagination"""
@@ -478,7 +480,8 @@ class LaunchpadCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               archive=True,
-                                              token_auth=False)
+                                              token_auth=False,
+                                              ssl_verify=True)
 
         # Optional arguments
         group = parser.parser.add_argument_group('Launchpad arguments')
