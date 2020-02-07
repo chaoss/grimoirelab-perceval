@@ -85,13 +85,15 @@ class TestRSSBackend(unittest.TestCase):
         self.assertEqual(rss.origin, RSS_FEED_URL)
         self.assertEqual(rss.tag, 'test')
         self.assertIsNone(rss.client)
+        self.assertTrue(rss.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in url
-        rss = RSS(RSS_FEED_URL)
+        rss = RSS(RSS_FEED_URL, ssl_verify=False)
         self.assertEqual(rss.url, RSS_FEED_URL)
         self.assertEqual(rss.origin, RSS_FEED_URL)
         self.assertEqual(rss.tag, RSS_FEED_URL)
+        self.assertFalse(rss.ssl_verify)
 
         rss = RSS(RSS_FEED_URL, tag='')
         self.assertEqual(rss.url, RSS_FEED_URL)
@@ -247,7 +249,19 @@ class TestRSSCommand(unittest.TestCase):
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, RSS_FEED_URL)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+
+        args = ['--tag', 'test',
+                '--no-archive',
+                '--no-ssl-verify',
+                RSS_FEED_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, RSS_FEED_URL)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertTrue(parsed_args.no_archive)
+        self.assertFalse(parsed_args.ssl_verify)
 
 
 class TestRSSClient(unittest.TestCase):
