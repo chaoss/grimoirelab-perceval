@@ -60,8 +60,9 @@ class Telegram(Backend):
     :param bot_token: authentication token used by the bot
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.10.0'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
     EXTRA_SEARCH_FIELDS = {
@@ -69,10 +70,10 @@ class Telegram(Backend):
         'chat_id': ['message', 'chat', 'id']
     }
 
-    def __init__(self, bot, bot_token, tag=None, archive=None):
+    def __init__(self, bot, bot_token, tag=None, archive=None, ssl_verify=True):
         origin = urijoin(TELEGRAM_URL, bot)
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.bot = bot
         self.bot_token = bot_token
 
@@ -235,7 +236,7 @@ class Telegram(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return TelegramBotClient(self.bot_token, self.archive, from_archive)
+        return TelegramBotClient(self.bot_token, self.archive, from_archive, self.ssl_verify)
 
     def _filter_message_by_chats(self, message, chats):
         """Check if a message can be filtered based in a list of chats.
@@ -273,7 +274,8 @@ class TelegramCommand(BackendCommand):
                                               offset=True,
                                               token_auth=True,
                                               archive=True,
-                                              aliases=aliases)
+                                              aliases=aliases,
+                                              ssl_verify=True)
 
         # Backend token is required
         action = parser.parser._option_string_actions['--api-token']
@@ -302,14 +304,15 @@ class TelegramBotClient(HttpClient):
     :param bot_token: token for the bot
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     API_URL = "https://api.telegram.org/bot%(token)s/%(method)s"
 
     UPDATES_METHOD = 'getUpdates'
     OFFSET = 'offset'
 
-    def __init__(self, bot_token, archive=None, from_archive=False):
-        super().__init__(self.API_URL, archive=archive, from_archive=from_archive)
+    def __init__(self, bot_token, archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(self.API_URL, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         self.bot_token = bot_token
 
     def updates(self, offset=None):
