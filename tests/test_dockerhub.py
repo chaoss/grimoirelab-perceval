@@ -75,12 +75,14 @@ class TestDockerHubBackend(unittest.TestCase):
         self.assertEqual(dockerhub.origin, expected_origin)
         self.assertEqual(dockerhub.tag, 'test')
         self.assertIsNone(dockerhub.client)
+        self.assertTrue(dockerhub.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in
-        dockerhub = DockerHub('grimoirelab', 'perceval')
+        dockerhub = DockerHub('grimoirelab', 'perceval', ssl_verify=False)
         self.assertEqual(dockerhub.origin, expected_origin)
         self.assertEqual(dockerhub.tag, expected_origin)
+        self.assertFalse(dockerhub.ssl_verify)
 
         dockerhub = DockerHub('grimoirelab', 'perceval', tag='')
         self.assertEqual(dockerhub.origin, expected_origin)
@@ -228,7 +230,15 @@ class TestDockerHubCommand(unittest.TestCase):
         args = ['grimoirelab', 'perceval', '--no-archive']
 
         parsed_args = parser.parse(*args)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.owner, 'grimoirelab')
+        self.assertEqual(parsed_args.repository, 'perceval')
+
+        args = ['grimoirelab', 'perceval', '--no-ssl-verify']
+
+        parsed_args = parser.parse(*args)
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.owner, 'grimoirelab')
         self.assertEqual(parsed_args.repository, 'perceval')
 
