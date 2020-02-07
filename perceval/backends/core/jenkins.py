@@ -58,8 +58,9 @@ class Jenkins(Backend):
         of connection problems
     :param archive: collect builds already retrieved from an archive
     :param blacklist_ids: exclude the jobs ID of this list while fetching
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.15.1'
+    version = '0.16.0'
 
     CATEGORIES = [CATEGORY_BUILD]
     EXTRA_SEARCH_FIELDS = {
@@ -68,7 +69,7 @@ class Jenkins(Backend):
     ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='url', type=str)
 
     def __init__(self, url, user=None, api_token=None, tag=None, archive=None,
-                 detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME, blacklist_ids=None):
+                 detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME, blacklist_ids=None, ssl_verify=True):
 
         if (user and not api_token) or (not user and api_token):
             msg = "Authentication method requires user and api_token"
@@ -76,7 +77,7 @@ class Jenkins(Backend):
             raise BackendError(cause=msg)
 
         origin = url
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.user = user
         self.api_token = api_token
@@ -235,7 +236,7 @@ class Jenkins(Backend):
 
         return JenkinsClient(self.url, self.user, self.api_token,
                              self.blacklist_ids, self.detail_depth, self.sleep_time,
-                             archive=self.archive, from_archive=from_archive)
+                             archive=self.archive, from_archive=from_archive, ssl_verify=self.ssl_verify)
 
 
 class JenkinsClient(HttpClient):
@@ -256,6 +257,7 @@ class JenkinsClient(HttpClient):
         of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
 
     :raises HTTPError: when an error occurs doing the request
     """
@@ -264,9 +266,9 @@ class JenkinsClient(HttpClient):
 
     def __init__(self, url, user=None, api_token=None, blacklist_jobs=None,
                  detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME,
-                 archive=None, from_archive=False):
+                 archive=None, from_archive=False, ssl_verify=True):
         super().__init__(url, sleep_time=sleep_time, extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
-                         archive=archive, from_archive=from_archive)
+                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
 
         self.auth = None
         if user and api_token:
@@ -314,7 +316,8 @@ class JenkinsCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               token_auth=True,
                                               archive=True,
-                                              blacklist=True)
+                                              blacklist=True,
+                                              ssl_verify=True)
 
         # Jenkins options
         group = parser.parser.add_argument_group('Jenkins arguments')
