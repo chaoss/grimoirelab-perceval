@@ -52,13 +52,14 @@ class HyperKitty(MBox):
     :param dirpath: directory path where the mboxes are stored
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.5.0'
+    version = '0.6.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
-    def __init__(self, url, dirpath, tag=None, archive=None):
-        super().__init__(url, dirpath, tag=tag, archive=archive)
+    def __init__(self, url, dirpath, tag=None, archive=None, ssl_verify=True):
+        super().__init__(url, dirpath, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
 
     def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
@@ -135,10 +136,11 @@ class HyperKittyList(MailingList):
 
     :param url: URL to the HyperKitty archiver for this list
     :param dirpath: path to the local mboxes archives
+    :param ssl_verify: enable/disable SSL verification
     """
-    def __init__(self, url, dirpath):
+    def __init__(self, url, dirpath, ssl_verify=True):
         super().__init__(url, dirpath)
-        self.client = HttpClient(url)
+        self.client = HttpClient(url, ssl_verify=ssl_verify)
 
     def fetch(self, from_date=DEFAULT_DATETIME):
         """Fetch the mbox files from the remote archiver.
@@ -268,7 +270,8 @@ class HyperKittyCommand(BackendCommand):
         """Returns the HyperKitty argument parser."""
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
-                                              from_date=True)
+                                              from_date=True,
+                                              ssl_verify=True)
 
         # Optional arguments
         group = parser.parser.add_argument_group('HyperKitty arguments')
