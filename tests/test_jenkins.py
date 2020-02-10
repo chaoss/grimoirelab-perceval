@@ -216,16 +216,18 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.tag, 'test')
         self.assertIsNone(jenkins.client)
         self.assertIsNone(jenkins.blacklist_ids)
+        self.assertTrue(jenkins.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in url
-        jenkins = Jenkins(SERVER_URL)
+        jenkins = Jenkins(SERVER_URL, ssl_verify=False)
         self.assertEqual(jenkins.url, SERVER_URL)
         self.assertEqual(jenkins.origin, SERVER_URL)
         self.assertEqual(jenkins.tag, SERVER_URL)
         self.assertEqual(jenkins.sleep_time, SLEEP_TIME)
         self.assertEqual(jenkins.detail_depth, DETAIL_DEPTH)
         self.assertIsNone(jenkins.blacklist_ids)
+        self.assertFalse(jenkins.ssl_verify)
 
         jenkins = Jenkins(SERVER_URL, tag='')
         self.assertEqual(jenkins.url, SERVER_URL)
@@ -660,15 +662,17 @@ class TestJenkinsClient(unittest.TestCase):
         client = JenkinsClient(SERVER_URL, sleep_time=target_sleep_time)
 
         self.assertEqual(client.base_url, SERVER_URL)
-        self.assertEqual(client.blacklist_jobs, None)
+        self.assertIsNone(client.blacklist_jobs)
         self.assertEqual(client.sleep_time, target_sleep_time)
         self.assertIsNone(client.auth)
+        self.assertTrue(client.ssl_verify)
 
-        client = JenkinsClient(SERVER_URL, user=USER, api_token=TOKEN)
+        client = JenkinsClient(SERVER_URL, user=USER, api_token=TOKEN, ssl_verify=False)
 
         self.assertEqual(client.base_url, SERVER_URL)
-        self.assertEqual(client.blacklist_jobs, None)
+        self.assertIsNone(client.blacklist_jobs)
         self.assertEqual(client.auth, (USER, TOKEN))
+        self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
     def test_http_retry_requests(self):
@@ -807,11 +811,12 @@ class TestJenkinsCommand(unittest.TestCase):
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.detail_depth, 2)
         self.assertEqual(parsed_args.sleep_time, 60)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
         self.assertIsNone(parsed_args.blacklist_ids)
 
         args = ['--tag', 'test', '--no-archive', '--sleep-time', '60',
-                '--detail-depth', '2',
+                '--detail-depth', '2', '--no-ssl-verify',
                 '--blacklist-ids', '1', '2', '3', '4', '--',
                 SERVER_URL]
 
@@ -822,7 +827,8 @@ class TestJenkinsCommand(unittest.TestCase):
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.detail_depth, 2)
         self.assertEqual(parsed_args.sleep_time, 60)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive, True)
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertListEqual(parsed_args.blacklist_ids, ['1', '2', '3', '4'])
 
         args = ['--tag', 'test', '-u', USER, '-t', TOKEN,
@@ -837,7 +843,7 @@ class TestJenkinsCommand(unittest.TestCase):
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.detail_depth, 2)
         self.assertEqual(parsed_args.sleep_time, 60)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
         self.assertListEqual(parsed_args.blacklist_ids, ['1', '2', '3', '4'])
 
 

@@ -91,13 +91,15 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(tlg.origin, origin)
         self.assertEqual(tlg.tag, 'test')
         self.assertIsNone(tlg.client)
+        self.assertTrue(tlg.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in url
-        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
+        tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, ssl_verify=False)
         self.assertEqual(tlg.bot, TELEGRAM_BOT)
         self.assertEqual(tlg.origin, origin)
         self.assertEqual(tlg.tag, origin)
+        self.assertFalse(tlg.ssl_verify)
 
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN, tag='')
         self.assertEqual(tlg.bot, TELEGRAM_BOT)
@@ -365,7 +367,23 @@ class TestTelegramCommand(unittest.TestCase):
         self.assertEqual(parsed_args.offset, 10)
         self.assertEqual(parsed_args.chats, [-10000])
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+
+        args = ['mybot',
+                '--api-token', '12345678',
+                '--offset', '10',
+                '--chats', '-10000',
+                '--tag', 'test',
+                '--no-ssl-verify']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.bot, 'mybot')
+        self.assertEqual(parsed_args.bot_token, '12345678')
+        self.assertEqual(parsed_args.offset, 10)
+        self.assertEqual(parsed_args.chats, [-10000])
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertFalse(parsed_args.ssl_verify)
 
 
 class TestTelegramBotClient(unittest.TestCase):
@@ -379,6 +397,11 @@ class TestTelegramBotClient(unittest.TestCase):
 
         client = TelegramBotClient(TELEGRAM_TOKEN)
         self.assertEqual(client.bot_token, TELEGRAM_TOKEN)
+        self.assertTrue(client.ssl_verify)
+
+        client = TelegramBotClient(TELEGRAM_TOKEN, ssl_verify=False)
+        self.assertEqual(client.bot_token, TELEGRAM_TOKEN)
+        self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
     def test_updates(self):

@@ -56,15 +56,16 @@ class Confluence(Backend):
     :param url: URL of the server
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.11.0'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 
-    def __init__(self, url, tag=None, archive=None):
+    def __init__(self, url, tag=None, archive=None, ssl_verify=True):
         origin = url
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.client = None
 
@@ -256,7 +257,7 @@ class Confluence(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return ConfluenceClient(self.url, archive=self.archive, from_archive=from_archive)
+        return ConfluenceClient(self.url, archive=self.archive, from_archive=from_archive, ssl_verify=self.ssl_verify)
 
     def __fetch_contents_summary(self, from_date):
         logger.debug("Fetching contents summary from %s", str(from_date))
@@ -323,7 +324,8 @@ class ConfluenceCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Required arguments
         parser.parser.add_argument('url',
@@ -341,6 +343,7 @@ class ConfluenceClient(HttpClient):
     :param base_url: URL of the Confluence server
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     URL = "%(base)s/rest/api/%(resource)s"
 
@@ -366,8 +369,8 @@ class ConfluenceClient(HttpClient):
     VEXPAND = ['body.storage', 'history', 'version']
     VHISTORICAL = 'historical'
 
-    def __init__(self, base_url, archive=None, from_archive=False):
-        super().__init__(base_url.rstrip('/'), archive=archive, from_archive=from_archive)
+    def __init__(self, base_url, archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(base_url.rstrip('/'), archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
 
     def contents(self, from_date=DEFAULT_DATETIME,
                  offset=None, max_contents=MAX_CONTENTS):

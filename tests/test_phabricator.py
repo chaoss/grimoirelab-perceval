@@ -169,6 +169,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.origin, PHABRICATOR_URL)
         self.assertEqual(phab.tag, 'test')
         self.assertIsNone(phab.client)
+        self.assertTrue(phab.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -177,12 +178,13 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.origin, PHABRICATOR_URL)
         self.assertEqual(phab.tag, PHABRICATOR_URL)
 
-        phab = Phabricator(PHABRICATOR_URL, 'AAAA', tag='')
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', tag='', ssl_verify=False)
         self.assertEqual(phab.url, PHABRICATOR_URL)
         self.assertEqual(phab.origin, PHABRICATOR_URL)
         self.assertEqual(phab.tag, PHABRICATOR_URL)
         self.assertEqual(phab.max_retries, MAX_RETRIES)
         self.assertEqual(phab.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertFalse(phab.ssl_verify)
 
         phab = Phabricator(PHABRICATOR_URL, 'AAAA', None, None, 3, 25)
         self.assertEqual(phab.url, PHABRICATOR_URL)
@@ -688,12 +690,14 @@ class TestConduitClient(unittest.TestCase):
         self.assertEqual(client.api_token, 'aaaa')
         self.assertEqual(client.max_retries, MAX_RETRIES)
         self.assertEqual(client.sleep_time, DEFAULT_SLEEP_TIME)
+        self.assertTrue(client.ssl_verify)
 
-        client = ConduitClient(PHABRICATOR_URL, 'aaaa', 2, 100)
+        client = ConduitClient(PHABRICATOR_URL, 'aaaa', 2, 100, ssl_verify=False)
         self.assertEqual(client.base_url, PHABRICATOR_URL)
         self.assertEqual(client.api_token, 'aaaa')
         self.assertEqual(client.max_retries, 2)
         self.assertEqual(client.sleep_time, 100)
+        self.assertFalse(client.ssl_verify)
 
         client = ConduitClient(PHABRICATOR_URL, 'aaaa', max_retries=2, sleep_time=100)
         self.assertEqual(client.base_url, PHABRICATOR_URL)
@@ -968,7 +972,8 @@ class TestPhabricatorCommand(unittest.TestCase):
         self.assertEqual(parsed_args.url, 'http://example.com')
         self.assertEqual(parsed_args.api_token, '12345678')
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
         self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
@@ -979,7 +984,8 @@ class TestPhabricatorCommand(unittest.TestCase):
                 '--no-archive',
                 '--from-date', '1970-01-01',
                 '--max-retries', '7',
-                '--sleep-time', '43']
+                '--sleep-time', '43',
+                '--no-ssl-verify']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, 'http://example.com')
@@ -989,6 +995,7 @@ class TestPhabricatorCommand(unittest.TestCase):
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.max_retries, 7)
         self.assertEqual(parsed_args.sleep_time, 43)
+        self.assertFalse(parsed_args.ssl_verify)
 
 
 if __name__ == "__main__":

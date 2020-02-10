@@ -58,8 +58,9 @@ class BugzillaREST(Backend):
     :param max_bugs: maximum number of bugs requested on the same query
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.9.0'
+    version = '0.10.0'
 
     CATEGORIES = [CATEGORY_BUG]
     EXTRA_SEARCH_FIELDS = {
@@ -68,10 +69,10 @@ class BugzillaREST(Backend):
     }
 
     def __init__(self, url, user=None, password=None, api_token=None,
-                 max_bugs=MAX_BUGS, tag=None, archive=None):
+                 max_bugs=MAX_BUGS, tag=None, archive=None, ssl_verify=True):
         origin = url
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.user = user
         self.password = password
@@ -171,7 +172,7 @@ class BugzillaREST(Backend):
         """Init client"""
 
         return BugzillaRESTClient(self.url, user=self.user, password=self.password, api_token=self.api_token,
-                                  archive=self.archive, from_archive=from_archive)
+                                  archive=self.archive, from_archive=from_archive, ssl_verify=self.ssl_verify)
 
     def __fetch_and_parse_bugs(self, from_date):
         max_contents = min(MAX_CONTENTS, self.max_bugs)
@@ -266,8 +267,9 @@ class BugzillaRESTClient(HttpClient):
         `user` and `password` parameters will be ignored
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
 
-    :raises BackendError: when an error occurs initilizing the
+    :raises BackendError: when an error occurs initializing the
         client
     """
     URL = "%(base)s/rest/%(resource)s"
@@ -297,8 +299,8 @@ class BugzillaRESTClient(HttpClient):
     VEXCLUDE_ATTCH_DATA = 'data'
 
     def __init__(self, base_url, user=None, password=None, api_token=None,
-                 archive=None, from_archive=False):
-        super().__init__(base_url, archive=archive, from_archive=from_archive)
+                 archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(base_url, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
 
         self.api_token = api_token if api_token else None
 
@@ -464,7 +466,8 @@ class BugzillaRESTCommand(BackendCommand):
                                               from_date=True,
                                               basic_auth=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # BugzillaREST options
         group = parser.parser.add_argument_group('Bugzilla REST arguments')

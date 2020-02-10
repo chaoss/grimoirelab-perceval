@@ -69,15 +69,16 @@ class MediaWiki(Backend):
     :param url: MediaWiki url
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.10.0'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_PAGE]
 
-    def __init__(self, url, tag=None, archive=None):
+    def __init__(self, url, tag=None, archive=None, ssl_verify=True):
         origin = url
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.client = None
 
@@ -177,7 +178,7 @@ class MediaWiki(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return MediaWikiClient(self.url, self.archive, from_archive)
+        return MediaWikiClient(self.url, self.archive, from_archive, self.ssl_verify)
 
     def __get_max_date(self, reviews):
         """"Get the max date in unixtime format from reviews."""
@@ -392,12 +393,13 @@ class MediaWikiClient(HttpClient):
     :param url: URL of mediawiki site: https://wiki.mozilla.org
     :param archive: an archive to store/retrieved the fetched data
     :param from_archive: define whether the archive is used to store/read data
+    :param ssl_verify: enable/disable SSL verification
 
     :raises HTTPError: when an error occurs doing the request
     """
 
-    def __init__(self, url, archive=None, from_archive=False):
-        super().__init__(urijoin(url, "api.php"), archive=archive, from_archive=from_archive)
+    def __init__(self, url, archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(urijoin(url, "api.php"), archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         self.limit = "max"  # Always get the max number of items
 
     def call(self, params):
@@ -537,7 +539,8 @@ class MediaWikiCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # MediaWiki options
         group = parser.parser.add_argument_group('MediaWiki arguments')

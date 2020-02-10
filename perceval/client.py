@@ -51,8 +51,18 @@ class HttpClient:
         before raising a RetryError exception
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
+    :param extra_headers: extra headers to be included in
+        the requests
+    :param extra_status_forcelist: a set of HTTP status codes that will
+        force a retry on
+    :param extra_retry_after_status: a set of HTTP status codes that will
+        perform a retry respecting the Retry-After header
+    :param archive: archive to store/retrieve items
+    :param from_archive: if `True` the data is fetched
+        from an archive
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     DEFAULT_SLEEP_TIME = 1
 
@@ -77,9 +87,10 @@ class HttpClient:
 
     def __init__(self, base_url, max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
                  extra_headers=None, extra_status_forcelist=None, extra_retry_after_status=None,
-                 archive=None, from_archive=False):
+                 archive=None, from_archive=False, ssl_verify=True):
 
         self.base_url = base_url
+        self.ssl_verify = ssl_verify
 
         self.headers = dict(self.DEFAULT_HEADERS)
         if extra_headers:
@@ -113,7 +124,7 @@ class HttpClient:
     def __del__(self):
         self._close_http_session()
 
-    def fetch(self, url, payload=None, headers=None, method=GET, stream=False, verify=True, auth=None):
+    def fetch(self, url, payload=None, headers=None, method=GET, stream=False, auth=None):
         """Fetch the data from a given URL.
 
         :param url: link to the resource
@@ -121,7 +132,6 @@ class HttpClient:
         :param headers: headers of the request
         :param method: type of request call (GET or POST)
         :param stream: defer downloading the response body until the response content is available
-        :param verify: verifying the SSL certificate
         :param auth: auth of the request
 
         :returns a response object
@@ -129,7 +139,7 @@ class HttpClient:
         if self.from_archive:
             response = self._fetch_from_archive(url, payload, headers)
         else:
-            response = self._fetch_from_remote(url, payload, headers, method, stream, verify, auth)
+            response = self._fetch_from_remote(url, payload, headers, method, stream, auth)
 
         return response
 
@@ -157,12 +167,14 @@ class HttpClient:
 
         return response
 
-    def _fetch_from_remote(self, url, payload, headers, method, stream, verify, auth):
+    def _fetch_from_remote(self, url, payload, headers, method, stream, auth):
 
         if method == self.GET:
-            response = self.session.get(url, params=payload, headers=headers, stream=stream, verify=verify, auth=auth)
+            response = self.session.get(url, params=payload, headers=headers, stream=stream,
+                                        verify=self.ssl_verify, auth=auth)
         else:
-            response = self.session.post(url, data=payload, headers=headers, stream=stream, verify=verify, auth=auth)
+            response = self.session.post(url, data=payload, headers=headers, stream=stream,
+                                         verify=self.ssl_verify, auth=auth)
 
         try:
             response.raise_for_status()

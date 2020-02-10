@@ -131,6 +131,7 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         self.assertEqual(bg.tag, 'test')
         self.assertEqual(bg.max_bugs, 5)
         self.assertIsNone(bg.client)
+        self.assertTrue(bg.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in URL
@@ -139,10 +140,11 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         self.assertEqual(bg.origin, BUGZILLA_SERVER_URL)
         self.assertEqual(bg.tag, BUGZILLA_SERVER_URL)
 
-        bg = BugzillaREST(BUGZILLA_SERVER_URL, tag='')
+        bg = BugzillaREST(BUGZILLA_SERVER_URL, tag='', ssl_verify=False)
         self.assertEqual(bg.url, BUGZILLA_SERVER_URL)
         self.assertEqual(bg.origin, BUGZILLA_SERVER_URL)
         self.assertEqual(bg.tag, BUGZILLA_SERVER_URL)
+        self.assertFalse(bg.ssl_verify)
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -348,6 +350,12 @@ class TestBugzillaRESTClient(unittest.TestCase):
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
         self.assertEqual(client.base_url, BUGZILLA_SERVER_URL)
         self.assertEqual(client.api_token, None)
+        self.assertTrue(client.ssl_verify)
+
+        client = BugzillaRESTClient(BUGZILLA_SERVER_URL, ssl_verify=False)
+        self.assertEqual(client.base_url, BUGZILLA_SERVER_URL)
+        self.assertEqual(client.api_token, None)
+        self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
     def test_init_auth(self):
@@ -683,7 +691,26 @@ class TestBugzillaRESTCommand(unittest.TestCase):
         self.assertEqual(parsed_args.max_bugs, 10)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.url, BUGZILLA_SERVER_URL)
+
+        args = ['--backend-user', 'jsmith@example.com',
+                '--backend-password', '1234',
+                '--api-token', 'abcdefg',
+                '--max-bugs', '10', '--tag', 'test',
+                '--from-date', '1970-01-01',
+                '--no-ssl-verify',
+                BUGZILLA_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.user, 'jsmith@example.com')
+        self.assertEqual(parsed_args.password, '1234')
+        self.assertEqual(parsed_args.api_token, 'abcdefg')
+        self.assertEqual(parsed_args.max_bugs, 10)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.url, BUGZILLA_SERVER_URL)
 
 

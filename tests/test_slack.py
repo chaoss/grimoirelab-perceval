@@ -165,12 +165,14 @@ class TestSlackBackend(unittest.TestCase):
         self.assertEqual(slack.channel, 'C011DUKE8')
         self.assertEqual(slack.max_items, 5)
         self.assertIsNone(slack.client)
+        self.assertTrue(slack.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in URL
-        slack = Slack('C011DUKE8', 'aaaa')
+        slack = Slack('C011DUKE8', 'aaaa', ssl_verify=False)
         self.assertEqual(slack.origin, 'https://slack.com/C011DUKE8')
         self.assertEqual(slack.tag, 'https://slack.com/C011DUKE8')
+        self.assertFalse(slack.ssl_verify)
 
         slack = Slack('C011DUKE8', 'aaaa', tag='')
         self.assertEqual(slack.origin, 'https://slack.com/C011DUKE8')
@@ -666,6 +668,12 @@ class TestSlackClient(unittest.TestCase):
         client = SlackClient('aaaa', max_items=5)
         self.assertEqual(client.api_token, 'aaaa')
         self.assertEqual(client.max_items, 5)
+        self.assertTrue(client.ssl_verify)
+
+        client = SlackClient('aaaa', max_items=5, ssl_verify=False)
+        self.assertEqual(client.api_token, 'aaaa')
+        self.assertEqual(client.max_items, 5)
+        self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
     def test_conversation_members(self):
@@ -851,7 +859,22 @@ class TestSlackCommand(unittest.TestCase):
         self.assertEqual(parsed_args.channel, 'C001')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.api_token, 'abcdefgh')
+        self.assertEqual(parsed_args.max_items, 10)
+
+        args = ['--tag', 'test', '--no-ssl-verify',
+                '--api-token', 'abcdefgh',
+                '--from-date', '1970-01-01',
+                '--max-items', '10',
+                'C001']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.channel, 'C001')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.api_token, 'abcdefgh')
         self.assertEqual(parsed_args.max_items, 10)
 

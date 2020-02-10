@@ -89,8 +89,9 @@ class GitLab(Backend):
     :param blacklist_ids: ids of items that must not be retrieved
     :param extra_retry_after_status: retry HTTP requests after status (default 500 and 502). These status complete
         the ones (413, 429, 503) defined in the HttpClient class
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.11.1'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
     ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='iid', type=int)
@@ -99,14 +100,14 @@ class GitLab(Backend):
                  is_oauth_token=False, base_url=None, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
-                 blacklist_ids=None, extra_retry_after_status=None):
+                 blacklist_ids=None, extra_retry_after_status=None, ssl_verify=True):
         origin = base_url if base_url else GITLAB_URL
         origin = urijoin(origin, owner, repository)
 
         if not api_token and is_oauth_token:
             raise BackendError(cause="is_oauth_token is True but api_token is None")
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.base_url = base_url
         self.owner = owner
         self.repository = repository
@@ -249,7 +250,7 @@ class GitLab(Backend):
                             self.is_oauth_token, self.base_url,
                             self.sleep_for_rate, self.min_rate_to_sleep,
                             self.sleep_time, self.max_retries, self.extra_retry_after_status,
-                            self.archive, from_archive)
+                            self.archive, from_archive, self.ssl_verify)
 
     def __fetch_issues(self, from_date):
         """Fetch the issues"""
@@ -453,6 +454,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
     :param extra_retry_after_status: retry HTTP requests after status
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
 
     RATE_LIMIT_HEADER = "RateLimit-Remaining"
@@ -470,7 +472,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
     def __init__(self, owner, repository, token, is_oauth_token=False, base_url=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES, extra_retry_after_status=None,
-                 archive=None, from_archive=False):
+                 archive=None, from_archive=False, ssl_verify=True):
 
         if not token and is_oauth_token:
             raise HttpClientError(cause="is_oauth_token is True but token is None")
@@ -490,7 +492,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
 
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_headers=self._set_extra_headers(), extra_retry_after_status=extra_retry_after_status,
-                         archive=archive, from_archive=from_archive)
+                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         super().setup_rate_limit_handler(rate_limit_header=self.RATE_LIMIT_HEADER,
                                          rate_limit_reset_header=self.RATE_LIMIT_RESET_HEADER,
                                          sleep_for_rate=sleep_for_rate,
@@ -737,7 +739,8 @@ class GitLabCommand(BackendCommand):
                                               from_date=True,
                                               token_auth=True,
                                               archive=True,
-                                              blacklist=True)
+                                              blacklist=True,
+                                              ssl_verify=True)
 
         # GitLab options
         group = parser.parser.add_argument_group('GitLab arguments')

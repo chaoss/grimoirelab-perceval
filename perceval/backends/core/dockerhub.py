@@ -56,8 +56,9 @@ class DockerHub(Backend):
     :param repository: DockerHub repository owned by `owner`
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.5.0'
+    version = '0.6.0'
 
     CATEGORIES = [CATEGORY_DOCKERHUB_DATA]
     EXTRA_SEARCH_FIELDS = {
@@ -65,13 +66,13 @@ class DockerHub(Backend):
         'namespace': ['namespace']
     }
 
-    def __init__(self, owner, repository, tag=None, archive=None):
+    def __init__(self, owner, repository, tag=None, archive=None, ssl_verify=True):
         if owner == DOCKER_SHORTCUT_OWNER:
             owner = DOCKER_OWNER
 
         origin = urijoin(DOCKERHUB_URL, owner, repository)
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.owner = owner
         self.repository = repository
         self.client = None
@@ -174,7 +175,7 @@ class DockerHub(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return DockerHubClient(archive=self.archive, from_archive=from_archive)
+        return DockerHubClient(archive=self.archive, from_archive=from_archive, ssl_verify=self.ssl_verify)
 
 
 class DockerHubClient(HttpClient):
@@ -185,11 +186,12 @@ class DockerHubClient(HttpClient):
 
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     RREPOSITORY = 'repositories'
 
-    def __init__(self, archive=None, from_archive=False):
-        super().__init__(DOCKERHUB_API_URL, archive=archive, from_archive=from_archive)
+    def __init__(self, archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(DOCKERHUB_API_URL, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
 
     def repository(self, owner, repository):
         """Fetch information about a repository."""
@@ -213,7 +215,8 @@ class DockerHubCommand(BackendCommand):
         """Returns the DockerHub argument parser."""
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Required arguments
         parser.parser.add_argument('owner',

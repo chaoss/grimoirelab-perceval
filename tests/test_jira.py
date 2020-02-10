@@ -144,6 +144,7 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(jira.tag, 'test')
         self.assertEqual(jira.max_results, 5)
         self.assertIsNone(jira.client)
+        self.assertTrue(jira.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -152,10 +153,11 @@ class TestJiraBackend(unittest.TestCase):
         self.assertEqual(jira.origin, JIRA_SERVER_URL)
         self.assertEqual(jira.tag, JIRA_SERVER_URL)
 
-        jira = Jira(JIRA_SERVER_URL, tag='')
+        jira = Jira(JIRA_SERVER_URL, tag='', ssl_verify=False)
         self.assertEqual(jira.url, JIRA_SERVER_URL)
         self.assertEqual(jira.origin, JIRA_SERVER_URL)
         self.assertEqual(jira.tag, JIRA_SERVER_URL)
+        self.assertFalse(jira.ssl_verify)
 
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
@@ -655,25 +657,25 @@ class TestJiraClient(unittest.TestCase):
 
         client = JiraClient(url='http://example.com', project='perceval',
                             user='user', password='password',
-                            verify=False, cert=None, max_results=100)
+                            ssl_verify=True, cert=None, max_results=100)
 
         self.assertEqual(client.base_url, 'http://example.com')
         self.assertEqual(client.project, 'perceval')
         self.assertEqual(client.user, 'user')
         self.assertEqual(client.password, 'password')
-        self.assertEqual(client.verify, False)
-        self.assertEqual(client.cert, None)
+        self.assertTrue(client.ssl_verify)
+        self.assertIsNone(client.cert)
         self.assertEqual(client.max_results, 100)
 
         client = JiraClient(url='http://example.com', project='perceval',
                             user='user', password='password',
-                            verify=False, cert="cert", max_results=100)
+                            ssl_verify=False, cert="cert", max_results=100)
 
         self.assertEqual(client.base_url, 'http://example.com')
         self.assertEqual(client.project, 'perceval')
         self.assertEqual(client.user, 'user')
         self.assertEqual(client.password, 'password')
-        self.assertEqual(client.verify, False)
+        self.assertFalse(client.ssl_verify)
         self.assertEqual(client.cert, "cert")
         self.assertEqual(client.max_results, 100)
 
@@ -703,7 +705,7 @@ class TestJiraClient(unittest.TestCase):
 
         client = JiraClient(url='http://example.com', project='perceval',
                             user='user', password='password',
-                            verify=False, cert=None, max_results=2)
+                            ssl_verify=False, cert=None, max_results=2)
 
         pages = [page for page in client.get_issues(from_date)]
 
@@ -756,7 +758,7 @@ class TestJiraClient(unittest.TestCase):
 
         client = JiraClient(url='http://example.com', project='perceval',
                             user='user', password='password',
-                            verify=False, cert=None, max_results=2)
+                            ssl_verify=False, cert=None, max_results=2)
 
         pages = [page for page in client.get_comments("1")]
 
@@ -801,7 +803,7 @@ class TestJiraClient(unittest.TestCase):
 
         client = JiraClient(url='http://example.com', project=None,
                             user='user', password='password',
-                            verify=False, cert=None, max_results=None)
+                            ssl_verify=False, cert=None, max_results=None)
 
         page = client.get_fields()
 
@@ -824,7 +826,7 @@ class TestJiraClient(unittest.TestCase):
 
         client = JiraClient(url='http://example.com', project='perceval',
                             user='user', password='password',
-                            verify=False, cert=None, max_results=1)
+                            ssl_verify=False, cert=None, max_results=1)
 
         pages = [page for page in client.get_issues(from_date)]
 
@@ -860,7 +862,6 @@ class TestJiraCommand(unittest.TestCase):
         args = ['--backend-user', 'jsmith',
                 '--backend-password', '1234',
                 '--project', 'Perceval Jira',
-                '--verify', False,
                 '--cert', 'aaaa',
                 '--max-results', '1',
                 '--tag', 'test',
@@ -872,11 +873,34 @@ class TestJiraCommand(unittest.TestCase):
         self.assertEqual(parsed_args.user, 'jsmith')
         self.assertEqual(parsed_args.password, '1234')
         self.assertEqual(parsed_args.project, 'Perceval Jira')
-        self.assertEqual(parsed_args.verify, False)
+        self.assertTrue(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.cert, 'aaaa')
         self.assertEqual(parsed_args.max_results, 1)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.url, JIRA_SERVER_URL)
+
+        args = ['--backend-user', 'jsmith',
+                '--backend-password', '1234',
+                '--project', 'Perceval Jira',
+                '--no-ssl-verify',
+                '--cert', 'aaaa',
+                '--max-results', '1',
+                '--tag', 'test',
+                '--no-archive',
+                '--from-date', '1970-01-01',
+                JIRA_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.user, 'jsmith')
+        self.assertEqual(parsed_args.password, '1234')
+        self.assertEqual(parsed_args.project, 'Perceval Jira')
+        self.assertFalse(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.cert, 'aaaa')
+        self.assertEqual(parsed_args.max_results, 1)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.url, JIRA_SERVER_URL)
 

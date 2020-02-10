@@ -71,6 +71,7 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertIsNone(discourse.client)
         self.assertEqual(discourse.sleep_time, DEFAULT_SLEEP_TIME)
         self.assertEqual(discourse.max_retries, MAX_RETRIES)
+        self.assertTrue(discourse.ssl_verify)
 
         # When origin is empty or None it will be set to
         # the value in url
@@ -79,10 +80,11 @@ class TestDiscourseBackend(unittest.TestCase):
         self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.tag, DISCOURSE_SERVER_URL)
 
-        discourse = Discourse(DISCOURSE_SERVER_URL, tag='')
+        discourse = Discourse(DISCOURSE_SERVER_URL, tag='', ssl_verify=False)
         self.assertEqual(discourse.url, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.origin, DISCOURSE_SERVER_URL)
         self.assertEqual(discourse.tag, DISCOURSE_SERVER_URL)
+        self.assertFalse(discourse.ssl_verify)
 
         discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=60, max_retries=30)
         self.assertEqual(discourse.url, DISCOURSE_SERVER_URL)
@@ -860,7 +862,7 @@ class TestDiscourseClient(unittest.TestCase):
     """
 
     def test_init(self):
-        """Test whether attributes are initializated"""
+        """Test whether attributes are initialized"""
 
         client = DiscourseClient(DISCOURSE_SERVER_URL)
 
@@ -869,15 +871,17 @@ class TestDiscourseClient(unittest.TestCase):
         self.assertIsNone(client.api_username)
         self.assertEqual(client.sleep_time, DEFAULT_SLEEP_TIME)
         self.assertEqual(client.max_retries, MAX_RETRIES)
+        self.assertTrue(client.ssl_verify)
 
         client = DiscourseClient(DISCOURSE_SERVER_URL,
-                                 api_key='aaaa', api_username='user')
+                                 api_key='aaaa', api_username='user', ssl_verify=False)
 
         self.assertEqual(client.base_url, DISCOURSE_SERVER_URL)
         self.assertEqual(client.api_key, 'aaaa')
         self.assertEqual(client.api_username, 'user')
         self.assertEqual(client.sleep_time, DEFAULT_SLEEP_TIME)
         self.assertEqual(client.max_retries, MAX_RETRIES)
+        self.assertFalse(client.ssl_verify)
 
         client = DiscourseClient(DISCOURSE_SERVER_URL,
                                  api_key='aaaa', api_username='user', sleep_time=60, max_retries=30)
@@ -1014,6 +1018,7 @@ class TestDiscourseCommand(unittest.TestCase):
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.sleep_time, DEFAULT_SLEEP_TIME)
         self.assertEqual(parsed_args.max_retries, MAX_RETRIES)
+        self.assertTrue(parsed_args.ssl_verify)
 
         args = ['--tag', 'test', '--no-archive',
                 '--from-date', '1970-01-01',
@@ -1036,6 +1041,7 @@ class TestDiscourseCommand(unittest.TestCase):
                 '--max-retries', '60',
                 '--sleep-time', '30',
                 '--api-token', 'aaaa',
+                '--no-ssl-verify',
                 '--api-username', 'user',
                 DISCOURSE_SERVER_URL]
 
@@ -1048,6 +1054,7 @@ class TestDiscourseCommand(unittest.TestCase):
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.sleep_time, 30)
         self.assertEqual(parsed_args.max_retries, 60)
+        self.assertFalse(parsed_args.ssl_verify)
 
 
 if __name__ == "__main__":

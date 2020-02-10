@@ -55,8 +55,9 @@ class Redmine(Backend):
     :param max_issues:  maximum number of issues requested on the same query
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.10.0'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
     EXTRA_SEARCH_FIELDS = {
@@ -65,10 +66,10 @@ class Redmine(Backend):
     }
 
     def __init__(self, url, api_token=None, max_issues=MAX_ISSUES,
-                 tag=None, archive=None):
+                 tag=None, archive=None, ssl_verify=True):
         origin = url
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.api_token = api_token
         self.max_issues = max_issues
@@ -229,7 +230,7 @@ class Redmine(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return RedmineClient(self.url, self.api_token, self.archive, from_archive)
+        return RedmineClient(self.url, self.api_token, self.archive, from_archive, self.ssl_verify)
 
     def __fetch_issues_ids(self, from_date):
         offset = 0
@@ -297,7 +298,8 @@ class RedmineCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Redmine options
         group = parser.parser.add_argument_group('Redmine arguments')
@@ -324,6 +326,7 @@ class RedmineClient(HttpClient):
         stored in the server
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     URL = '%(base)s/%(resource)s'
 
@@ -346,8 +349,8 @@ class RedmineClient(HttpClient):
     CRELATIONS = 'relations'
     CWATCHERS = 'watchers'
 
-    def __init__(self, base_url, api_token=None, archive=None, from_archive=False):
-        super().__init__(base_url.rstrip('/'), archive=archive, from_archive=from_archive)
+    def __init__(self, base_url, api_token=None, archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(base_url.rstrip('/'), archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         self.api_token = api_token
 
     def issues(self, from_date=DEFAULT_DATETIME,
@@ -441,6 +444,6 @@ class RedmineClient(HttpClient):
         logger.debug("Redmine client requests: %s params: %s",
                      resource, str(params))
 
-        r = self.fetch(url, payload=params, verify=False)
+        r = self.fetch(url, payload=params)
 
         return r.text

@@ -164,12 +164,14 @@ class TestHyperKittyBackend(unittest.TestCase):
         self.assertEqual(backend.dirpath, self.tmp_path)
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'test')
+        self.assertTrue(backend.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in uri
-        backend = HyperKitty('http://example.com/', self.tmp_path)
+        backend = HyperKitty('http://example.com/', self.tmp_path, ssl_verify=False)
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'http://example.com/')
+        self.assertFalse(backend.ssl_verify)
 
         backend = HyperKitty('http://example.com/', self.tmp_path, tag='')
         self.assertEqual(backend.origin, 'http://example.com/')
@@ -347,6 +349,19 @@ class TestHyperKittyCommand(unittest.TestCase):
         self.assertEqual(parsed_args.mboxes_path, '/tmp/perceval/')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertTrue(parsed_args.ssl_verify)
+
+        args = ['http://example.com/archives/list/test@example.com/',
+                '--mboxes-path', '/tmp/perceval/',
+                '--tag', 'test', '--no-ssl-verify',
+                '--from-date', '1970-01-01']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'http://example.com/archives/list/test@example.com/')
+        self.assertEqual(parsed_args.mboxes_path, '/tmp/perceval/')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertFalse(parsed_args.ssl_verify)
 
 
 if __name__ == "__main__":

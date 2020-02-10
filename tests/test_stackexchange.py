@@ -36,7 +36,8 @@ from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.stackexchange import (StackExchange,
                                                   StackExchangeCommand,
-                                                  StackExchangeClient)
+                                                  StackExchangeClient,
+                                                  MAX_QUESTIONS)
 from base import TestCaseBackendArchive
 
 
@@ -68,13 +69,15 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(stack.origin, 'stackoverflow')
         self.assertEqual(stack.tag, 'test')
         self.assertIsNone(stack.client)
+        self.assertTrue(stack.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in site
-        stack = StackExchange(site='stackoverflow')
+        stack = StackExchange(site='stackoverflow', ssl_verify=False)
         self.assertEqual(stack.site, 'stackoverflow')
         self.assertEqual(stack.origin, 'stackoverflow')
         self.assertEqual(stack.tag, 'stackoverflow')
+        self.assertFalse(stack.ssl_verify)
 
         stack = StackExchange(site='stackoverflow', tag='')
         self.assertEqual(stack.site, 'stackoverflow')
@@ -247,6 +250,24 @@ class TestStackExchangeBackendParsers(unittest.TestCase):
 
 class TestStackExchangeClient(unittest.TestCase):
     """StackExchange API client tests"""
+
+    def test_initialization(self):
+        """Test whether the parameters are initialized"""
+
+        client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa")
+        self.assertEqual(client.site, "stackoverflow")
+        self.assertEqual(client.tagged, "python")
+        self.assertEqual(client.token, "aaa")
+        self.assertEqual(client.max_questions, MAX_QUESTIONS)
+        self.assertTrue(client.ssl_verify)
+
+        client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa",
+                                     max_questions=5, ssl_verify=False)
+        self.assertEqual(client.site, "stackoverflow")
+        self.assertEqual(client.tagged, "python")
+        self.assertEqual(client.token, "aaa")
+        self.assertEqual(client.max_questions, 5)
+        self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
     def test_get_questions(self):
@@ -485,7 +506,25 @@ class TestStackExchangeCommand(unittest.TestCase):
         self.assertEqual(parsed_args.api_token, 'aaa')
         self.assertEqual(parsed_args.max_questions, 1)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+
+        args = ['--site', 'stackoverflow',
+                '--tagged', 'python',
+                '--api-token', 'aaa',
+                '--max-questions', '1',
+                '--tag', 'test',
+                '--no-ssl-verify',
+                '--from-date', '1970-01-01']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.site, 'stackoverflow')
+        self.assertEqual(parsed_args.tagged, 'python')
+        self.assertEqual(parsed_args.api_token, 'aaa')
+        self.assertEqual(parsed_args.max_questions, 1)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 

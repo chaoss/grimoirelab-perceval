@@ -200,6 +200,12 @@ class TestAskbotClient(unittest.TestCase):
         ab = AskbotClient(ASKBOT_URL)
 
         self.assertEqual(ab.base_url, ASKBOT_URL)
+        self.assertTrue(ab.ssl_verify)
+
+        ab = AskbotClient(ASKBOT_URL, ssl_verify=False)
+
+        self.assertEqual(ab.base_url, ASKBOT_URL)
+        self.assertFalse(ab.ssl_verify)
 
     @httpretty.activate
     def test_get_api_questions(self):
@@ -394,6 +400,7 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(ab.url, ASKBOT_URL)
         self.assertEqual(ab.tag, 'test')
         self.assertIsNone(ab.client, None)
+        self.assertTrue(ab.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -401,9 +408,10 @@ class TestAskbotBackend(unittest.TestCase):
         self.assertEqual(ab.url, ASKBOT_URL)
         self.assertEqual(ab.tag, ASKBOT_URL)
 
-        ab = Askbot(ASKBOT_URL, tag='')
+        ab = Askbot(ASKBOT_URL, tag='', ssl_verify=False)
         self.assertEqual(ab.url, ASKBOT_URL)
         self.assertEqual(ab.tag, ASKBOT_URL)
+        self.assertFalse(ab.ssl_verify)
 
     @httpretty.activate
     def test_too_many_redirects(self):
@@ -714,7 +722,19 @@ class TestAskbotCommand(unittest.TestCase):
         self.assertEqual(parsed_args.url, ASKBOT_URL)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+
+        args = ['--tag', 'test',
+                '--from-date', '1970-01-01',
+                '--no-ssl-verify',
+                ASKBOT_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, ASKBOT_URL)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertFalse(parsed_args.ssl_verify)
 
 
 if __name__ == "__main__":

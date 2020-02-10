@@ -56,8 +56,9 @@ class Slack(Backend):
     :param max_items: maximum number of message requested on the same query
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.8.0'
+    version = '0.9.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
     EXTRA_SEARCH_FIELDS = {
@@ -66,10 +67,10 @@ class Slack(Backend):
     }
 
     def __init__(self, channel, api_token, max_items=MAX_ITEMS,
-                 tag=None, archive=None):
+                 tag=None, archive=None, ssl_verify=True):
         origin = urijoin(SLACK_URL, channel)
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.channel = channel
         self.api_token = api_token
         self.max_items = max_items
@@ -261,7 +262,8 @@ class Slack(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return SlackClient(self.api_token, self.max_items, self.archive, from_archive)
+        return SlackClient(self.api_token, self.max_items, self.archive,
+                           from_archive, self.ssl_verify)
 
     def __get_or_fetch_user(self, user_id):
         if user_id in self._users:
@@ -288,10 +290,11 @@ class SlackClient(HttpClient):
     Client for fetching information from the Slack server
     using its REST API.
 
-    :param api_key: key needed to use the API
+    :param api_token: key needed to use the API
     :param max_items: maximum number of items per request
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     URL = urijoin(SLACK_URL, 'api', '%(resource)s')
 
@@ -308,8 +311,8 @@ class SlackClient(HttpClient):
     PTOKEN = 'token'
     PUSER = 'user'
 
-    def __init__(self, api_token, max_items=MAX_ITEMS, archive=None, from_archive=False):
-        super().__init__(SLACK_URL, archive=archive, from_archive=from_archive)
+    def __init__(self, api_token, max_items=MAX_ITEMS, archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(SLACK_URL, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         self.api_token = api_token
         self.max_items = max_items
 
@@ -464,7 +467,8 @@ class SlackCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Backend token is required
         action = parser.parser._option_string_actions['--api-token']

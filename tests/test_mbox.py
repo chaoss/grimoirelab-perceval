@@ -239,6 +239,7 @@ class TestMBoxBackend(TestBaseMBox):
         self.assertEqual(backend.dirpath, self.tmp_path)
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'test')
+        self.assertTrue(backend.ssl_verify)
 
         # When origin is empty or None it will be set to
         # the value in uri
@@ -246,9 +247,10 @@ class TestMBoxBackend(TestBaseMBox):
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'http://example.com/')
 
-        backend = MBox('http://example.com/', self.tmp_path, tag='')
+        backend = MBox('http://example.com/', self.tmp_path, tag='', ssl_verify=False)
         self.assertEqual(backend.origin, 'http://example.com/')
         self.assertEqual(backend.tag, 'http://example.com/')
+        self.assertFalse(backend.ssl_verify)
 
     def test_has_archiving(self):
         """Test if it returns False when has_archiving is called"""
@@ -575,6 +577,19 @@ class TestMBoxCommand(unittest.TestCase):
         self.assertEqual(parsed_args.dirpath, '/tmp/perceval/')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertTrue(parsed_args.ssl_verify)
+
+        args = ['http://example.com/', '/tmp/perceval/',
+                '--tag', 'test',
+                '--from-date', '1970-01-01',
+                '--no-ssl-verify']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.uri, 'http://example.com/')
+        self.assertEqual(parsed_args.dirpath, '/tmp/perceval/')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertFalse(parsed_args.ssl_verify)
 
 
 if __name__ == "__main__":

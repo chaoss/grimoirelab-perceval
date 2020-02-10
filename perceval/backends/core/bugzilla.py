@@ -58,8 +58,9 @@ class Bugzilla(Backend):
     :param max_bugs: maximum number of bugs requested on the same query
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.11.0'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_BUG]
     EXTRA_SEARCH_FIELDS = {
@@ -69,10 +70,10 @@ class Bugzilla(Backend):
 
     def __init__(self, url, user=None, password=None,
                  max_bugs=MAX_BUGS, max_bugs_csv=MAX_BUGS_CSV,
-                 tag=None, archive=None):
+                 tag=None, archive=None, ssl_verify=True):
         origin = url
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.user = user
         self.password = password
@@ -309,7 +310,7 @@ class Bugzilla(Backend):
 
         return BugzillaClient(self.url, user=self.user, password=self.password,
                               max_bugs_csv=self.max_bugs_csv,
-                              archive=self.archive, from_archive=from_archive)
+                              archive=self.archive, from_archive=from_archive, ssl_verify=self.ssl_verify)
 
     def __fetch_buglist(self, from_date):
         buglist = self.__fetch_and_parse_buglist_page(from_date)
@@ -357,7 +358,8 @@ class BugzillaCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               basic_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Bugzilla options
         group = parser.parser.add_argument_group('Bugzilla arguments')
@@ -391,8 +393,9 @@ class BugzillaClient(HttpClient):
     :param max_bugs_cvs: max bugs requested per CSV query
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
 
-    :raises BackendError: when an error occurs initilizing the
+    :raises BackendError: when an error occurs initializing the
         client
     """
     URL = "%(base)s/%(cgi)s"
@@ -427,9 +430,9 @@ class BugzillaClient(HttpClient):
     CTYPE_XML = 'xml'
 
     def __init__(self, base_url, user=None, password=None,
-                 max_bugs_csv=MAX_BUGS_CSV, archive=None, from_archive=False):
+                 max_bugs_csv=MAX_BUGS_CSV, archive=None, from_archive=False, ssl_verify=True):
         self.version = None
-        super().__init__(base_url, archive=archive, from_archive=from_archive)
+        super().__init__(base_url, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
 
         if user is not None and password is not None:
             self.login(user, password)

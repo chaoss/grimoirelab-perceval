@@ -57,8 +57,9 @@ class GoogleHits(Backend):
         before raising a RetryError exception
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     CATEGORIES = [CATEGORY_HITS]
     EXTRA_SEARCH_FIELDS = {
@@ -66,14 +67,14 @@ class GoogleHits(Backend):
     }
 
     def __init__(self, keywords, tag=None, archive=None,
-                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
+                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME, ssl_verify=True):
 
         if len(keywords) == 1 and keywords[0].strip() == "":
             cause = "No keywords provided"
             raise BackendError(cause=cause)
 
         self.keywords = keywords
-        super().__init__(GOOGLE_SEARCH_URL, tag=tag, archive=archive)
+        super().__init__(GOOGLE_SEARCH_URL, tag=tag, archive=archive, ssl_verify=ssl_verify)
 
         self.max_retries = max_retries
         self.sleep_time = sleep_time
@@ -161,7 +162,7 @@ class GoogleHits(Backend):
         """Init client"""
 
         return GoogleHitsClient(self.sleep_time, self.max_retries,
-                                archive=self.archive, from_archive=from_archive)
+                                archive=self.archive, from_archive=from_archive, ssl_verify=True)
 
     def __parse_hits(self, hit_raw):
         """Parse the hits returned by the Google Search API"""
@@ -209,14 +210,15 @@ class GoogleHitsClient(HttpClient):
         before raising a RetryError exception
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     EXTRA_STATUS_FORCELIST = [429]
 
     def __init__(self, sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
-                 archive=None, from_archive=False):
+                 archive=None, from_archive=False, ssl_verify=True):
         super().__init__(GOOGLE_SEARCH_URL, extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          sleep_time=sleep_time, max_retries=max_retries,
-                         archive=archive, from_archive=from_archive)
+                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
 
     def hits(self, keywords):
         """Fetch information about a list of keywords."""
@@ -245,7 +247,8 @@ class GoogleHitsCommand(BackendCommand):
         """Returns the GoogleHits argument parser."""
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         group = parser.parser.add_argument_group('GoogleHits arguments')
         # Generic client options

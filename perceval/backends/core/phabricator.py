@@ -55,16 +55,17 @@ class Phabricator(Backend):
         before raising a RetryError exception
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.12.0'
+    version = '0.13.0'
 
     CATEGORIES = [CATEGORY_TASK]
 
     def __init__(self, url, api_token, tag=None, archive=None,
-                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME):
+                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME, ssl_verify=True):
         origin = url
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.api_token = api_token
         self.client = None
@@ -228,7 +229,7 @@ class Phabricator(Backend):
 
         return ConduitClient(self.url, self.api_token,
                              self.max_retries, self.sleep_time,
-                             self.archive, from_archive)
+                             self.archive, from_archive, self.ssl_verify)
 
     def __fetch_tasks(self, from_date):
         for raw_tasks in self.client.tasks(from_date=from_date):
@@ -452,6 +453,7 @@ class ConduitClient(HttpClient):
         of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     EXTRA_STATUS_FORCELIST = [429, 502, 503]
     URL = '%(base)s/api/%(method)s'
@@ -474,10 +476,10 @@ class ConduitClient(HttpClient):
     VOUTDATED = 'outdated'
 
     def __init__(self, base_url, api_token, max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
-                 archive=None, from_archive=False):
+                 archive=None, from_archive=False, ssl_verify=True):
         super().__init__(base_url.rstrip('/'), sleep_time=sleep_time, max_retries=max_retries,
                          extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
-                         archive=archive, from_archive=from_archive)
+                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         self.api_token = api_token
 
     def tasks(self, from_date=DEFAULT_DATETIME):
@@ -594,7 +596,7 @@ class ConduitClient(HttpClient):
         logger.debug("Phabricator Conduit client requests: %s params: %s",
                      method, str(data))
 
-        r = self.fetch(url, payload=data, method=HttpClient.POST, verify=False)
+        r = self.fetch(url, payload=data, method=HttpClient.POST)
 
         # Check for possible Conduit API errors
         result = r.json()
@@ -618,7 +620,8 @@ class PhabricatorCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Phabricator options
         group = parser.parser.add_argument_group('Phabricator arguments')

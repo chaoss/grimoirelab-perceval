@@ -45,15 +45,16 @@ class RSS(Backend):
     :param url: RSS url
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
     CATEGORIES = [CATEGORY_ENTRY]
 
-    def __init__(self, url, tag=None, archive=None):
+    def __init__(self, url, tag=None, archive=None, ssl_verify=True):
         origin = url
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.client = None
 
@@ -144,7 +145,7 @@ class RSS(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return RSSClient(self.url, self.archive, from_archive)
+        return RSSClient(self.url, self.archive, from_archive, self.ssl_verify)
 
 
 class RSSClient(HttpClient):
@@ -156,12 +157,13 @@ class RSSClient(HttpClient):
     :param url: URL of rss node: https://item.opnfv.org/ci
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
 
     :raises HTTPError: when an error occurs doing the request
     """
 
-    def __init__(self, url, archive=None, from_archive=False):
-        super().__init__(url, archive=archive, from_archive=from_archive)
+    def __init__(self, url, archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(url, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
 
     def get_entries(self):
         """ Retrieve all entries from a RSS feed"""
@@ -180,7 +182,8 @@ class RSSCommand(BackendCommand):
         """Returns the RSS argument parser."""
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Required arguments
         parser.parser.add_argument('url',

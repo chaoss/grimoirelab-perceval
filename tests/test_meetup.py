@@ -189,12 +189,14 @@ class TestMeetupBackend(unittest.TestCase):
         self.assertEqual(meetup.group, 'mygroup')
         self.assertEqual(meetup.max_items, 5)
         self.assertIsNone(meetup.client)
+        self.assertTrue(meetup.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in URL
-        meetup = Meetup('mygroup', 'aaaa')
+        meetup = Meetup('mygroup', 'aaaa', ssl_verify=False)
         self.assertEqual(meetup.origin, 'https://meetup.com/')
         self.assertEqual(meetup.tag, 'https://meetup.com/')
+        self.assertFalse(meetup.ssl_verify)
 
         meetup = Meetup('mygroup', 'aaaa', tag='')
         self.assertEqual(meetup.origin, 'https://meetup.com/')
@@ -717,6 +719,20 @@ class TestMeetupCommand(unittest.TestCase):
         self.assertEqual(parsed_args.min_rate_to_sleep, 10)
         self.assertEqual(parsed_args.sleep_time, 10)
         self.assertTrue(parsed_args.filter_classified)
+        self.assertTrue(parsed_args.ssl_verify)
+
+        args = ['sqlpass-es',
+                '--api-token', 'aaaa',
+                '--max-items', '5',
+                '--tag', 'test',
+                '--no-ssl-verify']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.group, 'sqlpass-es')
+        self.assertEqual(parsed_args.api_token, 'aaaa')
+        self.assertEqual(parsed_args.max_items, 5)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertFalse(parsed_args.ssl_verify)
 
 
 class TestMeetupClient(unittest.TestCase):
@@ -735,14 +751,17 @@ class TestMeetupClient(unittest.TestCase):
         self.assertEqual(client.max_items, 10)
         self.assertFalse(client.sleep_for_rate)
         self.assertEqual(client.min_rate_to_sleep, MIN_RATE_LIMIT)
+        self.assertTrue(client.ssl_verify)
 
         client = MeetupClient('aaaa', max_items=10,
                               sleep_for_rate=True,
-                              min_rate_to_sleep=4)
+                              min_rate_to_sleep=4,
+                              ssl_verify=False)
         self.assertEqual(client.api_token, 'aaaa')
         self.assertEqual(client.max_items, 10)
         self.assertTrue(client.sleep_for_rate)
         self.assertEqual(client.min_rate_to_sleep, 4)
+        self.assertFalse(client.ssl_verify)
 
         # Max rate limit is never overtaken
         client = MeetupClient('aaaa', max_items=10,

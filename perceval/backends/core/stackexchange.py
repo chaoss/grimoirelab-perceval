@@ -53,8 +53,9 @@ class StackExchange(Backend):
     :param max_questions: max of questions per page retrieved
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.11.0'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_QUESTION]
     EXTRA_SEARCH_FIELDS = {
@@ -62,10 +63,10 @@ class StackExchange(Backend):
     }
 
     def __init__(self, site, tagged=None, api_token=None,
-                 max_questions=MAX_QUESTIONS, tag=None, archive=None):
+                 max_questions=MAX_QUESTIONS, tag=None, archive=None, ssl_verify=True):
         origin = site
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.site = site
         self.api_token = api_token
         self.tagged = tagged
@@ -178,7 +179,7 @@ class StackExchange(Backend):
         """Init client"""
 
         return StackExchangeClient(self.site, self.tagged, self.api_token, self.max_questions,
-                                   self.archive, from_archive)
+                                   self.archive, from_archive, self.ssl_verify)
 
 
 class StackExchangeClient(HttpClient):
@@ -193,6 +194,7 @@ class StackExchangeClient(HttpClient):
     :param max_questions: max number of questions per query
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
 
     :raises HTTPError: when an error occurs doing the request
     """
@@ -206,8 +208,10 @@ class StackExchangeClient(HttpClient):
     STACKEXCHANGE_API_URL = 'https://api.stackexchange.com'
     VERSION_API = '2.2'
 
-    def __init__(self, site, tagged, token, max_questions=MAX_QUESTIONS, archive=None, from_archive=False):
-        super().__init__(self.STACKEXCHANGE_API_URL, archive=archive, from_archive=from_archive)
+    def __init__(self, site, tagged, token, max_questions=MAX_QUESTIONS,
+                 archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(self.STACKEXCHANGE_API_URL, archive=archive,
+                         from_archive=from_archive, ssl_verify=ssl_verify)
         self.site = site
         self.tagged = tagged
         self.token = token
@@ -310,7 +314,8 @@ class StackExchangeCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # StackExchange options
         group = parser.parser.add_argument_group('StackExchange arguments')

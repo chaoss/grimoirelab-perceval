@@ -51,18 +51,19 @@ class Askbot(Backend):
     :param url: Askbot site URL
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.7.0'
+    version = '0.8.0'
 
     CATEGORIES = [CATEGORY_QUESTION]
     EXTRA_SEARCH_FIELDS = {
         'tags': ['tags']
     }
 
-    def __init__(self, url, tag=None, archive=None):
+    def __init__(self, url, tag=None, archive=None, ssl_verify=True):
         origin = url
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.client = None
         self.ab_parser = AskbotParser()
@@ -161,7 +162,7 @@ class Askbot(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return AskbotClient(self.url, self.archive, from_archive)
+        return AskbotClient(self.url, self.archive, from_archive, self.ssl_verify)
 
     def __fetch_question(self, question):
         """Fetch an Askbot HTML question body.
@@ -254,6 +255,7 @@ class AskbotClient(HttpClient):
     :param base_url: URL of the Askbot site
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
 
     :raises HTTPError: when an error occurs doing the request
     """
@@ -265,8 +267,8 @@ class AskbotClient(HttpClient):
     COMMENTS = 's/post_comments'
     COMMENTS_OLD = 'post_comments'
 
-    def __init__(self, base_url, archive=None, from_archive=False):
-        super().__init__(base_url, archive=archive, from_archive=from_archive)
+    def __init__(self, base_url, archive=None, from_archive=False, ssl_verify=True):
+        super().__init__(base_url, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         self._use_new_urls = True
 
     def get_api_questions(self, path):
@@ -534,7 +536,8 @@ class AskbotCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Required arguments
         parser.parser.add_argument('url',

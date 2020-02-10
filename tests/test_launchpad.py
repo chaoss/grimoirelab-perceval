@@ -33,7 +33,9 @@ pkg_resources.declare_namespace('perceval.backends')
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.launchpad import (Launchpad,
                                               LaunchpadClient,
-                                              LaunchpadCommand)
+                                              LaunchpadCommand,
+                                              ITEMS_PER_PAGE,
+                                              SLEEP_TIME)
 from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
 
@@ -64,12 +66,14 @@ class TestLaunchpadBackend(unittest.TestCase):
         self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
         self.assertEqual(launchpad.tag, 'test')
         self.assertIsNone(launchpad.client)
+        self.assertTrue(launchpad.ssl_verify)
 
-        launchpad = Launchpad('mydistribution', tag='test', package="mypackage")
+        launchpad = Launchpad('mydistribution', tag='test', package="mypackage", ssl_verify=False)
         self.assertEqual(launchpad.distribution, 'mydistribution')
         self.assertEqual(launchpad.package, 'mypackage')
         self.assertEqual(launchpad.origin, 'https://launchpad.net/mydistribution')
         self.assertEqual(launchpad.tag, 'test')
+        self.assertFalse(launchpad.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in origin
@@ -808,6 +812,27 @@ class TestLaunchpadBackendArchive(TestCaseBackendArchive):
 class TestLaunchpadClient(unittest.TestCase):
     """Launchpad API client tests"""
 
+    def test_initialization(self):
+        """Test whether attributes are initialized"""
+
+        client = LaunchpadClient("mydistribution")
+        self.assertEqual(client.distribution, "mydistribution")
+        self.assertIsNone(client.package)
+        self.assertEqual(client.items_per_page, ITEMS_PER_PAGE)
+        self.assertEqual(client.sleep_time, SLEEP_TIME)
+        self.assertIsNone(client.archive)
+        self.assertFalse(client.from_archive)
+        self.assertTrue(client.ssl_verify)
+
+        client = LaunchpadClient("mydistribution", package="mypackage", ssl_verify=False)
+        self.assertEqual(client.distribution, "mydistribution")
+        self.assertEqual(client.package, "mypackage")
+        self.assertEqual(client.items_per_page, ITEMS_PER_PAGE)
+        self.assertEqual(client.sleep_time, SLEEP_TIME)
+        self.assertIsNone(client.archive)
+        self.assertFalse(client.from_archive)
+        self.assertFalse(client.ssl_verify)
+
     @httpretty.activate
     def test_issues_from_date(self):
         """Test issues from date API call"""
@@ -988,9 +1013,26 @@ class TestLaunchpadCommand(unittest.TestCase):
         self.assertEqual(parsed_args.distribution, 'mydistribution')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.items_per_page, '75')
         self.assertEqual(parsed_args.sleep_time, '600')
+        self.assertTrue(parsed_args.ssl_verify)
+
+        args = ['--tag', 'test', '--no-archive',
+                '--from-date', '1970-01-01',
+                '--items-per-page', '75',
+                '--sleep-time', '600',
+                '--no-ssl-verify',
+                'mydistribution']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.distribution, 'mydistribution')
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertEqual(parsed_args.items_per_page, '75')
+        self.assertEqual(parsed_args.sleep_time, '600')
+        self.assertFalse(parsed_args.ssl_verify)
 
 
 if __name__ == "__main__":

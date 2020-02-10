@@ -58,13 +58,13 @@ class MockedClient(HttpClient, RateLimitHandler):
                  rate_limit_header=RateLimitHandler.RATE_LIMIT_HEADER,
                  rate_limit_reset_header=RateLimitHandler.RATE_LIMIT_RESET_HEADER,
                  define_calculate_time_to_reset=True,
-                 archive=None, from_archive=False, sanitize=False):
+                 archive=None, from_archive=False, sanitize=False, ssl_verify=True):
 
         self.define_calculate_time_to_reset = define_calculate_time_to_reset
         MockedClient.sanitize = sanitize
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_status_forcelist=extra_status_forcelist,
-                         extra_retry_after_status=extra_retry_after_status,
+                         extra_retry_after_status=extra_retry_after_status, ssl_verify=ssl_verify,
                          extra_headers=extra_headers, archive=archive, from_archive=from_archive)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate,
                                          min_rate_to_sleep=min_rate_to_sleep,
@@ -113,6 +113,8 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(client.rate_limit, None)
         self.assertEqual(client.rate_limit_reset_ts, None)
 
+        self.assertTrue(client.ssl_verify)
+
         expected_retries = 5
         expected_sleep_time = 100
         expected_headers = {'User-Agent': 'ACME Corp.', 'Token': "your-token"}
@@ -123,7 +125,8 @@ class TestHttpClient(unittest.TestCase):
                               sleep_time=expected_sleep_time,
                               extra_headers=expected_headers,
                               extra_retry_after_status=[extra_status],
-                              extra_status_forcelist=[extra_status])
+                              extra_status_forcelist=[extra_status],
+                              ssl_verify=False)
 
         self.assertEqual(client.session.headers['User-Agent'], expected_headers.get('User-Agent'))
         self.assertEqual(client.session.headers['Token'], expected_headers.get('Token'))
@@ -131,6 +134,7 @@ class TestHttpClient(unittest.TestCase):
         self.assertEqual(client.sleep_time, expected_sleep_time)
         self.assertTrue(extra_status in client.status_forcelist)
         self.assertTrue(extra_status in client.retry_after_status)
+        self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
     def test_close_session(self):

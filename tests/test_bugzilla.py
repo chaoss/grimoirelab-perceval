@@ -69,6 +69,7 @@ class TestBugzillaBackend(unittest.TestCase):
         self.assertEqual(bg.tag, 'test')
         self.assertEqual(bg.max_bugs, 5)
         self.assertIsNone(bg.client)
+        self.assertTrue(bg.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in the origin (URL)
@@ -77,10 +78,11 @@ class TestBugzillaBackend(unittest.TestCase):
         self.assertEqual(bg.origin, BUGZILLA_SERVER_URL)
         self.assertEqual(bg.tag, BUGZILLA_SERVER_URL)
 
-        bg = Bugzilla(BUGZILLA_SERVER_URL, tag='')
+        bg = Bugzilla(BUGZILLA_SERVER_URL, tag='', ssl_verify=False)
         self.assertEqual(bg.url, BUGZILLA_SERVER_URL)
         self.assertEqual(bg.origin, BUGZILLA_SERVER_URL)
         self.assertEqual(bg.tag, BUGZILLA_SERVER_URL)
+        self.assertFalse(bg.ssl_verify)
 
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
@@ -836,7 +838,26 @@ class TestBugzillaCommand(unittest.TestCase):
         self.assertEqual(parsed_args.max_bugs, 10)
         self.assertEqual(parsed_args.max_bugs_csv, 5)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.url, BUGZILLA_SERVER_URL)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+
+        args = ['--backend-user', 'jsmith@example.com',
+                '--backend-password', '1234',
+                '--max-bugs', '10', '--max-bugs-csv', '5',
+                '--tag', 'test',
+                '--from-date', '1970-01-01',
+                '--no-ssl-verify',
+                BUGZILLA_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.user, 'jsmith@example.com')
+        self.assertEqual(parsed_args.password, '1234')
+        self.assertEqual(parsed_args.max_bugs, 10)
+        self.assertEqual(parsed_args.max_bugs_csv, 5)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.url, BUGZILLA_SERVER_URL)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
@@ -855,6 +876,12 @@ class TestBugzillaClient(unittest.TestCase):
 
         client = BugzillaClient(BUGZILLA_SERVER_URL)
         self.assertEqual(client.version, None)
+        self.assertTrue(client.ssl_verify)
+        self.assertIsInstance(client.session, requests.Session)
+
+        client = BugzillaClient(BUGZILLA_SERVER_URL, ssl_verify=False)
+        self.assertEqual(client.version, None)
+        self.assertFalse(client.ssl_verify)
         self.assertIsInstance(client.session, requests.Session)
 
     @httpretty.activate

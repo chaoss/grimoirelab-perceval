@@ -71,22 +71,23 @@ class Twitter(Backend):
         of connection problems
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     CATEGORIES = [CATEGORY_TWEET]
 
     def __init__(self, query, api_token, max_items=MAX_ITEMS,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=SLEEP_TIME,
-                 tag=None, archive=None):
+                 tag=None, archive=None, ssl_verify=True):
         origin = TWITTER_URL
 
         if len(query) >= MAX_SEARCH_QUERY:
             msg = "Search query length exceeded %s, max is %s" % (len(query), MAX_SEARCH_QUERY)
             raise BackendError(cause=msg)
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.query = query
         self.api_token = api_token
         self.max_items = max_items
@@ -235,7 +236,7 @@ class Twitter(Backend):
 
         return TwitterClient(self.api_token, self.max_items,
                              self.sleep_for_rate, self.min_rate_to_sleep, self.sleep_time,
-                             self.archive, from_archive)
+                             self.archive, from_archive, self.ssl_verify)
 
 
 class TwitterClient(HttpClient, RateLimitHandler):
@@ -253,15 +254,16 @@ class TwitterClient(HttpClient, RateLimitHandler):
         of connection problems
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
     """
     def __init__(self, api_key, max_items=MAX_ITEMS,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT, sleep_time=SLEEP_TIME,
-                 archive=None, from_archive=False):
+                 archive=None, from_archive=False, ssl_verify=True):
         self.api_key = api_key
         self.max_items = max_items
 
         super().__init__(TWITTER_API_URL, sleep_time=sleep_time, extra_status_forcelist=[429],
-                         archive=archive, from_archive=from_archive)
+                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep,
                                          rate_limit_header=RATE_LIMIT_HEADER,
                                          rate_limit_reset_header=RATE_LIMIT_RESET_HEADER)
@@ -368,7 +370,8 @@ class TwitterCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               token_auth=True,
-                                              archive=True)
+                                              archive=True,
+                                              ssl_verify=True)
 
         # Backend token is required
         action = parser.parser._option_string_actions['--api-token']

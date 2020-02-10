@@ -158,13 +158,15 @@ class TestMediaWikiBackend(unittest.TestCase):
         self.assertEqual(mediawiki.origin, MEDIAWIKI_SERVER_URL)
         self.assertEqual(mediawiki.tag, 'test')
         self.assertIsNone(mediawiki.client)
+        self.assertTrue(mediawiki.ssl_verify)
 
         # When tag is empty or None it will be set to
         # the value in url
-        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
+        mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, ssl_verify=False)
         self.assertEqual(mediawiki.url, MEDIAWIKI_SERVER_URL)
         self.assertEqual(mediawiki.origin, MEDIAWIKI_SERVER_URL)
         self.assertEqual(mediawiki.tag, MEDIAWIKI_SERVER_URL)
+        self.assertFalse(mediawiki.ssl_verify)
 
         mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL, tag='')
         self.assertEqual(mediawiki.url, MEDIAWIKI_SERVER_URL)
@@ -698,7 +700,19 @@ class TestMediaWikiCommand(unittest.TestCase):
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, MEDIAWIKI_SERVER_URL)
         self.assertEqual(parsed_args.tag, 'test')
-        self.assertEqual(parsed_args.no_archive, True)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+
+        args = ['--tag', 'test', '--no-ssl-verify',
+                '--no-archive', '--from-date', '1970-01-01',
+                MEDIAWIKI_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, MEDIAWIKI_SERVER_URL)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertTrue(parsed_args.no_archive)
+        self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
 
 
