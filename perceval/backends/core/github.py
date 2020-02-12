@@ -96,7 +96,7 @@ class GitHub(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.25.0'
+    version = '0.25.1'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -196,7 +196,7 @@ class GitHub(Backend):
         return items
 
     def fetch_items(self, category, **kwargs):
-        """Fetch the items (issues or pull_requests)
+        """Fetch the items (issues or pull_requests or repo information)
 
         :param category: the category of items to fetch
         :param kwargs: backend arguments
@@ -264,8 +264,8 @@ class GitHub(Backend):
     def metadata_category(item):
         """Extracts the category from a GitHub item.
 
-        This backend generates two types of item which are
-        'issue' and 'pull_request'.
+        This backend generates three types of item which are
+        'issue', 'pull_request' and 'repo' information.
         """
 
         if "base" in item:
