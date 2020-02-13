@@ -336,6 +336,9 @@ in order to fetch messages from a group or channel, privacy settings must be
 disabled. To know how to create a bot, to obtain its token and to configure it
 please read the [Telegram Bots docs pages](https://core.telegram.org/bots).
 
+Note that the messages are available on the Telegram server until the bot fetches 
+them, but they will not be kept longer than 24 hours.
+
 ```
 $ perceval telegram mybot -t 12345678abcdefgh --chats 1 2 -10
 ```
