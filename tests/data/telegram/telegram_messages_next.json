@@ -19,6 +19,41 @@
                 "text": "Hi Bot!!!"
             },
             "update_id": 319280321
+        },
+        {
+            "message": {
+                "chat": {
+                    "id": -2,
+                    "title": "A new group",
+                    "type": "group"
+                },
+                "date": 1467370373,
+                "from": {
+                    "first_name": "Valerio",
+                    "id": 9
+                },
+                "message_id": 35,
+                "text": "Hola Hola"
+            },
+            "update_id": 319280322
+        },
+        {
+            "edited_message": {
+                "chat": {
+                    "id": -2,
+                    "title": "A new group",
+                    "type": "group"
+                },
+                "date": 1467370373,
+                "edit_date": 1467370374,
+                "from": {
+                    "first_name": "Valerio",
+                    "id": 9
+                },
+                "message_id": 35,
+                "text": "Holaaa"
+            },
+            "update_id": 319280323
         }
     ]
 }
