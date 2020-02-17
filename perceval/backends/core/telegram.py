@@ -62,7 +62,7 @@ class Telegram(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.11.0'
+    version = '0.11.1'
 
     CATEGORIES = [CATEGORY_MESSAGE]
     EXTRA_SEARCH_FIELDS = {
@@ -231,6 +231,15 @@ class Telegram(Backend):
 
         messages = result['result']
         for msg in messages:
+
+            if 'edited_message' in msg:
+                edit_message = msg.pop('edited_message')
+                edit_date = edit_message.pop('edit_date')
+                msg['message'] = edit_message
+                msg['message']['date'] = edit_date
+                msg['message']['edited'] = True
+                logger.debug("Message %s is edited", msg['message']['message_id'])
+
             yield msg
 
     def _init_client(self, from_archive=False):
@@ -352,7 +361,7 @@ class TelegramBotClient(HttpClient):
     def _call(self, method, params):
         """Retrive the given resource.
 
-        :param resource: resource to retrieve
+        :param method: resource to retrieve
         :param params: dict with the HTTP parameters needed to retrieve
             the given resource
         """
