@@ -100,7 +100,7 @@ class Backend:
     These fields are added to the item metadata information in the
     `search_fields` attribute. By default, `search_fields` contains
     the id of the item ('item_id': item_id_value), obtained via the
-    method `metadata_id`. However each backend can set extra search
+    method `metadata_id`. However, each backend can set extra search
     fields using the dict EXTRA_SEARCH_FIELDS. An example of
     EXTRA_SEARCH_FIELDS is provided below:
 
