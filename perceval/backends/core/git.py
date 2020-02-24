@@ -82,7 +82,7 @@ class Git(Backend):
         a list of commits. Commits are returned in the same order
         they were obtained.
 
-        When `from_date` parameter is given it returns items commited
+        When `from_date` parameter is given it returns items committed
         since the given date.
 
         The list of `branches` is a list of strings, with the names of

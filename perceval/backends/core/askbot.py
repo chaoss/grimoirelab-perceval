@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 class Askbot(Backend):
     """Askbot backend.
 
-    This class retrieves the questions posted in an Askbot site.
+    This class retrieves the questions posted on an Askbot site.
     To initialize this class the URL must be provided. The `url`
     will be set as the origin of the data.
 
@@ -167,7 +167,7 @@ class Askbot(Backend):
     def __fetch_question(self, question):
         """Fetch an Askbot HTML question body.
 
-        The method fetchs the HTML question retrieving the
+        The method fetches the HTML question retrieving the
         question body of the item question received
 
         :param question: item with the question itself
@@ -198,7 +198,7 @@ class Askbot(Backend):
     def __fetch_comments(self, question):
         """Fetch all the comments of an Askbot question and answers.
 
-        The method fetchs the list of every comment existing in a question and
+        The method fetches the list of every comment existing in a question and
         its answers.
 
         :param question: item with the question itself
@@ -368,8 +368,8 @@ class AskbotParser:
 
         The method parses the information available in the question information
         container. The container can have up to 2 elements: the first one
-        contains the information related with the user who generated the question
-        and the date (if any). The second one contains the date of the updated,
+        contains the information related to the user who generated the question
+        and the date (if any). The second one contains the date of the update
         and the user who updated it (if not the same who generated the question).
 
         :param html_question: raw HTML question element
@@ -410,8 +410,8 @@ class AskbotParser:
 
             The method parses the information available in the answer information
             container. The container can have up to 2 elements: the first one
-            contains the information related with the user who generated the question
-            and the date (if any). The second one contains the date of the updated,
+            contains the information related to the user who generated the question
+            and the date (if any). The second one contains the date of the update
             and the user who updated it (if not the same who generated the question).
 
             :param update_info: beautiful soup update_info container element
