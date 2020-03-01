@@ -29,7 +29,7 @@ docker run --rm -it --name perceval -v ~/.perceval:/root/.perceval grimoirelab/p
 
 ### Documentation
 
-All the information regarding the image generation is hosted publicly in [Github](https://github.com/grimoirelab/perceval/tree/master/images/perceval).
+All the information regarding the image generation is hosted publicly in [Github](https://github.com/chaoss/grimoirelab-perceval/tree/master/docker/images).
 
 ### Issues
 
