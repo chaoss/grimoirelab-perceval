@@ -327,7 +327,7 @@ class TestGroupsioClient(unittest.TestCase):
             },
             {
                 'group_id': ['7769'],
-                'start_time': ['2019-01-01T00:00:00']
+                'start_time': ['2019-01-01T00:00:00 00:00']
             }
         ]
 
