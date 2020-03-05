@@ -23,6 +23,7 @@ import logging
 import os
 import requests
 
+from grimoirelab_toolkit.datetime import datetime_to_utc
 from grimoirelab_toolkit.uris import urijoin
 
 from .mbox import MBox, MailingList, CATEGORY_MESSAGE
@@ -65,7 +66,7 @@ class Groupsio(MBox):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.4.0'
+    version = '0.4.1'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -206,7 +207,7 @@ class GroupsioClient(MailingList):
         }
 
         if from_date:
-            payload['start_time'] = from_date.isoformat()
+            payload['start_time'] = datetime_to_utc(from_date).isoformat()
 
         filepath = os.path.join(self.dirpath, MBOX_FILE)
         success = self._download_archive(url, payload, filepath)
