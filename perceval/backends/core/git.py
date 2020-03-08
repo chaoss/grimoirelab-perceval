@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2019 Bitergia
+# Copyright (C) 2015-2020 Bitergia
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,13 @@
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
+#     Valerio Cosentino <valcos@bitergia.com>
+#     Israel Herraiz <israel.herraiz@bbvadata.com>
+#     anveshc05 <anveshc10047@gmail.com>
+#     Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
+#     Harshal Mittal <harshalmittal4@gmail.com>
+#     Victor Morales <victor.morales@intel.com>
+#     animesh <animuz111@gmail.com>
 #
 
 import collections
