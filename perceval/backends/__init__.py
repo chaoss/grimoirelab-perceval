@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2019 Bitergia
+# Copyright (C) 2015-2020 Bitergia
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,9 @@
 #
 # Authors:
 #     Santiago Dueñas <sduenas@bitergia.com>
+#     Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
+#     Stephan Barth <stephan.barth@gmail.com>
+#     Valerio Cosentino <valcos@bitergia.com>
 #
 
 __import__('pkg_resources').declare_namespace(__name__)

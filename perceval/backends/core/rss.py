@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2019 Bitergia
+# Copyright (C) 2015-2020 Bitergia
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,11 @@
 #
 # Authors:
 #     Alvaro del Castillo <acs@bitergia.com>
+#     Santiago Dueñas <sduenas@bitergia.com>
+#     Stephan Barth <stephan.barth@gmail.com>
+#     Valerio Cosentino <valcos@bitergia.com>
+#     Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
+#     Harshal Mittal <harshalmittal4@gmail.com>
 #
 
 import logging
