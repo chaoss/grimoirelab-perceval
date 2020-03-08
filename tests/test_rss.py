@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2019 Bitergia
+# Copyright (C) 2015-2020 Bitergia
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:
-#     Santiago Dueñas <sduenas@bitergia.com>
 #     Alvaro del Castillo <acs@bitergia.com>
+#     Santiago Dueñas <sduenas@bitergia.com>
+#     Stephan Barth <stephan.barth@gmail.com>
+#     Valerio Cosentino <valcos@bitergia.com>
+#     Miguel Ángel Fernández <mafesan@bitergia.com>
+#     Harshal Mittal <harshalmittal4@gmail.com>
 #
 
 import httpretty

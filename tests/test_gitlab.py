@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2019 Bitergia
+# Copyright (C) 2015-2020 Bitergia
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,11 @@
 # Authors:
 #     Assad Montasser <assad.montasser@ow2.org>
 #     Valerio Cosentino <valcos@bitergia.com>
+#     Miguel Ángel Fernández <mafesan@bitergia.com>
+#     Santiago Dueñas <sduenas@bitergia.com>
+#     Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
+#     Harshal Mittal <harshalmittal4@gmail.com>
+#     JJMerchante <jj.merchante@gmail.com>
 #
 
 import copy
