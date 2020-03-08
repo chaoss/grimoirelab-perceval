@@ -31,6 +31,7 @@ are:
     mediawiki        Fetch pages and revisions from a MediaWiki site
     meetup           Fetch events from a Meetup group
     nntp             Fetch articles from a NNTP news group
+    pagure           Fetch issues from Pagure
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
     redmine          Fetch issues from a Redmine server
@@ -287,6 +288,11 @@ $ perceval meetup 'Software-Development-Analytics' --from-date '2016-06-01' -t a
 ### NNTP
 ```
 $ perceval nntp 'news.mozilla.org' 'mozilla.dev.project-link' --offset 10
+```
+
+### Pagure
+```
+$ perceval pagure '389-ds-base' --from-date '2020-03-06'
 ```
 
 ### Phabricator
