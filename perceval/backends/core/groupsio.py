@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2020 Bitergia
+# Copyright (C) 2015-2019 Bitergia
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,15 +17,12 @@
 #
 # Authors:
 #     Valerio Cosentino <valcos@bitergia.com>
-#     Harshal Mittal <harshalmittal4@gmail.com>
-#     Santiago Dueñas <sduenas@bitergia.com>
 #
 
 import logging
 import os
 import requests
 
-from grimoirelab_toolkit.datetime import datetime_to_utc
 from grimoirelab_toolkit.uris import urijoin
 
 from .mbox import MBox, MailingList, CATEGORY_MESSAGE
@@ -36,7 +33,7 @@ from ...errors import BackendError
 from ...utils import DEFAULT_DATETIME
 
 MBOX_FILE = 'messages.zip'
-
+DEFAULT_DATETIME_OFFSET = '+00:00'
 GROUPSIO_URL = 'https://groups.io/'
 GROUPSIO_API_URL = 'https://groups.io/api/v1'
 
@@ -68,7 +65,7 @@ class Groupsio(MBox):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.4.1'
+    version = '0.4.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -209,7 +206,9 @@ class GroupsioClient(MailingList):
         }
 
         if from_date:
-            payload['start_time'] = datetime_to_utc(from_date).isoformat()
+            payload['start_time'] = from_date.isoformat()
+            if DEFAULT_DATETIME_OFFSET not in payload['start_time']:
+                payload['start_time'] += DEFAULT_DATETIME_OFFSET
 
         filepath = os.path.join(self.dirpath, MBOX_FILE)
         success = self._download_archive(url, payload, filepath)
