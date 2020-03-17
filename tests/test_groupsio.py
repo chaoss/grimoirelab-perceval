@@ -33,6 +33,7 @@ import unittest
 import unittest.mock
 import zipfile
 
+
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -41,7 +42,8 @@ from perceval.utils import DEFAULT_DATETIME
 from perceval.backends.core.groupsio import (MBOX_FILE,
                                              Groupsio,
                                              GroupsioClient,
-                                             GroupsioCommand)
+                                             GroupsioCommand,
+                                             logger)
 
 
 GROUPSIO_API_URL = 'https://groups.io/api/v1/'
@@ -363,6 +365,19 @@ class TestGroupsioClient(unittest.TestCase):
         client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', ssl_verify=False)
         with self.assertRaises(requests.exceptions.HTTPError):
             client.fetch()
+
+    @httpretty.activate
+    def test_fetch_download_archive_error(self):
+        """Test whether Backend error is thrown when download archive is False for a group"""
+
+        setup_http_server(empty_mbox=True, http_status_download=400)
+
+        client = GroupsioClientMocked('beta', self.tmp_path, 'jsmith@example.com', 'aaaaa', ssl_verify=False)
+        with self.assertLogs(logger, level='ERROR') as cm:
+            with self.assertRaises(BackendError):
+                _ = client.fetch()
+            self.assertEqual(cm.output[0], 'ERROR:perceval.backends.core.groupsio:'
+                                           ' Enable download archive permission for the group beta')
 
     @httpretty.activate
     def test_fetch_os_error(self):

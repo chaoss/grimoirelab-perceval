@@ -201,7 +201,12 @@ class GroupsioClient(MailingList):
         if not os.path.exists(self.dirpath):
             os.makedirs(self.dirpath)
 
-        group_id = self.__find_group_id()
+        group_id, group_download_archive = self.__find_group_info()
+
+        if not group_download_archive:
+            msg = " Enable download archive permission for the group %s" % self.group_name
+            logger.error(msg)
+            raise BackendError(cause=msg)
 
         url = urijoin(GROUPSIO_API_URL, self.DOWNLOAD_ARCHIVES)
         payload = {
@@ -265,15 +270,15 @@ class GroupsioClient(MailingList):
         with open(filepath, 'wb') as fd:
             fd.write(r.raw.read())
 
-    def __find_group_id(self):
-        """Find the id of a group given its name by iterating on the list of subscriptions"""
-
+    def __find_group_info(self):
+        """Find the id and download archive permission of a group given
+        its name by iterating on the list of subscriptions"""
         group_subscriptions = self.subscriptions()
 
         for subscriptions in group_subscriptions:
             for sub in subscriptions:
                 if sub['group_name'] == self.group_name:
-                    return sub['group_id']
+                    return sub['group_id'], sub['perms']['download_archives']
 
         msg = "Group id not found for group name %s" % self.group_name
         raise BackendError(cause=msg)
