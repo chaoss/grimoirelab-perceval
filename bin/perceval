@@ -57,6 +57,7 @@ are:
     git              Fetch commits from Git
     github           Fetch issues, pull requests and repository information from GitHub
     gitlab           Fetch issues, merge requests from GitLab
+    gitter           Fetch messages from a Gitter room
     googlehits       Fetch hits from Google API
     groupsio         Fetch messages from Groups.io
     hyperkitty       Fetch messages from a HyperKitty archiver
