@@ -63,7 +63,7 @@ class Gerrit(Backend):
     :param archive: archive to store/retrieve items
     :param blacklist_ids: exclude the reviews while fetching
     """
-    version = '0.13.0'
+    version = '0.13.1'
 
     CATEGORIES = [CATEGORY_REVIEW]
     EXTRA_SEARCH_FIELDS = {
@@ -380,7 +380,7 @@ class GerritClient():
 
         gerrit_version = self.version
 
-        if gerrit_version[0] == 2 and gerrit_version[1] > 9:
+        if (gerrit_version[0] == 2 and gerrit_version[1] > 9) or gerrit_version[0] == 3:
             if last_item is None:
                 next_item = 0
             else:
@@ -486,7 +486,7 @@ class GerritClient():
         gerrit_version = self.version
 
         if last_item is not None:
-            if gerrit_version[0] == 2 and gerrit_version[1] >= 9:
+            if (gerrit_version[0] == 2 and gerrit_version[1] >= 9) or gerrit_version[0] == 3:
                 cmd += " --start=" + str(last_item)
             else:
                 cmd += " resume_sortkey:" + last_item

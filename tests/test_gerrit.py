@@ -49,6 +49,7 @@ GERRIT_USER = "user"
 
 VERSION_UNKNOWN = 'data/gerrit/gerrit_version_unknown'
 VERSION_214 = 'data/gerrit/gerrit_version_214'
+VERSION_313 = 'data/gerrit/gerrit_version_313'
 REVIEWS_PAGE_1 = 'data/gerrit/gerrit_reviews_page_1'
 REVIEWS_PAGE_2 = 'data/gerrit/gerrit_reviews_page_2'
 REVIEWS_PAGE_3 = 'data/gerrit/gerrit_reviews_page_3'
@@ -71,6 +72,23 @@ def read_file(filename, mode='r'):
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), mode) as f:
         content = f.read()
     return content
+
+
+def mock_check_ouput_gerrit_3(*args, **kwargs):
+    """Mock subprocess.check_output"""
+
+    responses = {CMD_VERSION: VERSION_313,
+                 CMD_REVIEWS_1: REVIEWS_PAGE_1,
+                 CMD_REVIEWS_2: REVIEWS_PAGE_2,
+                 CMD_REVIEWS_3: REVIEWS_PAGE_3}
+
+    cmd = args[0]
+    try:
+        data = read_file(responses[cmd], 'rb')
+    except Exception:
+        data = None
+
+    return data
 
 
 def mock_check_ouput(*args, **kwargs):
@@ -391,6 +409,18 @@ class TestGerritClient(unittest.TestCase):
 
         self.assertEqual(result_raw, expected_raw)
 
+    @unittest.mock.patch('subprocess.check_output', mock_check_ouput_gerrit_3)
+    def test_reviews_gerrit_3(self):
+        """Test reviews method"""
+
+        mock_check_ouput_gerrit_3.side_effect = mock_check_ouput_gerrit_3
+
+        expected_raw = read_file('data/gerrit/gerrit_reviews_page_1')
+        client = GerritClient(GERRIT_REPO, GERRIT_USER, max_reviews=2)
+        result_raw = client.reviews(0)
+
+        self.assertEqual(result_raw, expected_raw)
+
     @unittest.mock.patch('subprocess.check_output', mock_check_ouput_empty_review)
     def test_empty_review(self):
         """Test whether an excepti on is thrown when no data is returned"""
@@ -409,6 +439,17 @@ class TestGerritClient(unittest.TestCase):
 
         client = GerritClient(GERRIT_REPO, GERRIT_USER)
         client.version
+        # version 3.1
+        client._version[0] = 3
+        client._version[1] = 1
+
+        result = client.next_retrieve_group_item()
+        self.assertEqual(result, 0)
+
+        result = client.next_retrieve_group_item(last_item="last")
+        self.assertEqual(result, "last")
+
+        # version 2.10
         client._version[0] = 2
         client._version[1] = 10
 
@@ -418,12 +459,14 @@ class TestGerritClient(unittest.TestCase):
         result = client.next_retrieve_group_item(last_item="last")
         self.assertEqual(result, "last")
 
+        # version 2.9
         client._version[0] = 2
         client._version[1] = 9
 
         with self.assertRaises(BackendError):
             _ = client.next_retrieve_group_item()
 
+        # version 1.x
         client._version[0] = 1
         result = client.next_retrieve_group_item(entry={'sortKey': 'asc'})
         self.assertEqual(result, 'asc')
