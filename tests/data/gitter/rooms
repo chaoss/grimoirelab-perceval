@@ -1,0 +1,52 @@
+[
+  {
+    "id": "5e763973d73408ce4fdd8c40",
+    "name": "AnimeshCom/helloworld",
+    "topic": "",
+    "avatarUrl": "https://avatars-03.gitter.im/group/i/5e763951d73408ce4fdd8c3c",
+    "uri": "AnimeshCom/helloworld",
+    "oneToOne": false,
+    "userCount": 1,
+    "unreadItems": 0,
+    "mentions": 0,
+    "lastAccessTime": "2020-03-23T13:15:56.524Z",
+    "lurk": false,
+    "url": "/AnimeshCom/helloworld",
+    "githubType": "REPO_CHANNEL",
+    "security": "PUBLIC",
+    "noindex": false,
+    "tags": [],
+    "permissions": {
+      "admin": true
+    },
+    "roomMember": true,
+    "groupId": "5e763951d73408ce4fdd8c3c",
+    "public": true,
+    "meta": {}
+  },
+  {
+    "id": "5e78b6b9d73408ce4fddb4e5",
+    "name": "testapicomm/community",
+    "topic": "",
+    "avatarUrl": "https://avatars-05.gitter.im/group/i/5e78b6b9d73408ce4fddb4e4",
+    "uri": "testapicomm/community",
+    "oneToOne": false,
+    "userCount": 1,
+    "unreadItems": 0,
+    "mentions": 0,
+    "lastAccessTime": "2020-03-23T13:16:57.606Z",
+    "lurk": false,
+    "url": "/testapicomm/community",
+    "githubType": "REPO_CHANNEL",
+    "security": "PUBLIC",
+    "noindex": false,
+    "tags": [],
+    "permissions": {
+      "admin": true
+    },
+    "roomMember": true,
+    "groupId": "5e78b6b9d73408ce4fddb4e4",
+    "public": true,
+    "meta": {}
+  }
+]

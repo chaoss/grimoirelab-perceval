@@ -1,0 +1,26 @@
+[
+  {
+    "id": "5e7990ecada8262f814a8056",
+    "text": "This is test message 2",
+    "html": "This is test message 2",
+    "sent": "2020-03-24T04:47:40.777Z",
+    "fromUser": {
+      "id": "5e2f7e72d73408ce4fd7f187",
+      "username": "animeshk08",
+      "displayName": "Animesh Kumar",
+      "url": "/animeshk08",
+      "avatarUrl": "https://avatars-01.gitter.im/gh/uv/4/animeshk08",
+      "avatarUrlSmall": "https://avatars1.githubusercontent.com/u/32506591?v=4&s=60",
+      "avatarUrlMedium": "https://avatars1.githubusercontent.com/u/32506591?v=4&s=128",
+      "v": 6,
+      "gv": "4"
+    },
+    "unread": false,
+    "readBy": 0,
+    "urls": [],
+    "mentions": [],
+    "issues": [],
+    "meta": [],
+    "v": 1
+  }
+]
