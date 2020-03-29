@@ -215,6 +215,9 @@ class GoogleHitsClient(HttpClient):
     """
     EXTRA_STATUS_FORCELIST = [429]
 
+    # Resource parameters
+    PQUERY = 'q'
+
     def __init__(self, sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
                  archive=None, from_archive=False, ssl_verify=True):
         super().__init__(GOOGLE_SEARCH_URL, extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
@@ -230,7 +233,7 @@ class GoogleHitsClient(HttpClient):
             query_str = ' '.join([k for k in keywords])
 
         logger.info("Fetching hits for '%s'", query_str)
-        params = {'q': query_str}
+        params = {self.PQUERY: query_str}
 
         # Make the request
         req = self.fetch(GOOGLE_SEARCH_URL, payload=params)

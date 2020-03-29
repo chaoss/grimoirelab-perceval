@@ -424,7 +424,7 @@ class TestGitterClient(unittest.TestCase):
 
         url = "https://api.gitter.im/v1/testapicomm/community"
         headers = {
-            GitterClient.AUTHORIZATION_HEADER: 'Bearer aaaa'
+            GitterClient.HAUTHORIZATION: 'Bearer aaaa'
         }
 
         payload = {
@@ -433,7 +433,7 @@ class TestGitterClient(unittest.TestCase):
         }
 
         s_url, s_headers, s_payload = GitterClient.sanitize_for_archive(url, copy.deepcopy(headers), payload)
-        headers.pop(GitterClient.AUTHORIZATION_HEADER)
+        headers.pop(GitterClient.HAUTHORIZATION)
 
         self.assertEqual(url, s_url)
         self.assertEqual(headers, s_headers)

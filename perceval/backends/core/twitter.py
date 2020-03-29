@@ -258,6 +258,19 @@ class TwitterClient(HttpClient, RateLimitHandler):
     :param from_archive: it tells whether to write/read the archive
     :param ssl_verify: enable/disable SSL verification
     """
+    # API headers
+    HAUTHORIZATION = 'Authorization'
+
+    # Resource parameters
+    PQUERY = 'q'
+    PCOUNT = 'count'
+    PSINCE_ID = 'since_id'
+    PMAX_ID = 'max_id'
+    PGEOCODE = 'geocode'
+    PLANG = 'lang'
+    PINCLUDE_ENTITIES = 'include_entities'
+    PRESULT_TYPE = 'result_type'
+
     def __init__(self, api_key, max_items=MAX_ITEMS,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT, sleep_time=SLEEP_TIME,
                  archive=None, from_archive=False, ssl_verify=True):
@@ -289,8 +302,8 @@ class TwitterClient(HttpClient, RateLimitHandler):
 
         :returns url, headers and the sanitized payload
         """
-        if 'Authorization' in headers:
-            headers.pop('Authorization')
+        if TwitterClient.HAUTHORIZATION in headers:
+            headers.pop(TwitterClient.HAUTHORIZATION)
 
         return url, headers, payload
 
@@ -309,23 +322,23 @@ class TwitterClient(HttpClient, RateLimitHandler):
         :returns: a generator of tweets
         """
         resource = self.base_url
-        params = {'q': query,
-                  'count': self.max_items}
+        params = {self.PQUERY: query,
+                  self.PCOUNT: self.max_items}
 
         if since_id:
-            params['since_id'] = since_id
+            params[self.PSINCE_ID] = since_id
 
         if max_id:
-            params['max_id'] = max_id
+            params[self.PMAX_ID] = max_id
 
         if geocode:
-            params['geocode'] = geocode
+            params[self.PGEOCODE] = geocode
 
         if lang:
-            params['lang'] = lang
+            params[self.PLANG] = lang
 
-        params['include_entities'] = include_entities
-        params['result_type'] = result_type
+        params[self.PINCLUDE_ENTITIES] = include_entities
+        params[self.PRESULT_TYPE] = result_type
 
         while True:
             raw_tweets = self._fetch(resource, params=params)
@@ -334,7 +347,7 @@ class TwitterClient(HttpClient, RateLimitHandler):
             if not tweets['statuses']:
                 break
 
-            params['max_id'] = tweets['statuses'][-1]['id'] - 1
+            params[self.PMAX_ID] = tweets['statuses'][-1]['id'] - 1
             yield tweets['statuses']
 
     def _fetch(self, url, params):
@@ -352,7 +365,7 @@ class TwitterClient(HttpClient, RateLimitHandler):
         if not self.from_archive:
             self.sleep_for_rate_limit()
 
-        headers = {'Authorization': 'Bearer ' + self.api_key}
+        headers = {self.HAUTHORIZATION: 'Bearer ' + self.api_key}
         r = self.fetch(url, payload=params, headers=headers)
 
         if not self.from_archive:

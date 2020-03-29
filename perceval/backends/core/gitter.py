@@ -246,9 +246,16 @@ class GitterClient(HttpClient, RateLimitHandler):
     :param from_archive: it tells whether to write/read the archive
     :param ssl_verify: enable/disable SSL verification
     """
-    AUTHORIZATION_HEADER = 'Authorization'
+    # API resources
     RMESSAGES = 'chatMessages'
     RROOMS = 'rooms'
+
+    # API headers
+    HAUTHORIZATION = 'Authorization'
+
+    # Resource parameters
+    PLIMIT = 'limit'
+    PBEFORE_ID = 'beforeId'
 
     def __init__(self, api_token, max_items=MAX_ITEMS, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
@@ -283,7 +290,7 @@ class GitterClient(HttpClient, RateLimitHandler):
         :returns a response object
         """
         headers = {
-            self.AUTHORIZATION_HEADER: 'Bearer {}'.format(self.api_token)
+            self.HAUTHORIZATION: 'Bearer {}'.format(self.api_token)
         }
 
         logger.debug("Gitter client message request with params: %s", str(payload))
@@ -302,11 +309,11 @@ class GitterClient(HttpClient, RateLimitHandler):
         """Fetch a page of messages."""
 
         payload = {
-            'limit': self.max_items,
+            self.PLIMIT: self.max_items,
         }
 
         if before_id:
-            payload['beforeId'] = before_id
+            payload[self.PBEFORE_ID] = before_id
 
         path = urijoin(GITTER_API_URL, self.RROOMS,
                        room_id, self.RMESSAGES)
@@ -336,8 +343,8 @@ class GitterClient(HttpClient, RateLimitHandler):
 
         :returns url, headers and the sanitized payload
         """
-        if GitterClient.AUTHORIZATION_HEADER in headers:
-            headers.pop(GitterClient.AUTHORIZATION_HEADER)
+        if GitterClient.HAUTHORIZATION in headers:
+            headers.pop(GitterClient.HAUTHORIZATION)
 
         return url, headers, payload
 

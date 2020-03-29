@@ -55,8 +55,6 @@ GITLAB_API_URL = "https://gitlab.com/api/v4"
 MIN_RATE_LIMIT = 10
 MAX_RATE_LIMIT = 500
 
-PER_PAGE = 100
-
 # Default sleep time and retries to deal with connection/server problems
 DEFAULT_SLEEP_TIME = 1
 MAX_RETRIES = 5
@@ -275,7 +273,7 @@ class GitLab(Backend):
                 issue['notes_data'] = \
                     self.__get_issue_notes(issue_id)
                 issue['award_emoji_data'] = \
-                    self.__get_award_emoji(GitLabClient.ISSUES, issue_id)
+                    self.__get_award_emoji(GitLabClient.RISSUES, issue_id)
 
                 yield issue
 
@@ -284,14 +282,14 @@ class GitLab(Backend):
 
         notes = []
 
-        group_notes = self.client.notes(GitLabClient.ISSUES, issue_id)
+        group_notes = self.client.notes(GitLabClient.RISSUES, issue_id)
 
         for raw_notes in group_notes:
 
             for note in json.loads(raw_notes):
                 note_id = note['id']
                 note['award_emoji_data'] = \
-                    self.__get_note_award_emoji(GitLabClient.ISSUES, issue_id, note_id)
+                    self.__get_note_award_emoji(GitLabClient.RISSUES, issue_id, note_id)
                 notes.append(note)
 
         return notes
@@ -346,7 +344,7 @@ class GitLab(Backend):
                 self.__init_merge_extra_fields(merge_full)
 
                 merge_full['notes_data'] = self.__get_merge_notes(merge_id)
-                merge_full['award_emoji_data'] = self.__get_award_emoji(GitLabClient.MERGES, merge_id)
+                merge_full['award_emoji_data'] = self.__get_award_emoji(GitLabClient.RMERGES, merge_id)
                 merge_full['versions_data'] = self.__get_merge_versions(merge_id)
 
                 yield merge_full
@@ -356,13 +354,13 @@ class GitLab(Backend):
 
         notes = []
 
-        group_notes = self.client.notes(GitLabClient.MERGES, merge_id)
+        group_notes = self.client.notes(GitLabClient.RMERGES, merge_id)
 
         for raw_notes in group_notes:
             for note in json.loads(raw_notes):
                 note_id = note['id']
                 note['award_emoji_data'] = \
-                    self.__get_note_award_emoji(GitLabClient.MERGES, merge_id, note_id)
+                    self.__get_note_award_emoji(GitLabClient.RMERGES, merge_id, note_id)
                 notes.append(note)
 
         return notes
@@ -412,8 +410,8 @@ class GitLab(Backend):
         except requests.exceptions.HTTPError as error:
             if error.response.status_code == 404:
                 logger.warning("Emojis not available for %s ",
-                               urijoin(item_type, str(item_id), GitLabClient.NOTES,
-                                       str(note_id), GitLabClient.EMOJI))
+                               urijoin(item_type, str(item_id), GitLabClient.RNOTES,
+                                       str(note_id), GitLabClient.REMOJI))
                 return emojis
 
         return emojis
@@ -460,16 +458,34 @@ class GitLabClient(HttpClient, RateLimitHandler):
     :param from_archive: it tells whether to write/read the archive
     :param ssl_verify: enable/disable SSL verification
     """
+    # API resources
+    RISSUES = "issues"
+    RMERGES = "merge_requests"
+    RNOTES = "notes"
+    REMOJI = "award_emoji"
+    RPROJECTS = "projects"
+    RVERSIONS = "versions"
 
-    RATE_LIMIT_HEADER = "RateLimit-Remaining"
-    RATE_LIMIT_RESET_HEADER = "RateLimit-Reset"
+    # API headers
+    HAUTHORIZATION = 'Authorization'
+    HPRIVATE_TOKEN = 'PRIVATE-TOKEN'
+    HRATE_LIMIT = "RateLimit-Remaining"
+    HRATE_LIMIT_RESET = "RateLimit-Reset"
 
-    ISSUES = "issues"
-    MERGES = "merge_requests"
-    NOTES = "notes"
-    EMOJI = "award_emoji"
-    PROJECTS = "projects"
-    VERSIONS = "versions"
+    # Resource parameters
+    PSTATE = 'state'
+    PORDER_BY = 'order_by'
+    PSORT = 'sort'
+    PVIEW = 'view'
+    PPER_PAGE = 'per_page'
+    PUPDATE_AFTER = 'updated_after'
+
+    # Predefined values
+    VSTATE_ALL = 'all'
+    VORDER_UPDATED_AT = 'updated_at'
+    VSORT_ASC = 'asc'
+    VVIEW_SIMPLE = 'simple'
+    VPER_PAGE = 100
 
     _users = {}       # users cache
 
@@ -497,8 +513,8 @@ class GitLabClient(HttpClient, RateLimitHandler):
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_headers=self._set_extra_headers(), extra_retry_after_status=extra_retry_after_status,
                          archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
-        super().setup_rate_limit_handler(rate_limit_header=self.RATE_LIMIT_HEADER,
-                                         rate_limit_reset_header=self.RATE_LIMIT_RESET_HEADER,
+        super().setup_rate_limit_handler(rate_limit_header=self.HRATE_LIMIT,
+                                         rate_limit_reset_header=self.HRATE_LIMIT_RESET,
                                          sleep_for_rate=sleep_for_rate,
                                          min_rate_to_sleep=min_rate_to_sleep)
 
@@ -508,39 +524,39 @@ class GitLabClient(HttpClient, RateLimitHandler):
         """Get the issues from pagination"""
 
         payload = {
-            'state': 'all',
-            'order_by': 'updated_at',
-            'sort': 'asc',
-            'per_page': PER_PAGE
+            self.PSTATE: self.VSTATE_ALL,
+            self.PORDER_BY: self.VORDER_UPDATED_AT,
+            self.PSORT: self.VSORT_ASC,
+            self.PPER_PAGE: self.VPER_PAGE
         }
 
         if from_date:
-            payload['updated_after'] = from_date.isoformat()
+            payload[self.PUPDATE_AFTER] = from_date.isoformat()
 
-        return self.fetch_items(GitLabClient.ISSUES, payload)
+        return self.fetch_items(self.RISSUES, payload)
 
     def merges(self, from_date=None):
         """Get the merge requests from pagination"""
 
         payload = {
-            'state': 'all',
-            'order_by': 'updated_at',
-            'sort': 'asc',
-            'view': 'simple',
-            'per_page': PER_PAGE
+            self.PSTATE: self.VSTATE_ALL,
+            self.PORDER_BY: self.VORDER_UPDATED_AT,
+            self.PSORT: self.VSORT_ASC,
+            self.PVIEW: self.VVIEW_SIMPLE,
+            self.PPER_PAGE: self.VPER_PAGE
         }
 
         if from_date:
-            payload['updated_after'] = from_date.isoformat()
+            payload[self.PUPDATE_AFTER] = from_date.isoformat()
 
-        return self.fetch_items(GitLabClient.MERGES, payload)
+        return self.fetch_items(self.RMERGES, payload)
 
     def merge(self, merge_id):
         """Get the merge full data"""
 
         path = urijoin(self.base_url,
-                       GitLabClient.PROJECTS, self.owner + '%2F' + self.repository,
-                       GitLabClient.MERGES, merge_id)
+                       self.RPROJECTS, self.owner + '%2F' + self.repository,
+                       self.RMERGES, merge_id)
 
         response = self.fetch(path)
 
@@ -550,20 +566,20 @@ class GitLabClient(HttpClient, RateLimitHandler):
         """Get the merge versions from pagination"""
 
         payload = {
-            'order_by': 'updated_at',
-            'sort': 'asc',
-            'per_page': PER_PAGE
+            self.PORDER_BY: self.VORDER_UPDATED_AT,
+            self.PSORT: self.VSORT_ASC,
+            self.PPER_PAGE: self.VPER_PAGE
         }
 
-        path = urijoin(GitLabClient.MERGES, str(merge_id), GitLabClient.VERSIONS)
+        path = urijoin(self.RMERGES, str(merge_id), self.RVERSIONS)
         return self.fetch_items(path, payload)
 
     def merge_version(self, merge_id, version_id):
         """Get merge version detail"""
 
         path = urijoin(self.base_url,
-                       GitLabClient.PROJECTS, self.owner + '%2F' + self.repository,
-                       GitLabClient.MERGES, merge_id, GitLabClient.VERSIONS, version_id)
+                       self.RPROJECTS, self.owner + '%2F' + self.repository,
+                       self.RMERGES, merge_id, self.RVERSIONS, version_id)
 
         response = self.fetch(path)
 
@@ -573,12 +589,12 @@ class GitLabClient(HttpClient, RateLimitHandler):
         """Get the notes from pagination"""
 
         payload = {
-            'order_by': 'updated_at',
-            'sort': 'asc',
-            'per_page': PER_PAGE
+            self.PORDER_BY: self.VORDER_UPDATED_AT,
+            self.PSORT: self.VSORT_ASC,
+            self.PPER_PAGE: self.VPER_PAGE
         }
 
-        path = urijoin(item_type, str(item_id), GitLabClient.NOTES)
+        path = urijoin(item_type, str(item_id), self.RNOTES)
 
         return self.fetch_items(path, payload)
 
@@ -586,12 +602,12 @@ class GitLabClient(HttpClient, RateLimitHandler):
         """Get emojis from pagination"""
 
         payload = {
-            'order_by': 'updated_at',
-            'sort': 'asc',
-            'per_page': PER_PAGE
+            self.PORDER_BY: self.VORDER_UPDATED_AT,
+            self.PSORT: self.VSORT_ASC,
+            self.PPER_PAGE: self.VPER_PAGE
         }
 
-        path = urijoin(item_type, str(item_id), GitLabClient.EMOJI)
+        path = urijoin(item_type, str(item_id), self.REMOJI)
 
         return self.fetch_items(path, payload)
 
@@ -599,13 +615,13 @@ class GitLabClient(HttpClient, RateLimitHandler):
         """Get emojis of a note"""
 
         payload = {
-            'order_by': 'updated_at',
-            'sort': 'asc',
-            'per_page': PER_PAGE
+            self.PORDER_BY: self.VORDER_UPDATED_AT,
+            self.PSORT: self.VSORT_ASC,
+            self.PPER_PAGE: self.VPER_PAGE
         }
 
-        path = urijoin(item_type, str(item_id), GitLabClient.NOTES,
-                       str(note_id), GitLabClient.EMOJI)
+        path = urijoin(item_type, str(item_id), self.RNOTES,
+                       str(note_id), self.REMOJI)
 
         return self.fetch_items(path, payload)
 
@@ -647,7 +663,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
 
         page = 0  # current page
         last_page = None  # last page
-        url_next = urijoin(self.base_url, GitLabClient.PROJECTS, self.owner + '%2F' + self.repository, path)
+        url_next = urijoin(self.base_url, self.RPROJECTS, self.owner + '%2F' + self.repository, path)
 
         logger.debug("Get GitLab paginated items from " + url_next)
 
@@ -694,10 +710,10 @@ class GitLabClient(HttpClient, RateLimitHandler):
         if not headers:
             return url, headers, payload
 
-        if 'PRIVATE-TOKEN' in headers:
-            headers.pop('PRIVATE-TOKEN', None)
-        elif 'Authorization' in headers:
-            headers.pop('Authorization', None)
+        if GitLabClient.HPRIVATE_TOKEN in headers:
+            headers.pop(GitLabClient.HPRIVATE_TOKEN, None)
+        elif GitLabClient.HAUTHORIZATION in headers:
+            headers.pop(GitLabClient.HAUTHORIZATION, None)
 
         return url, headers, payload
 
@@ -710,9 +726,9 @@ class GitLabClient(HttpClient, RateLimitHandler):
             return headers
 
         if self.is_oauth_token:
-            headers = {'Authorization': "Bearer %s" % self.token}
+            headers = {self.HAUTHORIZATION: "Bearer %s" % self.token}
         else:
-            headers = {'PRIVATE-TOKEN': self.token}
+            headers = {self.HPRIVATE_TOKEN: self.token}
 
         return headers
 

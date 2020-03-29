@@ -234,7 +234,8 @@ class Launchpad(Backend):
                         issue['bug_data'] = self.__fetch_issue_data(issue_id)
                         issue['activity_data'] = [activity for activity in self.__fetch_issue_activities(issue_id)]
                         issue['messages_data'] = [message for message in self.__fetch_issue_messages(issue_id)]
-                        issue['attachments_data'] = [attachment for attachment in self.__fetch_issue_attachments(issue_id)]
+                        issue['attachments_data'] = [attachment for attachment in
+                                                     self.__fetch_issue_attachments(issue_id)]
                     elif field == 'assignee_link':
                         issue['assignee_data'] = self.__fetch_user_data('{ASSIGNEE}', issue[field])
                     elif field == 'owner_link':
@@ -307,8 +308,34 @@ class LaunchpadClient(HttpClient):
     :param from_archive: it tells whether to write/read the archive
     :param ssl_verify: enable/disable SSL verification
     """
-
     _users = {}
+
+    # API resources
+    RBUGS = 'bugs'
+    RSOURCE = "+source"
+
+    # API headers
+    HCONTENT_TYPE = 'Content-type'
+
+    # Resource parameters
+    PWS_SIZE = 'ws.size'
+    PWS_START = 'ws.start'
+    PORDER_BY = 'order_by'
+    POMIT_DULPLICATES = 'omit_duplicates'
+    PSTATUS = 'status'
+    PWS_OP = 'ws.op'
+    PMODIFIED_SINCE = 'modified_since'
+
+    # Predefined values
+    VDATE_LAST_MODIFIED = 'date_last_updated'
+    VCONTENT_TYPE = 'application/json'
+    VOMIT_DUPLICATES = 'false'
+    VSEARCH_TASKS = 'searchTasks'
+    VSTATUS = ["New", "Incomplete", "Opinion", "Invalid", "Won't Fix",
+               "Expired", "Confirmed", "Triaged", "In Progress",
+               "Fix Committed", "Fix Released",
+               "Incomplete (with response)",
+               "Incomplete (without response)"]
 
     def __init__(self, distribution, package=None,
                  items_per_page=ITEMS_PER_PAGE, sleep_time=SLEEP_TIME,
@@ -363,7 +390,7 @@ class LaunchpadClient(HttpClient):
     def issue(self, issue_id):
         """Get the issue data by its ID"""
 
-        path = urijoin("bugs", str(issue_id))
+        path = urijoin(self.RBUGS, str(issue_id))
         url_issue = self.__get_url(path)
         raw_text = self.__send_request(url_issue)
 
@@ -372,9 +399,9 @@ class LaunchpadClient(HttpClient):
     def issue_collection(self, issue_id, collection_name):
         """Get a collection list of a given issue"""
 
-        path = urijoin("bugs", str(issue_id), collection_name)
+        path = urijoin(self.RBUGS, str(issue_id), collection_name)
         url_collection = self.__get_url(path)
-        payload = {'ws.size': self.items_per_page, 'ws.start': 0, 'order_by': 'date_last_updated'}
+        payload = {self.PWS_SIZE: self.items_per_page, self.PWS_START: 0, self.PORDER_BY: self.VDATE_LAST_MODIFIED}
 
         raw_items = self.__fetch_items(path=url_collection, payload=payload)
 
@@ -398,7 +425,7 @@ class LaunchpadClient(HttpClient):
     def __get_url_distribution_package(self):
         """Build URL distribution package"""
 
-        return urijoin(self.__get_url_distribution(), "+source", self.package)
+        return urijoin(self.__get_url_distribution(), self.RSOURCE, self.package)
 
     def __get_url(self, path):
         """Build genereic URL"""
@@ -408,7 +435,7 @@ class LaunchpadClient(HttpClient):
     def __define_headers(self):
         """Add headers to the Client default ones"""
 
-        headers = {'Content-type': 'application/json'}
+        headers = {self.HCONTENT_TYPE: self.VCONTENT_TYPE}
 
         return headers
 
@@ -422,21 +449,17 @@ class LaunchpadClient(HttpClient):
         """Build payload"""
 
         payload = {
-            'ws.size': size,
-            'order_by': 'date_last_updated',
-            'omit_duplicates': 'false',
-            'status': ["New", "Incomplete", "Opinion", "Invalid", "Won't Fix",
-                       "Expired", "Confirmed", "Triaged", "In Progress",
-                       "Fix Committed", "Fix Released",
-                       "Incomplete (with response)",
-                       "Incomplete (without response)"]
+            self.PWS_SIZE: size,
+            self.PORDER_BY: self.VDATE_LAST_MODIFIED,
+            self.POMIT_DULPLICATES: self.VOMIT_DUPLICATES,
+            self.PSTATUS: self.VSTATUS
         }
 
         if operation:
-            payload['ws.op'] = 'searchTasks'
+            payload[self.PWS_OP] = self.VSEARCH_TASKS
         if startdate:
             startdate = startdate.isoformat()
-            payload['modified_since'] = startdate
+            payload[self.PMODIFIED_SINCE] = startdate
 
         return payload
 

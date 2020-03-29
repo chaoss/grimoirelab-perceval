@@ -208,9 +208,25 @@ class StackExchangeClient(HttpClient):
     # whitebox filter. It will display a list of checkboxes with the selected
     # values for the filter provided.
 
-    QUESTIONS_FILTER = 'Bf*y*ByQD_upZqozgU6lXL_62USGOoV3)MFNgiHqHpmO_Y-jHR'
     STACKEXCHANGE_API_URL = 'https://api.stackexchange.com'
     VERSION_API = '2.2'
+
+    # API resources
+    RQUESTIONS = 'questions'
+
+    # Resource parameters
+    PPAGE = 'page'
+    PPAGESIZE = 'pagesize'
+    PORDER = 'order'
+    PSORT = 'sort'
+    PTAGGED = 'tagged'
+    PSITE = 'site'
+    PKEY = 'key'
+    PFILTER = 'filter'
+    PMIN = 'min'
+
+    # Predefined values
+    VQUESTIONS_FILTER = 'Bf*y*ByQD_upZqozgU6lXL_62USGOoV3)MFNgiHqHpmO_Y-jHR'
 
     def __init__(self, site, tagged, token, max_questions=MAX_QUESTIONS,
                  archive=None, from_archive=False, ssl_verify=True):
@@ -228,7 +244,7 @@ class StackExchangeClient(HttpClient):
         """
 
         page = 1
-        url = urijoin(self.base_url, self.VERSION_API, "questions")
+        url = urijoin(self.base_url, self.VERSION_API, self.RQUESTIONS)
 
         req = self.fetch(url, payload=self.__build_payload(page, from_date))
         questions = req.text
@@ -275,23 +291,23 @@ class StackExchangeClient(HttpClient):
 
         :returns url, headers and the sanitized payload
         """
-        if 'key' in payload:
-            payload.pop('key')
+        if StackExchangeClient.PKEY in payload:
+            payload.pop(StackExchangeClient.PKEY)
 
         return url, headers, payload
 
     def __build_payload(self, page, from_date, order='desc', sort='activity'):
-        payload = {'page': page,
-                   'pagesize': self.max_questions,
-                   'order': order,
-                   'sort': sort,
-                   'tagged': self.tagged,
-                   'site': self.site,
-                   'key': self.token,
-                   'filter': self.QUESTIONS_FILTER}
+        payload = {self.PPAGE: page,
+                   self.PPAGESIZE: self.max_questions,
+                   self.PORDER: order,
+                   self.PSORT: sort,
+                   self.PTAGGED: self.tagged,
+                   self.PSITE: self.site,
+                   self.PKEY: self.token,
+                   self.PFILTER: self.VQUESTIONS_FILTER}
         if from_date:
             timestamp = int(from_date.timestamp())
-            payload['min'] = timestamp
+            payload[self.PMIN] = timestamp
         return payload
 
     def __log_status(self, quota_remaining, quota_max, page_size, total):
