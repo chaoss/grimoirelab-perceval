@@ -48,7 +48,7 @@ PAGURE_ISSUES_URL = PAGURE_REPO_URL + "/issues"
 PAGURE_REPO_URL_DISABLED_URL = PAGURE_API_URL + "/Project-test-example"
 PAGURE_ISSUES_DISABLED_URL = PAGURE_REPO_URL_DISABLED_URL + "/issues"
 
-PAGURE_NAMESPACE_REPO_URL = PAGURE_API_URL + "Test-group/Project-namespace-example"
+PAGURE_NAMESPACE_REPO_URL = PAGURE_API_URL + "/Test-group/Project-namespace-example"
 PAGURE_NAMESPACE_ISSUES_URL = PAGURE_NAMESPACE_REPO_URL + "/issues"
 
 
@@ -155,7 +155,7 @@ class TestPagureBackend(unittest.TestCase):
         body = read_file('data/pagure/pagure_empty_request')
 
         httpretty.register_uri(httpretty.GET,
-                               PAGURE_ISSUES_URL,
+                               PAGURE_ISSUES_DISABLED_URL,
                                body=body,
                                status=404,
                                )
@@ -164,7 +164,6 @@ class TestPagureBackend(unittest.TestCase):
 
         with self.assertLogs(logger, level='WARN') as cm:
             issues = [issues for issues in pagure.fetch(from_date=None, to_date=None)]
-            print(cm.output[0])
             self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.pagure:'
                                            'The issue tracker is disabled please enable'
                                            ' the feature for the repository')
