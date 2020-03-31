@@ -67,7 +67,7 @@ class Pagure(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.1.0'
+    version = '0.1.1'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -295,7 +295,7 @@ class PagureClient(HttpClient):
         try:
             response = super().fetch(url, payload, headers)
         except requests.exceptions.HTTPError as error:
-            if error.response.status_code == 404 and error.response.reason == 'NOT FOUND':
+            if error.response.status_code == 404 and str(error.response.reason).upper() == 'NOT FOUND':
                 logger.warning("The issue tracker is disabled please enable the feature for the repository")
                 return None
             else:
