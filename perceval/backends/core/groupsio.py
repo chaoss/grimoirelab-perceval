@@ -166,10 +166,18 @@ class GroupsioClient(MailingList):
     :param password: Groupsio user password
     :param ssl_verify: enable/disable SSL verification
     """
+    # API resources
+    RDOWNLOAD_ARCHIVES = 'downloadarchives'
+    RGET_SUBSCRIPTIONS = 'getsubs'
+    RLOGIN = 'login'
 
-    DOWNLOAD_ARCHIVES = 'downloadarchives'
-    GET_SUBSCRIPTIONS = 'getsubs'
-    LOGIN = 'login'
+    # Resource parameters
+    PGROUP_ID = 'group_id'
+    PSTART_TIME = 'start_time'
+    PLIMIT = 'limit'
+    PPAGE_TOKEN = 'page_token'
+    PEMAIL = 'email'
+    PPASSWORD = 'password'
 
     def __init__(self, group_name, dirpath, email, password, ssl_verify=True):
         url = urijoin(GROUPSIO_URL, 'g', group_name)
@@ -208,13 +216,13 @@ class GroupsioClient(MailingList):
             logger.error(msg)
             raise BackendError(cause=msg)
 
-        url = urijoin(GROUPSIO_API_URL, self.DOWNLOAD_ARCHIVES)
+        url = urijoin(GROUPSIO_API_URL, self.RDOWNLOAD_ARCHIVES)
         payload = {
-            'group_id': group_id
+            self.PGROUP_ID: group_id
         }
 
         if from_date:
-            payload['start_time'] = datetime_to_utc(from_date).isoformat()
+            payload[self.PSTART_TIME] = datetime_to_utc(from_date).isoformat()
 
         filepath = os.path.join(self.dirpath, MBOX_FILE)
         success = self._download_archive(url, payload, filepath)
@@ -228,12 +236,12 @@ class GroupsioClient(MailingList):
 
         :returns: an iterator of subscriptions
         """
-        url = urijoin(GROUPSIO_API_URL, self.GET_SUBSCRIPTIONS)
+        url = urijoin(GROUPSIO_API_URL, self.RGET_SUBSCRIPTIONS)
         logger.debug("Get groupsio paginated subscriptions from " + url)
 
         keep_fetching = True
         payload = {
-            "limit": per_page
+            self.PLIMIT: per_page
         }
 
         while keep_fetching:
@@ -245,7 +253,7 @@ class GroupsioClient(MailingList):
             total_subscriptions = response_raw['total_count']
             logger.debug("Subscriptions: %i/%i" % (response_raw['end_item'], total_subscriptions))
 
-            payload['page_token'] = response_raw['next_page_token']
+            payload[self.PPAGE_TOKEN] = response_raw['next_page_token']
             keep_fetching = response_raw['has_more']
 
     def _download_archive(self, url, payload, filepath):
@@ -301,11 +309,11 @@ class GroupsioClient(MailingList):
         :param email: Groupsio user email
         :param password: Groupsio user password
         """
-        url = urijoin(GROUPSIO_API_URL, self.LOGIN)
+        url = urijoin(GROUPSIO_API_URL, self.RLOGIN)
 
         payload = {
-            'email': email,
-            'password': password
+            self.PEMAIL: email,
+            self.PPASSWORD: password
         }
 
         self.session.post(url, params=payload)

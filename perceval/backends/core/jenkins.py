@@ -268,6 +268,14 @@ class JenkinsClient(HttpClient):
     EXTRA_STATUS_FORCELIST = [410, 502, 503]
     MAX_RETRIES = 5
 
+    # API resources
+    RAPI = 'api'
+    RJSON = 'json'
+    RJOB = 'job'
+
+    # Resource parameters
+    PDEPTH = 'depth'
+
     def __init__(self, url, user=None, api_token=None, blacklist_jobs=None,
                  detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME,
                  archive=None, from_archive=False, ssl_verify=True):
@@ -286,7 +294,7 @@ class JenkinsClient(HttpClient):
 
         :param url: target url to fetch jobs
         """
-        url_jenkins = urijoin(url, "api", "json")
+        url_jenkins = urijoin(url, self.RAPI, self.RJSON)
 
         response = self.fetch(url_jenkins, auth=self.auth)
         return response.text
@@ -301,8 +309,8 @@ class JenkinsClient(HttpClient):
             logger.warning("Not getting blacklisted job: %s", job_name)
             return
 
-        payload = {'depth': self.detail_depth}
-        url_build = urijoin(url, "job", job_name, "api", "json")
+        payload = {self.PDEPTH: self.detail_depth}
+        url_build = urijoin(url, self.RJOB, job_name, self.RAPI, self.RJSON)
 
         response = self.fetch(url_build, payload=payload, auth=self.auth)
         return response.text

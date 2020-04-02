@@ -286,10 +286,15 @@ class MattermostClient(HttpClient, RateLimitHandler):
     """
     API_URL = urijoin('%(base_url)s', 'api', 'v4', '%(entrypoint)s')
 
+    # API resources
     RCHANNELS = 'channels'
     RPOSTS = 'posts'
     RUSERS = 'users'
 
+    # API headers
+    HAUTHORIZATION = 'Authorization'
+
+    # Resource parameters
     PCHANNEL_ID = 'channel_id'
     PPAGE = 'page'
     PPER_PAGE = 'per_page'
@@ -401,7 +406,7 @@ class MattermostClient(HttpClient, RateLimitHandler):
         """Set authentication tokens."""
 
         headers = {
-            'Authorization': 'Bearer ' + self.api_token
+            self.HAUTHORIZATION: 'Bearer ' + self.api_token
         }
         return headers
 

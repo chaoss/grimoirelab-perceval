@@ -246,6 +246,22 @@ class PagureClient(HttpClient):
     :param from_archive: it tells whether to write/read the archive
     :param ssl_verify: enable/disable SSL verification
     """
+    # API resources
+    RISSUES = 'issues'
+
+    # API headers
+    HAUTHORIZATION = 'Authorization'
+
+    # Resource parameters
+    PSTATUS = 'status'
+    PPER_PAGE = 'per_page'
+    PORDER = 'order'
+    PSINCE = 'since'
+
+    # Predefined values
+    VSTATUS_ALL = 'all'
+    VORDER_ASC = 'asc'
+
     def __init__(self, namespace, repository, token,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
                  max_items=MAX_CATEGORY_ITEMS_PER_PAGE, archive=None, from_archive=False, ssl_verify=True):
@@ -272,15 +288,15 @@ class PagureClient(HttpClient):
         :returns: a generator of issues
         """
         payload = {
-            'status': 'all',
-            'per_page': self.max_items,
-            'order': 'asc'
+            self.PSTATUS: self.VSTATUS_ALL,
+            self.PPER_PAGE: self.max_items,
+            self.PORDER: self.VORDER_ASC
         }
 
         if from_date:
-            payload['since'] = from_date
+            payload[self.PSINCE] = from_date
 
-        path = urijoin("issues")
+        path = urijoin(self.RISSUES)
         return self.fetch_items(path, payload)
 
     def fetch(self, url, payload=None, headers=None):
@@ -347,7 +363,7 @@ class PagureClient(HttpClient):
 
         headers = {}
         if self.token:
-            headers = {'Authorization': "token %s" % self.token}
+            headers = {self.HAUTHORIZATION: "token %s" % self.token}
 
         return headers
 

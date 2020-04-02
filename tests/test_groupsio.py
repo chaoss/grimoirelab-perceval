@@ -57,29 +57,29 @@ def setup_http_server(empty_mbox=False, http_status_download=200, http_status_su
 
     if empty_mbox:
         httpretty.register_uri(httpretty.GET,
-                               GROUPSIO_API_URL + GroupsioClient.DOWNLOAD_ARCHIVES,
+                               GROUPSIO_API_URL + GroupsioClient.RDOWNLOAD_ARCHIVES,
                                body=groupsio_mbox_empty,
                                status=http_status_download)
     else:
         httpretty.register_uri(httpretty.GET,
-                               GROUPSIO_API_URL + GroupsioClient.DOWNLOAD_ARCHIVES,
+                               GROUPSIO_API_URL + GroupsioClient.RDOWNLOAD_ARCHIVES,
                                body=groupsio_mbox_archive,
                                status=http_status_download)
 
     httpretty.register_uri(httpretty.POST,
-                           GROUPSIO_API_URL + GroupsioClient.LOGIN,
+                           GROUPSIO_API_URL + GroupsioClient.RLOGIN,
                            body=login,
                            params={'email': 'jsmith@example.com', 'password': 'aaaaa'},
                            status=200)
 
     httpretty.register_uri(httpretty.GET,
-                           GROUPSIO_API_URL + GroupsioClient.GET_SUBSCRIPTIONS,
+                           GROUPSIO_API_URL + GroupsioClient.RGET_SUBSCRIPTIONS,
                            body=subscriptions_page_2,
                            params={"limit": 1, "next_page_token": 1},
                            status=http_status_subscriptions)
 
     httpretty.register_uri(httpretty.GET,
-                           GROUPSIO_API_URL + GroupsioClient.GET_SUBSCRIPTIONS,
+                           GROUPSIO_API_URL + GroupsioClient.RGET_SUBSCRIPTIONS,
                            body=subscriptions_page_1,
                            params={"limit": 1},
                            status=http_status_subscriptions)

@@ -266,11 +266,28 @@ class AskbotClient(HttpClient):
     """
 
     API_QUESTIONS = 'api/v1/questions/'
-    HTML_QUESTION = 'question/'
-    ORDER_API = 'activity-asc'
-    ORDER_HTML = 'votes'
-    COMMENTS = 's/post_comments'
-    COMMENTS_OLD = 'post_comments'
+
+    # API resources
+    RHTML_QUESTION = 'question/'
+    RCOMMENTS = 's/post_comments'
+    RCOMMENTS_OLD = 'post_comments'
+
+    # API header
+    HREQUEST_WITH = 'X-Requested-With'
+
+    # Resource parameters
+    PPAGE = 'page'
+    PSORT = 'sort'
+    PPOST_ID = 'post_id'
+    PPOST_TYPE = 'post_type'
+    PAVATAR_SIZE = 'avatar_size'
+
+    # Predefined values
+    VORDER_API = 'activity-asc'
+    VORDER_HTML = 'votes'
+    VANSWER = 'answer'
+    VAVATAR_SIZE = 0
+    VHTTP_REQUEST = 'XMLHttpRequest'
 
     def __init__(self, base_url, archive=None, from_archive=False, ssl_verify=True):
         super().__init__(base_url, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
@@ -289,8 +306,8 @@ class AskbotClient(HttpClient):
 
             try:
                 params = {
-                    'page': npages,
-                    'sort': self.ORDER_API
+                    self.PPAGE: npages,
+                    self.PSORT: self.VORDER_API
                 }
 
                 response = self.fetch(path, payload=params)
@@ -319,10 +336,10 @@ class AskbotClient(HttpClient):
         :param question_id: question identifier
         :param page: page to retrieve
         """
-        path = urijoin(self.base_url, self.HTML_QUESTION, question_id)
+        path = urijoin(self.base_url, self.RHTML_QUESTION, question_id)
         params = {
-            'page': page,
-            'sort': self.ORDER_HTML
+            self.PPAGE: page,
+            self.PSORT: self.VORDER_HTML
         }
 
         response = self.fetch(path, payload=params)
@@ -333,13 +350,13 @@ class AskbotClient(HttpClient):
 
         :param object_id: object identifiere
         """
-        path = urijoin(self.base_url, self.COMMENTS if self._use_new_urls else self.COMMENTS_OLD)
+        path = urijoin(self.base_url, self.RCOMMENTS if self._use_new_urls else self.RCOMMENTS_OLD)
         params = {
-            'post_id': post_id,
-            'post_type': 'answer',
-            'avatar_size': 0
+            self.PPOST_ID: post_id,
+            self.PPOST_TYPE: self.VANSWER,
+            self.PAVATAR_SIZE: self.VAVATAR_SIZE
         }
-        headers = {'X-Requested-With': 'XMLHttpRequest'}
+        headers = {self.HREQUEST_WITH: self.VHTTP_REQUEST}
 
         try:
             response = self.fetch(path, payload=params, headers=headers)
@@ -348,7 +365,7 @@ class AskbotClient(HttpClient):
             if ex.response.status_code == 404:
                 logger.debug("Comments URL did not work. Using old URL schema.")
                 self._use_new_urls = False
-                path = urijoin(self.base_url, self.COMMENTS_OLD)
+                path = urijoin(self.base_url, self.RCOMMENTS_OLD)
                 response = self.fetch(path, payload=params, headers=headers)
                 raw = response.text
             elif ex.response.status_code == 500:

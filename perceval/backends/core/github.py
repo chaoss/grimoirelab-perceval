@@ -59,7 +59,6 @@ MAX_RATE_LIMIT = 500
 TOKEN_USAGE_BEFORE_SWITCH = 0.1
 
 MAX_CATEGORY_ITEMS_PER_PAGE = 100
-PER_PAGE = 100
 
 # Default sleep time and retries to deal with connection/server problems
 DEFAULT_SLEEP_TIME = 1
@@ -592,6 +591,37 @@ class GitHubClient(HttpClient, RateLimitHandler):
     """
     EXTRA_STATUS_FORCELIST = [403, 500, 502, 503]
 
+    # API resources
+    RISSUES = 'issues'
+    RREACTIONS = 'reactions'
+    RCOMMENTS = 'comments'
+    RREPOS = 'repos'
+    RPULLS = 'pulls'
+    RREQUESTED_REVIEWERS = 'requested_reviewers'
+    RREVIEWS = 'reviews'
+    RUSERS = 'users'
+    RORGS = 'orgs'
+    RRATE_LIMIT = 'rate_limit'
+    RCOMMITS = 'commits'
+
+    # API headers
+    HAUTHORIZATION = 'Authorization'
+    HACCEPT = 'Accept'
+
+    # Resource parameters
+    PSTATE = 'state'
+    PPER_PAGE = 'per_page'
+    PDIRECTION = 'direction'
+    PSORT = 'sort'
+    PSINCE = 'since'
+
+    # Predefined values
+    VPER_PAGE = 100
+    VDIRECTION_ASC = 'asc'
+    VSORT_UPDATED = 'updated'
+    VSTATE_ALL = 'all'
+    VACCEPT = 'application/vnd.github.squirrel-girl-preview'
+
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
@@ -636,36 +666,36 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get reactions of an issue"""
 
         payload = {
-            'per_page': PER_PAGE,
-            'direction': 'asc',
-            'sort': 'updated'
+            self.PPER_PAGE: self.VPER_PAGE,
+            self.PDIRECTION: self.VDIRECTION_ASC,
+            self.PSORT: self.VSORT_UPDATED
         }
 
-        path = urijoin("issues", str(issue_number), "reactions")
+        path = urijoin(self.RISSUES, str(issue_number), self.RREACTIONS)
         return self.fetch_items(path, payload)
 
     def issue_comment_reactions(self, comment_id):
         """Get reactions of an issue comment"""
 
         payload = {
-            'per_page': PER_PAGE,
-            'direction': 'asc',
-            'sort': 'updated'
+            self.PPER_PAGE: self.VPER_PAGE,
+            self.PDIRECTION: self.VDIRECTION_ASC,
+            self.PSORT: self.VSORT_UPDATED
         }
 
-        path = urijoin("issues", "comments", str(comment_id), "reactions")
+        path = urijoin(self.RISSUES, self.RCOMMENTS, str(comment_id), self.RREACTIONS)
         return self.fetch_items(path, payload)
 
     def issue_comments(self, issue_number):
         """Get the issue comments from pagination"""
 
         payload = {
-            'per_page': PER_PAGE,
-            'direction': 'asc',
-            'sort': 'updated'
+            self.PPER_PAGE: self.VPER_PAGE,
+            self.PDIRECTION: self.VDIRECTION_ASC,
+            self.PSORT: self.VSORT_UPDATED
         }
 
-        path = urijoin("issues", str(issue_number), "comments")
+        path = urijoin(self.RISSUES, str(issue_number), self.RCOMMENTS)
         return self.fetch_items(path, payload)
 
     def issues(self, from_date=None):
@@ -679,15 +709,16 @@ class GitHubClient(HttpClient, RateLimitHandler):
         :returns: a generator of issues
         """
         payload = {
-            'state': 'all',
-            'per_page': self.max_items,
-            'direction': 'asc',
-            'sort': 'updated'}
+            self.PSTATE: self.VSTATE_ALL,
+            self.PPER_PAGE: self.max_items,
+            self.PDIRECTION: self.VDIRECTION_ASC,
+            self.PSORT: self.VSORT_UPDATED
+        }
 
         if from_date:
-            payload['since'] = from_date.isoformat()
+            payload[self.PSINCE] = from_date.isoformat()
 
-        path = urijoin("issues")
+        path = urijoin(self.RISSUES)
         return self.fetch_items(path, payload)
 
     def pulls(self, from_date=None):
@@ -710,7 +741,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
                     continue
 
                 pull_number = issue["number"]
-                path = urijoin(self.base_url, 'repos', self.owner, self.repository, "pulls", pull_number)
+                path = urijoin(self.base_url, self.RREPOS, self.owner, self.repository, self.RPULLS, pull_number)
                 r = self.fetch(path)
                 pull = r.text
                 yield pull
@@ -718,7 +749,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def repo(self):
         """Get repository data"""
 
-        path = urijoin(self.base_url, 'repos', self.owner, self.repository)
+        path = urijoin(self.base_url, self.RREPOS, self.owner, self.repository)
 
         r = self.fetch(path)
         repo = r.text
@@ -728,53 +759,53 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def pull_requested_reviewers(self, pr_number):
         """Get pull requested reviewers"""
 
-        requested_reviewers_url = urijoin("pulls", str(pr_number), "requested_reviewers")
+        requested_reviewers_url = urijoin(self.RPULLS, str(pr_number), self.RREQUESTED_REVIEWERS)
         return self.fetch_items(requested_reviewers_url, {})
 
     def pull_commits(self, pr_number):
         """Get pull request commits"""
 
         payload = {
-            'per_page': PER_PAGE,
+            self.PPER_PAGE: self.VPER_PAGE
         }
 
-        commit_url = urijoin("pulls", str(pr_number), "commits")
+        commit_url = urijoin(self.RPULLS, str(pr_number), self.RCOMMITS)
         return self.fetch_items(commit_url, payload)
 
     def pull_review_comments(self, pr_number):
         """Get pull request review comments"""
 
         payload = {
-            'per_page': PER_PAGE,
-            'direction': 'asc',
-            'sort': 'updated'
+            self.PPER_PAGE: self.VPER_PAGE,
+            self.PDIRECTION: self.VDIRECTION_ASC,
+            self.PSORT: self.VSORT_UPDATED
         }
 
-        comments_url = urijoin("pulls", str(pr_number), "comments")
+        comments_url = urijoin(self.RPULLS, str(pr_number), self.RCOMMENTS)
         return self.fetch_items(comments_url, payload)
 
     def pull_reviews(self, pr_number):
         """Get pull request reviews"""
 
         payload = {
-            'per_page': PER_PAGE,
-            'direction': 'asc',
-            'sort': 'updated'
+            self.PPER_PAGE: self.VPER_PAGE,
+            self.PDIRECTION: self.VDIRECTION_ASC,
+            self.PSORT: self.VSORT_UPDATED
         }
 
-        reviews_url = urijoin("pulls", str(pr_number), "reviews")
+        reviews_url = urijoin(self.RPULLS, str(pr_number), self.RREVIEWS)
         return self.fetch_items(reviews_url, payload)
 
     def pull_review_comment_reactions(self, comment_id):
         """Get reactions of a review comment"""
 
         payload = {
-            'per_page': PER_PAGE,
-            'direction': 'asc',
-            'sort': 'updated'
+            self.PPER_PAGE: self.VPER_PAGE,
+            self.PDIRECTION: self.VDIRECTION_ASC,
+            self.PSORT: self.VSORT_UPDATED
         }
 
-        path = urijoin("pulls", "comments", str(comment_id), "reactions")
+        path = urijoin(self.RPULLS, self.RCOMMENTS, str(comment_id), self.RREACTIONS)
         return self.fetch_items(path, payload)
 
     def user(self, login):
@@ -784,7 +815,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         if login in self._users:
             return self._users[login]
 
-        url_user = urijoin(self.base_url, 'users', login)
+        url_user = urijoin(self.base_url, self.RUSERS, login)
 
         logger.debug("Getting info for %s" % url_user)
 
@@ -799,7 +830,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         if login in self._users_orgs:
             return self._users_orgs[login]
 
-        url = urijoin(self.base_url, 'users', login, 'orgs')
+        url = urijoin(self.base_url, self.RUSERS, login, self.RORGS)
         try:
             r = self.fetch(url)
             orgs = r.text
@@ -845,7 +876,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         page = 0  # current page
         last_page = None  # last page
-        url_next = urijoin(self.base_url, 'repos', self.owner, self.repository, path)
+        url_next = urijoin(self.base_url, self.RREPOS, self.owner, self.repository, path)
         logger.debug("Get GitHub paginated items from " + url_next)
 
         response = self.fetch(url_next, payload=payload)
@@ -875,8 +906,8 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def _get_token_rate_limit(self, token):
         """Return token's remaining API points"""
 
-        rate_url = urijoin(self.base_url, "rate_limit")
-        self.session.headers.update({'Authorization': 'token ' + token})
+        rate_url = urijoin(self.base_url, self.RRATE_LIMIT)
+        self.session.headers.update({self.HAUTHORIZATION: 'token ' + token})
         remaining = 0
         try:
             headers = super().fetch(rate_url).headers
@@ -918,7 +949,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         # If we have any tokens - use best of them
         self.current_token = self.tokens[token_idx]
-        self.session.headers.update({'Authorization': 'token ' + self.current_token})
+        self.session.headers.update({self.HAUTHORIZATION: 'token ' + self.current_token})
         # Update rate limit data for the current token
         self._update_current_rate_limit()
 
@@ -951,7 +982,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def _update_current_rate_limit(self):
         """Update rate limits data for the current token"""
 
-        url = urijoin(self.base_url, "rate_limit")
+        url = urijoin(self.base_url, self.RRATE_LIMIT)
         try:
             # Turn off archiving when checking rates, because that would cause
             # archive key conflict (the same URLs giving different responses)
@@ -971,7 +1002,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Set extra headers for session"""
 
         headers = {}
-        headers.update({'Accept': 'application/vnd.github.squirrel-girl-preview'})
+        headers.update({self.HACCEPT: self.VACCEPT})
         return headers
 
 

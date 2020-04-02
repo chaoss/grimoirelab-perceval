@@ -141,6 +141,13 @@ class HyperKittyList(MailingList):
     :param dirpath: path to the local mboxes archives
     :param ssl_verify: enable/disable SSL verification
     """
+    # API resources
+    REXPORT = 'export'
+
+    # Resource parameters
+    PSTART = 'start'
+    PEND = 'end'
+
     def __init__(self, url, dirpath, ssl_verify=True):
         super().__init__(url, dirpath)
         self.client = HttpClient(url, ssl_verify=ssl_verify)
@@ -187,11 +194,11 @@ class HyperKittyList(MailingList):
             filename = start.strftime("%Y-%m.mbox.gz")
             filepath = os.path.join(self.dirpath, filename)
 
-            url = urijoin(self.client.base_url, 'export', filename)
+            url = urijoin(self.client.base_url, self.REXPORT, filename)
 
             params = {
-                'start': start.strftime("%Y-%m-%d"),
-                'end': end.strftime("%Y-%m-%d")
+                self.PSTART: start.strftime("%Y-%m-%d"),
+                self.PEND: end.strftime("%Y-%m-%d")
             }
 
             success = self._download_archive(url, params, filepath)

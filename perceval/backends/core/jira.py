@@ -283,12 +283,23 @@ class JiraClient(HttpClient):
 
     :raises HTTPError: when an error occurs doing the request
     """
-
-    EXPAND = 'renderedFields,transitions,operations,changelog'
     VERSION_API = '2'
     RESOURCE = 'rest/api'
-    ISSUE = 'issue'
-    COMMENT = 'comment'
+
+    # API resources
+    RISSUE = 'issue'
+    RCOMMENT = 'comment'
+    RFIELD = 'field'
+    RSEARCH = 'search'
+
+    # Resource parameters
+    PJQL = 'jql'
+    PSTART_AT = 'startAt'
+    PEXPAND = 'expand'
+    PMAX_RESULTS = 'maxResults'
+
+    # Predefined values
+    VEXPAND = 'renderedFields,transitions,operations,changelog'
 
     def __init__(self, url, project, user, password, cert, max_results=MAX_RESULTS,
                  archive=None, from_archive=False, ssl_verify=True):
@@ -338,7 +349,7 @@ class JiraClient(HttpClient):
 
         :param from_date: obtain issues updated since this date
         """
-        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, 'search')
+        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, self.RSEARCH)
         issues = self.get_items(from_date, url)
 
         return issues
@@ -348,7 +359,7 @@ class JiraClient(HttpClient):
 
         :param issue_id: ID of the issue
         """
-        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, self.ISSUE, issue_id, self.COMMENT)
+        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, self.RISSUE, issue_id, self.RCOMMENT)
         comments = self.get_items(DEFAULT_DATETIME, url, expand_fields=False)
 
         return comments
@@ -356,7 +367,7 @@ class JiraClient(HttpClient):
     def get_fields(self):
         """Retrieve all the fields available."""
 
-        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, 'field')
+        url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, self.RFIELD)
         req = self.fetch(url)
 
         return req.text
@@ -384,14 +395,14 @@ class JiraClient(HttpClient):
 
     def __build_payload(self, start_at, from_date, expand=True):
         payload = {
-            'jql': self.__build_jql_query(from_date),
-            'startAt': start_at,
-            'expand': self.EXPAND,
-            'maxResults': self.max_results
+            self.PJQL: self.__build_jql_query(from_date),
+            self.PSTART_AT: start_at,
+            self.PEXPAND: self.VEXPAND,
+            self.PMAX_RESULTS: self.max_results
         }
 
         if not expand:
-            payload.pop('expand')
+            payload.pop(self.PEXPAND)
 
         return payload
 

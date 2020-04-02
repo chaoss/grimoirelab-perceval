@@ -402,6 +402,43 @@ class MediaWikiClient(HttpClient):
 
     :raises HTTPError: when an error occurs doing the request
     """
+    # Resource parameters
+    PACTION = "action"
+    PMETA = "meta"
+    PSIPROP = "siprop"
+    PFORMAT = "format"
+    PLIST = "list"
+    PAP_LIMIT = "aplimit"
+    PAP_NAMESPACE = "apnamespace"
+    PAP_CONTINUE = "apcontinue"
+    PRC_LIMIT = "rclimit"
+    PRC_NAMESPACE = "rcnamespace"
+    PRC_PROP = "rcprop"
+    PRC_CONTINUE = "rccontinue"
+    PPROP = "prop"
+    PPAGE_IDS = "pageids"
+    PRV_DIR = "rvdir"
+    PRV_LIMIT = "rvlimit"
+    PRV_START = "rvstart"
+    PARV_NAMESPACE = "arvnamespace"
+    PARV_DIR = "arvdir"
+    PARV_LIMIT = "arvlimit"
+    PARV_PROP = "arvprop"
+    PARV_CONTINUE = "arvcontinue"
+    PARV_START = "arvstart"
+
+    # Predefined values
+    VQUERY = "query"
+    VSITE_INFO = "siteinfo"
+    VNAMESPACES = "namespaces"
+    VJSON = "json"
+    VALL_PAGES = "allpages"
+    VRECENT_CHANGES = "recentchanges"
+    VRC_PROP = "title|timestamp|ids"
+    VREVISIONS = "revisions"
+    VNEWER = "newer"
+    VALL_REVISIONS = "allrevisions"
+    VIDS = "ids"
 
     def __init__(self, url, archive=None, from_archive=False, ssl_verify=True):
         super().__init__(urijoin(url, "api.php"), archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
@@ -423,19 +460,19 @@ class MediaWikiClient(HttpClient):
         """ Retrieve all contents namespaces."""
 
         params = {
-            "action": "query",
-            "meta": "siteinfo",
-            "siprop": "namespaces",
-            "format": "json"
+            self.PACTION: self.VQUERY,
+            self.PMETA: self.VSITE_INFO,
+            self.PSIPROP: self.VNAMESPACES,
+            self.PFORMAT: self.VJSON
         }
 
         return self.call(params)
 
     def get_version(self):
         params = {
-            "action": "query",
-            "meta": "siteinfo",
-            "format": "json"
+            self.PACTION: self.VQUERY,
+            self.PMETA: self.VSITE_INFO,
+            self.PFORMAT: self.VJSON
         }
 
         try:
@@ -458,14 +495,14 @@ class MediaWikiClient(HttpClient):
     def get_pages(self, namespace, apcontinue=''):
         """Retrieve all pages from a namespace starting from apcontinue."""
         params = {
-            "action": "query",
-            "list": "allpages",
-            "aplimit": self.limit,
-            "apnamespace": namespace,
-            "format": "json"
+            self.PACTION: self.VQUERY,
+            self.PLIST: self.VALL_PAGES,
+            self.PAP_LIMIT: self.limit,
+            self.PAP_NAMESPACE: namespace,
+            self.PFORMAT: self.VJSON
         }
         if apcontinue:
-            params['apcontinue'] = apcontinue
+            params[self.PAP_CONTINUE] = apcontinue
 
         return self.call(params)
 
@@ -474,15 +511,15 @@ class MediaWikiClient(HttpClient):
 
         namespaces.sort()
         params = {
-            "action": "query",
-            "list": "recentchanges",
-            "rclimit": self.limit,
-            "rcnamespace": "|".join(namespaces),
-            "rcprop": "title|timestamp|ids",
-            "format": "json"
+            self.PACTION: self.VQUERY,
+            self.PLIST: self.VRECENT_CHANGES,
+            self.PRC_LIMIT: self.limit,
+            self.PRC_NAMESPACE: "|".join(namespaces),
+            self.PRC_PROP: self.VRC_PROP,
+            self.PFORMAT: self.VJSON
         }
         if rccontinue:
-            params['rccontinue'] = rccontinue
+            params[self.PRC_CONTINUE] = rccontinue
 
         return self.call(params)
 
@@ -493,15 +530,15 @@ class MediaWikiClient(HttpClient):
             last_date_str = last_date.isoformat()
 
         params = {
-            "action": "query",
-            "prop": "revisions",
-            "pageids": pageid,
-            "rvdir": "newer",
-            "rvlimit": self.limit,
-            "format": "json"
+            self.PACTION: self.VQUERY,
+            self.PPROP: self.VREVISIONS,
+            self.PPAGE_IDS: pageid,
+            self.PRV_DIR: self.VNEWER,
+            self.PRV_LIMIT: self.limit,
+            self.PFORMAT: self.VJSON
         }
         if last_date:
-            params['rvstart'] = last_date_str
+            params[self.PRV_START] = last_date_str
 
         return self.call(params)
 
@@ -515,20 +552,20 @@ class MediaWikiClient(HttpClient):
 
         namespaces.sort()
         params = {
-            "action": "query",
-            "list": "allrevisions",
-            "arvnamespace": "|".join(namespaces),
-            "arvdir": "newer",
-            "arvlimit": self.limit,
-            "arvprop": "ids",
-            "format": "json"
+            self.PACTION: self.VQUERY,
+            self.PLIST: self.VALL_REVISIONS,
+            self.PARV_NAMESPACE: "|".join(namespaces),
+            self.PARV_DIR: self.VNEWER,
+            self.PARV_LIMIT: self.limit,
+            self.PARV_PROP: self.VIDS,
+            self.PFORMAT: self.VJSON
         }
 
         if arvcontinue:
-            params['arvcontinue'] = arvcontinue
+            params[self.PARV_CONTINUE] = arvcontinue
         else:
             if from_date:
-                params['arvstart'] = from_date_str
+                params[self.PARV_START] = from_date_str
 
         return self.call(params)
 
