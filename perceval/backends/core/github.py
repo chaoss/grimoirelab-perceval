@@ -103,7 +103,7 @@ class GitHub(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.25.1'
+    version = '0.25.2'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -1004,6 +1004,25 @@ class GitHubClient(HttpClient, RateLimitHandler):
         headers = {}
         headers.update({self.HACCEPT: self.VACCEPT})
         return headers
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the
+        token information before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if not headers:
+            return url, headers, payload
+
+        if GitHubClient.HAUTHORIZATION in headers:
+            headers.pop(GitHubClient.HAUTHORIZATION, None)
+
+        return url, headers, payload
 
 
 class GitHubCommand(BackendCommand):

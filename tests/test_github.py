@@ -37,6 +37,7 @@ import os
 import time
 import unittest
 import unittest.mock
+import copy
 
 import httpretty
 import pkg_resources
@@ -4104,6 +4105,21 @@ class TestGitHubClient(unittest.TestCase):
 
         self.assertDictEqual(httpretty.last_request().querystring, expected)
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = {GitHubClient.HAUTHORIZATION: "token aaa"}
+        c_headers = copy.deepcopy(headers)
+        payload = {}
+
+        san_u, san_h, san_p = GitHubClient.sanitize_for_archive(url, c_headers, payload)
+        headers.pop(GitHubClient.HAUTHORIZATION)
+
+        self.assertEqual(url, san_u)
+        self.assertEqual(headers, san_h)
+        self.assertEqual(payload, san_p)
 
 
 class TestGitHubCommand(unittest.TestCase):
