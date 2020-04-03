@@ -67,7 +67,7 @@ class Pagure(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.1.1'
+    version = '0.1.2'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -386,6 +386,25 @@ class PagureClient(HttpClient):
         """Build URL for a repository"""
 
         return urijoin(self.base_url, self.repository)
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the
+        token information before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if not headers:
+            return url, headers, payload
+
+        if PagureClient.HAUTHORIZATION in headers:
+            headers.pop(PagureClient.HAUTHORIZATION, None)
+
+        return url, headers, payload
 
 
 class PagureCommand(BackendCommand):
