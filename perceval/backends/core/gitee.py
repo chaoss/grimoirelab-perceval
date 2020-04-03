@@ -29,9 +29,9 @@ from grimoirelab_toolkit.datetime import (datetime_to_utc,
 from grimoirelab_toolkit.uris import urijoin
 
 from perceval.backend import (Backend,
-                        BackendCommand,
-                        BackendCommandArgumentParser,
-                        DEFAULT_SEARCH_FIELD)
+                              BackendCommand,
+                              BackendCommandArgumentParser,
+                              DEFAULT_SEARCH_FIELD)
 from perceval.client import HttpClient, RateLimitHandler
 from perceval.utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 
@@ -160,10 +160,10 @@ class Gitee(Backend):
         """Init client"""
 
         return GiteeClient(self.owner, self.repository, self.api_token, self.base_url,
-                            self.sleep_for_rate, self.min_rate_to_sleep,
-                            self.sleep_time, self.max_retries, self.max_items,
-                            self.archive, from_archive, self.ssl_verify)
-    
+                           self.sleep_for_rate, self.min_rate_to_sleep,
+                           self.sleep_time, self.max_retries, self.max_items,
+                           self.archive, from_archive, self.ssl_verify)
+
     def __fetch_issues(self, from_date, to_date):
         """Fetch the issues"""
 
@@ -190,7 +190,6 @@ class Gitee(Backend):
                         issue[field + '_data'] = self.__get_issue_assignees(issue[field])
                     elif field == 'comments':
                         issue[field + '_data'] = self.__get_issue_comments(issue['number'])
-                  
                 yield issue
 
     def __fetch_pull_requests(self, from_date, to_date):
@@ -403,7 +402,7 @@ class Gitee(Backend):
             self.client.user_orgs(login)
         user['organizations'] = json.loads(user_orgs_raw)
 
-        return user    
+        return user
 
     def __init_extra_issue_fields(self, issue):
         """Add fields to an issue"""
@@ -422,7 +421,8 @@ class Gitee(Backend):
         pull['reviews_data'] = []
         pull['requested_reviewers_data'] = []
         pull['merged_by_data'] = []
-        pull['commits_data'] = []    
+        pull['commits_data'] = []
+
 
 class GiteeClient(HttpClient, RateLimitHandler):
     """Client for retieving information from GitHub API
@@ -471,7 +471,7 @@ class GiteeClient(HttpClient, RateLimitHandler):
                          extra_headers=self._set_extra_headers(),
                          extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
-   
+
     def issue_comments(self, issue_number):
         """Get the issue comments """
 
@@ -498,7 +498,7 @@ class GiteeClient(HttpClient, RateLimitHandler):
             'per_page': self.max_items,
             'direction': 'asc',
             'sort': 'updated'
-            }
+        }
 
         if from_date:
             payload['since'] = from_date.isoformat()
@@ -516,20 +516,15 @@ class GiteeClient(HttpClient, RateLimitHandler):
 
         :returns: a generator of pull requests
         """
-        issues_groups = self.issues(from_date=from_date)
+        payload = {
+            'state': 'all',
+            'per_page': self.max_items,
+            'direction': 'asc',
+            'sort': 'updated'
+        }
 
-        for raw_issues in issues_groups:
-            issues = json.loads(raw_issues)
-            for issue in issues:
-
-                if "pull_request" not in issue:
-                    continue
-
-                pull_number = issue["number"]
-                path = urijoin(self.base_url, 'repos', self.owner, self.repository, "pulls", pull_number)
-                r = self.fetch(path)
-                pull = r.text
-                yield pull
+        path = urijoin("pulls")
+        return self.fetch_items(path, payload)
 
     def repo(self):
         """Get repository data"""
@@ -643,14 +638,13 @@ class GiteeClient(HttpClient, RateLimitHandler):
 
         :returns a response object
         """
-        
-        # Add the access_token to the payload 
+        # Add the access_token to the payload
         if self.access_token:
             payload["access_token"] = self.access_token
 
         response = super().fetch(url, payload, headers, method, stream, auth)
 
-        #if not self.from_archive:
+        # if not self.from_archive:
         #    if self._need_check_tokens():
         #        self._choose_best_api_token()
         #    else:
@@ -691,8 +685,8 @@ class GiteeClient(HttpClient, RateLimitHandler):
                 logger.debug("Page: %i/%i" % (page, last_page))
 
     def _set_extra_headers(self):
-            """Set extra headers for session"""
-            headers = {}
-            # set the header for request
-            headers.update({'Content-Type': 'application/json;charset=UTF-8'})
-            return headers
+        """Set extra headers for session"""
+        headers = {}
+        # set the header for request
+        headers.update({'Content-Type': 'application/json;charset=UTF-8'})
+        return headers
