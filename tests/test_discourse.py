@@ -29,6 +29,7 @@ import datetime
 import os
 import shutil
 import unittest
+import copy
 
 import httpretty
 import pkg_resources
@@ -991,6 +992,25 @@ class TestDiscourseClient(unittest.TestCase):
         self.assertDictEqual(req.querystring, {})
         self.assertEqual(req.headers[DiscourseClient.HKEY], 'aaaa')
         self.assertEqual(req.headers[DiscourseClient.HUSER], 'user')
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = {
+            DiscourseClient.HUSER: 'user',
+            DiscourseClient.HKEY: 'aaaa'
+        }
+        c_headers = copy.deepcopy(headers)
+        payload = {}
+
+        san_u, san_h, san_p = DiscourseClient.sanitize_for_archive(url, c_headers, payload)
+        headers.pop(DiscourseClient.HUSER)
+        headers.pop(DiscourseClient.HKEY)
+
+        self.assertEqual(url, san_u)
+        self.assertEqual(headers, san_h)
+        self.assertEqual(payload, san_p)
 
 
 class TestDiscourseCommand(unittest.TestCase):

@@ -65,7 +65,7 @@ class Discourse(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.13.0'
+    version = '0.13.1'
 
     CATEGORIES = [CATEGORY_TOPIC]
     EXTRA_SEARCH_FIELDS = {
@@ -401,6 +401,26 @@ class DiscourseClient(HttpClient):
 
         r = self.fetch(url, payload=params)
         return r.text
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the user
+        and key information before storing/retrieving archived items
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if not headers:
+            return url, headers, payload
+
+        if DiscourseClient.HUSER and DiscourseClient.HKEY in headers:
+            headers.pop(DiscourseClient.HUSER, None)
+            headers.pop(DiscourseClient.HKEY, None)
+
+        return url, headers, payload
 
 
 class DiscourseCommand(BackendCommand):
