@@ -73,7 +73,7 @@ class Mattermost(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.4.0'
+    version = '0.4.1'
 
     CATEGORIES = [CATEGORY_POST]
     EXTRA_SEARCH_FIELDS = {
@@ -409,6 +409,25 @@ class MattermostClient(HttpClient, RateLimitHandler):
             self.HAUTHORIZATION: 'Bearer ' + self.api_token
         }
         return headers
+
+    @staticmethod
+    def sanitize_for_archive(url, headers, payload):
+        """Sanitize payload of a HTTP request by removing the
+        token information before storing/retrieving archived items.
+
+        :param: url: HTTP url request
+        :param: headers: HTTP headers request
+        :param: payload: HTTP payload request
+
+        :returns url, headers and the sanitized payload
+        """
+        if not headers:
+            return url, headers, payload
+
+        if MattermostClient.HAUTHORIZATION in headers:
+            headers.pop(MattermostClient.HAUTHORIZATION, None)
+
+        return url, headers, payload
 
 
 class MattermostCommand(BackendCommand):

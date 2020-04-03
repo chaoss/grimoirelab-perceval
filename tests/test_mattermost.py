@@ -25,6 +25,7 @@
 import datetime
 import os
 import unittest
+import copy
 
 import httpretty
 import pkg_resources
@@ -620,6 +621,21 @@ class TestMattermostClient(unittest.TestCase):
         time_to_reset = client.calculate_time_to_reset()
 
         self.assertEqual(time_to_reset, 0)
+
+    def test_sanitize_for_archive(self):
+        """Test whether the sanitize method works properly"""
+
+        url = "http://example.com"
+        headers = {MattermostClient.HAUTHORIZATION: 'Bearer aaaa'}
+        c_headers = copy.deepcopy(headers)
+        payload = {}
+
+        san_u, san_h, san_p = MattermostClient.sanitize_for_archive(url, c_headers, payload)
+        headers.pop(MattermostClient.HAUTHORIZATION)
+
+        self.assertEqual(url, san_u)
+        self.assertEqual(headers, san_h)
+        self.assertEqual(payload, san_p)
 
 
 if __name__ == "__main__":
