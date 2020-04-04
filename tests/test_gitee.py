@@ -19,7 +19,7 @@
 # Authors:
 #     Willem Jiang <willem.jiang@gmail.com>
 
-#from base import TestCaseBackendArchive
+# from base import TestCaseBackendArchive
 import os
 import unittest
 import httpretty
@@ -29,7 +29,6 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backends.core.gitee import (GiteeClient, GITEE_API_URL)
 
-GITEE_API_URL = "https://gitee.com/api/v5"
 GITEE_REPO_URL = GITEE_API_URL + "/repos/gitee_example/repo"
 GITEE_ISSUES_URL = GITEE_REPO_URL + "/issues"
 GITEE_ISSUE_COMMENTS_URL_1 = GITEE_ISSUES_URL + "/I1DI54/comments"
@@ -53,7 +52,7 @@ class TestGiteeClient(unittest.TestCase):
         self.assertEqual(client.max_retries, GiteeClient.MAX_RETRIES)
         self.assertEqual(client.sleep_time, GiteeClient.DEFAULT_SLEEP_TIME)
         self.assertEqual(client.max_retries, GiteeClient.MAX_RETRIES)
-        self.assertEqual(client.base_url, 'https://gitee.com/api/v5/')
+        self.assertEqual(client.base_url, GITEE_API_URL)
         self.assertTrue(client.ssl_verify)
 
     @httpretty.activate
@@ -107,6 +106,39 @@ class TestGiteeClient(unittest.TestCase):
             'access_token': ['aaa']
         }
         self.assertDictEqual(httpretty.last_request().querystring, expected)
+
+    @httpretty.activate
+    def test_get_two_pages_issues(self):
+        """Test Gitee issues API """
+
+        issues_1 = read_file('data/gitee/gitee_issues_page1')
+        issues_2 = read_file('data/gitee/gitee_issues_page2')
+        pagination_issue_header_1 = {'Link': '<' + GITEE_ISSUES_URL +
+                                     '/?&page=2>; rel="next", <' + GITEE_ISSUES_URL +
+                                     '/?&page=2>; rel="last"',
+                                     'total_count': '2',
+                                     'total_page': '2'
+                                     }
+
+        pagination_issue_header_2 = {'Link': '<' + GITEE_ISSUES_URL +
+                                     '/?&page=1>;  rel="prev", <' + GITEE_ISSUES_URL +
+                                     '/?&page=1>; rel="first"',
+                                     'total_count': '2',
+                                     'total_page': '2'
+                                     }
+
+        httpretty.register_uri(httpretty.GET, GITEE_ISSUES_URL,
+                               body=issues_1, status=200,
+                               forcing_headers=pagination_issue_header_1)
+
+        httpretty.register_uri(httpretty.GET, GITEE_ISSUES_URL + '/?&page=2',
+                               body=issues_2, status=200,
+                               forcing_headers=pagination_issue_header_2)
+
+        client = GiteeClient("gitee_example", "repo", 'aaa', None)
+        raw_issues = [issues for issues in client.issues()]
+        self.assertEqual(raw_issues[0], issues_1)
+        self.assertEqual(raw_issues[1], issues_2)
 
     @httpretty.activate
     def test_issue_comments(self):

@@ -40,7 +40,7 @@ CATEGORY_PULL_REQUEST = "pull_request"
 CATEGORY_REPO = 'repository'
 
 GITEE_URL = "https://gitee.com/"
-GITEE_API_URL = "https://gitee.com/api/v5/"
+GITEE_API_URL = "https://gitee.com/api/v5"
 
 
 # Range before sleeping until rate limit reset
@@ -656,7 +656,7 @@ class GiteeClient(HttpClient, RateLimitHandler):
         """Return the items from gitee API using links pagination"""
 
         page = 0  # current page
-        last_page = None  # last page
+        total_page = None  # total page number
         url_next = urijoin(self.base_url, 'repos', self.owner, self.repository, path)
         logger.debug("Get Gitee paginated items from " + url_next)
 
@@ -665,24 +665,22 @@ class GiteeClient(HttpClient, RateLimitHandler):
         items = response.text
         page += 1
 
-        if 'last' in response.links:
-            last_url = response.links['last']['url']
-            last_page = last_url.split('&page=')[1].split('&')[0]
-            last_page = int(last_page)
-            logger.debug("Page: %i/%i" % (page, last_page))
+        total_page = response.headers.get('total_page')
+        if total_page:
+            total_page = int(total_page[0])
+            logger.debug("Page: %i/%i" % (page, total_page))
 
         while items:
             yield items
-
             items = None
-
             if 'next' in response.links:
                 url_next = response.links['next']['url']
+                print(url_next)
                 response = self.fetch(url_next, payload=payload)
                 page += 1
-
                 items = response.text
-                logger.debug("Page: %i/%i" % (page, last_page))
+                print("page is %i" % (page))
+                logger.debug("Page: %i/%i" % (page, total_page))
 
     def _set_extra_headers(self):
         """Set extra headers for session"""
