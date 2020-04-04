@@ -27,8 +27,9 @@ import pkg_resources
 
 pkg_resources.declare_namespace('perceval.backends')
 
-from perceval.backends.core.gitee import (GiteeClient, GITEE_API_URL)
+from perceval.backends.core.gitee import (GiteeClient)
 
+GITEE_API_URL = "https://gitee.com/api/v5"
 GITEE_REPO_URL = GITEE_API_URL + "/repos/gitee_example/repo"
 GITEE_ISSUES_URL = GITEE_REPO_URL + "/issues"
 GITEE_ISSUE_COMMENTS_URL_1 = GITEE_ISSUES_URL + "/I1DI54/comments"
@@ -185,3 +186,11 @@ class TestGiteeClient(unittest.TestCase):
             'access_token': ['aaa']
         }
         self.assertDictEqual(httpretty.last_request().querystring, expected)
+
+    @httpretty.activate
+    def test_repo(self):
+        repo = read_file('data/gitee/gitee_repo')
+        httpretty.register_uri(httpretty.GET, GITEE_REPO_URL, body=repo, status=200)
+        client = GiteeClient("gitee_example", "repo", 'aaa', None)
+        raw_repo = client.repo()
+        self.assertEqual(raw_repo, repo)

@@ -640,6 +640,8 @@ class GiteeClient(HttpClient, RateLimitHandler):
         """
         # Add the access_token to the payload
         if self.access_token:
+            if not payload:
+                payload = {}
             payload["access_token"] = self.access_token
 
         response = super().fetch(url, payload, headers, method, stream, auth)
