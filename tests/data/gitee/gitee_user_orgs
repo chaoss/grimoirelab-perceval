@@ -1,0 +1,12 @@
+[ 
+  {
+    "id": 5467094,
+    "login": "opensourceway",
+    "url": "https://gitee.com/api/v5/orgs/opensourceway",
+    "avatar_url": "no_portrait.png#opensourceway-opensourceway",
+    "repos_url": "https://gitee.com/api/v5/orgs/opensourceway/repos",
+    "events_url": "https://gitee.com/api/v5/orgs/opensourceway/events",
+    "members_url": "https://gitee.com/api/v5/orgs/opensourceway/members{/member}",
+    "description": "Let everyone easily take practice in opensource community."
+  }
+]

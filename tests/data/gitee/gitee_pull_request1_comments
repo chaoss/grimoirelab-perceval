@@ -1,0 +1,46 @@
+[
+  {
+    "url":"https://gitee.com/api/v5/repos/willemjiang/camel-on-cloud/pulls/comments/2394818",
+    "id":2394818,
+    "path":null,
+    "position":null,
+    "original_position":null,
+    "commit_id":"",
+    "original_commit_id":"",
+    "user":{
+      "id":1335980,
+      "login":"willemjiang",
+      "name":"WillemJiang",
+      "avatar_url":"https://gitee.com/assets/no_portrait.png",
+      "url":"https://gitee.com/api/v5/users/willemjiang",
+      "html_url":"https://gitee.com/willemjiang",
+      "followers_url":"https://gitee.com/api/v5/users/willemjiang/followers",
+      "following_url":"https://gitee.com/api/v5/users/willemjiang/following_url{/other_user}",
+      "gists_url":"https://gitee.com/api/v5/users/willemjiang/gists{/gist_id}",
+      "starred_url":"https://gitee.com/api/v5/users/willemjiang/starred{/owner}{/repo}",
+      "subscriptions_url":"https://gitee.com/api/v5/users/willemjiang/subscriptions",
+      "organizations_url":"https://gitee.com/api/v5/users/willemjiang/orgs",
+      "repos_url":"https://gitee.com/api/v5/users/willemjiang/repos",
+      "events_url":"https://gitee.com/api/v5/users/willemjiang/events{/privacy}",
+      "received_events_url":"https://gitee.com/api/v5/users/willemjiang/received_events",
+      "type":"User",
+      "site_admin":false
+    },
+    "created_at":"2020-04-04T12:51:00+08:00",
+    "updated_at":"2020-04-04T12:51:00+08:00",
+    "body":"Add some comments here.",
+    "html_url":"https://gitee.com/willemjiang/camel-on-cloud/pulls/1#note_2394818",
+    "pull_request_url":"https://gitee.com/api/v5/repos/willemjiang/camel-on-cloud/pulls/1",
+    "_links":{
+      "self":{
+        "href":"https://gitee.com/api/v5/repos/willemjiang/camel-on-cloud/pulls/comments/2394818"
+      },
+      "html":{
+        "href":"https://gitee.com/willemjiang/camel-on-cloud/pulls/1#note_2394818"
+      },
+      "pull_request":{
+        "href":"https://gitee.com/api/v5/repos/willemjiang/camel-on-cloud/pulls/1"
+      }
+    }
+  }
+]
