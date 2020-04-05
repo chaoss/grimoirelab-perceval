@@ -107,7 +107,17 @@ class TestGiteeBackend(unittest.TestCase):
         gitee = Gitee("gitee_example", "repo", ["aaa"])
         issues = [issues for issues in gitee.fetch(from_date=from_date)]
 
-        self.assertEquals(len(issues), 1)
+        self.assertEqual(len(issues), 1)
+        issue = issues[0]
+        self.assertEqual(issue['origin'], 'https://gitee.com/gitee_example/repo')
+        self.assertEqual(issue['uuid'], 'e954a17216b20e5b11c7eef99df06aefa8b8b974')
+        self.assertEqual(issue['updated_on'], 1585704775.0)
+        self.assertEqual(issue['tag'], 'https://gitee.com/gitee_example/repo')
+        self.assertEqual(issue['data']['assignee_data']['login'], 'willemjiang')
+        # TODO to add collaborators information
+        # self.assertEqual(issue['data']['collaborators_data'][0]['login'], 'willemjiang')
+        self.assertEqual(len(issue['data']['comments_data']), 1)
+        self.assertEqual(issue['data']['comments_data'][0]['user_data']['login'], 'willemjiang')
 
     # @httpretty.activate
     # def test_fetch_pulls(self):

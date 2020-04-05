@@ -331,8 +331,6 @@ class Gitee(Backend):
             for comment in json.loads(raw_comments):
                 comment_id = comment.get('id')
                 comment['user_data'] = self.__get_user(comment['user']['login'])
-                comment['reactions_data'] = \
-                    self.__get_issue_comment_reactions(comment_id, comment['reactions']['total_count'])
                 comments.append(comment)
 
         return comments

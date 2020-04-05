@@ -146,7 +146,7 @@
     "deadline":null,
     "finished_at":null,
     "scheduled_time":0.0,
-    "comments":0,
+    "comments":1,
     "issue_type":"任务",
     "program":null,
     "security_hole":false
