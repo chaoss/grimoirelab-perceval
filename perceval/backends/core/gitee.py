@@ -58,7 +58,8 @@ DEFAULT_SLEEP_TIME = 1
 MAX_RETRIES = 5
 
 TARGET_ISSUE_FIELDS = ['user', 'assignee', 'collaborators', 'comments']
-TARGET_PULL_FIELDS = ['user', 'review_comments', 'requested_reviewers', "merged_by", "commits"]
+TARGET_PULL_FIELDS = ['user', 'assignees', 'number']
+# 'review_comments', 'requested_reviewers',  "merged_by", "commits"
 
 logger = logging.getLogger(__name__)
 
@@ -292,16 +293,14 @@ class Gitee(Backend):
     def __fetch_pull_requests(self, from_date, to_date):
         """Fetch the pull requests"""
 
-        raw_pulls = self.client.pulls(from_date=from_date)
-        for raw_pull in raw_pulls:
-            pull = json.loads(raw_pull)
-
-            if str_to_datetime(pull['updated_at']) > to_date:
-                return
+        raw_pulls_groups = self.client.pulls(from_date=from_date)
+        for raw_pulls in raw_pulls_groups:
+            pulls = json.loads(raw_pulls)
+            for pull in pulls:
+                if str_to_datetime(pull['updated_at']) > to_date:
+                    return
 
             self.__init_extra_pull_fields(pull)
-
-            pull['reviews_data'] = self.__get_pull_reviews(pull['number'])
 
             for field in TARGET_PULL_FIELDS:
                 if not pull[field]:
@@ -309,15 +308,15 @@ class Gitee(Backend):
 
                 if field == 'user':
                     pull[field + '_data'] = self.__get_user(pull[field]['login'])
-                elif field == 'merged_by':
-                    pull[field + '_data'] = self.__get_user(pull[field]['login'])
-                elif field == 'review_comments':
-                    pull[field + '_data'] = self.__get_pull_review_comments(pull['number'])
-                elif field == 'requested_reviewers':
-                    pull[field + '_data'] = self.__get_pull_requested_reviewers(pull['number'])
-                elif field == 'commits':
-                    pull[field + '_data'] = self.__get_pull_commits(pull['number'])
 
+                # TODO we need to find a way to find out merged_by information
+                # elif field == 'merged_by':
+                #    pull[field + '_data'] = self.__get_user(pull[field]['login'])
+
+                # TODO need to check if we need to add the tester information
+                elif field == 'number':
+                    pull['review_comments_data'] = self.__get_pull_review_comments(pull['number'])
+                    pull['commits_data'] = self.__get_pull_commits(pull['number'])
             yield pull
 
     def __get_issue_comments(self, issue_number):
@@ -343,29 +342,6 @@ class Gitee(Backend):
             assignees.append(self.__get_user(ra['login']))
 
         return assignees
-
-    def __get_pull_requested_reviewers(self, pr_number):
-        """Get pull request requested reviewers"""
-
-        requested_reviewers = []
-        group_requested_reviewers = self.client.pull_requested_reviewers(pr_number)
-
-        for raw_requested_reviewers in group_requested_reviewers:
-            group_requested_reviewers = json.loads(raw_requested_reviewers)
-
-            # GH Enterprise returns list of users instead of dict (issue #523)
-            if isinstance(group_requested_reviewers, list):
-                group_requested_reviewers = {'users': group_requested_reviewers}
-
-            for requested_reviewer in group_requested_reviewers['users']:
-                if requested_reviewer and 'login' in requested_reviewer:
-                    user_data = self.__get_user(requested_reviewer['login'])
-                    requested_reviewers.append(user_data)
-                else:
-                    logger.warning('Impossible to identify requested reviewer for pull request %s',
-                                   pr_number)
-
-        return requested_reviewers
 
     def __get_pull_commits(self, pr_number):
         """Get pull request commit hashes"""
@@ -398,9 +374,6 @@ class Gitee(Backend):
                     comment['user_data'] = None
                 else:
                     comment['user_data'] = self.__get_user(user['login'])
-
-                comment['reactions_data'] = \
-                    self.__get_pull_review_comment_reactions(comment_id, comment['reactions']['total_count'])
                 comments.append(comment)
 
         return comments
@@ -458,7 +431,6 @@ class Gitee(Backend):
         pull['user_data'] = {}
         pull['review_comments_data'] = {}
         pull['reviews_data'] = []
-        pull['requested_reviewers_data'] = []
         pull['merged_by_data'] = []
         pull['commits_data'] = []
 
@@ -604,18 +576,6 @@ class GiteeClient(HttpClient, RateLimitHandler):
         comments_url = urijoin("pulls", str(pr_number), "comments")
         return self.fetch_items(comments_url, payload)
 
-    def pull_reviews(self, pr_number):
-        """Get pull request reviews"""
-
-        payload = {
-            'per_page': PER_PAGE,
-            'direction': 'asc',
-            'sort': 'updated'
-        }
-
-        reviews_url = urijoin("pulls", str(pr_number), "reviews")
-        return self.fetch_items(reviews_url, payload)
-
     def user(self, login):
         """Get the user information and update the user cache"""
         user = None
@@ -705,11 +665,9 @@ class GiteeClient(HttpClient, RateLimitHandler):
             items = None
             if 'next' in response.links:
                 url_next = response.links['next']['url']
-                print(url_next)
                 response = self.fetch(url_next, payload=payload)
                 page += 1
                 items = response.text
-                print("page is %i" % (page))
                 logger.debug("Page: %i/%i" % (page, total_page))
 
     def _set_extra_headers(self):
