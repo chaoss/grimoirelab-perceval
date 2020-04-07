@@ -1,0 +1,53 @@
+[{
+    '_id': 'RMnDyzfePfhCpwq5K',
+    'rid': 'GENERAL',
+    'msg': "https://chat.frigbo.com is't working :DancingBanana:",
+    'ts': '2020-04-06T16:51:21.311Z',
+    'u': {'_id': 'mYYjeTe6BSuApydQu',
+          'username': 'ualtun',
+          'name': 'Umit Altun'},
+    '_updatedAt': '2020-04-06T16:51:23.226Z',
+    'urls': [{'url': 'https://chat.frigbo.com', '
+               meta': {'pageTitle': 'Frigbo', 'msapplicationTileImage': 'assets/tile_144.png', 'msapplicationConfig': 'images/browserconfig.xml', 'ogImage': 'assets/favicon_512.png', 'twitterImage': 'assets/favicon_512.png', 'appleMobileWebAppTitle': 'Frigbo'},
+               'headers': {'contentType': 'text/html; charset=utf-8'}, 'parsedUrl': {'host': 'chat.frigbo.com', 'hash': None, 'pathname': '/', 'protocol': 'https:', 'port': None, 'query': '_escaped_fragment_=', 'search': '?_escaped_fragment_=', 'hostname': 'chat.frigbo.com'}
+               }],
+     'mentions': [],
+     'channels': []
+ },
+ {
+    '_id': 'JXtqPMtFPFNuu44XA',
+    't': 'uj',
+    'rid': 'GENERAL',
+    'ts': '2020-04-06T16:55:02.354Z',
+    'msg': 'hmarcuse',
+    'u': {'_id': 'MtXvMtT4JRYwBEdGA',
+        'username': 'hmarcuse'},
+    'groupable': False,
+    '_updatedAt': '2020-04-06T16:55:02.354Z'
+},
+{
+    '_id': 'gYP2RcZpXLgB8AGo6',
+    't': 'discussion-created',
+    'rid': 'GENERAL',
+    'ts': '2020-02-06T16:49:12.662Z',
+    'msg': 'Plappointments ',
+    'u': {'_id': 'Kce278HSvWbYLQzSk',
+          'username': 'Matt_Pulliam'},
+    'groupable': False,
+     'drid': 'aGSDv6pspuPK7BXni',
+     'attachments': [],
+     '_updatedAt': '2020-04-06T16:55:17.221Z',
+     'dcount': 576,
+     'dlm': '2020-04-06T16:55:17.053Z'
+},
+{
+    '_id': 'qi27AXKX7gzDQYjnn',
+    't': 'uj',
+    'rid': 'GENERAL',
+    'ts': '2020-04-06T16:55:29.586Z',
+    'msg': 'Oric',
+    'u': {'_id': 'pPE8Y7xAxJcDQn56Z',
+          'username': 'Oric'},
+    'groupable': False,
+    '_updatedAt': '2020-04-06T16:55:29.586Z'
+}]

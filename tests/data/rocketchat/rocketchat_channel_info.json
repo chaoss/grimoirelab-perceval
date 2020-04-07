@@ -1,0 +1,47 @@
+{
+  "channel": {
+    "_id": "GENERAL",
+    "_updatedAt": "2020-03-27T17:23:11.583Z",
+    "name": "general",
+    "t": "c",
+    "default": "True",
+    "lm": "2020-03-27T17:14:09.988Z",
+    "msgs": 685499,
+    "topic": "Community support in [#support](https://open.rocket.chat/channel/support). Discussions in our [forums](https://forums.rocket.chat/).  Find jobs in [#jobs](https://open.rocket.chat/channel/jobs)",
+    "jitsiTimeout": "2020-03-26T10:23:42.960Z",
+    "muted": ["geekgonecrazy",
+               "alexa32",
+               "fixedgames2088",
+               "terrygarry1",
+               "petersmid40"],
+    "announcement": "Please review our [Code of Conduct](https://rocket.chat/code-of-conduct). Violations, including unwanted solicitations, will not be tolerated.",
+    "usersCount": 299000,
+    "unmuted": ["singli"],
+    "lastMessage": {
+        "_id": "GTBawQhJrGpHosvQD",
+       "alias": "ggazzo",
+       "msg": "Pull request synchronized",
+       "attachments": [{
+           "ts": "1970-01-01T00:00:00.000Z",
+           "author_name": "#17043 - [NEW] Directory page react",
+           "author_link": "https://github.com/RocketChat/Rocket.Chat/pull/17043",
+           "author_icon": "https://cloud.githubusercontent.com/assets/51996/13893698/c047133c-ed2e-11e5-9233-13622bcb9b7b.png"
+         }],
+       "parseUrls": "False",
+       "bot": {"i": "QyWmDsdtdyzvkjucS"},
+       "groupable": "False",
+       "avatar": "https://avatars2.githubusercontent.com/u/5263975?v=4",
+       "ts": "2020-03-27T17:14:09.988Z",
+       "u": {
+              "_id": "rocket.cat",
+              "username": "rocket.cat",
+              "name": "Rocket.Cat"
+       },
+       "rid": "GENERAL",
+       "_updatedAt": "2020-03-27T17:14:10.035Z",
+       "mentions": [],
+       "channels": []
+    }
+  },
+ "success": "True"
+}
