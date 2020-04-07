@@ -40,7 +40,7 @@ CATEGORY_REPO = 'repository'
 
 GITEE_URL = "https://gitee.com/"
 GITEE_API_URL = "https://gitee.com/api/v5"
-
+GITEE_REFRESH_TOKEN_URL = "https://gitee.com/oauth/token"
 
 # Range before sleeping until rate limit reset
 MIN_RATE_LIMIT = 10
@@ -456,7 +456,7 @@ class GiteeClient(HttpClient, RateLimitHandler):
     """
     EXTRA_STATUS_FORCELIST = [403, 500, 502, 503]
 
-    _users = {}       # users cache
+    _users = {}  # users cache
     _users_orgs = {}  # users orgs cache
 
     def __init__(self, owner, repository, tokens,
@@ -481,6 +481,8 @@ class GiteeClient(HttpClient, RateLimitHandler):
                          extra_headers=self._set_extra_headers(),
                          extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
+        # refresh the access token
+        self._refresh_access_token()
 
     def issue_comments(self, issue_number):
         """Get the issue comments """
@@ -675,6 +677,13 @@ class GiteeClient(HttpClient, RateLimitHandler):
         # set the header for request
         headers.update({'Content-Type': 'application/json;charset=UTF-8'})
         return headers
+
+    def _refresh_access_token(self):
+        """Send a refresh post access to the Gitee Server"""
+        if self.access_token:
+            url = GITEE_REFRESH_TOKEN_URL + "?grant_type=refresh_token&refresh_token=" + self.access_token
+            logger.info("Refresh the access_token for Gitee API")
+            self.session.post(url, data=None, headers=None, stream=False, auth=None)
 
 
 class GiteeCommand(BackendCommand):

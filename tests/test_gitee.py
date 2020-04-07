@@ -26,7 +26,7 @@ import httpretty
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.gitee import (Gitee, GiteeClient,
-                                          CATEGORY_PULL_REQUEST, GiteeCommand)
+                                          CATEGORY_PULL_REQUEST, GiteeCommand, GITEE_REFRESH_TOKEN_URL)
 
 from base import TestCaseBackendArchive
 from perceval.utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
@@ -61,6 +61,7 @@ def setup_gitee_pull_request_services():
 
 
 def setup_gitee_basic_services():
+    setup_refresh_access_token_service()
     orgs = read_file('data/gitee/gitee_user_orgs')
     httpretty.register_uri(httpretty.GET, GITEE_USER_ORGS_URL, body=orgs, status=200)
 
@@ -76,15 +77,15 @@ def __setup_gitee_issue_services():
     issues2 = read_file('data/gitee/gitee_issues2')
 
     pagination_issue_header_1 = {'Link': '<' + GITEE_ISSUES_URL +
-                                 '/?&page=2>; rel="next", <' + GITEE_ISSUES_URL +
-                                 '/?&page=2>; rel="last"',
+                                         '/?&page=2>; rel="next", <' + GITEE_ISSUES_URL +
+                                         '/?&page=2>; rel="last"',
                                  'total_count': '2',
                                  'total_page': '2'
                                  }
 
     pagination_issue_header_2 = {'Link': '<' + GITEE_ISSUES_URL +
-                                 '/?&page=1>;  rel="prev", <' + GITEE_ISSUES_URL +
-                                 '/?&page=1>; rel="first"',
+                                         '/?&page=1>;  rel="prev", <' + GITEE_ISSUES_URL +
+                                         '/?&page=1>; rel="first"',
                                  'total_count': '2',
                                  'total_page': '2'
                                  }
@@ -136,6 +137,10 @@ def __setup_gitee_pull_request_services():
                            })
 
 
+def setup_refresh_access_token_service():
+    httpretty.register_uri(httpretty.POST, GITEE_REFRESH_TOKEN_URL, body="", status=200)
+
+
 class TestGiteeBackend(unittest.TestCase):
     """Gitee Backend tests"""
 
@@ -150,6 +155,7 @@ class TestGiteeBackend(unittest.TestCase):
     @httpretty.activate
     def test_fetch_empty(self):
         """ Test when get a empty issues API call """
+        setup_gitee_issue_services()
         empty_issue = '[]'
         httpretty.register_uri(httpretty.GET, GITEE_ISSUES_URL,
                                body=empty_issue, status=200,
@@ -281,8 +287,10 @@ class TestGiteeBackendArchive(TestCaseBackendArchive):
 class TestGiteeClient(unittest.TestCase):
     """Gitee API client tests"""
 
+    @httpretty.activate
     def test_init(self):
         """ Test for the initialization of GiteeClient """
+        setup_refresh_access_token_service()
         client = GiteeClient('gitee_example', 'repo', ['aaa'])
         self.assertEqual(client.owner, 'gitee_example')
         self.assertEqual(client.repository, 'repo')
@@ -295,7 +303,7 @@ class TestGiteeClient(unittest.TestCase):
     @httpretty.activate
     def test_get_empty_issues(self):
         """ Test when issue is empty API call """
-
+        setup_refresh_access_token_service()
         empty_issue = '[]'
         httpretty.register_uri(httpretty.GET, GITEE_ISSUES_URL,
                                body=empty_issue, status=200,
@@ -319,9 +327,37 @@ class TestGiteeClient(unittest.TestCase):
         self.assertDictEqual(httpretty.last_request().querystring, expected)
 
     @httpretty.activate
+    def test_get_refresh_token(self):
+        """ Test when issue is empty API call """
+        setup_refresh_access_token_service()
+        empty_issue = '[]'
+        httpretty.register_uri(httpretty.GET, GITEE_ISSUES_URL,
+                               body=empty_issue, status=200,
+                               forcing_headers={
+                                   "total_count": "0",
+                                   "total_page": "0"
+                               })
+
+        httpretty.register_uri(httpretty.POST, GITEE_REFRESH_TOKEN_URL, body=empty_issue, status=200)
+
+        client = GiteeClient('gitee_example', 'repo', ['aaa'])
+        raw_issues = [issues for issues in client.issues()]
+        self.assertEqual(raw_issues[0], empty_issue)
+
+        # Check requests parameter
+        expected = {
+            'per_page': ['100'],
+            'state': ['all'],
+            'direction': ['asc'],
+            'sort': ['updated'],
+            'access_token': ['aaa']
+        }
+        self.assertDictEqual(httpretty.last_request().querystring, expected)
+
+    @httpretty.activate
     def test_get_issues(self):
         """Test Gitee issues API """
-
+        setup_refresh_access_token_service()
         issues = read_file('data/gitee/gitee_issues1')
         httpretty.register_uri(httpretty.GET, GITEE_ISSUES_URL,
                                body=issues, status=200,
@@ -347,19 +383,19 @@ class TestGiteeClient(unittest.TestCase):
     @httpretty.activate
     def test_get_two_pages_issues(self):
         """Test Gitee issues API """
-
+        setup_refresh_access_token_service()
         issues_1 = read_file('data/gitee/gitee_issues1')
         issues_2 = read_file('data/gitee/gitee_issues2')
         pagination_issue_header_1 = {'Link': '<' + GITEE_ISSUES_URL +
-                                     '/?&page=2>; rel="next", <' + GITEE_ISSUES_URL +
-                                     '/?&page=2>; rel="last"',
+                                             '/?&page=2>; rel="next", <' + GITEE_ISSUES_URL +
+                                             '/?&page=2>; rel="last"',
                                      'total_count': '2',
                                      'total_page': '2'
                                      }
 
         pagination_issue_header_2 = {'Link': '<' + GITEE_ISSUES_URL +
-                                     '/?&page=1>;  rel="prev", <' + GITEE_ISSUES_URL +
-                                     '/?&page=1>; rel="first"',
+                                             '/?&page=1>;  rel="prev", <' + GITEE_ISSUES_URL +
+                                             '/?&page=1>; rel="first"',
                                      'total_count': '2',
                                      'total_page': '2'
                                      }
@@ -380,7 +416,7 @@ class TestGiteeClient(unittest.TestCase):
     @httpretty.activate
     def test_issue_comments(self):
         """Test Gitee issue comments API """
-
+        setup_refresh_access_token_service()
         issue_comments = read_file('data/gitee/gitee_issue1_comments')
         httpretty.register_uri(httpretty.GET, GITEE_ISSUE_COMMENTS_URL_1,
                                body=issue_comments, status=200,
@@ -402,6 +438,7 @@ class TestGiteeClient(unittest.TestCase):
 
     @httpretty.activate
     def test_pulls(self):
+        setup_refresh_access_token_service()
         pull_request = read_file('data/gitee/gitee_pull_request1')
         httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_URL,
                                body=pull_request, status=200,
@@ -425,6 +462,7 @@ class TestGiteeClient(unittest.TestCase):
 
     @httpretty.activate
     def test_repo(self):
+        setup_refresh_access_token_service()
         repo = read_file('data/gitee/gitee_repo')
         httpretty.register_uri(httpretty.GET, GITEE_REPO_URL, body=repo, status=200)
         client = GiteeClient("gitee_example", "repo", ['aaa'], None)
@@ -433,6 +471,7 @@ class TestGiteeClient(unittest.TestCase):
 
     @httpretty.activate
     def test_user_orgs(self):
+        setup_refresh_access_token_service()
         orgs = read_file('data/gitee/gitee_user_orgs')
         httpretty.register_uri(httpretty.GET, GITEE_USER_ORGS_URL, body=orgs, status=200)
         client = GiteeClient("gitee_example", "repo", ['aaa'], None)
@@ -441,6 +480,7 @@ class TestGiteeClient(unittest.TestCase):
 
     @httpretty.activate
     def test_get_user(self):
+        setup_refresh_access_token_service()
         user = read_file('data/gitee/gitee_login')
         httpretty.register_uri(httpretty.GET, GITEE_USER_URL, body=user, status=200)
         client = GiteeClient("gitee_example", "repo", ['aaa'], None)
