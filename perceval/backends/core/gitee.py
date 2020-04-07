@@ -24,7 +24,6 @@ import logging
 
 import requests
 from grimoirelab_toolkit.datetime import (datetime_to_utc,
-                                          datetime_utcnow,
                                           str_to_datetime)
 from grimoirelab_toolkit.uris import urijoin
 

@@ -208,16 +208,15 @@ class TestGiteeBackend(unittest.TestCase):
         self.assertEqual(len(issues), 1)
         issue = issues[0]
         self.assertEqual(issue['origin'], 'https://gitee.com/gitee_example/repo')
-        self.assertEqual(issue['uuid'], '3e5e90b1f0862c1b8a1adb52bc961e8a77ec2431')
-        self.assertEqual(issue['updated_on'], 1585710411.0)
+        self.assertEqual(issue['uuid'], 'e954a17216b20e5b11c7eef99df06aefa8b8b974')
+        self.assertEqual(issue['updated_on'], 1577842375.0)
         self.assertEqual(issue['tag'], 'https://gitee.com/gitee_example/repo')
         self.assertEqual(issue['data']['assignee_data']['login'], 'willemjiang')
-        self.assertEqual(issue['data']['title'], 'Second example issue')
+        self.assertEqual(issue['data']['title'], 'First example issue')
         # TODO to add collaborators information
         # self.assertEqual(issue['data']['collaborators_data'][0]['login'], 'willemjiang')
         self.assertEqual(len(issue['data']['comments_data']), 1)
         self.assertEqual(issue['data']['comments_data'][0]['user_data']['login'], 'willemjiang')
-        self.assertEqual(issue['data']['comments_data'][0]['target']['issue']['number'], 'I1DAQF')
 
     @httpretty.activate
     def test_fetch_pulls(self):
@@ -278,12 +277,13 @@ class TestGiteeBackendArchive(TestCaseBackendArchive):
                                })
         self._test_fetch_from_archive()
 
+
 class TestGiteeClient(unittest.TestCase):
     """Gitee API client tests"""
 
     def test_init(self):
         """ Test for the initialization of GiteeClient """
-        client = GiteeClient('gitee_example', 'repo', 'aaa')
+        client = GiteeClient('gitee_example', 'repo', ['aaa'])
         self.assertEqual(client.owner, 'gitee_example')
         self.assertEqual(client.repository, 'repo')
         self.assertEqual(client.max_retries, GiteeClient.MAX_RETRIES)
@@ -304,7 +304,7 @@ class TestGiteeClient(unittest.TestCase):
                                    "total_page": "0"
                                })
 
-        client = GiteeClient('gitee_example', 'repo', 'aaa')
+        client = GiteeClient('gitee_example', 'repo', ['aaa'])
         raw_issues = [issues for issues in client.issues()]
         self.assertEqual(raw_issues[0], empty_issue)
 
@@ -330,7 +330,7 @@ class TestGiteeClient(unittest.TestCase):
                                    "total_page": "1"
                                })
 
-        client = GiteeClient("gitee_example", "repo", 'aaa', None)
+        client = GiteeClient("gitee_example", "repo", ['aaa'], None)
         raw_issues = [issues for issues in client.issues()]
         self.assertEqual(raw_issues[0], issues)
 
@@ -372,7 +372,7 @@ class TestGiteeClient(unittest.TestCase):
                                body=issues_2, status=200,
                                forcing_headers=pagination_issue_header_2)
 
-        client = GiteeClient("gitee_example", "repo", 'aaa', None)
+        client = GiteeClient("gitee_example", "repo", ['aaa'], None)
         raw_issues = [issues for issues in client.issues()]
         self.assertEqual(raw_issues[0], issues_1)
         self.assertEqual(raw_issues[1], issues_2)
@@ -389,7 +389,7 @@ class TestGiteeClient(unittest.TestCase):
                                    "total_page": "1"
                                })
 
-        client = GiteeClient("gitee_example", "repo", 'aaa', None)
+        client = GiteeClient("gitee_example", "repo", ['aaa'], None)
         raw_issue_comments = [comments for comments in client.issue_comments("I1DACG")]
         self.assertEqual(raw_issue_comments[0], issue_comments)
 
@@ -409,7 +409,7 @@ class TestGiteeClient(unittest.TestCase):
                                    "total_count": "1",
                                    "total_page": "1"
                                })
-        client = GiteeClient("gitee_example", "repo", 'aaa', None)
+        client = GiteeClient("gitee_example", "repo", ['aaa'], None)
         raw_pulls = [pulls for pulls in client.pulls()]
         self.assertEqual(raw_pulls[0], pull_request)
 
@@ -427,7 +427,7 @@ class TestGiteeClient(unittest.TestCase):
     def test_repo(self):
         repo = read_file('data/gitee/gitee_repo')
         httpretty.register_uri(httpretty.GET, GITEE_REPO_URL, body=repo, status=200)
-        client = GiteeClient("gitee_example", "repo", 'aaa', None)
+        client = GiteeClient("gitee_example", "repo", ['aaa'], None)
         raw_repo = client.repo()
         self.assertEqual(raw_repo, repo)
 
@@ -435,7 +435,7 @@ class TestGiteeClient(unittest.TestCase):
     def test_user_orgs(self):
         orgs = read_file('data/gitee/gitee_user_orgs')
         httpretty.register_uri(httpretty.GET, GITEE_USER_ORGS_URL, body=orgs, status=200)
-        client = GiteeClient("gitee_example", "repo", 'aaa', None)
+        client = GiteeClient("gitee_example", "repo", ['aaa'], None)
         raw_orgs = client.user_orgs("willemjiang")
         self.assertEqual(raw_orgs, orgs)
 
@@ -443,9 +443,10 @@ class TestGiteeClient(unittest.TestCase):
     def test_get_user(self):
         user = read_file('data/gitee/gitee_login')
         httpretty.register_uri(httpretty.GET, GITEE_USER_URL, body=user, status=200)
-        client = GiteeClient("gitee_example", "repo", 'aaa', None)
+        client = GiteeClient("gitee_example", "repo", ['aaa'], None)
         raw_user = client.user("willemjiang")
         self.assertEqual(raw_user, user)
+
 
 class TestGiteeCommand(unittest.TestCase):
     """GitHubCommand unit tests"""
