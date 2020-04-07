@@ -24,10 +24,12 @@ import os
 import unittest
 import httpretty
 
+from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.gitee import (Gitee, GiteeClient,
-                                          CATEGORY_PULL_REQUEST)
+                                          CATEGORY_PULL_REQUEST, GiteeCommand)
 
 from base import TestCaseBackendArchive
+from perceval.utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 
 GITEE_API_URL = "https://gitee.com/api/v5"
 GITEE_REPO_URL = GITEE_API_URL + "/repos/gitee_example/repo"
@@ -444,3 +446,73 @@ class TestGiteeClient(unittest.TestCase):
         client = GiteeClient("gitee_example", "repo", 'aaa', None)
         raw_user = client.user("willemjiang")
         self.assertEqual(raw_user, user)
+
+class TestGiteeCommand(unittest.TestCase):
+    """GitHubCommand unit tests"""
+
+    def test_backend_class(self):
+        """Test if the backend class is GitHub"""
+
+        self.assertIs(GiteeCommand.BACKEND, Gitee)
+
+    def test_setup_cmd_parser(self):
+        """Test if it parser object is correctly initialized"""
+
+        parser = GiteeCommand.setup_cmd_parser()
+        self.assertIsInstance(parser, BackendCommandArgumentParser)
+        self.assertEqual(parser._backend, Gitee)
+
+        args = ['--sleep-for-rate',
+                '--min-rate-to-sleep', '1',
+                '--max-retries', '5',
+                '--max-items', '10',
+                '--sleep-time', '10',
+                '--tag', 'test', '--no-archive',
+                '--api-token', 'abcdefgh', 'ijklmnop',
+                '--from-date', '1970-01-01',
+                '--to-date', '2100-01-01',
+                'gitee_example', 'repo']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.owner, 'gitee_example')
+        self.assertEqual(parsed_args.repository, 'repo')
+        self.assertTrue(parsed_args.sleep_for_rate)
+        self.assertEqual(parsed_args.max_retries, 5)
+        self.assertEqual(parsed_args.max_items, 10)
+        self.assertEqual(parsed_args.sleep_time, 10)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.to_date, DEFAULT_LAST_DATETIME)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.api_token, ['abcdefgh', 'ijklmnop'])
+
+        args = ['--sleep-for-rate',
+                '--min-rate-to-sleep', '1',
+                '--max-retries', '5',
+                '--max-items', '10',
+                '--sleep-time', '10',
+                '--tag', 'test', '--no-archive',
+                '--api-token', 'abcdefgh', 'ijklmnop',
+                '--from-date', '1970-01-01',
+                '--to-date', '2100-01-01',
+                '--no-ssl-verify',
+                'gitee_example', 'repo']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.owner, 'gitee_example')
+        self.assertEqual(parsed_args.repository, 'repo')
+        self.assertTrue(parsed_args.sleep_for_rate)
+        self.assertEqual(parsed_args.max_retries, 5)
+        self.assertEqual(parsed_args.max_items, 10)
+        self.assertEqual(parsed_args.sleep_time, 10)
+        self.assertEqual(parsed_args.tag, 'test')
+        self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.to_date, DEFAULT_LAST_DATETIME)
+        self.assertTrue(parsed_args.no_archive)
+        self.assertFalse(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.api_token, ['abcdefgh', 'ijklmnop'])
+
+
+if __name__ == "__main__":
+    unittest.main(warnings='ignore')

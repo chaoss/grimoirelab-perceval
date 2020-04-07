@@ -86,9 +86,7 @@ class Gitee(Backend):
         ['assignees_data'],
         ['requested_reviewers_data'],
         ['comments_data', 'user_data'],
-        ['comments_data', 'user_data'],
         ['reviews_data', 'user_data'],
-        ['review_comments_data', 'user_data'],
         ['review_comments_data', 'user_data']
     ]
 
@@ -462,13 +460,15 @@ class GiteeClient(HttpClient, RateLimitHandler):
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
-    def __init__(self, owner, repository, token,
+    def __init__(self, owner, repository, tokens,
                  base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
                  max_items=MAX_CATEGORY_ITEMS_PER_PAGE, archive=None, from_archive=False, ssl_verify=True):
         self.owner = owner
         self.repository = repository
-        self.access_token = token
+        # Just take the first token
+        if tokens:
+            self.access_token = tokens[0]
         # Gitee doesn't have rate limit check yet
         self.last_rate_limit_checked = None
         self.max_items = max_items
@@ -676,3 +676,52 @@ class GiteeClient(HttpClient, RateLimitHandler):
         # set the header for request
         headers.update({'Content-Type': 'application/json;charset=UTF-8'})
         return headers
+
+
+class GiteeCommand(BackendCommand):
+    """Class to run GitHub backend from the command line."""
+
+    BACKEND = Gitee
+
+    @classmethod
+    def setup_cmd_parser(cls):
+        """Returns the GitHub argument parser."""
+
+        parser = BackendCommandArgumentParser(cls.BACKEND,
+                                              from_date=True,
+                                              to_date=True,
+                                              token_auth=False,
+                                              archive=True,
+                                              ssl_verify=True)
+        # Gitee options
+        group = parser.parser.add_argument_group('Gitee arguments')
+        group.add_argument('--sleep-for-rate', dest='sleep_for_rate',
+                           action='store_true',
+                           help="sleep for getting more rate")
+        group.add_argument('--min-rate-to-sleep', dest='min_rate_to_sleep',
+                           default=MIN_RATE_LIMIT, type=int,
+                           help="sleep until reset when the rate limit reaches this value")
+        # Gitee token(s)
+        group.add_argument('-t', '--api-token', dest='api_token',
+                           nargs='+',
+                           default=[],
+                           help="list of Gitee API tokens")
+
+        # Generic client options
+        group.add_argument('--max-items', dest='max_items',
+                           default=MAX_CATEGORY_ITEMS_PER_PAGE, type=int,
+                           help="Max number of category items per query.")
+        group.add_argument('--max-retries', dest='max_retries',
+                           default=MAX_RETRIES, type=int,
+                           help="number of API call retries")
+        group.add_argument('--sleep-time', dest='sleep_time',
+                           default=DEFAULT_SLEEP_TIME, type=int,
+                           help="sleeping time between API call retries")
+
+        # Positional arguments
+        parser.parser.add_argument('owner',
+                                   help="Gitee owner")
+        parser.parser.add_argument('repository',
+                                   help="Gitee repository")
+
+        return parser
