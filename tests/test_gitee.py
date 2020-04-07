@@ -26,7 +26,7 @@ import httpretty
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.gitee import (Gitee, GiteeClient,
-                                          CATEGORY_PULL_REQUEST, GiteeCommand, GITEE_REFRESH_TOKEN_URL)
+                                          CATEGORY_PULL_REQUEST, GiteeCommand, GITEE_REFRESH_TOKEN_URL, CATEGORY_REPO)
 
 from base import TestCaseBackendArchive
 from perceval.utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
@@ -167,7 +167,7 @@ class TestGiteeBackend(unittest.TestCase):
         from_date = datetime.datetime(2019, 1, 1)
         gitee = Gitee("gitee_example", "repo", ["aaa"])
 
-        issues = [issues for issues in gitee.fetch(from_date=from_date)]
+        issues = [issues for issues in gitee.fetch(from_date=from_date, to_date=None)]
 
         self.assertEqual(len(issues), 0)
 
@@ -225,10 +225,26 @@ class TestGiteeBackend(unittest.TestCase):
         self.assertEqual(issue['data']['comments_data'][0]['user_data']['login'], 'willemjiang')
 
     @httpretty.activate
+    def test_fetch_repo(self):
+        setup_gitee_basic_services()
+        gitee = Gitee("gitee_example", "repo", "[aaa]")
+        repos = [repo for repo in gitee.fetch(category=CATEGORY_REPO)]
+
+        self.assertEqual(len(repos), 1)
+        repo = repos[0]
+        self.assertEqual(repo['category'], 'repository')
+        self.assertEqual(repo['data']['name'], "camel-on-cloud")
+        self.assertEqual(repo['data']['forks_count'], 1)
+        self.assertEqual(repo['data']['stargazers_count'], 2)
+        self.assertEqual(repo['data']['watchers_count'], 3)
+        self.assertEqual(repo['data']['open_issues_count'], 4)
+
+
+    @httpretty.activate
     def test_fetch_pulls(self):
         setup_gitee_pull_request_services()
         from_date = datetime.datetime(2019, 1, 1)
-        gitee = Gitee("gitee_example", "repo", "aaa")
+        gitee = Gitee("gitee_example", "repo", "[aaa]")
         pulls = [pr for pr in gitee.fetch(category=CATEGORY_PULL_REQUEST, from_date=from_date)]
 
         self.assertEqual(len(pulls), 1)
@@ -241,6 +257,16 @@ class TestGiteeBackend(unittest.TestCase):
         self.assertEqual(len(pull['data']['review_comments_data']), 1)
         self.assertEqual(pull['data']['review_comments_data'][0]['body'], "Add some comments here.")
         self.assertEqual(pull['data']['commits_data'], ['8cd1bca4f2989ac2e2753a152c8c4c8e065b22f5'])
+
+    def test_has_resuming(self):
+        """Test if it returns True when has_resuming is called"""
+
+        self.assertEqual(Gitee.has_resuming(), True)
+
+    def test_has_archiving(self):
+        """Test if it returns True when has_archiving is called"""
+
+        self.assertEqual(Gitee.has_archiving(), True)
 
 
 class TestGiteeBackendArchive(TestCaseBackendArchive):
