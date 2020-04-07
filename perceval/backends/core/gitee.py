@@ -86,10 +86,10 @@ class Gitee(Backend):
         ['assignees_data'],
         ['requested_reviewers_data'],
         ['comments_data', 'user_data'],
-        ['comments_data', 'reactions_data', 'user_data'],
+        ['comments_data', 'user_data'],
         ['reviews_data', 'user_data'],
         ['review_comments_data', 'user_data'],
-        ['review_comments_data', 'reactions_data', 'user_data']
+        ['review_comments_data', 'user_data']
     ]
 
     def __init__(self, owner=None, repository=None,

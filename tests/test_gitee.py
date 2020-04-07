@@ -19,22 +19,21 @@
 # Authors:
 #     Willem Jiang <willem.jiang@gmail.com>
 
-# from base import TestCaseBackendArchive
 import datetime
 import os
 import unittest
 import httpretty
-import pkg_resources
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backends.core.gitee import (Gitee, GiteeClient,
                                           CATEGORY_PULL_REQUEST)
+
+from base import TestCaseBackendArchive
 
 GITEE_API_URL = "https://gitee.com/api/v5"
 GITEE_REPO_URL = GITEE_API_URL + "/repos/gitee_example/repo"
 GITEE_ISSUES_URL = GITEE_REPO_URL + "/issues"
 GITEE_ISSUE_COMMENTS_URL_1 = GITEE_ISSUES_URL + "/I1DACG/comments"
+GITEE_ISSUE_COMMENTS_URL_2 = GITEE_ISSUES_URL + "/I1DAQF/comments"
 GITEE_USER_URL = GITEE_API_URL + "/users/willemjiang"
 GITEE_USER_ORGS_URL = GITEE_API_URL + "/users/willemjiang/orgs"
 GITEE_PULL_REQUEST_URL = GITEE_REPO_URL + "/pulls"
@@ -50,16 +49,16 @@ def read_file(filename, mode='r'):
 
 
 def setup_gitee_issue_services():
-    __setup_gitee_basic_services()
+    setup_gitee_basic_services()
     __setup_gitee_issue_services()
 
 
 def setup_gitee_pull_request_services():
-    __setup_gitee_basic_services()
+    setup_gitee_basic_services()
     __setup_gitee_pull_request_services()
 
 
-def __setup_gitee_basic_services():
+def setup_gitee_basic_services():
     orgs = read_file('data/gitee/gitee_user_orgs')
     httpretty.register_uri(httpretty.GET, GITEE_USER_ORGS_URL, body=orgs, status=200)
 
@@ -71,16 +70,40 @@ def __setup_gitee_basic_services():
 
 
 def __setup_gitee_issue_services():
-    issues = read_file('data/gitee/gitee_issues1')
+    issues1 = read_file('data/gitee/gitee_issues1')
+    issues2 = read_file('data/gitee/gitee_issues2')
+
+    pagination_issue_header_1 = {'Link': '<' + GITEE_ISSUES_URL +
+                                 '/?&page=2>; rel="next", <' + GITEE_ISSUES_URL +
+                                 '/?&page=2>; rel="last"',
+                                 'total_count': '2',
+                                 'total_page': '2'
+                                 }
+
+    pagination_issue_header_2 = {'Link': '<' + GITEE_ISSUES_URL +
+                                 '/?&page=1>;  rel="prev", <' + GITEE_ISSUES_URL +
+                                 '/?&page=1>; rel="first"',
+                                 'total_count': '2',
+                                 'total_page': '2'
+                                 }
     httpretty.register_uri(httpretty.GET, GITEE_ISSUES_URL,
-                           body=issues, status=200,
+                           body=issues1, status=200,
+                           forcing_headers=pagination_issue_header_1)
+
+    httpretty.register_uri(httpretty.GET, GITEE_ISSUES_URL + "/?&page=2",
+                           body=issues2, status=200,
+                           forcing_headers=pagination_issue_header_2)
+
+    issue1_comments = read_file('data/gitee/gitee_issue1_comments')
+    httpretty.register_uri(httpretty.GET, GITEE_ISSUE_COMMENTS_URL_1,
+                           body=issue1_comments, status=200,
                            forcing_headers={
                                "total_count": "1",
                                "total_page": "1"
                            })
-    issue_comments = read_file('data/gitee/gitee_issue1_comments')
-    httpretty.register_uri(httpretty.GET, GITEE_ISSUE_COMMENTS_URL_1,
-                           body=issue_comments, status=200,
+    issue2_comments = read_file('data/gitee/gitee_issue2_comments')
+    httpretty.register_uri(httpretty.GET, GITEE_ISSUE_COMMENTS_URL_2,
+                           body=issue2_comments, status=200,
                            forcing_headers={
                                "total_count": "1",
                                "total_page": "1"
@@ -147,17 +170,52 @@ class TestGiteeBackend(unittest.TestCase):
         gitee = Gitee("gitee_example", "repo", ["aaa"])
         issues = [issues for issues in gitee.fetch(from_date=from_date)]
 
+        self.assertEqual(len(issues), 2)
+        issue1 = issues[0]
+        self.assertEqual(issue1['origin'], 'https://gitee.com/gitee_example/repo')
+        self.assertEqual(issue1['uuid'], 'e954a17216b20e5b11c7eef99df06aefa8b8b974')
+        self.assertEqual(issue1['updated_on'], 1577842375.0)
+        self.assertEqual(issue1['tag'], 'https://gitee.com/gitee_example/repo')
+        self.assertEqual(issue1['data']['assignee_data']['login'], 'willemjiang')
+        self.assertEqual(issue1['data']['title'], 'First example issue')
+        # TODO to add collaborators information
+        # self.assertEqual(issue['data']['collaborators_data'][0]['login'], 'willemjiang')
+        self.assertEqual(len(issue1['data']['comments_data']), 1)
+        self.assertEqual(issue1['data']['comments_data'][0]['user_data']['login'], 'willemjiang')
+
+        issue2 = issues[1]
+        self.assertEqual(issue2['origin'], 'https://gitee.com/gitee_example/repo')
+        self.assertEqual(issue2['uuid'], '3e5e90b1f0862c1b8a1adb52bc961e8a77ec2431')
+        self.assertEqual(issue2['updated_on'], 1585710411.0)
+        self.assertEqual(issue2['tag'], 'https://gitee.com/gitee_example/repo')
+        self.assertEqual(issue2['data']['assignee_data']['login'], 'willemjiang')
+        self.assertEqual(issue2['data']['title'], 'Second example issue')
+        # TODO to add collaborators information
+        # self.assertEqual(issue['data']['collaborators_data'][0]['login'], 'willemjiang')
+        self.assertEqual(len(issue2['data']['comments_data']), 1)
+        self.assertEqual(issue2['data']['comments_data'][0]['user_data']['login'], 'willemjiang')
+        self.assertEqual(issue2['data']['comments_data'][0]['target']['issue']['number'], 'I1DAQF')
+
+    @httpretty.activate
+    def test_fetch_issues_with_to_data(self):
+        setup_gitee_issue_services()
+        to_date = datetime.datetime(2020, 2, 1)
+        gitee = Gitee("gitee_example", "repo", ["aaa"])
+        issues = [issues for issues in gitee.fetch(to_date=to_date)]
+
         self.assertEqual(len(issues), 1)
         issue = issues[0]
         self.assertEqual(issue['origin'], 'https://gitee.com/gitee_example/repo')
-        self.assertEqual(issue['uuid'], 'e954a17216b20e5b11c7eef99df06aefa8b8b974')
-        self.assertEqual(issue['updated_on'], 1585704775.0)
+        self.assertEqual(issue['uuid'], '3e5e90b1f0862c1b8a1adb52bc961e8a77ec2431')
+        self.assertEqual(issue['updated_on'], 1585710411.0)
         self.assertEqual(issue['tag'], 'https://gitee.com/gitee_example/repo')
         self.assertEqual(issue['data']['assignee_data']['login'], 'willemjiang')
+        self.assertEqual(issue['data']['title'], 'Second example issue')
         # TODO to add collaborators information
         # self.assertEqual(issue['data']['collaborators_data'][0]['login'], 'willemjiang')
         self.assertEqual(len(issue['data']['comments_data']), 1)
         self.assertEqual(issue['data']['comments_data'][0]['user_data']['login'], 'willemjiang')
+        self.assertEqual(issue['data']['comments_data'][0]['target']['issue']['number'], 'I1DAQF')
 
     @httpretty.activate
     def test_fetch_pulls(self):
@@ -168,7 +226,6 @@ class TestGiteeBackend(unittest.TestCase):
 
         self.assertEqual(len(pulls), 1)
         pull = pulls[0]
-        print(pull)
         self.assertEqual(pull['updated_on'], 1586078981.0)
         self.assertEqual(pull['uuid'], '497fa28f2109f702a7a88b1a4fbfbfb279a2266e')
         self.assertEqual(pull['data']['head']['repo']['path'], "camel-on-cloud")
@@ -178,6 +235,46 @@ class TestGiteeBackend(unittest.TestCase):
         self.assertEqual(pull['data']['review_comments_data'][0]['body'], "Add some comments here.")
         self.assertEqual(pull['data']['commits_data'], ['8cd1bca4f2989ac2e2753a152c8c4c8e065b22f5'])
 
+
+class TestGiteeBackendArchive(TestCaseBackendArchive):
+    """GitHub backend tests using an archive"""
+
+    def setUp(self):
+        super().setUp()
+        self.backend_write_archive = Gitee("gitee_example", "repo", ["aaa"], archive=self.archive)
+        self.backend_read_archive = Gitee("gitee_example", "repo", ["aaa"], archive=self.archive)
+
+    @httpretty.activate
+    def test_fetch_issues_from_archive(self):
+        """Test whether a list of issues is returned from archive"""
+        setup_gitee_issue_services()
+        self._test_fetch_from_archive(from_date=None)
+
+    @httpretty.activate
+    def test_fetch_pulls_from_archive(self):
+        """Test whether a list of pull requests is returned from archive"""
+        setup_gitee_pull_request_services()
+        self._test_fetch_from_archive(category=CATEGORY_PULL_REQUEST, from_date=None)
+
+    @httpretty.activate
+    def test_fetch_from_date_from_archive(self):
+        """Test whether a list of issues is returned from archive after a given date"""
+        setup_gitee_issue_services()
+        from_date = datetime.datetime(2016, 3, 1)
+        self._test_fetch_from_archive(from_date=from_date)
+
+    @httpretty.activate
+    def test_fetch_from_empty_archive(self):
+        """Test whether no issues are returned when the archive is empty"""
+        setup_gitee_basic_services()
+        empty_issue = ''
+        httpretty.register_uri(httpretty.GET, GITEE_ISSUES_URL,
+                               body=empty_issue, status=200,
+                               forcing_headers={
+                                   "total_count": "0",
+                                   "total_page": "0"
+                               })
+        self._test_fetch_from_archive()
 
 class TestGiteeClient(unittest.TestCase):
     """Gitee API client tests"""
