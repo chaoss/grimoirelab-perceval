@@ -56,11 +56,13 @@ from perceval.backends.core.github import (logger, GitHub,
                                            CATEGORY_ISSUE,
                                            CATEGORY_PULL_REQUEST,
                                            CATEGORY_REPO,
+                                           CATEGORY_EVENT,
                                            MAX_CATEGORY_ITEMS_PER_PAGE)
 from base import TestCaseBackendArchive
 
 
 GITHUB_API_URL = "https://api.github.com"
+GITHUB_API_GRAPHQL_URL = GITHUB_API_URL + "/graphql"
 GITHUB_RATE_LIMIT = GITHUB_API_URL + "/rate_limit"
 GITHUB_REPO_URL = GITHUB_API_URL + "/repos/zhquan_example/repo"
 GITHUB_ISSUES_URL = GITHUB_REPO_URL + "/issues"
@@ -87,6 +89,7 @@ GITHUB_COMMAND_URL = GITHUB_API_URL + "/command"
 
 GITHUB_ENTERPRISE_URL = "https://example.com"
 GITHUB_ENTERPRISE_API_URL = "https://example.com/api/v3"
+GITHUB_ENTERPRISE_API_GRAPHQL_URL = GITHUB_ENTERPRISE_URL + "/api/graphql"
 GITHUB_ENTREPRISE_RATE_LIMIT = GITHUB_ENTERPRISE_API_URL + "/rate_limit"
 GITHUB_ENTREPRISE_REPO_URL = GITHUB_ENTERPRISE_API_URL + "/repos/zhquan_example/repo"
 GITHUB_ENTERPRISE_ISSUES_URL = GITHUB_ENTREPRISE_REPO_URL + "/issues"
@@ -137,7 +140,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(github.tag, 'test')
         self.assertEqual(github.max_items, MAX_CATEGORY_ITEMS_PER_PAGE)
         self.assertFalse(github.exclude_user_data)
-        self.assertEqual(github.categories, [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO])
+        self.assertEqual(github.categories, [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO, CATEGORY_EVENT])
         self.assertTrue(github.ssl_verify)
 
         # When tag is empty or None it will be set to the value in origin
@@ -190,6 +193,118 @@ class TestGitHubBackend(unittest.TestCase):
         """Test if it returns True when has_archiving is called"""
 
         self.assertEqual(GitHub.has_archiving(), True)
+
+    @httpretty.activate
+    def test_fetch_events(self):
+        """Test whether a list of events is returned"""
+
+        events = read_file('data/github/github_events')
+        issue = read_file('data/github/github_issue_2')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=issue,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.POST,
+                               GITHUB_API_GRAPHQL_URL,
+                               body=events,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", ["aaa"])
+        events = [events for events in github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)]
+
+        self.assertEqual(len(events), 2)
+
+        event = events[0]
+        self.assertEqual(event['origin'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(event['uuid'], 'b46499fd01d2958d836241770063adff953b280e')
+        self.assertEqual(event['updated_on'], 1586265768.0)
+        self.assertEqual(event['category'], CATEGORY_EVENT)
+        self.assertEqual(event['tag'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(event['data']['actor']['login'], 'valeriocos')
+        self.assertEqual(event['data']['createdAt'], '2020-04-07T13:22:48Z')
+        self.assertEqual(event['data']['eventType'], 'MovedColumnsInProjectEvent')
+        self.assertIn('issue', event['data'])
+
+        event = events[1]
+        self.assertEqual(event['origin'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(event['uuid'], 'd05238b1254cf69deac49248ad8cc855482a6737')
+        self.assertEqual(event['updated_on'], 1586265783.0)
+        self.assertEqual(event['category'], CATEGORY_EVENT)
+        self.assertEqual(event['tag'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(event['data']['actor']['login'], 'valeriocos')
+        self.assertEqual(event['data']['createdAt'], '2020-04-07T13:23:03Z')
+        self.assertEqual(event['data']['eventType'], 'CrossReferencedEvent')
+        self.assertIn('issue', event['data'])
+
+    @httpretty.activate
+    def test_search_fields_event(self):
+        """Test whether the search_fields is properly set"""
+
+        events = read_file('data/github/github_events')
+        issue = read_file('data/github/github_issue_2')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=issue,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.POST,
+                               GITHUB_API_GRAPHQL_URL,
+                               body=events,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", ["aaa"])
+        events = [events for events in github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)]
+
+        self.assertEqual(len(events), 2)
+
+        event = events[0]
+        self.assertEqual(github.metadata_id(event['data']), event['search_fields']['item_id'])
+        self.assertEqual(event['search_fields']['owner'], 'zhquan_example')
+        self.assertEqual(event['search_fields']['repo'], 'repo')
+
+        event = events[1]
+        self.assertEqual(github.metadata_id(event['data']), event['search_fields']['item_id'])
+        self.assertEqual(event['search_fields']['owner'], 'zhquan_example')
+        self.assertEqual(event['search_fields']['repo'], 'repo')
 
     @httpretty.activate
     def test_fetch_issues(self):
@@ -2204,6 +2319,58 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(pull['data']['updated_at'], '2016-01-04T17:42:23Z')
 
     @httpretty.activate
+    def test_fetch_events_until_date(self):
+        """Test whether only the events after a given date are returned"""
+
+        events = read_file('data/github/github_events')
+        issue = read_file('data/github/github_issue_2')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=issue,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.POST,
+                               GITHUB_API_GRAPHQL_URL,
+                               body=events,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", ["aaa"])
+        to_date = datetime.datetime(2020, 4, 7, 13, 23, 00)
+        events = [events for events in github.fetch(from_date=None, to_date=to_date, category=CATEGORY_EVENT)]
+
+        self.assertEqual(len(events), 1)
+
+        event = events[0]
+        self.assertEqual(event['origin'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(event['uuid'], 'b46499fd01d2958d836241770063adff953b280e')
+        self.assertEqual(event['updated_on'], 1586265768.0)
+        self.assertEqual(event['category'], CATEGORY_EVENT)
+        self.assertEqual(event['tag'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(event['data']['actor']['login'], 'valeriocos')
+        self.assertEqual(event['data']['createdAt'], '2020-04-07T13:22:48Z')
+        self.assertEqual(event['data']['eventType'], 'MovedColumnsInProjectEvent')
+        self.assertIn('issue', event['data'])
+
+    @httpretty.activate
     def test_fetch_zero_reactions_on_issue(self):
         """Test zero reactions on a issue"""
 
@@ -2259,6 +2426,68 @@ class TestGitHubBackend(unittest.TestCase):
         issue = issues[0]
         self.assertEqual(issue['data']['reactions']['total_count'], 0)
         self.assertEqual(issue['data']['reactions_data'], [])
+
+    @httpretty.activate
+    def test_fetch_events_enterprise(self):
+        """Test if it fetches events from a GitHub Enterprise server"""
+
+        events = read_file('data/github/github_events')
+        issue = read_file('data/github/github_issue_2')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTREPRISE_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ENTERPRISE_ISSUES_URL,
+                               body=issue,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.POST,
+                               GITHUB_ENTERPRISE_API_GRAPHQL_URL,
+                               body=events,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", ["aaa"], base_url=GITHUB_ENTERPRISE_URL)
+        events = [events for events in github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)]
+
+        self.assertEqual(len(events), 2)
+
+        event = events[0]
+        self.assertEqual(event['origin'], 'https://example.com/zhquan_example/repo')
+        self.assertEqual(event['uuid'], '7ae18a45805b971b46dba2874f6deb28e1fb3db1')
+        self.assertEqual(event['updated_on'], 1586265768.0)
+        self.assertEqual(event['category'], CATEGORY_EVENT)
+        self.assertEqual(event['tag'], 'https://example.com/zhquan_example/repo')
+        self.assertEqual(event['data']['actor']['login'], 'valeriocos')
+        self.assertEqual(event['data']['createdAt'], '2020-04-07T13:22:48Z')
+        self.assertEqual(event['data']['eventType'], 'MovedColumnsInProjectEvent')
+        self.assertIn('issue', event['data'])
+
+        event = events[1]
+        self.assertEqual(event['origin'], 'https://example.com/zhquan_example/repo')
+        self.assertEqual(event['uuid'], 'd0d1489be06622577843c91b70cb5543f48be918')
+        self.assertEqual(event['updated_on'], 1586265783.0)
+        self.assertEqual(event['category'], CATEGORY_EVENT)
+        self.assertEqual(event['tag'], 'https://example.com/zhquan_example/repo')
+        self.assertEqual(event['data']['actor']['login'], 'valeriocos')
+        self.assertEqual(event['data']['createdAt'], '2020-04-07T13:23:03Z')
+        self.assertEqual(event['data']['eventType'], 'CrossReferencedEvent')
+        self.assertIn('issue', event['data'])
 
     @httpretty.activate
     def test_fetch_issue_enterprise(self):
@@ -2929,6 +3158,43 @@ class TestGitHubBackendArchive(TestCaseBackendArchive):
         self._test_fetch_from_archive(category=CATEGORY_PULL_REQUEST, from_date=None)
 
     @httpretty.activate
+    def test_fetch_events(self):
+        """Test whether a list of events is returned from archive"""
+
+        events = read_file('data/github/github_events')
+        issue = read_file('data/github/github_issue_2')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=issue,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.POST,
+                               GITHUB_API_GRAPHQL_URL,
+                               body=events,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        self._test_fetch_from_archive(category=CATEGORY_EVENT, from_date=None)
+
+    @httpretty.activate
     def test_fetch_from_date_from_archive(self):
         """Test whether a list of issues is returned from archive after a given date"""
 
@@ -3064,6 +3330,7 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(client.max_retries, GitHubClient.MAX_RETRIES)
         self.assertEqual(client.base_url, 'https://api.github.com')
         self.assertTrue(client.ssl_verify)
+        self.assertEqual(client.graphql_url, 'https://api.github.com/graphql')
 
         client = GitHubClient('zhquan_example', 'repo', ['aaa'], base_url=None,
                               sleep_for_rate=False, min_rate_to_sleep=3,
@@ -3083,6 +3350,7 @@ class TestGitHubClient(unittest.TestCase):
         self.assertIsNone(client.archive)
         self.assertFalse(client.from_archive)
         self.assertFalse(client.ssl_verify)
+        self.assertEqual(client.graphql_url, 'https://api.github.com/graphql')
 
         client = GitHubClient('zhquan_example', 'repo', ['aaa'], min_rate_to_sleep=RateLimitHandler.MAX_RATE_LIMIT + 1)
         self.assertEqual(client.min_rate_to_sleep, RateLimitHandler.MAX_RATE_LIMIT)
@@ -3255,6 +3523,68 @@ class TestGitHubClient(unittest.TestCase):
 
         issue_comment_reactions_raw = [rev for rev in client.issue_comment_reactions(1)]
         self.assertEqual(issue_comment_reactions_raw[0], issue_comment_reactions)
+
+    @httpretty.activate
+    def test_events(self):
+        """Test whether the GraphQL API call works properly"""
+
+        events = read_file('data/github/github_events')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.POST,
+                               GITHUB_API_GRAPHQL_URL,
+                               body=events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], None)
+        events = [event for event in client.events(issue_number=1, is_pull=False, from_date=DEFAULT_DATETIME)]
+        self.assertEqual(len(events[0]), 2)
+        self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
+
+    @httpretty.activate
+    def test_events_error(self):
+        """Test whether GraphQL API call"""
+
+        events = read_file('data/github/github_events_error')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.POST,
+                               GITHUB_API_GRAPHQL_URL,
+                               body=events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], None)
+
+        with self.assertLogs(logger, level='ERROR') as cm:
+            events = [event for event in client.events(issue_number=1,
+                                                       is_pull=False,
+                                                       from_date=DEFAULT_DATETIME)]
+            self.assertEqual(cm.output[0], 'ERROR:perceval.backends.core.github:Events not collected for issue 1'
+                                           ' in zhquan_example/repo due to: Parse error on "=" (EQUALS) at [7, 80]')
+            self.assertEqual(events, [])
+            self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
 
     @httpretty.activate
     def test_pulls(self):

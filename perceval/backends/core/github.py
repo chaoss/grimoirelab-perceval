@@ -48,6 +48,7 @@ from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 CATEGORY_ISSUE = "issue"
 CATEGORY_PULL_REQUEST = "pull_request"
 CATEGORY_REPO = 'repository'
+CATEGORY_EVENT = "event"
 
 GITHUB_URL = "https://github.com/"
 GITHUB_API_URL = "https://api.github.com"
@@ -66,6 +67,16 @@ MAX_RETRIES = 5
 
 TARGET_ISSUE_FIELDS = ['user', 'assignee', 'assignees', 'comments', 'reactions']
 TARGET_PULL_FIELDS = ['user', 'review_comments', 'requested_reviewers', "merged_by", "commits"]
+
+EVENT_TYPES = [
+    'ADDED_TO_PROJECT_EVENT',
+    'MOVED_COLUMNS_IN_PROJECT_EVENT',
+    'REMOVED_FROM_PROJECT_EVENT',
+    'CROSS_REFERENCED_EVENT',
+    'LABELED_EVENT',
+    'UNLABELED_EVENT',
+    'CLOSED_EVENT'
+]
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +114,9 @@ class GitHub(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.25.2'
+    version = '0.26.0'
 
-    CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
+    CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO, CATEGORY_EVENT]
 
     CLASSIFIED_FIELDS = [
         ['user_data'],
@@ -217,6 +228,8 @@ class GitHub(Backend):
             items = self.__fetch_issues(from_date, to_date)
         elif category == CATEGORY_PULL_REQUEST:
             items = self.__fetch_pull_requests(from_date, to_date)
+        elif category == CATEGORY_EVENT:
+            items = self.__fetch_events(from_date, to_date)
         else:
             items = self.__fetch_repo_info()
 
@@ -261,11 +274,15 @@ class GitHub(Backend):
         """
         if "forks_count" in item:
             return item['fetched_on']
+
+        if 'eventType' in item:
+            ts = item['createdAt']
         else:
             ts = item['updated_at']
-            ts = str_to_datetime(ts)
 
-            return ts.timestamp()
+        ts = str_to_datetime(ts)
+
+        return ts.timestamp()
 
     @staticmethod
     def metadata_category(item):
@@ -279,6 +296,8 @@ class GitHub(Backend):
             category = CATEGORY_PULL_REQUEST
         elif "forks_count" in item:
             category = CATEGORY_REPO
+        elif "eventType" in item:
+            category = CATEGORY_EVENT
         else:
             category = CATEGORY_ISSUE
 
@@ -323,6 +342,27 @@ class GitHub(Backend):
                             self.__get_issue_reactions(issue['number'], issue['reactions']['total_count'])
 
                 yield issue
+
+    def __fetch_events(self, from_date, to_date):
+        """Fetch the events declared at EVENT_TYPES for issues and pull requests"""
+
+        issues_groups = self.client.issues()
+
+        for raw_issues in issues_groups:
+            issues = json.loads(raw_issues)
+            for issue in issues:
+                issue_number = issue['number']
+
+                is_pull = 'pull_request' in issue
+                events_groups = self.client.events(issue_number, is_pull, from_date)
+                for events in events_groups:
+                    for event in events:
+
+                        if str_to_datetime(event['createdAt']) > to_date:
+                            return
+
+                        event['issue'] = issue
+                        yield event
 
     def __fetch_pull_requests(self, from_date, to_date):
         """Fetch the pull requests"""
@@ -620,7 +660,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
     VDIRECTION_ASC = 'asc'
     VSORT_UPDATED = 'updated'
     VSTATE_ALL = 'all'
-    VACCEPT = 'application/vnd.github.squirrel-girl-preview'
+    VACCEPT = 'application/vnd.github.squirrel-girl-preview,application/vnd.github.starfox-preview+json'
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
@@ -638,9 +678,13 @@ class GitHubClient(HttpClient, RateLimitHandler):
         self.max_items = max_items
 
         if base_url:
+            graphql_url = urijoin(base_url, 'api', 'graphql')
             base_url = urijoin(base_url, 'api', 'v3')
         else:
             base_url = GITHUB_API_URL
+            graphql_url = urijoin(base_url, 'graphql')
+
+        self.graphql_url = graphql_url
 
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_headers=self._set_extra_headers(),
@@ -697,6 +741,190 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         path = urijoin(self.RISSUES, str(issue_number), self.RCOMMENTS)
         return self.fetch_items(path, payload)
+
+    def events(self, issue_number, is_pull, from_date):
+        """Get the issue events of the types declared at EVENT_TYPES from the GraphQL API
+
+        :param issue_number: number of the issue
+        :param is_pull: boolean value to identify a pull request
+        :param from_date: fetch events after a given date
+        """
+        node_type = 'pullRequest' if is_pull else 'issue'
+        event_types = '[{}]'.format(','.join(EVENT_TYPES))
+
+        query_template = """
+        {
+          repository (owner: "%s"
+                      name: "%s") {
+            %s (number: %s) {
+              timelineItems (first: %s
+                             after: %s
+                             itemTypes: %s
+                             since: "%s") {
+                  nodes {
+                    eventType: __typename
+                    ... on CrossReferencedEvent {
+                      actor {
+                        login
+                      }
+                      id
+                      createdAt
+                      isCrossRepository
+                      willCloseTarget
+                      url
+                      source {
+                        type:__typename
+                        ... on Issue {
+                          number
+                          url
+                          createdAt
+                          updatedAt
+                          closed
+                          closedAt
+                        },
+                        ... on PullRequest {
+                          number
+                          url
+                          createdAt
+                          updatedAt
+                          closed
+                          closedAt
+                          merged
+                          mergedAt
+                        }
+                      }
+                    }
+                    ... on ClosedEvent {
+                      actor {
+                        login
+                      }
+                      id
+                      createdAt
+                      url
+                      closer {
+                        type:__typename
+                        ... on PullRequest {
+                          number
+                          url
+                          createdAt
+                          updatedAt
+                          closed
+                          closedAt
+                          merged
+                          mergedAt
+                        }
+                      }
+                    }
+                    ... on LabeledEvent {
+                      actor {
+                        login
+                      }
+                      id
+                      createdAt
+                      label {
+                        name
+                        description
+                        createdAt
+                        isDefault
+                        updatedAt
+                      }
+                    }
+                    ... on UnlabeledEvent {
+                      actor {
+                        login
+                      }
+                      id
+                      createdAt
+                      label {
+                        name
+                        description
+                        createdAt
+                        isDefault
+                        updatedAt
+                      }
+                    }
+                    ... on AddedToProjectEvent {
+                      actor {
+                        login
+                      }
+                      id
+                      createdAt
+                      projectColumnName,
+                      project {
+                        name
+                        url
+                        createdAt
+                        updatedAt
+                        closedAt
+                        state
+                      }
+                    }
+                    ... on MovedColumnsInProjectEvent {
+                      actor {
+                        login
+                      },
+                      id
+                      createdAt
+                      previousProjectColumnName
+                      projectColumnName
+                      project {
+                        name
+                        url
+                        createdAt
+                        updatedAt
+                        closedAt
+                        state
+                      }
+                    }
+                    ... on RemovedFromProjectEvent {
+                      actor {
+                        login
+                      },
+                      id
+                      createdAt
+                      projectColumnName
+                      project {
+                        name
+                        url
+                        createdAt
+                        updatedAt
+                        closedAt
+                        state
+                      }
+                    }
+                  }
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
+              }
+            }
+          }
+        }
+        """
+        query = query_template % (self.owner, self.repository, node_type, issue_number,
+                                  self.VPER_PAGE, "null", event_types, from_date.isoformat())
+
+        has_next = True
+        while has_next:
+            response = self.fetch(self.graphql_url, payload=json.dumps({'query': query}), method=HttpClient.POST)
+
+            items = response.json()
+            if 'errors' in items:
+                logger.error("Events not collected for issue %s in %s/%s due to: %s" %
+                             (issue_number, self.owner, self.repository, items['errors'][0]['message']))
+                return []
+
+            timelines = items['data']['repository'][node_type]['timelineItems']
+            nodes = timelines['nodes']
+            yield nodes
+
+            page = timelines['pageInfo']
+            has_next = page['hasNextPage']
+            next_cursor = page['endCursor']
+
+            query = query_template % (self.owner, self.repository, node_type, issue_number, self.VPER_PAGE,
+                                      '"{}"'.format(next_cursor), event_types, from_date.isoformat())
 
     def issues(self, from_date=None):
         """Fetch the issues from the repository.
