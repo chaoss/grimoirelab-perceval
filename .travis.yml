@@ -7,6 +7,8 @@ python:
 sudo: false
 
 before_install:
+  - pip install --upgrade setuptools
+  - pip install --upgrade pip
   - pip install -r "requirements.txt"
   - pip install -r "requirements_tests.txt"
   - pip install flake8
