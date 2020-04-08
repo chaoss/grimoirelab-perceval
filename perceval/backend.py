@@ -877,7 +877,7 @@ def uuid(*args):
     """Generate a UUID based on the given parameters.
 
     The UUID will be the SHA1 of the concatenation of the values
-    from the list. The separator bewteedn these values is ':'.
+    from the list. The separator between these values is ':'.
     Each value must be a non-empty string, otherwise, the function
     will raise an exception.
 

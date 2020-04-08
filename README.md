@@ -110,7 +110,7 @@ $ pip3 install -e .
 
 ## Documentation
 
-Documentation is generated automagically in the [ReadTheDocs Perceval site](http://perceval.readthedocs.org/).
+Documentation is generated automatically in the [ReadTheDocs Perceval site](http://perceval.readthedocs.org/).
 
 ## References
 
