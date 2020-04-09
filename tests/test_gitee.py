@@ -256,6 +256,10 @@ class TestGiteeBackend(unittest.TestCase):
         self.assertEqual(pull['data']['number'], 1)
         self.assertEqual(len(pull['data']['review_comments_data']), 1)
         self.assertEqual(pull['data']['review_comments_data'][0]['body'], "Add some comments here.")
+        self.assertEqual(len(pull['data']['assignees_data']), 1)
+        self.assertEqual(pull['data']['assignees_data'][0]['login'], "willemjiang")
+        # check if the  testers_data there
+        self.assertTrue( 'tester_data' not in pull['data'])
         self.assertEqual(pull['data']['commits_data'], ['8cd1bca4f2989ac2e2753a152c8c4c8e065b22f5'])
 
     def test_has_resuming(self):

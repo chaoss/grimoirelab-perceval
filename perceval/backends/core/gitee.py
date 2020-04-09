@@ -57,7 +57,7 @@ DEFAULT_SLEEP_TIME = 1
 MAX_RETRIES = 5
 
 TARGET_ISSUE_FIELDS = ['user', 'assignee', 'collaborators', 'comments']
-TARGET_PULL_FIELDS = ['user', 'assignees', 'number']
+TARGET_PULL_FIELDS = ['user', 'assignees', 'number', "assignees", "testers"]
 # 'review_comments', 'requested_reviewers',  "merged_by", "commits"
 
 logger = logging.getLogger(__name__)
@@ -310,7 +310,8 @@ class Gitee(Backend):
                 # elif field == 'merged_by':
                 #    pull[field + '_data'] = self.__get_user(pull[field]['login'])
 
-                # TODO need to check if we need to add the tester information
+                elif field == 'assignees' or field == 'testers':
+                    pull[field + '_data'] = self.__get_users(pull[field])
                 elif field == 'number':
                     pull['review_comments_data'] = self.__get_pull_review_comments(pull['number'])
                     pull['commits_data'] = self.__get_pull_commits(pull['number'])
@@ -405,6 +406,13 @@ class Gitee(Backend):
 
                 reviews.append(review)
         return reviews
+
+    def __get_users(self, items):
+        users = []
+        for item in items:
+            user = self.__get_user(item['login'])
+            users.append(user)
+        return users
 
     def __get_user(self, login):
         """Get user and org data for the login"""
