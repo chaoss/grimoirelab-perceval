@@ -307,14 +307,17 @@ class Gitee(Backend):
                     pull[field + '_data'] = self.__get_user(pull[field]['login'])
 
                 # TODO we need to find a way to find out merged_by information
-                # elif field == 'merged_by':
-                #    pull[field + '_data'] = self.__get_user(pull[field]['login'])
+                elif field == 'merged_by':
+                    pull[field + '_data'] = self.__get_user(pull[field]['login'])
 
                 elif field == 'assignees' or field == 'testers':
                     pull[field + '_data'] = self.__get_users(pull[field])
                 elif field == 'number':
                     pull['review_comments_data'] = self.__get_pull_review_comments(pull['number'])
                     pull['commits_data'] = self.__get_pull_commits(pull['number'])
+                    pull['merged_by'] = self.__get_pull_merged_by(pull['number'])
+                    if pull['merged_by']:
+                        pull['merged_by_data'] = self.__get_user(pull['merged_by'])
             yield pull
 
     def __fetch_repo_info(self):
@@ -351,6 +354,17 @@ class Gitee(Backend):
             collaborators.append(self.__get_user(ra['login']))
 
         return collaborators
+
+    def __get_pull_merged_by(self, pr_number):
+        group_raw_action_logs = self.client.pull_action_logs(pr_number)
+        result = None
+        for raw_action_logs in group_raw_action_logs:
+            action_logs = json.loads(raw_action_logs)
+            for action_log in action_logs:
+                if action_log["content"] == "合并了 Pull Request":
+                    result = action_log["user"]["login"]
+                    break
+        return result
 
     def __get_pull_commits(self, pr_number):
         """Get pull request commit hashes"""
@@ -450,6 +464,8 @@ class Gitee(Backend):
         pull['reviews_data'] = []
         pull['merged_by_data'] = []
         pull['commits_data'] = []
+
+
 
 
 class GiteeClient(HttpClient, RateLimitHandler):
@@ -568,11 +584,11 @@ class GiteeClient(HttpClient, RateLimitHandler):
 
         return repo
 
-    def pull_requested_reviewers(self, pr_number):
-        """Get pull requested reviewers"""
+    def pull_action_logs(self, pr_number):
+        """Get pull request action logs"""
 
-        requested_reviewers_url = urijoin("pulls", str(pr_number), "requested_reviewers")
-        return self.fetch_items(requested_reviewers_url, {})
+        pull_action_logs_path = urijoin("pulls", str(pr_number), "operate_logs")
+        return self.fetch_items(pull_action_logs_path, {})
 
     def pull_commits(self, pr_number):
         """Get pull request commits"""

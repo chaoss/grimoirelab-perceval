@@ -41,6 +41,7 @@ GITEE_USER_ORGS_URL = GITEE_API_URL + "/users/willemjiang/orgs"
 GITEE_PULL_REQUEST_URL = GITEE_REPO_URL + "/pulls"
 GITEE_PULL_REQUEST_COMMENTS_URL = GITEE_PULL_REQUEST_URL + "/1/comments"
 GITEE_PULL_REQUEST_COMMITS_URL = GITEE_PULL_REQUEST_URL + "/1/commits"
+GITEE_PULL_REQUEST_OPERATE_LOGS_URL = GITEE_PULL_REQUEST_URL + "/1/operate_logs"
 
 
 def read_file(filename, mode='r'):
@@ -135,6 +136,9 @@ def __setup_gitee_pull_request_services():
                                "total_count": "1",
                                "total_page": "1"
                            })
+    pull_request_action_logs = read_file('data/gitee/gitee_pull_request1_action_logs')
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_OPERATE_LOGS_URL,
+                           body=pull_request_action_logs, status=200)
 
 
 def setup_refresh_access_token_service():
@@ -261,6 +265,8 @@ class TestGiteeBackend(unittest.TestCase):
         # check if the  testers_data there
         self.assertTrue( 'tester_data' not in pull['data'])
         self.assertEqual(pull['data']['commits_data'], ['8cd1bca4f2989ac2e2753a152c8c4c8e065b22f5'])
+        self.assertEqual(pull['data']['merged_by'], "willemjiang")
+        self.assertEqual(pull['data']['merged_by_data']['login'], "willemjiang")
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -489,6 +495,16 @@ class TestGiteeClient(unittest.TestCase):
             'access_token': ['aaa']
         }
         self.assertDictEqual(httpretty.last_request().querystring, expected)
+
+    @httpretty.activate
+    def test_pulls_action_logs(self):
+        setup_refresh_access_token_service()
+        pull_action_logs = read_file('data/gitee/gitee_pull_request1_action_logs')
+        httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_OPERATE_LOGS_URL,
+                               body=pull_action_logs, status=200)
+        client = GiteeClient("gitee_example", "repo", ['aaa'], None)
+        raw_logs = [logs for logs in client.pull_action_logs(1)]
+        self.assertEqual(raw_logs[0], pull_action_logs)
 
     @httpretty.activate
     def test_repo(self):
