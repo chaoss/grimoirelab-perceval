@@ -39,9 +39,12 @@ GITEE_ISSUE_COMMENTS_URL_2 = GITEE_ISSUES_URL + "/I1DAQF/comments"
 GITEE_USER_URL = GITEE_API_URL + "/users/willemjiang"
 GITEE_USER_ORGS_URL = GITEE_API_URL + "/users/willemjiang/orgs"
 GITEE_PULL_REQUEST_URL = GITEE_REPO_URL + "/pulls"
-GITEE_PULL_REQUEST_COMMENTS_URL = GITEE_PULL_REQUEST_URL + "/1/comments"
-GITEE_PULL_REQUEST_COMMITS_URL = GITEE_PULL_REQUEST_URL + "/1/commits"
-GITEE_PULL_REQUEST_OPERATE_LOGS_URL = GITEE_PULL_REQUEST_URL + "/1/operate_logs"
+GITEE_PULL_REQUEST_1_COMMENTS_URL = GITEE_PULL_REQUEST_URL + "/1/comments"
+GITEE_PULL_REQUEST_1_COMMITS_URL = GITEE_PULL_REQUEST_URL + "/1/commits"
+GITEE_PULL_REQUEST_1_OPERATE_LOGS_URL = GITEE_PULL_REQUEST_URL + "/1/operate_logs"
+GITEE_PULL_REQUEST_2_COMMENTS_URL = GITEE_PULL_REQUEST_URL + "/2/comments"
+GITEE_PULL_REQUEST_2_COMMITS_URL = GITEE_PULL_REQUEST_URL + "/2/commits"
+GITEE_PULL_REQUEST_2_OPERATE_LOGS_URL = GITEE_PULL_REQUEST_URL + "/2/operate_logs"
 
 
 def read_file(filename, mode='r'):
@@ -115,30 +118,64 @@ def __setup_gitee_issue_services():
 
 
 def __setup_gitee_pull_request_services():
-    pull_request = read_file('data/gitee/gitee_pull_request1')
+    pagination_pull_header_1 = {'Link': '<' + GITEE_PULL_REQUEST_URL +
+                                        '/?&page=2>; rel="next", <' + GITEE_PULL_REQUEST_URL +
+                                        '/?&page=2>; rel="last"',
+                                'total_count': '2',
+                                'total_page': '2'
+                                }
+
+    pagination_pull_header_2 = {'Link': '<' + GITEE_PULL_REQUEST_URL +
+                                        '/?&page=1>;  rel="prev", <' + GITEE_PULL_REQUEST_URL +
+                                        '/?&page=1>; rel="first"',
+                                'total_count': '2',
+                                'total_page': '2'
+                                }
+
+    pull_request_1 = read_file('data/gitee/gitee_pull_request1')
     httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_URL,
-                           body=pull_request, status=200,
+                           body=pull_request_1, status=200,
+                           forcing_headers=pagination_pull_header_1)
+
+    pull_request_2 = read_file('data/gitee/gitee_pull_request2')
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_URL + "/?&page=2",
+                           body=pull_request_2, status=200,
+                           forcing_headers=pagination_pull_header_2)
+
+    pull_request_1_comments = read_file('data/gitee/gitee_pull_request1_comments')
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_1_COMMENTS_URL,
+                           body=pull_request_1_comments, status=200,
                            forcing_headers={
                                "total_count": "1",
                                "total_page": "1"
                            })
-    pull_request_comments = read_file('data/gitee/gitee_pull_request1_comments')
-    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_COMMENTS_URL,
-                           body=pull_request_comments, status=200,
+    pull_request_1_commits = read_file('data/gitee/gitee_pull_request1_commits')
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_1_COMMITS_URL,
+                           body=pull_request_1_commits, status=200,
                            forcing_headers={
                                "total_count": "1",
                                "total_page": "1"
                            })
-    pull_request_commits = read_file('data/gitee/gitee_pull_request1_commits')
-    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_COMMITS_URL,
-                           body=pull_request_commits, status=200,
+    pull_request_2_comments = read_file('data/gitee/gitee_pull_request2_comments')
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_2_COMMENTS_URL,
+                           body=pull_request_2_comments, status=200,
                            forcing_headers={
                                "total_count": "1",
                                "total_page": "1"
                            })
-    pull_request_action_logs = read_file('data/gitee/gitee_pull_request1_action_logs')
-    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_OPERATE_LOGS_URL,
-                           body=pull_request_action_logs, status=200)
+    pull_request_2_commits = read_file('data/gitee/gitee_pull_request2_commits')
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_2_COMMITS_URL,
+                           body=pull_request_2_commits, status=200,
+                           forcing_headers={
+                               "total_count": "1",
+                               "total_page": "1"
+                           })
+    pull_request_1_action_logs = read_file('data/gitee/gitee_pull_request1_action_logs')
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_1_OPERATE_LOGS_URL,
+                           body=pull_request_1_action_logs, status=200)
+    pull_request_2_action_logs = read_file('data/gitee/gitee_pull_request2_action_logs')
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_2_OPERATE_LOGS_URL,
+                           body=pull_request_2_action_logs, status=200)
 
 
 def setup_refresh_access_token_service():
@@ -243,7 +280,6 @@ class TestGiteeBackend(unittest.TestCase):
         self.assertEqual(repo['data']['watchers_count'], 3)
         self.assertEqual(repo['data']['open_issues_count'], 4)
 
-
     @httpretty.activate
     def test_fetch_pulls(self):
         setup_gitee_pull_request_services()
@@ -251,7 +287,7 @@ class TestGiteeBackend(unittest.TestCase):
         gitee = Gitee("gitee_example", "repo", "[aaa]")
         pulls = [pr for pr in gitee.fetch(category=CATEGORY_PULL_REQUEST, from_date=from_date)]
 
-        self.assertEqual(len(pulls), 1)
+        self.assertEqual(len(pulls), 2)
         pull = pulls[0]
         self.assertEqual(pull['updated_on'], 1586078981.0)
         self.assertEqual(pull['uuid'], '497fa28f2109f702a7a88b1a4fbfbfb279a2266e')
@@ -267,6 +303,23 @@ class TestGiteeBackend(unittest.TestCase):
         self.assertEqual(pull['data']['commits_data'], ['8cd1bca4f2989ac2e2753a152c8c4c8e065b22f5'])
         self.assertEqual(pull['data']['merged_by'], "willemjiang")
         self.assertEqual(pull['data']['merged_by_data']['login'], "willemjiang")
+
+        pull = pulls[1]
+        self.assertEqual(pull['updated_on'], 1585976439.0)
+        self.assertEqual(pull['uuid'], '46df79e68e92005db5c1897844e3a0c3acf1aa4f')
+        self.assertEqual(pull['data']['head']['repo']['path'], "camel-on-cloud")
+        self.assertEqual(pull['data']['base']['repo']['path'], "camel-on-cloud")
+        self.assertEqual(pull['data']['number'], 2)
+        self.assertEqual(len(pull['data']['review_comments_data']), 1)
+        self.assertEqual(pull['data']['review_comments_data'][0]['body'], "Added comment here.")
+        self.assertEqual(len(pull['data']['assignees_data']), 1)
+        self.assertEqual(pull['data']['assignees_data'][0]['login'], "willemjiang")
+        # check if the  testers_data there
+        self.assertTrue('tester_data' not in pull['data'])
+        self.assertEqual(pull['data']['commits_data'], ['586cc8e511097f5c5b7a4ce803a5efcaed99b9c2'])
+        self.assertEqual(pull['data']['merged_by'], None)
+        self.assertEqual(pull['data']['merged_by_data'], [])
+
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
@@ -500,7 +553,7 @@ class TestGiteeClient(unittest.TestCase):
     def test_pulls_action_logs(self):
         setup_refresh_access_token_service()
         pull_action_logs = read_file('data/gitee/gitee_pull_request1_action_logs')
-        httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_OPERATE_LOGS_URL,
+        httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_1_OPERATE_LOGS_URL,
                                body=pull_action_logs, status=200)
         client = GiteeClient("gitee_example", "repo", ['aaa'], None)
         raw_logs = [logs for logs in client.pull_action_logs(1)]
