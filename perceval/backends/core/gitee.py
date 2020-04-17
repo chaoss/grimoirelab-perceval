@@ -501,9 +501,11 @@ class GiteeClient(HttpClient, RateLimitHandler):
                  max_items=MAX_CATEGORY_ITEMS_PER_PAGE, archive=None, from_archive=False, ssl_verify=True):
         self.owner = owner
         self.repository = repository
-        # Just take the first token
+        # Just take the first token from tokens
         if tokens:
             self.access_token = tokens[0]
+        else:
+            self.access_token = None
         # Gitee doesn't have rate limit check yet
         self.last_rate_limit_checked = None
         self.max_items = max_items

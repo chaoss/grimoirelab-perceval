@@ -416,9 +416,8 @@ class TestGiteeClient(unittest.TestCase):
         self.assertDictEqual(httpretty.last_request().querystring, expected)
 
     @httpretty.activate
-    def test_get_refresh_token(self):
+    def test_get_without_api_token(self):
         """ Test when issue is empty API call """
-        setup_refresh_access_token_service()
         empty_issue = '[]'
         httpretty.register_uri(httpretty.GET, GITEE_ISSUES_URL,
                                body=empty_issue, status=200,
@@ -429,7 +428,7 @@ class TestGiteeClient(unittest.TestCase):
 
         httpretty.register_uri(httpretty.POST, GITEE_REFRESH_TOKEN_URL, body=empty_issue, status=200)
 
-        client = GiteeClient('gitee_example', 'repo', ['aaa'])
+        client = GiteeClient('gitee_example', 'repo', None)
         raw_issues = [issues for issues in client.issues()]
         self.assertEqual(raw_issues[0], empty_issue)
 
@@ -438,8 +437,7 @@ class TestGiteeClient(unittest.TestCase):
             'per_page': ['100'],
             'state': ['all'],
             'direction': ['asc'],
-            'sort': ['updated'],
-            'access_token': ['aaa']
+            'sort': ['updated']
         }
         self.assertDictEqual(httpretty.last_request().querystring, expected)
 
