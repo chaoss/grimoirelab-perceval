@@ -297,28 +297,28 @@ class Gitee(Backend):
                 if str_to_datetime(pull['updated_at']) > to_date:
                     return
 
-            self.__init_extra_pull_fields(pull)
+                self.__init_extra_pull_fields(pull)
 
-            for field in TARGET_PULL_FIELDS:
-                if not pull[field]:
-                    continue
+                for field in TARGET_PULL_FIELDS:
+                    if not pull[field]:
+                        continue
 
-                if field == 'user':
-                    pull[field + '_data'] = self.__get_user(pull[field]['login'])
+                    if field == 'user':
+                        pull[field + '_data'] = self.__get_user(pull[field]['login'])
 
-                # TODO we need to find a way to find out merged_by information
-                elif field == 'merged_by':
-                    pull[field + '_data'] = self.__get_user(pull[field]['login'])
+                    # TODO we need to find a way to find out merged_by information
+                    elif field == 'merged_by':
+                        pull[field + '_data'] = self.__get_user(pull[field]['login'])
 
-                elif field == 'assignees' or field == 'testers':
-                    pull[field + '_data'] = self.__get_users(pull[field])
-                elif field == 'number':
-                    pull['review_comments_data'] = self.__get_pull_review_comments(pull['number'])
-                    pull['commits_data'] = self.__get_pull_commits(pull['number'])
-                    pull['merged_by'] = self.__get_pull_merged_by(pull['number'])
-                    if pull['merged_by']:
-                        pull['merged_by_data'] = self.__get_user(pull['merged_by'])
-            yield pull
+                    elif field == 'assignees' or field == 'testers':
+                        pull[field + '_data'] = self.__get_users(pull[field])
+                    elif field == 'number':
+                        pull['review_comments_data'] = self.__get_pull_review_comments(pull['number'])
+                        pull['commits_data'] = self.__get_pull_commits(pull['number'])
+                        pull['merged_by'] = self.__get_pull_merged_by(pull['number'])
+                        if pull['merged_by']:
+                            pull['merged_by_data'] = self.__get_user(pull['merged_by'])
+                yield pull
 
     def __fetch_repo_info(self):
         """Get repo info about stars, watchers and forks"""
