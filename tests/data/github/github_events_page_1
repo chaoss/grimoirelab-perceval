@@ -1,0 +1,46 @@
+{
+    "data": {
+        "repository": {
+            "issue": {
+                "timelineItems": {
+                    "nodes": [
+                        {
+                            "actor": {
+                                "login": "valeriocos"
+                            },
+                            "createdAt": "2020-04-07T11:21:12Z",
+                            "eventType": "LabeledEvent",
+                            "id": "MDEyOkxhYmVsZWRFdmVudDMyMDkzOTI3NzU=",
+                            "label": {
+                                "createdAt": "2020-04-07T10:30:46Z",
+                                "description": "Something isn't working",
+                                "isDefault": true,
+                                "name": "bug",
+                                "updatedAt": "2020-04-07T10:30:46Z"
+                            }
+                        },
+                        {
+                            "actor": {
+                                "login": "valeriocos"
+                            },
+                            "createdAt": "2020-04-07T11:21:19Z",
+                            "eventType": "LabeledEvent",
+                            "id": "MDEyOkxhYmVsZWRFdmVudDMyMDkzOTMxMzI=",
+                            "label": {
+                                "createdAt": "2020-04-07T10:30:46Z",
+                                "description": "This issue or pull request already exists",
+                                "isDefault": true,
+                                "name": "duplicate",
+                                "updatedAt": "2020-04-07T10:30:46Z"
+                            }
+                        }
+                    ],
+                    "pageInfo": {
+                        "endCursor": "Y3Vyc29yOnYyOpPPAAABcVRfh5gBqjMyMDkzOTMxMzI=",
+                        "hasNextPage": true
+                    }
+                }
+            }
+        }
+    }
+}

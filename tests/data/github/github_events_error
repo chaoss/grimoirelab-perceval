@@ -1,0 +1,13 @@
+{
+    "errors": [
+        {
+            "locations": [
+                {
+                    "column": 80,
+                    "line": 7
+                }
+            ],
+            "message": "Parse error on \"=\" (EQUALS) at [7, 80]"
+        }
+    ]
+}
