@@ -1,0 +1,52 @@
+{
+    "data": {
+        "repository": {
+            "issue": {
+                "timelineItems": {
+                    "nodes": [
+                        {
+                            "actor": {
+                                "login": "valeriocos"
+                            },
+                            "createdAt": "2020-04-07T13:22:48Z",
+                            "eventType": "MovedColumnsInProjectEvent",
+                            "id": "MDI2Ok1vdmVkQ29sdW1uc0luUHJvamVjdEV2ZW50MzIwOTgzMzI1NA==",
+                            "previousProjectColumnName": "analysis",
+                            "project": {
+                                "closedAt": null,
+                                "createdAt": "2020-04-07T11:41:41Z",
+                                "name": "my fantastic board",
+                                "state": "OPEN",
+                                "updatedAt": "2020-04-07T13:23:03Z",
+                                "url": "https://github.com/valeriocos/test-issues-update/projects/1"
+                            },
+                            "projectColumnName": "doing"
+                        },
+                        {
+                            "actor": {
+                                "login": "valeriocos"
+                            },
+                            "createdAt": "2020-04-07T13:23:03Z",
+                            "eventType": "CrossReferencedEvent",
+                            "id": "MDI2Ok1vdmVkQ29sdW1uc0luUHJvamVjdEV2ZW50MzIwOTgzNDMzMQ==",
+                            "isCrossRepository": false,
+                            "source": {
+                                "createdAt": "2020-04-07T10:31:07Z",
+                                "number": 2,
+                                "type": "Issue",
+                                "updatedAt": "2020-04-07T10:34:26Z",
+                                "url": "https://github.com/valeriocos/test-issues-update/issues/2"
+                            },
+                            "url": "https://github.com/valeriocos/test-issues-update/issues/1#ref-issue-595767496",
+                            "willCloseTarget": false
+                        }
+                    ],
+                    "pageInfo": {
+                        "endCursor": "Y3Vyc29yOnYyOpPPAAABcVTO-tgBqjMyMDk4MzQzMzE=",
+                        "hasNextPage": false
+                    }
+                }
+            }
+        }
+    }
+}
