@@ -466,8 +466,6 @@ class Gitee(Backend):
         pull['commits_data'] = []
 
 
-
-
 class GiteeClient(HttpClient, RateLimitHandler):
     """Client for retrieving information from Gitee API
 

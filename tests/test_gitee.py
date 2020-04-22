@@ -299,7 +299,7 @@ class TestGiteeBackend(unittest.TestCase):
         self.assertEqual(len(pull['data']['assignees_data']), 1)
         self.assertEqual(pull['data']['assignees_data'][0]['login'], "willemjiang")
         # check if the  testers_data there
-        self.assertTrue( 'tester_data' not in pull['data'])
+        self.assertTrue('tester_data' not in pull['data'])
         self.assertEqual(pull['data']['commits_data'], ['8cd1bca4f2989ac2e2753a152c8c4c8e065b22f5'])
         self.assertEqual(pull['data']['merged_by'], "willemjiang")
         self.assertEqual(pull['data']['merged_by_data']['login'], "willemjiang")
@@ -319,7 +319,6 @@ class TestGiteeBackend(unittest.TestCase):
         self.assertEqual(pull['data']['commits_data'], ['586cc8e511097f5c5b7a4ce803a5efcaed99b9c2'])
         self.assertEqual(pull['data']['merged_by'], None)
         self.assertEqual(pull['data']['merged_by_data'], [])
-
 
     def test_has_resuming(self):
         """Test if it returns True when has_resuming is called"""
