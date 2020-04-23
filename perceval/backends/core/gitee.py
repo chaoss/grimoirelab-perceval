@@ -598,7 +598,16 @@ class GiteeClient(HttpClient, RateLimitHandler):
         }
 
         commit_url = urijoin("pulls", str(pr_number), "commits")
-        return self.fetch_items(commit_url, payload)
+        try:
+            result = self.fetch_items(commit_url, payload)
+        except requests.exceptions.HTTPError as error:
+            # 404 not found is wrongly received sometimes
+            if error.response.status_code == 404:
+                logger.error("Can't get gitee pull commits with : %s", commit_url)
+                result = '[]'
+            else:
+                raise error
+        return result
 
     def pull_review_comments(self, pr_number):
         """Get pull request review comments"""
@@ -642,7 +651,7 @@ class GiteeClient(HttpClient, RateLimitHandler):
         except requests.exceptions.HTTPError as error:
             # 404 not found is wrongly received sometimes
             if error.response.status_code == 404:
-                logger.error("Can't get gitee login orgs: %s", error)
+                logger.error("Can't get gitee login orgs with %s", url)
                 orgs = '[]'
             else:
                 raise error
