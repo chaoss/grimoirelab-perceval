@@ -62,6 +62,15 @@ def setup_gitee_issue_services():
 def setup_gitee_pull_request_services():
     setup_gitee_basic_services()
     __setup_gitee_pull_request_services()
+    __setup_gitee_pull_request_services_with_commits_and_comments()
+    __setup_gitee_pull_request_service_action_logs()
+
+
+def setup_gitee_pull_request_services_with_empty_commits_and_comments():
+    setup_gitee_basic_services()
+    __setup_gitee_pull_request_services()
+    __setup_gitee_pull_request_services_with_empty_commits_and_comments()
+    __setup_gitee_pull_request_service_action_logs()
 
 
 def setup_gitee_basic_services():
@@ -142,6 +151,8 @@ def __setup_gitee_pull_request_services():
                            body=pull_request_2, status=200,
                            forcing_headers=pagination_pull_header_2)
 
+
+def __setup_gitee_pull_request_services_with_commits_and_comments():
     pull_request_1_comments = read_file('data/gitee/gitee_pull_request1_comments')
     httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_1_COMMENTS_URL,
                            body=pull_request_1_comments, status=200,
@@ -170,6 +181,26 @@ def __setup_gitee_pull_request_services():
                                "total_count": "1",
                                "total_page": "1"
                            })
+    pull_request_1_action_logs = read_file('data/gitee/gitee_pull_request1_action_logs')
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_1_OPERATE_LOGS_URL,
+                           body=pull_request_1_action_logs, status=200)
+    pull_request_2_action_logs = read_file('data/gitee/gitee_pull_request2_action_logs')
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_2_OPERATE_LOGS_URL,
+                           body=pull_request_2_action_logs, status=200)
+
+
+def __setup_gitee_pull_request_services_with_empty_commits_and_comments():
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_1_COMMENTS_URL,
+                           body="", status=404)
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_1_COMMITS_URL,
+                           body="", status=404)
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_2_COMMENTS_URL,
+                           body="", status=404)
+    httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_2_COMMITS_URL,
+                           body="", status=404)
+
+
+def __setup_gitee_pull_request_service_action_logs():
     pull_request_1_action_logs = read_file('data/gitee/gitee_pull_request1_action_logs')
     httpretty.register_uri(httpretty.GET, GITEE_PULL_REQUEST_1_OPERATE_LOGS_URL,
                            body=pull_request_1_action_logs, status=200)
@@ -317,6 +348,31 @@ class TestGiteeBackend(unittest.TestCase):
         # check if the  testers_data there
         self.assertTrue('tester_data' not in pull['data'])
         self.assertEqual(pull['data']['commits_data'], ['586cc8e511097f5c5b7a4ce803a5efcaed99b9c2'])
+        self.assertEqual(pull['data']['merged_by'], None)
+        self.assertEqual(pull['data']['merged_by_data'], [])
+
+    @httpretty.activate
+    def test_fetch_pulls_with_empty_commits_and_comments(self):
+        setup_gitee_pull_request_services_with_empty_commits_and_comments()
+        from_date = datetime.datetime(2019, 1, 1)
+        gitee = Gitee("gitee_example", "repo", "[aaa]")
+        pulls = [pr for pr in gitee.fetch(category=CATEGORY_PULL_REQUEST, from_date=from_date)]
+
+        self.assertEqual(len(pulls), 2)
+        pull = pulls[0]
+        self.assertEqual(len(pull['data']['review_comments_data']), 0)
+        # check if the  testers_data there
+        self.assertTrue('tester_data' not in pull['data'])
+        self.assertEqual(pull['data']['commits_data'], [])
+        self.assertEqual(pull['data']['merged_by'], "willemjiang")
+        self.assertEqual(pull['data']['merged_by_data']['login'], "willemjiang")
+
+        pull = pulls[1]
+        self.assertEqual(len(pull['data']['review_comments_data']), 0)
+        self.assertEqual(len(pull['data']['review_comments_data']), 0)
+        # check if the  testers_data there
+        self.assertTrue('tester_data' not in pull['data'])
+        self.assertEqual(pull['data']['commits_data'], [])
         self.assertEqual(pull['data']['merged_by'], None)
         self.assertEqual(pull['data']['merged_by_data'], [])
 

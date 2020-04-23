@@ -370,41 +370,53 @@ class Gitee(Backend):
         """Get pull request commit hashes"""
 
         hashes = []
-        group_pull_commits = self.client.pull_commits(pr_number)
+        try:
+            group_pull_commits = self.client.pull_commits(pr_number)
 
-        for raw_pull_commits in group_pull_commits:
+            for raw_pull_commits in group_pull_commits:
 
-            for commit in json.loads(raw_pull_commits):
-                commit_hash = commit['sha']
-                hashes.append(commit_hash)
+                for commit in json.loads(raw_pull_commits):
+                    commit_hash = commit['sha']
+                    hashes.append(commit_hash)
 
+        except requests.exceptions.HTTPError as error:
+            # 404 not found is wrongly received from gitee API service
+            if error.response.status_code == 404:
+                logger.error("Can't get gitee pull request commits with PR number %s", pr_number)
+            else:
+                raise error
         return hashes
 
     def __get_pull_review_comments(self, pr_number):
         """Get pull request review comments"""
 
         comments = []
-        group_comments = self.client.pull_review_comments(pr_number)
+        try:
+            group_comments = self.client.pull_review_comments(pr_number)
+            for raw_comments in group_comments:
 
-        for raw_comments in group_comments:
+                for comment in json.loads(raw_comments):
+                    comment_id = comment.get('id')
 
-            for comment in json.loads(raw_comments):
-                comment_id = comment.get('id')
-
-                user = comment.get('user', None)
-                if not user:
-                    logger.warning("Missing user info for %s", comment['url'])
-                    comment['user_data'] = None
-                else:
-                    comment['user_data'] = self.__get_user(user['login'])
-                comments.append(comment)
+                    user = comment.get('user', None)
+                    if not user:
+                        logger.warning("Missing user info for %s", comment['url'])
+                        comment['user_data'] = None
+                    else:
+                        comment['user_data'] = self.__get_user(user['login'])
+                    comments.append(comment)
+        except requests.exceptions.HTTPError as error:
+            # 404 not found is wrongly received from gitee API service
+            if error.response.status_code == 404:
+                logger.error("Can't get gitee pull request comments with PR number %s", pr_number)
+            else:
+                raise error
 
         return comments
 
     # TODO need to check the Gitee API for the pull reviews
     def __get_pull_reviews(self, pr_number):
         """Get pull request reviews"""
-
         reviews = []
         group_reviews = self.client.pull_reviews(pr_number)
 
@@ -419,6 +431,7 @@ class Gitee(Backend):
                     review['user_data'] = self.__get_user(user['login'])
 
                 reviews.append(review)
+
         return reviews
 
     def __get_users(self, items):
@@ -598,16 +611,7 @@ class GiteeClient(HttpClient, RateLimitHandler):
         }
 
         commit_url = urijoin("pulls", str(pr_number), "commits")
-        try:
-            result = self.fetch_items(commit_url, payload)
-        except requests.exceptions.HTTPError as error:
-            # 404 not found is wrongly received sometimes
-            if error.response.status_code == 404:
-                logger.error("Can't get gitee pull commits with : %s", commit_url)
-                result = '[]'
-            else:
-                raise error
-        return result
+        return self.fetch_items(commit_url, payload)
 
     def pull_review_comments(self, pr_number):
         """Get pull request review comments"""
@@ -615,7 +619,7 @@ class GiteeClient(HttpClient, RateLimitHandler):
         payload = {
             'per_page': PER_PAGE,
             'direction': 'asc',
-            # doesn't suppor sort parameter
+            # doesn't support sort parameter
             # 'sort': 'updated'
         }
 
