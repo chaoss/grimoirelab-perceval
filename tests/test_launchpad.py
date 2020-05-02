@@ -1010,6 +1010,7 @@ class TestLaunchpadCommand(unittest.TestCase):
                 '--from-date', '1970-01-01',
                 '--items-per-page', '75',
                 '--sleep-time', '600',
+                '--package', 'mypackage',
                 'mydistribution']
 
         parsed_args = parser.parse(*args)
@@ -1019,12 +1020,14 @@ class TestLaunchpadCommand(unittest.TestCase):
         self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.items_per_page, '75')
         self.assertEqual(parsed_args.sleep_time, '600')
+        self.assertEqual(parsed_args.package, 'mypackage')
         self.assertTrue(parsed_args.ssl_verify)
 
         args = ['--tag', 'test', '--no-archive',
                 '--from-date', '1970-01-01',
                 '--items-per-page', '75',
                 '--sleep-time', '600',
+                '--package', 'mypackage',
                 '--no-ssl-verify',
                 'mydistribution']
 
@@ -1035,6 +1038,7 @@ class TestLaunchpadCommand(unittest.TestCase):
         self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.items_per_page, '75')
         self.assertEqual(parsed_args.sleep_time, '600')
+        self.assertEqual(parsed_args.package, 'mypackage')
         self.assertFalse(parsed_args.ssl_verify)
 
 

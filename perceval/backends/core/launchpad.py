@@ -63,7 +63,7 @@ class Launchpad(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.8.0'
+    version = '0.8.1'
 
     CATEGORIES = [CATEGORY_ISSUE]
 
@@ -515,6 +515,8 @@ class LaunchpadCommand(BackendCommand):
                            help="Items per page")
         group.add_argument('--sleep-time', dest='sleep_time',
                            help="Sleep time in case of connection lost")
+        group.add_argument('--package', dest='package',
+                           help="Distribution package")
 
         # Required arguments
         parser.parser.add_argument('distribution',
