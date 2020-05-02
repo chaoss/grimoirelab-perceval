@@ -36,6 +36,7 @@ are:
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
     redmine          Fetch issues from a Redmine server
+    rocketchat       Fetch messages from a Rocket.Chat channel   
     rss              Fetch entries from a RSS feed server
     slack            Fetch messages from a Slack channel
     stackexchange    Fetch questions from StackExchange sites
@@ -319,6 +320,13 @@ $ perceval pipermail 'http://mail-archives.apache.org/mod_mbox/httpd-dev/'
 ### Redmine
 ```
 $ perceval redmine 'https://www.redmine.org/' --from-date '2016-01-01' -t abcdefghijk
+```
+
+### Rocket.Chat
+
+Rocket.Chat backend needs an API token and a User Id to authenticate to the server.
+```
+$ perceval rocketchat -t 'abchdefghij' -u '1234abcd' --from-date '2020-05-02' https://open.rocket.chat general
 ```
 
 ### RSS

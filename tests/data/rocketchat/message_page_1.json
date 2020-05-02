@@ -1,0 +1,62 @@
+{
+  "messages": [
+    {
+      "_id": "4AwA2eJQ7xBgPZ4mv",
+      "rid": "wyJHNAtuPGnQCT5xP",
+      "msg": "Test message 1",
+      "ts": "2020-05-02T07:30:42.993Z",
+      "u": {
+        "_id": "123user",
+        "username": "animesh_username1",
+        "name": "Animesh Kumar"
+      },
+      "_updatedAt": "2020-05-02T07:31:26.164Z",
+      "mentions": [],
+      "channels": [],
+      "reactions": {
+        ":cool:": {
+          "usernames": [
+            "animesh_username2"
+          ]
+        },
+        ":wait:": {
+          "usernames": [
+            "animesh_username2"
+          ]
+        }
+      },
+      "starred": [],
+      "replies": [
+        "567user"
+      ],
+      "tcount": 1,
+      "tlm": "2020-05-02T07:31:26.007Z"
+    },
+    {
+      "_id": "zofFonHMq5M3tdGyu",
+      "rid": "wyJHNAtuPGnQCT5xP",
+      "tmid": "4AwA2eJQ7xBgPZ4mv",
+      "msg": "Test reply 1",
+      "ts": "2020-05-02T07:31:26.007Z",
+      "u": {
+        "_id": "567user",
+        "username": "animesh_username2",
+        "name": "Animesh Kumar Singh"
+      },
+      "_updatedAt": "2020-05-02T07:31:56.711Z",
+      "mentions": [],
+      "channels": [],
+      "_hidden": true,
+      "parent": "WnWSwiD877xRpqcMb",
+      "editedAt": "2020-05-02T07:31:56.711Z",
+      "editedBy": {
+        "_id": "123user",
+        "username": "animesh_username1"
+      }
+    }
+  ],
+  "count": 2,
+  "offset": 0,
+  "total": 4,
+  "success": true
+}

@@ -1,0 +1,43 @@
+{
+  "messages": [
+    {
+      "_id": "WnWSwiD877xRpqcMb",
+      "rid": "wyJHNAtuPGnQCT5xP",
+      "tmid": "4AwA2eJQ7xBgPZ4mv",
+      "msg": "Test reply 1 edited",
+      "ts": "2020-05-02T07:31:26.007Z",
+      "u": {
+        "_id": "567user",
+        "username": "animesh_username2",
+        "name": "Animesh Kumar Singh"
+      },
+      "_updatedAt": "2020-05-02T07:31:56.714Z",
+      "mentions": [],
+      "channels": [],
+      "editedAt": "2020-05-02T07:31:56.712Z",
+      "editedBy": {
+        "_id": "123user",
+        "username": "animesh_username1"
+      },
+      "urls": []
+    },
+    {
+      "_id": "p5dQSb48W25EimhJK",
+      "rid": "wyJHNAtuPGnQCT5xP",
+      "msg": "Test message 2",
+      "ts": "2020-05-03T07:32:03.571Z",
+      "u": {
+        "_id": "123user",
+        "username": "animesh_username1",
+        "name": "Animesh Kumar"
+      },
+      "_updatedAt": "2020-05-03T07:32:03.587Z",
+      "mentions": [],
+      "channels": []
+    }
+  ],
+  "count": 2,
+  "offset": 2,
+  "total": 4,
+  "success": true
+}

@@ -1,0 +1,22 @@
+{
+  "messages": [
+    {
+      "_id": "p5dQSb48W25EimhJK",
+      "rid": "wyJHNAtuPGnQCT5xP",
+      "msg": "Test message 2",
+      "ts": "2020-05-03T07:32:03.571Z",
+      "u": {
+        "_id": "123user",
+        "username": "animesh_username1",
+        "name": "Animesh Kumar"
+      },
+      "_updatedAt": "2020-05-03T07:32:03.587Z",
+      "mentions": [],
+      "channels": []
+    }
+  ],
+  "count": 1,
+  "offset": 0,
+  "total": 1,
+  "success": true
+}
