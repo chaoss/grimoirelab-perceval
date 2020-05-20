@@ -327,6 +327,18 @@ $ perceval rss 'https://blog.bitergia.com/feed/'
 ```
 
 ### Slack
+
+Slack backend requires an API token for authentication. Slack apps can be
+used to generate and configure this API token. The scopes required by a Slack
+app for the backend are `channels:history`, `channels:read` and `users:read`.
+To know more about Slack apps and its integration please refer the
+[Slack apps documentation](https://api.slack.com/start/overview).
+For more information about the scopes required by a Slack app please refer the
+[Scopes and permissions documentation](https://api.slack.com/scopes).
+
+The following [script](https://gist.github.com/valeriocos/de31324625a3fab32449cf5d43b24075)
+can also be used to generate an OAuth2 token to access the Slack API.
+
 ```
 $ perceval slack C0001 --from-date 2016-01-12 -t abcedefghijk
 ```

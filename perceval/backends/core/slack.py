@@ -61,7 +61,7 @@ class Slack(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.9.0'
+    version = '0.9.1'
 
     CATEGORIES = [CATEGORY_MESSAGE]
     EXTRA_SEARCH_FIELDS = {
@@ -302,9 +302,9 @@ class SlackClient(HttpClient):
     URL = urijoin(SLACK_URL, 'api', '%(resource)s')
 
     AUTHORIZATION_HEADER = 'Authorization'
-    RCONVERSATION_INFO = 'conversations.members'
-    RCHANNEL_INFO = 'channels.info'
-    RCHANNEL_HISTORY = 'channels.history'
+    RCONVERSATION_MEMBERS = 'conversations.members'
+    RCONVERSATION_INFO = 'conversations.info'
+    RCONVERSATION_HISTORY = 'conversations.history'
     RUSER_INFO = 'users.info'
 
     PCHANNEL = 'channel'
@@ -327,7 +327,7 @@ class SlackClient(HttpClient):
         """
         members = 0
 
-        resource = self.RCONVERSATION_INFO
+        resource = self.RCONVERSATION_MEMBERS
 
         params = {
             self.PCHANNEL: conversation,
@@ -348,7 +348,7 @@ class SlackClient(HttpClient):
     def channel_info(self, channel):
         """Fetch information about a channel."""
 
-        resource = self.RCHANNEL_INFO
+        resource = self.RCONVERSATION_INFO
 
         params = {
             self.PCHANNEL: channel,
@@ -361,7 +361,7 @@ class SlackClient(HttpClient):
     def history(self, channel, oldest=None, latest=None):
         """Fetch the history of a channel."""
 
-        resource = self.RCHANNEL_HISTORY
+        resource = self.RCONVERSATION_HISTORY
 
         params = {
             self.PCHANNEL: channel,

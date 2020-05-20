@@ -44,11 +44,11 @@ from perceval.backends.core.slack import (logger,
 from base import TestCaseBackendArchive
 
 
-SLACK_API_URL = 'https://slack.com/api'
-SLACK_CHANNEL_INFO_URL = SLACK_API_URL + '/channels.info'
-SLACK_CHANNEL_HISTORY_URL = SLACK_API_URL + '/channels.history'
-SLACK_CONVERSATION_MEMBERS = SLACK_API_URL + '/conversations.members'
-SLACK_USER_INFO_URL = SLACK_API_URL + '/users.info'
+SLACK_API_URL = 'https://slack.com/api/'
+SLACK_CHANNEL_INFO_URL = SLACK_API_URL + SlackClient.RCONVERSATION_INFO
+SLACK_CHANNEL_HISTORY_URL = SLACK_API_URL + SlackClient.RCONVERSATION_HISTORY
+SLACK_CONVERSATION_MEMBERS = SLACK_API_URL + SlackClient.RCONVERSATION_MEMBERS
+SLACK_USER_INFO_URL = SLACK_API_URL + SlackClient.RUSER_INFO
 
 
 def read_file(filename, mode='r'):
@@ -703,7 +703,7 @@ class TestSlackClient(unittest.TestCase):
 
         req = http_requests[0]
         self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, '/conversations.members')
+        self.assertRegex(req.path, SlackClient.RCONVERSATION_MEMBERS)
 
         for i in range(len(expected)):
             self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), http_requests[i].headers._headers)
@@ -727,7 +727,7 @@ class TestSlackClient(unittest.TestCase):
 
         req = http_requests[0]
         self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, '/channels.info')
+        self.assertRegex(req.path, SlackClient.RCONVERSATION_INFO)
         self.assertDictEqual(req.querystring, expected)
         self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), req.headers._headers)
 
@@ -754,7 +754,7 @@ class TestSlackClient(unittest.TestCase):
 
         req = http_requests[0]
         self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, '/channels.history')
+        self.assertRegex(req.path, SlackClient.RCONVERSATION_HISTORY)
         self.assertDictEqual(req.querystring, expected)
         self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), req.headers._headers)
 
@@ -781,7 +781,7 @@ class TestSlackClient(unittest.TestCase):
 
         req = http_requests[0]
         self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, '/channels.history')
+        self.assertRegex(req.path, SlackClient.RCONVERSATION_HISTORY)
         self.assertDictEqual(req.querystring, expected)
         self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), req.headers._headers)
 
@@ -804,7 +804,7 @@ class TestSlackClient(unittest.TestCase):
 
         req = http_requests[0]
         self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, '/users.info')
+        self.assertRegex(req.path, SlackClient.RUSER_INFO)
         self.assertDictEqual(req.querystring, expected)
         self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), req.headers._headers)
 
