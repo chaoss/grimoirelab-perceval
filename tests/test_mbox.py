@@ -395,8 +395,8 @@ class TestMBoxBackend(TestBaseMBox):
 
             with mbox.container as f_in:
                 with open(tmp_path, mode='wb') as f_out:
-                    for l in f_in:
-                        f_out.write(l)
+                    for line in f_in:
+                        f_out.write(line)
             return tmp_path
 
         shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/mbox/mbox_single.mbox'),

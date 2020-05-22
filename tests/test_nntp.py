@@ -95,7 +95,7 @@ class MockNNTPLib:
             raise nntplib.NNTPTemporaryError('not found')
 
         with open(a[1], 'rb') as f:
-            lines = [l.rstrip() for l in f]
+            lines = [line.rstrip() for line in f]
         return None, MockArticleInfo(article_id, message_id, lines)
 
     def quit(self):
