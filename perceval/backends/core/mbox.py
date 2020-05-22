@@ -66,7 +66,7 @@ class MBox(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.13.0'
+    version = '0.13.1'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -246,8 +246,8 @@ class MBox(Backend):
 
         with mbox.container as f_in:
             with open(tmp_path, mode='wb') as f_out:
-                for l in f_in:
-                    f_out.write(l)
+                for line in f_in:
+                    f_out.write(line)
         return tmp_path
 
     def _validate_message(self, message):

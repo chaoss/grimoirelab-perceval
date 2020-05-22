@@ -67,7 +67,7 @@ class Pipermail(MBox):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.11.0'
+    version = '0.11.1'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -217,8 +217,8 @@ class PipermailList(MailingList):
         if not os.path.exists(self.dirpath):
             os.makedirs(self.dirpath)
 
-        for l in links:
-            filename = os.path.basename(l)
+        for link in links:
+            filename = os.path.basename(link)
 
             mbox_dt = self._parse_date_from_filepath(filename)
 
@@ -227,10 +227,10 @@ class PipermailList(MailingList):
                 from_date < mbox_dt):
 
                 filepath = os.path.join(self.dirpath, filename)
-                success = self._download_archive(l, filepath)
+                success = self._download_archive(link, filepath)
 
                 if success:
-                    fetched.append((l, filepath))
+                    fetched.append((link, filepath))
 
         logger.info("%s/%s MBoxes downloaded", len(fetched), len(links))
 
