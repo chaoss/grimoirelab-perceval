@@ -1,0 +1,254 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2015-2020 Bitergia
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors:
+#     Venu Vardhan Reddy Tekula <venuvardhanreddytekula8@gmail.com>
+#
+
+
+import logging
+import json
+
+from grimoirelab_toolkit.uris import urijoin
+
+from ...backend import (Backend,
+                        BackendCommand,
+                        BackendCommandArgumentParser)
+from ...client import HttpClient
+
+logger = logging.getLogger(__name__)
+
+CATEGORY_MESSAGE = "message"
+
+DEFAULT_SEARCH_FIELD = 'item_id'
+DEFAULT_OFFSET = 1
+
+
+class Zulip(Backend):
+    """Zulip Backend.
+
+    This class retrieves the messages sent to a Zulip stream.
+    To access the server an API token and Bot email is required.
+
+    The orgin of the data will be set using this `url` plus the
+    stream from which the data is obtained (i.e: https://example.zulipchat.com/stream).
+
+    :param url: URL of the Zulip chat server
+    :param stream: stream from which the messages are to be fetched
+    :param email: bot email
+    :param api_token: key needed to use the API
+    :param tag: label used to mark the data
+    :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
+    """
+
+    version = '0.1.0'
+
+    CATEGORIES = [CATEGORY_MESSAGE]
+
+    def __init__(self, url, stream, email, api_token, tag=None, archive=None, ssl_verify=True):
+        origin = urijoin(url, stream)
+
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
+        self.url = url
+        self.stream = stream
+        self.api_token = api_token
+        self.email = email
+
+        self.client = None
+
+    def search_fields(self, item):
+        """Add search fields to an item.
+
+        It adds the values of `metadata_id` and `stream`.
+
+        :param item:  the item to extract the search fields values
+
+        :returns: a dict of search fields
+        """
+        search_fields = {
+            DEFAULT_SEARCH_FIELD: self.metadata_id(item),
+            'stream': self.stream,
+        }
+
+        return search_fields
+
+    def fetch(self, category=CATEGORY_MESSAGE, offset=DEFAULT_OFFSET):
+        """Fetch the message from the stream.
+
+        This method fetches the messages sent in the Zulip stream
+        starting on the given offset.
+
+        :param category: the category of items to fetch
+        :param offset: obtain messages from this offset
+
+        :return: a generator of messages
+        """
+        kwargs = {"offset": offset}
+        items = super().fetch(category, **kwargs)
+
+        return items
+
+    def fetch_items(self, category, **kwargs):
+        """Fetch the messages.
+
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :return: a generator of items
+        """
+        anchor = 'oldest'
+        found_newest = False
+
+        fetching = True
+
+        while fetching:
+            raw_messages = self.client.get_messages(anchor)
+            anchor, found_newest, messages = self.parse_messages(raw_messages)
+            yield messages[0]
+
+            if found_newest:
+                fetching = False
+                yield messages[1]
+
+    def parse_messages(self, raw_messages):
+        result = json.loads(raw_messages)
+
+        found_newest = result.get('found_newest', False)
+        messages = result.get('messages', None)
+        anchor = messages[1]['id'] if messages else None
+
+        return anchor, found_newest, messages
+
+    @classmethod
+    def has_archiving(cls):
+        """Returns whether it supports archiving items on the fetch process.
+
+        :returns: this backend supports items archive
+        """
+        return True
+
+    @classmethod
+    def has_resuming(cls):
+        """Returns whether it supports to resume the fetch process.
+
+        :returns: this backend does not support items resuming
+        """
+        return True
+
+    @staticmethod
+    def metadata_id(item):
+        """Extracts the identifier of a Zulip item."""
+
+        return str(item['id'])
+
+    @staticmethod
+    def metadata_updated_on(item):
+        """Extracts and coverts the update time from a Zulip item.
+
+        The timestamp is extracted from 'ts' field and converted
+        to a UNIX timestamp.
+
+        :param item: item generated by the backend
+
+        :returns: a UNIX timestamp
+        """
+        ts = float(item['timestamp'])
+        return ts
+
+    @ staticmethod
+    def metadata_category(item):
+        """Extracts the category from a Zulip item.
+
+        This backend only generates one type of item which is 'message'.
+        """
+        return CATEGORY_MESSAGE
+
+    def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return ZulipClient(self.url, self.stream, self.email, self.api_token,
+                           archive=self.archive, from_archive=from_archive, ssl_verify=self.ssl_verify)
+
+
+class ZulipClient(HttpClient):
+    """Zulip API client.
+
+    Client for fetching information from the Zulip server using its
+    REST API.
+
+    :param url: URL of the Zulip chat server
+    :param stream: stream from which the messages are to be fetched
+    :param email: bot email
+    :param api_token: key needed to use the API
+    :param archive: archive to store/retrieve items
+    :param from_archive: it tells whether to write/read the archive
+    :param ssl_verify: enable/disable SSL verification
+    """
+
+    def __init__(self, url, stream, email, api_token,
+                 archive=None, from_archive=False, ssl_verify=True):
+        self.url = url
+        self.stream = stream
+        self.email = email
+        self.api_token = api_token
+
+        super().__init__(url, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
+
+    def get_messages(self, anchor):
+        """Fetch the messages."""
+
+        params = {
+            'anchor': '{}'.format(anchor),
+            'num_before': '0',
+            'num_after': '2',
+            'apply_markdown': 'false',
+            'narrow': json.dumps([{'operator': 'stream', 'operand': '{}'.format(self.stream)}])
+        }
+
+        path = urijoin(self.url, "/api/v1/messages")
+
+        r = self.fetch(path, payload=params, auth=(self.email, self.api_token))
+
+        return r.text
+
+
+class ZulipCommand(BackendCommand):
+    """Class to run Zulip backend from the command line."""
+
+    BACKEND = Zulip
+
+    @classmethod
+    def setup_cmd_parser(cls):
+        """Returns the Zulip argument pareser."""
+
+        parser = BackendCommandArgumentParser(cls.BACKEND,
+                                              token_auth=True,
+                                              archive=True,
+                                              ssl_verify=True)
+
+        # Backend Token is required
+        action = parser.parser._option_string_actions['--api-token']
+        action.required = True
+
+        # # Required arguments
+        parser.parser.add_argument('url', help="Zulip chat URL")
+        parser.parser.add_argument('stream', help='Zulip chat stream name')
+        parser.parser.add_argument('-e', '--email', dest='email',
+                                   help="Zulip bot email")
+
+        return parser

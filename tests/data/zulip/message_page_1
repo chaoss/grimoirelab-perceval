@@ -1,0 +1,63 @@
+{
+   "result":"success",
+   "msg":"",
+   "messages":[
+        {
+            "avatar_url": "https://zulip-avatars.s3.amazonaws.com/1000/1cd87892343b6620726b112851f0b66cbda4a68f?x=x&version=4%22,avatar_url%22:%20%22https://zulip-avatars.s3.amazonaws.com/1000/1cd87892343b6620726b112851f0b66cbda4a68f?x=x&version=4",
+            "client": "ZulipElectron",
+            "content": "This is test messgae 2",
+            "content_type": "text/x-markdown",
+            "display_recipient": "abcdefghijkl",
+            "flags": [
+                "read",
+                "historical"
+            ],
+            "id": 159310824,
+            "is_me_message": false,
+            "reactions": [],
+            "recipient_id": 303900,
+            "sender_email": "bot@zulipchat.com",
+            "sender_full_name": "Bot",
+            "sender_id": 113001,
+            "sender_realm_str": "example",
+            "sender_short_name": "bot",
+            "stream_id": 187177,
+            "subject": "Test subject 2",
+            "submessages": [],
+            "timestamp": 1551067006,
+            "topic_links": [],
+            "type": "stream"
+        },
+        {
+            "avatar_url": "https://zulip-avatars.s3.amazonaws.com/1000/1cd87892343b6620726b112851f0b66cbda4a68f?x=x&version=4%22,avatar_url%22:%20%22https://zulip-avatars.s3.amazonaws.com/1000/1cd87892343b6620726b112851f0b66cbda4a68f?x=x&version=4",
+            "client": "ZulipElectron",
+            "content": "This is test messgae 1",
+            "content_type": "text/x-markdown",
+            "display_recipient": "abcdefghijkl",
+            "flags": [
+                "read",
+                "historical"
+            ],
+            "id": 159310770,
+            "is_me_message": false,
+            "reactions": [],
+            "recipient_id": 303900,
+            "sender_email": "bot@zulipchat.com",
+            "sender_full_name": "Bot",
+            "sender_id": 113001,
+            "sender_realm_str": "example",
+            "sender_short_name": "bot",
+            "stream_id": 187177,
+            "subject": "Test subject 1",
+            "submessages": [],
+            "timestamp": 1551066955,
+            "topic_links": [],
+            "type": "stream"
+        }
+   ],
+   "found_anchor":true,
+   "found_oldest":false,
+   "found_newest":true,
+   "history_limited":false,
+   "anchor":175270341
+}

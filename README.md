@@ -44,6 +44,7 @@ are:
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server
     twitter          Fetch tweets from the Twitter Search API
+    zulip            Fetch messages from a Zulip stream
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -384,6 +385,15 @@ https://gist.github.com/valeriocos/7d4d28f72f53fbce49f1512ba77ef5f6
 
 ```
 $ perceval twitter grimoirelab -t 12345678abcdefgh
+```
+
+### Zulip
+
+Zulip backend needs `BOT_EMAIL_ADDRESS` and `BOT_API_KEY`. `EMAIL_ADDRESS` and `API_KEY` can
+be used if the bots are restricted. More information at https://zulipchat.com/api/api-keys.
+
+```
+$ perceval zulip 'https://example.zulipchat.com/' 'stream' -e 'BOT_EMAIL_ADDRESS' -t 'BOT_API_KEY'
 ```
 
 ## Running tests

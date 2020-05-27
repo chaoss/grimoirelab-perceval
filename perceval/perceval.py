@@ -81,6 +81,7 @@ are:
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server
     twitter          Fetch tweets from the Twitter Search API
+    zulip            Fetch messages from a Zulip stream
 
 optional arguments:
   -h, --help            show this help message and exit
