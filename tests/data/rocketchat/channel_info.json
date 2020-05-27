@@ -1,0 +1,38 @@
+{
+  "channel": {
+    "_id": "wyJHNAtuPGnQCT5xP",
+    "name": "testapichannel",
+    "fname": "testapichannel",
+    "t": "c",
+    "msgs": 3,
+    "usersCount": 2,
+    "u": {
+      "_id": "123user",
+      "username": "animesh_username1"
+    },
+    "customFields": {},
+    "broadcast": false,
+    "encrypted": false,
+    "ts": "2020-05-03T07:30:30.990Z",
+    "ro": false,
+    "default": false,
+    "sysMes": true,
+    "_updatedAt": "2020-05-03T07:32:03.594Z",
+    "lastMessage": {
+      "_id": "p5dQSb48W25EimhJK",
+      "rid": "wyJHNAtuPGnQCT5xP",
+      "msg": "Test message 2",
+      "ts": "2020-05-03T07:32:03.571Z",
+      "u": {
+        "_id": "123user",
+        "username": "animeshk_username1",
+        "name": "Animesh Kumar"
+      },
+      "_updatedAt": "2020-05-03T07:32:03.587Z",
+      "mentions": [],
+      "channels": []
+    },
+    "lm": "2020-05-03T07:32:03.571Z"
+  },
+  "success": true
+}
