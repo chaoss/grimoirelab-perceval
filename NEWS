@@ -1,5 +1,15 @@
 # Releases
 
+## Perceval 0.15.0 - (2020-06-13)
+
+**New features:**
+
+ * Add Rocket.Chat backend (#543)\
+   Added support to fetch messages from a Rocket.Chat channel. The
+   messages are fetched in an ascending order based on time when they
+   were last updated. The channel information is also fetched. The tests
+   have been added accordingly. The usage docs have been updated.
+
 ## Perceval 0.12 - (2018-10-02)
 
 ** New features and improvements: **
