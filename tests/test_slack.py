@@ -453,6 +453,9 @@ class TestSlackBackend(unittest.TestCase):
             ("There are no events this week.",
              'b48fd01f4e010597091b7e44cecfb6074f56a1a6',
              1486969200.000136, 'B0001', 'test channel'),
+            ("hey hey!",
+             '141392fe7515c0710bc4b3d1da82f1d4bec311f4',
+             1486949200.000069, None, 'test channel'),
             ("<@U0003|dizquierdo> has joined the channel",
              'bb95a1facf7d61baaf57322f3d6b6d2d45af8aeb',
              1427799888.0, 'dizquierdo@example.com', 'test channel'),
@@ -479,6 +482,9 @@ class TestSlackBackend(unittest.TestCase):
             # The first message was sent by a bot
             if x == 0:
                 self.assertEqual(message['data']['bot_id'], expc[3])
+            elif x == 1:
+                self.assertNotIn('bot_id', message['data'])
+                self.assertNotIn('user_data', message['data'])
             else:
                 self.assertEqual(message['data']['user_data']['profile']['email'], expc[3])
 

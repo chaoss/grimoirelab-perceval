@@ -61,7 +61,7 @@ class Slack(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.9.1'
+    version = '0.9.2'
 
     CATEGORIES = [CATEGORY_MESSAGE]
     EXTRA_SEARCH_FIELDS = {
@@ -183,13 +183,19 @@ class Slack(Backend):
         'ts' and 'user' values (or 'bot_id' when the message is sent by a bot)
         are combined because there have been cases where two messages were sent
         by different users at the same time.
+
+        In the case where neither the 'user' or 'bot_id' attributes are present
+        (e.g, bot deleted), the fallback option is to generate the identifier
+        using the 'ts' and 'username' values.
         """
         if 'user' in item:
             nick = item['user']
         elif 'comment' in item:
             nick = item['comment']['user']
-        else:
+        elif 'bot_id' in item:
             nick = item['bot_id']
+        else:
+            nick = item['username']
 
         return item['ts'] + nick
 
