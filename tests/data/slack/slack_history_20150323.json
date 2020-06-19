@@ -9,6 +9,13 @@
             "type": "message"
         },
         {
+            "subtype": "bot_message",
+            "text": "hey hey!",
+            "ts": "1486949200.000069",
+            "type": "message",
+            "username": "Owl Capone"
+        },
+        {
             "subtype": "channel_join",
             "text": "<@U0003|dizquierdo> has joined the channel",
             "ts": "1427799888.000000",
