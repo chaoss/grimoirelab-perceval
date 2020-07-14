@@ -46,7 +46,7 @@ from base import TestCaseBackendArchive
 
 SLACK_API_URL = 'https://slack.com/api/'
 SLACK_CHANNEL_INFO_URL = SLACK_API_URL + SlackClient.RCONVERSATION_INFO
-SLACK_CHANNEL_HISTORY_URL = SLACK_API_URL + SlackClient.RCONVERSATION_HISTORY
+SLACK_CHANNEL_HISTORY_URL = SLACK_API_URL + SlackClient.RCHANNEL_HISTORY
 SLACK_CONVERSATION_MEMBERS = SLACK_API_URL + SlackClient.RCONVERSATION_MEMBERS
 SLACK_USER_INFO_URL = SLACK_API_URL + SlackClient.RUSER_INFO
 
@@ -760,7 +760,7 @@ class TestSlackClient(unittest.TestCase):
 
         req = http_requests[0]
         self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, SlackClient.RCONVERSATION_HISTORY)
+        self.assertRegex(req.path, SlackClient.RCHANNEL_HISTORY)
         self.assertDictEqual(req.querystring, expected)
         self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), req.headers._headers)
 
@@ -787,7 +787,7 @@ class TestSlackClient(unittest.TestCase):
 
         req = http_requests[0]
         self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, SlackClient.RCONVERSATION_HISTORY)
+        self.assertRegex(req.path, SlackClient.RCHANNEL_HISTORY)
         self.assertDictEqual(req.querystring, expected)
         self.assertIn((SlackClient.AUTHORIZATION_HEADER, 'Bearer aaaa'), req.headers._headers)
 
