@@ -137,7 +137,9 @@ class TestGerritBackend(unittest.TestCase):
         self.assertIsNone(gerrit.client)
         self.assertIsNone(gerrit.blacklist_ids)
 
-        gerrit = Gerrit(GERRIT_REPO, GERRIT_USER, port=1000, max_reviews=100)
+        gerrit = Gerrit(GERRIT_REPO, GERRIT_USER,
+                        port=1000, max_reviews=100,
+                        id_filepath='/tmp/.ssh-keys/id_rsa')
         self.assertEqual(gerrit.hostname, GERRIT_REPO)
         self.assertEqual(gerrit.port, 1000)
         self.assertEqual(gerrit.max_reviews, 100)
@@ -145,6 +147,7 @@ class TestGerritBackend(unittest.TestCase):
         self.assertEqual(gerrit.user, GERRIT_USER)
         self.assertIsNone(gerrit.client)
         self.assertIsNone(gerrit.blacklist_ids)
+        self.assertEqual(gerrit.id_filepath, '/tmp/.ssh-keys/id_rsa')
 
         gerrit = Gerrit(GERRIT_REPO, tag='test', blacklist_ids=['willy'])
         self.assertEqual(gerrit.hostname, GERRIT_REPO)
@@ -367,12 +370,17 @@ class TestGerritClient(unittest.TestCase):
         self.assertFalse(client.from_archive)
         self.assertIsNone(client.archive)
 
-        client = GerritClient(GERRIT_REPO, GERRIT_USER, port=1000, max_reviews=2, blacklist_reviews=["willy"])
+        client = GerritClient(
+            GERRIT_REPO, GERRIT_USER, port=1000, max_reviews=2,
+            blacklist_reviews=["willy"],
+            id_filepath='/tmp/.ssh-keys/id_rsa'
+        )
         self.assertEqual(client.repository, GERRIT_REPO)
         self.assertEqual(client.gerrit_user, GERRIT_USER)
         self.assertEqual(client.max_reviews, 2)
         self.assertEqual(client.blacklist_reviews, ["willy"])
         self.assertEqual(client.port, 1000)
+        self.assertEqual(client.id_filepath, '/tmp/.ssh-keys/id_rsa')
         self.assertFalse(client.from_archive)
         self.assertIsNone(client.archive)
 
@@ -519,6 +527,7 @@ class TestGerritCommand(unittest.TestCase):
                 '--blacklist-ids', 'willy', 'wolly', 'wally',
                 '--disable-host-key-check',
                 '--ssh-port', '1000',
+                '--ssh-id-filepath', '/my/keys/id_rsa',
                 '--tag', 'test', '--no-archive']
 
         parsed_args = parser.parse(*args)
@@ -529,6 +538,7 @@ class TestGerritCommand(unittest.TestCase):
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.no_archive, True)
         self.assertEqual(parsed_args.port, 1000)
+        self.assertEqual(parsed_args.id_filepath, '/my/keys/id_rsa')
         self.assertListEqual(parsed_args.blacklist_ids, ['willy', 'wolly', 'wally'])
 
 
