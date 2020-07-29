@@ -62,6 +62,7 @@ class Gerrit(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     :param blacklist_ids: exclude the reviews while fetching
+    :param id_filepath: path to SSH private key
     """
     version = '0.13.1'
 
@@ -74,7 +75,7 @@ class Gerrit(Backend):
 
     def __init__(self, hostname,
                  user=None, port=PORT, max_reviews=MAX_REVIEWS,
-                 disable_host_key_check=False,
+                 disable_host_key_check=False, id_filepath=None,
                  tag=None, archive=None, blacklist_ids=None):
         origin = hostname
 
@@ -82,6 +83,7 @@ class Gerrit(Backend):
         self.hostname = hostname
         self.user = user
         self.port = port
+        self.id_filepath = id_filepath
         self.max_reviews = max(1, max_reviews)
         self.blacklist_ids = blacklist_ids
         self.disable_host_key_check = disable_host_key_check
@@ -189,7 +191,8 @@ class Gerrit(Backend):
 
         return GerritClient(self.hostname, self.user, self.max_reviews,
                             self.blacklist_ids, self.disable_host_key_check,
-                            self.port, self.archive, from_archive)
+                            self.port, self.id_filepath, self.archive,
+                            from_archive)
 
     def _fetch_gerrit28(self, from_date=DEFAULT_DATETIME):
         """ Specific fetch for gerrit 2.8 version.
@@ -296,6 +299,7 @@ class GerritClient():
     :param blacklist_reviews: exclude the reviews of this list while fetching
     :param disable_host_key_check: disable host key controls
     :param port: SSH port
+    :param id_filepath: SSH private key path
     :param archive: collect issues already retrieved from an archive
     :param from_archive: it tells whether to write/read the archive
     """
@@ -306,7 +310,7 @@ class GerritClient():
     RETRY_WAIT = 60  # number of seconds when retrying a ssh command
 
     def __init__(self, repository, user=None, max_reviews=MAX_REVIEWS, blacklist_reviews=None,
-                 disable_host_key_check=False, port=PORT,
+                 disable_host_key_check=False, port=PORT, id_filepath=None,
                  archive=None, from_archive=False):
         self.gerrit_user = user
         self.max_reviews = max_reviews
@@ -316,12 +320,16 @@ class GerritClient():
         self.project = None
         self._version = None
         self.port = port
+        self.id_filepath = id_filepath
         self.archive = archive
         self.from_archive = from_archive
 
         ssh_opts = ''
         if disable_host_key_check:
             ssh_opts += "-o StrictHostKeyChecking=no "
+
+        if self.id_filepath:
+            ssh_opts += "-i %s " % self.id_filepath
 
         if self.port:
             self.gerrit_cmd = "ssh %s -p %s %s@%s" % (ssh_opts, self.port,
@@ -520,6 +528,7 @@ class GerritCommand(BackendCommand):
         group.add_argument('--ssh-port', dest='port',
                            default=PORT, type=int,
                            help="Set SSH port of the Gerrit server")
+        group.add_argument('--ssh-id-filepath', dest='id_filepath', help="Set SSH private key path")
 
         # Required arguments
         parser.parser.add_argument('hostname',
