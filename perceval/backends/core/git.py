@@ -46,6 +46,7 @@ from ...errors import RepositoryError, ParseError
 from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 
 CATEGORY_COMMIT = 'commit'
+BASE_DIR = '~/.perceval/repositories/'
 
 logger = logging.getLogger(__name__)
 
@@ -74,12 +75,22 @@ class Git(Backend):
 
     CATEGORIES = [CATEGORY_COMMIT]
 
-    def __init__(self, uri, gitpath, tag=None, archive=None):
+    def __init__(self, uri, gitpath, repopath=None, tag=None, archive=None):
         origin = uri
 
         super().__init__(origin, tag=tag, archive=archive)
         self.uri = uri
+        self.repopath = repopath
         self.gitpath = gitpath
+
+    # Deleting (Calling destructor)
+    def __del__(self):
+        """
+        Delete existing repository
+        """
+        # Remove clone code repository
+        # GitRepository.clean(self.repopath)
+        pass
 
     def fetch(self, category=CATEGORY_COMMIT, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
               branches=None, latest_items=False, no_update=False):
@@ -134,7 +145,6 @@ class Git(Backend):
             'no_update': no_update
         }
         items = super().fetch(category, **kwargs)
-
         return items
 
     def fetch_items(self, category, **kwargs):
@@ -321,10 +331,16 @@ class Git(Backend):
         return self.parse_git_log_from_iter(gitshow)
 
     def __create_git_repository(self):
+        if self.repopath and not os.path.exists(self.repopath):
+            GitRepository.clone(self.uri, self.repopath, bare=False)
+        elif os.path.exists(self.repopath):
+            GitRepository.pull_code_updates(self.repopath)
+
         if not os.path.exists(self.gitpath):
-            repo = GitRepository.clone(self.uri, self.gitpath)
+            repo = GitRepository.clone(self.uri, self.gitpath, self.repopath)
         elif os.path.isdir(self.gitpath):
-            repo = GitRepository(self.uri, self.gitpath)
+            repo = GitRepository(self.uri, self.gitpath, self.repopath)
+
         return repo
 
 
@@ -335,17 +351,20 @@ class GitCommand(BackendCommand):
 
     def _pre_init(self):
         """Initialize repositories directory path"""
-
+        repo_path = None
         if self.parsed_args.git_log:
             git_path = self.parsed_args.git_log
         elif not self.parsed_args.git_path:
-            base_path = os.path.expanduser('~/.perceval/repositories/')
+            base_path = os.path.expanduser(BASE_DIR)
             processed_uri = self.parsed_args.uri.lstrip('/')
-            git_path = os.path.join(base_path, processed_uri) + '-git'
+            repo_dir = processed_uri.split('/')[-1].replace('.git', '')
+            repo_path = os.path.join(base_path, repo_dir)
+            git_path = os.path.join(base_path, repo_dir) + '-git'
         else:
             git_path = self.parsed_args.git_path
 
         setattr(self.parsed_args, 'gitpath', git_path)
+        setattr(self.parsed_args, 'repopath', repo_path)
 
     @classmethod
     def setup_cmd_parser(cls):
@@ -363,6 +382,8 @@ class GitCommand(BackendCommand):
 
         # Mutual exclusive parameters
         exgroup = group.add_mutually_exclusive_group()
+        exgroup.add_argument('--git-repo-path', dest='repo_path',
+                             help="Path where the Git repository will be cloned")
         exgroup.add_argument('--git-path', dest='git_path',
                              help="Path where the Git repository will be cloned")
         exgroup.add_argument('--git-log', dest='git_log',
@@ -519,6 +540,7 @@ class GitParser:
         # Aux vars to store the commit that is being parsed
         self.commit = None
         self.commit_files = {}
+        self.total_lines_of_code = self.__get_total_lines_of_code()
 
         self.handlers = {
             self.INIT: self._handle_init,
@@ -554,10 +576,40 @@ class GitParser:
         def remove_none_values(d):
             return {k: v for k, v in d.items() if v is not None}
 
+        def get_file_changes(cmt_files_lst):
+            # Number of files touched
+            _touched = 0
+
+            # Number of lines added, removed and changes
+            _added, _removed, _changed = 0, 0, 0
+
+            for cmt_file in cmt_files_lst:
+                if 'action' not in cmt_file:
+                    # merges are not counted
+                    continue
+                _touched += 1
+                if 'added' in cmt_file and 'removed' in cmt_file:
+                    try:
+                        _added += int(cmt_file["added"])
+                        _removed += int(cmt_file["removed"])
+                    except ValueError:
+                        continue
+
+            return _touched, _added, _removed, (_added + _removed)
+
         commit = self.commit
         commit = remove_none_values(commit)
         commit['files'] = [remove_none_values(item)
                            for _, item in sorted(self.commit_files.items())]
+
+        (files_touched, lines_added, lines_removed, lines_changed) = \
+            get_file_changes(commit['files'])
+
+        commit['count_files_touch'] = files_touched
+        commit["count_lines_added"] = lines_added
+        commit["count_lines_removed"] = lines_removed
+        commit["count_lines_changed"] = lines_changed
+        commit['count_lines_of_code'] = self.total_lines_of_code
 
         self.commit = None
         self.commit_files = {}
@@ -732,6 +784,10 @@ class GitParser:
         else:
             return f
 
+    def __get_total_lines_of_code(self):
+        repo = self.stream.gi_frame.f_locals['self']
+        return repo.count_total_lines_of_code()
+
 
 class EmptyRepositoryError(RepositoryError):
     """Exception raised when a repository is empty"""
@@ -785,7 +841,7 @@ class GitRepository:
         '-c',  # show merge info
     ]
 
-    def __init__(self, uri, dirpath):
+    def __init__(self, uri, dirpath, repopath=None):
         gitdir = os.path.join(dirpath, 'HEAD')
 
         if not os.path.exists(dirpath):
@@ -800,6 +856,7 @@ class GitRepository:
 
         self.uri = uri
         self.dirpath = dirpath
+        self.repopath = repopath
         self.gitenv = {
             'LANG': 'C',
             'PAGER': '',
@@ -810,7 +867,7 @@ class GitRepository:
         }
 
     @classmethod
-    def clone(cls, uri, dirpath):
+    def clone(cls, uri, dirpath, bare=True):
         """Clone a Git repository.
 
         Make a bare copy of the repository stored in `uri` into `dirpath`.
@@ -824,7 +881,10 @@ class GitRepository:
         :raises RepositoryError: when an error occurs cloning the given
             repository
         """
-        cmd = ['git', 'clone', '--bare', uri, dirpath]
+        if bare:
+            cmd = ['git', 'clone', '--bare', uri, dirpath]
+        else:
+            cmd = ['git', 'clone', uri, dirpath]
         env = {
             'LANG': 'C',
             'HOME': os.getenv('HOME', '')
@@ -835,7 +895,54 @@ class GitRepository:
         logger.debug("Git %s repository cloned into %s",
                      uri, dirpath)
 
-        return cls(uri, dirpath)
+        if bare:
+            return cls(uri, dirpath)
+
+    @classmethod
+    def clean(cls, dirpath):
+        cmd = ['rm', '-rf', dirpath]
+        env = {
+            'LANG': 'C',
+            'HOME': os.getenv('HOME', '')
+        }
+
+        cls._exec(cmd, env=env)
+
+        logger.debug("Git %s repository clean", dirpath)
+
+    @classmethod
+    def pull_code_updates(cls, dirpath):
+        os.chdir(os.path.abspath(dirpath))
+        cmd = ['git', 'pull']
+        env = {
+            'LANG': 'C',
+            'HOME': os.getenv('HOME', '')
+        }
+
+        cls._exec(cmd, env=env)
+
+        logger.debug("Git %s repository pull updated code", dirpath)
+
+    def count_total_lines_of_code(self):
+        """
+        Get the total lines of code from the default branch
+        """
+        def extract_lines_of_code(value):
+            status = value.decode('utf8')
+            if 'SUM:' in status:
+                return int((status.split('\n')[-3]).split(' ')[-1])
+            return 0
+
+        if self.repopath and os.path.exists(self.repopath):
+            cmd = ['cloc', self.repopath]
+            env = {
+                'LANG': 'C',
+                'HOME': os.getenv('HOME', '')
+            }
+            result = self._exec(cmd, env=env)
+            return extract_lines_of_code(result)
+
+        return 0
 
     def count_objects(self):
         """Count the objects of a repository.
