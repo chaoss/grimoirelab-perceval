@@ -1,0 +1,34 @@
+{
+  "count": 10,
+  "previous": "https://my.weblate.org/api/changes",
+  "results": [
+    {
+      "unit": null,
+      "component": "https://my.weblate.org/api/components/libo_ui-master/instsetoo_nativeinc_openofficewindowsmsi_languages/",
+      "translation": null,
+      "glossary_term": null,
+      "user": "https://my.weblate.org/api/users/2",
+      "author": "https://my.weblate.org/api/users/2",
+      "timestamp": "2020-07-11T17:21:03.378436Z",
+      "action": 51,
+      "target": "",
+      "id": 3,
+      "action_name": "Created component",
+      "url": "https://my.weblate.org/api/changes/3/"
+    },
+    {
+      "unit": null,
+      "component": "https://my.weblate.org/api/components/libo_ui-master/instsetoo_nativeinc_openofficewindowsmsi_languages/",
+      "translation": null,
+      "glossary_term": null,
+      "user": null,
+      "author": null,
+      "timestamp": "2020-07-11T17:21:04.609924Z",
+      "action": 21,
+      "target": "",
+      "id": 4,
+      "action_name": "Rebased repository",
+      "url": "https://my.weblate.org/api/changes/4/"
+    }
+  ]
+}
