@@ -1,0 +1,13 @@
+{
+    "email": "tom@jerry.com",
+    "full_name": "tom jerry",
+    "username": "tom",
+    "groups": [
+        "https://my.weblate.org/api/groups/2/",
+        "https://my.weblate.org/api/groups/3/"
+    ],
+    "is_superuser": false,
+    "is_active": true,
+    "date_joined": "2020-09-17T09:03:33.581180Z",
+    "url": "https://my.weblate.org/api/users/2/"
+}

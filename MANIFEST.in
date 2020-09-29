@@ -1,0 +1,6 @@
+include README.md
+include NEWS
+include LICENSE
+include AUTHORS
+include tests/*.py
+recursive-include tests/data/ *

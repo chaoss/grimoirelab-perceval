@@ -1,0 +1,3 @@
+requests>=2.7.0
+-e git+https://github.com/chaoss/grimoirelab-toolkit/#egg=grimoirelab-toolkit
+-e git+https://github.com/chaoss/grimoirelab-perceval.git/#egg=perceval

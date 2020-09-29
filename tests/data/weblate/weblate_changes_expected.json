@@ -1,0 +1,196 @@
+[
+    {
+        "backend_name": "Weblate",
+        "backend_version": "0.1.0",
+        "perceval_version": "0.17.1",
+        "timestamp": 1600344221.316199,
+        "origin": "https://my.weblate.org",
+        "uuid": "83a1ea675884a0cdeff02d30a7013e1600907524",
+        "updated_on": 1562862020.95807,
+        "classified_fields_filtered": null,
+        "category": "changes",
+        "search_fields": {
+            "item_id": "1"
+        },
+        "tag": "https://my.weblate.org",
+        "data": {
+            "unit": null,
+            "component": null,
+            "translation": null,
+            "glossary_term": null,
+            "user": "https://my.weblate.org/api/users/1",
+            "author": "https://my.weblate.org/api/users/1",
+            "timestamp": "2019-07-11T16:20:20.958070Z",
+            "action": 50,
+            "target": "",
+            "id": 1,
+            "action_name": "Created project",
+            "url": "https://my.weblate.org/api/changes/1/",
+            "user_data": {
+                "email": "quan@bitergia.com",
+                "full_name": "quan zhou",
+                "username": "quan",
+                "groups": [
+                    "https://my.weblate.org/api/groups/2/",
+                    "https://my.weblate.org/api/groups/3/"
+                ],
+                "is_superuser": false,
+                "is_active": true,
+                "date_joined": "2020-09-16T09:03:33.581180Z",
+                "url": "https://my.weblate.org/api/users/1/"
+            },
+            "author_data": {
+                "email": "quan@bitergia.com",
+                "full_name": "quan zhou",
+                "username": "quan",
+                "groups": [
+                    "https://my.weblate.org/api/groups/2/",
+                    "https://my.weblate.org/api/groups/3/"
+                ],
+                "is_superuser": false,
+                "is_active": true,
+                "date_joined": "2020-09-16T09:03:33.581180Z",
+                "url": "https://my.weblate.org/api/users/1/"
+            }
+        }
+    },
+    {
+        "backend_name": "Weblate",
+        "backend_version": "0.1.0",
+        "perceval_version": "0.17.1",
+        "timestamp": 1600344221.351258,
+        "origin": "https://my.weblate.org",
+        "uuid": "ca17062e0fe54ffb3bb80d2f6967f56709d43bfe",
+        "updated_on": 1562862071.939033,
+        "classified_fields_filtered": null,
+        "category": "changes",
+        "search_fields": {
+            "item_id": "2"
+        },
+        "tag": "https://my.weblate.org",
+        "data": {
+            "unit": null,
+            "component": null,
+            "translation": null,
+            "glossary_term": null,
+            "user": "https://my.weblate.org/api/users/2",
+            "author": "https://my.weblate.org/api/users/2",
+            "timestamp": "2019-07-11T16:21:11.939033Z",
+            "action": 50,
+            "target": "",
+            "id": 2,
+            "action_name": "Created project",
+            "url": "https://my.weblate.org/api/changes/2/",
+            "user_data": {
+                "email": "tom@jerry.com",
+                "full_name": "tom jerry",
+                "username": "tom",
+                "groups": [
+                    "https://my.weblate.org/api/groups/2/",
+                    "https://my.weblate.org/api/groups/3/"
+                ],
+                "is_superuser": false,
+                "is_active": true,
+                "date_joined": "2020-09-17T09:03:33.581180Z",
+                "url": "https://my.weblate.org/api/users/2/"
+            },
+            "author_data": {
+                "email": "tom@jerry.com",
+                "full_name": "tom jerry",
+                "username": "tom",
+                "groups": [
+                    "https://my.weblate.org/api/groups/2/",
+                    "https://my.weblate.org/api/groups/3/"
+                ],
+                "is_superuser": false,
+                "is_active": true,
+                "date_joined": "2020-09-17T09:03:33.581180Z",
+                "url": "https://my.weblate.org/api/users/2/"
+            }
+        }
+    },
+    {
+        "backend_name": "Weblate",
+        "backend_version": "0.1.0",
+        "perceval_version": "0.17.1",
+        "timestamp": 1600344221.399991,
+        "origin": "https://my.weblate.org",
+        "uuid": "957659c9f35d7b35795296ff69f69b87356e6fe6",
+        "updated_on": 1594488063.378436,
+        "classified_fields_filtered": null,
+        "category": "changes",
+        "search_fields": {
+            "item_id": "3"
+        },
+        "tag": "https://my.weblate.org",
+        "data": {
+            "unit": null,
+            "component": "https://my.weblate.org/api/components/libo_ui-master/instsetoo_nativeinc_openofficewindowsmsi_languages/",
+            "translation": null,
+            "glossary_term": null,
+            "user": "https://my.weblate.org/api/users/2",
+            "author": "https://my.weblate.org/api/users/2",
+            "timestamp": "2020-07-11T17:21:03.378436Z",
+            "action": 51,
+            "target": "",
+            "id": 3,
+            "action_name": "Created component",
+            "url": "https://my.weblate.org/api/changes/3/",
+            "user_data": {
+                "email": "tom@jerry.com",
+                "full_name": "tom jerry",
+                "username": "tom",
+                "groups": [
+                    "https://my.weblate.org/api/groups/2/",
+                    "https://my.weblate.org/api/groups/3/"
+                ],
+                "is_superuser": false,
+                "is_active": true,
+                "date_joined": "2020-09-17T09:03:33.581180Z",
+                "url": "https://my.weblate.org/api/users/2/"
+            },
+            "author_data": {
+                "email": "tom@jerry.com",
+                "full_name": "tom jerry",
+                "username": "tom",
+                "groups": [
+                    "https://my.weblate.org/api/groups/2/",
+                    "https://my.weblate.org/api/groups/3/"
+                ],
+                "is_superuser": false,
+                "is_active": true,
+                "date_joined": "2020-09-17T09:03:33.581180Z",
+                "url": "https://my.weblate.org/api/users/2/"
+            }
+        }
+    },
+    {
+        "backend_name": "Weblate",
+        "backend_version": "0.1.0",
+        "perceval_version": "0.17.1",
+        "timestamp": 1600344221.401215,
+        "origin": "https://my.weblate.org",
+        "uuid": "eab568229e67d6f630832ee1446e247d6207a3b3",
+        "updated_on": 1594488064.609924,
+        "classified_fields_filtered": null,
+        "category": "changes",
+        "search_fields": {
+            "item_id": "4"
+        },
+        "tag": "https://my.weblate.org",
+        "data": {
+            "unit": null,
+            "component": "https://my.weblate.org/api/components/libo_ui-master/instsetoo_nativeinc_openofficewindowsmsi_languages/",
+            "translation": null,
+            "glossary_term": null,
+            "user": null,
+            "author": null,
+            "timestamp": "2020-07-11T17:21:04.609924Z",
+            "action": 21,
+            "target": "",
+            "id": 4,
+            "action_name": "Rebased repository",
+            "url": "https://my.weblate.org/api/changes/4/"
+        }
+    }
+]
