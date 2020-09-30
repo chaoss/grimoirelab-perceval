@@ -45,6 +45,8 @@ WEBLATE_USERS_API_URL = WEBLATE_API_URL + 'users'
 WEBLATE_USER_1_API_URL = WEBLATE_USERS_API_URL + '/1'
 WEBLATE_USER_2_API_URL = WEBLATE_USERS_API_URL + '/2'
 WEBLATE_USER_NO_PERMISSION_API_URL = WEBLATE_USERS_API_URL + '/NoPermission'
+WEBLATE_UNITS_API_URL = WEBLATE_API_URL + 'units'
+WEBLATE_UNIT_1_API_URL = WEBLATE_UNITS_API_URL + '/1'
 
 NO_CHECK_FIELDS = ['timestamp', 'backend_version', 'perceval_version']
 
@@ -70,6 +72,8 @@ def setup_http_server(archived_changes=False):
     user_2 = read_file('data/weblate/weblate_user_2.json', 'rb')
     user_no_permission = read_file('data/weblate/weblate_user_no_permission.json', 'rb')
 
+    unit = read_file('data/weblate/weblate_unit.json', 'rb')
+
     def request_callback(_, uri, headers):
         last_request = httpretty.last_request()
         params = last_request.querystring
@@ -89,6 +93,8 @@ def setup_http_server(archived_changes=False):
             body = user_2
         elif uri.startswith(WEBLATE_USER_NO_PERMISSION_API_URL):
             body = user_no_permission
+        elif uri.startswith(WEBLATE_UNIT_1_API_URL):
+            body = unit
         else:
             raise
 
@@ -123,6 +129,12 @@ def setup_http_server(archived_changes=False):
     httpretty.register_uri(httpretty.GET,
                            WEBLATE_USER_NO_PERMISSION_API_URL,
                            status=404,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                           ])
+
+    httpretty.register_uri(httpretty.GET,
+                           WEBLATE_UNIT_1_API_URL,
                            responses=[
                                httpretty.Response(body=request_callback)
                            ])
@@ -174,13 +186,14 @@ class TestWeblateBackend(unittest.TestCase):
 
         requests_path_expected = [
             '/api/changes?timestamp_after=1970-01-01T00%3A00%3A00%2B00%3A00',
-            '/api/users/1',
-            '/api/users/1',
-            '/api/users/2',
-            '/api/users/2',
+            '/api/users/1?id=1&type=user',
+            '/api/users/1?id=1&type=author',
+            '/api/units/1',
+            '/api/users/2?id=2&type=user',
+            '/api/users/2?id=2&type=author',
             '/api/changes/?page=2',
-            '/api/users/2',
-            '/api/users/2'
+            '/api/users/2?id=3&type=user',
+            '/api/users/2?id=3&type=author'
         ]
         self.assertEqual(len(http_requests), len(requests_path_expected))
         for i in range(len(http_requests)):
@@ -206,12 +219,13 @@ class TestWeblateBackend(unittest.TestCase):
 
         requests_path_expected = [
             '/api/changes?timestamp_after=1970-01-01T00%3A00%3A00%2B00%3A00',
-            '/api/users/1',
-            '/api/users/1',
-            '/api/users/2',
-            '/api/users/2',
-            '/api/users/2',
-            '/api/users/2'
+            '/api/users/1?id=1&type=user',
+            '/api/users/1?id=1&type=author',
+            '/api/units/1',
+            '/api/users/2?id=2&type=user',
+            '/api/users/2?id=2&type=author',
+            '/api/users/2?id=3&type=user',
+            '/api/users/2?id=3&type=author'
         ]
         self.assertEqual(len(http_requests), len(requests_path_expected))
         for i in range(len(http_requests)):
@@ -241,8 +255,8 @@ class TestWeblateBackend(unittest.TestCase):
 
         requests_path_expected = [
             '/api/changes?timestamp_after=2020-01-01T00%3A00%3A00%2B00%3A00',
-            '/api/users/2',
-            '/api/users/2'
+            '/api/users/2?id=3&type=user',
+            '/api/users/2?id=3&type=author'
         ]
         self.assertEqual(len(http_requests), len(requests_path_expected))
         for i in range(len(http_requests)):
@@ -307,6 +321,26 @@ class TestWeblateClient(unittest.TestCase):
 
         requests_path_expected = [
             '/api/users/NoPermission'
+        ]
+        self.assertEqual(len(http_requests), len(requests_path_expected))
+        for i in range(len(http_requests)):
+            self.assertEqual(http_requests[i].path, requests_path_expected[i])
+
+    @httpretty.activate
+    def test_unit(self):
+        """Test unit API call"""
+
+        http_requests = setup_http_server()
+
+        client = WeblateClient('https://my.weblate.org', api_token="xxyyzz")
+
+        unit = client.unit(WEBLATE_UNIT_1_API_URL)
+
+        unit_expected = json.loads(read_file('data/weblate/weblate_unit.json', 'r'))
+        self.assertDictEqual(unit, unit_expected)
+
+        requests_path_expected = [
+            '/api/units/1'
         ]
         self.assertEqual(len(http_requests), len(requests_path_expected))
         for i in range(len(http_requests)):

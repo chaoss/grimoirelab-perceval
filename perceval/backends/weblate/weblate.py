@@ -134,11 +134,21 @@ class Weblate(Backend):
             for change in changes:
                 user = change.get('user', None)
                 if user:
-                    change['user_data'] = self.client.user(user)
+                    payload = {
+                        'id': change['id'],
+                        'type': 'user'
+                    }
+                    change['user_data'] = self.client.user(user, payload=payload)
                 author = change.get('author', None)
                 if author:
-                    change['author_data'] = self.client.user(user)
-
+                    payload = {
+                        'id': change['id'],
+                        'type': 'author'
+                    }
+                    change['author_data'] = self.client.user(user, payload=payload)
+                unit = change.get('unit', None)
+                if unit:
+                    change['unit_data'] = self.client.unit(unit)
                 yield change
 
         logger.info("Fetch process completed")
@@ -243,12 +253,23 @@ class WeblateClient(HttpClient, RateLimitHandler):
 
         return headers
 
-    def user(self, url):
+    def unit(self, url):
+        """Fetch unit data"""
+
+        try:
+            response = self.fetch(url)
+            unit = response.json()
+            return unit
+        except requests.exceptions.HTTPError as error:
+            logger.error("Error fetching {}: {}".format(url, error))
+            raise error
+
+    def user(self, url, payload=None):
         """Fetch user data"""
 
         user = {}
         try:
-            response = self.fetch(url)
+            response = self.fetch(url, payload=payload)
             user = response.json()
         except requests.exceptions.HTTPError as error:
             # The endpoint users returns a list of users if you have permissions to see

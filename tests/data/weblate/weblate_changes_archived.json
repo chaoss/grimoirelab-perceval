@@ -3,7 +3,7 @@
   "previous": null,
   "results": [
     {
-      "unit": null,
+      "unit": "https://my.weblate.org/api/units/1",
       "component": null,
       "translation": null,
       "glossary_term": null,
