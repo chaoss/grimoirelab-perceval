@@ -86,7 +86,7 @@ class Askbot(Backend):
         """
         if not from_date:
             from_date = DEFAULT_DATETIME
-
+        logger.info(f"Pulling Askbot data from {from_date}")
         kwargs = {'from_date': from_date}
         items = super().fetch(category, **kwargs)
 
@@ -189,7 +189,7 @@ class Askbot(Backend):
                 html_question = self.client.get_html_question(question['id'], npages)
                 html_question_items.append(html_question)
                 tpages = self.ab_parser.parse_number_of_html_pages(html_question)
-
+                logger.info(f"{tpages} of questions found")
                 if npages == tpages:
                     next_request = False
 
@@ -214,6 +214,7 @@ class Askbot(Backend):
         comments[question['id']] = json.loads(self.client.get_comments(question['id']))
         for object_id in question['answer_ids']:
             comments[object_id] = json.loads(self.client.get_comments(object_id))
+        logger.debug(f"{len(comments)} comments found")
         return comments
 
     @staticmethod
@@ -300,7 +301,7 @@ class AskbotClient(HttpClient):
         """
         npages = 1
         next_request = True
-
+        logger.debug("Retrieving question pages")
         path = urijoin(self.base_url, path)
         while next_request:
 
@@ -337,6 +338,7 @@ class AskbotClient(HttpClient):
         :param page: page to retrieve
         """
         path = urijoin(self.base_url, self.RHTML_QUESTION, question_id)
+        logger.debug(f"Raw html retrieved: {path}")
         params = {
             self.PPAGE: page,
             self.PSORT: self.VORDER_HTML
@@ -412,7 +414,7 @@ class AskbotParser:
             updated = container[1]
             if AskbotParser.parse_user_info(updated):
                 container_info['updated_by'] = AskbotParser.parse_user_info(updated)
-
+        logger.debug("Container info parsed")
         return container_info
 
     @staticmethod
@@ -463,6 +465,7 @@ class AskbotParser:
         # Select all the answers
         bs_question = bs4.BeautifulSoup(html_question, "html.parser")
         bs_answers = bs_question.select("div.answer")
+        logger.debug(f"{str(len(bs_answers))} answers found")
         for bs_answer in bs_answers:
             answer_id = bs_answer.attrs["data-post-id"]
             votes_element = bs_answer.select("div.vote-number")[0].text
@@ -485,6 +488,7 @@ class AskbotParser:
             # Update the object with the information in the answer container
             answer.update(answer_container)
             answer_list.append(answer)
+        logger.debug("Answers parsed")
         return answer_list
 
     @staticmethod
@@ -535,7 +539,7 @@ class AskbotParser:
             if update_info.select("img.flag"):
                 flag = update_info.select("img.flag")[0].attrs["alt"]
                 user_info['country'] = re.sub("flag of ", "", flag)
-
+        logger.debug("User info parsed")
         return user_info
 
     @staticmethod
