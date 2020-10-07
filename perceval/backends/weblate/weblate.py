@@ -133,6 +133,7 @@ class Weblate(Backend):
         for changes in changes_groups:
             for change in changes:
                 user = change.get('user', None)
+                change['user_data'] = None
                 if user:
                     payload = {
                         'id': change['id'],
@@ -140,13 +141,15 @@ class Weblate(Backend):
                     }
                     change['user_data'] = self.client.user(user, payload=payload)
                 author = change.get('author', None)
+                change['author_data'] = None
                 if author:
                     payload = {
                         'id': change['id'],
                         'type': 'author'
                     }
-                    change['author_data'] = self.client.user(user, payload=payload)
+                    change['author_data'] = self.client.user(author, payload=payload)
                 unit = change.get('unit', None)
+                change['unit_data'] = None
                 if unit:
                     change['unit_data'] = self.client.unit(unit)
                 yield change
