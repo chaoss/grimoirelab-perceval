@@ -316,7 +316,7 @@ class WeblateClient(HttpClient, RateLimitHandler):
 
             yield results
 
-            if 'next' not in page:
+            if not page['next']:
                 fetch = False
                 continue
 

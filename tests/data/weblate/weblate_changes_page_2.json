@@ -1,5 +1,6 @@
 {
   "count": 10,
+  "next": null,
   "previous": "https://my.weblate.org/api/changes",
   "results": [
     {
