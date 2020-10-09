@@ -1,4 +1,4 @@
-# perceval-weblate [![Build Status](https://travis-ci.org/Bitergia/grimoirelab-perceval-weblate.svg?branch=master)](https://travis-ci.org/Bitergia/grimoirelab-perceval-weblate) [![Coverage Status](https://img.shields.io/coveralls/Bitergia/grimoirelab-perceval-weblate.svg)](https://coveralls.io/r/Bitergia/grimoirelab-perceval-weblate?branch=master)
+# perceval-weblate [![Build Status](https://travis-ci.org/chaoss/grimoirelab-perceval-weblate.svg?branch=master)](https://travis-ci.org/chaoss/grimoirelab-perceval-weblate) [![Coverage Status](https://img.shields.io/coveralls/chaoss/grimoirelab-perceval-weblate.svg)](https://coveralls.io/r/chaoss/grimoirelab-perceval-weblate?branch=master)
 
 
 Bundle of Perceval backends for Weblate.
@@ -21,7 +21,7 @@ The backends currently managed by this package support the next repositories:
 To install this package you will need to clone the repository first:
 
 ```
-$ git clone https://github.com/Bitergia/grimoirelab-perceval-weblate.git
+$ git clone https://github.com/chaoss/grimoirelab-perceval-weblate.git
 ```
 
 Then you can execute the following commands:
