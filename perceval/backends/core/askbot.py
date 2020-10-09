@@ -214,6 +214,7 @@ class Askbot(Backend):
         comments[question['id']] = json.loads(self.client.get_comments(question['id']))
         for object_id in question['answer_ids']:
             comments[object_id] = json.loads(self.client.get_comments(object_id))
+        logger.debug(f"{len(comments)} comments found")
         return comments
 
     @staticmethod
@@ -337,6 +338,7 @@ class AskbotClient(HttpClient):
         :param page: page to retrieve
         """
         path = urijoin(self.base_url, self.RHTML_QUESTION, question_id)
+        logger.debug(f"Raw html retrieved: {path}")
         params = {
             self.PPAGE: page,
             self.PSORT: self.VORDER_HTML
@@ -537,7 +539,7 @@ class AskbotParser:
             if update_info.select("img.flag"):
                 flag = update_info.select("img.flag")[0].attrs["alt"]
                 user_info['country'] = re.sub("flag of ", "", flag)
-
+        logger.debug("User info parsed")
         return user_info
 
     @staticmethod
