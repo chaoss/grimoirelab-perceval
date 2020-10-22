@@ -17,6 +17,7 @@
 #
 # Authors:
 #     Valerio Cosentino <valcos@bitergia.com>
+#     Quan Zhou <quan@bitergia.com>
 #
 
 import json
@@ -47,7 +48,8 @@ EVENT_TYPES = [
     'CROSS_REFERENCED_EVENT',
     'LABELED_EVENT',
     'UNLABELED_EVENT',
-    'CLOSED_EVENT'
+    'CLOSED_EVENT',
+    'MERGED_EVENT'
 ]
 
 QUERY_TEMPLATE = """
@@ -192,6 +194,23 @@ QUERY_TEMPLATE = """
                     closedAt
                     state
                   }
+                }
+                ... on MergedEvent {
+                  actor {
+                    login
+                  },
+                  id
+                  createdAt
+                  pullRequest {
+                    closed
+                    closedAt
+                    createdAt
+                    merged
+                    mergedAt
+                    updatedAt
+                    url
+                  }
+                  url
                 }
               }
               pageInfo {

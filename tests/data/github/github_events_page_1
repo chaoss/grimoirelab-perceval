@@ -33,6 +33,24 @@
                                 "name": "duplicate",
                                 "updatedAt": "2020-04-07T10:30:46Z"
                             }
+                        },
+                        {
+                            "eventType": "MergedEvent",
+                            "actor": {
+                                "login": "zhquan"
+                            },
+                            "id": "DDExOk1lcmdlZEV2ZW50MTE0NDMwMzM2",
+                            "createdAt": "2020-10-23T18:45:14Z",
+                            "pullRequest": {
+                                "closed": true,
+                                "closedAt": "2020-10-23T18:45:14Z",
+                                "createdAt": "2020-10-23T18:45:06Z",
+                                "merged": true,
+                                "mergedAt": "2020-10-23T18:45:14Z",
+                                "updatedAt": "2020-10-23T18:45:14Z",
+                                "url": "https://github.com/zhquan/test-merged-event/pull/3"
+                            },
+                            "url": "https://github.com/zhquan/test-merged-event/pull/3#event-114430334"
                         }
                     ],
                     "pageInfo": {
