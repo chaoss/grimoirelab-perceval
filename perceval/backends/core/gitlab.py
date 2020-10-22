@@ -555,7 +555,8 @@ class GitLabClient(HttpClient, RateLimitHandler):
         """Get the merge full data"""
 
         path = urijoin(self.base_url,
-                       self.RPROJECTS, self.owner + '%2F' + self.repository,
+                       self.RPROJECTS, urllib.parse.quote(
+                           self.owner + '/' + self.repository, safe=''),
                        self.RMERGES, merge_id)
 
         response = self.fetch(path)
@@ -578,7 +579,8 @@ class GitLabClient(HttpClient, RateLimitHandler):
         """Get merge version detail"""
 
         path = urijoin(self.base_url,
-                       self.RPROJECTS, self.owner + '%2F' + self.repository,
+                       self.RPROJECTS, urllib.parse.quote(
+                           self.owner + '/' + self.repository, safe=''),
                        self.RMERGES, merge_id, self.RVERSIONS, version_id)
 
         response = self.fetch(path)
@@ -663,7 +665,9 @@ class GitLabClient(HttpClient, RateLimitHandler):
 
         page = 0  # current page
         last_page = None  # last page
-        url_next = urijoin(self.base_url, self.RPROJECTS, self.owner + '%2F' + self.repository, path)
+        url_next = urijoin(
+            self.base_url, self.RPROJECTS, urllib.parse.quote(
+                self.owner + '/' + self.repository, safe=''), path)
 
         logger.debug("Get GitLab paginated items from " + url_next)
 
@@ -735,7 +739,8 @@ class GitLabClient(HttpClient, RateLimitHandler):
     def _init_rate_limit(self):
         """Initialize rate limit information"""
 
-        url = urijoin(self.base_url, 'projects', self.owner + '%2F' + self.repository)
+        url = urijoin(self.base_url, 'projects', urllib.parse.quote(
+            self.owner + '/' + self.repository, safe=''))
         try:
             response = super().fetch(url)
             self.update_rate_limit(response)
