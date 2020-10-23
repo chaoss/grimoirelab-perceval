@@ -48,9 +48,30 @@ EVENT_TYPES = [
     'CROSS_REFERENCED_EVENT',
     'LABELED_EVENT',
     'UNLABELED_EVENT',
-    'CLOSED_EVENT',
-    'MERGED_EVENT'
+    'CLOSED_EVENT'
 ]
+
+MERGED_EVENT = 'MERGED_EVENT'
+
+QUERY_MERGED_EVENT = """
+... on MergedEvent {
+  actor {
+    login
+  },
+  id
+  createdAt
+  pullRequest {
+    closed
+    closedAt
+    createdAt
+    merged
+    mergedAt
+    updatedAt
+    url
+  }
+  url
+}
+"""
 
 QUERY_TEMPLATE = """
     {
@@ -195,23 +216,7 @@ QUERY_TEMPLATE = """
                     state
                   }
                 }
-                ... on MergedEvent {
-                  actor {
-                    login
-                  },
-                  id
-                  createdAt
-                  pullRequest {
-                    closed
-                    closedAt
-                    createdAt
-                    merged
-                    mergedAt
-                    updatedAt
-                    url
-                  }
-                  url
-                }
+                %s
               }
               pageInfo {
                 hasNextPage
@@ -449,10 +454,17 @@ class GitHubQLClient(GitHubClient):
         :param from_date: fetch events after a given date
         """
         node_type = 'pullRequest' if is_pull else 'issue'
-        event_types = '[{}]'.format(','.join(EVENT_TYPES))
+        aux_event_types = EVENT_TYPES
+        query_merged_event = ""
+        if is_pull:
+            aux_event_types = EVENT_TYPES + [MERGED_EVENT]
+            query_merged_event = QUERY_MERGED_EVENT
+
+        event_types = '[{}]'.format(','.join(aux_event_types))
 
         query = QUERY_TEMPLATE % (self.owner, self.repository, node_type, issue_number,
-                                  self.VPER_PAGE, "null", event_types, from_date.isoformat())
+                                  self.VPER_PAGE, "null", event_types, from_date.isoformat(),
+                                  query_merged_event)
 
         has_next = True
         while has_next:
@@ -473,7 +485,8 @@ class GitHubQLClient(GitHubClient):
             next_cursor = page['endCursor']
 
             query = QUERY_TEMPLATE % (self.owner, self.repository, node_type, issue_number, self.VPER_PAGE,
-                                      '"{}"'.format(next_cursor), event_types, from_date.isoformat())
+                                      '"{}"'.format(next_cursor), event_types, from_date.isoformat(),
+                                      query_merged_event)
 
 
 class GitHubQLCommand(GitHubCommand):
