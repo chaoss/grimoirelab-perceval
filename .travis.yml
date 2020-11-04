@@ -1,14 +1,15 @@
 language: python
 
 python:
-  - "3.5"
   - "3.6"
+  - "3.7"
+  - "3.8"
 
 sudo: false
 
 before_install:
-  - pip install --upgrade setuptools
-  - pip install --upgrade pip
+  - pip install --upgrade setuptools==49.6.0
+  - pip install --upgrade pip==18.1
   - pip install -r "requirements.txt"
   - pip install -r "requirements_tests.txt"
   - pip install flake8
