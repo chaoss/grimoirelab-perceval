@@ -94,6 +94,7 @@
         "tag": "https://my.weblate.org",
         "data": {
             "unit": null,
+            "unit_data": null,
             "component": null,
             "translation": null,
             "glossary_term": null,
@@ -149,6 +150,7 @@
         "tag": "https://my.weblate.org",
         "data": {
             "unit": null,
+            "unit_data": null,
             "component": "https://my.weblate.org/api/components/libo_ui-master/instsetoo_nativeinc_openofficewindowsmsi_languages/",
             "translation": null,
             "glossary_term": null,
@@ -204,11 +206,14 @@
         "tag": "https://my.weblate.org",
         "data": {
             "unit": null,
+            "unit_data": null,
             "component": "https://my.weblate.org/api/components/libo_ui-master/instsetoo_nativeinc_openofficewindowsmsi_languages/",
             "translation": null,
             "glossary_term": null,
             "user": null,
+            "user_data": null,
             "author": null,
+            "author_data": null,
             "timestamp": "2020-07-11T17:21:04.609924Z",
             "action": 21,
             "target": "",
