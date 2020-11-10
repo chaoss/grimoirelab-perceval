@@ -34,9 +34,8 @@ pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.weblate.weblate import (Weblate,
-                                            WeblateClient,
-                                            WeblateCommand)
-
+                                               WeblateClient,
+                                               WeblateCommand)
 
 WEBLATE_API_URL = 'https://my.weblate.org/api/'
 WEBLATE_CHANGES_API_URL = WEBLATE_API_URL + 'changes'
