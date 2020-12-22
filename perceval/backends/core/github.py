@@ -27,11 +27,14 @@
 #     Aniruddha Karajgi <akarajgi0@gmail.com>
 #     Cedric Williams <cewilliams@paypal.com>
 #     JJMerchante <jj.merchante@gmail.com>
+#     Quan Zhou <quan@bitergia.com>
 #
 
+import datetime
 import json
 import logging
 
+import jwt
 import requests
 from grimoirelab_toolkit.datetime import (datetime_to_utc,
                                           datetime_utcnow,
@@ -51,6 +54,9 @@ CATEGORY_REPO = 'repository'
 
 GITHUB_URL = "https://github.com/"
 GITHUB_API_URL = "https://api.github.com"
+GITHUB_APP_INSTALLATION = 'app/installations'
+GITHUB_APP_ACCESS_TOKEN = 'access_tokens'
+GITHUB_APP_INSTALLATION_REPOSITORIES = 'installation/repositories'
 
 # Range before sleeping until rate limit reset
 MIN_RATE_LIMIT = 10
@@ -87,6 +93,8 @@ class GitHub(Backend):
     :param owner: GitHub owner
     :param repository: GitHub repository from the owner
     :param api_token: list of GitHub auth tokens to access the API
+    :param github_app_id: GitHub App ID
+    :param github_app_pk_filepath: GitHub App private key PEM file path
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitHub public site.
@@ -103,7 +111,7 @@ class GitHub(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.25.2'
+    version = '0.26.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -121,8 +129,8 @@ class GitHub(Backend):
     ]
 
     def __init__(self, owner=None, repository=None,
-                 api_token=None, base_url=None,
-                 tag=None, archive=None,
+                 api_token=None, github_app_id=None, github_app_pk_filepath=None,
+                 base_url=None, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
                  max_items=MAX_CATEGORY_ITEMS_PER_PAGE, ssl_verify=True):
@@ -136,6 +144,8 @@ class GitHub(Backend):
         self.owner = owner
         self.repository = repository
         self.api_token = api_token
+        self.github_app_id = github_app_id
+        self.github_app_pk_filepath = github_app_pk_filepath
         self.base_url = base_url
 
         self.sleep_for_rate = sleep_for_rate
@@ -287,7 +297,8 @@ class GitHub(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return GitHubClient(self.owner, self.repository, self.api_token, self.base_url,
+        return GitHubClient(self.owner, self.repository, self.api_token,
+                            self.github_app_id, self.github_app_pk_filepath, self.base_url,
                             self.sleep_for_rate, self.min_rate_to_sleep,
                             self.sleep_time, self.max_retries, self.max_items,
                             self.archive, from_archive, self.ssl_verify)
@@ -306,7 +317,6 @@ class GitHub(Backend):
 
                 self.__init_extra_issue_fields(issue)
                 for field in TARGET_ISSUE_FIELDS:
-
                     if not issue[field]:
                         continue
 
@@ -573,6 +583,8 @@ class GitHubClient(HttpClient, RateLimitHandler):
     :param owner: GitHub owner
     :param repository: GitHub repository from the owner
     :param tokens: list of GitHub auth tokens to access the API
+    :param github_app_id: GitHub App ID
+    :param github_app_pk_filepath: GitHub App private key PEM file path
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitHub public site.
@@ -621,21 +633,27 @@ class GitHubClient(HttpClient, RateLimitHandler):
     VSORT_UPDATED = 'updated'
     VSTATE_ALL = 'all'
     VACCEPT = 'application/vnd.github.squirrel-girl-preview'
+    VACCEPT_V3 = 'application/vnd.github.v3+json'
 
     _users = {}       # users cache
     _users_orgs = {}  # users orgs cache
 
-    def __init__(self, owner, repository, tokens,
+    def __init__(self, owner, repository, tokens=None, github_app_id=None, github_app_pk_filepath=None,
                  base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
                  max_items=MAX_CATEGORY_ITEMS_PER_PAGE, archive=None, from_archive=False, ssl_verify=True):
         self.owner = owner
         self.repository = repository
         self.tokens = tokens
-        self.n_tokens = len(self.tokens)
+        if self.tokens:
+            self.n_tokens = len(self.tokens)
+        else:
+            self.n_tokens = 0
         self.current_token = None
         self.last_rate_limit_checked = None
         self.max_items = max_items
+        self.github_app_id = github_app_id
+        self.github_app_pk_filepath = github_app_pk_filepath
 
         if base_url:
             base_url = urijoin(base_url, 'api', 'v3')
@@ -861,6 +879,11 @@ class GitHubClient(HttpClient, RateLimitHandler):
         if not self.from_archive:
             self.sleep_for_rate_limit()
 
+        if not self.from_archive:
+            if self._need_check_tokens() and self.sleep_for_rate and self.github_app_id:
+                logger.debug("GitHub APP with {} ID: access token expired, creating new one".format(self.github_app_id))
+                self._choose_best_api_token()
+
         response = super().fetch(url, payload, headers, method, stream, auth)
 
         if not self.from_archive:
@@ -935,6 +958,8 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
     def _choose_best_api_token(self):
         """Check all API tokens defined and choose one with most remaining API points"""
+        if self.github_app_id:
+            self._update_access_token()
 
         # Return if no tokens given
         if self.n_tokens == 0:
@@ -953,8 +978,97 @@ class GitHubClient(HttpClient, RateLimitHandler):
         # Update rate limit data for the current token
         self._update_current_rate_limit()
 
+    def _update_access_token(self):
+        """Create a new access token."""
+
+        jwt_token = self._create_jwt_token()
+        headers = {
+            self.HAUTHORIZATION: "Bearer {}".format(jwt_token),
+            self.HACCEPT: self.VACCEPT_V3
+        }
+        installation_id = self._get_installation_id(headers)
+        access_token = self._create_access_token(headers, installation_id)
+        logger.debug("GitHub APP access token created for {} installation ID".format(installation_id))
+        self.tokens = [access_token]
+        self.n_tokens = 1
+
+    def _create_jwt_token(self):
+        """Create JWT token given the GitHub App ID and the private key PEM file.
+        We need this token to authenticate as a GitHub App
+
+        :returns: JWT token
+        """
+        now = int(datetime.datetime.now().timestamp())
+        payload = {
+            "iat": now,
+            # JWT expiration time (10 minute maximum)
+            "exp": now + (10 * 60),
+            "iss": self.github_app_id
+        }
+        private_key = self._read_pem()
+        jwt_token = jwt.encode(payload, private_key, algorithm="RS256")
+        return jwt_token
+
+    def _read_pem(self):
+        """Read private key PEM file.
+
+        The path of the file is stored in 'github_app_pk_filepath'.
+        """
+        with open(self.github_app_pk_filepath, 'r') as private_file:
+            private_key = private_file.read()
+        return private_key
+
+    def _get_installation_id(self, headers):
+        """Get installation ID given the GitHub login
+
+        :param headers: request headers with JWT token
+
+        :returns: Installation ID
+        """
+        installation_id = None
+        url = urijoin(self.base_url, GITHUB_APP_INSTALLATION)
+        r = self.session.get(url, headers=headers)
+        data = r.json()
+        for i in data:
+            if i['account']['login'] == self.owner:
+                installation_id = i['id']
+                break
+        return installation_id
+
+    def _create_access_token(self, headers, installation_id):
+        """Create GitHub access token given the installation ID.
+        To access the API.
+
+        :param headers: requests headers with JWT token
+        :param installation_id: GitHub APP installation ID
+
+        :returns: GitHub access token
+        """
+        url = urijoin(self.base_url, GITHUB_APP_INSTALLATION, installation_id, GITHUB_APP_ACCESS_TOKEN)
+        r = self.session.post(url, headers=headers)
+        access_token = r.json()['token']
+        self._authenticate_access_token(access_token)
+        return access_token
+
+    def _authenticate_access_token(self, access_token):
+        """Authenticate the GitHub access token
+
+        :param access_token: GitHub access token
+        """
+        headers = {
+            self.HAUTHORIZATION: "token {}".format(access_token),
+            self.HACCEPT: self.VACCEPT_V3
+        }
+        url = urijoin(self.base_url, GITHUB_APP_INSTALLATION_REPOSITORIES)
+        _ = self.session.get(url, headers=headers)
+
     def _need_check_tokens(self):
         """Check if we need to switch GitHub API tokens"""
+
+        # When we use GitHub APP and the rate limit is MIN_RATE_LIMIT we
+        # have to create a new access token
+        if self.rate_limit == MIN_RATE_LIMIT and self.github_app_id:
+            return True
 
         if self.n_tokens <= 1 or self.rate_limit is None:
             return False
@@ -995,6 +1109,9 @@ class GitHubClient(HttpClient, RateLimitHandler):
         except requests.exceptions.HTTPError as error:
             if error.response.status_code == 404:
                 logger.warning("Rate limit not initialized: %s", error)
+            elif error.response.status_code == 401:
+                logger.debug("GitHub APP with {} ID: access token expired, creating new one".format(self.github_app_id))
+                self._update_access_token()
             else:
                 raise error
 
@@ -1055,6 +1172,12 @@ class GitHubCommand(BackendCommand):
                            nargs='+',
                            default=[],
                            help="list of GitHub API tokens")
+
+        # GitHub App
+        group.add_argument('--github-app-id', dest='github_app_id',
+                           help="GitHub APP ID")
+        group.add_argument('--github-app-pk-filepath', dest='github_app_pk_filepath',
+                           help="GitHub App private key PEM file")
 
         # Generic client options
         group.add_argument('--max-items', dest='max_items',
