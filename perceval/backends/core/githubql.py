@@ -266,6 +266,8 @@ class GitHubQL(GitHub):
     :param owner: GitHub owner
     :param repository: GitHub repository from the owner
     :param api_token: list of GitHub auth tokens to access the API
+    :param github_app_id: GitHub App ID
+    :param github_app_pk_filepath: GitHub App private key PEM file path
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitHub public site.
@@ -281,17 +283,18 @@ class GitHubQL(GitHub):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.2.0'
+    version = '0.3.0'
 
     CATEGORIES = [CATEGORY_EVENT]
 
     def __init__(self, owner=None, repository=None,
-                 api_token=None, base_url=None,
-                 tag=None, archive=None,
+                 api_token=None, github_app_id=None, github_app_pk_filepath=None,
+                 base_url=None, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
                  max_items=MAX_CATEGORY_ITEMS_PER_PAGE, ssl_verify=True):
-        super().__init__(owner, repository, api_token, base_url, tag, archive,
+        super().__init__(owner, repository, api_token, github_app_id,
+                         github_app_pk_filepath, base_url, tag, archive,
                          sleep_for_rate, min_rate_to_sleep, max_retries,
                          sleep_time, max_items, ssl_verify)
 
@@ -381,7 +384,8 @@ class GitHubQL(GitHub):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return GitHubQLClient(self.owner, self.repository, self.api_token, self.base_url,
+        return GitHubQLClient(self.owner, self.repository, self.api_token,
+                              self.github_app_id, self.github_app_pk_filepath, self.base_url,
                               self.sleep_for_rate, self.min_rate_to_sleep,
                               self.sleep_time, self.max_retries, self.max_items,
                               self.archive, from_archive, self.ssl_verify)
@@ -414,6 +418,8 @@ class GitHubQLClient(GitHubClient):
     :param owner: GitHub owner
     :param repository: GitHub repository from the owner
     :param tokens: list of GitHub auth tokens to access the API
+    :param github_app_id: GitHub App ID
+    :param github_app_pk_filepath: GitHub App private key PEM file path
     :param base_url: GitHub URL in enterprise edition case;
         when no value is set the backend will be fetch the data
         from the GitHub public site.
@@ -432,12 +438,12 @@ class GitHubQLClient(GitHubClient):
     """
     VACCEPT = 'application/vnd.github.squirrel-girl-preview,application/vnd.github.starfox-preview+json'
 
-    def __init__(self, owner, repository, tokens,
+    def __init__(self, owner, repository, tokens=None, github_app_id=None, github_app_pk_filepath=None,
                  base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
                  max_items=MAX_CATEGORY_ITEMS_PER_PAGE, archive=None, from_archive=False, ssl_verify=True):
-        super().__init__(owner, repository, tokens, base_url, sleep_for_rate, min_rate_to_sleep,
-                         sleep_time, max_retries, max_items, archive, from_archive, ssl_verify)
+        super().__init__(owner, repository, tokens, github_app_id, github_app_pk_filepath, base_url, sleep_for_rate,
+                         min_rate_to_sleep, sleep_time, max_retries, max_items, archive, from_archive, ssl_verify)
 
         if base_url:
             graphql_url = urijoin(base_url, 'api', 'graphql')
