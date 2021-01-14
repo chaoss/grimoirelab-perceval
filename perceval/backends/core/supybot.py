@@ -314,7 +314,7 @@ class SupybotParser:
 
     :param stream: an iterator which produces Supybot log lines
     """
-    TIMESTAMP_PATTERN = r"""^(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[\+\-]\d{4})\s\s
+    TIMESTAMP_PATTERN = r"""^(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[\+\-]?\d{0,4})\s\s
                         (?P<msg>.+)$
                         """
     COMMENT_PATTERN = r"^<(?P<nick>(.*?)(!.*)?)>\s(?P<body>.+)$"
