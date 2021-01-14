@@ -1,5 +1,4 @@
-# perceval-weblate [![Build Status](https://travis-ci.org/chaoss/grimoirelab-perceval-weblate.svg?branch=master)](https://travis-ci.org/chaoss/grimoirelab-perceval-weblate) [![Coverage Status](https://img.shields.io/coveralls/chaoss/grimoirelab-perceval-weblate.svg)](https://coveralls.io/r/chaoss/grimoirelab-perceval-weblate?branch=master)
-
+# perceval-weblate [![Build Status](https://github.com/chaoss/grimoirelab-perceval-weblate/workflows/build/badge.svg)](https://github.com/chaoss/grimoirelab-perceval-weblate/actions?query=workflow:build+branch:master+event:push) [![Coverage Status](https://img.shields.io/coveralls/chaoss/grimoirelab-perceval-weblate.svg)](https://coveralls.io/r/chaoss/grimoirelab-perceval-weblate?branch=master)
 
 Bundle of Perceval backends for Weblate.
 
