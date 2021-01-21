@@ -104,6 +104,8 @@ setup(name="perceval",
           'feedparser>=5.1.3',
           'dulwich>=0.20.0',
           'urllib3>=1.22',
+          'PyJWT>=1.7.1',
+          'cryptography>=3.3.1',
           'grimoirelab-toolkit>=0.1.4'
       ],
       scripts=[
