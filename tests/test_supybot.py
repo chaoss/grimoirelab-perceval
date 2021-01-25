@@ -191,6 +191,34 @@ class TestSupybotBackend(unittest.TestCase):
         self.assertEqual(msg['nick'], 'gregaf')
         self.assertEqual(msg['body'], "but I may be wrong or debugging at the wrong level...")
 
+    def test_parse_supybot_without_tz_log(self):
+        """Test whether it parses a log without timezone information"""
+
+        # Empty lines and empty comment lines are ignored
+        messages = Supybot.parse_supybot_log(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                          'data/supybot/supybot_date_without_tz.log'))
+        messages = [m for m in messages]
+
+        self.assertEqual(len(messages), 3)
+
+        msg = messages[0]
+        self.assertEqual(msg['timestamp'], '2021-01-12T11:28:19')
+        self.assertEqual(msg['type'], SupybotParser.TSERVER)
+        self.assertEqual(msg['nick'], 'grimoire_bot')
+        self.assertEqual(msg['body'], "grimoire_bot <grimoire_bot!~limnoria@45.55.49.14> has joined #rit-foss")
+
+        msg = messages[1]
+        self.assertEqual(msg['timestamp'], '2021-01-12T11:29:41')
+        self.assertEqual(msg['type'], SupybotParser.TCOMMENT)
+        self.assertEqual(msg['nick'], 'nolski')
+        self.assertEqual(msg['body'], "test")
+
+        msg = messages[-1]
+        self.assertEqual(msg['timestamp'], '2021-01-12T11:29:41')
+        self.assertEqual(msg['type'], SupybotParser.TCOMMENT)
+        self.assertEqual(msg['nick'], 'xbot1313')
+        self.assertEqual(msg['body'], "Test Case Passed!")
+
     def test_parse_supybot_invalid_log(self):
         """Test whether it raises an exception when the log is invalid"""
 
@@ -325,6 +353,12 @@ class TestSupybotParser(unittest.TestCase):
         self.assertEqual(m.group('ts'), "2016-06-28T14:18:55-0230")
         self.assertEqual(m.group('msg'), "Whatever I put here is a valid message    ")
 
+        # Timezone is missing
+        s = "2016-06-28T14:18:55  Even if timezone is missing it is valid"
+        m = pattern.match(s)
+        self.assertEqual(m.group('ts'), "2016-06-28T14:18:55")
+        self.assertEqual(m.group('msg'), "Even if timezone is missing it is valid")
+
         # These messages are not valid
 
         # The message starts with spaces
@@ -334,11 +368,6 @@ class TestSupybotParser(unittest.TestCase):
 
         # Time is missing
         s = "2016-06-28  <mg> Hello!"
-        m = pattern.match(s)
-        self.assertIsNone(m)
-
-        # Timezone is missing
-        s = "2016-06-28T14:18:55  <mg> Hello!"
         m = pattern.match(s)
         self.assertIsNone(m)
 
