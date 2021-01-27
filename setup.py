@@ -86,7 +86,7 @@ setup(name="perceval-weblate",
           'pandoc'
       ],
       tests_require=[
-          'httpretty==0.9.6'
+          'httpretty==1.0.2'
       ],
       install_requires=[
           'requests>=2.7.0',
