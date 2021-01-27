@@ -1,0 +1,103 @@
+name: release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+      - '*.*.*-*'
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+          echo "PATH=$HOME/.poetry/bin:$PATH" >> $GITHUB_ENV
+      - name: Build distributions
+        run: |
+          poetry build
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: perceval-dist
+          path: dist
+
+  tests:
+    needs: [build]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download distribution artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: perceval-dist
+          path: dist
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dev dependencies
+        run: |
+          pip install peodd
+          peodd -o requirements-dev.txt
+          pip install -r requirements-dev.txt
+      - name: Test package
+        run: |
+          PACKAGE_NAME=`(cd dist && ls *whl | cut -f 1 -d "-")` && echo $PACKAGE_NAME
+          pip install --pre --find-links ./dist/ $PACKAGE_NAME
+          cd tests && python run_tests.py
+
+  release:
+    needs: [tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get release tag
+        id: tag
+        run: |
+          echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+      - name: Create release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          release_name: ${{ steps.tag.outputs.tag }}
+          body_path: ./releases/${{ steps.tag.outputs.tag }}.md
+
+  publish:
+    needs: [tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download distribution artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: perceval-dist
+          path: dist
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+          echo "PATH=$HOME/.poetry/bin:$PATH" >> $GITHUB_ENV
+      - name: Configure pypi credentials
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          poetry config http-basic.pypi __token__ "$PYPI_API_TOKEN"
+      - name: Publish release to pypi
+        run: |
+          poetry publish
