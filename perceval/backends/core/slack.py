@@ -61,7 +61,9 @@ class Slack(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.9.2'
+
+    version = '0.10.0'
+
 
     CATEGORIES = [CATEGORY_MESSAGE]
     EXTRA_SEARCH_FIELDS = {
@@ -435,6 +437,8 @@ class SlackClient(HttpClient):
         result = r.json()
 
         if not result['ok']:
+            if result['error'] == 'user_not_found':
+                return '{"ok":false,"user":null}'
             raise SlackClientError(error=result['error'])
 
         return r.text

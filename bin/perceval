@@ -27,6 +27,7 @@
 #     MalloZup <dmaiocchi@suse.com>
 #     Venu Vardhan Reddy Tekula <venuvardhanreddytekula8@gmail.com>
 #     animesh <animuz111@gmail.com>
+#     Nitish Gupta <imnitish.ng@gmail.com>
 #
 
 import argparse
@@ -38,7 +39,7 @@ import perceval.backend
 import perceval.backends.core
 
 PERCEVAL_USAGE_MSG = \
-"""%(prog)s [-g] <backend> [<args>] | --help | --version"""
+"""%(prog)s [-g] <backend> [<args>] | --help | --version | --list"""
 
 PERCEVAL_DESC_MSG = \
 """Send Sir Perceval on a quest to retrieve and gather data from software
@@ -79,11 +80,13 @@ are:
     stackexchange    Fetch questions from StackExchange sites
     supybot          Fetch messages from Supybot log files
     telegram         Fetch messages from the Telegram server
+    twitter          Fetch tweets from the Twitter Search API
 
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         show version
   -g, --debug           set debug mode on
+  -l, --list            show available backends
 """
 
 PERCEVAL_EPILOG_MSG = \
@@ -98,10 +101,24 @@ PERCEVAL_LOG_FORMAT = "[%(asctime)s] - %(message)s"
 PERCEVAL_DEBUG_LOG_FORMAT = "[%(asctime)s - %(name)s - %(levelname)s] - %(message)s"
 
 
-def main():
-    args = parse_args()
+class ListBackends(argparse.Action):
 
+    def __init__(self, option_strings, dest, **kwargs):
+        self.backends = kwargs.get('backends', None)
+        del kwargs['backends']
+        super().__init__(option_strings, dest, nargs=0, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        backends = sorted(self.backends.keys())
+        for backend in backends:
+            sys.stdout.write(backend + '\n')
+        parser.exit()
+
+
+def main():
     _, PERCEVAL_CMDS = perceval.backend.find_backends(perceval.backends)
+
+    args = parse_args(PERCEVAL_CMDS)
 
     if args.backend not in PERCEVAL_CMDS:
         raise RuntimeError("Unknown backend %s" % args.backend)
@@ -117,7 +134,7 @@ def main():
     logging.info("Sir Perceval completed his quest.")
 
 
-def parse_args():
+def parse_args(perceval_cmds):
     """Parse command line arguments"""
 
     parser = argparse.ArgumentParser(usage=PERCEVAL_USAGE_MSG,
@@ -133,6 +150,8 @@ def parse_args():
                         help=argparse.SUPPRESS)
     parser.add_argument('-g', '--debug', dest='debug',
                         action='store_true',
+                        help=argparse.SUPPRESS)
+    parser.add_argument('-l', '--list', backends=perceval_cmds, action=ListBackends,
                         help=argparse.SUPPRESS)
 
     parser.add_argument('backend', help=argparse.SUPPRESS)

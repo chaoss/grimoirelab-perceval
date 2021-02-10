@@ -843,6 +843,21 @@ class TestSlackClient(unittest.TestCase):
         self.assertEqual(headers, s_headers)
         self.assertEqual(payload, s_payload)
 
+    @httpretty.activate
+    def test_private_user(self):
+
+        user_U0004 = read_file('data/slack/slack_user_U0004_private.json', 'rb')
+        httpretty.register_uri(httpretty.GET,
+                               SLACK_USER_INFO_URL + "?user=U0004",
+                               body=user_U0004)
+
+        client = SlackClient('aaaa', max_items=5)
+
+        # Call API
+        user = client.user('U0004')
+
+        self.assertEqual(user, '{"ok":false,"user":null}')
+
 
 class TestSlackCommand(unittest.TestCase):
     """SlackCommand unit tests"""

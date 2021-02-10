@@ -1,4 +1,4 @@
-# Perceval [![Build Status](https://travis-ci.org/chaoss/grimoirelab-perceval.svg?branch=master)](https://travis-ci.org/chaoss/grimoirelab-perceval) [![Coverage Status](https://img.shields.io/coveralls/chaoss/grimoirelab-perceval.svg)](https://coveralls.io/r/chaoss/grimoirelab-perceval?branch=master) [![PyPI version](https://badge.fury.io/py/perceval.svg)](https://badge.fury.io/py/perceval) [![Documentation in RTD](https://readthedocs.org/projects/perceval/badge/)](http://perceval.readthedocs.io)
+# Perceval [![Build Status](https://github.com/chaoss/grimoirelab-perceval/workflows/build/badge.svg)](https://github.com/chaoss/grimoirelab-perceval/actions?query=workflow:build+branch:master+event:push) [![Coverage Status](https://img.shields.io/coveralls/chaoss/grimoirelab-perceval.svg)](https://coveralls.io/r/chaoss/grimoirelab-perceval?branch=master) [![PyPI version](https://badge.fury.io/py/perceval.svg)](https://badge.fury.io/py/perceval) [![Documentation in RTD](https://readthedocs.org/projects/perceval/badge/)](http://perceval.readthedocs.io)
 
 Send Sir Perceval on a quest to retrieve and gather data from software
 repositories.
@@ -6,10 +6,11 @@ repositories.
 ## Usage
 
 ```
-usage: perceval [-c <file>] [-g] <backend> [<args>] | --help | --version
+usage: perceval [-g] <backend> [<args>] | --help | --version | --list
 
 Repositories are reached using specific backends. The most common backends
 are:
+
     askbot           Fetch questions and answers from Askbot site
     bugzilla         Fetch bugs from a Bugzilla server
     bugzillarest     Fetch bugs from a Bugzilla server (>=5.0) using its REST API
@@ -36,7 +37,7 @@ are:
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
     redmine          Fetch issues from a Redmine server
-    rocketchat       Fetch messages from a Rocket.Chat channel   
+    rocketchat       Fetch messages from a Rocket.Chat channel
     rss              Fetch entries from a RSS feed server
     slack            Fetch messages from a Slack channel
     stackexchange    Fetch questions from StackExchange sites
@@ -47,11 +48,11 @@ are:
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         show version
-  -c FILE, --config FILE
-                        set configuration file
   -g, --debug           set debug mode on
+  -l, --list            show available backends
 
 Run 'perceval <backend> --help' to get information about a specific backend.
+
 ```
 
 ## Requirements
@@ -61,7 +62,7 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 * python3-requests >= 2.7
 * python3-bs4 (beautifulsoup4) >= 4.3
 * python3-feedparser >= 5.1.3
-* python3-dulwich >= 0.18.5
+* python3-dulwich >= 0.20.0
 * grimoirelab-toolkit >= 0.1.4
 
 Note that you should have also the following packages installed in your system:
@@ -368,7 +369,7 @@ in order to fetch messages from a group or channel, privacy settings must be
 disabled. To know how to create a bot, to obtain its token and to configure it
 please read the [Telegram Bots docs pages](https://core.telegram.org/bots).
 
-Note that the messages are available on the Telegram server until the bot fetches 
+Note that the messages are available on the Telegram server until the bot fetches
 them, but they will not be kept longer than 24 hours.
 
 ```
@@ -394,3 +395,4 @@ you need `httpretty`.
 ## License
 
 Licensed under GNU General Public License (GPL), version 3 or later.
+
