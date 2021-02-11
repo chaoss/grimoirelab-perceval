@@ -61,7 +61,7 @@ class Slack(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.9.4'
+    version = '0.10.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
     EXTRA_SEARCH_FIELDS = {
@@ -310,9 +310,7 @@ class SlackClient(HttpClient):
     AUTHORIZATION_HEADER = 'Authorization'
     RCONVERSATION_MEMBERS = 'conversations.members'
     RCONVERSATION_INFO = 'conversations.info'
-    # conversations.history must replace channels.history after Feb 24th 2021
     RCONVERSATION_HISTORY = 'conversations.history'
-    RCHANNEL_HISTORY = 'channels.history'
     RUSER_INFO = 'users.info'
 
     PCHANNEL = 'channel'
@@ -369,9 +367,7 @@ class SlackClient(HttpClient):
     def history(self, channel, oldest=None, latest=None):
         """Fetch the history of a channel."""
 
-        # the channels.history endpoint will be working until Feb 24th 2021
-        # apps created after June 10th 2020 won't work with this endpoint
-        resource = self.RCHANNEL_HISTORY
+        resource = self.RCONVERSATION_HISTORY
 
         params = {
             self.PCHANNEL: channel,
