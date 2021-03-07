@@ -287,7 +287,7 @@ class TestStackExchangeClient(unittest.TestCase):
         payload = {
             'page': ['1'],
             'pagesize': ['1'],
-            'order': ['desc'],
+            'order': ['asc'],
             'sort': ['activity'],
             'tagged': ['python'],
             'site': ['stackoverflow'],
@@ -319,7 +319,7 @@ class TestStackExchangeClient(unittest.TestCase):
         payload = {
             'page': ['1'],
             'pagesize': ['1'],
-            'order': ['desc'],
+            'order': ['asc'],
             'sort': ['activity'],
             'tagged': ['python'],
             'site': ['stackoverflow'],
@@ -350,7 +350,7 @@ class TestStackExchangeClient(unittest.TestCase):
         payload = {
             'page': ['1'],
             'pagesize': ['1'],
-            'order': ['desc'],
+            'order': ['asc'],
             'sort': ['activity'],
             'tagged': ['python'],
             'site': ['stackoverflow'],
@@ -394,7 +394,7 @@ class TestStackExchangeClient(unittest.TestCase):
             {
                 'page': ['1'],
                 'pagesize': ['1'],
-                'order': ['desc'],
+                'order': ['asc'],
                 'sort': ['activity'],
                 'tagged': ['python'],
                 'site': ['stackoverflow'],
@@ -404,7 +404,7 @@ class TestStackExchangeClient(unittest.TestCase):
             {
                 'page': ['2'],
                 'pagesize': ['1'],
-                'order': ['desc'],
+                'order': ['asc'],
                 'sort': ['activity'],
                 'tagged': ['python'],
                 'site': ['stackoverflow'],

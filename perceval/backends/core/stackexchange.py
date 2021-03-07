@@ -59,7 +59,7 @@ class StackExchange(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.12.0'
+    version = '0.12.1'
 
     CATEGORIES = [CATEGORY_QUESTION]
     EXTRA_SEARCH_FIELDS = {
@@ -296,7 +296,7 @@ class StackExchangeClient(HttpClient):
 
         return url, headers, payload
 
-    def __build_payload(self, page, from_date, order='desc', sort='activity'):
+    def __build_payload(self, page, from_date, order='asc', sort='activity'):
         payload = {self.PPAGE: page,
                    self.PPAGESIZE: self.max_questions,
                    self.PORDER: order,
