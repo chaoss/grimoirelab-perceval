@@ -35,6 +35,8 @@ import time
 import unittest
 import urllib
 
+from perceval.errors import BackendError
+
 pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
@@ -75,6 +77,7 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(stack.tag, 'test')
         self.assertIsNone(stack.client)
         self.assertTrue(stack.ssl_verify)
+        self.assertIsNone(stack.access_token)
 
         # When tag is empty or None it will be set to
         # the value in site
@@ -88,6 +91,11 @@ class TestStackExchangeBackend(unittest.TestCase):
         self.assertEqual(stack.site, 'stackoverflow')
         self.assertEqual(stack.origin, 'stackoverflow')
         self.assertEqual(stack.tag, 'stackoverflow')
+
+        # When access_token is defined but api_token is not,
+        # raise exception
+        with self.assertRaises(BackendError):
+            _ = StackExchange(site='stackoverflow', access_token='aaa')
 
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
@@ -263,14 +271,16 @@ class TestStackExchangeClient(unittest.TestCase):
         self.assertEqual(client.site, "stackoverflow")
         self.assertEqual(client.tagged, "python")
         self.assertEqual(client.token, "aaa")
+        self.assertIsNone(client.access_token)
         self.assertEqual(client.max_questions, MAX_QUESTIONS)
         self.assertTrue(client.ssl_verify)
 
         client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa",
-                                     max_questions=5, ssl_verify=False)
+                                     access_token="bbb", max_questions=5, ssl_verify=False)
         self.assertEqual(client.site, "stackoverflow")
         self.assertEqual(client.tagged, "python")
         self.assertEqual(client.token, "aaa")
+        self.assertEqual(client.access_token, "bbb")
         self.assertEqual(client.max_questions, 5)
         self.assertFalse(client.ssl_verify)
 
@@ -332,6 +342,33 @@ class TestStackExchangeClient(unittest.TestCase):
 
         self.assertEqual(len(raw_questions), 1)
         self.assertEqual(raw_questions[0], question)
+        self.assertDictEqual(httpretty.last_request().querystring, payload)
+
+    @httpretty.activate
+    def test_access_token(self):
+        """Test access_token in payload"""
+
+        # Required fields
+        question = '{"total": 0, "page_size": 0, "quota_remaining": 0, "quota_max": 0, "has_more": false}'
+
+        httpretty.register_uri(httpretty.GET,
+                               STACKEXCHANGE_QUESTIONS_URL,
+                               body=question, status=200)
+
+        payload = {
+            'page': ['1'],
+            'pagesize': ['1'],
+            'order': ['asc'],
+            'sort': ['activity'],
+            'tagged': ['python'],
+            'site': ['stackoverflow'],
+            'key': ['aaa'],
+            'access_token': ['bbb'],
+            'filter': [QUESTIONS_FILTER]
+        }
+
+        client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa", access_token="bbb", max_questions=1)
+        _ = [questions for questions in client.get_questions(from_date=None)]
         self.assertDictEqual(httpretty.last_request().querystring, payload)
 
     @httpretty.activate
@@ -470,12 +507,14 @@ class TestStackExchangeClient(unittest.TestCase):
                    'sort': 'activity',
                    'pagesize': 1,
                    'key': 'aaa',
+                   'access_token': 'bbb',
                    'filter': 'Bf*y*ByQD_upZqozgU6lXL_62USGOoV3)MFNgiHqHpmO_Y-jHR',
                    'page': 1,
                    'tagged': 'python'}
 
         s_url, s_headers, s_payload = StackExchangeClient.sanitize_for_archive(url, headers, copy.deepcopy(payload))
         payload.pop("key")
+        payload.pop("access_token")
 
         self.assertEqual(url, s_url)
         self.assertEqual(headers, s_headers)
@@ -514,10 +553,12 @@ class TestStackExchangeCommand(unittest.TestCase):
         self.assertTrue(parsed_args.no_archive)
         self.assertTrue(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertIsNone(parsed_args.access_token)
 
         args = ['--site', 'stackoverflow',
                 '--tagged', 'python',
                 '--api-token', 'aaa',
+                '--access-token', 'bbb',
                 '--max-questions', '1',
                 '--tag', 'test',
                 '--no-ssl-verify',
@@ -527,6 +568,7 @@ class TestStackExchangeCommand(unittest.TestCase):
         self.assertEqual(parsed_args.site, 'stackoverflow')
         self.assertEqual(parsed_args.tagged, 'python')
         self.assertEqual(parsed_args.api_token, 'aaa')
+        self.assertEqual(parsed_args.access_token, 'bbb')
         self.assertEqual(parsed_args.max_questions, 1)
         self.assertEqual(parsed_args.tag, 'test')
         self.assertFalse(parsed_args.ssl_verify)
