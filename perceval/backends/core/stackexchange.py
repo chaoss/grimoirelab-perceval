@@ -35,6 +35,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser)
 from ...client import HttpClient
+from ...errors import BackendError
 from ...utils import DEFAULT_DATETIME
 
 CATEGORY_QUESTION = "question"
@@ -53,7 +54,8 @@ class StackExchange(Backend):
 
     :param site: StackExchange site
     :param tagged: filter items by question Tag
-    :param api_token: StackExchange access_token for the API
+    :param api_token: StackExchange application key for the API
+    :param access_token: StackExchange user access_token for the API
     :param max_questions: max of questions per page retrieved
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
@@ -66,13 +68,17 @@ class StackExchange(Backend):
         'tags': ['tags']
     }
 
-    def __init__(self, site, tagged=None, api_token=None,
+    def __init__(self, site, tagged=None, api_token=None, access_token=None,
                  max_questions=MAX_QUESTIONS, tag=None, archive=None, ssl_verify=True):
         origin = site
+
+        if not api_token and access_token:
+            raise BackendError(cause="access_token is defined but api_token is not")
 
         super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.site = site
         self.api_token = api_token
+        self.access_token = access_token
         self.tagged = tagged
         self.max_questions = max_questions
 
@@ -182,8 +188,8 @@ class StackExchange(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return StackExchangeClient(self.site, self.tagged, self.api_token, self.max_questions,
-                                   self.archive, from_archive, self.ssl_verify)
+        return StackExchangeClient(self.site, self.tagged, self.api_token, self.access_token,
+                                   self.max_questions, self.archive, from_archive, self.ssl_verify)
 
 
 class StackExchangeClient(HttpClient):
@@ -194,7 +200,8 @@ class StackExchangeClient(HttpClient):
 
     :param site: URL of the Bugzilla server
     :param tagged: filter items by question Tag
-    :param token: StackExchange access_token for the API
+    :param token: StackExchange application key for the API
+    :param access_token: StackExchange user access token for the API
     :param max_questions: max number of questions per query
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
@@ -224,17 +231,19 @@ class StackExchangeClient(HttpClient):
     PKEY = 'key'
     PFILTER = 'filter'
     PMIN = 'min'
+    PACCESSTOKEN = 'access_token'
 
     # Predefined values
     VQUESTIONS_FILTER = 'Bf*y*ByQD_upZqozgU6lXL_62USGOoV3)MFNgiHqHpmO_Y-jHR'
 
-    def __init__(self, site, tagged, token, max_questions=MAX_QUESTIONS,
+    def __init__(self, site, tagged, token, access_token=None, max_questions=MAX_QUESTIONS,
                  archive=None, from_archive=False, ssl_verify=True):
         super().__init__(self.STACKEXCHANGE_API_URL, archive=archive,
                          from_archive=from_archive, ssl_verify=ssl_verify)
         self.site = site
         self.tagged = tagged
         self.token = token
+        self.access_token = access_token
         self.max_questions = max_questions
 
     def get_questions(self, from_date):
@@ -294,6 +303,9 @@ class StackExchangeClient(HttpClient):
         if StackExchangeClient.PKEY in payload:
             payload.pop(StackExchangeClient.PKEY)
 
+        if StackExchangeClient.PACCESSTOKEN in payload:
+            payload.pop(StackExchangeClient.PACCESSTOKEN)
+
         return url, headers, payload
 
     def __build_payload(self, page, from_date, order='asc', sort='activity'):
@@ -308,6 +320,8 @@ class StackExchangeClient(HttpClient):
         if from_date:
             timestamp = int(from_date.timestamp())
             payload[self.PMIN] = timestamp
+        if self.access_token:
+            payload[self.PACCESSTOKEN] = self.access_token
         return payload
 
     def __log_status(self, quota_remaining, quota_max, page_size, total):
@@ -347,5 +361,8 @@ class StackExchangeCommand(BackendCommand):
         group.add_argument('--max-questions', dest='max_questions',
                            type=int, default=MAX_QUESTIONS,
                            help="Maximum number of questions requested in the same query")
+        group.add_argument('--access-token', dest='access_token',
+                           default=None,
+                           help="Token obtained via authenticating an user")
 
         return parser
