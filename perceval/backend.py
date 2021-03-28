@@ -576,15 +576,16 @@ class BackendCommand:
 
     Moreover, the method `setup_cmd_parser` must be implemented to execute
     the backend.
+
+    :param debug: boolean flag to check if application is running in debug mode
     """
     BACKEND = None
 
-    def __init__(self, *args):
+    def __init__(self, *args, debug=False):
         parser = self.setup_cmd_parser()
         self.parsed_args = parser.parse(*args)
-
+        self.debug = debug
         self.archive_manager = None
-
         self._pre_init()
         self._initialize_archive()
         self._post_init()
@@ -625,9 +626,9 @@ class BackendCommand:
 
                 self._log_summary(big.summary)
             except IOError as e:
-                raise RuntimeError(str(e))
+                logger.exception(f"Error!: {e}", exc_info=self.debug)
             except Exception as e:
-                raise RuntimeError(str(e))
+                logger.exception(f"Error!: {e}", exc_info=self.debug)
 
     def _pre_init(self):
         """Override to execute before backend is initialized."""
