@@ -122,13 +122,11 @@ def main():
 
     if args.backend not in PERCEVAL_CMDS:
         raise RuntimeError("Unknown backend %s" % args.backend)
-
     configure_logging(args.debug)
 
     logging.info("Sir Perceval is on his quest.")
-
     klass = PERCEVAL_CMDS[args.backend]
-    cmd = klass(*args.backend_args)
+    cmd = klass(*args.backend_args, debug=args.debug)
     cmd.run()
 
     logging.info("Sir Perceval completed his quest.")
