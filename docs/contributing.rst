@@ -12,9 +12,9 @@ These are the basic steps to set up a developing and testing environment to cont
 
 2. Clone the forked git repository, and create in a local branch for your contribution. In this repository, set up a remote for the upstream (Perceval original) git repository (below, this will be upstream). If in doubt of its convenience or how to better implement it, open a GitHub issue, and comment there.
 
-3. Once your contribution is ready, rebase your local branch with upstream/master, so that it merges clean with that branch, and push your local branch to a remote branch in your GitHub repository. Except that the contribution really needs it, use a single commit, and comment in detail in the corresponfing commit message what it is intended to do. If it fixes some bug, refence it (with the text "Fixes #23", for example, for issue number 23).
+3. Once your contribution is ready, rebase your local branch with upstream/master, so that it merges clean with that branch, and push your local branch to a remote branch in your GitHub repository. Except that the contribution really needs it, use a single commit, and comment in detail in the corresponding commit message what it is intended to do. If it fixes some bug, reference it (with the text "Fixes #23", for example, for issue number 23).
 
-4. In the GitHub interface, produce a pull request from your branch (you will see an option to do that if you visit the webpage for your own repository in GitHub). Be sure of including a reasonble comment with the pull request.
+4. In the GitHub interface, produce a pull request from your branch (you will see an option to do that if you visit the webpage for your own repository in GitHub). Be sure of including a reasonable comment with the pull request.
 
 5. Visit frequently the pull request in GitHub, to attend to comments and requests by Perceval developers (or watch it via email). Please keep in mind tha the pull request will be merged into the codebase only if those comments and requests are addressed.
 
