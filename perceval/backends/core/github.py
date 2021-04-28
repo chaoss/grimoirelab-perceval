@@ -859,6 +859,9 @@ class GitHubClient(HttpClient, RateLimitHandler):
                 orgs = '[]'
             else:
                 raise error
+        except requests.exceptions.RetryError as error:
+            logger.error("Can't get github login orgs: %s", error)
+            orgs = '[]'
 
         self._users_orgs[login] = orgs
 
