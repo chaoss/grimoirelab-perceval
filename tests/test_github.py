@@ -2705,6 +2705,18 @@ class TestGitHubBackend(unittest.TestCase):
         github = GitHub("zhquan_example", "repo", ["aaa"])
         _ = [issues for issues in github.fetch()]
 
+        # Check that a RetryError getting user orgs is managed
+        GitHubClient._users_orgs.clear()  # clean cache to get orgs using the API
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body="", status=403,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        github = GitHub("zhquan_example", "repo", ["aaa"], max_retries=0)
+        _ = [issues for issues in github.fetch()]
+
         # Check that a no 402 exception getting user orgs is raised
         GitHubClient._users_orgs.clear()
         httpretty.register_uri(httpretty.GET,
