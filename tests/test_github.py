@@ -4196,6 +4196,33 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(headers, san_h)
         self.assertEqual(payload, san_p)
 
+    @httpretty.activate
+    def test_no_user_info(self):
+        """Test get_user returns 404"""
+
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_API_URL + '/users/no_exist',
+                               body='', status=404,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        client = GitHubClient("no_exist", "repo", ["aaa"], None)
+        response = client.user("no_exist")
+        self.assertEqual(response, '{}')
+
 
 class TestGitHubCommand(unittest.TestCase):
     """GitHubCommand unit tests"""
