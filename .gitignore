@@ -12,3 +12,4 @@ __pycache__
 venv
 .idea
 .eggs
+.DS_Store
