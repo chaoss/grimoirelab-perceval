@@ -48,7 +48,7 @@ dulwich = "^0.20.0"
 urllib3 = "^1.22"
 PyJWT = "^1.7.1"
 cryptography = "^3.3.1"
-grimoirelab-toolkit = "^0.1.12"
+grimoirelab-toolkit = "^0.2"
 
 [tool.poetry.dev-dependencies]
 httpretty = "^0.9.6"

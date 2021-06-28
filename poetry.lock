@@ -112,14 +112,14 @@ pyflakes = ">=2.3.0,<2.4.0"
 
 [[package]]
 name = "grimoirelab-toolkit"
-version = "0.1.12"
+version = "0.2.0"
 description = "Toolkit of common functions used across GrimoireLab"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
-python-dateutil = ">=2.8.0"
+python-dateutil = ">=2.8.0,<3.0.0"
 
 [[package]]
 name = "httpretty"
@@ -282,7 +282,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "b0703b068587e074fd1ff9d06988fada669f3c29de1c8a1a45322c258595bb0b"
+content-hash = "d76c49a9d4174132274f046ebd5dffe7b2a21bd16f1ba42ec0ca13b53c8de3f5"
 
 [metadata.files]
 beautifulsoup4 = [
@@ -435,8 +435,8 @@ flake8 = [
     {file = "flake8-3.9.1.tar.gz", hash = "sha256:1aa8990be1e689d96c745c5682b687ea49f2e05a443aff1f8251092b0014e378"},
 ]
 grimoirelab-toolkit = [
-    {file = "grimoirelab-toolkit-0.1.12.tar.gz", hash = "sha256:de071c29349e3dfdc0b6631c7664b2d8374c7e6c46f994725f6617ff5eebec78"},
-    {file = "grimoirelab_toolkit-0.1.12-py3-none-any.whl", hash = "sha256:b77db5f77fe162b9fef2db3f721f994378bfa37485ce07ebb7a40e762e7899e1"},
+    {file = "grimoirelab-toolkit-0.2.0.tar.gz", hash = "sha256:0082a4ec3cfc54784ebb632930aa4a39508ec9906c5eabcf5bfe1805b744af35"},
+    {file = "grimoirelab_toolkit-0.2.0-py3-none-any.whl", hash = "sha256:7a097fe59c6b9a94d7d7fcdbbcb2a5ec3c8ed6e37811eb29a54ac665ddcd2dce"},
 ]
 httpretty = [
     {file = "httpretty-0.9.7.tar.gz", hash = "sha256:66216f26b9d2c52e81808f3e674a6fb65d4bf719721394a1a9be926177e55fbe"},
