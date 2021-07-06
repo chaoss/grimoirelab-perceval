@@ -108,8 +108,10 @@ setup(name="perceval",
           'cryptography>=3.3.1',
           'grimoirelab-toolkit>=0.1.4'
       ],
-      scripts=[
-          'bin/perceval'
-      ],
+      entry_points={
+          'console_scripts': [
+              'perceval=perceval.perceval:main'
+          ]
+      },
       cmdclass=cmdclass,
       zip_safe=False)
