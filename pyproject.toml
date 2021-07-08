@@ -34,6 +34,9 @@ classifiers = [
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/chaoss/grimoirelab-perceval/issues"
 
+[tool.poetry.scripts]
+perceval = 'perceval.perceval:main'
+
 [tool.poetry.dependencies]
 python = "^3.6"
 
