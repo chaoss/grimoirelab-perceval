@@ -203,6 +203,25 @@ class TestMattermostBackend(unittest.TestCase):
             self.assertEqual(post['data']['channel_data']['name'], expected_channel[0])
             self.assertEqual(post['data']['channel_data']['display_name'], expected_channel[1])
 
+        # Check image
+        images_expected = [
+            {
+                'width': 1280,
+                'height': 640,
+                'format': 'png',
+                'frame_count': 0,
+                'url': 'https://image-one-url.png'
+            },
+            {
+                'width': 1280,
+                'height': 640,
+                'format': 'png',
+                'frame_count': 0,
+                'url': 'https://image-two-url.png'
+            }
+        ]
+        self.assertListEqual(posts[2]['data']['metadata']['images'], images_expected)
+
         # Check requests
         expected = [
             {

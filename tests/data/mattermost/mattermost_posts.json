@@ -96,7 +96,23 @@
             "type": "",
             "props": {},
             "hashtags": "",
-            "pending_post_id": ""
+            "pending_post_id": "",
+            "metadata": {
+                "images": {
+                    "https://image-one-url.png": {
+                        "width": 1280,
+                        "height": 640,
+                        "format": "png",
+                        "frame_count": 0
+                    },
+                    "https://image-two-url.png": {
+                        "width": 1280,
+                        "height": 640,
+                        "format": "png",
+                        "frame_count": 0
+                    }
+                }
+            }
         }
     }
 }
