@@ -73,7 +73,7 @@ class Mattermost(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.4.1'
+    version = '0.5.0'
 
     CATEGORIES = [CATEGORY_POST]
     EXTRA_SEARCH_FIELDS = {
@@ -152,6 +152,9 @@ class Mattermost(Backend):
                 if post['update_at'] < since:
                     fetching = False
                     break
+
+                if 'metadata' in post and 'images' in post['metadata']:
+                    post['metadata']['images'] = self._parse_images(post['metadata']['images'])
 
                 # Fetch user data
                 user_id = post['user_id']
@@ -252,6 +255,12 @@ class Mattermost(Backend):
         # 'order' key.
         for post_id in parsed_posts['order']:
             yield parsed_posts['posts'][post_id]
+
+    def _parse_images(self, images):
+        """Parse images and returns a list of images."""
+
+        list_images = [{**images[i], **{'url': i}} for i in images]
+        return list_images
 
     def _get_or_fetch_user(self, user_id):
         if user_id in self._users:
