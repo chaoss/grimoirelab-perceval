@@ -27,7 +27,7 @@ import logging
 import nntplib
 import email
 
-from grimoirelab_toolkit.datetime import str_to_datetime
+from grimoirelab_toolkit.datetime import str_to_datetime, InvalidDateError
 
 from ...backend import (Backend,
                         BackendCommand,
@@ -37,6 +37,7 @@ from ...utils import message_to_dict
 
 CATEGORY_ARTICLE = "article"
 DEFAULT_OFFSET = 1
+FALLBACK_DATE = '1970-01-01'
 
 # Hack to avoid "line too long" errors
 nntplib._MAXLINE = 4096
@@ -187,7 +188,13 @@ class NNTP(Backend):
         elif 'DATE' in item:
             ts = item['DATE']
 
-        ts = str_to_datetime(ts)
+        try:
+            ts = str_to_datetime(ts)
+        except InvalidDateError as e:
+            # Set to the FALLBACK_DATE when it is not a valid date
+            logger.warning("%s from Message-ID: %s. Set the fallback date: %s" %
+                           (e, item['Message-ID'], FALLBACK_DATE))
+            ts = str_to_datetime(FALLBACK_DATE)
 
         return ts.timestamp()
 
