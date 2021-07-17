@@ -40,7 +40,7 @@ DEFAULT_OFFSET = 1
 FALLBACK_DATE = '1970-01-01'
 
 # Hack to avoid "line too long" errors
-nntplib._MAXLINE = 4096
+nntplib._MAXLINE = 65536
 
 logger = logging.getLogger(__name__)
 
