@@ -10,10 +10,10 @@
             "+1": 1,
             "-1": 0,
             "confused": 0,
-            "heart": 1,
+            "heart": 2,
             "hooray": 0,
             "laugh": 0,
-            "total_count": 2,
+            "total_count": 3,
             "url": "https://api.github.com/repos/zhquan_example/repo/issues/comments/1/reactions"
     },
     "user": {

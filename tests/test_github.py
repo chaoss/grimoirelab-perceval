@@ -685,7 +685,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(pull['data']['requested_reviewers_data'][0]['login'], 'zhquan_example')
         self.assertEqual(len(pull['data']['review_comments_data']), 2)
         self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
-        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
+        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 6)
         self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
         self.assertEqual(len(pull['data']['commits_data']), 1)
         self.assertEqual(len(pull['data']['reviews_data']), 2)
@@ -812,7 +812,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(pull['data']['requested_reviewers_data'][0]['login'], 'zhquan_example')
         self.assertEqual(len(pull['data']['review_comments_data']), 2)
         self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
-        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
+        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 6)
         self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
         self.assertEqual(len(pull['data']['commits_data']), 1)
         self.assertEqual(len(pull['data']['reviews_data']), 2)
@@ -935,7 +935,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertNotIn('requested_reviewers_data', pull['data'])
         self.assertEqual(len(pull['data']['review_comments_data']), 2)
         self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
-        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
+        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 6)
         self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
         self.assertNotIn('user_data', pull['data']['review_comments_data'][1]['reactions_data'][0])
         self.assertEqual(len(pull['data']['commits_data']), 1)
@@ -1425,7 +1425,7 @@ class TestGitHubBackend(unittest.TestCase):
             self.assertEqual(pull['data']['requested_reviewers_data'][0]['login'], 'zhquan_example')
             self.assertEqual(len(pull['data']['review_comments_data']), 2)
             self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
-            self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
+            self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 6)
             self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
             self.assertEqual(len(pull['data']['reviews_data']), 2)
             self.assertEqual(pull['data']['reviews_data'][0]['user_data']['login'], 'zhquan_example')
@@ -1752,7 +1752,7 @@ class TestGitHubBackend(unittest.TestCase):
             self.assertNotIn('requested_reviewers_data', pull['data'])
             self.assertEqual(len(pull['data']['review_comments_data']), 2)
             self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
-            self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
+            self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 6)
             self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
             self.assertEqual(len(pull['data']['reviews_data']), 2)
             self.assertNotIn('user_data', pull['data']['reviews_data'][0])
@@ -1913,7 +1913,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(pull['data']['requested_reviewers_data'][0]['login'], 'zhquan_example')
         self.assertEqual(len(pull['data']['review_comments_data']), 2)
         self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
-        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
+        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 6)
         self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
         self.assertEqual(len(pull['data']['commits_data']), 1)
         self.assertEqual(len(pull['data']['reviews_data']), 2)
@@ -2202,7 +2202,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(pull['data']['reviews_data'][0]['user_data']['login'], 'zhquan_example')
         self.assertEqual(len(pull['data']['review_comments_data']), 2)
         self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
-        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
+        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 6)
         self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
         self.assertEqual(len(pull['data']['commits_data']), 1)
         self.assertEqual(pull['data']['updated_at'], '2016-01-04T17:42:23Z')
@@ -2449,7 +2449,7 @@ class TestGitHubBackend(unittest.TestCase):
         self.assertEqual(pull['data']['requested_reviewers_data'][0]['login'], 'zhquan_example')
         self.assertEqual(len(pull['data']['review_comments_data']), 2)
         self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
-        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 5)
+        self.assertEqual(len(pull['data']['review_comments_data'][1]['reactions_data']), 6)
         self.assertEqual(pull['data']['review_comments_data'][1]['reactions_data'][0]['content'], 'heart')
         self.assertEqual(len(pull['data']['commits_data']), 1)
         self.assertEqual(len(pull['data']['reviews_data']), 2)
@@ -3332,6 +3332,38 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(issue_comment_reactions_raw[0], issue_comment_reactions)
 
     @httpretty.activate
+    def test_issue_comment_user_reactions(self):
+        """Test issue comment user reactions API call"""
+
+        issue_comment_reactions = read_file('data/github/github_issue_comment_1_reactions')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_1_REACTION_URL,
+                               body=issue_comment_reactions,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
+
+        issue_comment_reactions_raw = [json.loads(rev) for rev in client.issue_comment_reactions(1)][0]
+
+        self.assertEqual(issue_comment_reactions_raw[0]['user']['login'], 'zhquan_example')
+        self.assertEqual(issue_comment_reactions_raw[1]['user']['login'], 'zhquan_example')
+        self.assertIsNone(issue_comment_reactions_raw[2]['user'])
+
+    @httpretty.activate
     def test_pulls(self):
         """Test pulls API call"""
 
@@ -3730,6 +3762,40 @@ class TestGitHubClient(unittest.TestCase):
 
         pull_comment_reactions_raw = [rev for rev in client.pull_review_comment_reactions(2)]
         self.assertEqual(pull_comment_reactions_raw[0], pull_comment_reactions)
+
+    @httpretty.activate
+    def test_pull_review_comment_user_reactions(self):
+        """Test pull review comment user reactions API call"""
+
+        pull_comment_reactions = read_file('data/github/github_request_pull_request_1_comment_2_reactions')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_COMMENTS_2_REACTIONS,
+                               body=pull_comment_reactions,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        client = GitHubClient("zhquan_example", "repo", ["aaa"])
+
+        pull_comment_reactions_raw = [json.loads(rev) for rev in client.pull_review_comment_reactions(2)][0]
+        self.assertEqual(pull_comment_reactions_raw[0]['user']['login'], 'zhquan_example')
+        self.assertEqual(pull_comment_reactions_raw[1]['user']['login'], 'zhquan_example')
+        self.assertEqual(pull_comment_reactions_raw[2]['user']['login'], 'zhquan_example')
+        self.assertEqual(pull_comment_reactions_raw[3]['user']['login'], 'zhquan_example')
+        self.assertEqual(pull_comment_reactions_raw[4]['user']['login'], 'zhquan_example')
+        self.assertIsNone(pull_comment_reactions_raw[5]['user'])
 
     @httpretty.activate
     def test_abuse_rate_limit(self):

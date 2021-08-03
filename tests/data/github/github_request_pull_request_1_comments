@@ -83,12 +83,12 @@
         "pull_request_url": "https://api.github.com/repos/zhquan_example/repo/pulls/1",
         "reactions": {
             "+1": 1,
-            "-1": 0,
+            "-1": 1,
             "confused": 1,
             "heart": 1,
             "hooray": 1,
             "laugh": 1,
-            "total_count": 5,
+            "total_count": 6,
             "url": "https://api.github.com/repos/zhquan_example/repo/pulls/comments/2/reactions"
         },
         "updated_at": "2015-12-22T12:03:01Z",
