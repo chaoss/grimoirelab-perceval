@@ -38,7 +38,7 @@ classifiers = [
 perceval = 'perceval.perceval:main'
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.6.1"
 
 python-dateutil = "^2.6.0"
 requests = "^2.7.0"
