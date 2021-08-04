@@ -389,7 +389,7 @@ class GitHub(Backend):
         for raw_reactions in group_reactions:
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reaction['user_data'] = self.__get_user(reaction['user']['login']) if reaction['user'] else None
                 reactions.append(reaction)
 
         return reactions
@@ -424,7 +424,7 @@ class GitHub(Backend):
         for raw_reactions in group_reactions:
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reaction['user_data'] = self.__get_user(reaction['user']['login']) if reaction['user'] else None
                 reactions.append(reaction)
 
         return reactions
@@ -538,7 +538,7 @@ class GitHub(Backend):
         for raw_reactions in group_reactions:
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reaction['user_data'] = self.__get_user(reaction['user']['login']) if reaction['user'] else None
                 reactions.append(reaction)
 
         return reactions
