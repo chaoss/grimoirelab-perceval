@@ -57,15 +57,21 @@ class Mattermost(Backend):
     have enough permissions to read from the given channel.
 
     To initialize this class the URL of the server must be provided.
-    The origin of data will be set using this `url` plus the
-    channel from data is obtained (i.e: https://mattermost.example.com/abcdefg).
+    The origin of data will be set using this `url` plus the channel
+    from data is obtained (i.e: https://mattermost.example.com/abcdefg).
+    If using channel and team names instead of a channel id, this will
+    take the form `url` plus `team` plus `channel`.
+
+    The `team` parameter is only required if providing a channel
+    name instead of a channel ID.
 
     :param url: URL of the server
-    :param channel: identifier of the channel where data will be fetched
+    :param channel: identifier/name of the channel where data will be fetched
     :param api_token: token or key needed to use the API
     :param max_items: maximum number of message requested on the same query
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param team: (optional)  The name of the team the channel is in
     :param sleep_for_rate: sleep until rate limit is reset
     :param min_rate_to_sleep: minimun rate needed to sleep until
          it will be reset
@@ -82,13 +88,18 @@ class Mattermost(Backend):
     }
 
     def __init__(self, url, channel, api_token, max_items=MAX_ITEMS,
-                 tag=None, archive=None,
+                 tag=None, archive=None, team=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, ssl_verify=True):
-        origin = urijoin(url, channel)
+
+        if team is not None:
+            origin = urijoin(url, team, channel)
+        else:
+            origin = urijoin(url, channel)
 
         super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
+        self.team = team
         self.channel = channel
         self.api_token = api_token
         self.max_items = max_items
@@ -137,8 +148,18 @@ class Mattermost(Backend):
         page = 0
         nposts = 0
 
-        channel_info_raw = self.client.channel(self.channel)
-        channel_info = self.parse_json(channel_info_raw)
+        # If `self.team` is not None, that means that the both the `self.team` and
+        # `self.channel` are names instead of IDs.  If this is the case, we want to
+        # perform a lookup by name instead of by ID, and then we can extract the channel
+        # ID.
+        if self.team is not None:
+            channel_info_raw = self.client.channel_by_name(self.team, self.channel)
+            channel_info = self.parse_json(channel_info_raw)
+            self.channel = channel_info['id']
+            self.team = None  # Mark that we've looked up the channel
+        else:
+            channel_info_raw = self.client.channel(self.channel)
+            channel_info = self.parse_json(channel_info_raw)
 
         # Convert timestamp to integer for comparing
         since = int(from_date.timestamp() * 1000)
@@ -299,6 +320,7 @@ class MattermostClient(HttpClient, RateLimitHandler):
     RCHANNELS = 'channels'
     RPOSTS = 'posts'
     RUSERS = 'users'
+    RCHANNELS_BY_NAME = 'teams/name/%s/channels/name/%s'
 
     # API headers
     HAUTHORIZATION = 'Authorization'
@@ -330,6 +352,22 @@ class MattermostClient(HttpClient, RateLimitHandler):
         params = {
             self.PCHANNEL_ID: channel
         }
+
+        response = self._fetch(entrypoint, params)
+
+        return response
+
+    def channel_by_name(self, team: str, channel: str):
+        """Fetch the channel information by channel/team name
+
+        This provides identical information to the :func:`channel` method, with the key
+        difference of looking up a channel by channel name and team name instead of by the
+        channel ID.
+        """
+
+        entrypoint = self.RCHANNELS_BY_NAME % (team, channel)
+
+        params = {}
 
         response = self._fetch(entrypoint, params)
 
@@ -443,6 +481,9 @@ class MattermostCommand(BackendCommand):
     """Class to run Mattermost backend from the command line."""
 
     BACKEND = Mattermost
+    DESCRIPTION = 'Can either be called a channel ID, or a channel name.  If '\
+                  'a channel name is used, the team name is required. '\
+                  'Otherwise, the team argument is ignored.'
 
     @classmethod
     def setup_cmd_parser(cls):
@@ -455,7 +496,7 @@ class MattermostCommand(BackendCommand):
                                               ssl_verify=True)
 
         # Mattermost options
-        group = parser.parser.add_argument_group('Mattermost arguments')
+        group = parser.parser.add_argument_group('Mattermost arguments', description=cls.DESCRIPTION)
         group.add_argument('--max-items', dest='max_items',
                            type=int, default=MAX_ITEMS,
                            help="maximum number of items requested on the same query")
@@ -469,10 +510,12 @@ class MattermostCommand(BackendCommand):
                            default=DEFAULT_SLEEP_TIME, type=int,
                            help="minimun sleeping time to avoid too many request exception")
 
-        # Required arguments
+        # Positional arguments
         parser.parser.add_argument('url',
                                    help="URL of Mattermost server")
         parser.parser.add_argument('channel',
-                                   help="channel name")
+                                   help="channel id OR channel name")
+        parser.parser.add_argument('team',
+                                   help="team name (only if using channel name)", nargs='?', default=None)
 
         return parser
