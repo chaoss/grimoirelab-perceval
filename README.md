@@ -386,6 +386,20 @@ https://gist.github.com/valeriocos/7d4d28f72f53fbce49f1512ba77ef5f6
 $ perceval twitter grimoirelab -t 12345678abcdefgh
 ```
 
+## Community Backends
+
+Some backends are implemented in a seperate repository but not merged into 
+[chaoss/grimoirelab-perceval](https://github.com/chaoss/grimoirelab-perceval) 
+due to long-run maintainence reasons. Please feel free to check the backends
+and contact the maintainers for any issues or questions related to them.
+
+- Bundle for Puppet, Inc. ecosystem: [chaoss/grimoirelab-perceval-puppet](https://github.com/chaoss/grimoirelab-perceval-puppet)
+- Bundle for OPNFV ecosystem: [chaoss/grimoirelab-perceval-opnfv](https://github.com/chaoss/grimoirelab-perceval-opnfv)
+- Bundle for Mozilla ecosystem: [chaoss/grimoirelab-perceval-mozilla](https://github.com/chaoss/grimoirelab-perceval-mozilla)
+- Bundle for FINOS ecosystem: [Bitergia/grimoirelab-perceval-finos](https://github.com/Bitergia/grimoirelab-perceval-finos)
+- Weblate backend: [chaoss/grimoirelab-perceval-weblate](https://github.com/chaoss/grimoirelab-perceval-weblate)
+- Zulip backend: [vchrombie/grimoirelab-perceval-zulip](https://github.com/vchrombie/grimoirelab-perceval-zulip)
+
 ## Running tests
 
 Perceval comes with a comprehensive list of unit tests.
@@ -395,4 +409,3 @@ you need `httpretty`.
 ## License
 
 Licensed under GNU General Public License (GPL), version 3 or later.
-
