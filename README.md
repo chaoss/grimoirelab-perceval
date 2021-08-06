@@ -399,6 +399,7 @@ and contact the maintainers for any issues or questions related to them.
 - Bundle for FINOS ecosystem: [Bitergia/grimoirelab-perceval-finos](https://github.com/Bitergia/grimoirelab-perceval-finos)
 - Weblate backend: [chaoss/grimoirelab-perceval-weblate](https://github.com/chaoss/grimoirelab-perceval-weblate)
 - Zulip backend: [vchrombie/grimoirelab-perceval-zulip](https://github.com/vchrombie/grimoirelab-perceval-zulip)
+- OSF backend: [gitlab.com/open-rit/perceval-osf](https://gitlab.com/open-rit/perceval-osf)
 
 ## Running tests
 
