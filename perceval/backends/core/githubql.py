@@ -53,6 +53,8 @@ EVENT_TYPES = [
 
 MERGED_EVENT = 'MERGED_EVENT'
 
+PULL_REQUEST_REVIEW_EVENT = 'PULL_REQUEST_REVIEW'
+
 QUERY_MERGED_EVENT = """
 ... on MergedEvent {
   actor {
@@ -73,6 +75,27 @@ QUERY_MERGED_EVENT = """
 }
 """
 
+QUERY_PULL_REQUEST_REVIEWS_EVENT = """
+... on PullRequestReview {
+  state
+  body
+  createdAt
+  id
+  pullRequest {
+    closed
+    closedAt
+    createdAt
+    merged
+    mergedAt
+    updatedAt
+    url
+  }
+  url
+  author{
+    login
+  }
+}
+"""
 QUERY_TEMPLATE = """
     {
       repository (owner: "%s"
@@ -217,6 +240,7 @@ QUERY_TEMPLATE = """
                   }
                 }
                 %s
+                %s
               }
               pageInfo {
                 hasNextPage
@@ -283,7 +307,7 @@ class GitHubQL(GitHub):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.3.0'
+    version = '0.4.0'
 
     CATEGORIES = [CATEGORY_EVENT]
 
@@ -462,15 +486,17 @@ class GitHubQLClient(GitHubClient):
         node_type = 'pullRequest' if is_pull else 'issue'
         aux_event_types = EVENT_TYPES
         query_merged_event = ""
+        query_pull_request_reviews_event = ""
         if is_pull:
-            aux_event_types = EVENT_TYPES + [MERGED_EVENT]
+            aux_event_types = EVENT_TYPES + [MERGED_EVENT, PULL_REQUEST_REVIEW_EVENT]
             query_merged_event = QUERY_MERGED_EVENT
+            query_pull_request_reviews_event = QUERY_PULL_REQUEST_REVIEWS_EVENT
 
         event_types = '[{}]'.format(','.join(aux_event_types))
 
         query = QUERY_TEMPLATE % (self.owner, self.repository, node_type, issue_number,
                                   self.VPER_PAGE, "null", event_types, from_date.isoformat(),
-                                  query_merged_event)
+                                  query_merged_event, query_pull_request_reviews_event)
 
         has_next = True
         while has_next:
@@ -492,7 +518,7 @@ class GitHubQLClient(GitHubClient):
 
             query = QUERY_TEMPLATE % (self.owner, self.repository, node_type, issue_number, self.VPER_PAGE,
                                       '"{}"'.format(next_cursor), event_types, from_date.isoformat(),
-                                      query_merged_event)
+                                      query_merged_event, query_pull_request_reviews_event)
 
 
 class GitHubQLCommand(GitHubCommand):

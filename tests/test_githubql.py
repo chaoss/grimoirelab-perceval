@@ -715,6 +715,37 @@ class TestGitHubQLClient(unittest.TestCase):
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
 
     @httpretty.activate
+    def test_pull_request_review_event(self):
+        """Test PullRequestReview event GraphQL API call works properly"""
+
+        events = read_file('data/github/github_events_pull_request_review')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.POST,
+                               GITHUB_API_GRAPHQL_URL,
+                               body=events, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        client = GitHubQLClient("zhquan_example", "repo", ["aaa"], None)
+        events = [event for event in client.events(issue_number=1, is_pull=True, from_date=DEFAULT_DATETIME)]
+        self.assertEqual(len(events[0]), 3)
+        self.assertEqual(events[0][0]['state'], 'CHANGES_REQUESTED')
+        self.assertEqual(events[0][1]['state'], 'COMMENTED')
+        self.assertEqual(events[0][2]['state'], 'APPROVED')
+        self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
+
+    @httpretty.activate
     def test_events_pagination(self):
         """Test whether the GraphQL API call works properly on paginated results"""
 

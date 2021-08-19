@@ -1,0 +1,73 @@
+{
+    "data": {
+        "repository": {
+            "pullRequest": {
+                    "timelineItems": {
+                    "nodes": [
+                        {
+                            "eventType": "PullRequestReview",
+                            "state": "CHANGES_REQUESTED",
+                            "body": "Please reword your commit message",
+                            "createdAt": "2020-09-25T16:02:47Z",
+                            "pullRequest": {
+                                "closed": true,
+                                "closedAt": "2020-10-07T18:08:10Z",
+                                "createdAt": "2020-09-25T15:41:15Z",
+                                "merged": true,
+                                "mergedAt": "2020-10-07T18:08:10Z",
+                                "updatedAt": "2020-10-07T18:08:10Z",
+                                "url": "https://github.com/zhquan/test-merged-event/pull/387"
+                            },
+                            "url": "https://github.com/zhquan/test-merged-event/pull/387#pullrequestreview-496553963",
+                            "author": {
+                                "login": "zhquan"
+                            }
+                        },
+                        {
+                            "eventType": "PullRequestReview",
+                            "state": "COMMENTED",
+                            "body": "HTML code needs review",
+                            "createdAt": "2020-09-28T12:00:22Z",
+                            "pullRequest": {
+                                "closed": true,
+                                "closedAt": "2020-10-07T18:08:10Z",
+                                "createdAt": "2020-09-25T15:41:15Z",
+                                "merged": true,
+                                "mergedAt": "2020-10-07T18:08:10Z",
+                                "updatedAt": "2020-10-07T18:08:10Z",
+                                "url": "https://github.com/zhquan/test-merged-event/pull/387"
+                            },
+                            "url": "https://github.com/zhquan/test-merged-event/pull/387#pullrequestreview-497441001",
+                            "author": {
+                                "login": "zhquan"
+                            }
+                        },
+                        {
+                            "eventType": "PullRequestReview",
+                            "state": "APPROVED",
+                            "body": "LGTM",
+                            "createdAt": "2020-10-07T18:06:51Z",
+                            "pullRequest": {
+                                "closed": true,
+                                "closedAt": "2020-10-07T18:08:10Z",
+                                "createdAt": "2020-09-25T15:41:15Z",
+                                "merged": true,
+                                "mergedAt": "2020-10-07T18:08:10Z",
+                                "updatedAt": "2020-10-07T18:08:10Z",
+                                "url": "https://github.com/zhquan/test-merged-event/pull/387"
+                            },
+                            "url": "https://github.com/zhquan/test-merged-event/pull/387#pullrequestreview-504138961",
+                            "author": {
+                                "login": "zhquan"
+                            }
+                        }
+                    ],
+                    "pageInfo": {
+                        "hasNextPage": false,
+                        "endCursor": "Y3Vyc29yOnYyOpPPAAABdQQ_xxABqjM4NTE4NjYwOTI="
+                    }
+                }
+            }
+        }
+    }
+}
