@@ -96,8 +96,8 @@ class Jira(Backend):
 
     :param url: JIRA's endpoint
     :param project: filter issues by project
-    :param user: Jira user
-    :param password: Jira user password
+    :param user: JIRA's user email
+    :param password: JIRA's api token
     :param cert: SSL certificate path (PEM)
     :param max_results: max number of results per query
     :param tag: label used to mark the data
@@ -273,8 +273,8 @@ class JiraClient(HttpClient):
 
     :param URL: URL of the JIRA server
     :param project: filter issues by project
-    :param user: JIRA's username
-    :param password: JIRA's password
+    :param user: JIRA's user email
+    :param password: JIRA's api token
     :param cert: SSL certificate
     :param max_results: max number of results per query
     :param archive: an archive to store/read fetched data
