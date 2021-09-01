@@ -9,3 +9,8 @@ __pycache__
 .project
 .pydevproject
 .settings
+
+# Documentation
+.eggs/
+docs/_build/
+docs/source
