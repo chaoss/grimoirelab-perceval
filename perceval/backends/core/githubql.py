@@ -461,6 +461,7 @@ class GitHubQLClient(GitHubClient):
     :param ssl_verify: enable/disable SSL verification
     """
     VACCEPT = 'application/vnd.github.squirrel-girl-preview,application/vnd.github.starfox-preview+json'
+    VPER_PAGE = 100
 
     def __init__(self, owner, repository, tokens=None, github_app_id=None, github_app_pk_filepath=None,
                  base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
