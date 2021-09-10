@@ -8,6 +8,9 @@ repositories.
 ```
 usage: perceval [-g] <backend> [<args>] | --help | --version | --list
 
+Send Sir Perceval on a quest to retrieve and gather data from software
+repositories.
+
 Repositories are reached using specific backends. The most common backends
 are:
 
@@ -57,13 +60,13 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 
 ## Requirements
 
-* Python >= 3.4
+* Python >= 3.6.1
 * python3-dateutil >= 2.6
 * python3-requests >= 2.7
-* python3-bs4 (beautifulsoup4) >= 4.3
-* python3-feedparser >= 5.1.3
+* python3-bs4 (beautifulsoup4) >= 4.3.2
+* python3-feedparser >= 6.0.8
 * python3-dulwich >= 0.20.0
-* grimoirelab-toolkit >= 0.1.4
+* grimoirelab-toolkit >= 0.2
 
 Note that you should have also the following packages installed in your system:
 - git
