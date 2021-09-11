@@ -802,7 +802,7 @@ class TestGitCommand(TestCaseGit):
 
         cmd = GitCommand(*args)
         self.assertEqual(cmd.parsed_args.gitpath,
-                         os.path.join(self.tmp_path, 'testpath/http://example.com/' + '-git'))
+                         os.path.join(self.tmp_path, 'testpath/http://example.com/-git'))
 
         args = ['http://example.com/',
                 '--git-log', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/git/git_log.txt')]
@@ -817,11 +817,17 @@ class TestGitCommand(TestCaseGit):
         cmd = GitCommand(*args)
         self.assertEqual(cmd.parsed_args.gitpath, '/tmp/gitpath')
 
+        args = ['http://example.com/',
+                '--base-path', '/tmp/basepath']
+
+        cmd = GitCommand(*args)
+        self.assertEqual(cmd.parsed_args.gitpath, '/tmp/basepath/http://example.com/-git')
+
         args = ['/tmp/gitpath/']
 
         cmd = GitCommand(*args)
         self.assertEqual(cmd.parsed_args.gitpath,
-                         os.path.join(self.tmp_path, 'testpath/tmp/gitpath/' + '-git'))
+                         os.path.join(self.tmp_path, 'testpath/tmp/gitpath/-git'))
 
     def test_setup_cmd_parser(self):
         """Test if it parser object is correctly initialized"""
@@ -856,6 +862,13 @@ class TestGitCommand(TestCaseGit):
         self.assertEqual(parsed_args.uri, 'http://example.com/')
         self.assertEqual(parsed_args.branches, ['master', 'testing'])
         self.assertFalse(parsed_args.no_update)
+
+        args = ['http://example.com/',
+                '--base-path', '/tmp/basepath']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.base_path, '/tmp/basepath')
+        self.assertEqual(parsed_args.uri, 'http://example.com/')
 
     def test_mutual_exclusive_update(self):
         """Test whether an exception is thrown when no-update and latest-items flags are set"""

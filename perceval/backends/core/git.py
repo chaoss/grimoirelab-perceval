@@ -70,7 +70,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.12.0'
+    version = '0.12.1'
 
     CATEGORIES = [CATEGORY_COMMIT]
 
@@ -338,12 +338,16 @@ class GitCommand(BackendCommand):
 
         if self.parsed_args.git_log:
             git_path = self.parsed_args.git_log
-        elif not self.parsed_args.git_path:
-            base_path = os.path.expanduser('~/.perceval/repositories/')
+        elif self.parsed_args.git_path:
+            git_path = self.parsed_args.git_path
+        else:
+            if self.parsed_args.base_path:
+                base_path = self.parsed_args.base_path
+            else:
+                base_path = os.path.expanduser('~/.perceval/repositories/')
+
             processed_uri = self.parsed_args.uri.lstrip('/')
             git_path = os.path.join(base_path, processed_uri) + '-git'
-        else:
-            git_path = self.parsed_args.git_path
 
         setattr(self.parsed_args, 'gitpath', git_path)
 
@@ -363,6 +367,8 @@ class GitCommand(BackendCommand):
 
         # Mutual exclusive parameters
         exgroup = group.add_mutually_exclusive_group()
+        exgroup.add_argument('--base-path', dest='base_path',
+                             help="Base path where the Git repositories will be cloned")
         exgroup.add_argument('--git-path', dest='git_path',
                              help="Path where the Git repository will be cloned")
         exgroup.add_argument('--git-log', dest='git_log',
