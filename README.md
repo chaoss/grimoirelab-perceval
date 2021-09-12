@@ -404,6 +404,8 @@ and contact the maintainers for any issues or questions related to them.
 - Zulip backend: [vchrombie/grimoirelab-perceval-zulip](https://github.com/vchrombie/grimoirelab-perceval-zulip)
 - OSF backend: [gitlab.com/open-rit/perceval-osf](https://gitlab.com/open-rit/perceval-osf)
 - Gitee backend: [grimoirelab-gitee/grimoirelab-perceval-gitee](https://github.com/grimoirelab-gitee/grimoirelab-perceval-gitee)
+- Airtable backend: [perceval-backends/grimoirelab-perceval-airtable](https://github.com/perceval-backends/grimoirelab-perceval-airtable)
+- Bitbucket backend: [perceval-backends/grimoirelab-perceval-bitbucket](https://github.com/perceval-backends/grimoirelab-perceval-bitbucket)
 
 ## Running tests
 
