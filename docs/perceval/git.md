@@ -178,6 +178,15 @@ cedc42d8d897d1bf64e999b91fb9ce34464440c9
 d7bef8060648f96000a575b1c2af6bc63f9a0ad3
 ```
 
+### Fetch commits from private Git repositories
+
+If you want to fetch commits from a private github repository, you must pass the
+credentials (`username` and `password`/`api-token`) directly in the URL.
+
+```
+$ perceval git https://<username>:<api-token>@github.com/chaoss/grimoirelab-perceval
+```
+
 ### An example: counting commits in a repository
 
 After the first example of using Perceval to get data from git repositories, we can write

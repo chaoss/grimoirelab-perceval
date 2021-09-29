@@ -204,6 +204,19 @@ this backend Git program has to be installed on your system.
 $ perceval git 'https://github.com/chaoss/grimoirelab-perceval.git' --from-date '2016-01-01'
 ```
 
+To run the backend against a **private git repository**, you must pass the
+credentials directly in the URL:
+
+```
+perceval git https://<username>:<password>@repository-url
+```
+
+For example, for private GitHub repositories:
+
+```
+$ perceval git https://<username>:<api-token>@github.com/chaoss/grimoirelab-perceval
+```
+
 Git backend can also work with a Git log file as input. We recommend to use the next command to get the most complete log file.
 
 ```
