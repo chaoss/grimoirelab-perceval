@@ -111,7 +111,7 @@ class GitHub(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.26.0'
+    version = '0.27.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
@@ -389,7 +389,7 @@ class GitHub(Backend):
         for raw_reactions in group_reactions:
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reaction['user_data'] = self.__get_user(reaction['user']['login']) if reaction['user'] else None
                 reactions.append(reaction)
 
         return reactions
@@ -424,7 +424,7 @@ class GitHub(Backend):
         for raw_reactions in group_reactions:
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reaction['user_data'] = self.__get_user(reaction['user']['login']) if reaction['user'] else None
                 reactions.append(reaction)
 
         return reactions
@@ -538,7 +538,7 @@ class GitHub(Backend):
         for raw_reactions in group_reactions:
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login'])
+                reaction['user_data'] = self.__get_user(reaction['user']['login']) if reaction['user'] else None
                 reactions.append(reaction)
 
         return reactions
@@ -628,7 +628,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
     PSINCE = 'since'
 
     # Predefined values
-    VPER_PAGE = 100
     VDIRECTION_ASC = 'asc'
     VSORT_UPDATED = 'updated'
     VSTATE_ALL = 'all'
@@ -684,7 +683,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get reactions of an issue"""
 
         payload = {
-            self.PPER_PAGE: self.VPER_PAGE,
+            self.PPER_PAGE: self.max_items,
             self.PDIRECTION: self.VDIRECTION_ASC,
             self.PSORT: self.VSORT_UPDATED
         }
@@ -696,7 +695,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get reactions of an issue comment"""
 
         payload = {
-            self.PPER_PAGE: self.VPER_PAGE,
+            self.PPER_PAGE: self.max_items,
             self.PDIRECTION: self.VDIRECTION_ASC,
             self.PSORT: self.VSORT_UPDATED
         }
@@ -708,7 +707,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get the issue comments from pagination"""
 
         payload = {
-            self.PPER_PAGE: self.VPER_PAGE,
+            self.PPER_PAGE: self.max_items,
             self.PDIRECTION: self.VDIRECTION_ASC,
             self.PSORT: self.VSORT_UPDATED
         }
@@ -784,7 +783,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get pull request commits"""
 
         payload = {
-            self.PPER_PAGE: self.VPER_PAGE
+            self.PPER_PAGE: self.max_items
         }
 
         commit_url = urijoin(self.RPULLS, str(pr_number), self.RCOMMITS)
@@ -794,7 +793,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get pull request review comments"""
 
         payload = {
-            self.PPER_PAGE: self.VPER_PAGE,
+            self.PPER_PAGE: self.max_items,
             self.PDIRECTION: self.VDIRECTION_ASC,
             self.PSORT: self.VSORT_UPDATED
         }
@@ -806,7 +805,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get pull request reviews"""
 
         payload = {
-            self.PPER_PAGE: self.VPER_PAGE,
+            self.PPER_PAGE: self.max_items,
             self.PDIRECTION: self.VDIRECTION_ASC,
             self.PSORT: self.VSORT_UPDATED
         }
@@ -818,7 +817,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Get reactions of a review comment"""
 
         payload = {
-            self.PPER_PAGE: self.VPER_PAGE,
+            self.PPER_PAGE: self.max_items,
             self.PDIRECTION: self.VDIRECTION_ASC,
             self.PSORT: self.VSORT_UPDATED
         }

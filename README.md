@@ -8,6 +8,9 @@ repositories.
 ```
 usage: perceval [-g] <backend> [<args>] | --help | --version | --list
 
+Send Sir Perceval on a quest to retrieve and gather data from software
+repositories.
+
 Repositories are reached using specific backends. The most common backends
 are:
 
@@ -57,13 +60,13 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 
 ## Requirements
 
-* Python >= 3.4
+* Python >= 3.6.1
 * python3-dateutil >= 2.6
 * python3-requests >= 2.7
-* python3-bs4 (beautifulsoup4) >= 4.3
-* python3-feedparser >= 5.1.3
+* python3-bs4 (beautifulsoup4) >= 4.3.2
+* python3-feedparser >= 6.0.8
 * python3-dulwich >= 0.20.0
-* grimoirelab-toolkit >= 0.1.4
+* grimoirelab-toolkit >= 0.2
 
 Note that you should have also the following packages installed in your system:
 - git
@@ -199,6 +202,18 @@ this backend Git program has to be installed on your system.
 
 ```
 $ perceval git 'https://github.com/chaoss/grimoirelab-perceval.git' --from-date '2016-01-01'
+```
+
+To run the backend against a **private git repository**, you must pass the credentials directly in the URL:
+
+```
+$ perceval git https://username:key@repository-url
+```
+
+For example, for private GitHub repositories:
+
+```
+$ perceval git https://username:api_token@github.com/chaoss/grimoirelab-private
 ```
 
 Git backend can also work with a Git log file as input. We recommend to use the next command to get the most complete log file.
@@ -386,6 +401,24 @@ https://gist.github.com/valeriocos/7d4d28f72f53fbce49f1512ba77ef5f6
 $ perceval twitter grimoirelab -t 12345678abcdefgh
 ```
 
+## Community Backends
+
+Some backends are implemented in a seperate repository but not merged into 
+[chaoss/grimoirelab-perceval](https://github.com/chaoss/grimoirelab-perceval) 
+due to long-run maintainence reasons. Please feel free to check the backends
+and contact the maintainers for any issues or questions related to them.
+
+- Bundle for Puppet, Inc. ecosystem: [chaoss/grimoirelab-perceval-puppet](https://github.com/chaoss/grimoirelab-perceval-puppet)
+- Bundle for OPNFV ecosystem: [chaoss/grimoirelab-perceval-opnfv](https://github.com/chaoss/grimoirelab-perceval-opnfv)
+- Bundle for Mozilla ecosystem: [chaoss/grimoirelab-perceval-mozilla](https://github.com/chaoss/grimoirelab-perceval-mozilla)
+- Bundle for FINOS ecosystem: [Bitergia/grimoirelab-perceval-finos](https://github.com/Bitergia/grimoirelab-perceval-finos)
+- Weblate backend: [chaoss/grimoirelab-perceval-weblate](https://github.com/chaoss/grimoirelab-perceval-weblate)
+- Zulip backend: [vchrombie/grimoirelab-perceval-zulip](https://github.com/vchrombie/grimoirelab-perceval-zulip)
+- OSF backend: [gitlab.com/open-rit/perceval-osf](https://gitlab.com/open-rit/perceval-osf)
+- Gitee backend: [grimoirelab-gitee/grimoirelab-perceval-gitee](https://github.com/grimoirelab-gitee/grimoirelab-perceval-gitee)
+- Airtable backend: [perceval-backends/grimoirelab-perceval-airtable](https://github.com/perceval-backends/grimoirelab-perceval-airtable)
+- Bitbucket backend: [perceval-backends/grimoirelab-perceval-bitbucket](https://github.com/perceval-backends/grimoirelab-perceval-bitbucket)
+
 ## Running tests
 
 Perceval comes with a comprehensive list of unit tests.
@@ -395,4 +428,3 @@ you need `httpretty`.
 ## License
 
 Licensed under GNU General Public License (GPL), version 3 or later.
-

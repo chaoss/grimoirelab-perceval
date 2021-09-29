@@ -44,6 +44,7 @@ from base import TestCaseBackendArchive
 
 MATTERMOST_API_URL = 'https://mattermost.example.com/api/v4'
 MATTERMOST_CHANNEL_INFO = MATTERMOST_API_URL + '/channels/abcdefghijkl'
+MATTERMOST_CHANNEL_NAME_INFO = MATTERMOST_API_URL + '/teams/name/my_team_name/channels/name/my_channel_name'
 MATTERMOST_CHANNEL_POSTS = MATTERMOST_API_URL + '/channels/abcdefghijkl/posts'
 MATTERMOST_USERS = MATTERMOST_API_URL + '/users'
 MATTERMOST_USER_SDUENAS = MATTERMOST_USERS + '/8tbwn7uikpdy3gpse6fgiie5co'
@@ -88,7 +89,7 @@ def setup_http_server():
             else:
                 page = int(params['page'][0])
             body = full_response[page]
-        elif uri.startswith(MATTERMOST_CHANNEL_INFO):
+        elif uri.startswith(MATTERMOST_CHANNEL_INFO) or uri.startswith(MATTERMOST_CHANNEL_NAME_INFO):
             body = channel_info
         else:
             raise Exception("no valid URL")
@@ -99,6 +100,11 @@ def setup_http_server():
 
     httpretty.register_uri(httpretty.GET,
                            MATTERMOST_CHANNEL_INFO,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           MATTERMOST_CHANNEL_NAME_INFO,
                            responses=[
                                httpretty.Response(body=request_callback)
                            ])
@@ -249,6 +255,92 @@ class TestMattermostBackend(unittest.TestCase):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
 
     @httpretty.activate
+    def test_fetch_with_name(self):
+        """Test whether it fetches a set of posts"""
+
+        http_requests = setup_http_server()
+
+        mattermost = Mattermost('https://mattermost.example.com/', 'my_channel_name', 'aaaa',
+                                max_items=5, team='my_team_name')
+
+        posts = [post for post in mattermost.fetch(from_date=None)]
+
+        expected = [
+            ('59io5i1f5bbetxtj6mbm67fouw', '7d6cfbe12f4efdb99665ee12795e144937a4e0d5', 1523546846.639, 'sduenas'),
+            ('pot46s7kjif7xx6x91ua7m4d7y', '4b7a02956fb24ee68e36367b90aba575e460e852', 1523546846.639, 'valcos'),
+            ('zgzsgcnuobyf9bwdcbug8iqu6e', 'a84fce829ca6fcc8dc111112f5a6229f22d5edbd', 1523526214.021, 'sduenas'),
+            ('sg3eifxowjba7k47xb16767isa', '061fa174bd10cf57b5fcc0a6051d2916e79fb8d0', 1523526206.815, 'sduenas'),
+            ('shs4ujzubtffzxbshxthfcxfdw', '1a850c8416a07214e2de6104dcad78b18a497cf2', 1523526199.108, 'sduenas'),
+            ('swqyc3ekabrjbxc5bjf6hhba3w', '734eea67728be29e9a39d4a95b07b227212c858d', 1523526187.090, 'valcos'),
+            ('b15jpgkw9bftufcdzteqiypoyr', '7df120577130cb49793c1a534ecd152444f540ac', 1523526181.298, 'valcos'),
+            ('49ctz9ndgfd48eb5oq4xbjpfby', '57c941fecb76c94ededa5ec2f7e69871a75bc6f9', 1523526171.280, 'valcos'),
+            ('1ju85sxo7bfab8nf3yk5snn17a', '8223b67900ac63a8a4fd85614a40729d40f4e55c', 1523525981.213, 'sduenas')
+        ]
+        expected_channel = ('grimoirelab', 'GrimoireLab channel')
+
+        # The remaining code provides the same assertions as test_fetch().  Fetching with
+        # channel/team names should provide the same functionality as fetching with a
+        # channel id.
+
+        self.assertEqual(len(posts), len(expected))
+
+        for x in range(len(posts)):
+            post = posts[x]
+            expc = expected[x]
+            self.assertEqual(post['data']['id'], expc[0])
+            self.assertEqual(post['uuid'], expc[1])
+            self.assertEqual(post['origin'], 'https://mattermost.example.com/my_team_name/my_channel_name')
+            self.assertEqual(post['updated_on'], expc[2])
+            self.assertEqual(post['category'], 'post')
+            self.assertEqual(post['tag'], 'https://mattermost.example.com/my_team_name/my_channel_name')
+            self.assertEqual(post['data']['user_data']['username'], expc[3])
+            self.assertEqual(post['data']['channel_data']['name'], expected_channel[0])
+            self.assertEqual(post['data']['channel_data']['display_name'], expected_channel[1])
+
+        # Check image
+        images_expected = [
+            {
+                'width': 1280,
+                'height': 640,
+                'format': 'png',
+                'frame_count': 0,
+                'url': 'https://image-one-url.png'
+            },
+            {
+                'width': 1280,
+                'height': 640,
+                'format': 'png',
+                'frame_count': 0,
+                'url': 'https://image-two-url.png'
+            }
+        ]
+        self.assertListEqual(posts[2]['data']['metadata']['images'], images_expected)
+
+        # Check requests
+        expected = [
+            {},
+            {
+                'per_page': ['5'],
+                'page': ['0']
+            },
+            {},
+            {},
+            {
+                'per_page': ['5'],
+                'page': ['1']
+            },
+            {
+                'per_page': ['5'],
+                'page': ['2']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
     def test_search_fields(self):
         """Test whether the search_fields is properly set"""
 
@@ -260,21 +352,21 @@ class TestMattermostBackend(unittest.TestCase):
 
         post = posts[0]
         self.assertEqual(mattermost.metadata_id(post['data']), post['search_fields']['item_id'])
-        self.assertEqual(post['data']['channel_data']['id'], 'abcdef4ut3dij8gywe38ktn51a')
+        self.assertEqual(post['data']['channel_data']['id'], 'abcdefghijkl')
         self.assertEqual(post['data']['channel_data']['id'], post['search_fields']['channel_id'])
         self.assertEqual(post['data']['channel_data']['name'], 'grimoirelab')
         self.assertEqual(post['data']['channel_data']['name'], post['search_fields']['channel_name'])
 
         post = posts[1]
         self.assertEqual(mattermost.metadata_id(post['data']), post['search_fields']['item_id'])
-        self.assertEqual(post['data']['channel_data']['id'], 'abcdef4ut3dij8gywe38ktn51a')
+        self.assertEqual(post['data']['channel_data']['id'], 'abcdefghijkl')
         self.assertEqual(post['data']['channel_data']['id'], post['search_fields']['channel_id'])
         self.assertEqual(post['data']['channel_data']['name'], 'grimoirelab')
         self.assertEqual(post['data']['channel_data']['name'], post['search_fields']['channel_name'])
 
         post = posts[2]
         self.assertEqual(mattermost.metadata_id(post['data']), post['search_fields']['item_id'])
-        self.assertEqual(post['data']['channel_data']['id'], 'abcdef4ut3dij8gywe38ktn51a')
+        self.assertEqual(post['data']['channel_data']['id'], 'abcdefghijkl')
         self.assertEqual(post['data']['channel_data']['id'], post['search_fields']['channel_id'])
         self.assertEqual(post['data']['channel_data']['name'], 'grimoirelab')
         self.assertEqual(post['data']['channel_data']['name'], post['search_fields']['channel_name'])
@@ -454,6 +546,7 @@ class TestMattermostCommand(unittest.TestCase):
         self.assertEqual(parsed_args.min_rate_to_sleep, 10)
         self.assertEqual(parsed_args.sleep_time, 10)
         self.assertTrue(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.team, None)
 
         args = ['https://mattermost.example.com/', 'abcdefghijkl',
                 '--api-token', 'aaaa',
@@ -478,6 +571,14 @@ class TestMattermostCommand(unittest.TestCase):
         self.assertEqual(parsed_args.min_rate_to_sleep, 10)
         self.assertEqual(parsed_args.sleep_time, 10)
         self.assertFalse(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.team, None)
+
+        args = ['https://mattermost.example.com/', '-t', 'aaaa', 'channel_name', 'team_name']
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.url, 'https://mattermost.example.com/')
+        self.assertEqual(parsed_args.api_token, 'aaaa')
+        self.assertEqual(parsed_args.channel, 'channel_name')
+        self.assertEqual(parsed_args.team, 'team_name')
 
 
 class TestMattermostClient(unittest.TestCase):
@@ -539,6 +640,32 @@ class TestMattermostClient(unittest.TestCase):
             req = http_requests[x]
             self.assertEqual(req.method, 'GET')
             self.assertRegex(req.path, '/api/v4/channels/abcdefghijkl')
+            self.assertDictEqual(req.querystring, expected[x])
+            self.assertEqual(req.headers['Authorization'], 'Bearer aaaa')
+
+    @httpretty.activate
+    def test_channel_by_name(self):
+        """Test channel API call"""
+
+        http_requests = setup_http_server()
+
+        client = MattermostClient('https://mattermost.example.com/', 'aaaa')
+
+        # Call API
+        channel = client.channel_by_name('my_team_name', 'my_channel_name')
+
+        self.assertEqual(len(http_requests), 1)
+
+        expected = [
+            {}
+        ]
+
+        self.assertEqual(len(http_requests), 1)
+
+        for x in range(0, len(http_requests)):
+            req = http_requests[x]
+            self.assertEqual(req.method, 'GET')
+            self.assertRegex(req.path, '/api/v4/teams/name/my_team_name/channels/name/my_channel_name')
             self.assertDictEqual(req.querystring, expected[x])
             self.assertEqual(req.headers['Authorization'], 'Bearer aaaa')
 

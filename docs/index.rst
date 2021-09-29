@@ -3,19 +3,18 @@
 Welcome to Perceval's documentation!
 ====================================
 
-Contents:
+.. toctree::
+    :maxdepth: 1
+    :caption: Perceval:
+
+    Introduction to Perceval <perceval/intro.md>
+    Data Sources <perceval/data-sources.rst>
+    Perceval Backends <perceval/perceval-backends.md>
+    Testing with HTTPretty <perceval/httpretty.md>
 
 .. toctree::
    :maxdepth: 1
+   :caption: Developer Documentation:
 
-   perceval
-   contributing.rst
-   howto_doc.rst
-   howto_pkg.rst
+   API reference doc <perceval/api-reference.rst>
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

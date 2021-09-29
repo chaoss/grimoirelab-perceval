@@ -59,11 +59,22 @@ class Backend:
     will be named as 'origin'. During the initialization, an `Archive`
     object can be provided for archiving raw data from the repositories.
 
-    Derived classes have to implement `fetch_items`, `has_archiving` and
-    `has_resuming` methods. Otherwise, `NotImplementedError`
-    exception will be raised. Metadata decorator can be used together with
-    fetch methods but requires the implementation of `metadata_id`,
-    `metadata_updated_on` and `metadata_category` static methods.
+    To avoid a :class:`NotImplementedError`, derived classes have to implement
+    or define:
+     - :func:`fetch_items`, to retrieve items from the repository
+     - :func:`has_archiving`, whether this backend supports archives
+     - :func:`has_resuming`, whether this backend supports resuming
+     - :func:`metadata_id`, to produce a unique id from an item
+     - :func:`metadata_updated_on`, to find the last time an item was modified
+     - :func:`metadata_category`, to identify the category of an item
+     - :func:`_init_client`, to initialize the backend's client
+     - :data:`CATEGORIES`, defining the set of categories the backend produces
+     - [Optional] :data:`CLASSIFIED_FIELDS`, to hide certain fields from results
+     - [Optional] :data:`EXTRA_SEARCH_FIELDS`, to add easy access fields to items
+     - [Optional] :data:`ORIGIN_UNIQUE_FIELD`, to enable item blacklisting
+
+    For more information on the details of implementing these methods, please
+    see the docs on each method.
 
     The fetched items can be tagged using the `tag` parameter. It will
     be useful to trace data. When it is set to `None` or to an empty
@@ -73,17 +84,6 @@ class Backend:
     process, this class provides a `version` attribute that each backend
     may override.
 
-    Each backend should implement a class attribute named `CLASSIFIED_FIELDS`.
-    It will allow to filter from items those fields that may be considered
-    sensible or confidential. This attribute is a list of lists.
-    As items returned are dicts that may contain nested dicts, each entry
-    is a list which stores the "path" or nested dicts keys to the field to
-    remove. For example, `['my', 'classified', 'field']` will remove `field`
-    from `item['data']['my']['classified']` dict.
-
-    Classified data filtering and archiving are not compatible to prevent
-    data leaks or security issues.
-
     Each fetch operation generates a summary, available via the property
     `summary`. By default, it includes the last UUID generated, number
     of items fetched, skipped and their sum, plus the min, max and last
@@ -92,32 +92,10 @@ class Backend:
     the summary also includes some extra fields, which can be used by any
     backend to include fetch-specific information.
 
-    Each backend can also provide a set of search fields to simplify query
-    operations (avoiding the manual inspection of the items). The search
-    fields are included in a dict with the following shape:
-
-        {
-            'key-1': value-1,
-            'key-2': value-2,
-            'key-3': value-3
-        }
-
-    These fields are added to the item metadata information in the
-    `search_fields` attribute. By default, `search_fields` contains
-    the id of the item ('item_id': item_id_value), obtained via the
-    method `metadata_id`. However, each backend can set extra search
-    fields using the dict EXTRA_SEARCH_FIELDS. An example of
-    EXTRA_SEARCH_FIELDS is provided below:
-
-        {
-            'project_id': ['fields', 'project', 'id'],
-            'project_key': ['fields', 'project', 'key'],
-            'project_name': ['fields', 'project', 'name']
-        }
-
-    Each key in the dict is a search field to be included in the item
-    metadata information, while the corresponding value is a list that
-    stores the "path" of the search field value within the item.
+    Backends also produce a set of search fields, exposed in the
+    `search_fields` attribute of each item returned by a call to :func:`fetch`.
+    These contain the `item_id`, as well as any number of backend-specific
+    fields.
 
     :param origin: identifier of the repository
     :param tag: tag items using this label
@@ -130,9 +108,90 @@ class Backend:
     version = '0.12.0'
 
     CATEGORIES = []
+    """A list of categories that can be fetched by this backend.
+
+    Every backend able to produce items falling into a limited set of
+    categories. The specific categories a backend can fetch is unique to that
+    backend.
+
+    The categories defined in this variable (and *only* the categories defined
+    in this variable) can be passed to :func:`fetch` and returned from
+    :func:`metadata_category`.
+
+    Implementing backends can define any category they need, as long as
+    categories are short, descriptive, snake_case strings, such as "commit",
+    "merge_request", or "pull_request".
+    """
+
     CLASSIFIED_FIELDS = []
+    """A list of fields that should be considered sensitive or confidential.
+
+    Fields listed here will be hidden from fetched items, when this behaviour
+    is requested.
+
+    Fields are represented as a list of strings.  As items returned are dicts
+    that may contain nested dicts, each entry is a list which stores the "path"
+    or nested dicts keys to the field to remove. For example, `['my',
+    'classified', 'field']` will remove `field` from
+    `item['data']['my']['classified']` dict.
+
+    Classified data filtering and archiving are not compatible to prevent
+    data leaks or security issues.
+    """
+
     EXTRA_SEARCH_FIELDS = {}
+    """A set of search fields to simplify query operations.
+
+    The use of search fields can avoid the manual inspection of the items. The
+    search fields are included with items returned from :func:`fetch` in a dict
+    with the following shape:
+
+        {
+            'key-1': value-1,
+            'key-2': value-2,
+            'key-3': value-3
+        }
+
+    These fields are added to the item metadata information in the
+    `search_fields` attribute. By default, `search_fields` contains
+    the id of the item ('item_id': item_id_value), obtained via the
+    method `metadata_id`. However, each backend can set extra search
+    fields using the dict :data:`EXTRA_SEARCH_FIELDS`. An example of
+    :data:`EXTRA_SEARCH_FIELDS` is provided below:
+
+        {
+            'project_id': ['fields', 'project', 'id'],
+            'project_key': ['fields', 'project', 'key'],
+            'project_name': ['fields', 'project', 'name']
+        }
+
+    Each key in the dict is a search field to be included in the item
+    metadata information, while the corresponding value is a list that
+    stores the "path" of the search field value within the item.
+    """
+
     ORIGIN_UNIQUE_FIELD = None
+    """A field unique to a given origin for items produced by this backend.
+
+    If `ORIGIN_UNIQUE_FIELD` is defined, users can pass a list of blocked
+    values which should not be included in the results, if the field defined here
+    contains them. For example, if `ORIGIN_UNIQUE_FIELD` were set to
+    `post_id`, then users could pass a list of post ids that should be excluded
+    from the results.
+
+    If set to `None`, blacklisting will be disabled completely. Otherwise, this
+    should be set to a :class:`OriginUniqueField` containing the number and
+    data type of the field.
+
+    Note: Origin in this context refers to one site, api, or other remote that
+    contains several repositories, each consisting of many items of several
+    categories. For example, for the backend GitLab, an origin would be one
+    instance GitLab, such as gitlab.com or opensource.ieee.org, which each
+    contain many repositories, which contain items such as issues and merge
+    request.
+
+    To access this field, please prefer :func:`origin_unique_field`.
+    """
 
     def __init__(self, origin, tag=None, archive=None, blacklist_ids=None, ssl_verify=True):
         self._origin = origin
@@ -169,18 +228,49 @@ class Backend:
 
     @property
     def categories(self):
+        """See :data:`CATEGORIES`."""
         return self.CATEGORIES
 
     @property
     def origin_unique_field(self):
+        """See :data:`ORIGIN_UNIQUE_FIELD`."""
         return self.ORIGIN_UNIQUE_FIELD
 
     @property
     def classified_fields(self):
+        """A list of fields to be hidden from results.
+
+        Fields are represented as a list of strings, where each string is a
+        period delimited field. For example,
+        `'attributes.author_info.secret_info'` would hide the secret info of the
+        author in the attributes dict.
+        """
         cfs = ['.'.join(cf) for cf in self.CLASSIFIED_FIELDS]
         return cfs
 
     def fetch_items(self, category, **kwargs):
+        """Retrieve raw data from the repository.
+
+        This method is to be implemented by implementors of Backend, and is
+        intended for internal use. Developers hoping to retrieve processed
+        results should use the :func:`fetch` method.
+
+        This method receives a category of items to fetch from the repository.
+        This will be one of categories defined in the :data:`CATEGORIES` class
+        variable. The method also receives a list of keyword arguments. These
+        arguments include any commandline variables defined by the
+        corresponding :class:`BackendCommand`.
+
+        The method is then responsible for retrieving all items matching the
+        criteria defined by the keyword args and the given category, then
+        returning them as a generator of dicts. The structure of the dicts is
+        irrelevant, but each dict should represent exactly one item.
+
+        :param category: the category if items to retrieve from the repository
+        :param kwargs: additional arguments to assist or specify retrieval
+
+        :returns: a generator producing items
+        """
         raise NotImplementedError
 
     def fetch(self, category, filter_classified=False, **kwargs):
@@ -344,25 +434,123 @@ class Backend:
 
     @classmethod
     def has_archiving(cls):
+        """Whether or not this backend supports archiving requests.
+
+        For implementors, this means whether :func:`_init_client` can be called
+        with `from_archive=True` and whether the backend will respect that.  If
+        the client used by the backend is an :class:`HttpClient`, and
+        :func:`_init_client` passes `from_archive` on to the
+        :class:`client.HttpClient`'s initializer, this should be true.
+
+        Classified data filtering and archiving are not compatible to prevent
+        data leaks or security issues.
+        """
         raise NotImplementedError
 
     @classmethod
     def has_resuming(cls):
+        """Whether this backend supports resuming interrupted collections.
+
+        When interrupted, some backends may support resuming the collection by
+        setting the `from_date` parameter on :func:`fetch_items` or
+        :func:`fetch` to the date of the last item retrieved from the
+        repository.
+
+        However, for some backends, this cannot be done, for example because
+        results are retrieved from newest to oldest. If resuming was attempted on a
+        backend like this, then some items would be missed.
+
+        For example, if the backend was in the middle of retrieving items from
+        January 5th through 1st, but was interrupted when retrieving items from
+        the 3rd, than it would be missing items for the 2nd and 1st. If this
+        backend was resumed by setting `from_date` to the most recent item (the
+        5th), these missing items would not be retrieved, since they are earlier
+        than the `from_date`.
+
+        This method is used to indicate that this backend can be resumed in this
+        manner without missing any items. If a backend declares that it supports
+        resuming, than  `from_date` should be set to the date of the *most
+        recent item* from the last collection, even if it failed. Otherwise,
+        `from_date` should be set to the most recent item of the last
+        *successful* collection. Resuming in this manner should not leave any
+        holes in the collected items.
+
+        This can be used to speed up collections by skipping network IO for
+        items that have already been downloaded and added to the database.
+
+        Additionally, `from_date` may be set regardless of this setting if the
+        last collection did not fail, or if the user is not interested in items
+        earlier than the provided datetime.
+
+        Implementers should return a constant `True` if their backend supports
+        resuming connections in this manor, or `False` otherwise.
+        """
         raise NotImplementedError
 
     @staticmethod
     def metadata_id(item):
+        """Produce a unique identifier for an item.
+
+        Given one of the items produced by :func:`fetch_items`, produce a
+        unique identifier for that item. Typically, this is an identifier
+        given by the repository itself, such as a commit hash or post id.
+
+        The id should be represented by a string.
+        """
         raise NotImplementedError
 
     @staticmethod
     def metadata_updated_on(item):
+        """Determine the last time an item was updated.
+
+        Given one of the items produced by :func:`fetch_items`, attempt to
+        identify the last time this item was modified.
+
+        :returns: The timestamp of the last modification, represented as epoch
+            seconds (a UNIX timestamp)
+        """
         raise NotImplementedError
 
     @staticmethod
     def metadata_category(item):
+        """Identify the category of a given item.
+
+        Every item returned by :func:`fetch_items` should belong to exactly one
+        of the categories listed in the `CATEGORIES` class member. This method
+        should determine which category the item belongs to, given one of the
+        items returned by :func:`fetch_items` method.
+
+        Note that for all items returned by a call to :func:`fetch_items`, this
+        method is expected to return a category equivalent to the one passed as
+        the `category` argument.
+
+        :returns: One of the strings in `CATEGORIES`
+        """
         raise NotImplementedError
 
     def _init_client(self, from_archive=False):
+        """Initialize the client to be used by the backend.
+
+        Many backends use a persistent HTTP client to retrieve information from
+        a backend. This method is called before any calls to
+        :func:`fetch_items`, and should be used as an opportunity to initialize
+        the client.
+
+        If the backend chooses to do so, then it should return an instance of
+        its client, which will then be immediately assigned to the `.client`
+        attribute of the backend.
+
+        If the backend chooses not to initialize a client, it may simply `pass`
+        or return `None`. However, note that the `.client` attribute will
+        still be overridden.
+
+        Additionally, the client or the backend should be set to respect
+        archiving, based on the :func:`from_archive`. If the backend does not
+        report that it :func:`has_archiving`, then this parameter may just be
+        ignored.
+
+        :returns: a client, or `None`
+        """
         raise NotImplementedError
 
     def _skip_item(self, item):
