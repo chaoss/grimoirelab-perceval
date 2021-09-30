@@ -91,7 +91,7 @@ If the ssh interface to Gerrit is not in the default port (29418), you can speci
 ### Using Perceval as a Python module
 
 As expected, the Perceval backend for Gerrit can be used from Python. See the following
-example (also available as `perceval_gerrit_1.py`:
+example (also available as `[perceval_gerrit_1.py](https://github.com/chaoss/grimoirelab-perceval/blob/master/docs/scripts/perceval_gerrit_1.py)`:
 
 ```py
 #! /usr/bin/env python3
@@ -118,7 +118,7 @@ This will retrieve all reviews that had any change during the last day, and prin
 ### A more complete example
 
 See below a more complete example of exploiting the data retrieved from Gerrit (also
-available as `perceval_gerrit_2.py`:
+available as `[perceval_gerrit_2.py](https://github.com/chaoss/grimoirelab-perceval/blob/master/docs/scripts/perceval_gerrit_2.py)`:
 
 ```py
 #! /usr/bin/env python3

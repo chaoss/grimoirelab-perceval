@@ -141,7 +141,7 @@ Of course, differences will be longer for larger repositories.
 ### Using Perceval as a Python module
 
 But we know that Perceval is a Python library. So, let’s use it as a Python library, from
-a Python script `perceval_git_1.py`:
+a Python script `[perceval_git_1.py](https://github.com/chaoss/grimoirelab-perceval/blob/master/docs/scripts/perceval_git_1.py)`:
 
 ```py
 #! /usr/bin/env python3
@@ -192,7 +192,7 @@ $ perceval git https://<username>:<api-token>@github.com/chaoss/grimoirelab-perc
 After the first example of using Perceval to get data from git repositories, we can write
 a slightly useful Python script: one that counts commits in a git repository. The complete
 script is described in the Tools and Tips chapter, and the code can be accessed as
-`perceval_git_counter.py`. Its skeleton is as follows:
+`[perceval_git_counter.py](https://github.com/chaoss/grimoirelab-perceval/blob/master/docs/scripts/perceval_git_counter.py)`. Its skeleton is as follows:
 
 ```py
 import argparse
