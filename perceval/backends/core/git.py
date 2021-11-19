@@ -66,6 +66,7 @@ class Git(Backend):
     :param gitpath: path to the repository or to the log file
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
+    :param ssl_verify: enable/disable SSL verification
 
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
@@ -74,10 +75,10 @@ class Git(Backend):
 
     CATEGORIES = [CATEGORY_COMMIT]
 
-    def __init__(self, uri, gitpath, tag=None, archive=None):
+    def __init__(self, uri, gitpath, tag=None, archive=None, ssl_verify=True):
         origin = uri
 
-        super().__init__(origin, tag=tag, archive=archive)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.uri = uri
         self.gitpath = gitpath
 
@@ -322,7 +323,7 @@ class Git(Backend):
 
     def __create_git_repository(self):
         if not os.path.exists(self.gitpath):
-            repo = GitRepository.clone(self.uri, self.gitpath)
+            repo = GitRepository.clone(self.uri, self.gitpath, self.ssl_verify)
         elif os.path.isdir(self.gitpath):
             repo = GitRepository(self.uri, self.gitpath)
         return repo
@@ -357,7 +358,8 @@ class GitCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
-                                              to_date=True)
+                                              to_date=True,
+                                              ssl_verify=True)
 
         # Optional arguments
         group = parser.parser.add_argument_group('Git arguments')
@@ -816,14 +818,15 @@ class GitRepository:
         }
 
     @classmethod
-    def clone(cls, uri, dirpath):
+    def clone(cls, uri, dirpath, ssl_verify=True):
         """Clone a Git repository.
 
         Make a bare copy of the repository stored in `uri` into `dirpath`.
         The repository would be either local or remote.
 
         :param uri: URI of the repository
-        :param dirtpath: directory where the repository will be cloned
+        :param dirpath: directory where the repository will be cloned
+        :param ssl_verify: enable/disable SSL verification
 
         :returns: a `GitRepository` class having cloned the repository
 
@@ -831,6 +834,8 @@ class GitRepository:
             repository
         """
         cmd = ['git', 'clone', '--bare', uri, dirpath]
+        if not ssl_verify:
+            cmd += ['-c', 'http.sslVerify=false']
         env = {
             'LANG': 'C',
             'HOME': os.getenv('HOME', '')

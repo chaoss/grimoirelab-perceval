@@ -852,6 +852,7 @@ class TestGitCommand(TestCaseGit):
         self.assertEqual(parsed_args.to_date, DEFAULT_LAST_DATETIME)
         self.assertEqual(parsed_args.branches, None)
         self.assertTrue(parsed_args.no_update)
+        self.assertTrue(parsed_args.ssl_verify)
 
         args = ['http://example.com/',
                 '--git-path', '/tmp/gitpath',
@@ -862,13 +863,16 @@ class TestGitCommand(TestCaseGit):
         self.assertEqual(parsed_args.uri, 'http://example.com/')
         self.assertEqual(parsed_args.branches, ['master', 'testing'])
         self.assertFalse(parsed_args.no_update)
+        self.assertTrue(parsed_args.ssl_verify)
 
         args = ['http://example.com/',
-                '--base-path', '/tmp/basepath']
+                '--base-path', '/tmp/basepath',
+                '--no-ssl-verify']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.base_path, '/tmp/basepath')
         self.assertEqual(parsed_args.uri, 'http://example.com/')
+        self.assertFalse(parsed_args.ssl_verify)
 
     def test_mutual_exclusive_update(self):
         """Test whether an exception is thrown when no-update and latest-items flags are set"""
@@ -1330,6 +1334,17 @@ class TestGitRepository(TestCaseGit):
         new_path = os.path.join(self.tmp_path, 'newgit')
 
         repo = GitRepository.clone(self.git_path, new_path)
+
+        self.assertIsInstance(repo, GitRepository)
+        self.assertEqual(repo.uri, self.git_path)
+        self.assertEqual(repo.dirpath, new_path)
+        self.assertTrue(os.path.exists(new_path))
+        self.assertTrue(os.path.exists(os.path.join(new_path, 'HEAD')))
+
+        shutil.rmtree(new_path)
+
+        # Disabling SSL verification must have the same behavior
+        repo = GitRepository.clone(self.git_path, new_path, ssl_verify=False)
 
         self.assertIsInstance(repo, GitRepository)
         self.assertEqual(repo.uri, self.git_path)
