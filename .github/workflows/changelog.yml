@@ -1,0 +1,12 @@
+name: Check changelog file included
+
+on:
+  pull_request:
+    paths:
+      - 'perceval/**'
+
+jobs:
+  check-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: bitergia/release-tools-check-changelog@master
