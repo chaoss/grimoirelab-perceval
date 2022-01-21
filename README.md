@@ -419,6 +419,7 @@ and contact the maintainers for any issues or questions related to them.
 - Gitee backend: [grimoirelab-gitee/grimoirelab-perceval-gitee](https://github.com/grimoirelab-gitee/grimoirelab-perceval-gitee)
 - Airtable backend: [perceval-backends/grimoirelab-perceval-airtable](https://github.com/perceval-backends/grimoirelab-perceval-airtable)
 - Bitbucket backend: [perceval-backends/grimoirelab-perceval-bitbucket](https://github.com/perceval-backends/grimoirelab-perceval-bitbucket)
+- Coveralls backend: [Groninger-Bugbusters/grimoirelab-perceval-coveralls](https://github.com/Groninger-Bugbusters/grimoirelab-perceval-coveralls)
 
 ## Running tests
 
