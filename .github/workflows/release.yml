@@ -11,23 +11,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: Build package using Poetry and store result
+        uses: chaoss/grimoirelab-github-actions/build@master
         with:
-          python-version: '3.x'
-      - name: Install poetry
-        run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
-          echo "PATH=$HOME/.poetry/bin:$PATH" >> $GITHUB_ENV
-      - name: Build distributions
-        run: |
-          poetry build
-      - name: Upload distribution artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: perceval-dist
-          path: dist
+          artifact-name: perceval-dist
+          artifact-path: dist
 
   tests:
     needs: [build]
@@ -61,43 +49,18 @@ jobs:
     needs: [tests]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Get release tag
-        id: tag
-        run: |
-          echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
-      - name: Create release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create a new release on the repository
+        uses: chaoss/grimoirelab-github-actions/release@master
         with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          release_name: ${{ steps.tag.outputs.tag }}
-          body_path: ./releases/${{ steps.tag.outputs.tag }}.md
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
     needs: [tests]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Download distribution artifact
-        uses: actions/download-artifact@v2
+      - name: Publish the package on PyPI
+        uses: chaoss/grimoirelab-github-actions/publish@master
         with:
-          name: perceval-dist
-          path: dist
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      - name: Install poetry
-        run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
-          echo "PATH=$HOME/.poetry/bin:$PATH" >> $GITHUB_ENV
-      - name: Configure pypi credentials
-        env:
-          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          poetry config http-basic.pypi __token__ "$PYPI_API_TOKEN"
-      - name: Publish release to pypi
-        run: |
-          poetry publish
+          artifact-name: perceval-dist
+          artifact-path: dist
+          pypi-api-token: ${{ secrets.PYPI_API_TOKEN }}
