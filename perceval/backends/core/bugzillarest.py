@@ -59,12 +59,13 @@ class BugzillaREST(Backend):
     :param user: Bugzilla user
     :param password: Bugzilla user password
     :param api_token: Bugzilla token
+    :param api_key: Bugzilla API key
     :param max_bugs: maximum number of bugs requested on the same query
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.10.0'
+    version = '0.11.0'
 
     CATEGORIES = [CATEGORY_BUG]
     EXTRA_SEARCH_FIELDS = {
@@ -72,7 +73,7 @@ class BugzillaREST(Backend):
         'component': ['component']
     }
 
-    def __init__(self, url, user=None, password=None, api_token=None,
+    def __init__(self, url, user=None, password=None, api_token=None, api_key=None,
                  max_bugs=MAX_BUGS, tag=None, archive=None, ssl_verify=True):
         origin = url
 
@@ -81,6 +82,7 @@ class BugzillaREST(Backend):
         self.user = user
         self.password = password
         self.api_token = api_token
+        self.api_key = api_key
         self.max_bugs = max(1, max_bugs)
         self.client = None
 
@@ -176,7 +178,8 @@ class BugzillaREST(Backend):
         """Init client"""
 
         return BugzillaRESTClient(self.url, user=self.user, password=self.password, api_token=self.api_token,
-                                  archive=self.archive, from_archive=from_archive, ssl_verify=self.ssl_verify)
+                                  api_key=self.api_key, archive=self.archive, from_archive=from_archive,
+                                  ssl_verify=self.ssl_verify)
 
     def __fetch_and_parse_bugs(self, from_date):
         max_contents = min(MAX_CONTENTS, self.max_bugs)
@@ -269,6 +272,8 @@ class BugzillaRESTClient(HttpClient):
     :param password: user password
     :param api_token: api token for user; when this is provided
         `user` and `password` parameters will be ignored
+    :param api_key: api key for user; when this is provided
+        `user`, `password`, and `api_token` parameters will be ignored
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
     :param ssl_verify: enable/disable SSL verification
@@ -284,11 +289,13 @@ class BugzillaRESTClient(HttpClient):
     RCOMMENT = 'comment'
     RHISTORY = 'history'
     RLOGIN = 'login'
+    RVERSION = 'version'
 
     # Resource parameters
     PBUGZILLA_LOGIN = 'login'
     PBUGZILLA_PASSWORD = 'password'
     PBUGZILLA_TOKEN = 'token'
+    PBUGZILLA_KEY = 'api_key'
     PIDS = 'ids'
     PLAST_CHANGE_TIME = 'last_change_time'
     PLIMIT = 'limit'
@@ -302,14 +309,31 @@ class BugzillaRESTClient(HttpClient):
     VINCLUDE_ALL = '_all'
     VEXCLUDE_ATTCH_DATA = 'data'
 
+    # API headers
+    HAUTHORIZATION = 'Authorization'
+
     def __init__(self, base_url, user=None, password=None, api_token=None,
-                 archive=None, from_archive=False, ssl_verify=True):
+                 api_key=None, archive=None, from_archive=False, ssl_verify=True):
         super().__init__(base_url, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
 
         self.api_token = api_token if api_token else None
+        self.api_key = api_key if api_key else None
+        self.bugzilla_custom = False
+        if self.api_key:
+            self.check_bugzilla_type()
 
-        if user is not None and password is not None:
+        if user is not None and password is not None and api_key is None:
             self.login(user, password)
+
+    def check_bugzilla_type(self):
+        """Check if the type of the bugzilla is standard or custom."""
+
+        url = self.URL % {'base': self.base_url, 'resource': self.RVERSION}
+
+        params = {self.PBUGZILLA_KEY: self.api_key}
+        r = self.fetch(url, payload=params)
+        if 'version' not in r.json():
+            self.bugzilla_custom = True
 
     def login(self, user, password):
         """Authenticate a user in the server.
@@ -417,13 +441,22 @@ class BugzillaRESTClient(HttpClient):
         """
         url = self.URL % {'base': self.base_url, 'resource': resource}
 
-        if self.api_token:
+        headers = None
+        if self.api_key and not self.bugzilla_custom:
+            params[self.PBUGZILLA_KEY] = self.api_key
+        elif self.api_key and self.bugzilla_custom:
+            # This header is needed because of the instance https://bugzilla.redhat.com does not support
+            # these parameters: Bugzilla_login, Bugzilla_password, Bugzilla_token, Bugzilla_api_key
+            # More info see https://bugzilla.redhat.com/docs/en/html/api/core/v1/general.html#authentication
+            headers = {
+                self.HAUTHORIZATION: "Bearer " + self.api_key
+            }
+        elif self.api_token:
             params[self.PBUGZILLA_TOKEN] = self.api_token
 
         logger.debug("Bugzilla REST client requests: %s params: %s",
                      resource, str(params))
-
-        r = self.fetch(url, payload=params)
+        r = self.fetch(url, payload=params, headers=headers)
 
         # Check for possible Bugzilla API errors
         result = r.json()
@@ -478,6 +511,8 @@ class BugzillaRESTCommand(BackendCommand):
         group.add_argument('--max-bugs', dest='max_bugs',
                            type=int, default=MAX_BUGS,
                            help="Maximum number of bugs requested on the same query")
+        group.add_argument('--api-key', dest='api_key',
+                           help="Bugzilla API key")
 
         # Required arguments
         parser.parser.add_argument('url',
