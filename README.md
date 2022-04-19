@@ -60,7 +60,7 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 
 ## Requirements
 
-* Python >= 3.6.1
+* Python >= 3.7
 * python3-dateutil >= 2.6
 * python3-requests >= 2.7
 * python3-bs4 (beautifulsoup4) >= 4.3.2
