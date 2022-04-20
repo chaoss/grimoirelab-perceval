@@ -61,7 +61,7 @@ myst-parser = { version = "^0.15.2", optional = true }
 furo = { version = "^2021.8.31", optional = true }
 
 [tool.poetry.dev-dependencies]
-httpretty = "^0.9.6"
+httpretty = "^1.1.4"
 flake8 = "^3.9.1"
 coverage = "^5.5"
 
