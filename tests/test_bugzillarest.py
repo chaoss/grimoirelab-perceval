@@ -47,6 +47,7 @@ from base import TestCaseBackendArchive
 
 BUGZILLA_SERVER_URL = 'http://example.com'
 BUGZILLA_LOGIN_URL = BUGZILLA_SERVER_URL + '/rest/login'
+BUGZILLA_VERSION_URL = BUGZILLA_SERVER_URL + '/rest/version'
 BUGZILLA_BUGS_URL = BUGZILLA_SERVER_URL + '/rest/bug'
 BUGZILLA_BUGS_COMMENTS_1273442_URL = BUGZILLA_SERVER_URL + '/rest/bug/1273442/comment'
 BUGZILLA_BUGS_HISTORY_1273442_URL = BUGZILLA_SERVER_URL + '/rest/bug/1273442/history'
@@ -74,7 +75,9 @@ def setup_http_server():
                         read_file('data/bugzilla/bugzilla_rest_bugs_attachments_empty.json', mode='rb')]
 
     def request_callback(method, uri, headers):
-        if uri.startswith(BUGZILLA_BUGS_COMMENTS_1273442_URL):
+        if uri.startswith(BUGZILLA_VERSION_URL):
+            body = '{"version":"5.1.2"}'
+        elif uri.startswith(BUGZILLA_BUGS_COMMENTS_1273442_URL):
             body = body_comments[0]
         elif uri.startswith(BUGZILLA_BUGS_HISTORY_1273442_URL):
             body = body_history[0]
@@ -93,6 +96,13 @@ def setup_http_server():
         http_requests.append(httpretty.last_request())
 
         return (200, headers, body)
+
+    httpretty.register_uri(httpretty.GET,
+                           BUGZILLA_VERSION_URL,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                               for _ in range(3)
+                           ])
 
     httpretty.register_uri(httpretty.GET,
                            BUGZILLA_BUGS_URL,
@@ -290,6 +300,10 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_URL,
                                body=body, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
 
         bg = BugzillaREST(BUGZILLA_SERVER_URL)
         bugs = [bug for bug in bg.fetch()]
@@ -335,6 +349,10 @@ class TestBugzillaRESTBackendArchive(TestCaseBackendArchive):
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_URL,
                                body=body, status=200)
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
 
         self._test_fetch_from_archive(from_date=None)
 
@@ -351,14 +369,21 @@ class TestBugzillaRESTClient(unittest.TestCase):
     def test_init(self):
         """Test initialization"""
 
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
+
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
         self.assertEqual(client.base_url, BUGZILLA_SERVER_URL)
         self.assertEqual(client.api_token, None)
+        self.assertEqual(client.api_key, None)
         self.assertTrue(client.ssl_verify)
 
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL, ssl_verify=False)
         self.assertEqual(client.base_url, BUGZILLA_SERVER_URL)
         self.assertEqual(client.api_token, None)
+        self.assertEqual(client.api_key, None)
         self.assertFalse(client.ssl_verify)
 
     @httpretty.activate
@@ -369,6 +394,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_LOGIN_URL,
                                body='{"token": "786-OLaWfBisMY", "id": "786"}',
+                               status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
                                status=200)
 
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL,
@@ -399,6 +429,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
                                body="401 Client Error: Authorization Required",
                                status=401)
 
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
+
         with self.assertRaises(BackendError):
             _ = BugzillaRESTClient(BUGZILLA_SERVER_URL,
                                    user='jsmith@example.com',
@@ -420,6 +455,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_URL,
                                body=body, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
 
         # Test API token login
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL,
@@ -460,6 +500,107 @@ class TestBugzillaRESTClient(unittest.TestCase):
         self.assertDictEqual(req.querystring, expected)
 
     @httpretty.activate
+    def test_bugzilla_api_key(self):
+        """Test Bugzilla API key authentication"""
+
+        # Set up a mock HTTP server
+        body = read_file('data/bugzilla/bugzilla_rest_bugs.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGS_URL,
+                               body=body, status=200)
+
+        # Test API token login
+        client = BugzillaRESTClient(BUGZILLA_SERVER_URL,
+                                    api_key='abcdef')
+
+        # Check whether it is included on the calls
+        _ = client.bugs()
+
+        # Check the URL containing the API key
+        req = httpretty.last_request()
+        expected_url = 'http://example.com/rest/bug?last_change_time=1970-01-01T00%3A00%3A00Z&limit=500&' \
+                       'order=changeddate&include_fields=_all&api_key=abcdef'
+        self.assertEqual(req.url, expected_url)
+
+        # Check the header that does not contain the API key
+        expected_header = "Authorization: Bearer abcdef"
+        self.assertNotIn(expected_header, req.raw_headers.decode("utf-8"))
+
+    @httpretty.activate
+    def test_bugzilla_api_key_custom_instance(self):
+        """Test Bugzilla API Key authentication on a custom instance
+        https://bugzilla.redhat.com"""
+
+        # Set up a mock HTTP server
+        body = read_file('data/bugzilla/bugzilla_rest_bugs.json')
+
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"code":32000,"error":true,"message":"You have attempted to access..."}',
+                               status=200)
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGS_URL,
+                               body=body, status=200)
+
+        # Test API token login
+        client = BugzillaRESTClient(BUGZILLA_SERVER_URL,
+                                    api_key='abcdef')
+
+        self.assertEqual(client.api_key, 'abcdef')
+
+        # Check whether it is included on the calls
+        _ = client.bugs()
+
+        # Check request params
+        expected = {
+            'last_change_time': ['1970-01-01T00:00:00Z'],
+            'limit': ['500'],
+            'order': ['changeddate'],
+            'include_fields': ['_all']
+        }
+
+        req = httpretty.last_request()
+        self.assertDictEqual(req.querystring, expected)
+
+        # Check URL that does not contain the API key
+        expected_url = 'http://example.com/rest/bug?last_change_time=1970-01-01T00%3A00%3A00Z&limit=500&' \
+                       'order=changeddate&include_fields=_all'
+        self.assertEqual(req.url, expected_url)
+
+        # Check the header containing the API key
+        expected_header = "Authorization: Bearer abcdef"
+        self.assertIn(expected_header, req.raw_headers.decode("utf-8"))
+
+    @httpretty.activate
+    def test_check_bugzilla_type(self):
+        """Test Check if the type of the bugzilla is standard or custom"""
+
+        # Set up a mock HTTP server
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
+
+        # Test standard Bugzilla
+        client = BugzillaRESTClient(BUGZILLA_SERVER_URL, api_key='abcdef')
+        self.assertFalse(client.bugzilla_custom)
+
+        # Set up a mock HTTP server
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"code":32000,"error":true,"message":"You have attempted to access..."}',
+                               status=200)
+
+        # Test custom Bugzilla version https://bugzilla.redhat.com
+        client = BugzillaRESTClient(BUGZILLA_SERVER_URL, api_key='abcdef')
+        self.assertTrue(client.bugzilla_custom)
+
+    @httpretty.activate
     def test_bugs(self):
         """Test bugs API call"""
 
@@ -468,6 +609,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_URL,
                                body=body, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
 
         # Call API
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
@@ -521,6 +667,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
                                BUGZILLA_BUGS_COMMENTS_1273442_URL,
                                body=body, status=200)
 
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
+
         # Call API
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
         response = client.comments('1273442', '1273439')
@@ -548,6 +699,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
                                BUGZILLA_BUGS_HISTORY_1273442_URL,
                                body=body, status=200)
 
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
+
         # Call API
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
         response = client.history('1273442', '1273439')
@@ -574,6 +730,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_ATTACHMENTS_1273442_URL,
                                body=body, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
 
         # Call API
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
@@ -603,6 +764,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
                                BUGZILLA_BUGS_HISTORY_1273442_URL,
                                body=body, status=200)
 
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
+
         # Call API
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
         response = client.history('1273442', '1273439')
@@ -627,6 +793,11 @@ class TestBugzillaRESTClient(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_BUGS_URL,
                                body=body, status=200)
+
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}',
+                               status=200)
 
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL)
 
@@ -715,6 +886,13 @@ class TestBugzillaRESTCommand(unittest.TestCase):
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertFalse(parsed_args.ssl_verify)
+        self.assertEqual(parsed_args.url, BUGZILLA_SERVER_URL)
+
+        args = ['--api-key', 'abcdefg',
+                BUGZILLA_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.api_key, 'abcdefg')
         self.assertEqual(parsed_args.url, BUGZILLA_SERVER_URL)
 
 
