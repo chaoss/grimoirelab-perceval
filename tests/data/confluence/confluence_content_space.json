@@ -1,0 +1,70 @@
+{
+    "results": [
+        {
+            "id": "3",
+            "type": "page",
+            "status": "current",
+            "title": "PERCEVAL",
+            "ancestors": [
+                {
+                    "id": "3",
+                    "type": "page",
+                    "status": "current",
+                    "title": "Community Home",
+                    "extensions": {
+                        "position": 0
+                    },
+                    "_links": {
+                        "webui": "/display/TEST/Community+Home",
+                        "edit": "/pages/resumedraft.action?draftId=3",
+                        "tinyui": "/x/AgAoDw",
+                        "self": "https://example.com/rest/api/content/3"
+                    },
+                    "_expandable": {
+                        "container": "/rest/api/space/TEST",
+                        "metadata": "",
+                        "operations": "",
+                        "children": "/rest/api/content/3/child",
+                        "restrictions": "/rest/api/content/3/restriction/byOperation",
+                        "history": "/rest/api/content/3/history",
+                        "ancestors": "",
+                        "body": "",
+                        "version": "",
+                        "descendants": "/rest/api/content/3/descendant",
+                        "space": "/rest/api/space/TEST"
+                    }
+                }
+            ],
+            "extensions": {
+                "position": 1
+            },
+            "_links": {
+                "webui": "/display/TEST/PERCEVAL",
+                "edit": "/pages/resumedraft.action?draftId=4&draftShareId=57d3099b-f2df-45f2-bd63-7aa8430435a5",
+                "tinyui": "/x/LYDTGw",
+                "self": "https://example.com/rest/api/content4"
+            },
+            "_expandable": {
+                "container": "/rest/api/space/TEST",
+                "metadata": "",
+                "operations": "",
+                "children": "/rest/api/content4/child",
+                "restrictions": "/rest/api/content4/restriction/byOperation",
+                "history": "/rest/api/content4/history",
+                "body": "",
+                "version": "",
+                "descendants": "/rest/api/content4/descendant",
+                "space": "/rest/api/space/TEST"
+            }
+        }
+    ],
+    "start": 0,
+    "limit": 200,
+    "size": 1,
+    "totalSize": 1,
+    "_links": {
+        "self": "https://example.com/rest/api/content/search?expand=ancestors&cql=space+in+%28TEST%29+and+lastModified%3E%3D%272022-05-05+00%3A00%27+order+by+lastModified",
+        "base": "https://example.com",
+        "context": ""
+    }
+}
