@@ -1,0 +1,89 @@
+{
+    "_expandable": {
+        "container": "",
+        "metadata": "",
+        "operations": "",
+        "children": "/rest/api/content/3/child?parentVersion=3",
+        "restrictions": "/rest/api/content/3/restriction/byOperation",
+        "ancestors": "",
+        "descendants": "/rest/api/content/3/descendant",
+        "space": "/rest/api/space/TEST"
+    },
+    "body": {
+        "storage": {
+            "value": "Value text",
+            "representation": "storage",
+            "_expandable": {
+                "content": "/rest/api/content/3?status=historical&version=3"
+            }
+        },
+        "_expandable": {
+            "editor": "",
+            "view": "",
+            "export_view": "",
+            "styled_view": "",
+            "anonymous_export_view": ""
+        }
+    },
+    "extensions": {
+        "position": 1
+    },
+    "history": {
+        "latest": false,
+        "createdBy": {
+            "type": "known",
+            "username": "smith",
+            "userKey": "a80255c66b579d45016b9b47dbf20051",
+            "profilePicture": {
+                "path": "/images/icons/profilepics/default.svg",
+                "width": 48,
+                "height": 48,
+                "isDefault": true
+            },
+            "displayName": "Smith John",
+            "_links": {
+                "self": "https://example.com/rest/api/user?key=a80255c66b579d45016b9b47dbf20051"
+            },
+            "_expandable": {
+                "status": ""
+            }
+        },
+        "createdDate": "2019-07-26T20:16:58.000Z",
+        "latest": true
+    },
+    "id": "3",
+    "status": "current",
+    "title": "PERCEVAL",
+    "type": "page",
+    "version": {
+        "by": {
+            "type": "known",
+            "username": "smith",
+            "userKey": "2c9fac3d6a43e63e016e47429dd70000",
+            "profilePicture": {
+                "path": "/download/attachments/507281416/user-avatar",
+                "width": 48,
+                "height": 48,
+                "isDefault": false
+            },
+            "displayName": "John Smith",
+            "_links": {
+                "self": "https://example.com/rest/api/user?key=2c9fac3d6a43e63e016e47429dd70000"
+            },
+            "_expandable": {
+                "status": ""
+            }
+        },
+        "when": "2021-01-12T15:46:37.336Z",
+        "message": "",
+        "number": 3,
+        "minorEdit": false,
+        "hidden": false,
+        "_links": {
+            "self": "https://example.com/rest/experimental/content/3/version/3"
+        },
+        "_expandable": {
+            "content": "/rest/api/content/3?status=historical&version=3"
+        }
+    }
+}

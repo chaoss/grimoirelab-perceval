@@ -62,16 +62,17 @@ class Confluence(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.12.0'
+    version = '0.13.0'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 
-    def __init__(self, url, tag=None, archive=None, ssl_verify=True):
+    def __init__(self, url, tag=None, archive=None, ssl_verify=True, spaces=None):
         origin = url
 
         super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.client = None
+        self.spaces = spaces
 
     def search_fields(self, item):
         """Add search fields to an item.
@@ -261,7 +262,8 @@ class Confluence(Backend):
     def _init_client(self, from_archive=False):
         """Init client"""
 
-        return ConfluenceClient(self.url, archive=self.archive, from_archive=from_archive, ssl_verify=self.ssl_verify)
+        return ConfluenceClient(self.url, archive=self.archive, from_archive=from_archive,
+                                ssl_verify=self.ssl_verify, spaces=self.spaces)
 
     def __fetch_contents_summary(self, from_date):
         logger.debug("Fetching contents summary from %s", str(from_date))
@@ -334,6 +336,9 @@ class ConfluenceCommand(BackendCommand):
         # Required arguments
         parser.parser.add_argument('url',
                                    help="URL of the Confluence server")
+        # Optional arguments
+        parser.parser.add_argument('--spaces', nargs='+',
+                                   help="List of spaces to fetch")
 
         return parser
 
@@ -370,11 +375,13 @@ class ConfluenceClient(HttpClient):
 
     # Common values
     VCQL = "lastModified>='%(date)s' order by lastModified"
+    VCQL_SPACE = "space in (%(spaces)s) and lastModified>='%(date)s' order by lastModified"
     VEXPAND = ['body.storage', 'history', 'version']
     VHISTORICAL = 'historical'
 
-    def __init__(self, base_url, archive=None, from_archive=False, ssl_verify=True):
+    def __init__(self, base_url, archive=None, from_archive=False, ssl_verify=True, spaces=None):
         super().__init__(base_url.rstrip('/'), archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
+        self.spaces = spaces
 
     def contents(self, from_date=DEFAULT_DATETIME,
                  offset=None, max_contents=MAX_CONTENTS):
@@ -393,7 +400,11 @@ class ConfluenceClient(HttpClient):
 
         # Set confluence query parameter (cql)
         date = from_date.strftime("%Y-%m-%d %H:%M")
+
         cql = self.VCQL % {'date': date}
+        if self.spaces:
+            spaces = ", ".join(self.spaces)
+            cql = self.VCQL_SPACE % {'date': date, 'spaces': spaces}
 
         # Set parameters
         params = {

@@ -53,7 +53,9 @@ CONFLUENCE_API_URL = CONFLUENCE_URL + '/rest/api'
 CONFLUENCE_CONTENTS_URL = CONFLUENCE_API_URL + '/content/search'
 CONFLUENCE_HISTORICAL_CONTENT_1 = CONFLUENCE_API_URL + '/content/1'
 CONFLUENCE_HISTORICAL_CONTENT_2 = CONFLUENCE_API_URL + '/content/2'
+CONFLUENCE_HISTORICAL_CONTENT_3 = CONFLUENCE_API_URL + '/content/3'
 CONFLUENCE_HISTORICAL_CONTENT_ATT = CONFLUENCE_API_URL + '/content/att1'
+CONFLUENCE_CONTENTS_SPACE_URL = CONFLUENCE_URL + ''
 
 STATUS_CODE_SUCCESS = 200
 STATUS_CODE_NOT_HANDLED = 503
@@ -77,7 +79,9 @@ def setup_http_server(not_handle_status_code=False):
     body_content_1_v2 = read_file('data/confluence/confluence_content_1_v2.json', 'rb')
     body_content_1_v3 = read_file('data/confluence/confluence_content_1_v3.json', 'rb')
     body_content_2 = read_file('data/confluence/confluence_content_2_v1.json', 'rb')
+    body_content_3 = read_file('data/confluence/confluence_content_3.json', 'rb')
     body_content_att = read_file('data/confluence/confluence_content_att_v1.json', 'rb')
+    body_content_space = read_file('data/confluence/confluence_content_space.json', 'rb')
 
     def request_callback(method, uri, headers):
 
@@ -92,6 +96,8 @@ def setup_http_server(not_handle_status_code=False):
                 body = body_contents_empty
             elif params['cql'][0].startswith("lastModified>='2016-07-08 00:00'"):
                 body = body_contents_empty
+            elif params['cql'][0].startswith("space in"):
+                body = body_content_space
             else:
                 body = body_contents
         elif uri.startswith(CONFLUENCE_HISTORICAL_CONTENT_1):
@@ -108,6 +114,8 @@ def setup_http_server(not_handle_status_code=False):
 
             if not_handle_status_code:
                 status_code = STATUS_CODE_NOT_HANDLED
+        elif uri.startswith(CONFLUENCE_HISTORICAL_CONTENT_3):
+            body = body_content_3
 
         elif uri.startswith(CONFLUENCE_HISTORICAL_CONTENT_ATT):
             body = body_content_att
@@ -130,6 +138,11 @@ def setup_http_server(not_handle_status_code=False):
                            ])
     httpretty.register_uri(httpretty.GET,
                            CONFLUENCE_HISTORICAL_CONTENT_2,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                           ])
+    httpretty.register_uri(httpretty.GET,
+                           CONFLUENCE_HISTORICAL_CONTENT_3,
                            responses=[
                                httpretty.Response(body=request_callback)
                            ])
@@ -244,6 +257,54 @@ class TestConfluenceBackend(unittest.TestCase):
                 'expand': ['body.storage,history,version'],
                 'status': ['historical'],
                 'version': ['1']
+            },
+            {
+                'expand': ['body.storage,history,version'],
+                'status': ['historical'],
+                'version': ['1']
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_spaces(self):
+        """Test it fetches and parses a list of contents in specific spaces"""
+
+        http_requests = setup_http_server()
+
+        confluence = Confluence(CONFLUENCE_URL, spaces=["TEST"])
+
+        hcs = [hc for hc in confluence.fetch()]
+
+        expected = [
+            ('3', 3, '93cd38039f3987594d46508396317734131823c1',
+             1610466397.336, 'http://example.com/display/TEST/PERCEVAL'),
+        ]
+
+        self.assertEqual(len(hcs), len(expected))
+
+        for x in range(len(hcs)):
+            hc = hcs[x]
+            self.assertEqual(hc['data']['id'], expected[x][0])
+            self.assertEqual(hc['data']['version']['number'], expected[x][1])
+            self.assertEqual(hc['uuid'], expected[x][2])
+            self.assertEqual(hc['origin'], CONFLUENCE_URL)
+            self.assertEqual(hc['updated_on'], expected[x][3])
+            self.assertEqual(hc['data']['content_url'], expected[x][4])
+            self.assertEqual(hc['category'], "historical content")
+            self.assertEqual(hc['tag'], CONFLUENCE_URL)
+            self.assertEqual(hc['data']['_expandable']['space'], '/rest/api/space/TEST')
+
+        # Check requests
+        expected = [
+            {
+                'cql': ["space in (TEST) and lastModified>='1970-01-01 00:00' order by lastModified"],
+                'limit': ['200'],
+                'expand': ['ancestors']
             },
             {
                 'expand': ['body.storage,history,version'],
@@ -577,16 +638,19 @@ class TestConfluenceCommand(unittest.TestCase):
         self.assertTrue(parsed_args.no_archive)
         self.assertTrue(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertIsNone(parsed_args.spaces)
 
         args = ['http://example.com',
                 '--tag', 'test', '--no-ssl-verify',
-                '--from-date', '1970-01-01']
+                '--from-date', '1970-01-01',
+                '--spaces', 'TEST', 'PERCEVAL']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, 'http://example.com')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.spaces, ['TEST', 'PERCEVAL'])
 
 
 class TestConfluenceClient(unittest.TestCase):

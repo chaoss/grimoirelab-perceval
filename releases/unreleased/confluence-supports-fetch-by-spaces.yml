@@ -1,0 +1,9 @@
+---
+title: Confluence supports fetch by spaces
+category: added
+author: Quan Zhou <quan@bitergia.com>
+issue: null
+notes: >
+    This allows fetching confluence by specific spaces. By
+    default it will fetch the entire instance, but adding the
+    `--spaces` argument will fetch only these spaces.
