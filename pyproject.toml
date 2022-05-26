@@ -52,7 +52,7 @@ beautifulsoup4 = "^4.3.2"
 feedparser = "^6.0.8"
 dulwich = "^0.20.0"
 urllib3 = "^1.26"
-PyJWT = "^1.7.1"
+PyJWT = "^2.4.0"
 cryptography = "^3.3.2"
 grimoirelab-toolkit = "^0.2"
 
