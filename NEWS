@@ -1,5 +1,29 @@
 # Releases
 
+## perceval 0.18.0 - (2022-06-01)
+
+**New features:**
+
+ * [bugzillarest] API Key authentication\
+   A new authentication is available in the `bugzillarest` backend using
+   an API Key. This can be provided using the parameter `--api-key` on
+   the command line. Note that this parameter will invalidate `--backend-
+   user` `--backend-password`, and `--api-token` parameters. For
+   developers, this parameter is also available during the initialization
+   of the class `BugzillaRESTClient` under the name `api_key`.
+ * Confluence supports fetch by spaces\
+   This allows fetching confluence by specific spaces. By default it will
+   fetch the entire instance, but adding the `--spaces` argument will
+   fetch only these spaces.
+
+**Feature removals:**
+
+ * Drop Python 3.6 support\
+   Python 3.6 reached the end of life at the end of 2021. This means it
+   won't receive new updates or patches to fix security issues.
+   Therefore, this package will only work with Python >= 3.7 from now on.
+
+
 ## Perceval 0.15.0 - (2020-06-13)
 
 **New features:**
@@ -428,3 +452,4 @@
    end of log stream_" message. (#8)
  * Empty Git commit logs raised erros when were parsed. (#17)
  * Character ^M) produced some parsing errors in the Git backend. (#21)
+
