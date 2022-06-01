@@ -1,0 +1,1 @@
+-e git+https://github.com/chaoss/grimoirelab-toolkit.git/#egg=grimoirelab-toolkit
