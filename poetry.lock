@@ -184,11 +184,11 @@ doc = ["myst-parser", "sphinx-copybutton", "sphinx-design", "sphinx-inline-tabs"
 
 [[package]]
 name = "grimoirelab-toolkit"
-version = "0.2.0"
+version = "0.3.0"
 description = "Toolkit of common functions used across GrimoireLab"
 category = "main"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
 python-dateutil = ">=2.8.0,<3.0.0"
@@ -609,7 +609,7 @@ docs = ["furo", "myst-parser"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "5d356e94b0a654ba0b58c61fef5ddb217397fa207a7da8a74d7c1b8f7dedd053"
+content-hash = "8cf9cac968b2504ce7cce94ef1a51cdb113b5a740c09c921c0975f844d21da6d"
 
 [metadata.files]
 alabaster = [
@@ -807,8 +807,8 @@ furo = [
     {file = "furo-2021.11.23.tar.gz", hash = "sha256:54cecac5f3b688b5c7370d72ecdf1cd91a6c53f0f42751f4a719184b562cde70"},
 ]
 grimoirelab-toolkit = [
-    {file = "grimoirelab-toolkit-0.2.0.tar.gz", hash = "sha256:0082a4ec3cfc54784ebb632930aa4a39508ec9906c5eabcf5bfe1805b744af35"},
-    {file = "grimoirelab_toolkit-0.2.0-py3-none-any.whl", hash = "sha256:7a097fe59c6b9a94d7d7fcdbbcb2a5ec3c8ed6e37811eb29a54ac665ddcd2dce"},
+    {file = "grimoirelab-toolkit-0.3.0.tar.gz", hash = "sha256:8d443d4047e18cc858fcfdcd9143c5d54444e7a6355e36fe26818e0125b576ae"},
+    {file = "grimoirelab_toolkit-0.3.0-py3-none-any.whl", hash = "sha256:604698d8a06acfe61d89c86b2230c6b10e3a60b5b549cfa17d7bce3e9b45b935"},
 ]
 httpretty = [
     {file = "httpretty-1.1.4.tar.gz", hash = "sha256:20de0e5dd5a18292d36d928cc3d6e52f8b2ac73daec40d41eb62dee154933b68"},

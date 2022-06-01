@@ -60,15 +60,13 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 
 ## Requirements
 
-* Python >= 3.7
-* python3-dateutil >= 2.6
-* python3-requests >= 2.7
-* python3-bs4 (beautifulsoup4) >= 4.3.2
-* python3-feedparser >= 6.0.8
-* python3-dulwich >= 0.20.0
-* grimoirelab-toolkit >= 0.2
+Perceval requires Python 3.7 or later to run. For other Python
+dependencies, please check the `pyproject.toml` file included
+on this repository.
 
-Note that you should have also the following packages installed in your system:
+Also, note that you should have the following packages installed
+in your system:
+
 - git
 - build-essential
 
