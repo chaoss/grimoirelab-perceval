@@ -184,9 +184,9 @@ class Slack(Backend):
         are combined because there have been cases where two messages were sent
         by different users at the same time.
 
-        In the case where neither the 'user' or 'bot_id' attributes are present
-        (e.g, bot deleted), the fallback option is to generate the identifier
-        using the 'ts' and 'username' values.
+        In the case where neither the 'user', 'bot_id', or 'username' attributes
+        are present (e.g, bot deleted), the fallback option is to generate the
+        identifier using the 'ts' value.
         """
         if 'user' in item:
             nick = item['user']
@@ -194,8 +194,10 @@ class Slack(Backend):
             nick = item['comment']['user']
         elif 'bot_id' in item:
             nick = item['bot_id']
-        else:
+        elif 'username' in item:
             nick = item['username']
+        else:
+            nick = ""
 
         return item['ts'] + nick
 
