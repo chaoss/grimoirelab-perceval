@@ -858,6 +858,55 @@ class TestSlackClient(unittest.TestCase):
 
         self.assertEqual(user, '{"ok":false,"user":null}')
 
+    def test_metadata_id(self):
+
+        client = Slack('CHANNEL', 'TOKEN')
+
+        # When 'user', 'bot_id', 'comment', or 'username' do not exist.
+        item = {
+            'type': 'message',
+            'text': 'A file was commented on',
+            'ts': '1529335169.000726',
+            'channel_info': {
+                'id': 'CHANNEL',
+                'name': 'test',
+                'is_channel': True,
+                'num_members': 4
+            }
+        }
+        metadata_id = client.metadata_id(item)
+        expected_id = item['ts']
+
+        self.assertEqual(metadata_id, expected_id)
+
+        # With 'username'
+        item['username'] = "username"
+        metadata_id = client.metadata_id(item)
+        expected_id = item['ts'] + item['username']
+
+        self.assertEqual(metadata_id, expected_id)
+
+        # With 'bot_id'
+        item['bot_id'] = "1"
+        metadata_id = client.metadata_id(item)
+        expected_id = item['ts'] + item['bot_id']
+
+        self.assertEqual(metadata_id, expected_id)
+
+        # With 'comment'
+        item['comment'] = {"user": "user"}
+        metadata_id = client.metadata_id(item)
+        expected_id = item['ts'] + item['comment']['user']
+
+        self.assertEqual(metadata_id, expected_id)
+
+        # With 'user'
+        item['user'] = "user"
+        metadata_id = client.metadata_id(item)
+        expected_id = item['ts'] + item['user']
+
+        self.assertEqual(metadata_id, expected_id)
+
 
 class TestSlackCommand(unittest.TestCase):
     """SlackCommand unit tests"""
