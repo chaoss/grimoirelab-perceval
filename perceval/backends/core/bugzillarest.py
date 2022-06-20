@@ -65,7 +65,7 @@ class BugzillaREST(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.11.0'
+    version = '0.12.0'
 
     CATEGORIES = [CATEGORY_BUG]
     EXTRA_SEARCH_FIELDS = {
@@ -331,8 +331,11 @@ class BugzillaRESTClient(HttpClient):
         url = self.URL % {'base': self.base_url, 'resource': self.RVERSION}
 
         params = {self.PBUGZILLA_KEY: self.api_key}
-        r = self.fetch(url, payload=params)
-        if 'version' not in r.json():
+        try:
+            r = self.fetch(url, payload=params)
+            if 'version' not in r.json():
+                self.bugzilla_custom = True
+        except requests.exceptions.HTTPError:
             self.bugzilla_custom = True
 
     def login(self, user, password):

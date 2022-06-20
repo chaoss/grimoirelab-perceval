@@ -600,6 +600,17 @@ class TestBugzillaRESTClient(unittest.TestCase):
         client = BugzillaRESTClient(BUGZILLA_SERVER_URL, api_key='abcdef')
         self.assertTrue(client.bugzilla_custom)
 
+        # Set up a mock HTTP server
+        body_400_error = "400 Client Error: Bad Request for url: " + BUGZILLA_VERSION_URL + "?api_key=abcdef"
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body=body_400_error,
+                               status=400)
+
+        # Test custom Bugzilla version https://bugzilla.redhat.com
+        client = BugzillaRESTClient(BUGZILLA_SERVER_URL, api_key='abcdef')
+        self.assertTrue(client.bugzilla_custom)
+
     @httpretty.activate
     def test_bugs(self):
         """Test bugs API call"""
