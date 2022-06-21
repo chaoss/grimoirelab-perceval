@@ -198,7 +198,7 @@ class TestConfluenceBackend(unittest.TestCase):
 
         http_requests = setup_http_server()
 
-        confluence = Confluence(CONFLUENCE_URL)
+        confluence = Confluence(CONFLUENCE_URL, max_contents=2)
 
         hcs = [hc for hc in confluence.fetch()]
 
@@ -639,11 +639,13 @@ class TestConfluenceCommand(unittest.TestCase):
         self.assertTrue(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertIsNone(parsed_args.spaces)
+        self.assertEqual(parsed_args.max_contents, 200)
 
         args = ['http://example.com',
                 '--tag', 'test', '--no-ssl-verify',
                 '--from-date', '1970-01-01',
-                '--spaces', 'TEST', 'PERCEVAL']
+                '--spaces', 'TEST', 'PERCEVAL',
+                '--max-contents', '2']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, 'http://example.com')
@@ -651,6 +653,7 @@ class TestConfluenceCommand(unittest.TestCase):
         self.assertFalse(parsed_args.ssl_verify)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.spaces, ['TEST', 'PERCEVAL'])
+        self.assertEqual(parsed_args.max_contents, 2)
 
 
 class TestConfluenceClient(unittest.TestCase):

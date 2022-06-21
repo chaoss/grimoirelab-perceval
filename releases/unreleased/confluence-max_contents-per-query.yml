@@ -1,0 +1,11 @@
+---
+title: '[confluence] Option `max_contents` to limit the number of requested contents'
+category: added
+author: Quan Zhou <quan@bitergia.com>
+issue: null
+notes: >
+    This parameter sets the maximum number of contents requested
+    per query. By default, this number is 200, but this can be changed by
+    adding the `--max-contents` argument. This will help to bypass those
+    instances where the maximum limit is lower than Perceval's default
+    value.

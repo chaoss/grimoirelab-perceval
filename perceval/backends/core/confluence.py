@@ -61,18 +61,22 @@ class Confluence(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
+    :param spaces: name of spaces to fetch, (default the entire instance)
+    :param max_contents: maximum number of contents to fetch per request
     """
-    version = '0.13.0'
+    version = '0.14.0'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 
-    def __init__(self, url, tag=None, archive=None, ssl_verify=True, spaces=None):
+    def __init__(self, url, tag=None, archive=None, ssl_verify=True,
+                 spaces=None, max_contents=MAX_CONTENTS):
         origin = url
 
         super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.client = None
         self.spaces = spaces
+        self.max_contents = max_contents
 
     def search_fields(self, item):
         """Add search fields to an item.
@@ -105,7 +109,9 @@ class Confluence(Backend):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_HISTORICAL_CONTENT, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_HISTORICAL_CONTENT,
+              from_date=DEFAULT_DATETIME,
+              max_contents=MAX_CONTENTS):
         """Fetch the contents by version from the server.
 
         This method fetches the different historical versions (or
@@ -120,6 +126,7 @@ class Confluence(Backend):
         :param category: the category of items to fetch
         :param from_date: obtain historical versions of contents updated
             since this date
+        :param max_contents: maximum number of contents to fetch per request
 
         :returns: a generator of historical versions
         """
@@ -129,7 +136,8 @@ class Confluence(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {
-            'from_date': from_date
+            'from_date': from_date,
+            'max_contents': max_contents
         }
 
         items = super().fetch(category, **kwargs)
@@ -146,13 +154,14 @@ class Confluence(Backend):
         """
 
         from_date = kwargs['from_date']
+        max_contents = kwargs['max_contents']
 
-        logger.info("Fetching historical contents of '%s' from %s",
-                    self.url, str(from_date))
+        logger.info("Fetching historical contents of '%s' from %s max contents per query %s",
+                    self.url, str(from_date), str(max_contents))
 
         nhcs = 0
 
-        contents = self.__fetch_contents_summary(from_date)
+        contents = self.__fetch_contents_summary(from_date, max_contents)
         contents = [content for content in contents]
 
         for content in contents:
@@ -263,11 +272,12 @@ class Confluence(Backend):
         """Init client"""
 
         return ConfluenceClient(self.url, archive=self.archive, from_archive=from_archive,
-                                ssl_verify=self.ssl_verify, spaces=self.spaces)
+                                ssl_verify=self.ssl_verify, spaces=self.spaces,
+                                max_contents=self.max_contents)
 
-    def __fetch_contents_summary(self, from_date):
+    def __fetch_contents_summary(self, from_date, max_contents):
         logger.debug("Fetching contents summary from %s", str(from_date))
-        for page in self.client.contents(from_date=from_date):
+        for page in self.client.contents(from_date=from_date, max_contents=max_contents):
             for cs in self.parse_contents_summary(page):
                 yield cs
 
@@ -339,6 +349,9 @@ class ConfluenceCommand(BackendCommand):
         # Optional arguments
         parser.parser.add_argument('--spaces', nargs='+',
                                    help="List of spaces to fetch")
+        parser.parser.add_argument('--max-contents', dest='max_contents',
+                                   type=int, default=MAX_CONTENTS,
+                                   help="Maximum number of contents requested on the same query")
 
         return parser
 
@@ -353,6 +366,8 @@ class ConfluenceClient(HttpClient):
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
     :param ssl_verify: enable/disable SSL verification
+    :param spaces: name of spaces to fetch, (default the entire instance)
+    :param max_contents: maximum number of contents to fetch per request
     """
     URL = "%(base)s/rest/api/%(resource)s"
 
@@ -379,9 +394,11 @@ class ConfluenceClient(HttpClient):
     VEXPAND = ['body.storage', 'history', 'version']
     VHISTORICAL = 'historical'
 
-    def __init__(self, base_url, archive=None, from_archive=False, ssl_verify=True, spaces=None):
+    def __init__(self, base_url, archive=None, from_archive=False, ssl_verify=True,
+                 spaces=None, max_contents=MAX_CONTENTS):
         super().__init__(base_url.rstrip('/'), archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         self.spaces = spaces
+        self.max_contents = max_contents
 
     def contents(self, from_date=DEFAULT_DATETIME,
                  offset=None, max_contents=MAX_CONTENTS):
@@ -394,7 +411,7 @@ class ConfluenceClient(HttpClient):
 
         :param from_date: fetch the contents updated since this date
         :param offset: fetch the contents starting from this offset
-        :param limit: maximum number of contents to fetch per request
+        :param max_contents: maximum number of contents to fetch per request
         """
         resource = self.RCONTENTS + '/' + self.MSEARCH
 
