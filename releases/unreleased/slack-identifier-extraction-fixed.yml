@@ -1,8 +1,0 @@
----
-title: Slack identifier extraction fixed
-category: fixed
-author: Quan Zhou <quan@bitergia.com>
-issue: null
-notes: >
-    Extract the identifier without user information when the user was
-    deleted.
