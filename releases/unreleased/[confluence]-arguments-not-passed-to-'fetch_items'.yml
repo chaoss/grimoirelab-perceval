@@ -1,0 +1,8 @@
+---
+title: '[confluence] KeyError exception when arguments not passed to ''fetch_items'''
+category: fixed
+author: Santiago Dueñas <sduenas@bitergia.com>
+issue: null
+notes: >
+  Required arguments that weren't passed to 'fetch_items'
+  made the code fail with a KeyError exception.
