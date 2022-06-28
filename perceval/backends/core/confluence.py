@@ -64,7 +64,7 @@ class Confluence(Backend):
     :param spaces: name of spaces to fetch, (default the entire instance)
     :param max_contents: maximum number of contents to fetch per request
     """
-    version = '0.14.0'
+    version = '0.14.1'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 
@@ -153,8 +153,8 @@ class Confluence(Backend):
         :returns: a generator of items
         """
 
-        from_date = kwargs['from_date']
-        max_contents = kwargs['max_contents']
+        from_date = kwargs.get('from_date', DEFAULT_DATETIME)
+        max_contents = kwargs.get('max_contents', MAX_CONTENTS)
 
         logger.info("Fetching historical contents of '%s' from %s max contents per query %s",
                     self.url, str(from_date), str(max_contents))
