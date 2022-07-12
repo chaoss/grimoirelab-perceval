@@ -175,6 +175,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.tag, 'test')
         self.assertIsNone(phab.client)
         self.assertTrue(phab.ssl_verify)
+        self.assertListEqual(phab.blacklist_ids, [])
 
         # When tag is empty or None it will be set to
         # the value in url
@@ -182,6 +183,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.url, PHABRICATOR_URL)
         self.assertEqual(phab.origin, PHABRICATOR_URL)
         self.assertEqual(phab.tag, PHABRICATOR_URL)
+        self.assertListEqual(phab.blacklist_ids, [])
 
         phab = Phabricator(PHABRICATOR_URL, 'AAAA', tag='', ssl_verify=False)
         self.assertEqual(phab.url, PHABRICATOR_URL)
@@ -190,6 +192,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.max_retries, MAX_RETRIES)
         self.assertEqual(phab.sleep_time, DEFAULT_SLEEP_TIME)
         self.assertFalse(phab.ssl_verify)
+        self.assertListEqual(phab.blacklist_ids, [])
 
         phab = Phabricator(PHABRICATOR_URL, 'AAAA', None, None, 3, 25)
         self.assertEqual(phab.url, PHABRICATOR_URL)
@@ -197,6 +200,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.tag, PHABRICATOR_URL)
         self.assertEqual(phab.max_retries, 3)
         self.assertEqual(phab.sleep_time, 25)
+        self.assertListEqual(phab.blacklist_ids, [])
 
         phab = Phabricator(PHABRICATOR_URL, 'AAAA', tag='', max_retries=3, sleep_time=25)
         self.assertEqual(phab.url, PHABRICATOR_URL)
@@ -204,6 +208,10 @@ class TestPhabricatorBackend(unittest.TestCase):
         self.assertEqual(phab.tag, PHABRICATOR_URL)
         self.assertEqual(phab.max_retries, 3)
         self.assertEqual(phab.sleep_time, 25)
+        self.assertListEqual(phab.blacklist_ids, [])
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', blacklist_ids=[69])
+        self.assertEqual(phab.blacklist_ids, [69])
 
     def test_has_archiving(self):
         """Test if it returns True when has_archiving is called"""
@@ -554,6 +562,171 @@ class TestPhabricatorBackend(unittest.TestCase):
             rparams = http_requests[i].parsed_body
             rparams['params'] = json.loads(rparams['params'][0])
             self.assertDictEqual(rparams, expected[i])
+
+    @httpretty.activate
+    def test_fetch_id_blacklisted(self):
+        http_requests = setup_http_server()
+
+        phab = Phabricator(PHABRICATOR_URL, 'AAAA', blacklist_ids=[296])
+        tasks = [task for task in phab.fetch(from_date=None)]
+
+        expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
+                    (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
+                    (78, 17, 'jdoe', None, 'fa971157c4d0155652f94b673866abd83b929b27', 1462792338.0)]
+
+        self.assertEqual(len(tasks), len(expected))
+
+        for x in range(len(tasks)):
+            task = tasks[x]
+            expc = expected[x]
+            self.assertEqual(task['data']['id'], expc[0])
+            self.assertEqual(len(task['data']['transactions']), expc[1])
+            self.assertEqual(task['data']['fields']['authorData']['userName'], expc[2])
+
+            # Check owner data; when it is null owner is not included
+            if not expc[3]:
+                self.assertNotIn('ownerData', task['data']['fields'])
+            else:
+                self.assertEqual(task['data']['fields']['ownerData']['userName'], expc[3])
+
+            self.assertEqual(task['uuid'], expc[4])
+            self.assertEqual(task['origin'], PHABRICATOR_URL)
+            self.assertEqual(task['updated_on'], expc[5])
+            self.assertEqual(task['category'], 'task')
+            self.assertEqual(task['tag'], PHABRICATOR_URL)
+
+        # Check some authors info on transactions
+        trans = tasks[0]['data']['transactions']
+        self.assertEqual(trans[0]['authorData']['userName'], 'jdoe')
+        self.assertEqual(trans[15]['authorData']['userName'], 'jdoe')
+
+        # Check that subscribers data is included for core:subscribers type transactions
+        trans = tasks[0]['data']['transactions'][6]
+        self.assertEqual(trans['transactionType'], 'core:subscribers')
+        self.assertEqual(trans['oldValue'], [])
+        self.assertEqual(trans['oldValue'], trans['oldValue_data'])
+        self.assertEqual(len(trans['newValue']), len(trans['newValue_data']))
+        self.assertDictEqual(trans['newValue_data'][0], trans['authorData'])
+
+        # Check that project data is included for core:edge type transactions
+        trans = tasks[0]['data']['transactions'][7]
+        self.assertEqual(trans['transactionType'], 'core:edge')
+        self.assertEqual(trans['newValue_data'][0]['phid'],
+                         trans['newValue'][trans['newValue_data'][0]['phid']]['dst'])
+
+        # Check that policy data is include for core:edit-policy type transactions
+        trans = tasks[0]['data']['transactions'][8]
+        self.assertEqual(trans['transactionType'], 'core:edit-policy')
+        self.assertIsNotNone(trans['newValue_data'])
+        self.assertIsNone(trans['oldValue_data'])
+
+        # Check that policy data is include for core:view-policy type transactions
+        trans = tasks[0]['data']['transactions'][9]
+        self.assertEqual(trans['transactionType'], 'core:view-policy')
+        self.assertIsNotNone(trans['newValue_data'])
+        self.assertIsNone(trans['oldValue_data'])
+
+        # Check that reassign data is include for reassign type transactions
+        trans = tasks[0]['data']['transactions'][13]
+        self.assertEqual(trans['transactionType'], 'reassign')
+        self.assertDictEqual(trans['newValue_data'], trans['authorData'])
+        self.assertIsNone(trans['oldValue_data'])
+
+        # Check authors that weren't found on the server: jsmith
+        trans = tasks[1]['data']['transactions']
+        self.assertEqual(trans[3]['authorData'], None)
+
+        # Check some info about projects
+        prjs = tasks[0]['data']['projects']
+        self.assertEqual(len(prjs), 0)
+
+        # Check requests
+        expected = [
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'attachments': {'projects': True},
+                    'constraints': {'modifiedStart': 1},
+                    'order': 'outdated'
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'ids': [69, 73, 78]
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-2uk52xorcqb6sjvp467y']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-PROJ-zi2ndtoy3fh5pnbqzfdo']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-PROJ-2qnt6thbrd7qnx5bitzy']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-bjxhrstz5fb5gkrojmev']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-mjr7pnwpg6slsnjcqki7']
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'after': '335',
+                    'attachments': {'projects': True},
+                    'constraints': {'modifiedStart': 1},
+                    'order': 'outdated'
+                }
+            },
+            {
+                '__conduit__': ['True'],
+                'output': ['json'],
+                'params': {
+                    '__conduit__': {'token': 'AAAA'},
+                    'phids': ['PHID-USER-ojtcpympsmwenszuef7p']
+                }
+            }
+        ]
+
+        self.assertEqual(len(http_requests), len(expected))
+
+        for i in range(len(expected)):
+            rparams = http_requests[i].parsed_body
+            rparams['params'] = json.loads(rparams['params'][0])
+            self.assertIn(rparams, expected)
 
     @httpretty.activate
     def test_fetch_empty(self):
