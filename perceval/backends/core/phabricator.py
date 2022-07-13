@@ -29,7 +29,8 @@ from grimoirelab_toolkit.datetime import datetime_to_utc
 
 from ...backend import (Backend,
                         BackendCommand,
-                        BackendCommandArgumentParser)
+                        BackendCommandArgumentParser,
+                        OriginUniqueField)
 from ...client import HttpClient
 from ...errors import BaseError
 from ...utils import DEFAULT_DATETIME
@@ -59,22 +60,26 @@ class Phabricator(Backend):
     :param sleep_time: time (in seconds) to sleep in case
         of connection problems
     :param ssl_verify: enable/disable SSL verification
+    :param blacklist_ids: exclude the ids while fetching
     """
-    version = '0.13.0'
+    version = '0.14.0'
 
     CATEGORIES = [CATEGORY_TASK]
+    ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='id', type=int)
 
     def __init__(self, url, api_token, tag=None, archive=None,
-                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME, ssl_verify=True):
+                 max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
+                 ssl_verify=True, blacklist_ids=None):
         origin = url
 
-        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify, blacklist_ids=blacklist_ids)
         self.url = url
         self.api_token = api_token
         self.client = None
 
         self.max_retries = max_retries
         self.sleep_time = sleep_time
+        self.blacklist_ids = [] if not blacklist_ids else blacklist_ids
 
         self._users = {}
         self._projects = {}
@@ -165,13 +170,14 @@ class Phabricator(Backend):
         return CATEGORY_TASK
 
     @staticmethod
-    def parse_tasks(raw_json):
+    def parse_tasks(raw_json, blacklist_ids=[]):
         """Parse a Phabricator tasks JSON stream.
 
         The method parses a JSON stream and returns a list iterator.
         Each item is a dictionary that contains the task parsed data.
 
         :param raw_json: JSON string to parse
+        :param blacklist_ids: exclude tasks whose ids are in this list
 
         :returns: a generator of parsed tasks
         """
@@ -179,7 +185,8 @@ class Phabricator(Backend):
 
         tasks = results['result']['data']
         for t in tasks:
-            yield t
+            if t['id'] not in blacklist_ids:
+                yield t
 
     @staticmethod
     def parse_tasks_transactions(raw_json):
@@ -232,12 +239,14 @@ class Phabricator(Backend):
 
         return ConduitClient(self.url, self.api_token,
                              self.max_retries, self.sleep_time,
-                             self.archive, from_archive, self.ssl_verify)
+                             self.archive, from_archive, self.ssl_verify,
+                             self.blacklist_ids)
 
     def __fetch_tasks(self, from_date):
+        blacklist_ids = [int(x) for x in self.blacklist_ids]
         for raw_tasks in self.client.tasks(from_date=from_date):
 
-            tasks = [t for t in self.parse_tasks(raw_tasks)]
+            tasks = [t for t in self.parse_tasks(raw_tasks, blacklist_ids)]
 
             if not tasks:
                 break
@@ -457,6 +466,7 @@ class ConduitClient(HttpClient):
     :param archive: an archive to store/read fetched data
     :param from_archive: it tells whether to write/read the archive
     :param ssl_verify: enable/disable SSL verification
+    :param blacklist_ids: exclude the ids of this list while fetching
     """
     EXTRA_STATUS_FORCELIST = [429, 502, 503]
     URL = '%(base)s/api/%(method)s'
@@ -479,11 +489,12 @@ class ConduitClient(HttpClient):
     VOUTDATED = 'outdated'
 
     def __init__(self, base_url, api_token, max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
-                 archive=None, from_archive=False, ssl_verify=True):
+                 archive=None, from_archive=False, ssl_verify=True, blacklist_ids=None):
         super().__init__(base_url.rstrip('/'), sleep_time=sleep_time, max_retries=max_retries,
                          extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
                          archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         self.api_token = api_token
+        self.blacklist_ids = [] if not blacklist_ids else blacklist_ids
 
     def tasks(self, from_date=DEFAULT_DATETIME):
         """Retrieve tasks.
@@ -624,7 +635,8 @@ class PhabricatorCommand(BackendCommand):
                                               from_date=True,
                                               token_auth=True,
                                               archive=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              blacklist=True)
 
         # Phabricator options
         group = parser.parser.add_argument_group('Phabricator arguments')
