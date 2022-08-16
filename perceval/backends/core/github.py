@@ -371,8 +371,13 @@ class GitHub(Backend):
         raw_repo = self.client.repo()
         repo = json.loads(raw_repo)
 
-        raw_repo_releases = self.client.repo_releases()
-        repo_releases = json.loads(raw_repo_releases)
+        repo_releases_groups = self.client.repo_releases()
+        repo_releases = []
+        for raw_releases in repo_releases_groups:
+            releases = json.loads(raw_releases)
+            for release in releases:
+               repo_releases.append(release) 
+            
         repo['releases'] = repo_releases
 
         fetched_on = datetime_utcnow()
@@ -619,6 +624,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
     RORGS = 'orgs'
     RRATE_LIMIT = 'rate_limit'
     RCOMMITS = 'commits'
+    RELEASES = 'releases'
 
     # API headers
     HAUTHORIZATION = 'Authorization'
@@ -780,12 +786,12 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def repo_releases(self):
         """Get repository releases data"""
 
-        path = urijoin(self.base_url, self.RREPOS, self.owner, self.repository, 'releases?page=1&per_page=100')
+        payload = {
+            self.PPER_PAGE: self.max_items
+        }
 
-        r = self.fetch(path)
-        repo = r.text
-
-        return repo
+        path = urijoin(self.RELEASES)
+        return self.fetch_items(path, payload)
 
     def pull_requested_reviewers(self, pr_number):
         """Get pull requested reviewers"""
