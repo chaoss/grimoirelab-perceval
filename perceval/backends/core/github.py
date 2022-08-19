@@ -110,6 +110,7 @@ class GitHub(Backend):
     :param sleep_time: time to sleep in case
         of connection problems
     :param ssl_verify: enable/disable SSL verification
+    :param proxy: proxy to be used in the requests
     """
     version = '0.27.0'
 
@@ -133,13 +134,13 @@ class GitHub(Backend):
                  base_url=None, tag=None, archive=None,
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
-                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE, ssl_verify=True):
+                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE, ssl_verify=True, proxy=None):
         if api_token is None:
             api_token = []
         origin = base_url if base_url else GITHUB_URL
         origin = urijoin(origin, owner, repository)
 
-        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
+        super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify, proxy=proxy)
 
         self.owner = owner
         self.repository = repository
@@ -650,7 +651,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def __init__(self, owner, repository, tokens=None, github_app_id=None, github_app_pk_filepath=None,
                  base_url=None, sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, max_retries=MAX_RETRIES,
-                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE, archive=None, from_archive=False, ssl_verify=True):
+                 max_items=MAX_CATEGORY_ITEMS_PER_PAGE, archive=None, from_archive=False, ssl_verify=True, proxy=None):
         self.owner = owner
         self.repository = repository
         self.tokens = tokens
@@ -672,7 +673,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_headers=self._set_extra_headers(),
                          extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
-                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
+                         archive=archive, from_archive=from_archive, ssl_verify=ssl_verify, proxy=proxy)
         super().setup_rate_limit_handler(sleep_for_rate=sleep_for_rate, min_rate_to_sleep=min_rate_to_sleep)
 
         # Choose best API token (with maximum API points remaining)
@@ -1186,7 +1187,8 @@ class GitHubCommand(BackendCommand):
                                               to_date=True,
                                               token_auth=False,
                                               archive=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              proxy=True)
         # GitHub options
         group = parser.parser.add_argument_group('GitHub arguments')
         group.add_argument('--enterprise-url', dest='base_url',

@@ -62,6 +62,7 @@ class HttpClient:
     :param from_archive: if `True` the data is fetched
         from an archive
     :param ssl_verify: enable/disable SSL verification
+    :param proxy: proxy to be used in the requests
     """
     version = '0.3.0'
 
@@ -88,7 +89,7 @@ class HttpClient:
 
     def __init__(self, base_url, max_retries=MAX_RETRIES, sleep_time=DEFAULT_SLEEP_TIME,
                  extra_headers=None, extra_status_forcelist=None, extra_retry_after_status=None,
-                 archive=None, from_archive=False, ssl_verify=True):
+                 archive=None, from_archive=False, ssl_verify=True, proxy=None):
 
         self.base_url = base_url
         self.ssl_verify = ssl_verify
@@ -119,6 +120,7 @@ class HttpClient:
 
         self.archive = archive
         self.from_archive = from_archive
+        self.proxy = proxy
 
         self._create_http_session()
 
@@ -197,6 +199,10 @@ class HttpClient:
 
         if self.headers:
             self.session.headers.update(self.headers)
+
+        if self.proxy:
+            proxies = { 'http': self.proxy, 'https': self.proxy }
+            self.session.proxies.update(proxies)
 
         retries = urllib3.util.Retry(total=self.max_retries,
                                      connect=self.max_retries_on_connect,
