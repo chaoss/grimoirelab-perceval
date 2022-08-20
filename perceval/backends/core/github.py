@@ -362,6 +362,7 @@ class GitHub(Backend):
                     pull[field + '_data'] = self.__get_pull_requested_reviewers(pull['number'])
                 elif field == 'commits':
                     pull[field + '_data'] = self.__get_pull_commits(pull['number'])
+                    pull['linked_issues_data'] = self.__get_pull_linked_issues(pull['number'])               
 
             yield pull
 
@@ -551,6 +552,23 @@ class GitHub(Backend):
                 reactions.append(reaction)
 
         return reactions
+    
+    def __get_pull_linked_issues(self, pr_number):
+        linked_times = 0
+        try:
+            group_linked_issues = self.client.pull_linked_issues(pr_number)
+            for raw_linked_issues in group_linked_issues:
+                for event in json.loads(raw_linked_issues):
+                    if event["event"] in ["connected"]:
+                        linked_times += 1
+        except requests.exceptions.HTTPError as error:
+            # 404 not found is wrongly received from gitee API service
+            if error.response.status_code == 404:
+                logger.error("Can't get gitee pull request linked issues with PR number %s", pr_number)
+            else:
+                raise error
+        return linked_times
+
 
     def __get_user(self, login):
         """Get user and org data for the login"""
@@ -844,6 +862,18 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         path = urijoin(self.RPULLS, self.RCOMMENTS, str(comment_id), self.RREACTIONS)
         return self.fetch_items(path, payload)
+
+    def pull_linked_issues(self, pr_number):
+        """Get pull request linked issues"""
+
+        payload = {
+            self.PPER_PAGE: self.max_items,
+            self.PDIRECTION: self.VDIRECTION_ASC,
+            self.PSORT: self.VSORT_UPDATED
+        }
+
+        commit_url = urijoin(self.RISSUES, str(pr_number), "events")
+        return self.fetch_items(commit_url, payload)
 
     def user(self, login):
         """Get the user information and update the user cache"""
