@@ -193,13 +193,14 @@ class Backend:
     To access this field, please prefer :func:`origin_unique_field`.
     """
 
-    def __init__(self, origin, tag=None, archive=None, blacklist_ids=None, ssl_verify=True):
+    def __init__(self, origin, tag=None, archive=None, blacklist_ids=None, ssl_verify=True, proxy=None):
         self._origin = origin
         self.tag = tag if tag else origin
         self.archive = archive or None
         self.blacklist_ids = blacklist_ids or None
         self._summary = None
         self._ssl_verify = ssl_verify
+        self._proxy = proxy
 
     @property
     def origin(self):
@@ -216,6 +217,10 @@ class Backend:
     @property
     def ssl_verify(self):
         return self._ssl_verify
+
+    @property
+    def proxy(self):
+        return self.proxy
 
     @archive.setter
     def archive(self, obj):
@@ -610,6 +615,7 @@ class BackendCommandArgumentParser:
     :param archive: set archiving arguments
     :param aliases: define aliases for parsed arguments
     :param ssl_verify: set SSL verify argument
+    :param proxy: proxy to be used in the requests
 
     :raises AttributeError: when both `from_date` and `offset` are set
         to `True`
@@ -617,12 +623,13 @@ class BackendCommandArgumentParser:
 
     def __init__(self, backend, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False, archive=False,
-                 aliases=None, blacklist=False, ssl_verify=False):
+                 aliases=None, blacklist=False, ssl_verify=False, proxy=False):
         self._from_date = from_date
         self._to_date = to_date
         self._archive = archive
         self._backend = backend
         self._ssl_verify = ssl_verify
+        self._proxy = proxy
 
         self.aliases = aliases or {}
         self.parser = argparse.ArgumentParser()
@@ -672,6 +679,10 @@ class BackendCommandArgumentParser:
         if ssl_verify:
             group.add_argument('--no-ssl-verify', dest='ssl_verify', action='store_false',
                                help="disable SSL verification")
+        if proxy:
+            group.add_argument('--proxy', dest='proxy',
+                               help="To use HTTP Basic Auth with your proxy, \
+                                    use the http://user:password@host/ syntax")
 
         self._set_output_arguments()
 
