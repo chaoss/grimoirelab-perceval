@@ -26,9 +26,6 @@ import os
 import unittest.mock
 
 import httpretty
-import pkg_resources
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.client import RateLimitHandler
 from perceval.utils import DEFAULT_DATETIME

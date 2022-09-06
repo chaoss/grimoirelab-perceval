@@ -32,11 +32,8 @@ import os
 import unittest
 
 import httpretty
-import pkg_resources
 
 from grimoirelab_toolkit.datetime import str_to_datetime
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME

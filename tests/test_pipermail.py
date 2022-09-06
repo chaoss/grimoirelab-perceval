@@ -28,14 +28,11 @@
 import datetime
 import httpretty
 import os
-import pkg_resources
 import requests
 import shutil
 import tempfile
 import unittest
 import unittest.mock
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME

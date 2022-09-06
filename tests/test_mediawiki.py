@@ -30,15 +30,12 @@ import datetime
 import dateutil
 import httpretty
 import os
-import pkg_resources
 import unittest
 import urllib
 import unittest.mock
 
 from grimoirelab_toolkit.datetime import (datetime_to_utc,
                                           str_to_datetime)
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.errors import BackendError

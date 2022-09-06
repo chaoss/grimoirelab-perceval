@@ -31,9 +31,6 @@ import shutil
 import unittest
 
 import httpretty
-import pkg_resources
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.errors import BackendError

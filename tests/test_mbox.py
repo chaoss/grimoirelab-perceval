@@ -28,14 +28,11 @@ import bz2
 import datetime
 import gzip
 import os
-import pkg_resources
 import shutil
 import tempfile
 import unittest
 import unittest.mock
 import zipfile
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME

@@ -26,11 +26,8 @@
 
 import httpretty
 import os
-import pkg_resources
 import unittest
 import urllib
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.telegram import (Telegram,

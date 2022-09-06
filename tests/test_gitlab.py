@@ -34,10 +34,7 @@ import time
 import unittest
 
 import httpretty
-import pkg_resources
 import requests
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from grimoirelab_toolkit.datetime import datetime_utcnow
 from perceval.backend import BackendCommandArgumentParser

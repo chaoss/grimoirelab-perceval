@@ -32,11 +32,8 @@ import unittest.mock
 
 import dateutil
 import httpretty
-import pkg_resources
 
 from grimoirelab_toolkit.uris import urijoin
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.dockerhub import (DockerHub,
