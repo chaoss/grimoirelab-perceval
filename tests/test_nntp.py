@@ -26,13 +26,10 @@
 import collections
 import nntplib
 import os
-import pkg_resources
 import shutil
 import tempfile
 import unittest
 import unittest.mock
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.archive import Archive
 from perceval.backend import BackendCommandArgumentParser

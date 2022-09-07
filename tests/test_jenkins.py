@@ -32,9 +32,6 @@ import time
 import unittest
 
 import httpretty
-import pkg_resources
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.jenkins import (logger,

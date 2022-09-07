@@ -25,14 +25,11 @@ import copy
 import datetime
 import httpretty
 import os
-import pkg_resources
 import unittest
 import unittest.mock
 import dateutil.tz
 import time
 import json
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.errors import RateLimitError

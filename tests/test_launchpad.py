@@ -27,11 +27,8 @@ import datetime
 import httpretty
 import json
 import os
-import pkg_resources
 import requests
 import unittest
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.launchpad import (Launchpad,
