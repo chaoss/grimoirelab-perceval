@@ -27,10 +27,7 @@
 
 import httpretty
 import os
-import pkg_resources
 import unittest
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.backends.core.rss import RSS, RSSCommand, RSSClient

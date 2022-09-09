@@ -26,12 +26,9 @@
 
 import datetime
 import os
-import pkg_resources
 import shutil
 import tempfile
 import unittest
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.errors import ParseError

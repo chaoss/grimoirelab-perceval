@@ -32,10 +32,7 @@ import unittest
 import urllib
 
 import httpretty
-import pkg_resources
 import requests
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.utils import DEFAULT_DATETIME

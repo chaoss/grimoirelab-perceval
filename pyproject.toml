@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "perceval"
-version = "0.20.0-rc.2"
+version = "0.20.0-rc.7"
 description = "Send Sir Perceval on a quest to fetch and gather data from software repositories."
 authors = [
     "GrimoireLab Developers"
@@ -62,7 +62,7 @@ furo = { version = "^2021.8.31", optional = true }
 
 [tool.poetry.dev-dependencies]
 httpretty = "^1.1.4"
-flake8 = "^3.9.1"
+flake8 = "^4.0.1"
 coverage = "^5.5"
 
 [tool.poetry.extras]

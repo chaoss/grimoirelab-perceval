@@ -31,9 +31,6 @@ import unittest.mock
 
 import dateutil
 import httpretty
-import pkg_resources
-
-pkg_resources.declare_namespace('perceval.backends')
 
 from grimoirelab_toolkit.datetime import str_to_datetime
 from perceval.backend import BackendCommandArgumentParser
