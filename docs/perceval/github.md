@@ -222,7 +222,7 @@ interface. Once you’re authenticated with GitHub, follow the following process
 - Click on “Settings” on your personal pop-up menu (usually obtained by clicking on your avatar, on the top right corner of the web page).
 - Once in “Settings”, look for “Personal access tokens”, in the “Developer settings” submenu, in the right menu.
 - Once in “Personal access tokens”, click on “Generate new token” (top right).
-- Once in “New personal access token”, select a name for your token (“token desription”), and select the scopes for it. If you’re going to use it only with perceval, you don’t really need permissions for any scope, so you don’t need to select any.
+- Once in “New personal access token”, select a name for your token (“token desription”), and select the scopes for it. If you’re going to use it only with public repositories, you don’t need to select any scopes. For private repositories you need the ”repo” scope.
 
 Regardless of the method used, perceval produces (as it did for the git backend) a JSON document for each item in stdout, and some messages in stderr. You can see both differentiated, for example, by redirecting stdout to a file:
 
