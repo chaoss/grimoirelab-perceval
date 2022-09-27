@@ -183,7 +183,7 @@ test = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
 name = "grimoirelab-toolkit"
-version = "0.3.1rc1"
+version = "0.3.1"
 description = "Toolkit of common functions used across GrimoireLab"
 category = "main"
 optional = false
@@ -845,8 +845,8 @@ furo = [
     {file = "furo-2021.11.23.tar.gz", hash = "sha256:54cecac5f3b688b5c7370d72ecdf1cd91a6c53f0f42751f4a719184b562cde70"},
 ]
 grimoirelab-toolkit = [
-    {file = "grimoirelab-toolkit-0.3.1rc1.tar.gz", hash = "sha256:b2ee5a5fcffdff0212f7ec82b3d8c4bcbfbef411200788a783752b2352344d61"},
-    {file = "grimoirelab_toolkit-0.3.1rc1-py3-none-any.whl", hash = "sha256:dc26f0b3d320dd404e2b83391146bd22bd59239c74d162dc6bae9de51c43d043"},
+    {file = "grimoirelab-toolkit-0.3.1.tar.gz", hash = "sha256:de5fbb100cda40145e2acfca407bc872e6a6870ab2c5413504c827d926df7903"},
+    {file = "grimoirelab_toolkit-0.3.1-py3-none-any.whl", hash = "sha256:2e92b6d2ba1dc6819cb65b3b78895c2a186db275b337f1eae60ec2c573380e27"},
 ]
 httpretty = [
     {file = "httpretty-1.1.4.tar.gz", hash = "sha256:20de0e5dd5a18292d36d928cc3d6e52f8b2ac73daec40d41eb62dee154933b68"},
