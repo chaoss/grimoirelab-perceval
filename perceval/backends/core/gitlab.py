@@ -153,15 +153,15 @@ class GitLab(Backend):
         return search_fields
 
     def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
-        """Fetch the issues/merge requests from the repository.
+        """Fetch the issues or merge requests from the repository.
 
-        The method retrieves, from a GitLab repository, the issues/merge requests
+        The method retrieves, from a GitLab repository, the issues or merge requests
         updated since the given date.
 
         :param category: the category of items to fetch
-        :param from_date: obtain issues updated since this date
+        :param from_date: obtain items updated since this date
 
-        :returns: a generator of issues
+        :returns: a generator of items
         """
         if not from_date:
             from_date = DEFAULT_DATETIME
@@ -759,7 +759,7 @@ class GitLabCommand(BackendCommand):
                                               ssl_verify=True)
 
         # GitLab options
-        group = parser.parser.add_argument_group('GitLab arguments')
+        group = parser.parser.add_argument_group('gitlab arguments')
         group.add_argument('--url', '--enterprise-url', dest='base_url',
                            help="Base URL for GitLab instance")
         group.add_argument('--sleep-for-rate', dest='sleep_for_rate',
