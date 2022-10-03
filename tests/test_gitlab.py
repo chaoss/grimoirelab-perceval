@@ -66,13 +66,13 @@ GITLAB_URL_PROJECT_GRP = "{}/projects/{}".format(GITLAB_API_URL, GITLAB_PRJ_GRP)
 GITLAB_ISSUES_URL_GRP = "{}/projects/{}/issues".format(GITLAB_API_URL, GITLAB_PRJ_GRP)
 GITLAB_MERGES_URL_GRP = "{}/projects/{}/merge_requests".format(GITLAB_API_URL, GITLAB_PRJ_GRP)
 
-GITLAB_ENTERPRISE_URL = "https://gitlab.ow2.org"
-GITLAB_ENTERPRISE_API_URL = GITLAB_ENTERPRISE_URL + "/api/v4"
+GITLAB_SELFMANAGED_URL = "https://gitlab.ow2.org"
+GITLAB_SELFMANAGED_API_URL = GITLAB_SELFMANAGED_URL + "/api/v4"
 
-GITLAB_ENT_PRJ = "am%2Ftest"
-GITLAB_ENTERPRISE_URL_PROJECT = "{}/projects/{}".format(GITLAB_ENTERPRISE_API_URL, GITLAB_ENT_PRJ)
-GITLAB_ENTERPRISE_ISSUES_URL = "{}/projects/{}/issues".format(GITLAB_ENTERPRISE_API_URL, GITLAB_ENT_PRJ)
-GITLAB_ENTERPRISE_MERGES_URL = "{}/projects/{}/merge_requests".format(GITLAB_ENTERPRISE_API_URL, GITLAB_ENT_PRJ)
+GITLAB_SELFMANAGED_PRJ = "am%2Ftest"
+GITLAB_SELFMANAGED_PROJECT_URL = "{}/projects/{}".format(GITLAB_SELFMANAGED_API_URL, GITLAB_SELFMANAGED_PRJ)
+GITLAB_SELFMANAGED_ISSUES_URL = "{}/projects/{}/issues".format(GITLAB_SELFMANAGED_API_URL, GITLAB_SELFMANAGED_PRJ)
+GITLAB_SELFMANAGED_MERGES_URL = "{}/projects/{}/merge_requests".format(GITLAB_SELFMANAGED_API_URL, GITLAB_SELFMANAGED_PRJ)
 
 
 def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=None, no_attr_last=False):
@@ -515,19 +515,19 @@ class TestGitLabBackend(unittest.TestCase):
             _ = GitLab('fdroid', 'fdroiddata', is_oauth_token=True, tag='test')
 
     @httpretty.activate
-    def test_initialization_entreprise(self):
-        """Test whether attributes are initialized for the entreprise version"""
+    def test_initialization_selfmanaged(self):
+        """Test whether attributes are initialized for the self-managed version"""
 
-        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
-                          GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+        setup_http_server(GITLAB_SELFMANAGED_PROJECT_URL,
+                          GITLAB_SELFMANAGED_ISSUES_URL,
+                          GITLAB_SELFMANAGED_MERGES_URL)
 
-        gitlab = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, tag='')
+        gitlab = GitLab('am', 'test', base_url=GITLAB_SELFMANAGED_URL, tag='')
 
         self.assertEqual(gitlab.owner, 'am')
         self.assertEqual(gitlab.repository, 'test')
-        self.assertEqual(gitlab.origin, GITLAB_ENTERPRISE_URL + "/am/test")
-        self.assertEqual(gitlab.tag, GITLAB_ENTERPRISE_URL + "/am/test")
+        self.assertEqual(gitlab.origin, GITLAB_SELFMANAGED_URL + "/am/test")
+        self.assertEqual(gitlab.tag, GITLAB_SELFMANAGED_URL + "/am/test")
         self.assertIsNone(gitlab.client)
 
     def test_has_archiving(self):
@@ -1015,65 +1015,65 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertDictEqual(request.querystring, expected)
 
     @httpretty.activate
-    def test_fetch_issues_enterprise(self):
-        """Test whether issues are properly fetched from GitLab Enterprise server"""
+    def test_fetch_issues_selfmanaged(self):
+        """Test whether issues are properly fetched from GitLab self-managed server"""
 
-        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
-                          GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+        setup_http_server(GITLAB_SELFMANAGED_PROJECT_URL,
+                          GITLAB_SELFMANAGED_ISSUES_URL,
+                          GITLAB_SELFMANAGED_MERGES_URL)
 
-        gitlab = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL)
+        gitlab = GitLab('am', 'test', base_url=GITLAB_SELFMANAGED_URL)
 
         issues = [issues for issues in gitlab.fetch()]
 
         self.assertEqual(len(issues), 4)
 
         issue = issues[0]
-        self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['origin'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(issue['category'], CATEGORY_ISSUE)
-        self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['tag'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(issue['data']['author']['id'], 1)
         self.assertEqual(issue['data']['author']['username'], 'redfish64')
 
         issue = issues[1]
-        self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['origin'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(issue['category'], CATEGORY_ISSUE)
-        self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['tag'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(issue['data']['author']['id'], 1)
         self.assertEqual(issue['data']['author']['username'], 'redfish64')
 
         issue = issues[2]
-        self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['origin'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(issue['category'], CATEGORY_ISSUE)
-        self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['tag'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(issue['data']['author']['id'], 2)
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
 
         issue = issues[3]
-        self.assertEqual(issue['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['origin'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(issue['category'], CATEGORY_ISSUE)
-        self.assertEqual(issue['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(issue['tag'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(issue['data']['author']['id'], 2)
         self.assertEqual(issue['data']['author']['username'], 'YoeriNijs')
 
     @httpretty.activate
-    def test_fetch_merges_enterprise(self):
-        """Test whether merges are properly fetched from GitLab Enterprise server"""
+    def test_fetch_merges_selfmanaged(self):
+        """Test whether merges are properly fetched from GitLab selfmanaged server"""
 
-        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
-                          GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+        setup_http_server(GITLAB_SELFMANAGED_PROJECT_URL,
+                          GITLAB_SELFMANAGED_ISSUES_URL,
+                          GITLAB_SELFMANAGED_MERGES_URL)
 
-        gitlab = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL)
+        gitlab = GitLab('am', 'test', base_url=GITLAB_SELFMANAGED_URL)
 
         merges = [merges for merges in gitlab.fetch(category=CATEGORY_MERGE_REQUEST)]
 
         self.assertEqual(len(merges), 3)
 
         merge = merges[0]
-        self.assertEqual(merge['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['origin'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
-        self.assertEqual(merge['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['tag'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
         self.assertEqual(len(merge['data']['versions_data']), 2)
@@ -1081,18 +1081,18 @@ class TestGitLabBackend(unittest.TestCase):
         self.assertTrue('diffs' not in merge['data']['versions_data'][1])
 
         merge = merges[1]
-        self.assertEqual(merge['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['origin'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
-        self.assertEqual(merge['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['tag'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
         self.assertEqual(len(merge['data']['versions_data']), 1)
         self.assertTrue('diffs' not in merge['data']['versions_data'][0])
 
         merge = merges[2]
-        self.assertEqual(merge['origin'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['origin'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(merge['category'], CATEGORY_MERGE_REQUEST)
-        self.assertEqual(merge['tag'], GITLAB_ENTERPRISE_URL + '/am/test')
+        self.assertEqual(merge['tag'], GITLAB_SELFMANAGED_URL + '/am/test')
         self.assertEqual(merge['data']['author']['id'], 1)
         self.assertEqual(merge['data']['author']['username'], 'redfish64')
         self.assertEqual(len(merge['data']['versions_data']), 1)
@@ -1226,27 +1226,27 @@ class TestGitHUbBackendArchive(TestCaseBackendArchive):
         self._test_fetch_from_archive(category=CATEGORY_MERGE_REQUEST, from_date=from_date)
 
     @httpretty.activate
-    def test_fetch_issues_enterprise(self):
-        """Test whether issues are properly fetched from GitLab Enterprise server"""
+    def test_fetch_issues_selfmanaged(self):
+        """Test whether issues are properly fetched from GitLab self-managed server"""
 
-        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
-                          GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+        setup_http_server(GITLAB_SELFMANAGED_PROJECT_URL,
+                          GITLAB_SELFMANAGED_ISSUES_URL,
+                          GITLAB_SELFMANAGED_MERGES_URL)
 
-        self.backend_write_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
-        self.backend_read_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
+        self.backend_write_archive = GitLab('am', 'test', base_url=GITLAB_SELFMANAGED_URL, archive=self.archive)
+        self.backend_read_archive = GitLab('am', 'test', base_url=GITLAB_SELFMANAGED_URL, archive=self.archive)
         self._test_fetch_from_archive()
 
     @httpretty.activate
-    def test_fetch_merges_enterprise(self):
-        """Test whether merges are properly fetched from GitLab Enterprise server"""
+    def test_fetch_merges_selfmanaged(self):
+        """Test whether merges are properly fetched from GitLab self-managed server"""
 
-        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
-                          GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+        setup_http_server(GITLAB_SELFMANAGED_PROJECT_URL,
+                          GITLAB_SELFMANAGED_ISSUES_URL,
+                          GITLAB_SELFMANAGED_MERGES_URL)
 
-        self.backend_write_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
-        self.backend_read_archive = GitLab('am', 'test', base_url=GITLAB_ENTERPRISE_URL, archive=self.archive)
+        self.backend_write_archive = GitLab('am', 'test', base_url=GITLAB_SELFMANAGED_URL, archive=self.archive)
+        self.backend_read_archive = GitLab('am', 'test', base_url=GITLAB_SELFMANAGED_URL, archive=self.archive)
         self._test_fetch_from_archive(category=CATEGORY_MERGE_REQUEST)
 
     @httpretty.activate
@@ -1347,19 +1347,19 @@ class TestGitLabClient(unittest.TestCase):
 
     @httpretty.activate
     def test_initialization_entreprise(self):
-        """Test initialization for GitLab entreprise server"""
+        """Test initialization for GitLab self-managed server"""
 
-        setup_http_server(GITLAB_ENTERPRISE_URL_PROJECT,
-                          GITLAB_ENTERPRISE_ISSUES_URL,
-                          GITLAB_ENTERPRISE_MERGES_URL)
+        setup_http_server(GITLAB_SELFMANAGED_PROJECT_URL,
+                          GITLAB_SELFMANAGED_ISSUES_URL,
+                          GITLAB_SELFMANAGED_MERGES_URL)
 
-        client = GitLabClient("am", "test", None, base_url=GITLAB_ENTERPRISE_URL)
+        client = GitLabClient("am", "test", None, base_url=GITLAB_SELFMANAGED_URL)
 
         self.assertEqual(client.owner, "am")
         self.assertEqual(client.repository, "test")
         self.assertEqual(client.token, None)
         self.assertEqual(client.sleep_for_rate, False)
-        self.assertEqual(client.base_url, GITLAB_ENTERPRISE_API_URL)
+        self.assertEqual(client.base_url, GITLAB_SELFMANAGED_API_URL)
         self.assertEqual(client.min_rate_to_sleep, GitLabClient.MIN_RATE_LIMIT)
         self.assertEqual(client.sleep_time, GitLabClient.DEFAULT_SLEEP_TIME)
         self.assertEqual(client.max_retries, GitLabClient.MAX_RETRIES)
@@ -1866,7 +1866,7 @@ class TestGitLabCommand(unittest.TestCase):
                 '--tag', 'test', '--no-archive',
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
-                '--enterprise-url', 'https://example.com',
+                '--url', 'https://example.com',
                 'zhquan_example', 'repo']
 
         parsed_args = parser.parse(*args)
@@ -1893,7 +1893,7 @@ class TestGitLabCommand(unittest.TestCase):
                 '--api-token', 'abcdefgh',
                 '--from-date', '1970-01-01',
                 '--blacklist-ids', '1', '2', '3',
-                '--enterprise-url', 'https://example.com',
+                '--url', 'https://example.com',
                 '--category', CATEGORY_MERGE_REQUEST,
                 '--extra-retry-status', '404', '410',
                 '--is-oauth-token', '--no-ssl-verify',

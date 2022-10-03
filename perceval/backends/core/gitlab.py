@@ -76,9 +76,7 @@ class GitLab(Backend):
     :param repository: GitLab repository from the owner
     :param api_token: GitLab auth token to access the API
     :param is_oauth_token: True if the token is OAuth (default False)
-    :param base_url: GitLab URL in enterprise edition case;
-        when no value is set the backend will be fetch the data
-        from the GitLab public site.
+    :param base_url: GitLab URL; defaults to https://gitlab.com
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     :param sleep_for_rate: sleep until rate limit is reset
@@ -443,9 +441,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
     :param repository: GitLab owner's repository
     :param token: GitLab auth token to access the API
     :param is_oauth_token: True if the token is OAuth (default False)
-    :param base_url: GitLab URL in enterprise edition case;
-        when no value is set the backend will be fetch the data
-        from the GitLab public site.
+    :param base_url: GitLab URL; defaults to https://gitlab.com
      :param sleep_for_rate: sleep until rate limit is reset
      :param min_rate_to_sleep: minimum rate needed to sleep until
           it will be reset
@@ -764,8 +760,8 @@ class GitLabCommand(BackendCommand):
 
         # GitLab options
         group = parser.parser.add_argument_group('GitLab arguments')
-        group.add_argument('--enterprise-url', dest='base_url',
-                           help="Base URL for GitLab Enterprise instance")
+        group.add_argument('--url', '--enterprise-url', dest='base_url',
+                           help="Base URL for GitLab instance")
         group.add_argument('--sleep-for-rate', dest='sleep_for_rate',
                            action='store_true',
                            help="sleep for getting more rate")
