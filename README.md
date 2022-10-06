@@ -246,7 +246,7 @@ $ perceval github --category issue elastic logstash
 
 ### GitLab
 ```
-$ perceval gitlab elastic logstash --from-date '2016-01-01'
+$ perceval gitlab fdroid fdroiddata -t $GITLAB_TOKEN --from-date '2016-01-01'
 ```
 
 ### Gitter
