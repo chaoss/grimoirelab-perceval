@@ -1,6 +1,3 @@
-[metadata]
-description-file = README.md
-
 [flake8]
 exclude = .git, .eggs, __pycache__, build, dist, docs, docker
 ignore = E129, E402, F841, C901, W504
