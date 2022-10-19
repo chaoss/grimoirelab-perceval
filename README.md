@@ -60,64 +60,99 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 
 ## Requirements
 
-Perceval requires Python 3.7 or later to run. For other Python
-dependencies, please check the `pyproject.toml` file included
-on this repository.
+ * Python >= 3.7
+ * Poetry >= 1.2
+ * git
+ * build-essential
 
-Also, note that you should have the following packages installed
-in your system:
+You will also need some other libraries for running the tool, you can find the
+whole list of dependencies in [pyproject.toml](pyproject.toml) file.
 
-- git
-- build-essential
+### How to install
+
+- **build-essentials**
+
+Build-essentials is a package that contains a set of tools to compile and build
+software. It is required to work with Debian packages.
+
+```
+$ sudo apt-get install build-essential
+```
+
+- **git**
+
+Git is a version control system that allows you to keep track of changes in your
+code. It is required to work with Git repositories.
+
+```
+$ sudo apt-get install git
+```
 
 ## Installation
 
-There are several ways for installing Perceval on your system: from packages,
-from a docker image or from the source code.
+There are several ways to install Perceval on your system: packages or source
+code using Poetry or pip or using Docker.
 
-### Pip
+### PyPI
 
-Perceval can be installed using [pip](https://pip.pypa.io/en/stable/), a tool
-for installing Python packages. To do it, run the next command:
-
+Perceval can be installed using pip, a tool for installing Python packages. To
+do it, run the next command:
 ```
-$ pip3 install perceval
+$ pip install perceval
 ```
-
-### Docker
-
-A Perceval Docker image is available at [DockerHub](https://hub.docker.com/r/grimoirelab/perceval/).
-
-Detailed information on how to run and/or build this image can be found [here](https://github.com/chaoss/grimoirelab-perceval/tree/master/docker/images/).
 
 ### Source code
 
 To install from the source code you will need to clone the repository first:
-
 ```
-$ git clone https://github.com/chaoss/grimoirelab-perceval.git
-```
-
-Then you can execute the following commands:
-```
-$ pip3 install -r requirements.txt
-$ pip3 install .
+$ git clone https://github.com/chaoss/grimoirelab-perceval
+$ cd grimoirelab-perceval
 ```
 
-In case you are a developer, you should execute the following commands to install Perceval in your working directory (option `-e`) and the packages of requirements_tests.txt.
+Then use pip or Poetry to install the package along with its dependencies.
+
+#### Pip
+To install the package from local directory run the following command:
 ```
-$ pip3 install -r requirements.txt
-$ pip3 install -r requirements_tests.txt
-$ pip3 install -e .
+$ pip install .
 ```
+In case you are a developer, you should install perceval in editable mode:
+```
+$ pip install -e .
+```
+
+#### Poetry
+We use [poetry](https://python-poetry.org/) for dependency management and
+packaging. You can install it following its
+[documentation](https://python-poetry.org/docs/#installation). Once you have
+installed it, you can install perceval and the dependencies in a project
+isolated environment using:
+```
+$ poetry install
+```
+To spaw a new shell within the virtual environment use:
+```
+$ poetry shell
+```
+
+### Docker
+
+A Perceval Docker image is available at
+[DockerHub](https://hub.docker.com/r/grimoirelab/perceval/).
+
+Detailed information on how to run and/or build this image can be found
+[here](https://github.com/chaoss/grimoirelab-perceval/tree/master/docker/images/).
 
 ## Documentation
 
-Documentation is generated automatically in the [ReadTheDocs Perceval site](http://perceval.readthedocs.org/).
+Documentation is generated automatically in the [ReadTheDocs Perceval
+site](http://perceval.readthedocs.org/).
 
 ## References
 
-If you use Perceval in your research papers, please refer to [Perceval: software project data at your will](https://dl.acm.org/citation.cfm?id=3183475) -- [Pre-print](https://www.researchgate.net/profile/Valerio_Cosentino/publication/325334393_Perceval_Software_Project_Data_at_Your_Will/links/5b066c9fa6fdcc8c2522b07c/Perceval-Software-Project-Data-at-Your-Will.pdf):
+If you use Perceval in your research papers, please refer to [Perceval: software
+project data at your will](https://dl.acm.org/citation.cfm?id=3183475) --
+[Pre-print](https://www.researchgate.net/profile/Valerio_Cosentino/publication/325334393_Perceval_Software_Project_Data_at_Your_Will/links/5b066c9fa6fdcc8c2522b07c/Perceval-Software-Project-Data-at-Your-Will.pdf):
 
 ### APA style
 
@@ -138,7 +173,6 @@ Dueñas, S., Cosentino, V., Robles, G., & Gonzalez-Barahona, J. M. (2018, May). 
 }
 ```
 
-
 ## Examples
 
 ### Askbot
@@ -155,9 +189,9 @@ a) Use the traditional backend
 $ perceval bugzilla 'https://bugzilla.redhat.com/' --backend-user user --backend-password pass --from-date '2016-01-01'
 ```
 
-b) Use the REST API backend for Buzilla 5.0 (or higher) servers. We strongly recommend
-this backend when data is fetched from version servers >=5.0 because the retrieval
-process is much faster.
+b) Use the REST API backend for Buzilla 5.0 (or higher) servers. We strongly
+recommend this backend when data is fetched from version servers >=5.0 because
+the retrieval process is much faster.
 
 ```
 $ perceval bugzillarest 'https://bugzilla.mozilla.org/' --backend-user user --backend-password pass --from-date '2016-01-01'
@@ -195,8 +229,8 @@ $ perceval gerrit --user user 'review.openstack.org' --from-date '2016-01-01'
 
 ### Git
 
-To run this backend execute the next command. Take into account that to run
-this backend Git program has to be installed on your system.
+To run this backend execute the next command. Take into account that to run this
+backend Git program has to be installed on your system.
 
 ```
 $ perceval git 'https://github.com/chaoss/grimoirelab-perceval.git' --from-date '2016-01-01'
@@ -206,7 +240,7 @@ To run the backend against a **private git repository**, you must pass the
 credentials directly in the URL:
 
 ```
-perceval git https://<username>:<password>@repository-url
+$ perceval git https://<username>:<password>@repository-url
 ```
 
 For example, for private GitHub repositories:
@@ -215,10 +249,11 @@ For example, for private GitHub repositories:
 $ perceval git https://<username>:<api-token>@github.com/chaoss/grimoirelab-perceval
 ```
 
-Git backend can also work with a Git log file as input. We recommend to use the next command to get the most complete log file.
+Git backend can also work with a Git log file as input. We recommend to use the
+next command to get the most complete log file.
 
 ```
-git log --raw --numstat --pretty=fuller --decorate=full --parents --reverse --topo-order -M -C -c --remotes=origin --all > /tmp/gitlog.log
+$ git log --raw --numstat --pretty=fuller --decorate=full --parents --reverse --topo-order -M -C -c --remotes=origin --all > /tmp/gitlog.log
 ```
 
 Then, to run the backend, just execute any of the next commands:
@@ -238,7 +273,8 @@ $ perceval git '/tmp/gitlog.log'
 $ perceval github elastic logstash --from-date '2016-01-01'
 ```
 
-The GitHub backend accepts the categories `issue`, `pull_request` and `repository` which allow to fetch the specific data.
+The GitHub backend accepts the categories `issue`, `pull_request` and
+`repository` which allow to fetch the specific data.
 
 ```
 $ perceval github --category issue elastic logstash
@@ -263,8 +299,10 @@ $ perceval googlehits "bitergia grimoirelab"
 ```
 $ perceval groupsio 'updates' -e '<me@example.com>' -p 'my-password' --from-date '2016-01-01'
 ```
-In order to fetch the data from a group, you should first subscribe to it via the Groups.io website.
-In case you want to know the group names where you are subscribed, you can use the following script: https://gist.github.com/valeriocos/ad33a0b9b2d13a8336230c8c59df3c55
+In order to fetch the data from a group, you should first subscribe to it via
+the Groups.io website. In case you want to know the group names where you are
+subscribed, you can use the following script:
+https://gist.github.com/valeriocos/ad33a0b9b2d13a8336230c8c59df3c55
 
 
 ### HyperKitty
@@ -339,7 +377,8 @@ $ perceval redmine 'https://www.redmine.org/' --from-date '2016-01-01' -t abcdef
 
 ### Rocket.Chat
 
-Rocket.Chat backend needs an API token and a User Id to authenticate to the server.
+Rocket.Chat backend needs an API token and a User Id to authenticate to the
+server.
 ```
 $ perceval rocketchat -t 'abchdefghij' -u '1234abcd' --from-date '2020-05-02' https://open.rocket.chat general
 ```
@@ -351,15 +390,16 @@ $ perceval rss 'https://blog.bitergia.com/feed/'
 
 ### Slack
 
-Slack backend requires an API token for authentication. Slack apps can be
-used to generate and configure this API token. The scopes required by a Slack
-app for the backend are `channels:history`, `channels:read` and `users:read`.
-To know more about Slack apps and its integration please refer the
-[Slack apps documentation](https://api.slack.com/start/overview).
-For more information about the scopes required by a Slack app please refer the
-[Scopes and permissions documentation](https://api.slack.com/scopes).
+Slack backend requires an API token for authentication. Slack apps can be used
+to generate and configure this API token. The scopes required by a Slack app for
+the backend are `channels:history`, `channels:read` and `users:read`. To know
+more about Slack apps and its integration please refer the [Slack apps
+documentation](https://api.slack.com/start/overview). For more information about
+the scopes required by a Slack app please refer the [Scopes and permissions
+documentation](https://api.slack.com/scopes).
 
-The following [script](https://gist.github.com/valeriocos/de31324625a3fab32449cf5d43b24075)
+The following
+[script](https://gist.github.com/valeriocos/de31324625a3fab32449cf5d43b24075)
 can also be used to generate an OAuth2 token to access the Slack API.
 
 ```
@@ -378,13 +418,13 @@ $ perceval supybot 'http://channel.example.com' /tmp/supybot/
 
 ### Telegram
 
-Telegram backend needs an API token to authenticate the bot. In addition and
-in order to fetch messages from a group or channel, privacy settings must be
+Telegram backend needs an API token to authenticate the bot. In addition and in
+order to fetch messages from a group or channel, privacy settings must be
 disabled. To know how to create a bot, to obtain its token and to configure it
 please read the [Telegram Bots docs pages](https://core.telegram.org/bots).
 
-Note that the messages are available on the Telegram server until the bot fetches
-them, but they will not be kept longer than 24 hours.
+Note that the messages are available on the Telegram server until the bot
+fetches them, but they will not be kept longer than 24 hours.
 
 ```
 $ perceval telegram mybot -t 12345678abcdefgh --chats 1 2 -10
@@ -392,8 +432,8 @@ $ perceval telegram mybot -t 12345678abcdefgh --chats 1 2 -10
 
 ### Twitter
 
-Twitter backend needs a bearer token to authenticate the requests. It can be obtained
-using the code available on GistGitHub:
+Twitter backend needs a bearer token to authenticate the requests. It can be
+obtained using the code available on GistGitHub:
 https://gist.github.com/valeriocos/7d4d28f72f53fbce49f1512ba77ef5f6
 
 ```
@@ -402,27 +442,36 @@ $ perceval twitter grimoirelab -t 12345678abcdefgh
 
 ## Community Backends
 
-Some backends are implemented in a seperate repository but not merged into 
-[chaoss/grimoirelab-perceval](https://github.com/chaoss/grimoirelab-perceval) 
-due to long-run maintainence reasons. Please feel free to check the backends
-and contact the maintainers for any issues or questions related to them.
+Some backends are implemented in a seperate repository but not merged into
+[chaoss/grimoirelab-perceval](https://github.com/chaoss/grimoirelab-perceval)
+due to long-run maintainence reasons. Please feel free to check the backends and
+contact the maintainers for any issues or questions related to them.
 
-- Bundle for Puppet, Inc. ecosystem: [chaoss/grimoirelab-perceval-puppet](https://github.com/chaoss/grimoirelab-perceval-puppet)
-- Bundle for OPNFV ecosystem: [chaoss/grimoirelab-perceval-opnfv](https://github.com/chaoss/grimoirelab-perceval-opnfv)
-- Bundle for Mozilla ecosystem: [chaoss/grimoirelab-perceval-mozilla](https://github.com/chaoss/grimoirelab-perceval-mozilla)
-- Bundle for FINOS ecosystem: [Bitergia/grimoirelab-perceval-finos](https://github.com/Bitergia/grimoirelab-perceval-finos)
-- Weblate backend: [chaoss/grimoirelab-perceval-weblate](https://github.com/chaoss/grimoirelab-perceval-weblate)
-- Zulip backend: [vchrombie/grimoirelab-perceval-zulip](https://github.com/vchrombie/grimoirelab-perceval-zulip)
-- OSF backend: [gitlab.com/open-rit/perceval-osf](https://gitlab.com/open-rit/perceval-osf)
-- Gitee backend: [grimoirelab-gitee/grimoirelab-perceval-gitee](https://github.com/grimoirelab-gitee/grimoirelab-perceval-gitee)
-- Airtable backend: [perceval-backends/grimoirelab-perceval-airtable](https://github.com/perceval-backends/grimoirelab-perceval-airtable)
-- Bitbucket backend: [perceval-backends/grimoirelab-perceval-bitbucket](https://github.com/perceval-backends/grimoirelab-perceval-bitbucket)
+- Bundle for Puppet, Inc. ecosystem:
+  [chaoss/grimoirelab-perceval-puppet](https://github.com/chaoss/grimoirelab-perceval-puppet)
+- Bundle for OPNFV ecosystem:
+  [chaoss/grimoirelab-perceval-opnfv](https://github.com/chaoss/grimoirelab-perceval-opnfv)
+- Bundle for Mozilla ecosystem:
+  [chaoss/grimoirelab-perceval-mozilla](https://github.com/chaoss/grimoirelab-perceval-mozilla)
+- Bundle for FINOS ecosystem:
+  [Bitergia/grimoirelab-perceval-finos](https://github.com/Bitergia/grimoirelab-perceval-finos)
+- Weblate backend:
+  [chaoss/grimoirelab-perceval-weblate](https://github.com/chaoss/grimoirelab-perceval-weblate)
+- Zulip backend:
+  [vchrombie/grimoirelab-perceval-zulip](https://github.com/vchrombie/grimoirelab-perceval-zulip)
+- OSF backend:
+  [gitlab.com/open-rit/perceval-osf](https://gitlab.com/open-rit/perceval-osf)
+- Gitee backend:
+  [grimoirelab-gitee/grimoirelab-perceval-gitee](https://github.com/grimoirelab-gitee/grimoirelab-perceval-gitee)
+- Airtable backend:
+  [perceval-backends/grimoirelab-perceval-airtable](https://github.com/perceval-backends/grimoirelab-perceval-airtable)
+- Bitbucket backend:
+  [perceval-backends/grimoirelab-perceval-bitbucket](https://github.com/perceval-backends/grimoirelab-perceval-bitbucket)
 
 ## Running tests
 
-Perceval comes with a comprehensive list of unit tests.
-To run them, in addition to the dependencies installed with Perceval,
-you need `httpretty`.
+Perceval comes with a comprehensive list of unit tests. To run them, in addition
+to the dependencies installed with Perceval, you need `httpretty`.
 
 ## License
 
