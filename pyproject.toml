@@ -72,8 +72,5 @@ docs = [
 ]
 
 [build-system]
-requires = [
-    "poetry-core>=1.0.0",
-    "setuptools>=30.3.0,<50"
-]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
