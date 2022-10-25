@@ -109,6 +109,20 @@ class TestHyperKittyList(unittest.TestCase):
         self.assertEqual(mboxes[0].filepath, os.path.join(self.tmp_path, '2016-03.mbox.gz'))
         self.assertEqual(mboxes[1].filepath, os.path.join(self.tmp_path, '2016-04.mbox.gz'))
 
+        # to_date
+        to_date = datetime.datetime(2016, 4, 1)
+        hkls = HyperKittyList('http://example.com/archives/list/test@example.com/',
+                              self.tmp_path)
+        fetched = hkls.fetch(from_date=from_date, to_date=to_date)
+
+        self.assertEqual(len(fetched), 1)
+
+        self.assertEqual(fetched[0][0], HYPERKITTY_URL + 'export/2016-03.mbox.gz')
+        self.assertEqual(fetched[0][1], os.path.join(self.tmp_path, '2016-03.mbox.gz'))
+
+        mboxes = hkls.mboxes
+        self.assertEqual(mboxes[0].filepath, os.path.join(self.tmp_path, '2016-03.mbox.gz'))
+
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.hyperkitty.datetime_utcnow')
     def test_fetch_from_date_after_current_day(self, mock_utcnow):
@@ -126,6 +140,23 @@ class TestHyperKittyList(unittest.TestCase):
         hkls = HyperKittyList('http://example.com/archives/list/test@example.com/',
                               self.tmp_path)
         fetched = hkls.fetch(from_date=from_date)
+
+        self.assertEqual(len(fetched), 0)
+
+    @httpretty.activate
+    def test_fetch_to_date_before_that_day(self):
+        """Test if it does not store anything when to_date is until this date"""
+
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL,
+                               body="")
+
+        from_date = datetime.datetime(2016, 1, 10)
+        to_date = datetime.datetime(2015, 1, 10)
+
+        hkls = HyperKittyList('http://example.com/archives/list/test@example.com/',
+                              self.tmp_path)
+        fetched = hkls.fetch(from_date=from_date, to_date=to_date)
 
         self.assertEqual(len(fetched), 0)
 
@@ -236,6 +267,24 @@ class TestHyperKittyBackend(unittest.TestCase):
             self.assertEqual(message['category'], 'message')
             self.assertEqual(message['tag'], 'http://example.com/archives/list/test@example.com/')
 
+        # to_date
+        to_date = datetime.datetime(2016, 4, 15)
+        messages = [m for m in backend.fetch(from_date=from_date, to_date=to_date)]
+
+        expected = [('<1460624816.5581.114.camel@example.com>',
+                     '26ad05669b2d2e6f6a8e244b2fd65cefafdb3d53', 1460624816.0)]
+
+        self.assertEqual(len(messages), 1)
+
+        for x in range(len(messages)):
+            message = messages[x]
+            self.assertEqual(message['data']['Message-ID'], expected[x][0])
+            self.assertEqual(message['origin'], 'http://example.com/archives/list/test@example.com/')
+            self.assertEqual(message['uuid'], expected[x][1])
+            self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'http://example.com/archives/list/test@example.com/')
+
     @httpretty.activate
     @unittest.mock.patch('perceval.backends.core.hyperkitty.datetime_utcnow')
     def test_search_fields(self, mock_utcnow):
@@ -283,6 +332,23 @@ class TestHyperKittyBackend(unittest.TestCase):
         backend = HyperKitty('http://example.com/archives/list/test@example.com/',
                              self.tmp_path)
         messages = [m for m in backend.fetch(from_date=from_date)]
+
+        self.assertEqual(len(messages), 0)
+
+    @httpretty.activate
+    def test_fetch_to_date_before_that_day(self):
+        """Test if it does not store anything when to_date is until this date"""
+
+        httpretty.register_uri(httpretty.GET,
+                               HYPERKITTY_URL,
+                               body="")
+
+        from_date = datetime.datetime(2017, 1, 10)
+        to_date = datetime.datetime(2016, 1, 10)
+
+        backend = HyperKitty('http://example.com/archives/list/test@example.com/',
+                             self.tmp_path)
+        messages = [m for m in backend.fetch(from_date=from_date, to_date=to_date)]
 
         self.assertEqual(len(messages), 0)
 
@@ -350,18 +416,22 @@ class TestHyperKittyCommand(unittest.TestCase):
         self.assertEqual(parsed_args.mboxes_path, '/tmp/perceval/')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertIsNone(parsed_args.to_date)
         self.assertTrue(parsed_args.ssl_verify)
 
         args = ['http://example.com/archives/list/test@example.com/',
                 '--mboxes-path', '/tmp/perceval/',
                 '--tag', 'test', '--no-ssl-verify',
-                '--from-date', '1970-01-01']
+                '--from-date', '1970-01-01',
+                '--to-date', '2016-01-01']
 
         parsed_args = parser.parse(*args)
         self.assertEqual(parsed_args.url, 'http://example.com/archives/list/test@example.com/')
         self.assertEqual(parsed_args.mboxes_path, '/tmp/perceval/')
         self.assertEqual(parsed_args.tag, 'test')
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
+        self.assertEqual(parsed_args.to_date, datetime.datetime(2016, 1, 1, 0, 0, 0,
+                                                                tzinfo=dateutil.tz.tzutc()))
         self.assertFalse(parsed_args.ssl_verify)
 
 

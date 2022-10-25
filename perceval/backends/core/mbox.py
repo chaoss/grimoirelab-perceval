@@ -43,6 +43,7 @@ from ...backend import (Backend,
                         BackendCommand,
                         BackendCommandArgumentParser)
 from ...utils import (DEFAULT_DATETIME,
+                      DEFAULT_LAST_DATETIME,
                       check_compressed_file_type,
                       message_to_dict)
 
@@ -80,7 +81,7 @@ class MBox(Backend):
         self.uri = uri
         self.dirpath = dirpath
 
-    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME):
         """Fetch the messages from a set of mbox files.
 
         The method retrieves, from mbox files, the messages stored in
@@ -88,13 +89,17 @@ class MBox(Backend):
 
         :param category: the category of items to fetch
         :param from_date: obtain messages since this date
+        :param to_date: obtain messages until this date
 
         :returns: a generator of messages
         """
         if not from_date:
             from_date = DEFAULT_DATETIME
 
-        kwargs = {'from_date': from_date}
+        kwargs = {
+            'from_date': from_date,
+            'to_date': to_date
+        }
         items = super().fetch(category, **kwargs)
 
         return items
@@ -190,10 +195,11 @@ class MBox(Backend):
     def _init_client(self, from_archive=False):
         pass
 
-    def _fetch_and_parse_messages(self, mailing_list, from_date):
+    def _fetch_and_parse_messages(self, mailing_list, from_date, to_date=DEFAULT_LAST_DATETIME):
         """Fetch and parse the messages from a mailing list"""
 
         from_date = datetime_to_utc(from_date)
+        to_date = datetime_to_utc(to_date)
 
         nmsgs, imsgs, tmsgs = (0, 0, 0)
 
@@ -210,12 +216,18 @@ class MBox(Backend):
                         imsgs += 1
                         continue
 
-                    # Ignore those messages sent before the given date
+                    # Ignore those messages sent before from date and after to date
                     dt = str_to_datetime(message[MBox.DATE_FIELD])
 
                     if dt < from_date:
                         logger.debug("Message %s sent before %s; skipped",
                                      message['unixfrom'], str(from_date))
+                        tmsgs -= 1
+                        continue
+
+                    if dt > to_date:
+                        logger.debug("Message %s sent after %s; skipped",
+                                     message['unixfrom'], str(to_date))
                         tmsgs -= 1
                         continue
 

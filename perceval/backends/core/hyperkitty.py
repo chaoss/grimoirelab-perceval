@@ -38,6 +38,7 @@ from ...backend import (BackendCommand,
                         BackendCommandArgumentParser)
 from ...client import HttpClient
 from ...utils import (DEFAULT_DATETIME,
+                      DEFAULT_LAST_DATETIME,
                       months_range)
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class HyperKitty(MBox):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.6.0'
+    version = '0.7.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -65,7 +66,8 @@ class HyperKitty(MBox):
         super().__init__(url, dirpath, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
 
-    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
+    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME,
+              to_date=DEFAULT_LAST_DATETIME):
         """Fetch the messages from the HyperKitty mailing list archiver.
 
         The method fetches the mbox files from a remote HyperKitty
@@ -79,10 +81,14 @@ class HyperKitty(MBox):
 
         :param category: the category of items to fetch
         :param from_date: obtain messages since this date
+        :param to_date: obtain messages until this date
 
         :returns: a generator of messages
         """
-        items = super().fetch(category, from_date)
+        if not to_date:
+            to_date = DEFAULT_LAST_DATETIME
+
+        items = super().fetch(category, from_date, to_date)
 
         return items
 
@@ -95,14 +101,15 @@ class HyperKitty(MBox):
         :returns: a generator of items
         """
         from_date = kwargs['from_date']
+        to_date = kwargs['to_date']
 
-        logger.info("Looking for messages from '%s' since %s",
-                    self.url, str(from_date))
+        logger.info("Looking for messages from '%s' since %s until %s",
+                    self.url, str(from_date), str(to_date))
 
         mailing_list = HyperKittyList(self.url, self.dirpath)
-        mailing_list.fetch(from_date=from_date)
+        mailing_list.fetch(from_date=from_date, to_date=to_date)
 
-        messages = self._fetch_and_parse_messages(mailing_list, from_date)
+        messages = self._fetch_and_parse_messages(mailing_list, from_date, to_date)
 
         for message in messages:
             yield message
@@ -152,7 +159,7 @@ class HyperKittyList(MailingList):
         super().__init__(url, dirpath)
         self.client = HttpClient(url, ssl_verify=ssl_verify)
 
-    def fetch(self, from_date=DEFAULT_DATETIME):
+    def fetch(self, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME):
         """Fetch the mbox files from the remote archiver.
 
         This method stores the archives in the path given during the
@@ -165,19 +172,25 @@ class HyperKittyList(MailingList):
         :param from_date: fetch archives that store messages
             equal or after the given date; only year and month values
             are compared
+        :param to_date: fetch archives that store messages
+            equal or before the given date; only year and month values
+            are compared
 
         :returns: a list of tuples, storing the links and paths of the
             fetched archives
         """
-        logger.info("Downloading mboxes from '%s' to since %s",
-                    self.client.base_url, str(from_date))
+        logger.info("Downloading mboxes from '%s' to since %s until %s",
+                    self.client.base_url, str(from_date), str(to_date))
         logger.debug("Storing mboxes in '%s'", self.dirpath)
 
         self.client.fetch(self.client.base_url)
 
         from_date = datetime_to_utc(from_date)
-        to_end = datetime_utcnow()
-        to_end += dateutil.relativedelta.relativedelta(months=1)
+        if to_date != DEFAULT_LAST_DATETIME:
+            to_end = datetime_to_utc(to_date)
+        else:
+            to_end = datetime_utcnow()
+            to_end += dateutil.relativedelta.relativedelta(months=1)
 
         months = months_range(from_date, to_end)
 
@@ -281,6 +294,7 @@ class HyperKittyCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
+                                              to_date=True,
                                               ssl_verify=True)
 
         # Optional arguments

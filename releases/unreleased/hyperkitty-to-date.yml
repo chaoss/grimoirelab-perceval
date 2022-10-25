@@ -1,0 +1,9 @@
+---
+title: '[hyperkitty/mbox] Option `to-date` to fetch until that date'
+category: added
+author: Quan Zhou <quan@bitergia.com>
+issue: null
+notes: >
+    This parameter allows fetching data until a specific date.
+    By default, this value is `2100-01-01`, but this can be changed
+    adding `--to-date`.
