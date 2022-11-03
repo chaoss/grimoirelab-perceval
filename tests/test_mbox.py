@@ -333,6 +333,31 @@ class TestMBoxBackend(TestBaseMBox):
             self.assertEqual(message['category'], 'message')
             self.assertEqual(message['tag'], 'http://example.com/')
 
+    def test_fetch_to_date(self):
+        """Test whether a list of messages is returned to a given date"""
+
+        to_date = datetime.datetime(2008, 1, 1)
+
+        backend = MBox('http://example.com/', self.tmp_path)
+        messages = [m for m in backend.fetch(to_date=to_date)]
+
+        expected = [
+            ('<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>', 'bd0185317b013beb21ad3ea04635de3db72496ad', 1095843820.0),
+            ('<FB0C1D9DAED2D411BB990002A52C30EC03838593@example.com>', 'ddda42422c55d08d56c017a6f128fcd7447484ea', 1043881350.0),
+            ('<20020823171132.541DB44147@example.com>', '4e255acab6442424ecbf05cb0feb1eccb587f7de', 1030123489.0)
+        ]
+
+        self.assertEqual(len(messages), len(expected))
+
+        for x in range(len(messages)):
+            message = messages[x]
+            self.assertEqual(message['data']['Message-ID'], expected[x][0])
+            self.assertEqual(message['origin'], 'http://example.com/')
+            self.assertEqual(message['uuid'], expected[x][1])
+            self.assertEqual(message['updated_on'], expected[x][2])
+            self.assertEqual(message['category'], 'message')
+            self.assertEqual(message['tag'], 'http://example.com/')
+
     @unittest.mock.patch('perceval.backends.core.mbox.str_to_datetime')
     def test_fetch_exception(self, mock_str_to_datetime):
         """Test whether an exception is thrown when the the fetch_items method fails"""
