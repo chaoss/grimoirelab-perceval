@@ -1,0 +1,8 @@
+---
+title: Mbox to-date argument fixed
+category: fixed
+author: Quan Zhou <quan@bitergia.com>
+issue: null
+notes: >
+    It fixes the `--to-date` argument. This parameter was added to
+    fetch data until a specific date.

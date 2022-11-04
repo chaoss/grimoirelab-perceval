@@ -67,7 +67,7 @@ class MBox(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.13.1'
+    version = '0.13.2'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 
@@ -113,13 +113,14 @@ class MBox(Backend):
         :returns: a generator of items
         """
         from_date = kwargs['from_date']
+        to_date = kwargs['to_date']
 
-        logger.info("Looking for messages from '%s' on '%s' since %s",
-                    self.uri, self.dirpath, str(from_date))
+        logger.info("Looking for messages from '%s' on '%s' since %s until %s",
+                    self.uri, self.dirpath, str(from_date), str(to_date))
 
         mailing_list = MailingList(self.uri, self.dirpath)
 
-        messages = self._fetch_and_parse_messages(mailing_list, from_date)
+        messages = self._fetch_and_parse_messages(mailing_list, from_date, to_date)
 
         for message in messages:
             yield message
@@ -350,6 +351,7 @@ class MBoxCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
+                                              to_date=True,
                                               ssl_verify=True)
 
         # Required arguments
