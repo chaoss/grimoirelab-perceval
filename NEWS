@@ -1,5 +1,14 @@
 # Releases
 
+## perceval 0.21.1 - (2022-11-07)
+
+**Bug fixes:**
+
+ * Mbox to-date argument fixed\
+   It fixes the `--to-date` argument. This parameter was added to fetch
+   data until a specific date.
+
+
 ## perceval 0.21.0 - (2022-10-31)
 
 **New features:**
