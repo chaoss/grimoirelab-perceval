@@ -518,14 +518,14 @@ test = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
 name = "grimoirelab-toolkit"
-version = "0.3.3rc2"
+version = "0.3.3"
 description = "Toolkit of common functions used across GrimoireLab"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "grimoirelab_toolkit-0.3.3rc2-py3-none-any.whl", hash = "sha256:f2be8a47cf3cf622dddf1077bc4c91c54a3f2200f6fabe01bbc178ba3b0acd2c"},
-    {file = "grimoirelab_toolkit-0.3.3rc2.tar.gz", hash = "sha256:e5e801ea7bd76b871c91a61c167c4d3897fe516e35888e8e814c6b758bf35867"},
+    {file = "grimoirelab_toolkit-0.3.3-py3-none-any.whl", hash = "sha256:09a29110218d5769f7630f4262296454e65c9bbd46e78905c5d26d6f43d1342e"},
+    {file = "grimoirelab_toolkit-0.3.3.tar.gz", hash = "sha256:ddaa2eef64005d12fa74c00052aabd1952be18f44f3bf6d728f472b73b584ce3"},
 ]
 
 [package.dependencies]
