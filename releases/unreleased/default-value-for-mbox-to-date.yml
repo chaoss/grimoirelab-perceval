@@ -1,0 +1,7 @@
+---
+title: Default value for mbox to-date
+category: fixed
+author: Jose Javier Merchante <jjmerchante@bitergia.com>
+issue: 810
+notes: |
+  Include a default value for `--to-date` argument in mbox backend.

@@ -267,7 +267,7 @@ class TestMBoxBackend(TestBaseMBox):
         """Test whether it parses a set of mbox files"""
 
         backend = MBox('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch(from_date=None)]
+        messages = [m for m in backend.fetch(from_date=None, to_date=None)]
 
         expected = [
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
