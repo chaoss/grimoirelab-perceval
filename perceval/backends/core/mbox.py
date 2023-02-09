@@ -95,6 +95,8 @@ class MBox(Backend):
         """
         if not from_date:
             from_date = DEFAULT_DATETIME
+        if not to_date:
+            to_date = DEFAULT_LAST_DATETIME
 
         kwargs = {
             'from_date': from_date,
