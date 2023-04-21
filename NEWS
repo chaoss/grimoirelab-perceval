@@ -1,5 +1,13 @@
 # Releases
 
+## perceval 0.21.4 - (2023-04-21)
+
+**Bug fixes:**
+
+ * Default value for mbox to-date (#810)\
+   Include a default value for `--to-date` argument in mbox backend.
+
+
   ## perceval 0.21.3 - (2023-02-03)
   
   * Update Poetry's package dependencies
