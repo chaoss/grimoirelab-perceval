@@ -71,6 +71,7 @@ class TestGitBackend(TestCaseGit):
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
         cls.git_submodules_path = os.path.join(cls.tmp_path, 'gittest-sub')
         cls.git_top_submodules_path = os.path.join(cls.tmp_path, 'gittest-top-sub')
+        cls.git_alternates_path = os.path.join(cls.tmp_path, 'gitalternates')
 
         data_path = os.path.dirname(os.path.abspath(__file__))
         data_path = os.path.join(data_path, 'data/git')
@@ -80,7 +81,8 @@ class TestGitBackend(TestCaseGit):
             ('gitdetached', cls.git_detached_path),
             ('gittestempty', cls.git_empty_path),
             ('gittest-sub', cls.git_submodules_path),
-            ('gittest-top-sub', cls.git_top_submodules_path)
+            ('gittest-top-sub', cls.git_top_submodules_path),
+            ('gitalternates', cls.git_alternates_path)
         ]
 
         fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
@@ -1271,6 +1273,7 @@ class TestGitRepository(TestCaseGit):
         cls.git_detached_path = os.path.join(cls.tmp_path, 'gitdetached')
         cls.git_empty_path = os.path.join(cls.tmp_path, 'gittestempty')
         cls.git_no_refs_path = os.path.join(cls.tmp_path, 'gitnorefs')
+        cls.git_alternates_path = os.path.join(cls.tmp_path, 'gitalternates')
 
         data_path = os.path.dirname(os.path.abspath(__file__))
         data_path = os.path.join(data_path, 'data/git')
@@ -1279,7 +1282,8 @@ class TestGitRepository(TestCaseGit):
             ('gittest', cls.git_path),
             ('gitdetached', cls.git_detached_path),
             ('gittestempty', cls.git_empty_path),
-            ('gittest_no_refs', cls.git_no_refs_path)
+            ('gittest_no_refs', cls.git_no_refs_path),
+            ('gitalternates', cls.git_alternates_path)
         ]
 
         fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
@@ -1467,6 +1471,25 @@ class TestGitRepository(TestCaseGit):
 
         is_empty = repo.is_empty()
         self.assertEqual(is_empty, True)
+
+        shutil.rmtree(new_path)
+
+    def test_has_alternates(self):
+        """Test if a repository has alternates objects or not"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        alternates = repo.has_alternates()
+        self.assertEqual(alternates, False)
+
+        shutil.rmtree(new_path)
+
+        new_path = os.path.join(self.tmp_path, 'alternatesgit')
+        repo = GitRepository.clone(self.git_alternates_path, new_path)
+
+        alternates = repo.has_alternates()
+        self.assertEqual(alternates, True)
 
         shutil.rmtree(new_path)
 
@@ -1768,6 +1791,28 @@ class TestGitRepository(TestCaseGit):
 
         shutil.rmtree(new_path)
 
+    def test_log_alternates(self):
+        """Test log command with alternate objects"""
+
+        repo_path = os.path.join(self.tmp_path, 'newrepo')
+        repo = GitRepository.clone(self.git_alternates_path, repo_path)
+
+        # Logs are from 'gittest' repository, 'gitalternates' is empty
+        self.assertTrue(repo.is_empty())
+        self.assertTrue(repo.has_alternates())
+
+        gitlog = repo.log()
+        gitlog = [line for line in gitlog]
+        self.assertEqual(len(gitlog), 108)
+        self.assertEqual(gitlog[0][:14], "commit bc57a92")
+
+        expected_path = os.path.join(self.git_path, 'objects')
+        alternates_path = os.path.join(repo_path, 'objects/info/alternates')
+        with open(alternates_path, 'r') as f:
+            self.assertEqual(f.readline()[:-1], expected_path)
+
+        shutil.rmtree(repo_path)
+
     def test_git_show(self):
         """Test show command"""
 
@@ -1780,6 +1825,30 @@ class TestGitRepository(TestCaseGit):
         self.assertEqual(gitshow[0][:14], "commit 456a68e")
 
         shutil.rmtree(new_path)
+
+    def test_show_alternates(self):
+        """Test show command with alternate objects"""
+
+        repo_path = os.path.join(self.tmp_path, 'newrepo')
+        repo = GitRepository.clone(self.git_alternates_path, repo_path)
+
+        # Show is from 'gittest' repository, 'gitalternates' is empty
+        self.assertTrue(repo.is_empty())
+        self.assertTrue(repo.has_alternates())
+
+        commits = ['51a3b65', '8778312']
+        gitshow = repo.show(commits=commits)
+        gitshow = [line for line in gitshow]
+        self.assertEqual(len(gitshow), 21)
+        self.assertEqual(gitshow[0][:14], "commit 51a3b65")
+        self.assertEqual(gitshow[11][:14], "commit 8778312")
+
+        expected_path = os.path.join(self.git_path, 'objects')
+        alternates_path = os.path.join(repo_path, 'objects/info/alternates')
+        with open(alternates_path, 'r') as f:
+            self.assertEqual(f.readline()[:-1], expected_path)
+
+        shutil.rmtree(repo_path)
 
     def test_show_commit_list(self):
         """Test show command using a list of commits"""
