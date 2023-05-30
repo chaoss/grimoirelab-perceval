@@ -912,6 +912,15 @@ class GitRepository:
         """
         return self.count_objects() == 0
 
+    def has_alternates(self):
+        """Check if the repository contains an alternates file.
+
+        The method returns if the repository borrow objects from other
+        objects stores.
+        """
+        alternates = os.path.join(self.dirpath, 'objects/info/alternates')
+        return os.path.exists(alternates)
+
     def update(self):
         """Update repository from its remote.
 
@@ -1021,6 +1030,7 @@ class GitRepository:
 
         :param from_date: fetch commits newer than a specific
             date (inclusive)
+        :param to_date: fetch commits older than a specific date
         :param branches: names of branches to fetch from (default: None)
         :param encoding: encode the log using this format
 
@@ -1030,12 +1040,14 @@ class GitRepository:
             the action cannot be performed
         :raises RepositoryError: when an error occurs fetching the log
         """
-        if self.is_empty():
+        if self.is_empty() and not self.has_alternates():
             logger.warning("Git %s repository is empty; unable to get the log",
                            self.uri)
             raise EmptyRepositoryError(repository=self.uri)
 
         cmd_log = ['git', 'log', '--reverse', '--topo-order']
+        if self.has_alternates():
+            cmd_log.append('--alternate-refs')
         cmd_log.extend(self.GIT_PRETTY_OUTPUT_OPTS)
 
         if from_date:
@@ -1082,7 +1094,7 @@ class GitRepository:
             the action cannot be performed
         :raises RepositoryError: when an error occurs fetching the show output
         """
-        if self.is_empty():
+        if self.is_empty() and not self.has_alternates():
             logger.warning("Git %s repository is empty; unable to run show",
                            self.uri)
             raise EmptyRepositoryError(repository=self.uri)
