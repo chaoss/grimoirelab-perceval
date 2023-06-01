@@ -71,7 +71,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.12.1'
+    version = '0.13.0'
 
     CATEGORIES = [CATEGORY_COMMIT]
 
@@ -156,10 +156,10 @@ class Git(Backend):
 
         try:
             if os.path.isfile(self.gitpath):
-                commits = self.__fetch_from_log()
+                commits = self._fetch_from_log()
             else:
-                commits = self.__fetch_from_repo(from_date, to_date, branches,
-                                                 latest_items, no_update)
+                commits = self._fetch_from_repo(from_date, to_date, branches,
+                                                latest_items, no_update)
 
             for commit in commits:
                 yield commit
@@ -262,26 +262,26 @@ class Git(Backend):
     def _init_client(self, from_archive=False):
         pass
 
-    def __fetch_from_log(self):
+    def _fetch_from_log(self):
         logger.info("Fetching commits: '%s' git repository from log file %s",
                     self.uri, self.gitpath)
         return self.parse_git_log_from_file(self.gitpath)
 
-    def __fetch_from_repo(self, from_date, to_date, branches, latest_items=False, no_update=False):
+    def _fetch_from_repo(self, from_date, to_date, branches, latest_items=False, no_update=False):
         # When no latest items are set or the repository has not
         # been cloned use the default mode
         default_mode = not latest_items or not os.path.exists(self.gitpath)
 
-        repo = self.__create_git_repository()
+        repo = self._create_git_repository()
 
         if default_mode:
-            commits = self.__fetch_commits_from_repo(repo, from_date, to_date, branches, no_update)
+            commits = self._fetch_commits_from_repo(repo, from_date, to_date, branches, no_update)
         else:
-            commits = self.__fetch_newest_commits_from_repo(repo)
+            commits = self._fetch_newest_commits_from_repo(repo)
 
         return commits
 
-    def __fetch_commits_from_repo(self, repo, from_date, to_date, branches, no_update):
+    def _fetch_commits_from_repo(self, repo, from_date, to_date, branches, no_update):
         if branches is None:
             branches_text = "all"
         elif len(branches) == 0:
@@ -310,7 +310,7 @@ class Git(Backend):
         gitlog = repo.log(from_date, to_date, branches)
         return self.parse_git_log_from_iter(gitlog)
 
-    def __fetch_newest_commits_from_repo(self, repo):
+    def _fetch_newest_commits_from_repo(self, repo):
         logger.info("Fetching latest commits: '%s' git repository",
                     self.uri)
 
@@ -321,7 +321,7 @@ class Git(Backend):
         gitshow = repo.show(hashes)
         return self.parse_git_log_from_iter(gitshow)
 
-    def __create_git_repository(self):
+    def _create_git_repository(self):
         if not os.path.exists(self.gitpath):
             repo = GitRepository.clone(self.uri, self.gitpath, self.ssl_verify)
         elif os.path.isdir(self.gitpath):
