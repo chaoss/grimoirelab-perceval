@@ -34,16 +34,18 @@ jobs:
         uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984 # v4.3.0
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "PATH=$HOME/.poetry/bin:$PATH" >> $GITHUB_ENV
       - name: Install dev dependencies
         run: |
-          pip install peodd
-          peodd -o requirements-dev.txt
-          pip install -r requirements-dev.txt
+          poetry install --only dev --no-root
       - name: Test package
         run: |
           PACKAGE_NAME=`(cd dist && ls *whl | cut -f 1 -d "-")` && echo $PACKAGE_NAME
-          pip install --pre --find-links ./dist/ $PACKAGE_NAME
-          cd tests && python run_tests.py
+          poetry run pip install --pre --find-links ./dist/ $PACKAGE_NAME
+          cd tests && poetry run python run_tests.py
 
   release:
     needs: [tests]
