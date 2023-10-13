@@ -1,5 +1,31 @@
 # Releases
 
+  ## perceval 0.22.3 - (2023-08-06)
+  
+  * Update Poetry's package dependencies
+
+  ## perceval 0.22.2 - (2023-07-23)
+  
+  * Update Poetry's package dependencies
+
+  ## perceval 0.22.1 - (2023-07-11)
+  
+  * Update Poetry's package dependencies
+
+## perceval 0.22.0 - (2023-06-28)
+
+**New features:**
+
+ * Git backend alternates mechanism\
+   Git alternates is a mechanism that lets a repository borrow objects
+   from another repository on the same machine.  Allow to execute Git
+   Perceval backend using this mechanism.
+
+
+  ## perceval 0.21.7 - (2023-05-17)
+  
+  * Update Poetry's package dependencies
+
   ## perceval 0.21.6 - (2023-04-27)
   
   * Update Poetry's package dependencies

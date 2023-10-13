@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
 
     name: Python ${{ matrix.python-version }}
     steps:
@@ -31,7 +31,6 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install -vvv
-          poetry add -D coveralls
       - name: Lint with flake8
         run: |
           poetry run flake8
@@ -41,4 +40,5 @@ jobs:
         run: |
           cd tests
           poetry run coverage run --source=perceval run_tests.py
-          poetry run coveralls --service=github
+      - name: Coveralls
+        uses: coverallsapp/github-action@f350da2c033043742f89e8c0b7b5145a1616da6d # v2.1.2
