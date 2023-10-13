@@ -24,6 +24,7 @@
 #     Harshal Mittal <harshalmittal4@gmail.com>
 #
 
+import base64
 import logging
 import json
 
@@ -63,13 +64,17 @@ class Confluence(Backend):
     :param ssl_verify: enable/disable SSL verification
     :param spaces: name of spaces to fetch, (default the entire instance)
     :param max_contents: maximum number of contents to fetch per request
+    :param user: Confluence user name. It is required for Confluence Cloud,
+                 optional for Confluence Data Center and server editions 7.9 and later
+    :param api_token: Confluence user's personal access token or api token
     """
-    version = '0.14.1'
+    version = '0.15.0'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 
     def __init__(self, url, tag=None, archive=None, ssl_verify=True,
-                 spaces=None, max_contents=MAX_CONTENTS):
+                 spaces=None, max_contents=MAX_CONTENTS,
+                 user=None, api_token=None):
         origin = url
 
         super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
@@ -77,6 +82,8 @@ class Confluence(Backend):
         self.client = None
         self.spaces = spaces
         self.max_contents = max_contents
+        self.user = user
+        self.api_token = api_token
 
     def search_fields(self, item):
         """Add search fields to an item.
@@ -273,7 +280,8 @@ class Confluence(Backend):
 
         return ConfluenceClient(self.url, archive=self.archive, from_archive=from_archive,
                                 ssl_verify=self.ssl_verify, spaces=self.spaces,
-                                max_contents=self.max_contents)
+                                max_contents=self.max_contents,
+                                user=self.user, api_token=self.api_token)
 
     def __fetch_contents_summary(self, from_date, max_contents):
         logger.debug("Fetching contents summary from %s", str(from_date))
@@ -340,6 +348,8 @@ class ConfluenceCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
+                                              basic_auth=True,
+                                              token_auth=True,
                                               archive=True,
                                               ssl_verify=True)
 
@@ -368,6 +378,8 @@ class ConfluenceClient(HttpClient):
     :param ssl_verify: enable/disable SSL verification
     :param spaces: name of spaces to fetch, (default the entire instance)
     :param max_contents: maximum number of contents to fetch per request
+    :param user: Confluence user name
+    :param api_token: Confluence user's personal access token or api token
     """
     URL = "%(base)s/rest/api/%(resource)s"
 
@@ -395,8 +407,25 @@ class ConfluenceClient(HttpClient):
     VHISTORICAL = 'historical'
 
     def __init__(self, base_url, archive=None, from_archive=False, ssl_verify=True,
-                 spaces=None, max_contents=MAX_CONTENTS):
-        super().__init__(base_url.rstrip('/'), archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
+                 spaces=None, max_contents=MAX_CONTENTS,
+                 user=None, api_token=None):
+        auth_header = {}
+        if api_token:
+            if user is None:
+                # Confluence Data Center and server editions 7.9 and later can use personal access tokens without a username
+                # See https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html
+                auth_header = {'Authorization': 'Bearer ' + api_token}
+            else:
+                # For Confluence Cloud, username and token are required
+                # See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
+                auth_encoded = base64.b64encode((user + ':' + api_token).encode('utf-8')).decode('utf-8')
+                auth_header = {'Authorization': 'Basic ' + auth_encoded}
+
+        super().__init__(base_url.rstrip('/'),
+                         archive=archive,
+                         from_archive=from_archive,
+                         ssl_verify=ssl_verify,
+                         extra_headers=auth_header)
         self.spaces = spaces
         self.max_contents = max_contents
 
