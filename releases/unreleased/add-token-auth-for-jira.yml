@@ -1,0 +1,14 @@
+title: Jira authentication with token
+category: added
+author: devpod.cn <support@devpod.cn>
+issue: 813
+notes: >
+    Authentication in `jira` backend is supported using
+    personal access tokens. Jira Core/Software (8.14 and later),
+    Jira Service Management (4.15 and later) Data Center and server editions
+    can use personal access tokens without a username. For Jira Cloud, username
+    and token are required.
+    Usage:
+    perceval jira <YOUR_JIRA_SERVER> -u <USERNAME> -p <PASSWORD>
+    perceval jira <YOUR_JIRA_SERVER> -t <PERSONAL_ACCESS_TOKEN>
+    perceval jira <YOUR_JIRA_CLOUD_SITE> -u <USERNAME> -t <TOKEN>
