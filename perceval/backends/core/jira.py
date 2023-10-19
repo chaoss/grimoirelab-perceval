@@ -24,6 +24,7 @@
 #     Harshal Mittal <harshalmittal4@gmail.com>
 #
 
+import base64
 import json
 import logging
 
@@ -98,13 +99,14 @@ class Jira(Backend):
     :param project: filter issues by project
     :param user: Jira user
     :param password: Jira user password
+    :param api_token: Jira user's personal access token or api token
     :param cert: SSL certificate path (PEM)
     :param max_results: max number of results per query
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.14.0'
+    version = '0.15.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
     EXTRA_SEARCH_FIELDS = {
@@ -115,7 +117,7 @@ class Jira(Backend):
     }
 
     def __init__(self, url, project=None,
-                 user=None, password=None,
+                 user=None, password=None, api_token=None,
                  cert=None, max_results=MAX_RESULTS,
                  tag=None, archive=None, ssl_verify=True):
         origin = url
@@ -125,6 +127,7 @@ class Jira(Backend):
         self.project = project
         self.user = user
         self.password = password
+        self.api_token = api_token
         self.cert = cert
         self.max_results = max_results
         self.client = None
@@ -248,7 +251,7 @@ class Jira(Backend):
         """Init client"""
 
         return JiraClient(self.url, self.project, self.user, self.password,
-                          self.cert, self.max_results,
+                          self.cert, self.api_token, self.max_results,
                           self.archive, from_archive, self.ssl_verify)
 
     def __get_issue_comments(self, issue_id):
@@ -275,6 +278,7 @@ class JiraClient(HttpClient):
     :param project: filter issues by project
     :param user: JIRA's username
     :param password: JIRA's password
+    :param api_token: JIRA user's personal access token or api token
     :param cert: SSL certificate
     :param max_results: max number of results per query
     :param archive: an archive to store/read fetched data
@@ -301,12 +305,14 @@ class JiraClient(HttpClient):
     # Predefined values
     VEXPAND = 'renderedFields,transitions,operations,changelog'
 
-    def __init__(self, url, project, user, password, cert, max_results=MAX_RESULTS,
-                 archive=None, from_archive=False, ssl_verify=True):
+    def __init__(self, url, project, user, password, cert, api_token=None,
+                 max_results=MAX_RESULTS, archive=None, from_archive=False,
+                 ssl_verify=True):
         super().__init__(url, archive=archive, from_archive=from_archive, ssl_verify=ssl_verify)
         self.project = project
         self.user = user
         self.password = password
+        self.api_token = api_token
         self.cert = cert
         self.max_results = max_results
 
@@ -416,6 +422,19 @@ class JiraClient(HttpClient):
     def __init_session(self):
         if (self.user and self.password) is not None:
             self.session.auth = (self.user, self.password)
+        elif self.api_token is not None:
+            auth_header = {}
+            if self.user is None:
+                # Jira Core/Software (8.14 and later), Jira Service Management (4.15 and later)
+                # Data Center and server editions can use personal access tokens without a username
+                # See https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html
+                auth_header = {'Authorization': 'Bearer ' + self.api_token}
+            else:
+                # For Jira Cloud, username and token are required
+                # See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
+                auth_encoded = base64.b64encode((self.user + ':' + self.api_token).encode('utf-8')).decode('utf-8')
+                auth_header = {'Authorization': 'Basic ' + auth_encoded}
+            self.session.headers.update(auth_header)
 
         if self.cert:
             self.session.cert = self.cert
@@ -437,6 +456,7 @@ class JiraCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               basic_auth=True,
+                                              token_auth=True,
                                               archive=True,
                                               ssl_verify=True)
 

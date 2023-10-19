@@ -682,6 +682,16 @@ class TestJiraClient(unittest.TestCase):
         self.assertEqual(client.cert, "cert")
         self.assertEqual(client.max_results, 100)
 
+        client = JiraClient(url='http://example.com', project='perceval',
+                            user='user', password=None, api_token='token',
+                            ssl_verify=False, cert="cert", max_results=100)
+
+        self.assertEqual(client.base_url, 'http://example.com')
+        self.assertEqual(client.project, 'perceval')
+        self.assertEqual(client.user, 'user')
+        self.assertEqual(client.password, None)
+        self.assertEqual(client.api_token, 'token')
+
     @httpretty.activate
     def test_get_issues(self):
         """Test get issues API call"""
@@ -906,6 +916,14 @@ class TestJiraCommand(unittest.TestCase):
         self.assertTrue(parsed_args.no_archive)
         self.assertEqual(parsed_args.from_date, DEFAULT_DATETIME)
         self.assertEqual(parsed_args.url, JIRA_SERVER_URL)
+
+        args = ['--backend-user', 'jsmith',
+                '--api-token', 'token_xxx',
+                JIRA_SERVER_URL]
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.user, 'jsmith')
+        self.assertEqual(parsed_args.api_token, 'token_xxx')
 
 
 if __name__ == '__main__':
