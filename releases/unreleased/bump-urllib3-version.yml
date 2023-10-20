@@ -1,0 +1,7 @@
+---
+title: Bump urllib3 version
+category: dependency
+author: Jose Javier Merchante <jjmerchante@bitergia.com>
+issue: null
+notes: >
+  Bump urllib3 from ^1.26 to ^2.0.7
