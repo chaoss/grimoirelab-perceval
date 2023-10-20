@@ -1,9 +1,0 @@
-title: Clonfluence authentication with personal access tokens
-category: added
-author: devpod.cn <support@devpod.cn>
-issue:
-notes: >
-    Authentication in `confluence` backend is supported using
-    personal access tokens. Confluence Data Center and server
-    editions 7.9 and later can use personal access tokens without
-    a username. For Confluence Cloud, username and token are required.

@@ -1,5 +1,36 @@
 # Releases
 
+## perceval 0.23.0 - (2023-10-20)
+
+**New features:**
+
+ * Jira authentication with token (#813)\
+   Authentication in `jira` backend is supported using personal access
+   tokens. Jira Core/Software (8.14 and later), Jira Service Management
+   (4.15 and later) Data Center and server editions can use personal
+   access tokens without a username. For Jira Cloud, username and token
+   are required. Usage: perceval jira <YOUR_JIRA_SERVER> -u <USERNAME> -p
+   <PASSWORD> perceval jira <YOUR_JIRA_SERVER> -t <PERSONAL_ACCESS_TOKEN>
+   perceval jira <YOUR_JIRA_CLOUD_SITE> -u <USERNAME> -t <TOKEN>
+ * Clonfluence authentication with personal access tokens\
+   Authentication in `confluence` backend is supported using personal
+   access tokens. Confluence Data Center and server editions 7.9 and
+   later can use personal access tokens without a username. For
+   Confluence Cloud, username and token are required.
+
+**Feature removals:**
+
+ * Drop Python 3.7 support\
+   Python 3.7 reaches the end of life in June 2023. This means it won't
+   receive new updates or patches to fix security issues. Therefore, this
+   package only works with Python >= 3.8 from now on.
+
+**Dependencies updateds:**
+
+ * Bump urllib3 version\
+   Bump urllib3 from ^1.26 to ^2.0.7
+
+
   ## perceval 0.22.3 - (2023-08-06)
   
   * Update Poetry's package dependencies

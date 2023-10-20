@@ -1,9 +1,0 @@
----
-title: Drop Python 3.7 support
-category: removed
-author: Jose Javier Merchante <jjmerchante@bitergia.com>
-issue: null
-notes: >
-  Python 3.7 reaches the end of life in June 2023. This means it
-  won't receive new updates or patches to fix security issues.
-  Therefore, this package only works with Python >= 3.8 from now on.
