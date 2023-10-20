@@ -203,7 +203,7 @@ class HttpClient:
                                      read=self.max_retries_on_read,
                                      redirect=self.max_retries_on_redirect,
                                      status=self.max_retries_on_status,
-                                     method_whitelist=self.method_whitelist,
+                                     allowed_methods=self.method_whitelist,
                                      status_forcelist=self.status_forcelist,
                                      backoff_factor=self.sleep_time,
                                      raise_on_redirect=self.raise_on_redirect,
