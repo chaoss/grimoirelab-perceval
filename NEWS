@@ -1,5 +1,9 @@
 # Releases
 
+  ## perceval 0.23.3 - (2023-11-28)
+  
+  * Update Poetry's package dependencies
+
   ## perceval 0.23.2 - (2023-11-14)
   
   * Update Poetry's package dependencies
