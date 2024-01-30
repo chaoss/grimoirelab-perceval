@@ -484,13 +484,13 @@ sphinx-basic-ng = "*"
 
 [[package]]
 name = "grimoirelab-toolkit"
-version = "0.4.2rc1"
+version = "0.4.2"
 description = "Toolkit of common functions used across GrimoireLab"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "grimoirelab_toolkit-0.4.2rc1-py3-none-any.whl", hash = "sha256:bbce240b786a8d30dc988343856bc502bd16279ef1f430193f3f7e56ca7e4f9c"},
-    {file = "grimoirelab_toolkit-0.4.2rc1.tar.gz", hash = "sha256:3b5253a542b59a7ea70bacbdf62b98d7add52edf0b37ab57f7a82765a63b69c4"},
+    {file = "grimoirelab_toolkit-0.4.2-py3-none-any.whl", hash = "sha256:63749c42c7e6dd656acdf6ed32f19f966414388fbbb5e8ae521703b7ae68ca4b"},
+    {file = "grimoirelab_toolkit-0.4.2.tar.gz", hash = "sha256:ebd4832987d39bb588f79df0ac4b1acb32a218d588318d0f7749701dc4ffd9c0"},
 ]
 
 [package.dependencies]
