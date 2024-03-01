@@ -1,0 +1,8 @@
+---
+title: NNTP backend deprecated
+category: deprecated
+author: Jose Javier Merchante <jjmerchante@bitergia.com>
+issue: null
+notes: >
+  NNTP is deprecated. It is not compatible with Python 3.11.8 and
+  will be removed in a future version.
