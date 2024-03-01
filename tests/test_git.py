@@ -129,6 +129,19 @@ class TestGitBackend(TestCaseGit):
 
         self.assertEqual(Git.has_resuming(), True)
 
+    def test_metadata(self):
+        """Test that the offset metadata is the commit from the item"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        git = Git(self.git_path, new_path)
+        commits = [commit for commit in git.fetch()]
+
+        for commit in commits:
+            self.assertEqual(commit['offset'], commit['data']['commit'])
+
+        shutil.rmtree(new_path)
+
     def test_fetch_submodules(self):
         """Test whether repositories with submodules are correctly fetched"""
 
@@ -706,6 +719,111 @@ class TestGitBackend(TestCaseGit):
             self.assertEqual(commit['category'], 'commit')
             self.assertEqual(commit['tag'], 'http://example.com.git')
 
+    def test_fetch_recovery_from_repo(self):
+        """Test whether recovery from a commits in first execution works"""
+
+        origin_path = os.path.join(self.tmp_repo_path, 'gittest')
+        editable_path = os.path.join(self.tmp_path, 'editgit')
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        shutil.copytree(origin_path, editable_path)
+
+        git = Git(editable_path, new_path)
+        commits = [commit for commit in git.fetch()]
+
+        # Count the number of commits before adding some new
+        expected = [('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0),
+                    ('87783129c3f00d2c81a3a8e585eb86a47e39891a', 1344965535.0),
+                    ('7debcf8a2f57f86663809c58b5c07a398be7674c', 1344965607.0),
+                    ('c0d66f92a95e31c77be08dc9d0f11a16715d1885', 1344965702.0),
+                    ('c6ba8f7a1058db3e6b4bc6f1090e932b107605fb', 1344966351.0),
+                    ('589bb080f059834829a2a5955bebfd7c2baa110a', 1344967441.0),
+                    ('ce8e0b86a1e9877f42fe9453ede418519115f367', 1392185269.0),
+                    ('51a3b654f252210572297f47597b31527c475fb8', 1392185366.0),
+                    ('456a68ee1407a77f3e804a30dff245bb6c6b872f', 1392185439.0)]
+
+        self.assertEqual(len(commits), len(expected))
+
+        for x in range(len(commits)):
+            expected_uuid = uuid(editable_path, expected[x][0])
+            commit = commits[x]
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['data']['commit'], expected[x][0])
+
+        # Check we can recover from a commit
+        from_commit = 'c6ba8f7a1058db3e6b4bc6f1090e932b107605fb'
+        commits_recovery = [commit for commit in git.fetch(recovery_commit=from_commit)]
+
+        expected_recovery = expected[4:]
+
+        self.assertEqual(len(commits_recovery), len(expected_recovery))
+
+        for x in range(len(commits_recovery)):
+            expected_uuid = uuid(editable_path, expected_recovery[x][0])
+            commit = commits_recovery[x]
+            self.assertEqual(commit['uuid'], expected_uuid)
+            self.assertEqual(commit['data']['commit'], expected_recovery[x][0])
+
+        # Cleanup
+        shutil.rmtree(editable_path)
+        shutil.rmtree(new_path)
+
+    def test_fetch_recovery_from_packs(self):
+        """Test whether recovery from a commits in a repo with packs works"""
+
+        origin_path = os.path.join(self.tmp_repo_path, 'gittest')
+        editable_path = os.path.join(self.tmp_path, 'editgit')
+        new_path = os.path.join(self.tmp_path, 'newgit')
+        new_file = os.path.join(editable_path, 'newfile')
+
+        shutil.copytree(origin_path, editable_path)
+
+        git = Git(editable_path, new_path)
+        _ = [commit for commit in git.fetch()]
+
+        # Create some new commits
+        cmd = ['git', 'checkout', '-b', 'mybranch']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        with open(new_file, 'w') as f:
+            f.write("Testing sync method")
+
+        cmd = ['git', 'add', new_file]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', '-c', 'user.name="mock"',
+               '-c', 'user.email="mock@example.com"',
+               'commit', '-m', 'Testing sync']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', 'rm', new_file]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        cmd = ['git', '-c', 'user.name="mock"',
+               '-c', 'user.email="mock@example.com"',
+               'commit', '-m', 'Removing testing file for sync']
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                cwd=editable_path, env={'LANG': 'C'})
+
+        # Two new commits should have been fetched
+        commits = [commit for commit in git.fetch(latest_items=True)]
+        self.assertEqual(len(commits), 2)
+
+        # Check if we can recover from the last packfile
+        from_commit = commits[0]['data']['commit']
+        commits_recovery = [commit for commit in git.fetch(recovery_commit=from_commit)]
+        self.assertEqual(len(commits_recovery), 2)
+        self.assertEqual(commits_recovery[0]['uuid'], commits[0]['uuid'])
+        self.assertEqual(commits_recovery[1]['uuid'], commits[1]['uuid'])
+
+        # Cleanup
+        shutil.rmtree(editable_path)
+        shutil.rmtree(new_path)
+
     def test_git_parser(self):
         """Test if the static method parses a git log file"""
 
@@ -873,6 +991,18 @@ class TestGitCommand(TestCaseGit):
         self.assertEqual(parsed_args.uri, 'http://example.com/')
         self.assertFalse(parsed_args.ssl_verify)
 
+        args = ['http://example.com/',
+                '--git-path', '/tmp/gitpath',
+                '--recovery', 'foocommit']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.git_path, '/tmp/gitpath')
+        self.assertEqual(parsed_args.uri, 'http://example.com/')
+        self.assertEqual(parsed_args.recovery_commit, 'foocommit')
+        self.assertFalse(parsed_args.no_update)
+        self.assertFalse(parsed_args.latest_items)
+        self.assertTrue(parsed_args.ssl_verify)
+
     def test_mutual_exclusive_update(self):
         """Test whether an exception is thrown when no-update and latest-items flags are set"""
 
@@ -881,6 +1011,18 @@ class TestGitCommand(TestCaseGit):
                 '--git-path', '/tmp/gitpath',
                 '--branches', 'master', 'testing',
                 '--no-update', '--latest-items']
+
+        with self.assertRaises(SystemExit):
+            _ = parser.parse(*args)
+
+    def test_mutual_exclusive_recovery(self):
+        """Test whether an exception is thrown when recovery and latest-items flags are set"""
+
+        parser = GitCommand.setup_cmd_parser()
+        args = ['http://example.com/',
+                '--git-path', '/tmp/gitpath',
+                '--recovery', 'foocommit',
+                '--latest-items']
 
         with self.assertRaises(SystemExit):
             _ = parser.parse(*args)
@@ -1823,6 +1965,30 @@ class TestGitRepository(TestCaseGit):
         gitshow = [line for line in gitshow]
         self.assertEqual(len(gitshow), 14)
         self.assertEqual(gitshow[0][:14], "commit 456a68e")
+
+        shutil.rmtree(new_path)
+
+    def test_has_loose_objects(self):
+        """Test if the repository has loose objects"""
+
+        new_path = os.path.join(self.tmp_path, 'newgit')
+
+        repo = GitRepository.clone(self.git_path, new_path)
+
+        # Create a loose object in the repository
+        process = subprocess.Popen(['git', 'hash-object', '-w', '--stdin'],
+                                   stdin=subprocess.PIPE,
+                                   cwd=new_path,
+                                   env={'LANG': 'C'})
+        process.communicate(input=b"Data test")
+
+        self.assertTrue(repo.has_loose_objects())
+
+        # Group loose objects in a packfile and remove unreachable objects
+        subprocess.run(['git', 'gc'], cwd=new_path, check=True)
+        subprocess.run(['git', 'prune'], cwd=new_path, check=True)
+
+        self.assertFalse(repo.has_loose_objects())
 
         shutil.rmtree(new_path)
 
