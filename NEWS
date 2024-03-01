@@ -1,5 +1,14 @@
 # Releases
 
+## perceval 0.24.0 - (2024-03-01)
+
+**New deprecations:**
+
+ * NNTP backend deprecated\
+   NNTP is deprecated. It is not compatible with Python 3.11.8 and will
+   be removed in a future version.
+
+
   ## perceval 0.23.6 - (2024-02-08)
   
   * Update Poetry's package dependencies
