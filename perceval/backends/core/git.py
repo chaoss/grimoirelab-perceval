@@ -83,7 +83,7 @@ class Git(Backend):
         self.gitpath = gitpath
 
     def fetch(self, category=CATEGORY_COMMIT, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
-              branches=None, latest_items=False, no_update=False):
+              branches=None, latest_items=False, recovery_commit=None, no_update=False):
         """Fetch commits.
 
         The method retrieves from a Git repository or a log file
@@ -118,6 +118,7 @@ class Git(Backend):
         :param branches: names of branches to fetch from (default: None)
         :param latest_items: sync with the repository to fetch only the
             newest commits
+        :param recovery_commit: recover from this commit no updating the repo
         :param no_update: if enabled, don't update the repo with the latest changes
 
         :returns: a generator of commits
@@ -132,6 +133,7 @@ class Git(Backend):
             'to_date': to_date,
             'branches': branches,
             'latest_items': latest_items,
+            'recovery_commit': recovery_commit,
             'no_update': no_update
         }
         items = super().fetch(category, **kwargs)
@@ -151,11 +153,14 @@ class Git(Backend):
         branches = kwargs['branches']
         latest_items = kwargs['latest_items']
         no_update = kwargs['no_update']
+        recovery_commit = kwargs['recovery_commit']
 
         ncommits = 0
 
         try:
-            if os.path.isfile(self.gitpath):
+            if recovery_commit:
+                commits = self._recovery(recovery_commit, from_date, to_date, branches)
+            elif os.path.isfile(self.gitpath):
                 commits = self._fetch_from_log()
             else:
                 commits = self._fetch_from_repo(from_date, to_date, branches,
@@ -185,6 +190,20 @@ class Git(Backend):
         :returns: this backend supports items resuming
         """
         return True
+
+    def metadata(self, item, filter_classified=False):
+        """Git metadata.
+
+        This method takes items, overriding `metadata` decorator,
+        to add extra information related to Git.
+
+        :param item: an item fetched by a backend
+        :param filter_classified: sets if classified fields were filtered
+        """
+        item = super().metadata(item, filter_classified=filter_classified)
+        item['offset'] = item['data']['commit']
+
+        return item
 
     @staticmethod
     def metadata_id(item):
@@ -321,6 +340,55 @@ class Git(Backend):
         gitshow = repo.show(hashes)
         return self.parse_git_log_from_iter(gitshow)
 
+    def __fetch_from_packs(self, repo, packs, from_commit):
+        """Retrieve commits from packfiles starting with the pack containing from_commit"""
+
+        hashes = repo.get_commits_from_packs(packs, from_commit)
+        gitshow = repo.show(hashes)
+        commits = self.parse_git_log_from_iter(gitshow)
+
+        return commits
+
+    def _recovery(self, from_commit, from_date, to_date, branches):
+        """Recover Perceval execution from a specific commit
+
+        If the path is a Git log file, resume the execution using the
+        Git file.
+
+        When the path is a directory, there are two cases to consider:
+
+        If the repository contains only loose objects without packfiles,
+        or a single packfile without loose objects (this occurs when the
+        repository is large enough or to reduce storage space), fetch the
+        commits as it was the first execution. This involves using the
+        '__fetch_from_repository' method, which retrieves commits using the
+        log.
+
+        If the repository contains more than one packfile, or has loose
+        objects and one packfile, we can deduce that the packfile is from the
+        last execution. In this case, we will fetch the commits using the
+        '_from_packs' method.
+        """
+        if os.path.isfile(self.gitpath):
+            commits = self._fetch_from_log()
+        else:
+            repo = self._create_git_repository()
+            packs = repo.packs_by_date()
+            if not packs or (len(packs) == 1 and not repo.has_loose_objects()):
+                commits = self._fetch_from_repo(from_date=from_date, to_date=to_date,
+                                                branches=branches, no_update=True)
+            else:
+                commits = self.__fetch_from_packs(repo, packs, from_commit)
+
+        # Only commits after from_commit
+        found = False
+        for commit in commits:
+            if not found and commit['commit'] == from_commit:
+                found = True
+
+            if found:
+                yield commit
+
     def _create_git_repository(self):
         if not os.path.exists(self.gitpath):
             repo = GitRepository.clone(self.uri, self.gitpath, self.ssl_verify)
@@ -380,6 +448,8 @@ class GitCommand(BackendCommand):
         exgroup_fetch.add_argument('--latest-items', dest='latest_items',
                                    action='store_true',
                                    help="Fetch latest commits added to the repository")
+        exgroup_fetch.add_argument('--recovery', dest='recovery_commit',
+                                   help="Recover the last execution from a commit")
         exgroup_fetch.add_argument('--no-update', dest='no_update',
                                    action='store_true',
                                    help="Fetch all commits without updating the repository")
@@ -1111,6 +1181,53 @@ class GitRepository:
 
         logger.debug("Git show fetched from %s repository (%s)",
                      self.uri, self.dirpath)
+
+    def get_commits_from_packs(self, packs, from_commit):
+        """Get commits from a specific one using fetched packfiles"""
+
+        hashes = []
+        found = False
+
+        for pack in packs:
+            commits = self._read_commits_from_pack(pack)
+            for commit in commits:
+                if not found and from_commit == commit:
+                    found = True
+
+                if found:
+                    hashes.append(commit)
+
+        return hashes
+
+    def packs_by_date(self):
+        """Get all packs ordered by date"""
+
+        packs_dir = os.path.join(self.dirpath, 'objects/pack/')
+
+        files = os.listdir(packs_dir)
+        # Sort by date, from older to newer
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(packs_dir, x)))
+        packs = [f.split('.')[0].split('-')[1]
+                 for f in files
+                 if f.endswith('.idx')]
+
+        return packs
+
+    def has_loose_objects(self):
+        """Check if the repository has loose objects"""
+
+        cmd_count_objects = ['git', 'count-objects', '-v']
+
+        outs = self._exec(cmd_count_objects, cwd=self.dirpath, env=self.gitenv)
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+
+        for line in outs.split('\n'):
+            if line.startswith('count:'):
+                count = int(line.split(':')[1].strip())
+                return count > 0
+        else:
+            msg = "Unexpected output format from 'git count-objects -v'"
+            raise RepositoryError(cause=msg)
 
     def _fetch_pack(self):
         """Fetch changes and store them in a pack."""
