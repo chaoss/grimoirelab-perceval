@@ -68,7 +68,7 @@ class Groupsio(MBox):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.4.2'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 

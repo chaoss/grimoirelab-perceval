@@ -71,7 +71,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '0.13.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_COMMIT]
 

@@ -67,7 +67,7 @@ class Pagure(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.1.2'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
 

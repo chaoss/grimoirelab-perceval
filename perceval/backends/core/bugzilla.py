@@ -64,7 +64,7 @@ class Bugzilla(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.12.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_BUG]
     EXTRA_SEARCH_FIELDS = {

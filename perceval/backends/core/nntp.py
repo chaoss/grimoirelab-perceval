@@ -57,7 +57,7 @@ class NNTP(Backend):
     :param tag: label used to mark the data
     :param archive: archive to store/retrieve items
     """
-    version = '0.6.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_ARTICLE]
     EXTRA_SEARCH_FIELDS = {

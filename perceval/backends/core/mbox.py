@@ -67,7 +67,7 @@ class MBox(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.13.2'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_MESSAGE]
 

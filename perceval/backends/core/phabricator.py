@@ -62,7 +62,7 @@ class Phabricator(Backend):
     :param ssl_verify: enable/disable SSL verification
     :param blacklist_ids: exclude the ids while fetching
     """
-    version = '0.14.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_TASK]
     ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='id', type=int)

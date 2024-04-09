@@ -64,7 +64,7 @@ class Jenkins(Backend):
     :param blacklist_ids: exclude the jobs ID of this list while fetching
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.16.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_BUILD]
     EXTRA_SEARCH_FIELDS = {

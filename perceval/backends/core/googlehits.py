@@ -60,7 +60,7 @@ class GoogleHits(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.4.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_HITS]
     EXTRA_SEARCH_FIELDS = {
