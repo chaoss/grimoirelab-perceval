@@ -91,7 +91,7 @@ class GitLab(Backend):
         the ones (413, 429, 503) defined in the HttpClient class
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.12.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_MERGE_REQUEST]
     ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='iid', type=int)

@@ -68,7 +68,7 @@ class Confluence(Backend):
                  optional for Confluence Data Center and server editions 7.9 and later
     :param api_token: Confluence user's personal access token or api token
     """
-    version = '0.15.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_HISTORICAL_CONTENT]
 

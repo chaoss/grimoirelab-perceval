@@ -111,7 +111,7 @@ class GitHub(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.27.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 

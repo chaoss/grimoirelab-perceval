@@ -106,7 +106,7 @@ class Jira(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.15.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_ISSUE]
     EXTRA_SEARCH_FIELDS = {

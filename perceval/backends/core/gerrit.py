@@ -64,7 +64,7 @@ class Gerrit(Backend):
     :param blacklist_ids: exclude the reviews while fetching
     :param id_filepath: path to SSH private key
     """
-    version = '0.13.1'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_REVIEW]
     EXTRA_SEARCH_FIELDS = {

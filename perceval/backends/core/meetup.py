@@ -72,7 +72,7 @@ class Meetup(Backend):
         of connection problems
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.17.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_EVENT]
     CLASSIFIED_FIELDS = [

@@ -75,7 +75,7 @@ class Twitter(Backend):
     :param archive: archive to store/retrieve items
     :param ssl_verify: enable/disable SSL verification
     """
-    version = '0.4.0'
+    version = '1.0.0'
 
     CATEGORIES = [CATEGORY_TWEET]
 
