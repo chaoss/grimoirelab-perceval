@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "perceval"
-version = "1.0.0-rc.2"
+version = "1.0.0"
 description = "Send Sir Perceval on a quest to fetch and gather data from software repositories."
 authors = [
     "GrimoireLab Developers"
