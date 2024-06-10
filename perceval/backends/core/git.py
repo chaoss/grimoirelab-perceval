@@ -804,7 +804,14 @@ class GitParser:
             prefix = f[0:i]
             inner = f[i + 1:f.find(' => ', i)]
             suffix = f[j + 1:]
-            return prefix + inner + suffix
+            old_filepath = prefix + inner + suffix
+
+            # Remove double '/' for corner cases like
+            # 'dir/{ => subdir}/filename'.
+            # The resulting old path on these entries is 'dir//filename'.
+            old_filepath = old_filepath.replace('//', '/')
+
+            return old_filepath
         elif ' => ' in f:
             return f.split(' => ')[0]
         else:

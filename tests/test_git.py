@@ -1129,6 +1129,47 @@ class TestGitParser(TestCaseGit):
 
         self.assertDictEqual(commits[9], expected)
 
+    def test_parser_renamed_files(self):
+        """Check it moved or copied files are correctly renamed"""
+
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/git/git_log_moved.txt"), 'r') as f:
+            parser = GitParser(f)
+            commits = [commit for commit in parser.parse()]
+
+        self.assertEqual(len(commits), 1)
+
+        expected = {
+            'commit': '1e6250992e6cddebfaf4e6fdf241171091874523',
+            'parents': ['ff93e98029e7b8356bf87456df0254332f4a6549'],
+            'refs': [],
+            'Author': 'John Smith <jsmith@example.com>',
+            'AuthorDate': 'Tue Nov 22 14:00:06 2016 +0100',
+            'Commit': 'John Smith <jsmith@example.com>',
+            'CommitDate': 'Tue Nov 22 14:00:06 2016 +0100',
+            'message': '[backends] Move backends to core sub-package',
+            'files': [
+                {
+                    'file': 'perceval/backends/bugzilla.py',
+                    'newfile': 'perceval/backends/core/bugzilla.py',
+                    'added': '4',
+                    'removed': '4',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['232acb3', '7923641'],
+                    'action': 'R098'
+                },
+                {
+                    'file': 'perceval/backends/core/__init__.py',
+                    'added': '0',
+                    'removed': '0',
+                    'modes': ['000000', '100644'],
+                    'indexes': ['0000000', 'e69de29'],
+                    'action': 'A'
+                }
+            ]
+        }
+
+        self.assertDictEqual(commits[0], expected)
+
     def test_parser_merge_commit(self):
         """Test if it parses all the available data on a merge commit"""
 
