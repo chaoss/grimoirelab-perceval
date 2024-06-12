@@ -1,0 +1,12 @@
+commit 1e6250992e6cddebfaf4e6fdf241171091874523 ff93e98029e7b8356bf87456df0254332f4a6549
+Author:     John Smith <jsmith@example.com>
+AuthorDate: Tue Nov 22 14:00:06 2016 +0100
+Commit:     John Smith <jsmith@example.com>
+CommitDate: Tue Nov 22 14:00:06 2016 +0100
+
+    [backends] Move backends to core sub-package
+
+:000000 100644 0000000 e69de29 A	perceval/backends/core/__init__.py
+:100644 100644 232acb3 7923641 R098	perceval/backends/bugzilla.py	perceval/backends/core/bugzilla.py
+0	0	perceval/backends/core/__init__.py
+4	4	perceval/backends/{ => core}/bugzilla.py
