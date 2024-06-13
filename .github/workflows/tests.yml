@@ -44,3 +44,5 @@ jobs:
         uses: coverallsapp/github-action@643bc377ffa44ace6394b2b5d0d3950076de9f63 # v2.3.0
         with:
           coverage-reporter-version: "v0.6.9"
+          flag-name: run ${{ join(matrix.*, ' - ') }}
+          parallel: true
