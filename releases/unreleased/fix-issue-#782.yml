@@ -1,0 +1,6 @@
+title: 'Fix issue #782'
+category: fixed
+author: Matt Gaughan <mgaughan@proton.me>
+issue: 782
+notes: >
+  The issue was that perceval would not delete old tags from upstream references. This change deletes tags locally if tags are deleted upstream. 
