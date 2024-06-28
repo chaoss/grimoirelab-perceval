@@ -1299,6 +1299,8 @@ class GitRepository:
         for old_ref in self._discover_refs():
             if not old_ref.refname.startswith('refs/heads/'):
                 continue
+            if not old_ref.refname.startswith('refs/tags/'):
+                continue
             if old_ref.refname in new_refs:
                 continue
             self._update_ref(old_ref, delete=True)
