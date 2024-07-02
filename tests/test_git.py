@@ -1799,7 +1799,7 @@ class TestGitRepository(TestCaseGit):
         # Cleanup
         shutil.rmtree(editable_path)
         shutil.rmtree(new_path)
-    
+
     def test_tag_removal_sync(self):
         """Test sync process for tag removal"""
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
@@ -1811,11 +1811,11 @@ class TestGitRepository(TestCaseGit):
         repo = GitRepository.clone(editable_path, new_path)
         repo.sync()
 
-        #Add a tag 'v.0.0-lw' to the refs and check that it exists
+        # Add a tag 'v.0.0-lw' to the refs and check that it exists
         cmd = ['git', 'tag', 'v.0.0-lw']
         subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                 cwd=editable_path, env={'LANG': 'C'})
-        
+
         new_commits = repo.sync()
         self.assertEqual(len(new_commits), 0)
 
@@ -1827,11 +1827,11 @@ class TestGitRepository(TestCaseGit):
         refs.sort()
         self.assertListEqual(refs, expected)
 
-        #Delete the tag 'v.0.0-lw' and check that it has been deleted from refs
+        # Delete the tag 'v.0.0-lw' and check that it has been deleted from refs
         cmd = ['git', 'tag', '-d', 'v.0.0-lw']
         subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                 cwd=editable_path, env={'LANG': 'C'})
-        
+
         new_commits = repo.sync()
         self.assertEqual(len(new_commits), 0)
 
@@ -1841,10 +1841,10 @@ class TestGitRepository(TestCaseGit):
         refs = [ref for ref in discover_refs(new_path).keys()]
         refs.sort()
         self.assertListEqual(refs, expected)
-        #Cleanup
+        # Cleanup
         shutil.rmtree(editable_path)
         shutil.rmtree(new_path)
-    
+
     def test_sync_from_empty_repos(self):
         """Test sync process on empty repositories"""
 
