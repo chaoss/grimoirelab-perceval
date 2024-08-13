@@ -771,6 +771,9 @@ class BackendCommand:
 
     def __init__(self, *args, debug=False):
         parser = self.setup_cmd_parser()
+
+        parser.parser.prog = "perceval %s" % self.BACKEND.__name__.lower()
+
         self.parsed_args = parser.parse(*args)
         self.debug = debug
         self.archive_manager = None
