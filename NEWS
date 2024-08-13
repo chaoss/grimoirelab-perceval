@@ -1,5 +1,14 @@
 # Releases
 
+## perceval 1.0.5 - (2024-08-13)
+
+**Bug fixes:**
+
+ * Fixed missing backend name in usage string (#799)\
+   The `perceval` command-line tool now correctly displays the backend
+   name in the usage string when using the `--help` option.
+
+
   ## perceval 1.0.4 - (2024-08-09)
   
   * Update Poetry's package dependencies
