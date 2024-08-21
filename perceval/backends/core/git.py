@@ -1297,7 +1297,7 @@ class GitRepository:
 
         # Delete old references
         for old_ref in self._discover_refs():
-            if not old_ref.refname.startswith('refs/heads/'):
+            if not old_ref.refname.startswith('refs/heads/') and not old_ref.refname.startswith('refs/tags/'):
                 continue
             if old_ref.refname in new_refs:
                 continue
