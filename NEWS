@@ -1,5 +1,15 @@
 # Releases
 
+## perceval 1.0.6 - (2024-08-30)
+
+**Bug fixes:**
+
+ * Fix issue #782 (#782)\
+   The issue was that perceval would not delete old tags from upstream
+   references. This change deletes tags locally if tags are deleted
+   upstream.
+
+
 ## perceval 1.0.5 - (2024-08-13)
 
 **Bug fixes:**
