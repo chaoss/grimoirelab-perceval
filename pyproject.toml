@@ -44,14 +44,14 @@ classifiers = [
 perceval = 'perceval.perceval:main'
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 
 python-dateutil = "^2.6.0"
 requests = "^2.7.0"
 beautifulsoup4 = "^4.3.2"
 feedparser = "^6.0.8"
-dulwich = "^0.20.0"
-urllib3 = "^1.26"
+dulwich = ">=0.21.5,<1.0.0"
+urllib3 = "^2.2"
 PyJWT = "^2.4.0"
 cryptography = ">=41.0.3,<44.0.0"
 grimoirelab-toolkit = { version = ">=0.3", allow-prereleases = true}
@@ -62,7 +62,7 @@ furo = { version = "^2023.03.27", optional = true }
 
 [tool.poetry.dev-dependencies]
 httpretty = "^1.1.4"
-flake8 = "^4.0.1"
+flake8 = "^7.1.1"
 coverage = "^7.2.3"
 
 [tool.poetry.extras]

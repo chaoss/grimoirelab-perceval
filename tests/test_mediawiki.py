@@ -67,7 +67,7 @@ class HTTPServer():
     def routes(cls, version="1.28", empty=False, response_num=200):
         """Configure in http the routes to be served"""
 
-        assert(version in TESTED_VERSIONS)
+        assert version in TESTED_VERSIONS
 
         if version == "1.28":
             mediawiki_siteinfo = read_file('data/mediawiki/mediawiki_siteinfo_1.28.json')
