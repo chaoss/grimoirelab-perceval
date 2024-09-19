@@ -132,7 +132,7 @@ def message_to_dict(msg):
             hv = []
 
             for text, charset in email.header.decode_header(value):
-                if type(text) == bytes:
+                if isinstance(text, bytes):
                     charset = charset if charset else 'utf-8'
                     try:
                         text = text.decode(charset, errors='surrogateescape')
