@@ -1,5 +1,14 @@
 # Releases
 
+## perceval 1.0.7 - (2024-09-23)
+
+**Dependencies updateds:**
+
+ * Python minimum version updated\
+   Python 3.8 will reach its end of life in October 2024. Python 3.9 is
+   the minimum version required by the project.
+
+
 ## perceval 1.0.6 - (2024-08-30)
 
 **Bug fixes:**
