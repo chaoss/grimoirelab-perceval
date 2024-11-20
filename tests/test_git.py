@@ -1395,6 +1395,19 @@ class TestGitParser(TestCaseGit):
         self.assertEqual(m.group('removed'), "0")
         self.assertEqual(m.group('file'), "bbb/{something => something.renamed}")
 
+        # Test with files that have whitespaces
+        s = "5\t0\t afile.txt"
+        m = pattern.match(s)
+        self.assertEqual(m.group('added'), "5")
+        self.assertEqual(m.group('removed'), "0")
+        self.assertEqual(m.group('file'), " afile.txt")
+
+        s = "5\t0\ta fi le.txt"
+        m = pattern.match(s)
+        self.assertEqual(m.group('added'), "5")
+        self.assertEqual(m.group('removed'), "0")
+        self.assertEqual(m.group('file'), "a fi le.txt")
+
     def test_empty_line(self):
         """Test empty line pattern"""
 

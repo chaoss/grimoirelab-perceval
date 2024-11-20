@@ -1,0 +1,11 @@
+---
+title: Git stats not assigned with their actions
+category: fixed
+author: Santiago Dueñas <sduenas@bitergia.com>
+issue: null
+notes: >
+  Git stats were not assigned to their actions in
+  a commit for filenames that contain whitespaces.
+  Instead, an empty stat was created like in a
+  merge commit, where actions normally don't take
+  place.
