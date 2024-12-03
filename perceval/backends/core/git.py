@@ -1304,6 +1304,8 @@ class GitRepository:
             self._update_ref(old_ref, delete=True)
 
         # Update new references
+        current_refs = {ref.refname: ref.hash for ref in self._discover_refs()}
+
         for new_ref in refs:
             refname = new_ref.refname
 
@@ -1313,6 +1315,10 @@ class GitRepository:
                 continue
             elif not refname.startswith('refs/heads/') and not refname.startswith('refs/tags/'):
                 logger.debug("Reference %s not needed; ignored for updating in sync process",
+                             refname)
+                continue
+            elif refname in current_refs and new_ref.hash == current_refs[refname]:
+                logger.debug("Reference %s already up to date in sync process",
                              refname)
                 continue
             else:
