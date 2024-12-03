@@ -71,7 +71,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '1.0.0'
+    version = '1.0.1'
 
     CATEGORIES = [CATEGORY_COMMIT]
 
@@ -567,7 +567,7 @@ class GitParser:
                       (?P<file>[^\t]+)
                       (?:\t+(?P<newfile>.+))?$"""
 
-    STATS_PATTERN = r"^(?P<added>\d+|-)[ \t]+(?P<removed>\d+|-)[ \t]+(?P<file>.+)$"
+    STATS_PATTERN = r"^(?P<added>\d+|-)\t+(?P<removed>\d+|-)\t+(?P<file>.+)$"
 
     EMPTY_LINE_PATTERN = r"^$"
 
