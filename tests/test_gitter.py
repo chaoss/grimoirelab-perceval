@@ -204,7 +204,6 @@ class TestGitterBackend(unittest.TestCase):
         from_date = datetime.datetime(2020, 3, 24, 0, 0, tzinfo=dateutil.tz.tzutc())
         backend = Gitter(group='testapicomm', room='community', api_token='aaa', max_items=1)
         messages = [m for m in backend.fetch(from_date=from_date)]
-        print(messages)
         self.assertEqual(len(messages), 1)
 
         message = messages[0]

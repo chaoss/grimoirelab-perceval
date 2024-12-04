@@ -2072,6 +2072,8 @@ class TestGitRepository(TestCaseGit):
         # Create a loose object in the repository
         process = subprocess.Popen(['git', 'hash-object', '-w', '--stdin'],
                                    stdin=subprocess.PIPE,
+                                   stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL,
                                    cwd=new_path,
                                    env={'LANG': 'C'})
         process.communicate(input=b"Data test")
@@ -2079,8 +2081,12 @@ class TestGitRepository(TestCaseGit):
         self.assertTrue(repo.has_loose_objects())
 
         # Group loose objects in a packfile and remove unreachable objects
-        subprocess.run(['git', 'gc'], cwd=new_path, check=True)
-        subprocess.run(['git', 'prune'], cwd=new_path, check=True)
+        subprocess.run(['git', 'gc'],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       cwd=new_path, check=True)
+        subprocess.run(['git', 'prune'],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       cwd=new_path, check=True)
 
         self.assertFalse(repo.has_loose_objects())
 
