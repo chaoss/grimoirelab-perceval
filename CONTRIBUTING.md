@@ -1,7 +1,7 @@
 # Contributing to GrimoireLab Perceval
 
 These are some general guidelines and information related to how we contribute to 
-GrimoireLab. You can read about it from the [CONTRIBUTING.md](https://github.com/chaoss/grimoirelab/blob/master/CONTRIBUTING.md).
+GrimoireLab. You can read about it from the [CONTRIBUTING.md](https://github.com/chaoss/grimoirelab/blob/main/CONTRIBUTING.md).
 
 ## Changelog Entries
 
