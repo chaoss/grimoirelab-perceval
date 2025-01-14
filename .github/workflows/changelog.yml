@@ -9,4 +9,4 @@ jobs:
   check-changelog:
     runs-on: ubuntu-latest
     steps:
-      - uses: bitergia/release-tools-check-changelog@master
+      - uses: bitergia/release-tools-check-changelog@main

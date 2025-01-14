@@ -1,4 +1,4 @@
-# Perceval [![Build Status](https://github.com/chaoss/grimoirelab-perceval/workflows/tests/badge.svg)](https://github.com/chaoss/grimoirelab-perceval/actions?query=workflow:tests+branch:master+event:push) [![Coverage Status](https://img.shields.io/coveralls/chaoss/grimoirelab-perceval.svg)](https://coveralls.io/r/chaoss/grimoirelab-perceval?branch=master) [![PyPI version](https://badge.fury.io/py/perceval.svg)](https://badge.fury.io/py/perceval) [![Documentation in RTD](https://readthedocs.org/projects/perceval/badge/)](http://perceval.readthedocs.io)
+# Perceval [![Build Status](https://github.com/chaoss/grimoirelab-perceval/workflows/tests/badge.svg)](https://github.com/chaoss/grimoirelab-perceval/actions?query=workflow:tests+branch:main+event:push) [![Coverage Status](https://img.shields.io/coveralls/chaoss/grimoirelab-perceval.svg)](https://coveralls.io/r/chaoss/grimoirelab-perceval?branch=main) [![PyPI version](https://badge.fury.io/py/perceval.svg)](https://badge.fury.io/py/perceval) [![Documentation in RTD](https://readthedocs.org/projects/perceval/badge/)](http://perceval.readthedocs.io)
 
 Send Sir Perceval on a quest to retrieve and gather data from software
 repositories.
@@ -141,7 +141,7 @@ A Perceval Docker image is available at
 [DockerHub](https://hub.docker.com/r/grimoirelab/perceval/).
 
 Detailed information on how to run and/or build this image can be found
-[here](https://github.com/chaoss/grimoirelab-perceval/tree/master/docker/images/).
+[here](https://github.com/chaoss/grimoirelab-perceval/tree/main/docker/images/).
 
 ## Documentation
 

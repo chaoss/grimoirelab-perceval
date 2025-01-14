@@ -16,7 +16,7 @@ A Perceval retriever is built with three components:
 
 
 Backend and CommandLine extend the abstract classes in
-[backend.py](https://github.com/grimoirelab/perceval/blob/master/perceval/backend.py).
+[backend.py](https://github.com/grimoirelab/perceval/blob/main/perceval/backend.py).
 They require the definition of several methods:
 
 - Backend:
@@ -39,8 +39,8 @@ They require the definition of several methods:
 - `setup_cmd_parser()` initializes the command parser for the backend.
 
 All backends have their own unit tests and corresponding data, saved in the folder
-[/tests](https://github.com/grimoirelab/perceval/tree/master/tests) and
-[/tests/data](https://github.com/grimoirelab/perceval/tree/master/tests/data)
+[/tests](https://github.com/grimoirelab/perceval/tree/main/tests) and
+[/tests/data](https://github.com/grimoirelab/perceval/tree/main/tests/data)
 respectively. Since most backends fetch data from HTTP APIs, their tests rely on HTTPretty
 (version==0.8.6), a mocking tool that simulates HTTP requests.
 
@@ -75,9 +75,9 @@ calling the `fetch_from_cache()` method.
 
 A strategy to deal with such a complexity is to add markers before and after pushing items
 to the cache. Examples of this strategy have been implemented for
-[GitHub](https://github.com/grimoirelab/perceval/blob/master/perceval/backends/core/github.py)
+[GitHub](https://github.com/grimoirelab/perceval/blob/main/perceval/backends/core/github.py)
 and [Launchpad
-backends](https://github.com/grimoirelab/perceval/blob/master/perceval/backends/core/launchpad.py).
+backends](https://github.com/grimoirelab/perceval/blob/main/perceval/backends/core/launchpad.py).
 
 The Python-like pseudocode below shows this strategy for extracting issues, comments and
 their authors.
