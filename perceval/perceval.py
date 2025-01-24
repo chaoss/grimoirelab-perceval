@@ -28,7 +28,7 @@
 #     Venu Vardhan Reddy Tekula <venuvardhanreddytekula8@gmail.com>
 #     animesh <animuz111@gmail.com>
 #     Nitish Gupta <imnitish.ng@gmail.com>
-#
+#     Ashish Kumar Choubey <contactchoubey@gmail.com>
 
 import argparse
 import logging
@@ -73,6 +73,7 @@ are:
     pagure           Fetch issues from Pagure
     phabricator      Fetch tasks from a Phabricator site
     pipermail        Fetch messages from a Pipermail archiver
+    postgresdb       Fetch contents from Postgres DB using SQL queries via DP API 2.0 standards
     redmine          Fetch issues from a Redmine server
     rocketchat       Fetch messages from a Rocket.Chat channel
     rss              Fetch entries from a RSS feed server

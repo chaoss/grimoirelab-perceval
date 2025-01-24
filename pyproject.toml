@@ -55,6 +55,8 @@ urllib3 = "^2.2"
 PyJWT = "^2.4.0"
 cryptography = ">=41.0.3,<44.0.0"
 grimoirelab-toolkit = { version = ">=0.3", allow-prereleases = true}
+pandas = "^2.2.3"
+psycopg2 = "^2.9.10"
 
 # Documentation
 myst-parser = { version = "^1.0.0", optional = true }
