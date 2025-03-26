@@ -1,0 +1,12 @@
+---
+title: NNTP backend removed for Python > 3.13
+category: removed
+author: Jose Javier Merchante <jjmerchante@bitergia.com>
+issue: null
+notes: >
+  nntplib is no longer part of the Python standard library.
+  It was removed in Python 3.13 after being deprecated in
+  Python 3.11 (PEP 594).
+
+  This version raises an exception when trying to use
+  the NNTP backend and nntplib package is not available.

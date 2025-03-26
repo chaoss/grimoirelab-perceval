@@ -24,8 +24,18 @@
 
 import io
 import logging
-import nntplib
 import email
+
+
+try:
+    import nntplib
+
+    # Hack to avoid "line too long" errors
+    nntplib._MAXLINE = 65536
+except ImportError:
+    # nntplib has been removed in Python 3.13
+    nntplib = None
+
 
 from grimoirelab_toolkit.datetime import str_to_datetime, InvalidDateError
 
@@ -38,9 +48,6 @@ from ...utils import message_to_dict
 CATEGORY_ARTICLE = "article"
 DEFAULT_OFFSET = 1
 FALLBACK_DATE = '1970-01-01'
-
-# Hack to avoid "line too long" errors
-nntplib._MAXLINE = 65536
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +72,11 @@ class NNTP(Backend):
     }
 
     def __init__(self, host, group, tag=None, archive=None):
+
+        if not nntplib:
+            raise ImportError("nntp is no longer supported in Python >= 3.13 due"
+                              "to nntplib has been removed from the standard library")
+
         origin = host + '-' + group
 
         super().__init__(origin, tag=tag, archive=archive)
@@ -267,6 +279,14 @@ class NNTTPClient():
     OVER = "over"
 
     def __init__(self, host, archive=None, from_archive=False):
+
+        if not nntplib:
+            raise ImportError("nntp is no longer supported in Python >= 3.13 due"
+                              "to nntplib has been removed from the standard library")
+        else:
+            logging.warning("nntp will no longer be supported in Python >= 3.13 due"
+                            "to nntplib has been removed from the standard library")
+
         self.host = host
         self.archive = archive
         self.from_archive = from_archive
