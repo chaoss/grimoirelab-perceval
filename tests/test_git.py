@@ -892,6 +892,33 @@ class TestGitBackend(TestCaseGit):
 
         self.assertListEqual(result, expected)
 
+    def test_filename_brackets(self):
+        """Test if filenames with brackets are correctly parsed"""
+
+        commits = Git.parse_git_log_from_file(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                           "data/git/git_log_brackets.txt"))
+
+        result = [commit for commit in commits]
+
+        self.assertEqual(len(result), 1)
+
+        commit = result[0]
+        self.assertEqual(commit['commit'], 'd79655db20a9d5321bf9c95f5ca53bd62fe3d652')
+
+        files = commit['files']
+        self.assertEqual(len(files), 1)
+
+        expected_file = {
+            'action': 'A',
+            'added': '0',
+            'file': 'a/{{ folderName }}.yml.hbs',
+            'indexes': ['0000000', 'e69de29'],
+            'modes': ['000000', '100644'],
+            'removed': '0'
+        }
+        file = files[0]
+        self.assertDictEqual(file, expected_file)
+
 
 class TestGitCommand(TestCaseGit):
     """GitCommand tests"""
@@ -1169,6 +1196,86 @@ class TestGitParser(TestCaseGit):
         }
 
         self.assertDictEqual(commits[0], expected)
+
+    def test_parser_renamed_files_with_braces(self):
+        """Check if renamed files with braces are correctly parsed"""
+
+        log_file = "data/git/git_log_moved_special_files.txt"
+
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), log_file), 'r') as f:
+            parser = GitParser(f)
+            commits = [commit for commit in parser.parse()]
+
+        expected = {
+            "commit": "7441fd43783dcf2fbc7850fb9c40612f45c67219",
+            "parents": ["5b21b0e881531ab3ba7fe4af8020970c5df40baa"],
+            "refs": ["HEAD -> refs/heads/master"],
+            "Author": "John Smith <jsmith@example.com>",
+            "AuthorDate": "Fri Mar 28 12:24:17 2025 +0100",
+            "Commit": "John Smith <jsmith@example.com>",
+            "CommitDate": "Fri Mar 28 12:24:17 2025 +0100",
+            "message": "Move files between dirs",
+            "files": [
+                {
+                    "modes": ["100644", "100644"],
+                    "indexes": ["e69de29", "e69de29"],
+                    "action": "R100",
+                    "file": "dir2}/file5}",
+                    "newfile": "dir2}/dir_in1/dir_in2/file5}",
+                    "added": "0",
+                    "removed": "0"
+                },
+                {
+                    "modes": ["100644", "100644"],
+                    "indexes": ["e69de29", "e69de29"],
+                    "action": "R100",
+                    "file": "dir2}/file6{",
+                    "newfile": "file6{",
+                    "added": "0",
+                    "removed": "0"
+                },
+                {
+                    "modes": ["100644", "100644"],
+                    "indexes": ["e69de29", "e69de29"],
+                    "action": "R100",
+                    "file": "dir{1/f{file}3",
+                    "newfile": "dir{1/{{directory_1}}/f{file}3",
+                    "added": "0",
+                    "removed": "0"
+                },
+                {
+                    "modes": ["100644", "100644"],
+                    "indexes": ["e69de29", "e69de29"],
+                    "action": "R100",
+                    "file": "dir{1/f{file}4",
+                    "newfile": "dir2}/f{file}4",
+                    "added": "0",
+                    "removed": "0"
+                },
+                {
+                    "modes": ["100644", "100644"],
+                    "indexes": ["e69de29", "e69de29"],
+                    "action": "R087",
+                    "file": "examples/sentiment/data.py",
+                    "newfile": "examples/text/data.py",
+                    "added": "21",
+                    "removed": "18"
+                },
+                {
+                    "modes": ["100644", "100644"],
+                    "indexes": ["e69de29", "e69de29"],
+                    "action": "R100",
+                    "file": "{{file1}}",
+                    "newfile": "{{file3}}",
+                    "added": "0",
+                    "removed": "0"
+                },
+            ]
+        }
+
+        self.assertEqual(len(commits), 1)
+
+        self.assertEqual(commits[0], expected)
 
     def test_parser_merge_commit(self):
         """Test if it parses all the available data on a merge commit"""

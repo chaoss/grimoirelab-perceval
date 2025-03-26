@@ -571,6 +571,11 @@ class GitParser:
 
     EMPTY_LINE_PATTERN = r"^$"
 
+    RENAME_PREFIX = r"^(?P<prefix>.*/)?"
+    RENAME_FILENAME = r"\{(?P<old_name>.*) => (?P<new_name>(?:(?!}/).)+)?\}"
+    RENAME_SUFFIX = r"(?P<suffix>/[^/]+)?$"
+    RENAME_BRACES_PATTERN = RENAME_PREFIX + RENAME_FILENAME + RENAME_SUFFIX
+
     # Compiled patterns
     GIT_COMMIT_REGEXP = re.compile(COMMIT_PATTERN, re.VERBOSE)
     GIT_HEADER_TRAILER_REGEXP = re.compile(HEADER_TRAILER_PATTERN, re.VERBOSE)
@@ -578,6 +583,7 @@ class GitParser:
     GIT_ACTION_REGEXP = re.compile(ACTION_PATTERN, re.VERBOSE)
     GIT_STATS_REGEXP = re.compile(STATS_PATTERN, re.VERBOSE)
     GIT_NEXT_STATE_REGEXP = re.compile(EMPTY_LINE_PATTERN, re.VERBOSE)
+    GIT_RENAMED_BRACES_REGEXP = re.compile(RENAME_BRACES_PATTERN)
 
     # Git parser status
     (INIT,
@@ -793,29 +799,32 @@ class GitParser:
           'old_name => new_name'
           '{old_prefix => new_prefix}/name'
           'name/{old_suffix => new_suffix}'
+          'old_prefix/{ => new_dir}/name'
+          'old_prefix/{old_dir => }/name'
 
         This method returns the filepath before the file was moved or
         renamed.
         """
-        i = f.find('{')
-        j = f.find('}')
-
-        if i > -1 and j > -1:
-            prefix = f[0:i]
-            inner = f[i + 1:f.find(' => ', i)]
-            suffix = f[j + 1:]
-            old_filepath = prefix + inner + suffix
-
-            # Remove double '/' for corner cases like
-            # 'dir/{ => subdir}/filename'.
-            # The resulting old path on these entries is 'dir//filename'.
-            old_filepath = old_filepath.replace('//', '/')
-
-            return old_filepath
-        elif ' => ' in f:
-            return f.split(' => ')[0]
-        else:
+        if ' => ' not in f:
             return f
+
+        # There are two scenarios, one with curly braces when moving files
+        # between directories and one without braces when renaming files
+        # or moving files from root directory.
+        m = self.GIT_RENAMED_BRACES_REGEXP.match(f)
+        if m and (m.group("prefix") or m.group("suffix")):
+            old_filepath = ''.join([m.group("prefix") or '',
+                                    m.group("old_name") or '',
+                                    m.group("suffix") or ''])
+        else:
+            old_filepath = f.split(" => ")[0]
+
+        # Remove double '/' for corner cases like
+        # 'dir/{ => subdir}/filename'.
+        # The resulting old path on these entries is 'dir//filename'.
+        old_filepath = old_filepath.replace('//', '/')
+
+        return old_filepath
 
 
 class EmptyRepositoryError(RepositoryError):
