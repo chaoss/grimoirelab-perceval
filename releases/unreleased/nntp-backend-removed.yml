@@ -1,6 +1,6 @@
 ---
 title: NNTP backend removed for Python > 3.13
-category: removed
+category: deprecated
 author: Jose Javier Merchante <jjmerchante@bitergia.com>
 issue: null
 notes: >
