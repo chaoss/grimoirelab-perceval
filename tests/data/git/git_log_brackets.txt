@@ -1,0 +1,10 @@
+commit d79655db20a9d5321bf9c95f5ca53bd62fe3d652 (HEAD -> refs/heads/master)
+Author:     John Smith <jsmith@example.com>
+AuthorDate: Wed Mar 26 14:52:08 2025 +0100
+Commit:     John Smith <jsmith@example.com>
+CommitDate: Wed Mar 26 14:52:08 2025 +0100
+
+    Create commit with a filename with brackets
+
+:000000 100644 0000000 e69de29 A	a/{{ folderName }}.yml.hbs
+0	0	a/{{ folderName }}.yml.hbs

@@ -1,0 +1,20 @@
+commit 7441fd43783dcf2fbc7850fb9c40612f45c67219 5b21b0e881531ab3ba7fe4af8020970c5df40baa (HEAD -> refs/heads/master)
+Author:     John Smith <jsmith@example.com>
+AuthorDate: Fri Mar 28 12:24:17 2025 +0100
+Commit:     John Smith <jsmith@example.com>
+CommitDate: Fri Mar 28 12:24:17 2025 +0100
+
+    Move files between dirs
+
+:100644 100644 e69de29 e69de29 R100	dir2}/file5}	dir2}/dir_in1/dir_in2/file5}
+:100644 100644 e69de29 e69de29 R100	dir{1/f{file}4	dir2}/f{file}4
+:100644 100644 e69de29 e69de29 R100	dir{1/f{file}3	dir{1/{{directory_1}}/f{file}3
+:100644 100644 e69de29 e69de29 R100	dir2}/file6{	file6{
+:100644 100644 e69de29 e69de29 R100	{{file1}}	{{file3}}
+:100644 100644 e69de29 e69de29 R087	examples/sentiment/data.py	examples/text/data.py
+0	0	dir2}/{ => dir_in1/dir_in2}/file5}
+0	0	{dir{1 => dir2}}/f{file}4
+0	0	dir{1/{ => {{directory_1}}}/f{file}3
+0	0	dir2}/file6{ => file6{
+0	0	{{file1}} => {{file3}}
+21	18	examples/{sentiment => text}/data.py
