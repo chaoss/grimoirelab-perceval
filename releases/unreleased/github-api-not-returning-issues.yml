@@ -1,0 +1,8 @@
+---
+title: GitHub API not returning issues
+category: fixed
+author: Jose Javier Merchante <jjmerchante@bitergia.com>
+issue: 865
+notes: >
+  The GitHub API does not return issues when using the epoch time (1970-01-01).
+  This has been temporarily fixed by using 1980-01-01 as the from-date.
