@@ -34,6 +34,7 @@ import datetime
 import json
 import logging
 
+import dateutil.tz
 import jwt
 import requests
 from grimoirelab_toolkit.datetime import (datetime_to_utc,
@@ -46,7 +47,8 @@ from ...backend import (Backend,
                         BackendCommandArgumentParser,
                         DEFAULT_SEARCH_FIELD)
 from ...client import HttpClient, RateLimitHandler
-from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
+from ...utils import DEFAULT_LAST_DATETIME
+
 
 CATEGORY_ISSUE = "issue"
 CATEGORY_PULL_REQUEST = "pull_request"
@@ -69,6 +71,11 @@ MAX_CATEGORY_ITEMS_PER_PAGE = 100
 # Default sleep time and retries to deal with connection/server problems
 DEFAULT_SLEEP_TIME = 1
 MAX_RETRIES = 5
+
+# GitHub issues API doesn't return issues using 1970-01-01
+# https://github.com/chaoss/grimoirelab-perceval/issues/865
+GITHUB_DEFAULT_DATETIME = datetime.datetime(1980, 1, 1, 0, 0, 0,
+                                            tzinfo=dateutil.tz.tzutc())
 
 TARGET_ISSUE_FIELDS = ['user', 'assignee', 'assignees', 'comments', 'reactions']
 TARGET_PULL_FIELDS = ['user', 'review_comments', 'requested_reviewers', "merged_by", "commits"]
@@ -175,7 +182,7 @@ class GitHub(Backend):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
+    def fetch(self, category=CATEGORY_ISSUE, from_date=GITHUB_DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
               filter_classified=False):
         """Fetch the issues/pull requests from the repository.
 
@@ -195,7 +202,7 @@ class GitHub(Backend):
             logger.info("Excluding user data. Personal user information won't be collected from the API.")
 
         if not from_date:
-            from_date = DEFAULT_DATETIME
+            from_date = GITHUB_DEFAULT_DATETIME
         if not to_date:
             to_date = DEFAULT_LAST_DATETIME
 
@@ -1162,7 +1169,6 @@ class GitHubCommand(BackendCommand):
         """Returns the GitHub argument parser."""
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
-                                              from_date=True,
                                               to_date=True,
                                               token_auth=False,
                                               archive=True,
@@ -1190,6 +1196,14 @@ class GitHubCommand(BackendCommand):
                            help="GitHub App private key PEM file")
 
         # Generic client options
+
+        # GitHub issues API doesn't return issues using 1970-01-01
+        # https://github.com/chaoss/grimoirelab-perceval/issues/865
+        group.add_argument('--from-date', dest='from_date',
+                           default='1980-01-01',
+                           type=str_to_datetime,
+                           help="fetch items updated since this \
+                                 date (in any ISO 8601 format, e.g., 'YYYY-MM-DD HH:mm:SS +|-HH:MM')")
         group.add_argument('--max-items', dest='max_items',
                            default=MAX_CATEGORY_ITEMS_PER_PAGE, type=int,
                            help="Max number of category items per query.")
