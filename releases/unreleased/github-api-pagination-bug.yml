@@ -1,0 +1,8 @@
+---
+title: GitHub API pagination bug
+category: fixed
+author: Jose Javier Merchante <jjmerchante@bitergia.com>
+issue: null
+notes: >
+  Fixed a bug where pagination stopped working after the GitHub
+  API stopped providing a reference to the last page.

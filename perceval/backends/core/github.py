@@ -915,7 +915,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Return the items from github API using links pagination"""
 
         page = 0  # current page
-        last_page = None  # last page
         url_next = urijoin(self.base_url, self.RREPOS, self.owner, self.repository, path)
         logger.debug("Get GitHub paginated items from " + url_next)
 
@@ -924,11 +923,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         items = response.text
         page += 1
 
-        if 'last' in response.links:
-            last_url = response.links['last']['url']
-            last_page = last_url.split('&page=')[1].split('&')[0]
-            last_page = int(last_page)
-            logger.debug("Page: %i/%i" % (page, last_page))
+        logger.debug(f"Page: {page}")
 
         while items:
             yield items
@@ -941,7 +936,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
                 page += 1
 
                 items = response.text
-                logger.debug("Page: %i/%i" % (page, last_page))
+                logger.debug(f"Page: {page}")
 
     def _get_token_rate_limit(self, token):
         """Return token's remaining API points"""
