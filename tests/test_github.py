@@ -116,6 +116,10 @@ def read_file(filename, mode='r'):
 class TestGitHubBackend(unittest.TestCase):
     """ GitHub backend tests """
 
+    def tearDown(self):
+        GitHubClient._users.clear()
+        GitHubClient._users_orgs.clear()
+
     @httpretty.activate
     def test_initialization(self):
         """Test whether attributes are initialized"""
@@ -2727,6 +2731,206 @@ class TestGitHubBackend(unittest.TestCase):
         github = GitHub("zhquan_example", "repo", ["aaa"])
         with self.assertRaises(requests.exceptions.HTTPError):
             _ = [issues for issues in github.fetch()]
+
+    @httpretty.activate
+    def test_fetch_pulls_no_api_user(self):
+        """Test whether a user_data is returned when the user in the API does not exist"""
+
+        body = read_file('data/github/github_request')
+        pull = read_file('data/github/github_request_pull_request_1')
+        pull_comments = read_file('data/github/github_request_pull_request_1_comments')
+        pull_reviews_1 = read_file('data/github/github_request_pull_request_1_reviews')
+        pull_commits = read_file('data/github/github_request_pull_request_1_commits')
+        pull_comment_2_reactions = read_file('data/github/github_request_pull_request_1_comment_2_reactions')
+        pull_requested_reviewers = read_file('data/github/github_request_requested_reviewers')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=body,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_URL,
+                               body=pull,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_COMMENTS,
+                               body=pull_comments,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_REVIEWS,
+                               body=pull_reviews_1,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_COMMITS,
+                               body=pull_commits,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_COMMENTS_2_REACTIONS,
+                               body=pull_comment_2_reactions,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_PULL_REQUEST_1_REQUESTED_REVIEWERS_URL,
+                               body=pull_requested_reviewers, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_USER_URL,
+                               body='{}', status=404,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body='{}', status=404,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", ["aaa"])
+        pulls = [pull for pull in github.fetch(category=CATEGORY_PULL_REQUEST, from_date=None, to_date=None)]
+
+        self.assertEqual(len(pulls), 1)
+
+        pull = pulls[0]
+        self.assertEqual(pull['origin'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(pull['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
+        self.assertEqual(pull['updated_on'], 1451929343.0)
+        self.assertEqual(pull['category'], CATEGORY_PULL_REQUEST)
+        self.assertEqual(pull['tag'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(pull['data']['user_data']['login'], 'zhquan_example')
+        self.assertEqual(pull['data']['user_data']['name'], 'zhquan_example')
+        self.assertEqual(pull['data']['user_data']['type'], 'User')
+        self.assertEqual(pull['data']['user_data']['organizations'], [])
+        self.assertEqual(pull['data']['merged_by_data']['login'], 'zhquan_example')
+        self.assertEqual(len(pull['data']['requested_reviewers_data']), 1)
+        self.assertEqual(pull['data']['requested_reviewers_data'][0]['login'], 'zhquan_example')
+        self.assertEqual(len(pull['data']['review_comments_data']), 2)
+        self.assertEqual(len(pull['data']['review_comments_data'][0]['reactions_data']), 0)
+        self.assertEqual(pull['data']['review_comments_data'][0]['user_data']['login'], 'zhquan_example')
+        self.assertEqual(len(pull['data']['reviews_data']), 2)
+        self.assertEqual(pull['data']['reviews_data'][0]['user_data']['login'], 'zhquan_example')
+
+    @httpretty.activate
+    def test_fetch_issues_no_api_user(self):
+        """Test whether a user_data is returned when the user in the API does not exist"""
+
+        body = read_file('data/github/github_request')
+        comments = read_file('data/github/github_issue_comments_1')
+        reactions = read_file('data/github/github_issue_comment_1_reactions')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               body=body,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_1_COMMENTS_URL,
+                               body=comments, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUE_COMMENT_1_REACTION_URL,
+                               body=reactions, status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_USER_URL,
+                               body='{}', status=404,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ORGS_URL,
+                               body='{}', status=404,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        github = GitHub("zhquan_example", "repo", ["aaa"])
+        issues = [issues for issues in github.fetch(from_date=None, to_date=None)]
+
+        self.assertEqual(len(issues), 1)
+
+        issue = issues[0]
+        self.assertEqual(issue['origin'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(issue['uuid'], '58c073fd2a388c44043b9cc197c73c5c540270ac')
+        self.assertEqual(issue['updated_on'], 1454328801.0)
+        self.assertEqual(issue['category'], CATEGORY_ISSUE)
+        self.assertEqual(issue['tag'], 'https://github.com/zhquan_example/repo')
+        self.assertEqual(issue['data']['assignee_data']['login'], 'zhquan_example')
+        self.assertEqual(issue['data']['assignee_data']['name'], 'zhquan_example')
+        self.assertEqual(issue['data']['assignee_data']['type'], 'User')
+        self.assertEqual(issue['data']['assignee_data']['organizations'], [])
+        self.assertEqual(len(issue['data']['assignees_data']), 1)
+        self.assertEqual(issue['data']['assignees_data'][0]['login'], 'zhquan_example')
+        self.assertEqual(len(issue['data']['comments_data']), 1)
+        self.assertEqual(issue['data']['comments_data'][0]['user_data']['login'], 'zhquan_example')
+        self.assertEqual(len(issue['data']['comments_data'][0]['reactions_data']),
+                         issue['data']['comments_data'][0]['reactions']['total_count'])
+        self.assertEqual(issue['data']['comments_data'][0]['reactions_data'][0]['user_data']['login'], 'zhquan_example')
 
 
 class TestGitHubBackendArchive(TestCaseBackendArchive):

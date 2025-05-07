@@ -328,7 +328,7 @@ class GitHub(Backend):
                         continue
 
                     if field == 'user':
-                        issue[field + '_data'] = self.__get_user(issue[field]['login'])
+                        issue[field + '_data'] = self.__get_user_data(issue[field])
                     elif field == 'assignee':
                         issue[field + '_data'] = self.__get_issue_assignee(issue[field])
                     elif field == 'assignees':
@@ -360,9 +360,9 @@ class GitHub(Backend):
                     continue
 
                 if field == 'user':
-                    pull[field + '_data'] = self.__get_user(pull[field]['login'])
+                    pull[field + '_data'] = self.__get_user_data(pull[field])
                 elif field == 'merged_by':
-                    pull[field + '_data'] = self.__get_user(pull[field]['login'])
+                    pull[field + '_data'] = self.__get_user_data(pull[field])
                 elif field == 'review_comments':
                     pull[field + '_data'] = self.__get_pull_review_comments(pull['number'])
                 elif field == 'requested_reviewers':
@@ -396,7 +396,8 @@ class GitHub(Backend):
         for raw_reactions in group_reactions:
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login']) if reaction['user'] else None
+                user = reaction.get('user', None)
+                reaction['user_data'] = self.__get_user_data(user) if user else None
                 reactions.append(reaction)
 
         return reactions
@@ -411,7 +412,7 @@ class GitHub(Backend):
 
             for comment in json.loads(raw_comments):
                 comment_id = comment.get('id')
-                comment['user_data'] = self.__get_user(comment['user']['login'])
+                comment['user_data'] = self.__get_user_data(comment['user'])
                 comment['reactions_data'] = \
                     self.__get_issue_comment_reactions(comment_id, comment['reactions']['total_count'])
                 comments.append(comment)
@@ -431,7 +432,8 @@ class GitHub(Backend):
         for raw_reactions in group_reactions:
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login']) if reaction['user'] else None
+                user = reaction.get('user', None)
+                reaction['user_data'] = self.__get_user_data(user) if user else None
                 reactions.append(reaction)
 
         return reactions
@@ -439,7 +441,7 @@ class GitHub(Backend):
     def __get_issue_assignee(self, raw_assignee):
         """Get issue assignee"""
 
-        assignee = self.__get_user(raw_assignee['login'])
+        assignee = self.__get_user_data(raw_assignee)
 
         return assignee
 
@@ -448,7 +450,7 @@ class GitHub(Backend):
 
         assignees = []
         for ra in raw_assignees:
-            assignees.append(self.__get_user(ra['login']))
+            assignees.append(self.__get_user_data(ra))
 
         return assignees
 
@@ -467,7 +469,7 @@ class GitHub(Backend):
 
             for requested_reviewer in group_requested_reviewers['users']:
                 if requested_reviewer and 'login' in requested_reviewer:
-                    user_data = self.__get_user(requested_reviewer['login'])
+                    user_data = self.__get_user_data(requested_reviewer)
                     requested_reviewers.append(user_data)
                 else:
                     logger.warning('Impossible to identify requested reviewer for pull request %s',
@@ -505,7 +507,7 @@ class GitHub(Backend):
                     logger.warning("Missing user info for %s", comment['url'])
                     comment['user_data'] = None
                 else:
-                    comment['user_data'] = self.__get_user(user['login'])
+                    comment['user_data'] = self.__get_user_data(user)
 
                 comment['reactions_data'] = \
                     self.__get_pull_review_comment_reactions(comment_id, comment['reactions']['total_count'])
@@ -527,7 +529,7 @@ class GitHub(Backend):
                     logger.warning("Missing user info for %s", review['html_url'])
                     review['user_data'] = None
                 else:
-                    review['user_data'] = self.__get_user(user['login'])
+                    review['user_data'] = self.__get_user_data(user)
 
                 reviews.append(review)
         return reviews
@@ -545,24 +547,31 @@ class GitHub(Backend):
         for raw_reactions in group_reactions:
 
             for reaction in json.loads(raw_reactions):
-                reaction['user_data'] = self.__get_user(reaction['user']['login']) if reaction['user'] else None
+                user = reaction.get('user', None)
+                reaction['user_data'] = self.__get_user_data(user) if user else None
                 reactions.append(reaction)
 
         return reactions
 
-    def __get_user(self, login):
-        """Get user and org data for the login"""
+    def __get_user_data(self, user):
+        """Get user and org data for a user"""
+
+        login = user.get('login', None)
 
         if not login or self.exclude_user_data:
             return None
 
         user_raw = self.client.user(login)
-        user = json.loads(user_raw)
+        user_data = json.loads(user_raw)
+        if not user_data:
+            user_data = user.copy()
+            user_data['name'] = login
+
         user_orgs_raw = \
             self.client.user_orgs(login)
-        user['organizations'] = json.loads(user_orgs_raw)
+        user_data['organizations'] = json.loads(user_orgs_raw)
 
-        return user
+        return user_data
 
     def __init_extra_issue_fields(self, issue):
         """Add fields to an issue"""
@@ -846,7 +855,6 @@ class GitHubClient(HttpClient, RateLimitHandler):
         try:
             r = self.fetch(url_user)
             user = r.text
-            self._users[login] = user
         except requests.exceptions.HTTPError as error:
             # When the login is no longer exist or the token has no permission
             if error.response.status_code == 404:
@@ -855,6 +863,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
             else:
                 raise error
 
+        self._users[login] = user
         return user
 
     def user_orgs(self, login):
