@@ -1,9 +1,0 @@
----
-title: Git filename with curly brackets issue
-category: fixed
-author: Jose Javier Merchante <jjmerchante@bitergia.com>
-issue: null
-notes: >
-  Perceval misinterpreted file paths with curly brackets as
-  rename or move actions, causing new files to be created
-  without an associated action.

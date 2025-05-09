@@ -1,9 +1,0 @@
----
-title: GitHub user data fallback
-category: fixed
-author: Jose Javier Merchante <jjmerchante@bitergia.com>
-issue: null
-notes: >
-  When the API returns a 404 for a user, Perceval returns the
-  basic user data available in the related issue, pull request,
-  comment, or review.
