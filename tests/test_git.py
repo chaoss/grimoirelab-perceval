@@ -1176,6 +1176,14 @@ class TestGitParser(TestCaseGit):
             'message': '[backends] Move backends to core sub-package',
             'files': [
                 {
+                    'file': 'perceval/backends/core/__init__.py',
+                    'added': '0',
+                    'removed': '0',
+                    'modes': ['000000', '100644'],
+                    'indexes': ['0000000', 'e69de29'],
+                    'action': 'A'
+                },
+                {
                     'file': 'perceval/backends/bugzilla.py',
                     'newfile': 'perceval/backends/core/bugzilla.py',
                     'added': '4',
@@ -1183,14 +1191,6 @@ class TestGitParser(TestCaseGit):
                     'modes': ['100644', '100644'],
                     'indexes': ['232acb3', '7923641'],
                     'action': 'R098'
-                },
-                {
-                    'file': 'perceval/backends/core/__init__.py',
-                    'added': '0',
-                    'removed': '0',
-                    'modes': ['000000', '100644'],
-                    'indexes': ['0000000', 'e69de29'],
-                    'action': 'A'
                 }
             ]
         }
@@ -1217,29 +1217,29 @@ class TestGitParser(TestCaseGit):
             "message": "Move files between dirs",
             "files": [
                 {
+                    'file': 'audio/assets/Test => TS.ipynb',
+                    'added': '12',
+                    'removed': '85',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['8de566a', 'b40f49e'],
+                    'action': 'M'
+
+                },
+                {
+                    'file': 'audio/assets/Test => A.ipynb',
+                    'newfile': 'audio/assets/TestA.ipynb',
+                    'added': '0',
+                    'removed': '0',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['8de566a', '8de566a'],
+                    'action': 'R100'
+                },
+                {
                     "modes": ["100644", "100644"],
                     "indexes": ["e69de29", "e69de29"],
                     "action": "R100",
                     "file": "dir2}/file5}",
                     "newfile": "dir2}/dir_in1/dir_in2/file5}",
-                    "added": "0",
-                    "removed": "0"
-                },
-                {
-                    "modes": ["100644", "100644"],
-                    "indexes": ["e69de29", "e69de29"],
-                    "action": "R100",
-                    "file": "dir2}/file6{",
-                    "newfile": "file6{",
-                    "added": "0",
-                    "removed": "0"
-                },
-                {
-                    "modes": ["100644", "100644"],
-                    "indexes": ["e69de29", "e69de29"],
-                    "action": "R100",
-                    "file": "dir{1/f{file}3",
-                    "newfile": "dir{1/{{directory_1}}/f{file}3",
                     "added": "0",
                     "removed": "0"
                 },
@@ -1255,11 +1255,49 @@ class TestGitParser(TestCaseGit):
                 {
                     "modes": ["100644", "100644"],
                     "indexes": ["e69de29", "e69de29"],
+                    "action": "R100",
+                    "file": "dir{1/f{file}3",
+                    "newfile": "dir{1/{{directory_1}}/f{file}3",
+                    "added": "0",
+                    "removed": "0"
+                },
+                {
+                    "modes": ["100644", "100644"],
+                    "indexes": ["e69de29", "e69de29"],
                     "action": "R087",
                     "file": "examples/sentiment/data.py",
                     "newfile": "examples/text/data.py",
                     "added": "21",
                     "removed": "18"
+                },
+                {
+                    "modes": ["100644", "100644"],
+                    "indexes": ["e69de29", "e69de29"],
+                    "action": "R100",
+                    "file": "dir2}/file6{",
+                    "newfile": "file6{",
+                    "added": "0",
+                    "removed": "0"
+                },
+                {
+                    'file': 'Actions/pipeline-template/{{outputDir}}/.github/workflows/pipeline.yaml',
+                    'newfile': 'tests/testfile_github/expected_iam.yaml',
+                    'added': '45',
+                    'removed': '69',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['1d90095', 'e195cca'],
+                    'action': 'C058'
+
+                },
+                {
+                    'file': 'Actions/pipeline-template/{{outputDir}}/.github/workflows/pipeline.yaml',
+                    'newfile': 'tests/testfile_github/expected_oidc.yaml',
+                    'added': '35',
+                    'removed': '70',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['1d90095', '7e4451d'],
+                    'action': 'C058'
+
                 },
                 {
                     "modes": ["100644", "100644"],

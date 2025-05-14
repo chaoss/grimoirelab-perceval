@@ -571,11 +571,6 @@ class GitParser:
 
     EMPTY_LINE_PATTERN = r"^$"
 
-    RENAME_PREFIX = r"^(?P<prefix>.*/)?"
-    RENAME_FILENAME = r"\{(?P<old_name>.*) => (?P<new_name>(?:(?!}/).)+)?\}"
-    RENAME_SUFFIX = r"(?P<suffix>/[^/]+)?$"
-    RENAME_BRACES_PATTERN = RENAME_PREFIX + RENAME_FILENAME + RENAME_SUFFIX
-
     # Compiled patterns
     GIT_COMMIT_REGEXP = re.compile(COMMIT_PATTERN, re.VERBOSE)
     GIT_HEADER_TRAILER_REGEXP = re.compile(HEADER_TRAILER_PATTERN, re.VERBOSE)
@@ -583,7 +578,6 @@ class GitParser:
     GIT_ACTION_REGEXP = re.compile(ACTION_PATTERN, re.VERBOSE)
     GIT_STATS_REGEXP = re.compile(STATS_PATTERN, re.VERBOSE)
     GIT_NEXT_STATE_REGEXP = re.compile(EMPTY_LINE_PATTERN, re.VERBOSE)
-    GIT_RENAMED_BRACES_REGEXP = re.compile(RENAME_BRACES_PATTERN)
 
     # Git parser status
     (INIT,
@@ -603,6 +597,7 @@ class GitParser:
         # Aux vars to store the commit that is being parsed
         self.commit = None
         self.commit_files = {}
+        self.merge_commit = False
 
         self.handlers = {
             self.INIT: self._handle_init,
@@ -645,6 +640,7 @@ class GitParser:
 
         self.commit = None
         self.commit_files = {}
+        self.merge_commit = False
 
         return commit
 
@@ -692,6 +688,9 @@ class GitParser:
         header = m.group('name')
         value = m.group('value')
         self.commit[header] = value
+
+        if header.lower() == 'merge':
+            self.merge_commit = True
 
         return True
 
@@ -764,7 +763,7 @@ class GitParser:
     def _handle_action_data(self, data):
         modes = self.__parse_data_list(data['modes'])
         indexes = self.__parse_data_list(data['indexes'])
-        filename = data['file']
+        filename = data['newfile'] if data['newfile'] else data['file']
 
         if filename not in self.commit_files:
             self.commit_files[filename] = {}
@@ -772,11 +771,18 @@ class GitParser:
         self.commit_files[filename]['modes'] = modes
         self.commit_files[filename]['indexes'] = indexes
         self.commit_files[filename]['action'] = data['action']
-        self.commit_files[filename]['file'] = filename
+        self.commit_files[filename]['file'] = data['file']
         self.commit_files[filename]['newfile'] = data['newfile']
 
     def _handle_stats_data(self, data):
-        filename = self.__get_old_filepath(data['file'])
+        if ' => ' in data['file']:
+            filename = self.__get_new_filepath(data['file'])
+            if not self.merge_commit and self.commit_files and filename not in self.commit_files:
+                # Try to guess on very specific cases
+                file_guessed = self._guess_new_filename(data['file'])
+                filename = file_guessed if file_guessed else filename
+        else:
+            filename = data['file']
 
         if filename not in self.commit_files:
             self.commit_files[filename] = {'file': filename}
@@ -791,40 +797,66 @@ class GitParser:
         else:
             return []
 
-    def __get_old_filepath(self, f):
-        """Get the old filepath of a moved/renamed file.
+    def _guess_new_filename(self, rename_path):
+        """
+        Guess the new filename of a moved or renamed file.
+
+        Checks the part before or after a ' => ' in the path
+        (removing braces) against the old and new filenames.
+
+        Return None if the new filename cannot be guessed.
+        """
+        parts = rename_path.split(' => ')
+        for i in range(1, len(parts)):
+            before = ' => '.join(parts[:i]).replace('{', '')
+            after = ' => '.join(parts[i:]).replace('}', '')
+
+            for files in self.commit_files.values():
+                if not files.get('newfile') or not files.get('file'):
+                    continue
+                old_file = files['file'].replace('{', '')
+                new_file = files['newfile'].replace('}', '')
+                if old_file.startswith(before) and new_file.endswith(after):
+                    return files['newfile']
+
+        if rename_path in self.commit_files:
+            # When the file wasn't renamed but contains ' => '
+            return rename_path
+
+        logger.debug(f"Can't identify stats for '{rename_path}', commit {self.commit['commit']}")
+        return None
+
+    def __get_new_filepath(self, f):
+        """Get the new filepath of a moved/renamed file.
 
         Moved or renamed files can be found in the log with any of the
         next patterns:
           'old_name => new_name'
           '{old_prefix => new_prefix}/name'
           'name/{old_suffix => new_suffix}'
-          'old_prefix/{ => new_dir}/name'
-          'old_prefix/{old_dir => }/name'
 
-        This method returns the filepath before the file was moved or
+        This method returns the filepath after the file was moved or
         renamed.
         """
-        if ' => ' not in f:
-            return f
+        i = f.find('{')
+        j = f.find('}')
 
-        # There are two scenarios, one with curly braces when moving files
-        # between directories and one without braces when renaming files
-        # or moving files from root directory.
-        m = self.GIT_RENAMED_BRACES_REGEXP.match(f)
-        if m and (m.group("prefix") or m.group("suffix")):
-            old_filepath = ''.join([m.group("prefix") or '',
-                                    m.group("old_name") or '',
-                                    m.group("suffix") or ''])
+        if i > -1 and j > -1:
+            prefix = f[0:i]
+            inner = f[f.find(' => ', i) + 4: j]
+            suffix = f[j + 1:]
+            new_filepath = prefix + inner + suffix
+
+            # Remove double '/' for corner cases like
+            # 'dir/{ => subdir}/filename'.
+            # The resulting old path on these entries is 'dir//filename'.
+            new_filepath = new_filepath.replace('//', '/')
+
+            return new_filepath
+        elif ' => ' in f:
+            return f.split(' => ')[1]
         else:
-            old_filepath = f.split(" => ")[0]
-
-        # Remove double '/' for corner cases like
-        # 'dir/{ => subdir}/filename'.
-        # The resulting old path on these entries is 'dir//filename'.
-        old_filepath = old_filepath.replace('//', '/')
-
-        return old_filepath
+            return f
 
 
 class EmptyRepositoryError(RepositoryError):
