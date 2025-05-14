@@ -12,9 +12,17 @@ CommitDate: Fri Mar 28 12:24:17 2025 +0100
 :100644 100644 e69de29 e69de29 R100	dir2}/file6{	file6{
 :100644 100644 e69de29 e69de29 R100	{{file1}}	{{file3}}
 :100644 100644 e69de29 e69de29 R087	examples/sentiment/data.py	examples/text/data.py
+:100644 100644 1d90095 e195cca C058	Actions/pipeline-template/{{outputDir}}/.github/workflows/pipeline.yaml	tests/testfile_github/expected_iam.yaml
+:100644 100644 1d90095 7e4451d C058	Actions/pipeline-template/{{outputDir}}/.github/workflows/pipeline.yaml	tests/testfile_github/expected_oidc.yaml
+:100644 100644 8de566a b40f49e M	audio/assets/Test => TS.ipynb
+:100644 100644 8de566a 8de566a R100	audio/assets/Test => A.ipynb	audio/assets/TestA.ipynb
 0	0	dir2}/{ => dir_in1/dir_in2}/file5}
 0	0	{dir{1 => dir2}}/f{file}4
 0	0	dir{1/{ => {{directory_1}}}/f{file}3
 0	0	dir2}/file6{ => file6{
 0	0	{{file1}} => {{file3}}
 21	18	examples/{sentiment => text}/data.py
+45	69	Actions/pipeline-template/{{outputDir}}/.github/workflows/pipeline.yaml => tests/testfile_github/expected_iam.yaml
+35	70	Actions/pipeline-template/{{outputDir}}/.github/workflows/pipeline.yaml => tests/testfile_github/expected_oidc.yaml
+12	85	audio/assets/Test => TS.ipynb
+0	0	audio/{assets/Test => A.ipynb => TestA.ipynb}

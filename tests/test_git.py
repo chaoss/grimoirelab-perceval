@@ -1176,6 +1176,14 @@ class TestGitParser(TestCaseGit):
             'message': '[backends] Move backends to core sub-package',
             'files': [
                 {
+                    'file': 'perceval/backends/core/__init__.py',
+                    'added': '0',
+                    'removed': '0',
+                    'modes': ['000000', '100644'],
+                    'indexes': ['0000000', 'e69de29'],
+                    'action': 'A'
+                },
+                {
                     'file': 'perceval/backends/bugzilla.py',
                     'newfile': 'perceval/backends/core/bugzilla.py',
                     'added': '4',
@@ -1183,14 +1191,6 @@ class TestGitParser(TestCaseGit):
                     'modes': ['100644', '100644'],
                     'indexes': ['232acb3', '7923641'],
                     'action': 'R098'
-                },
-                {
-                    'file': 'perceval/backends/core/__init__.py',
-                    'added': '0',
-                    'removed': '0',
-                    'modes': ['000000', '100644'],
-                    'indexes': ['0000000', 'e69de29'],
-                    'action': 'A'
                 }
             ]
         }
@@ -1217,6 +1217,24 @@ class TestGitParser(TestCaseGit):
             "message": "Move files between dirs",
             "files": [
                 {
+                    'file': 'audio/assets/Test => TS.ipynb',
+                    'added': '12',
+                    'removed': '85',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['8de566a', 'b40f49e'],
+                    'action': 'M'
+
+                },
+                {
+                    'file': 'audio/assets/Test => A.ipynb',
+                    'newfile': 'audio/assets/TestA.ipynb',
+                    'added': '0',
+                    'removed': '0',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['8de566a', '8de566a'],
+                    'action': 'R100'
+                },
+                {
                     "modes": ["100644", "100644"],
                     "indexes": ["e69de29", "e69de29"],
                     "action": "R100",
@@ -1229,8 +1247,8 @@ class TestGitParser(TestCaseGit):
                     "modes": ["100644", "100644"],
                     "indexes": ["e69de29", "e69de29"],
                     "action": "R100",
-                    "file": "dir2}/file6{",
-                    "newfile": "file6{",
+                    "file": "dir{1/f{file}4",
+                    "newfile": "dir2}/f{file}4",
                     "added": "0",
                     "removed": "0"
                 },
@@ -1240,15 +1258,6 @@ class TestGitParser(TestCaseGit):
                     "action": "R100",
                     "file": "dir{1/f{file}3",
                     "newfile": "dir{1/{{directory_1}}/f{file}3",
-                    "added": "0",
-                    "removed": "0"
-                },
-                {
-                    "modes": ["100644", "100644"],
-                    "indexes": ["e69de29", "e69de29"],
-                    "action": "R100",
-                    "file": "dir{1/f{file}4",
-                    "newfile": "dir2}/f{file}4",
                     "added": "0",
                     "removed": "0"
                 },
@@ -1265,6 +1274,35 @@ class TestGitParser(TestCaseGit):
                     "modes": ["100644", "100644"],
                     "indexes": ["e69de29", "e69de29"],
                     "action": "R100",
+                    "file": "dir2}/file6{",
+                    "newfile": "file6{",
+                    "added": "0",
+                    "removed": "0"
+                },
+                {
+                    'file': 'Actions/pipeline-template/{{outputDir}}/.github/workflows/pipeline.yaml',
+                    'newfile': 'tests/testfile_github/expected_iam.yaml',
+                    'added': '45',
+                    'removed': '69',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['1d90095', 'e195cca'],
+                    'action': 'C058'
+
+                },
+                {
+                    'file': 'Actions/pipeline-template/{{outputDir}}/.github/workflows/pipeline.yaml',
+                    'newfile': 'tests/testfile_github/expected_oidc.yaml',
+                    'added': '35',
+                    'removed': '70',
+                    'modes': ['100644', '100644'],
+                    'indexes': ['1d90095', '7e4451d'],
+                    'action': 'C058'
+
+                },
+                {
+                    "modes": ["100644", "100644"],
+                    "indexes": ["e69de29", "e69de29"],
+                    "action": "R100",
                     "file": "{{file1}}",
                     "newfile": "{{file3}}",
                     "added": "0",
@@ -1276,6 +1314,74 @@ class TestGitParser(TestCaseGit):
         self.assertEqual(len(commits), 1)
 
         self.assertEqual(commits[0], expected)
+
+    def test_parser_merge_renamed_files(self):
+        """Check if renamed files in merges are correctly parsed"""
+
+        log_file = "data/git/git_log_merge_moved.txt"
+
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), log_file), 'r') as f:
+            parser = GitParser(f)
+            commits = [commit for commit in parser.parse()]
+
+        expected_0 = {
+            'Author': 'John Smith <jsmith@example.com>',
+            'AuthorDate': 'Thu Apr 4 13:15:54 2024 -0700',
+            'Commit': 'GitHub <noreply@github.com>',
+            'CommitDate': 'Thu Apr 4 13:15:54 2024 -0700',
+            'Merge': 'e8e76c3e4 61230f999',
+            'commit': 'f864da5d2731399f37de63f3b9c2e1601cb88f2a',
+            'files': [
+                {
+                    'added': '9',
+                    'file': 'Software/{tests/Software.Tests/Query/Pipeline => src/Pagination}/TracingAsyncEnumerator.cs',
+                    'removed': '6'
+                },
+                {
+                    'added': '6',
+                    'file': 'Software/src/Resource/FullFidelity/{ChangeFeedItemChange{T}.cs => ChangeFeedItem.cs}',
+                    'removed': '6'
+                },
+                {
+                    'action': 'MM',
+                    'added': '3',
+                    'file': 'Software/tests/Software.EmulatorTests/Software.EmulatorTests.csproj',
+                    'indexes': ['edcc4aae1', '509e89c0a', '014ed26c2'],
+                    'modes': ['100644', '100644', '100644'],
+                    'removed': '0'
+                }
+            ],
+            'message': "Merge branch 'master' into users/asd/pwd",
+            'parents': ['e8e76c3e45c039efec5b9f587ff75761445a19c8', '61230f9999326ed7bc93884ecd31fcc135bcb974'],
+            'refs': []
+        }
+
+        expected_1 = {
+            'Author': 'John Smith <jsmith@example.com>',
+            'AuthorDate': 'Tue Feb 11 22:10:39 2014 -0800',
+            'Commit': 'John Smith <jsmith@example.com>',
+            'CommitDate': 'Tue Feb 11 22:10:39 2014 -0800',
+            'Merge': 'ce8e0b8 51a3b65',
+            'commit': '456a68ee1407a77f3e804a30dff245bb6c6b872f',
+            'files': [
+                {
+                    'action': 'MR',
+                    'added': '1',
+                    'file': 'aaa/sample => file.py',
+                    'indexes': ['e69de29...', '58a6c75...', '58a6c75...'],
+                    'modes': ['100644', '100644', '100644'],
+                    'removed': '0'
+                }
+            ],
+            'message': "Merge branch 'lzp'",
+            'parents': ['ce8e0b86a1e9877f42fe9453ede418519115f367', '51a3b654f252210572297f47597b31527c475fb8'],
+            'refs': ['HEAD -> refs/heads/master']
+        }
+
+        self.assertEqual(len(commits), 2)
+
+        self.assertEqual(commits[0], expected_0)
+        self.assertEqual(commits[1], expected_1)
 
     def test_parser_merge_commit(self):
         """Test if it parses all the available data on a merge commit"""
