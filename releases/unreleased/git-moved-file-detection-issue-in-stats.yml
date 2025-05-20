@@ -1,0 +1,9 @@
+---
+title: Git moved file detection issue in stats
+category: fixed
+author: Jose Javier Merchante <jjmerchante@bitergia.com>
+issue: null
+notes: >
+  Refactored file path resolution logic in the Git parser to
+  better handle complex move and rename cases, including braces
+  patterns and file moves within nested directories.
