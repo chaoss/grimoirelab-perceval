@@ -1,5 +1,15 @@
 # Releases
 
+## perceval 1.2.3 - (2025-06-03)
+
+**Bug fixes:**
+
+ * Git moved file detection issue in stats\
+   Refactored file path resolution logic in the Git parser to better
+   handle complex move and rename cases, including braces patterns and
+   file moves within nested directories.
+
+
   ## perceval 1.2.2 - (2025-05-20)
   
   * Update Poetry's package dependencies
