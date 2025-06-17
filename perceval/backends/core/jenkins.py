@@ -73,7 +73,8 @@ class Jenkins(Backend):
     ORIGIN_UNIQUE_FIELD = OriginUniqueField(name='url', type=str)
 
     def __init__(self, url, user=None, api_token=None, tag=None, archive=None,
-                 detail_depth=DETAIL_DEPTH, sleep_time=SLEEP_TIME, blacklist_ids=None, ssl_verify=True):
+                 detail_depth=DETAIL_DEPTH, blacklist_builds=None, sleep_time=SLEEP_TIME,
+                 blacklist_ids=None, ssl_verify=True):
 
         if (user and not api_token) or (not user and api_token):
             msg = "Authentication method requires user and api_token"
@@ -87,6 +88,7 @@ class Jenkins(Backend):
         self.api_token = api_token
         self.sleep_time = sleep_time
         self.blacklist_ids = blacklist_ids
+        self.blacklist_builds = blacklist_builds or []
         self.detail_depth = detail_depth
 
         self.client = None
@@ -133,6 +135,9 @@ class Jenkins(Backend):
                         njobs += 1
 
                     for build in builds:
+                        if f"{job['name']}:{build['id']}" in self.blacklist_builds:
+                            logger.warning(f"Skipping blacklisted build: {job['name']}:{build['id']}")
+                            continue
                         nbuilds += 1
                         yield build
 
@@ -144,6 +149,9 @@ class Jenkins(Backend):
                     njobs += 1
 
                 for build in builds:
+                    if f"{job['name']}:{build['id']}" in self.blacklist_builds:
+                        logger.warning(f"Skipping blacklisted build: {job['name']}:{build['id']}")
+                        continue
                     nbuilds += 1
                     yield build
 
@@ -342,6 +350,10 @@ class JenkinsCommand(BackendCommand):
         group.add_argument('--sleep-time', dest='sleep_time',
                            type=int, default=SLEEP_TIME,
                            help="Minimun time to wait after a Timeout connection error.")
+        group.add_argument('--blacklist-builds', dest='blacklist_builds',
+                           nargs='*', default=[],
+                           help="List of builds to be blacklisted. "
+                                "Format: 'job_name:build_id'.")
 
         # Required arguments
         parser.parser.add_argument('url',
