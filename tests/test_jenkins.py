@@ -571,6 +571,27 @@ class TestJenkinsBackend(unittest.TestCase):
         # Builds just from JOB_BUILDS_2
         self.assertEqual(len(builds), 37)
 
+    @httpretty.activate
+    def test_fetch_blacklist_build(self):
+        """Test whether builds in blacklist are not retrieved"""
+
+        blacklist = ["apex-build-brahmaputra:106",
+                     "apex-build-brahmaputra:107"]
+
+        configure_http_server()
+
+        jenkins = Jenkins(SERVER_URL, blacklist_builds=blacklist)
+
+        with self.assertLogs(logger, level='WARNING') as cm:
+            builds = [build for build in jenkins.fetch()]
+            self.assertIn('WARNING:perceval.backends.core.jenkins:'
+                          'Skipping blacklisted build: apex-build-brahmaputra:107', cm.output)
+            self.assertIn('WARNING:perceval.backends.core.jenkins:'
+                          'Skipping blacklisted build: apex-build-brahmaputra:106', cm.output)
+
+        # Builds from JOB_BUILDS_1 + JOB_BUILDS_2 except those 2 in blacklist
+        self.assertEqual(len(builds), 67)
+
 
 class TestJenkinsBackendArchive(TestCaseBackendArchive):
     """Jenkins backend tests using an archive"""
@@ -834,6 +855,7 @@ class TestJenkinsCommand(unittest.TestCase):
 
         args = ['--tag', 'test', '-u', USER, '-t', TOKEN,
                 '--no-archive', '--sleep-time', '60', '--detail-depth', '2',
+                '--blacklist-builds', 'job_1:123',
                 '--blacklist-ids', '1', '2', '3', '4', '--',
                 SERVER_URL]
 
@@ -846,6 +868,7 @@ class TestJenkinsCommand(unittest.TestCase):
         self.assertEqual(parsed_args.sleep_time, 60)
         self.assertTrue(parsed_args.no_archive)
         self.assertListEqual(parsed_args.blacklist_ids, ['1', '2', '3', '4'])
+        self.assertListEqual(parsed_args.blacklist_builds, ['job_1:123'])
 
 
 if __name__ == "__main__":
