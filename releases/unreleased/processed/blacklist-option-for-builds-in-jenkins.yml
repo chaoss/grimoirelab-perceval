@@ -1,9 +1,0 @@
----
-title: Blacklist option for builds in Jenkins
-category: added
-author: Jose Javier Merchante <jjmerchante@bitergia.com>
-issue: null
-notes: >
-  Add blacklist functionality for builds in Jenkins integration.
-  To ignore a build, you must define the job name and the build
-  id with the following format: `--blacklist-builds job-id:1234`.
