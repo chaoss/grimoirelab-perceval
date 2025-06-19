@@ -523,14 +523,14 @@ sphinx-basic-ng = "*"
 
 [[package]]
 name = "grimoirelab-toolkit"
-version = "1.0.12"
+version = "1.0.13rc1"
 description = "Toolkit of common functions used across GrimoireLab"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "grimoirelab_toolkit-1.0.12-py3-none-any.whl", hash = "sha256:2b52aac12d7dad8b434bc9d579666e704f416f91ae3f3303a0cc77da8e719287"},
-    {file = "grimoirelab_toolkit-1.0.12.tar.gz", hash = "sha256:eb9e5065ccf206eabfb0a1e434b1d2a246cb74b6a6de2fc553c8474a15ecb0d7"},
+    {file = "grimoirelab_toolkit-1.0.13rc1-py3-none-any.whl", hash = "sha256:e650291c4ca9cd0149c66ae2ac56cc39e7186c736bba79b8dbbde82a48f2682b"},
+    {file = "grimoirelab_toolkit-1.0.13rc1.tar.gz", hash = "sha256:ccbc6c0232cf0819af728520c39f52c7f857664b66a6a590377671420bc3118a"},
 ]
 
 [package.dependencies]
@@ -1200,14 +1200,14 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "2.4.0"
+version = "2.5.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "urllib3-2.4.0-py3-none-any.whl", hash = "sha256:4e16665048960a0900c702d4a66415956a584919c03361cac9f1df5c5dd7e813"},
-    {file = "urllib3-2.4.0.tar.gz", hash = "sha256:414bc6535b787febd7567804cc015fee39daab8ad86268f1310a9250697de466"},
+    {file = "urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc"},
+    {file = "urllib3-2.5.0.tar.gz", hash = "sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760"},
 ]
 
 [package.extras]
