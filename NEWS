@@ -1,5 +1,16 @@
 # Releases
 
+## perceval 1.3.3 - (2025-08-21)
+
+**Bug fixes:**
+
+ * Latest dulwich version contains a bug (#876)\
+   The latest releases of Dulwich contain a bug that prevents Perceval
+   from retrieving the most recent items from repositories. Pin the
+   dependency to the last known working version until a Dulwich release
+   with a fix is available.
+
+
   ## perceval 1.3.2 - (2025-08-18)
   
   * Update Poetry's package dependencies
