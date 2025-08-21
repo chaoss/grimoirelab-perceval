@@ -1,0 +1,10 @@
+---
+title: Latest dulwich version contains a bug
+category: fixed
+author: Jose Javier Merchante <jjmerchante@bitergia.com>
+issue: 876
+notes: >
+  The latest releases of Dulwich contain a bug that prevents Perceval
+  from retrieving the most recent items from repositories.
+  Pin the dependency to the last known working version until a Dulwich
+  release with a fix is available.

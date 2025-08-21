@@ -50,7 +50,7 @@ python-dateutil = "^2.6.0"
 requests = "^2.7.0"
 beautifulsoup4 = "^4.3.2"
 feedparser = "^6.0.8"
-dulwich = ">=0.21.5,<1.0.0"
+dulwich = ">=0.21.5,<0.23.0"  # Pin version because of a bug. See #876.
 urllib3 = "^2.2"
 PyJWT = "^2.4.0"
 cryptography = ">=41.0.3,<44.0.0"
@@ -60,7 +60,7 @@ grimoirelab-toolkit = { version = ">=0.3", allow-prereleases = true}
 myst-parser = { version = "^1.0.0", optional = true }
 furo = { version = "^2023.03.27", optional = true }
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 httpretty = "^1.1.4"
 flake8 = "^7.1.1"
 coverage = "^7.2.3"
