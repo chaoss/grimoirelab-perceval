@@ -44,7 +44,7 @@ classifiers = [
 perceval = 'perceval.perceval:main'
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 
 python-dateutil = "^2.6.0"
 requests = "^2.7.0"
@@ -52,8 +52,7 @@ beautifulsoup4 = "^4.3.2"
 feedparser = "^6.0.8"
 dulwich = ">=0.21.5,<0.23.0"  # Pin version because of a bug. See #876.
 urllib3 = "^2.2"
-PyJWT = "^2.4.0"
-cryptography = ">=41.0.3,<44.0.0"
+PyJWT = { version = "^2.4.0", extras = ["crypto"] }
 grimoirelab-toolkit = { version = ">=0.3", allow-prereleases = true}
 
 # Documentation
