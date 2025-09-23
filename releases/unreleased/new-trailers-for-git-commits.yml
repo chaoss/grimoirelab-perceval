@@ -1,0 +1,8 @@
+---
+title: New trailers for Git commits
+category: added
+author: Jose Javier Merchante <jjmerchante@bitergia.com>
+issue: null
+notes: >
+  The list of recognized trailers in Git has been expanded using the
+  ones listed by the [Git documentation](https://git-scm.com/docs/SubmittingPatches#sign-off).
