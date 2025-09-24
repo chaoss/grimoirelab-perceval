@@ -1472,11 +1472,15 @@ class TestGitParser(TestCaseGit):
                 'John Smith <jsmith@example.com>',
                 'John Doe <jdoe@example.com>'
             ],
+            'Reported-by': [
+                'Jane Doe <jane@example.com>'
+            ],
             'message': "Commit with a list of trailers\n"
                        "\n"
                        "Signed-off-by: John Smith <jsmith@example.com>\n"
                        "MyTrailer: this is my trailer\n"
-                       "Signed-off-by: John Doe <jdoe@example.com>",
+                       "Signed-off-by: John Doe <jdoe@example.com>\n"
+                       "Reported-by: Jane Doe <jane@example.com>",
             'files': [
                 {
                     'file': 'bbb/ccc/yet_anotherthing',

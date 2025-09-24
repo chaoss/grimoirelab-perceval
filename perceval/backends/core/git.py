@@ -587,7 +587,17 @@ class GitParser:
      FILE) = range(5)
 
     # Git trailers
-    TRAILERS = ['Signed-off-by']
+    TRAILERS = [
+        "Acked-by",
+        "Co-authored-by",
+        "Helped-by",
+        "Mentored-by",
+        "Reported-by",
+        "Reviewed-by",
+        "Signed-off-by",
+        "Suggested-by",
+        "Tested-by",
+    ]
 
     def __init__(self, stream):
         self.stream = stream
@@ -751,7 +761,7 @@ class GitParser:
         if not m:
             return
 
-        trailer = m.group('name')
+        trailer = m.group('name').capitalize()
         value = m.group('value')
 
         if trailer not in self.TRAILERS:

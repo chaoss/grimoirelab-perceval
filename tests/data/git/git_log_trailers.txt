@@ -9,6 +9,7 @@ CommitDate: Tue Aug 14 14:33:27 2012 -0300
     Signed-off-by: John Smith <jsmith@example.com>
     MyTrailer: this is my trailer
     Signed-off-by: John Doe <jdoe@example.com>
+    Reported-by: Jane Doe <jane@example.com>
 
 :000000 100644 0000000... e69de29... A	bbb/ccc/yet_anotherthing
 0	0	bbb/ccc/yet_anotherthing
