@@ -1,5 +1,15 @@
 # Releases
 
+## perceval 1.4.0 - (2025-10-10)
+
+**New features:**
+
+ * New trailers for Git commits\
+   The list of recognized trailers in Git has been expanded using the
+   ones listed by the [Git documentation](https://git-
+   scm.com/docs/SubmittingPatches#sign-off).
+
+
   ## perceval 1.3.4 - (2025-09-23)
   
   * Update Poetry's package dependencies
