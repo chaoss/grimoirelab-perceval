@@ -270,15 +270,22 @@ $ perceval git '/tmp/gitlog.log'
 
 ### GitHub
 ```
-$ perceval github elastic logstash --from-date '2016-01-01'
+$ perceval github opensearch-project opensearch-py --from-date '2022-01-01'
 ```
 
 The GitHub backend accepts the categories `issue`, `pull_request` and
 `repository` which allow to fetch the specific data.
 
+#### Using GitHub tokens
+
 ```
-$ perceval github --category issue elastic logstash
+$ perceval github --category issue opensearch-project opensearch-py -t $GITHUB_TOKEN
 ```
+
+Both types of GitHub personal access tokens work with Perceval:
+
+* **Classic tokens**: Select the `public_repo` scope under `repo` section. 
+* **Fine-grained tokens**: Select the `Public repositories` scope, with no additional permissions.
 
 ### GitLab
 ```
