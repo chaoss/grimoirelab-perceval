@@ -1127,7 +1127,7 @@ class GitRepository:
             logger.debug("Git repository %s (%s) does not have any new object",
                          self.uri, self.dirpath)
 
-        self._update_references(refs)
+        dangling_commits = self._update_references(refs)
 
         logger.debug("Git repository %s (%s) is synced",
                      self.uri, self.dirpath)
@@ -1378,9 +1378,11 @@ class GitRepository:
         return commits
 
     def _update_references(self, refs):
-        """Update references removing old ones."""
+        """Update references removing old ones. Return dangling commits."""
 
+        dangling_commits = []
         new_refs = [ref.refname for ref in refs]
+        new_hashes = [ref.hash for ref in refs]
 
         # Delete old references
         for old_ref in self._discover_refs():
@@ -1388,6 +1390,8 @@ class GitRepository:
                 continue
             if old_ref.refname in new_refs:
                 continue
+            # Use hashes rather than ref names to avoid referencing outdated ref
+            dangling_commits.extend(self._find_unique_commits_in_ref(old_ref.refname, new_hashes))
             self._update_ref(old_ref, delete=True)
 
         # Update new references
@@ -1409,11 +1413,16 @@ class GitRepository:
                              refname)
                 continue
             else:
+                if refname in current_refs:
+                    to_remove = self._find_unique_commits_in_ref(current_refs[refname], new_hashes)
+                    dangling_commits.extend(to_remove)
                 self._update_ref(new_ref)
 
         # Prune repository to remove old branches
         cmd = ['git', 'remote', 'prune', 'origin']
         self._exec(cmd, cwd=self.dirpath, env=self.gitenv)
+
+        return dangling_commits
 
     def _discover_refs(self, remote=False):
         """Get the current list of local or remote refs."""
@@ -1470,6 +1479,20 @@ class GitRepository:
         else:
             logger.debug("Git %s ref %s in %s (%s)",
                          ref.refname, action, self.uri, self.dirpath)
+
+    def _find_unique_commits_in_ref(self, ref, excluded_refs):
+        """
+        Identify commits in ref not reachable from any of the excluded refs.
+
+        Use hashes in excluded_refs instead of ref names to avoid referencing
+        names that could not be up to date and can produce wrong results.
+        """
+        unique = []
+        cmd = ['git', 'rev-list', ref, '--not'] + excluded_refs
+        for line in self._exec_nb(cmd, cwd=self.dirpath, env=self.gitenv):
+            sha = line.rstrip('\n')
+            unique.append(sha)
+        return unique
 
     def _exec_nb(self, cmd, cwd=None, env=None, encoding='utf-8'):
         """Run a command with a non blocking call.
