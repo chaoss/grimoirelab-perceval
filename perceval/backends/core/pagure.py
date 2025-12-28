@@ -109,38 +109,6 @@ class Pagure(Backend):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
-              filter_classified=False):
-        """Fetch the issues from the repository.
-
-        The method retrieves, from a Pagure repository,
-        the issues updated since/until the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain issues updated since this date
-        :param to_date: obtain issues until a until a specific date (included)
-        :param filter_classified: remove classified fields from the resulting items
-
-        :returns: a generator of issues
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        if not to_date:
-            to_date = DEFAULT_LAST_DATETIME
-
-        from_date = from_date.strftime('%Y-%m-%d')
-        to_date = to_date.strftime('%Y-%m-%d')
-        kwargs = {
-            'from_date': from_date,
-            'to_date': to_date
-        }
-        items = super().fetch(category,
-                              filter_classified=filter_classified,
-                              **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the items (issues)
 
@@ -149,8 +117,16 @@ class Pagure(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
-        to_date = kwargs['to_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        to_date = kwargs.get('to_date')
+        if not to_date:
+            to_date = DEFAULT_LAST_DATETIME
+
+        from_date = from_date.strftime('%Y-%m-%d')
+        to_date = to_date.strftime('%Y-%m-%d')
         items = self.__fetch_issues(from_date, to_date)
         return items
 

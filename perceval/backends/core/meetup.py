@@ -102,33 +102,6 @@ class Meetup(Backend):
 
         self.client = None
 
-    def fetch(self, category=CATEGORY_EVENT, from_date=DEFAULT_DATETIME, to_date=None,
-              filter_classified=False):
-        """Fetch the events from the server.
-
-        This method fetches those events of a group stored on the server
-        that were updated since the given date. Data comments and rsvps
-        are included within each event.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain events updated since this date
-        :param to_date: obtain events updated before this date
-        :param filter_classified: remove classified fields from the resulting items
-
-        :returns: a generator of events
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-
-        kwargs = {"from_date": from_date, "to_date": to_date}
-        items = super().fetch(category,
-                              filter_classified=filter_classified,
-                              **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the events
 
@@ -137,8 +110,12 @@ class Meetup(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
-        to_date = kwargs['to_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+        from_date = datetime_to_utc(from_date)
+
+        to_date = kwargs.get('to_date')
 
         logger.info("Fetching events of '%s' group from %s to %s",
                     self.group, str(from_date),

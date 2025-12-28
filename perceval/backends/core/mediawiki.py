@@ -87,28 +87,6 @@ class MediaWiki(Backend):
         self.url = url
         self.client = None
 
-    def fetch(self, category=CATEGORY_PAGE, from_date=DEFAULT_DATETIME, reviews_api=False):
-        """Fetch the pages from the backend url.
-
-        The method retrieves, from a MediaWiki url, the
-        wiki pages.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain pages updated since this date
-        :param reviews_api: use the reviews API available in MediaWiki >= 1.27
-
-        :returns: a generator of pages
-        """
-        if from_date == DEFAULT_DATETIME:
-            from_date = None
-        else:
-            from_date = datetime_to_utc(from_date)
-
-        kwargs = {"from_date": from_date, "reviews_api": reviews_api}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the pages
 
@@ -117,8 +95,14 @@ class MediaWiki(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
-        reviews_api = kwargs['reviews_api']
+        from_date = kwargs.get('from_date')
+        if from_date == DEFAULT_DATETIME:
+            from_date = None
+        else:
+            if from_date:
+                from_date = datetime_to_utc(from_date)
+
+        reviews_api = kwargs.get('reviews_api', False)
 
         mediawiki_version = self.client.get_version()
         logger.info("MediaWiki version: %s", mediawiki_version)

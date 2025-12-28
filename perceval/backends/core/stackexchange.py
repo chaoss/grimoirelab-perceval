@@ -84,26 +84,6 @@ class StackExchange(Backend):
 
         self.client = None
 
-    def fetch(self, category=CATEGORY_QUESTION, from_date=DEFAULT_DATETIME):
-        """Fetch the questions from the site.
-
-        The method retrieves, from a StackExchange site, the
-        questions updated since the given date.
-
-        :param from_date: obtain questions updated since this date
-
-        :returns: a generator of questions
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-
-        kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the questions
 
@@ -112,7 +92,11 @@ class StackExchange(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        from_date = datetime_to_utc(from_date)
 
         logger.info("Looking for questions at site '%s', with tag '%s' and updated from '%s'",
                     self.site, self.tagged, str(from_date))

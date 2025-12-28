@@ -75,21 +75,6 @@ class Pipermail(MBox):
         super().__init__(url, dirpath, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
 
-    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
-        """Fetch the messages from the Pipermail archiver.
-
-        The method fetches the mbox files from a remote Pipermail
-        archiver and retrieves the messages stored on them.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain messages since this date
-
-        :returns: a generator of messages
-        """
-        items = super().fetch(category, from_date)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
 
@@ -98,7 +83,9 @@ class Pipermail(MBox):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
 
         logger.info("Looking for messages from '%s' since %s",
                     self.url, str(from_date))

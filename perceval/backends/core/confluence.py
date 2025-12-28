@@ -116,41 +116,6 @@ class Confluence(Backend):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_HISTORICAL_CONTENT,
-              from_date=DEFAULT_DATETIME,
-              max_contents=MAX_CONTENTS):
-        """Fetch the contents by version from the server.
-
-        This method fetches the different historical versions (or
-        snapshots) of the contents stored in the server that were
-        updated since the given date. Only those snapshots created
-        or updated after `from_date` will be returned.
-
-        Take into account that the seconds of `from_date` parameter will
-        be ignored because the Confluence REST API only accepts the date
-        and hours and minutes for timestamps values.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain historical versions of contents updated
-            since this date
-        :param max_contents: maximum number of contents to fetch per request
-
-        :returns: a generator of historical versions
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-
-        kwargs = {
-            'from_date': from_date,
-            'max_contents': max_contents
-        }
-
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the contents
 
@@ -160,7 +125,11 @@ class Confluence(Backend):
         :returns: a generator of items
         """
 
-        from_date = kwargs.get('from_date', DEFAULT_DATETIME)
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+        from_date = datetime_to_utc(from_date)
+
         max_contents = kwargs.get('max_contents', MAX_CONTENTS)
 
         logger.info("Fetching historical contents of '%s' from %s max contents per query %s",

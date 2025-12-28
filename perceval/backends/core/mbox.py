@@ -81,31 +81,6 @@ class MBox(Backend):
         self.uri = uri
         self.dirpath = dirpath
 
-    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME):
-        """Fetch the messages from a set of mbox files.
-
-        The method retrieves, from mbox files, the messages stored in
-        these containers.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain messages since this date
-        :param to_date: obtain messages until this date
-
-        :returns: a generator of messages
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-        if not to_date:
-            to_date = DEFAULT_LAST_DATETIME
-
-        kwargs = {
-            'from_date': from_date,
-            'to_date': to_date
-        }
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
 
@@ -114,8 +89,13 @@ class MBox(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
-        to_date = kwargs['to_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        to_date = kwargs.get('to_date')
+        if not to_date:
+            to_date = DEFAULT_LAST_DATETIME
 
         logger.info("Looking for messages from '%s' on '%s' since %s until %s",
                     self.uri, self.dirpath, str(from_date), str(to_date))

@@ -82,21 +82,6 @@ class GoogleHits(Backend):
 
         self.client = None
 
-    def fetch(self, category=CATEGORY_HITS):
-        """Fetch data from Google API.
-
-        The method retrieves a list of hits for some
-        given keywords using the Google API.
-
-        :param category: the category of items to fetch
-
-        :returns: a generator of data
-        """
-        kwargs = {}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch Google hit items
 

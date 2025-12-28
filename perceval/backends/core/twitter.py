@@ -118,33 +118,6 @@ class Twitter(Backend):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_TWEET, since_id=None, max_id=None,
-              geocode=None, lang=None,
-              include_entities=True, tweets_type=TWEET_TYPE_MIXED):
-        """Fetch the tweets from the server.
-
-        This method fetches tweets from the TwitterSearch API published in the last seven days.
-
-        :param category: the category of items to fetch
-        :param since_id: if not null, it returns results with an ID greater than the specified ID
-        :param max_id: when it is set or if not None, it returns results with an ID less than the specified ID
-        :param geocode: if enabled, returns tweets by users located at latitude,longitude,"mi"|"km"
-        :param lang: if enabled, restricts tweets to the given language, given by an ISO 639-1 code
-        :param include_entities: if disabled, it excludes entities node
-        :param tweets_type: type of tweets returned. Default is “mixed”, others are "recent" and "popular"
-
-        :returns: a generator of tweets
-        """
-        kwargs = {"since_id": since_id,
-                  "max_id": max_id,
-                  "geocode": geocode,
-                  "lang": lang,
-                  "include_entities": include_entities,
-                  "result_type": tweets_type}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the tweets
 
@@ -153,12 +126,12 @@ class Twitter(Backend):
 
         :returns: a generator of items
         """
-        since_id = kwargs['since_id']
-        max_id = kwargs['max_id']
-        geocode = kwargs['geocode']
-        lang = kwargs['lang']
-        entities = kwargs['include_entities']
-        tweets_type = kwargs['result_type']
+        since_id = kwargs.get('since_id')
+        max_id = kwargs.get('max_id')
+        geocode = kwargs.get('geocode')
+        lang = kwargs.get('lang')
+        entities = kwargs.get('include_entities', True)
+        tweets_type = kwargs.get('result_type', TWEET_TYPE_MIXED)
 
         logger.info("Fetching tweets %s from %s to %s",
                     self.query, str(since_id),

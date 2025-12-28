@@ -80,22 +80,6 @@ class DockerHub(Backend):
         self.repository = repository
         self.client = None
 
-    def fetch(self, category=CATEGORY_DOCKERHUB_DATA):
-        """Fetch data from a Docker Hub repository.
-
-        The method retrieves, from a repository stored in Docker Hub,
-        its data which includes number of pulls, stars, description,
-        among other data.
-
-        :param category: the category of items to fetch
-
-        :returns: a generator of data
-        """
-        kwargs = {}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the Dockher Hub items
 

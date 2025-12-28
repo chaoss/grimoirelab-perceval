@@ -101,29 +101,6 @@ class Gitter(Backend):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
-        """Fetch the messages from the room.
-
-        This method fetches the messages sent in the room that were
-        sent since the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: date from which messages are to be fetched
-
-        :returns: a generator of messages
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        from_date = from_date.strftime('%Y-%m-%d')
-        kwargs = {
-            'from_date': from_date,
-        }
-
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the messages.
 
@@ -132,7 +109,12 @@ class Gitter(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        if hasattr(from_date, 'strftime'):
+            from_date = from_date.strftime('%Y-%m-%d')
 
         logger.debug("Get Gitter message paginated items of room: %s from date: %s", self.room, from_date)
 
