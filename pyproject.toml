@@ -47,6 +47,7 @@ perceval = 'perceval.perceval:main'
 python = "^3.10"
 
 python-dateutil = "^2.6.0"
+defusedxml = "^0.7.1"
 requests = "^2.7.0"
 beautifulsoup4 = "^4.3.2"
 feedparser = "^6.0.8"

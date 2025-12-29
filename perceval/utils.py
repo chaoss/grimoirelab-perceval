@@ -31,7 +31,7 @@ import mailbox
 import re
 import sys
 
-import xml.etree.ElementTree
+from defusedxml import ElementTree
 
 import dateutil.rrule
 import dateutil.tz
@@ -263,8 +263,8 @@ def xml_to_dict(raw_xml):
     purged_xml = remove_invalid_xml_chars(raw_xml)
 
     try:
-        tree = xml.etree.ElementTree.fromstring(purged_xml)
-    except xml.etree.ElementTree.ParseError as e:
+        tree = ElementTree.fromstring(purged_xml)
+    except ElementTree.ParseError as e:
         cause = "XML stream %s" % (str(e))
         raise ParseError(cause=cause)
 

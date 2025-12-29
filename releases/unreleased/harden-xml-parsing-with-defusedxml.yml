@@ -1,0 +1,8 @@
+---
+title: Harden XML parsing with defusedxml
+category: security
+author: Venu Vardhan Reddy Tekula <venu@chaoss.community>
+issue: 777
+notes: >
+  XML handling now relies on defusedxml instead of ElementTree to
+  mitigate parser vulnerabilities.
