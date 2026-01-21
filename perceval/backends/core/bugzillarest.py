@@ -459,7 +459,24 @@ class BugzillaRESTClient(HttpClient):
 
         logger.debug("Bugzilla REST client requests: %s params: %s",
                      resource, str(params))
-        r = self.fetch(url, payload=params, headers=headers)
+        try:
+            r = self.fetch(url, payload=params, headers=headers)
+        except requests.exceptions.HTTPError as e:
+            if e.response is not None and e.response.status_code == 400:
+                logger.warning(
+                    "Bugzilla REST returned 400 for resource %s with params %s. "
+                    "This usually indicates an invalid or too-large pagination offset.",
+                    resource, params
+                )
+                raise BackendError(
+                    cause=(
+                        "Bugzilla REST API returned HTTP 400 while paginating. "
+                        "Pagination offsets may be too large or unsupported by the server."
+                    )
+                )
+            raise
+
+
 
         # Check for possible Bugzilla API errors
         result = r.json()
