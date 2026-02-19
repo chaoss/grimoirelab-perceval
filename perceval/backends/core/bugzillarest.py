@@ -507,7 +507,8 @@ class BugzillaRESTCommand(BackendCommand):
                                               basic_auth=True,
                                               token_auth=True,
                                               archive=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              secrets_manager=True)
 
         # BugzillaREST options
         group = parser.parser.add_argument_group('Bugzilla REST arguments')

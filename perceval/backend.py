@@ -617,12 +617,14 @@ class BackendCommandArgumentParser:
 
     def __init__(self, backend, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False, archive=False,
-                 aliases=None, blacklist=False, ssl_verify=False):
+                 aliases=None, blacklist=False, ssl_verify=False,
+                 secrets_manager=False):
         self._from_date = from_date
         self._to_date = to_date
         self._archive = archive
         self._backend = backend
         self._ssl_verify = ssl_verify
+        self._secrets_manager = secrets_manager
 
         self.aliases = aliases or {}
         self.parser = argparse.ArgumentParser()
@@ -672,6 +674,9 @@ class BackendCommandArgumentParser:
         if ssl_verify:
             group.add_argument('--no-ssl-verify', dest='ssl_verify', action='store_false',
                                help="disable SSL verification")
+
+        if secrets_manager:
+            self._set_secrets_manager_arguments()
 
         self._set_output_arguments()
 
@@ -749,6 +754,44 @@ class BackendCommandArgumentParser:
         group.add_argument('--json-line', dest='json_line', action='store_true',
                            help="produce a JSON line for each output item")
 
+    def _set_secrets_manager_arguments(self):
+        """Activate secret manager arguments parsing"""
+
+        group = self.parser.add_argument_group('secrets manager authentication arguments')
+        group.add_argument('--secrets-manager', dest='secrets_manager',
+                           choices=['bitwarden', 'hashicorp', 'aws'],
+                           help="Secrets manager service to ust for credential retrieval")
+        group.add_argument('--item-name', dest='item_name',
+                           help="Name of the item in the secrets manager")
+        group.add_argument('--user-field', dest='user_field',
+                           help="Name of the username credential in the secrets manager")
+        group.add_argument('--email-field', dest='email_field',
+                           help="Name of the email credential in the secrets manager")
+        group.add_argument('--user-id-field', dest='user_id_field',
+                           help="Name of the user_id field in the secrets manager")
+        group.add_argument('--password-field', dest='password_field',
+                           help="Name of the password credential in the secrets manager")
+        group.add_argument('--token-field', dest='token_field',
+                           help="Name of the token/API key credential in the secrets manager")
+        group.add_argument('--access-token-field', dest='access_token_field',
+                           help="Name of the token/API key credential in the secrets manager")
+
+        # Bitwarden credentials
+        group.add_argument('--bw-client-id', dest='bw_client_id',
+                           help="Bitwarden API client ID")
+        group.add_argument('--bw-client-secret', dest='bw_client_secret',
+                           help="Bitwarden API client secret")
+        group.add_argument('--bw-master-password', dest='bw_master_password',
+                           help="Bitwarden master password")
+
+        # HashiCorp Vault credentials
+        group.add_argument('--vault-url', dest='vault_url',
+                           help="HashiCorp Vault URL")
+        group.add_argument('--vault-token', dest='vault_token',
+                           help="HashiCorp Vault authentication token")
+        group.add_argument('--vault-certificate', dest='vault_certificate',
+                           help="Path to CA certificate for HashiCorp Vault TLS verification")
+
 
 class BackendCommand:
     """Abstract class to run backends from the command line.
@@ -822,8 +865,113 @@ class BackendCommand:
                 logger.exception(f"Error!: {e}", exc_info=self.debug)
 
     def _pre_init(self):
-        """Override to execute before backend is initialized."""
-        pass
+        """Override to execute before backend is initialized.
+
+        This method handles fetching credentials from a secrets manager
+        and injecting them into backend arguments.
+        """
+        if not (hasattr(self.parsed_args, 'secrets_manager') and
+                self.parsed_args.secrets_manager):
+            return
+
+        if not getattr(self.parsed_args, 'item_name', None):
+            raise ValueError("--item-name is required when --secrets-manager is specified.")
+
+        logging.debug("Processing credentials with %s", self.parsed_args.secrets_manager)
+
+        try:
+            from grimoirelab_toolkit.credential_manager import resolve_credentials
+
+            manager_config = self._build_manager_config()
+            field_mapping = self._build_field_mapping()
+
+            credentials = resolve_credentials(
+                manager_type=self.parsed_args.secrets_manager,
+                manager_config=manager_config,
+                item_name=self.parsed_args.item_name,
+                field_mapping=field_mapping,
+            )
+
+            # Post-process: GitHub backend expects api_token as a list
+            if 'api_token' in credentials:
+                credentials['api_token'] = [credentials['api_token']]
+
+            # Inject resolved credentials into parsed_args
+            for param_name, value in credentials.items():
+                setattr(self.parsed_args, param_name, value)
+                logger.info('Using %s from secrets manager', param_name)
+
+        except ImportError:
+            logging.warning('Credential management module not found. Using command line credentials.')
+        except Exception as e:
+            raise RuntimeError('Error retrieving credentials from secret manager: %s' % str(e)) from e
+
+    def _build_manager_config(self):
+        """Build manager-specific config dict from parsed CLI args.
+
+        :returns: Configuration dict for the secrets manager
+        :rtype: dict
+        """
+        manager_type = self.parsed_args.secrets_manager
+
+        if manager_type == 'bitwarden':
+            bw_client_id = getattr(self.parsed_args, 'bw_client_id', None)
+            bw_client_secret = getattr(self.parsed_args, 'bw_client_secret', None)
+            bw_master_password = getattr(self.parsed_args, 'bw_master_password', None)
+
+            if not all([bw_client_id, bw_client_secret, bw_master_password]):
+                raise ValueError(
+                    'Bitwarden requires --bw-client-id, --bw-client-secret, and --bw-master-password'
+                )
+            return {
+                'client_id': bw_client_id,
+                'client_secret': bw_client_secret,
+                'master_password': bw_master_password,
+            }
+
+        elif manager_type == 'hashicorp':
+            vault_url = getattr(self.parsed_args, 'vault_url', None)
+            vault_token = getattr(self.parsed_args, 'vault_token', None)
+            vault_certificate = getattr(self.parsed_args, 'vault_certificate', None)
+
+            if not all([vault_url, vault_token]):
+                raise ValueError('HashiCorp Vault requires --vault-url and --vault-token')
+
+            return {
+                'vault_url': vault_url,
+                'token': vault_token,
+                'certificate': vault_certificate,
+            }
+
+        elif manager_type == 'aws':
+            return {}
+
+        return {}
+
+    def _build_field_mapping(self):
+        """Build field_mapping dict from parsed CLI --*-field args.
+
+        Maps secret field names (from CLI args) to output parameter names.
+
+        :returns: Mapping of secret field names to output parameter names
+        :rtype: dict
+        """
+        field_args = {
+            'user_field': 'user',
+            'password_field': 'password',
+            'token_field': 'api_token',
+            'email_field': 'email',
+            'access_token_field': 'access_token',
+            'user_id_field': 'user_id',
+        }
+
+        mapping = {}
+        for arg_name, output_param in field_args.items():
+            field_value = getattr(self.parsed_args, arg_name, None)
+            if field_value:
+                mapping[field_value] = output_param
+
+        return mapping
 
     def _post_init(self):
         """Override to execute after backend is initialized."""

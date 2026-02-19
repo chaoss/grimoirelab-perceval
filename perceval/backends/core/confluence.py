@@ -351,7 +351,8 @@ class ConfluenceCommand(BackendCommand):
                                               basic_auth=True,
                                               token_auth=True,
                                               archive=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              secrets_manager=True)
 
         # Required arguments
         parser.parser.add_argument('url',

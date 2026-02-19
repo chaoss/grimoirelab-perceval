@@ -343,7 +343,8 @@ class GroupsioCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              secrets_manager=True)
 
         # Optional arguments
         group = parser.parser.add_argument_group('Groupsio arguments')

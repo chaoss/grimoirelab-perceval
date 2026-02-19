@@ -143,6 +143,138 @@ A Perceval Docker image is available at
 Detailed information on how to run and/or build this image can be found
 [here](https://github.com/chaoss/grimoirelab-perceval/tree/main/docker/images/).
 
+## Secrets Manager
+
+Perceval supports retrieving credentials from a secrets manager instead of
+passing them directly on the command line. This is useful for automated
+pipelines and environments where storing credentials in plain text is not
+acceptable.
+
+The following backends support secrets manager authentication: `bugzilla`,
+`bugzillarest`, `confluence`, `discourse`, `gerrit`, `git`, `github`,
+`gitlab`, `gitter`, `googlehits`, `groupsio`, `jenkins`, `rocketchat`,
+`stackexchange`.
+
+### Installation
+
+To use **HashiCorp Vault**, install Perceval with the `hashicorp-manager` group:
+
+```
+$ poetry install --with hashicorp-manager
+```
+
+**Bitwarden** does not require any extra Python package, but the
+[Bitwarden CLI](https://bitwarden.com/help/cli/) (`bw`) must be installed
+and available on your `PATH`.
+
+### Common arguments
+
+All secrets manager providers share the following arguments:
+
+- `--secrets-manager` — Provider to use: `bitwarden`, `hashicorp`, or `aws`
+- `--item-name` — Name of the secret item in the secrets manager
+- `--token-field` — Field name for an API token / key
+- `--user-field` — Field name for a username
+- `--password-field` — Field name for a password
+- `--email-field` — Field name for an email address
+- `--access-token-field` — Field name for an access token
+- `--user-id-field` — Field name for a user ID
+
+### Bitwarden
+
+Store your credentials in a Bitwarden item. Username and password are read
+from the `login` fields; tokens and other custom values are read from custom
+fields.
+
+Bitwarden-specific arguments:
+
+- `--bw-client-id` — Bitwarden API client ID
+- `--bw-client-secret` — Bitwarden API client secret
+- `--bw-master-password` — Bitwarden master password
+
+#### Example
+```
+$ perceval github \
+    --secrets-manager bitwarden \
+    --item-name 'GitHub' \
+    --token-field 'api-token' \
+    --bw-client-id $BW_CLIENT_ID \
+    --bw-client-secret $BW_CLIENT_SECRET \
+    --bw-master-password $BW_MASTER_PASSWORD \
+    --from-date '2020-01-01' --no-archive \
+    chaoss grimoirelab-perceval
+```
+
+### HashiCorp Vault
+
+Store your credentials as key-value pairs in a HashiCorp Vault KV secret.
+
+HashiCorp-specific arguments:
+
+- `--vault-url` — HashiCorp Vault server URL
+- `--vault-token` — Vault authentication token
+- `--vault-certificate` — Path to CA certificate for TLS verification (optional)
+
+#### Example
+```
+$ perceval github \
+    --secrets-manager hashicorp \
+    --item-name 'GitHub' \
+    --token-field 'api-token' \
+    --vault-url $VAULT_URL \
+    --vault-token $VAULT_TOKEN \
+    --from-date '2020-01-01' --no-archive \
+    chaoss grimoirelab-perceval
+```
+
+### AWS Secrets Manager
+
+Store your credentials as key-value pairs in an AWS Secrets Manager secret.
+AWS uses the default credential provider chain (environment variables,
+`~/.aws/credentials`, IAM role, etc.), so no extra arguments are needed
+beyond the common ones.
+
+To use **AWS Secrets Manager**, install Perceval with the `aws-manager` dependencies:
+
+```
+$ pip install boto3
+```
+
+#### Example
+```
+$ perceval github \
+    --secrets-manager aws \
+    --item-name 'GitHub' \
+    --token-field 'api-token' \
+    --from-date '2020-01-01' --no-archive \
+    chaoss grimoirelab-perceval
+```
+
+### Programmatic usage
+
+The credential resolution logic is also available as a standalone function
+in `grimoirelab-toolkit`, so it can be used from any Python code without
+going through the CLI:
+
+```python
+from grimoirelab_toolkit.credential_manager import resolve_credentials
+
+credentials = resolve_credentials(
+    manager_type='bitwarden',
+    manager_config={
+        'client_id': 'your-client-id',
+        'client_secret': 'your-client-secret',
+        'master_password': 'your-master-password',
+    },
+    item_name='GitHub',
+    field_mapping={'api-token': 'api_token'},
+)
+print(credentials)  # {'api_token': 'ghp_...'}
+```
+
+This is useful for consumers like KingArthur or custom scripts that use
+Perceval's `Backend` class directly without the CLI.
+
 ## Documentation
 
 Documentation is generated automatically in the [ReadTheDocs Perceval

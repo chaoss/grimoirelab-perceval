@@ -32,7 +32,9 @@ import json
 import os
 import shutil
 import sqlite3
+import sys
 import tempfile
+import types
 import unittest
 import unittest.mock
 
@@ -56,15 +58,14 @@ from perceval.backend import (Backend,
                               logger as backend_logger)
 from perceval.errors import ArchiveError, BackendError, BackendCommandArgumentParserError
 from perceval.utils import DEFAULT_DATETIME
-from base import TestCaseBackendArchive
-import mocked_package
-from mocked_package.backend import (BackendA,
-                                    BackendCommandA)
-import mocked_package.nested_package
-from mocked_package.nested_package.nested_backend_b import (BackendB,
-                                                            BackendCommandB)
-from mocked_package.nested_package.nested_backend_c import (BackendC,
-                                                            BackendCommandC)
+from .base import TestCaseBackendArchive
+from .import mocked_package
+from .mocked_package.backend import (BackendA,
+                                     BackendCommandA)
+from .mocked_package.nested_package.nested_backend_b import (BackendB,
+                                                             BackendCommandB)
+from .mocked_package.nested_package.nested_backend_c import (BackendC,
+                                                             BackendCommandC)
 
 
 SUMMARY_LOG_REPORT = """INFO:perceval.backend:Summary of results
@@ -362,6 +363,18 @@ class NoArchiveBackendCommand(BackendCommand):
         parser.parser.add_argument('origin')
         parser.parser.add_argument('--subtype', dest='subtype')
 
+        return parser
+
+
+class PreInitTestCommand(BackendCommand):
+    """BackendCommand subclass for testing _pre_init credential logic."""
+
+    BACKEND = MockedBackend
+
+    @classmethod
+    def setup_cmd_parser(cls):
+        parser = BackendCommandArgumentParser(cls.BACKEND, secrets_manager=True)
+        parser.parser.add_argument('origin')
         return parser
 
 
@@ -1122,6 +1135,120 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
 
         self.assertEqual(parsed_args.category, '')
 
+    def test_parse_secrets_manager_arguments(self):
+        """Test parsing of secrets manager arguments"""
+        parser = BackendCommandArgumentParser(MockedBackend,
+                                              secrets_manager=True)
+
+        # Test with bitwarden secrets manager
+        args = ['--secrets-manager', 'bitwarden',
+                '--item-name', 'test-credentials',
+                '--token-field', 'api_token',
+                '--user-id-field', 'user_id']
+
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.secrets_manager, 'bitwarden')
+        self.assertEqual(parsed_args.item_name, 'test-credentials')
+        self.assertEqual(parsed_args.token_field, 'api_token')
+        self.assertEqual(parsed_args.user_id_field, 'user_id')
+
+    def test_parse_secrets_manager_all_providers(self):
+        """Test parsing with different secrets manager providers"""
+        parser = BackendCommandArgumentParser(MockedBackend,
+                                              secrets_manager=True)
+
+        # Test each provider
+        providers = ['bitwarden', 'hashicorp', 'aws']
+
+        for provider in providers:
+            args = ['--secrets-manager', provider,
+                    '--item-name', 'test-item']
+
+            parsed_args = parser.parse(*args)
+            self.assertEqual(parsed_args.secrets_manager, provider)
+
+    def test_parse_secrets_manager_field_mappings(self):
+        """Test parsing of different credential field mappings"""
+        parser = BackendCommandArgumentParser(MockedBackend,
+                                              secrets_manager=True)
+
+        args = ['--secrets-manager', 'bitwarden',
+                '--item-name', 'test-credentials',
+                '--user-field', 'username',
+                '--email-field', 'email_address',
+                '--password-field', 'secret_password',
+                '--token-field', 'api_key',
+                '--access-token-field', 'access_key',
+                '--user-id-field', 'uid']
+
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.user_field, 'username')
+        self.assertEqual(parsed_args.email_field, 'email_address')
+        self.assertEqual(parsed_args.password_field, 'secret_password')
+        self.assertEqual(parsed_args.token_field, 'api_key')
+        self.assertEqual(parsed_args.access_token_field, 'access_key')
+        self.assertEqual(parsed_args.user_id_field, 'uid')
+
+    def test_secrets_manager_disabled_by_default(self):
+        """Test that secrets manager arguments are not available when not enabled"""
+        parser = BackendCommandArgumentParser(MockedBackend,
+                                              secrets_manager=False)
+
+        args = ['--secrets-manager', 'bitwarden']
+
+        # Should fail parsing unknown argument
+        with self.assertRaises(SystemExit):
+            parser.parse(*args)
+
+    def test_secrets_manager_arguments_passed_to_backend(self):
+        """Test that secrets manager arguments are correctly parsed"""
+        parser = BackendCommandArgumentParser(MockedBackend, secrets_manager=True)
+        args = ['--secrets-manager', 'bitwarden',
+                '--item-name', 'test-credentials',
+                '--token-field', 'api_token',
+                '--user-field', 'username',
+                '--password-field', 'secret_password']
+
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.secrets_manager, 'bitwarden')
+        self.assertEqual(parsed_args.item_name, 'test-credentials')
+        self.assertEqual(parsed_args.token_field, 'api_token')
+        self.assertEqual(parsed_args.user_field, 'username')
+        self.assertEqual(parsed_args.password_field, 'secret_password')
+
+    def test_secrets_manager_arguments_integration_with_command(self):
+        """Test end-to-end credential injection through BackendCommand._pre_init"""
+        item = {'login': {'username': 'alice', 'password': 'secret'},
+                'fields': [{'name': 'api_token', 'value': 'tok123'}]}
+
+        mock_manager = unittest.mock.MagicMock()
+        mock_manager.get_secret.return_value = item
+        mock_factory = unittest.mock.MagicMock()
+        mock_factory.get_bitwarden_manager.return_value = mock_manager
+        mock_smf = types.ModuleType('secrets_manager_factory')
+        mock_smf.SecretsManagerFactory = mock_factory
+        patches = {'grimoirelab_toolkit.credential_manager.secrets_manager_factory': mock_smf}
+
+        with unittest.mock.patch.dict(sys.modules, patches):
+            args = ['http://example.com/',
+                    '--secrets-manager', 'bitwarden',
+                    '--item-name', 'prod-credentials',
+                    '--bw-client-id', 'client_id',
+                    '--bw-client-secret', 'client_secret',
+                    '--bw-master-password', 'master_pass',
+                    '--user-field', 'username',
+                    '--password-field', 'password',
+                    '--token-field', 'api_token']
+            cmd = PreInitTestCommand(*args)
+
+        self.assertEqual(cmd.parsed_args.user, 'alice')
+        self.assertEqual(cmd.parsed_args.password, 'secret')
+        self.assertEqual(cmd.parsed_args.api_token, ['tok123'])
+        mock_manager.get_secret.assert_called_once_with('prod-credentials')
+
 
 def convert_cmd_output_to_json(filepath):
     """Transforms the output of a BackendCommand into json objects"""
@@ -1138,6 +1265,219 @@ def convert_cmd_output_to_json(filepath):
                 yield obj
             else:
                 buff += line
+
+
+class TestBackendCommandPreInit(unittest.TestCase):
+    """Unit tests for BackendCommand._pre_init credential manager logic"""
+
+    def _make_bw_mock(self, item):
+        """Build a sys.modules patch dict and a mock manager for Bitwarden."""
+        mock_manager = unittest.mock.MagicMock()
+        mock_manager.get_secret.return_value = item
+
+        mock_factory = unittest.mock.MagicMock()
+        mock_factory.get_bitwarden_manager.return_value = mock_manager
+
+        mock_smf = types.ModuleType('secrets_manager_factory')
+        mock_smf.SecretsManagerFactory = mock_factory
+
+        patches = {
+            'grimoirelab_toolkit.credential_manager.secrets_manager_factory': mock_smf,
+        }
+        return mock_factory, mock_manager, patches
+
+    def _make_hc_mock(self, secret_data):
+        """Build a sys.modules patch dict and a mock manager for HashiCorp."""
+        mock_manager = unittest.mock.MagicMock()
+        mock_manager.get_secret.return_value = {'data': {'data': secret_data}}
+
+        mock_factory = unittest.mock.MagicMock()
+        mock_factory.get_hashicorp_manager.return_value = mock_manager
+
+        mock_smf = types.ModuleType('secrets_manager_factory')
+        mock_smf.SecretsManagerFactory = mock_factory
+
+        patches = {
+            'grimoirelab_toolkit.credential_manager.secrets_manager_factory': mock_smf,
+        }
+        return mock_factory, mock_manager, patches
+
+    def test_pre_init_skips_when_no_secrets_manager(self):
+        """_pre_init returns immediately when no --secrets-manager flag is given"""
+
+        args = ['http://example.com/']
+        cmd = PreInitTestCommand(*args)
+        self.assertFalse(hasattr(cmd.parsed_args, 'user'))
+        self.assertFalse(hasattr(cmd.parsed_args, 'password'))
+
+    def test_pre_init_raises_valueerror_if_item_name_missing(self):
+        """_pre_init raises ValueError when --secrets-manager is set but --item-name is missing"""
+
+        args = ['http://example.com/',
+                '--secrets-manager', 'bitwarden']
+        with self.assertRaises(ValueError) as ctx:
+            PreInitTestCommand(*args)
+        self.assertIn('--item-name', str(ctx.exception))
+
+    def test_pre_init_bitwarden_injects_username_and_password(self):
+        """_pre_init injects username and password from Bitwarden into parsed_args"""
+
+        item = {'login': {'username': 'alice', 'password': 'secret123'}, 'fields': []}
+        mock_factory, mock_manager, patches = self._make_bw_mock(item)
+
+        with unittest.mock.patch.dict(sys.modules, patches):
+            args = ['http://example.com/',
+                    '--secrets-manager', 'bitwarden',
+                    '--item-name', 'my-item',
+                    '--bw-client-id', 'client_id',
+                    '--bw-client-secret', 'client_secret',
+                    '--bw-master-password', 'master_pass',
+                    '--user-field', 'username',
+                    '--password-field', 'password']
+            cmd = PreInitTestCommand(*args)
+
+        self.assertEqual(cmd.parsed_args.user, 'alice')
+        self.assertEqual(cmd.parsed_args.password, 'secret123')
+        mock_manager.login.assert_called_once()
+        mock_manager.logout.assert_called_once()
+        mock_manager.get_secret.assert_called_once_with('my-item')
+
+    def test_pre_init_bitwarden_uses_custom_field_names(self):
+        """_pre_init uses custom field names as dict keys in item['login']"""
+
+        item = {'login': {'login_user': 'bob', 'login_pass': 'pw', 'user_email': 'bob@example.com'}, 'fields': []}
+        mock_factory, mock_manager, patches = self._make_bw_mock(item)
+
+        with unittest.mock.patch.dict(sys.modules, patches):
+            args = ['http://example.com/',
+                    '--secrets-manager', 'bitwarden',
+                    '--item-name', 'my-item',
+                    '--bw-client-id', 'client_id',
+                    '--bw-client-secret', 'client_secret',
+                    '--bw-master-password', 'master_pass',
+                    '--user-field', 'login_user',
+                    '--password-field', 'login_pass',
+                    '--email-field', 'user_email']
+            cmd = PreInitTestCommand(*args)
+
+        self.assertEqual(cmd.parsed_args.user, 'bob')
+        self.assertEqual(cmd.parsed_args.password, 'pw')
+        self.assertEqual(cmd.parsed_args.email, 'bob@example.com')
+
+    def test_pre_init_bitwarden_token_from_fields_array(self):
+        """_pre_init retrieves token from Bitwarden fields[] array by matching name"""
+
+        item = {'login': {}, 'fields': [{'name': 'api_token', 'value': 'tok123'}]}
+        mock_factory, mock_manager, patches = self._make_bw_mock(item)
+
+        with unittest.mock.patch.dict(sys.modules, patches):
+            args = ['http://example.com/',
+                    '--secrets-manager', 'bitwarden',
+                    '--item-name', 'my-item',
+                    '--bw-client-id', 'client_id',
+                    '--bw-client-secret', 'client_secret',
+                    '--bw-master-password', 'master_pass',
+                    '--token-field', 'api_token']
+            cmd = PreInitTestCommand(*args)
+
+        self.assertEqual(cmd.parsed_args.api_token, ['tok123'])
+
+    def test_pre_init_bitwarden_raises_runtime_error_on_missing_bw_creds(self):
+        """_pre_init raises RuntimeError when Bitwarden credentials are missing"""
+
+        _, _, patches = self._make_bw_mock({})
+
+        with unittest.mock.patch.dict(sys.modules, patches):
+            args = ['http://example.com/',
+                    '--secrets-manager', 'bitwarden',
+                    '--item-name', 'my-item']
+            with self.assertRaises(RuntimeError) as ctx:
+                PreInitTestCommand(*args)
+        self.assertIn('Error retrieving credentials', str(ctx.exception))
+
+    def test_pre_init_hashicorp_injects_credentials(self):
+        """_pre_init injects username, password, and token from HashiCorp Vault"""
+
+        secret_data = {'user': 'carol', 'pass': 'pw2', 'api_key': 'key999'}
+        mock_factory, mock_manager, patches = self._make_hc_mock(secret_data)
+
+        with unittest.mock.patch.dict(sys.modules, patches):
+            args = ['http://example.com/',
+                    '--secrets-manager', 'hashicorp',
+                    '--item-name', 'my-secret',
+                    '--vault-url', 'http://vault:8200',
+                    '--vault-token', 'hvs.token',
+                    '--user-field', 'user',
+                    '--password-field', 'pass',
+                    '--token-field', 'api_key']
+            cmd = PreInitTestCommand(*args)
+
+        self.assertEqual(cmd.parsed_args.user, 'carol')
+        self.assertEqual(cmd.parsed_args.password, 'pw2')
+        self.assertEqual(cmd.parsed_args.api_token, ['key999'])
+        mock_factory.get_hashicorp_manager.assert_called_once_with(
+            'http://vault:8200', 'hvs.token', None
+        )
+        mock_manager.get_secret.assert_called_once_with('my-secret')
+
+    def test_pre_init_hashicorp_with_certificate(self):
+        """_pre_init passes certificate path through to get_hashicorp_manager"""
+        secret_data = {'api_key': 'tok123'}
+        mock_factory, mock_manager, patches = self._make_hc_mock(secret_data)
+
+        with unittest.mock.patch.dict(sys.modules, patches):
+            args = ['http://example.com/',
+                    '--secrets-manager', 'hashicorp',
+                    '--item-name', 'my-secret',
+                    '--vault-url', 'http://vault:8200',
+                    '--vault-token', 'hvs.token',
+                    '--vault-certificate', '/path/to/ca.crt',
+                    '--token-field', 'api_key']
+            cmd = PreInitTestCommand(*args)
+
+        mock_factory.get_hashicorp_manager.assert_called_once_with(
+            'http://vault:8200', 'hvs.token', '/path/to/ca.crt'
+        )
+        self.assertEqual(cmd.parsed_args.api_token, ['tok123'])
+
+    def test_pre_init_hashicorp_raises_when_vault_url_missing(self):
+        """_pre_init raises RuntimeError when --vault-url is not provided"""
+        _, _, patches = self._make_hc_mock({})
+
+        with unittest.mock.patch.dict(sys.modules, patches):
+            args = ['http://example.com/',
+                    '--secrets-manager', 'hashicorp',
+                    '--item-name', 'my-secret',
+                    '--vault-token', 'hvs.token']
+            with self.assertRaises(RuntimeError) as ctx:
+                PreInitTestCommand(*args)
+        self.assertIn('Error retrieving credentials', str(ctx.exception))
+
+    def test_pre_init_hashicorp_raises_when_vault_token_missing(self):
+        """_pre_init raises RuntimeError when --vault-token is not provided"""
+        _, _, patches = self._make_hc_mock({})
+
+        with unittest.mock.patch.dict(sys.modules, patches):
+            args = ['http://example.com/',
+                    '--secrets-manager', 'hashicorp',
+                    '--item-name', 'my-secret',
+                    '--vault-url', 'http://vault:8200']
+            with self.assertRaises(RuntimeError) as ctx:
+                PreInitTestCommand(*args)
+        self.assertIn('Error retrieving credentials', str(ctx.exception))
+
+    def test_pre_init_hashicorp_raises_runtime_error_on_missing_vault_creds(self):
+        """_pre_init raises RuntimeError when HashiCorp Vault credentials are missing"""
+
+        _, _, patches = self._make_hc_mock({})
+
+        with unittest.mock.patch.dict(sys.modules, patches):
+            args = ['http://example.com/',
+                    '--secrets-manager', 'hashicorp',
+                    '--item-name', 'my-secret']
+            with self.assertRaises(RuntimeError) as ctx:
+                PreInitTestCommand(*args)
+        self.assertIn('Error retrieving credentials', str(ctx.exception))
 
 
 class TestBackendCommand(unittest.TestCase):
