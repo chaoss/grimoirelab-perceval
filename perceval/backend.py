@@ -617,12 +617,14 @@ class BackendCommandArgumentParser:
 
     def __init__(self, backend, from_date=False, to_date=False, offset=False,
                  basic_auth=False, token_auth=False, archive=False,
-                 aliases=None, blacklist=False, ssl_verify=False):
+                 aliases=None, blacklist=False, ssl_verify=False,
+                 secrets_manager=False):
         self._from_date = from_date
         self._to_date = to_date
         self._archive = archive
         self._backend = backend
         self._ssl_verify = ssl_verify
+        self._secrets_manager = secrets_manager
 
         self.aliases = aliases or {}
         self.parser = argparse.ArgumentParser()
@@ -672,6 +674,9 @@ class BackendCommandArgumentParser:
         if ssl_verify:
             group.add_argument('--no-ssl-verify', dest='ssl_verify', action='store_false',
                                help="disable SSL verification")
+
+        if secrets_manager:
+            self._set_secrets_manager_arguments()
 
         self._set_output_arguments()
 
@@ -749,6 +754,39 @@ class BackendCommandArgumentParser:
         group.add_argument('--json-line', dest='json_line', action='store_true',
                            help="produce a JSON line for each output item")
 
+    def _set_secrets_manager_arguments(self):
+        """Activate secret manager arguments parsing"""
+
+        group = self.parser.add_argument_group('secrets manager arguments')
+        group.add_argument('--secrets-manager', dest='secrets_manager',
+                           choices=['bitwarden', 'hashicorp'],
+                           help="Secrets manager service to use for credential retrieval")
+        group.add_argument('--item-name', dest='item_name',
+                           help="Name of the item in the secrets manager")
+
+        bw_group = self.parser.add_argument_group('bitwarden arguments')
+        bw_group.add_argument('--bw-client-id', dest='bw_client_id',
+                              default=os.environ.get('PERCEVAL_BW_CLIENT_ID'),
+                              help="Bitwarden API client ID (env: PERCEVAL_BW_CLIENT_ID)")
+        bw_group.add_argument('--bw-client-secret', dest='bw_client_secret',
+                              default=os.environ.get('PERCEVAL_BW_CLIENT_SECRET'),
+                              help="Bitwarden API client secret (env: PERCEVAL_BW_CLIENT_SECRET)")
+        bw_group.add_argument('--bw-master-password', dest='bw_master_password',
+                              default=os.environ.get('PERCEVAL_BW_MASTER_PASSWORD'),
+                              help="Bitwarden master password (env: PERCEVAL_BW_MASTER_PASSWORD)")
+
+        hc_group = self.parser.add_argument_group('hashicorp vault arguments')
+        hc_group.add_argument('--vault-url', dest='vault_url',
+                              default=os.environ.get('PERCEVAL_VAULT_URL'),
+                              help="HashiCorp Vault URL (env: PERCEVAL_VAULT_URL)")
+        hc_group.add_argument('--vault-token', dest='vault_token',
+                              default=os.environ.get('PERCEVAL_VAULT_TOKEN'),
+                              help="HashiCorp Vault authentication token (env: PERCEVAL_VAULT_TOKEN)")
+        hc_group.add_argument('--vault-certificate', dest='vault_certificate',
+                              default=os.environ.get('PERCEVAL_VAULT_CERTIFICATE'),
+                              help="Path to CA certificate for HashiCorp Vault TLS verification "
+                                   "(env: PERCEVAL_VAULT_CERTIFICATE)")
+
 
 class BackendCommand:
     """Abstract class to run backends from the command line.
@@ -822,8 +860,76 @@ class BackendCommand:
                 logger.exception(f"Error!: {e}", exc_info=self.debug)
 
     def _pre_init(self):
-        """Override to execute before backend is initialized."""
-        pass
+        """Override to execute before backend is initialized.
+
+        This method handles fetching credentials from a secrets manager
+        and injecting them into backend arguments.
+        """
+        if not (hasattr(self.parsed_args, 'secrets_manager') and
+                self.parsed_args.secrets_manager):
+            return
+
+        if not getattr(self.parsed_args, 'item_name', None):
+            raise ValueError("--item-name is required when --secrets-manager is specified.")
+
+        logging.debug("Processing credentials with %s", self.parsed_args.secrets_manager)
+
+        try:
+            manager = self._build_manager()
+            field_names = ['user', 'password', 'api_token', 'email', 'access_token', 'user_id']
+
+            credentials = manager.resolve_credentials(
+                secret_name=self.parsed_args.item_name,
+                field_names=field_names,
+            )
+
+            # Post-process: GitHub backend expects api_token as a list
+            if 'api_token' in credentials:
+                credentials['api_token'] = [credentials['api_token']]
+
+            # Inject resolved credentials into parsed_args
+            for param_name, value in credentials.items():
+                setattr(self.parsed_args, param_name, value)
+                logger.info('Using %s from secrets manager', param_name)
+
+        except ImportError:
+            logging.warning('Credential management module not found. Using command line credentials.')
+        except Exception as e:
+            raise RuntimeError('Error retrieving credentials from secret manager: %s' % str(e)) from e
+
+    def _build_manager(self):
+        """Build and return a credential manager instance from parsed CLI args.
+
+        :returns: A credential manager instance
+        :rtype: CredentialManager
+        """
+        manager_type = self.parsed_args.secrets_manager
+
+        if manager_type == 'bitwarden':
+            bw_client_id = getattr(self.parsed_args, 'bw_client_id', None)
+            bw_client_secret = getattr(self.parsed_args, 'bw_client_secret', None)
+            bw_master_password = getattr(self.parsed_args, 'bw_master_password', None)
+
+            if not all([bw_client_id, bw_client_secret, bw_master_password]):
+                raise ValueError(
+                    'Bitwarden requires --bw-client-id, --bw-client-secret, and --bw-master-password'
+                )
+
+            from grimoirelab_toolkit.credential_manager.bw_manager import BitwardenManager
+            return BitwardenManager(bw_client_id, bw_client_secret, bw_master_password)
+
+        elif manager_type == 'hashicorp':
+            vault_url = getattr(self.parsed_args, 'vault_url', None)
+            vault_token = getattr(self.parsed_args, 'vault_token', None)
+            vault_certificate = getattr(self.parsed_args, 'vault_certificate', None)
+
+            if not all([vault_url, vault_token]):
+                raise ValueError('HashiCorp Vault requires --vault-url and --vault-token')
+
+            from grimoirelab_toolkit.credential_manager.hc_manager import HashicorpManager
+            return HashicorpManager(vault_url, vault_token, vault_certificate)
+
+        raise ValueError(f"Unsupported secrets manager: '{manager_type}'")
 
     def _post_init(self):
         """Override to execute after backend is initialized."""

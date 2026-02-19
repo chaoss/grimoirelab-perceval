@@ -372,7 +372,8 @@ class RocketChatCommand(BackendCommand):
                                               from_date=True,
                                               token_auth=True,
                                               archive=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              secrets_manager=True)
 
         # Backend token is required
         action = parser.parser._option_string_actions['--api-token']

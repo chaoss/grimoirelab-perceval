@@ -57,6 +57,7 @@ from perceval.backend import (Backend,
 from perceval.errors import ArchiveError, BackendError, BackendCommandArgumentParserError
 from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
+from grimoirelab_toolkit.credential_manager.bw_manager import BitwardenManager
 import mocked_package
 from mocked_package.backend import (BackendA,
                                     BackendCommandA)
@@ -362,6 +363,42 @@ class NoArchiveBackendCommand(BackendCommand):
         parser.parser.add_argument('origin')
         parser.parser.add_argument('--subtype', dest='subtype')
 
+        return parser
+
+
+class PreInitTestCommand(BackendCommand):
+    """BackendCommand subclass for testing _pre_init credential logic."""
+
+    BACKEND = MockedBackend
+
+    @classmethod
+    def setup_cmd_parser(cls):
+        parser = BackendCommandArgumentParser(cls.BACKEND, secrets_manager=True)
+        parser.parser.add_argument('origin')
+        return parser
+
+
+class CredentialBackend(MockedBackend):
+    """Backend that accepts credential parameters in __init__."""
+
+    def __init__(self, origin, tag=None, archive=None, blacklist_ids=None,
+                 user=None, password=None, api_token=None, email=None):
+        super().__init__(origin, tag=tag, archive=archive, blacklist_ids=blacklist_ids)
+        self.user = user
+        self.password = password
+        self.api_token = api_token
+        self.email = email
+
+
+class CredentialBackendCommand(BackendCommand):
+    """BackendCommand that uses CredentialBackend with secrets_manager enabled."""
+
+    BACKEND = CredentialBackend
+
+    @classmethod
+    def setup_cmd_parser(cls):
+        parser = BackendCommandArgumentParser(cls.BACKEND, secrets_manager=True)
+        parser.parser.add_argument('origin')
         return parser
 
 
@@ -1122,6 +1159,106 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
 
         self.assertEqual(parsed_args.category, '')
 
+    def test_parse_secrets_manager_arguments(self):
+        """Test parsing of secrets manager arguments"""
+        parser = BackendCommandArgumentParser(MockedBackend,
+                                              secrets_manager=True)
+
+        # Test with bitwarden secrets manager
+        args = ['--secrets-manager', 'bitwarden',
+                '--item-name', 'test-credentials']
+
+        parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.secrets_manager, 'bitwarden')
+        self.assertEqual(parsed_args.item_name, 'test-credentials')
+
+    def test_parse_secrets_manager_all_providers(self):
+        """Test parsing with different secrets manager providers"""
+        parser = BackendCommandArgumentParser(MockedBackend,
+                                              secrets_manager=True)
+
+        # Test each provider
+        providers = ['bitwarden', 'hashicorp']
+
+        for provider in providers:
+            args = ['--secrets-manager', provider,
+                    '--item-name', 'test-item']
+
+            parsed_args = parser.parse(*args)
+            self.assertEqual(parsed_args.secrets_manager, provider)
+
+    def test_secrets_manager_args_rejected_when_not_enabled(self):
+        """Test that secrets manager arguments are not available when not enabled"""
+        parser = BackendCommandArgumentParser(MockedBackend,
+                                              secrets_manager=False)
+
+        args = ['--secrets-manager', 'bitwarden']
+
+        # Should fail parsing unknown argument
+        with self.assertRaises(SystemExit):
+            parser.parse(*args)
+
+    def test_bitwarden_credentials_from_env_vars(self):
+        """Test that Bitwarden credentials are read from environment variables"""
+        env = {
+            'PERCEVAL_BW_CLIENT_ID': 'env_client_id',
+            'PERCEVAL_BW_CLIENT_SECRET': 'env_client_secret',
+            'PERCEVAL_BW_MASTER_PASSWORD': 'env_master_pass',
+        }
+
+        with unittest.mock.patch.dict(os.environ, env):
+            parser = BackendCommandArgumentParser(MockedBackend,
+                                                  secrets_manager=True)
+            args = ['--secrets-manager', 'bitwarden',
+                    '--item-name', 'test-item']
+            parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.bw_client_id, 'env_client_id')
+        self.assertEqual(parsed_args.bw_client_secret, 'env_client_secret')
+        self.assertEqual(parsed_args.bw_master_password, 'env_master_pass')
+
+    def test_hashicorp_credentials_from_env_vars(self):
+        """Test that HashiCorp Vault credentials are read from environment variables"""
+        env = {
+            'PERCEVAL_VAULT_URL': 'http://vault:8200',
+            'PERCEVAL_VAULT_TOKEN': 'hvs.env_token',
+            'PERCEVAL_VAULT_CERTIFICATE': '/path/to/ca.crt',
+        }
+
+        with unittest.mock.patch.dict(os.environ, env):
+            parser = BackendCommandArgumentParser(MockedBackend,
+                                                  secrets_manager=True)
+            args = ['--secrets-manager', 'hashicorp',
+                    '--item-name', 'test-item']
+            parsed_args = parser.parse(*args)
+
+        self.assertEqual(parsed_args.vault_url, 'http://vault:8200')
+        self.assertEqual(parsed_args.vault_token, 'hvs.env_token')
+        self.assertEqual(parsed_args.vault_certificate, '/path/to/ca.crt')
+
+    def test_secrets_manager_arguments_integration_with_command(self):
+        """Test end-to-end credential injection through BackendCommand._pre_init"""
+        item = {'login': {'user': 'alice', 'password': 'secret'},
+                'fields': [{'name': 'api_token', 'value': 'tok123'}]}
+
+        with unittest.mock.patch.object(BitwardenManager, '__init__', lambda self, *a, **kw: None), \
+             unittest.mock.patch.object(BitwardenManager, 'login'), \
+             unittest.mock.patch.object(BitwardenManager, 'logout'), \
+             unittest.mock.patch.object(BitwardenManager, 'get_secret', return_value=item) as mock_get:
+            args = ['http://example.com/',
+                    '--secrets-manager', 'bitwarden',
+                    '--item-name', 'prod-credentials',
+                    '--bw-client-id', 'client_id',
+                    '--bw-client-secret', 'client_secret',
+                    '--bw-master-password', 'master_pass']
+            cmd = PreInitTestCommand(*args)
+
+        self.assertEqual(cmd.parsed_args.user, 'alice')
+        self.assertEqual(cmd.parsed_args.password, 'secret')
+        self.assertEqual(cmd.parsed_args.api_token, ['tok123'])
+        mock_get.assert_called_once_with('prod-credentials')
+
 
 def convert_cmd_output_to_json(filepath):
     """Transforms the output of a BackendCommand into json objects"""
@@ -1138,6 +1275,130 @@ def convert_cmd_output_to_json(filepath):
                 yield obj
             else:
                 buff += line
+
+
+class TestBackendCommandPreInit(unittest.TestCase):
+    """Tests that _pre_init injects credentials from the credential manager
+    into the backend before perceval runs.
+
+    Uses CredentialBackend (accepts user/password/api_token/email in __init__)
+    so find_signature_parameters passes them through to the backend, just like
+    real backends (GitHub, GitLab, etc.).
+    """
+
+    def setUp(self):
+        self.test_path = tempfile.mkdtemp(prefix='perceval_')
+        self.fout_path = tempfile.mktemp(dir=self.test_path)
+
+    def tearDown(self):
+        shutil.rmtree(self.test_path)
+
+    def _run_with_mock_manager(self, credentials):
+        mock_manager = unittest.mock.MagicMock()
+        mock_manager.resolve_credentials.return_value = credentials
+
+        args = ['--secrets-manager', 'bitwarden',
+                '--item-name', 'my-item',
+                '--bw-client-id', 'cid',
+                '--bw-client-secret', 'csecret',
+                '--bw-master-password', 'mpass',
+                '--output', self.fout_path,
+                'http://example.com/']
+
+        with unittest.mock.patch.object(CredentialBackendCommand,
+                                        '_build_manager',
+                                        return_value=mock_manager):
+            cmd = CredentialBackendCommand(*args)
+
+        captured = {}
+        original_big_init = BackendItemsGenerator.__init__
+
+        def capturing_big_init(big_self, *a, **kw):
+            original_big_init(big_self, *a, **kw)
+            captured['backend'] = big_self.backend
+
+        with unittest.mock.patch.object(BackendItemsGenerator, '__init__',
+                                        capturing_big_init):
+            cmd.run()
+            cmd.outfile.close()
+
+        return captured.get('backend'), mock_manager
+
+    def test_pre_init_skips_when_no_secrets_manager(self):
+        """Backend receives no credentials when --secrets-manager is not given"""
+
+        args = ['--output', self.fout_path, 'http://example.com/']
+        cmd = CredentialBackendCommand(*args)
+        self.assertFalse(hasattr(cmd.parsed_args, 'user'))
+        self.assertFalse(hasattr(cmd.parsed_args, 'password'))
+
+    def test_pre_init_raises_when_item_name_missing(self):
+        """_pre_init raises ValueError when --item-name is not provided"""
+
+        args = ['--output', self.fout_path, 'http://example.com/',
+                '--secrets-manager', 'bitwarden']
+        with self.assertRaises(ValueError) as ctx:
+            CredentialBackendCommand(*args)
+        self.assertIn('--item-name', str(ctx.exception))
+
+    def test_credentials_injected_into_backend(self):
+        """Credentials from the manager reach the backend's __init__"""
+
+        backend, mock_mgr = self._run_with_mock_manager({
+            'user': 'alice', 'password': 'secret123'
+        })
+
+        self.assertEqual(backend.user, 'alice')
+        self.assertEqual(backend.password, 'secret123')
+        mock_mgr.resolve_credentials.assert_called_once_with(
+            secret_name='my-item',
+            field_names=['user', 'password', 'api_token', 'email',
+                         'access_token', 'user_id']
+        )
+
+        items = [i for i in convert_cmd_output_to_json(self.fout_path)]
+        self.assertEqual(len(items), 5)
+
+    def test_api_token_injected_as_list(self):
+        """api_token from the manager is wrapped in a list before reaching the backend"""
+
+        backend, _ = self._run_with_mock_manager({
+            'api_token': 'tok123'
+        })
+
+        self.assertEqual(backend.api_token, ['tok123'])
+
+    def test_all_credential_fields_injected(self):
+        """All credential fields from the manager reach the backend"""
+
+        backend, _ = self._run_with_mock_manager({
+            'user': 'carol', 'password': 'pw2',
+            'api_token': 'key999', 'email': 'carol@example.com'
+        })
+
+        self.assertEqual(backend.user, 'carol')
+        self.assertEqual(backend.password, 'pw2')
+        self.assertEqual(backend.api_token, ['key999'])
+        self.assertEqual(backend.email, 'carol@example.com')
+
+    def test_manager_failure_raises_runtime_error(self):
+        """_pre_init raises RuntimeError when the credential manager fails"""
+
+        mock_manager = unittest.mock.MagicMock()
+        mock_manager.resolve_credentials.side_effect = Exception('connection refused')
+
+        with unittest.mock.patch.object(CredentialBackendCommand,
+                                        '_build_manager',
+                                        return_value=mock_manager):
+            args = ['--output', self.fout_path, 'http://example.com/',
+                    '--secrets-manager', 'bitwarden',
+                    '--item-name', 'my-item',
+                    '--bw-client-id', 'cid',
+                    '--bw-client-secret', 'csecret',
+                    '--bw-master-password', 'mpass']
+            with self.assertRaises(RuntimeError) as ctx:
+                CredentialBackendCommand(*args)
+        self.assertIn('Error retrieving credentials', str(ctx.exception))
 
 
 class TestBackendCommand(unittest.TestCase):

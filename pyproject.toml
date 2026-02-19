@@ -53,11 +53,17 @@ feedparser = "^6.0.8"
 dulwich = ">=0.21.5,<0.23.0"  # Pin version because of a bug. See #876.
 urllib3 = "^2.2"
 PyJWT = { version = "^2.4.0", extras = ["crypto"] }
-grimoirelab-toolkit = { version = ">=0.3", allow-prereleases = true}
+grimoirelab-toolkit = { version = ">=0.3", allow-prereleases = true }
 
 # Documentation
 myst-parser = { version = "^1.0.0", optional = true }
 furo = { version = "^2023.03.27", optional = true }
+
+[tool.poetry.group.hashicorp-manager]
+optional = true
+
+[tool.poetry.group.hashicorp-manager.dependencies]
+hvac = ">=2.3.0"
 
 [tool.poetry.group.dev.dependencies]
 httpretty = "^1.1.4"

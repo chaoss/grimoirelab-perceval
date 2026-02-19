@@ -514,7 +514,8 @@ class GerritCommand(BackendCommand):
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               from_date=True,
                                               archive=True,
-                                              blacklist=True)
+                                              blacklist=True,
+                                              secrets_manager=True)
 
         # Gerrit options
         group = parser.parser.add_argument_group('Gerrit arguments')

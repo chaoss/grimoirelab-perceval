@@ -756,7 +756,8 @@ class GitLabCommand(BackendCommand):
                                               token_auth=True,
                                               archive=True,
                                               blacklist=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              secrets_manager=True)
 
         # GitLab options
         group = parser.parser.add_argument_group('gitlab arguments')
