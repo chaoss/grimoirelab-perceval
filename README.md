@@ -267,6 +267,12 @@ or
 ```
 $ perceval git '/tmp/gitlog.log'
 ```
+To fetch commits without updating the repository (useful for offline use or
+reproducing results from a specific state of the repository):
+
+```
+$ perceval git 'https://github.com/chaoss/grimoirelab-perceval.git' --no-update
+```
 
 ### GitHub
 ```
