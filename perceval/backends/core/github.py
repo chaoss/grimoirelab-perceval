@@ -1040,9 +1040,13 @@ class GitHubClient(HttpClient, RateLimitHandler):
         return private_key
 
     def _get_installation_id(self, headers):
-        """Get installation ID given the GitHub login
+        """Return the GitHub App installation ID for the configured owner.
 
-        :param headers: request headers with JWT token
+        For private repositories, the installation must match the owner.
+        For public repositories, any available installation ID is sufficient.
+
+        If no installation matches the owner, the first available installation
+        is returned (if any).
 
         :returns: Installation ID
         """
@@ -1054,6 +1058,10 @@ class GitHubClient(HttpClient, RateLimitHandler):
             if i['account']['login'] == self.owner:
                 installation_id = i['id']
                 break
+
+        if not installation_id and data:
+            installation_id = data[0]['id']
+
         return installation_id
 
     def _create_access_token(self, headers, installation_id):
