@@ -3724,6 +3724,82 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
 
     @httpretty.activate
+    def test_get_installation_id(self):
+        """Test installation ID lookup for the matching owner"""
+
+        rate_limit = read_file("data/github/rate_limit")
+
+        httpretty.register_uri(
+            httpretty.GET,
+            GITHUB_RATE_LIMIT,
+            body=rate_limit,
+            status=200,
+            forcing_headers={"X-RateLimit-Remaining": "20", "X-RateLimit-Reset": "15"},
+        )
+
+        client = GitHubClient(
+            "zhquan_example",
+            "repo",
+            [],
+            github_app_id="1",
+            github_app_pk_filepath="data/github/private.pem",
+            from_archive=True,
+        )
+
+        installations = [
+            {"account": {"login": "other_owner"}, "id": "7"},
+            {"account": {"login": "zhquan_example"}, "id": "8"},
+        ]
+        response = unittest.mock.Mock()
+        response.json.return_value = installations
+        client.session.get = unittest.mock.Mock(return_value=response)
+
+        installation_id = client._get_installation_id({"Authorization": "Bearer token"})
+
+        self.assertEqual(installation_id, "8")
+        client.session.get.assert_called_once_with(
+            GITHUB_APP_INSTALLATION_URL, headers={"Authorization": "Bearer token"}
+        )
+
+    @httpretty.activate
+    def test_get_installation_id_fallback(self):
+        """Test installation ID lookup fallback for public repositories"""
+
+        rate_limit = read_file("data/github/rate_limit")
+
+        httpretty.register_uri(
+            httpretty.GET,
+            GITHUB_RATE_LIMIT,
+            body=rate_limit,
+            status=200,
+            forcing_headers={"X-RateLimit-Remaining": "20", "X-RateLimit-Reset": "15"},
+        )
+
+        client = GitHubClient(
+            "public_owner",
+            "repo",
+            [],
+            github_app_id="1",
+            github_app_pk_filepath="data/github/private.pem",
+            from_archive=True,
+        )
+
+        installations = [
+            {"account": {"login": "other_owner"}, "id": "7"},
+            {"account": {"login": "another_owner"}, "id": "8"},
+        ]
+        response = unittest.mock.Mock()
+        response.json.return_value = installations
+        client.session.get = unittest.mock.Mock(return_value=response)
+
+        installation_id = client._get_installation_id({"Authorization": "Bearer token"})
+
+        self.assertEqual(installation_id, "7")
+        client.session.get.assert_called_once_with(
+            GITHUB_APP_INSTALLATION_URL, headers={"Authorization": "Bearer token"}
+        )
+
+    @httpretty.activate
     def test_get_from_date_issues(self):
         """Test issues from date API call"""
 
