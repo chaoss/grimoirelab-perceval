@@ -1,5 +1,15 @@
 # Releases
 
+## perceval 1.4.7 - (2026-05-06)
+
+**Bug fixes:**
+
+ * GitHub App token for public repositories (#898)\
+   When no matching GitHub App installation is available for a
+   repository, Perceval now falls back to using another installation
+   token to retrieve public data.
+
+
   ## perceval 1.4.6 - (2026-03-03)
   
   * Update Poetry's package dependencies

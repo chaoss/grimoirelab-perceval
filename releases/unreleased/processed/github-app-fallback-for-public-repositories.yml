@@ -1,9 +1,0 @@
----
-title: GitHub App token for public repositories
-category: fixed
-author: Jose Javier Merchante <jjmerchante@bitergia.com>
-issue: 898
-notes: >
-  When no matching GitHub App installation is available for a repository,
-  Perceval now falls back to using another installation token to retrieve
-  public data.
