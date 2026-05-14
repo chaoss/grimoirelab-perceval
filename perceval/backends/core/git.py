@@ -82,64 +82,6 @@ class Git(Backend):
         self.uri = uri
         self.gitpath = gitpath
 
-    def fetch(self, category=CATEGORY_COMMIT, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
-              branches=None, latest_items=False, recovery_commit=None, no_update=False):
-        """Fetch commits.
-
-        The method retrieves from a Git repository or a log file
-        a list of commits. Commits are returned in the same order
-        they were obtained.
-
-        When `from_date` parameter is given it returns items committed
-        since the given date.
-
-        The list of `branches` is a list of strings, with the names of
-        the branches to fetch. If the list of branches is empty, no
-        commit is fetched. If the list of branches is None, all commits
-        for all branches will be fetched.
-
-        The parameter `latest_items` returns only those commits which
-        are new since the last time this method was called.
-
-        The parameter `no_update` returns all commits without performing
-        an update of the repository before.
-
-        Take into account that `from_date` and `branches` are ignored
-        when the commits are fetched from a Git log file or when
-        `latest_items` flag is set.
-
-        The class raises a `RepositoryError` exception when an error
-        occurs accessing the repository.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain commits newer than a specific date
-            (inclusive)
-        :param to_date: obtain commits older than a specific date
-        :param branches: names of branches to fetch from (default: None)
-        :param latest_items: sync with the repository to fetch only the
-            newest commits
-        :param recovery_commit: recover from this commit no updating the repo
-        :param no_update: if enabled, don't update the repo with the latest changes
-
-        :returns: a generator of commits
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-        if not to_date:
-            to_date = DEFAULT_LAST_DATETIME
-
-        kwargs = {
-            'from_date': from_date,
-            'to_date': to_date,
-            'branches': branches,
-            'latest_items': latest_items,
-            'recovery_commit': recovery_commit,
-            'no_update': no_update
-        }
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the commits
 
@@ -148,12 +90,12 @@ class Git(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
-        to_date = kwargs['to_date']
-        branches = kwargs['branches']
-        latest_items = kwargs['latest_items']
-        no_update = kwargs['no_update']
-        recovery_commit = kwargs['recovery_commit']
+        from_date = kwargs.get('from_date', DEFAULT_DATETIME)
+        to_date = kwargs.get('to_date', DEFAULT_LAST_DATETIME)
+        branches = kwargs.get('branches')
+        latest_items = kwargs.get('latest_items')
+        no_update = kwargs.get('no_update')
+        recovery_commit = kwargs.get('recovery_commit')
 
         ncommits = 0
 

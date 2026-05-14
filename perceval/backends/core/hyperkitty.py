@@ -66,32 +66,6 @@ class HyperKitty(MBox):
         super().__init__(url, dirpath, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
 
-    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME,
-              to_date=DEFAULT_LAST_DATETIME):
-        """Fetch the messages from the HyperKitty mailing list archiver.
-
-        The method fetches the mbox files from a remote HyperKitty
-        mailing list archiver and retrieves the messages stored on them.
-
-        Take into account that HyperKitty does not provide yet any kind
-        of info to know which is the first message on the mailing list.
-        For this reason, using a value in `from_date` previous to the
-        date where the first message was sent will make to download
-        empty mbox files.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain messages since this date
-        :param to_date: obtain messages until this date
-
-        :returns: a generator of messages
-        """
-        if not to_date:
-            to_date = DEFAULT_LAST_DATETIME
-
-        items = super().fetch(category, from_date, to_date)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
 
@@ -100,8 +74,13 @@ class HyperKitty(MBox):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
-        to_date = kwargs['to_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        to_date = kwargs.get('to_date')
+        if not to_date:
+            to_date = DEFAULT_LAST_DATETIME
 
         logger.info("Looking for messages from '%s' since %s until %s",
                     self.url, str(from_date), str(to_date))

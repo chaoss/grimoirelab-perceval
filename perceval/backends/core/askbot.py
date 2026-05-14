@@ -73,25 +73,6 @@ class Askbot(Backend):
         self.client = None
         self.ab_parser = AskbotParser()
 
-    def fetch(self, category=CATEGORY_QUESTION, from_date=DEFAULT_DATETIME):
-        """Fetch the questions/answers from the repository.
-
-        The method retrieves, from an Askbot site, the questions and answers
-        updated since the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain questions/answers updated since this date
-
-        :returns: a generator of items
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-        logger.info(f"Pulling Askbot data from {from_date}")
-        kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the questions
 
@@ -101,7 +82,13 @@ class Askbot(Backend):
         :returns: a generator of items
         """
 
-        from_date = datetime_to_utc(kwargs['from_date']).timestamp()
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        logger.info(f"Pulling Askbot data from {from_date}")
+
+        from_date = datetime_to_utc(from_date).timestamp()
 
         questions_groups = self.client.get_api_questions(AskbotClient.API_QUESTIONS)
         for questions in questions_groups:

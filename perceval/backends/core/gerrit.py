@@ -90,25 +90,6 @@ class Gerrit(Backend):
         self.archive = archive
         self.client = None
 
-    def fetch(self, category=CATEGORY_REVIEW, from_date=DEFAULT_DATETIME):
-        """Fetch the reviews from the repository.
-
-        The method retrieves, from a Gerrit repository, the reviews
-        updated since the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain reviews updated since this date
-
-        :returns: a generator of reviews
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the reviews
 
@@ -117,7 +98,9 @@ class Gerrit(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
 
         if self.client.version[0] == 2 and self.client.version[1] == 8:
             fetcher = self._fetch_gerrit28(from_date)

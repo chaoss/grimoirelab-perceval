@@ -83,33 +83,6 @@ class Telegram(Backend):
 
         self.client = None
 
-    def fetch(self, category=CATEGORY_MESSAGE, offset=DEFAULT_OFFSET, chats=None):
-        """Fetch the messages the bot can read from the server.
-
-        The method retrieves, from the Telegram server, the messages
-        sent with an offset equal or greater than the given.
-
-        A list of chats, groups and channels identifiers can be set
-        using the parameter `chats`. When it is set, only those
-        messages sent to any of these will be returned. An empty list
-        will return no messages.
-
-        :param category: the category of items to fetch
-        :param offset: obtain messages from this offset
-        :param chats: list of chat names used to filter messages
-
-        :returns: a generator of messages
-
-        :raises ValueError: when `chats` is an empty list
-        """
-        if not offset:
-            offset = DEFAULT_OFFSET
-
-        kwargs = {"offset": offset, "chats": chats}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
 
@@ -118,8 +91,11 @@ class Telegram(Backend):
 
         :returns: a generator of items
         """
-        offset = kwargs['offset']
-        chats = kwargs['chats']
+        offset = kwargs.get('offset')
+        if not offset:
+            offset = DEFAULT_OFFSET
+
+        chats = kwargs.get('chats')
 
         logger.info("Looking for messages of '%s' bot from offset '%s'",
                     self.bot, offset)
