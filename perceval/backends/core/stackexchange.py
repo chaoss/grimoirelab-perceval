@@ -349,7 +349,8 @@ class StackExchangeCommand(BackendCommand):
                                               from_date=True,
                                               token_auth=True,
                                               archive=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              secrets_manager=True)
 
         # StackExchange options
         group = parser.parser.add_argument_group('StackExchange arguments')

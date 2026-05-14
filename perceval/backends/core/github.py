@@ -1184,7 +1184,8 @@ class GitHubCommand(BackendCommand):
                                               to_date=True,
                                               token_auth=False,
                                               archive=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              secrets_manager=True)
         # GitHub options
         group = parser.parser.add_argument_group('GitHub arguments')
         group.add_argument('--enterprise-url', dest='base_url',

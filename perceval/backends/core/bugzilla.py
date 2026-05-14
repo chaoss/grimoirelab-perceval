@@ -363,7 +363,8 @@ class BugzillaCommand(BackendCommand):
                                               from_date=True,
                                               basic_auth=True,
                                               archive=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              secrets_manager=True)
 
         # Bugzilla options
         group = parser.parser.add_argument_group('Bugzilla arguments')

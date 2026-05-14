@@ -337,7 +337,8 @@ class JenkinsCommand(BackendCommand):
                                               token_auth=True,
                                               archive=True,
                                               blacklist=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              secrets_manager=True)
 
         # Jenkins options
         group = parser.parser.add_argument_group('Jenkins arguments')

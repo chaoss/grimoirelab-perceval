@@ -252,7 +252,8 @@ class GoogleHitsCommand(BackendCommand):
 
         parser = BackendCommandArgumentParser(cls.BACKEND,
                                               archive=True,
-                                              ssl_verify=True)
+                                              ssl_verify=True,
+                                              secrets_manager=True)
 
         group = parser.parser.add_argument_group('GoogleHits arguments')
         # Generic client options
