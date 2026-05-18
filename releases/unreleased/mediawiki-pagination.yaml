@@ -1,0 +1,8 @@
+title: 'Add pagination for revisions in MediaWiki backend'
+category: changed
+author: Aamir377300 <belalaamirkhan@gmail.com>
+notes: >
+    Implement pagination support in get_revisions for the MediaWiki backend
+    using the continue parameter. This ensures the full revision history
+    is retrieved for high-activity pages while keeping existing last_date
+    filtering intact.
