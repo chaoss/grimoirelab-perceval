@@ -524,8 +524,6 @@ class MediaWikiClient(HttpClient):
         return self.call(params)
 
     def get_revisions(self, pageid, last_date=None):
-        # TODO: Iterate if more than self.max reviews (500)
-
         if last_date:
             last_date_str = last_date.isoformat()
 
@@ -540,7 +538,52 @@ class MediaWikiClient(HttpClient):
         if last_date:
             params[self.PRV_START] = last_date_str
 
-        return self.call(params)
+        responses = []
+        visited_continues = set()
+
+        while True:
+            raw_res = self.call(params)
+            res = json.loads(raw_res)
+
+            if 'continue' in res and all(params.get(k) == v for k, v in res['continue'].items()):
+                break
+
+            responses.append(raw_res)
+
+            if 'continue' not in res:
+                break
+
+            cont_tuple = tuple(sorted(res['continue'].items()))
+            if cont_tuple in visited_continues:
+                logger.warning("Detected duplicate/looping continue parameter in MediaWiki API response: %s", res['continue'])
+                break
+            visited_continues.add(cont_tuple)
+
+            for k, v in res['continue'].items():
+                params[k] = v
+
+        if len(responses) == 1:
+            return responses[0]
+
+        all_revisions = []
+        full_response = json.loads(responses[0])
+
+        for raw in responses:
+            parsed = json.loads(raw)
+            pageid_str = str(pageid)
+            if 'query' in parsed and 'pages' in parsed['query'] and pageid_str in parsed['query']['pages']:
+                page_data = parsed['query']['pages'][pageid_str]
+                if 'revisions' in page_data:
+                    all_revisions.extend(page_data['revisions'])
+
+        if full_response and 'query' in full_response and 'pages' in full_response['query'] and str(pageid) in full_response['query']['pages']:
+            page_data = full_response['query']['pages'][str(pageid)]
+            if 'revisions' in page_data or all_revisions:
+                page_data['revisions'] = all_revisions
+            if 'continue' in full_response:
+                del full_response['continue']
+
+        return json.dumps(full_response)
 
     def get_pages_from_allrevisions(self, namespaces, from_date=None, arvcontinue=None):
 

@@ -26,9 +26,11 @@
 #     Harshal Mittal <harshalmittal4@gmail.com>
 #
 
+import copy
 import datetime
 import dateutil
 import httpretty
+import json
 import os
 import unittest
 import urllib
@@ -93,6 +95,17 @@ class HTTPServer():
         mediawiki_page_476589 = read_file('data/mediawiki/mediawiki_page_476589_revisions.json')
         mediawiki_page_476590 = read_file('data/mediawiki/mediawiki_page_476590_revisions.json')
 
+        page_476583_data = json.loads(mediawiki_page_476583)
+        page_476583_part1 = copy.deepcopy(page_476583_data)
+        page_476583_part2 = copy.deepcopy(page_476583_data)
+
+        all_revs = page_476583_data["query"]["pages"]["476583"]["revisions"]
+        page_476583_part1["query"]["pages"]["476583"]["revisions"] = all_revs[:250]
+
+        page_476583_part2["query"]["pages"]["476583"]["revisions"] = all_revs[250:]
+        if 'continue' in page_476583_part2:
+            del page_476583_part2['continue']
+
         def request_callback(method, uri, headers):
             params = urllib.parse.parse_qs(urllib.parse.urlparse(uri).query)
             if 'meta' in params and 'siteinfo' in params['meta']:
@@ -108,7 +121,10 @@ class HTTPServer():
                     body = mediawiki_pages_allrevisions
             elif 'pageids' in params:
                 if params['pageids'][0] == '476583':
-                    body = mediawiki_page_476583
+                    if 'rvcontinue' in params or 'continue' in params:
+                        body = json.dumps(page_476583_part2)
+                    else:
+                        body = json.dumps(page_476583_part1)
                 elif params['pageids'][0] == '592384':
                     body = mediawiki_page_592384
                 elif params['pageids'][0] == '476589':
@@ -560,11 +576,16 @@ class TestMediaWikiClient(unittest.TestCase):
         body = read_file('data/mediawiki/mediawiki_page_476583_revisions.json')
         client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
         response = client.get_revisions(476583)
-        req = HTTPServer.requests_http[-1]
-        self.assertEqual(response, body)
-        self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, '/api.php')
-        # Check request params
+        
+        # Verify the aggregated output contains all 500 revisions
+        resp_json = json.loads(response)
+        self.assertEqual(len(resp_json['query']['pages']['476583']['revisions']), 500)
+        self.assertNotIn('continue', resp_json)
+
+        # Check first request (without continue parameter)
+        first_req = HTTPServer.requests_http[-2]
+        self.assertEqual(first_req.method, 'GET')
+        self.assertRegex(first_req.path, '/api.php')
         expected = {
             'action': ['query'],
             'prop': ['revisions'],
@@ -573,7 +594,13 @@ class TestMediaWikiClient(unittest.TestCase):
             'rvlimit': ['max'],
             'rvdir': ['newer']
         }
-        self.assertDictEqual(req.querystring, expected)
+        self.assertDictEqual(first_req.querystring, expected)
+
+        # Check second request (with continue parameter)
+        second_req = HTTPServer.requests_http[-1]
+        self.assertEqual(second_req.method, 'GET')
+        self.assertRegex(second_req.path, '/api.php')
+        self.assertEqual(second_req.querystring['rvcontinue'], ['20160226140047|2062172'])
 
     @httpretty.activate
     def test_get_revisions_last_date(self):
@@ -584,11 +611,16 @@ class TestMediaWikiClient(unittest.TestCase):
         str_date = '2016-01-01 00:00'
         dt = str_to_datetime(str_date)
         response = client.get_revisions(476583, last_date=dt)
-        req = HTTPServer.requests_http[-1]
-        self.assertEqual(response, body)
-        self.assertEqual(req.method, 'GET')
-        self.assertRegex(req.path, '/api.php')
-        # Check request params
+        
+        # Verify the aggregated output contains all 500 revisions
+        resp_json = json.loads(response)
+        self.assertEqual(len(resp_json['query']['pages']['476583']['revisions']), 500)
+        self.assertNotIn('continue', resp_json)
+
+        # Check first request (without continue parameter, with rvstart)
+        first_req = HTTPServer.requests_http[-2]
+        self.assertEqual(first_req.method, 'GET')
+        self.assertRegex(first_req.path, '/api.php')
         expected = {
             'action': ['query'],
             'prop': ['revisions'],
@@ -598,7 +630,7 @@ class TestMediaWikiClient(unittest.TestCase):
             'rvdir': ['newer'],
             'rvstart': ['2016-01-01T00:00:00 00:00']
         }
-        self.assertDictEqual(req.querystring, expected)
+        self.assertDictEqual(first_req.querystring, expected)
 
     @httpretty.activate
     def test_get_pages_from_allrevisions(self):
