@@ -576,7 +576,8 @@ class MediaWikiClient(HttpClient):
                 if 'revisions' in page_data:
                     all_revisions.extend(page_data['revisions'])
 
-        if full_response and 'query' in full_response and 'pages' in full_response['query'] and str(pageid) in full_response['query']['pages']:
+        if (full_response and 'query' in full_response and 'pages' in full_response['query']
+                and str(pageid) in full_response['query']['pages']):
             page_data = full_response['query']['pages'][str(pageid)]
             if 'revisions' in page_data or all_revisions:
                 page_data['revisions'] = all_revisions

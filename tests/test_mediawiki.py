@@ -576,7 +576,7 @@ class TestMediaWikiClient(unittest.TestCase):
         body = read_file('data/mediawiki/mediawiki_page_476583_revisions.json')
         client = MediaWikiClient(MEDIAWIKI_SERVER_URL)
         response = client.get_revisions(476583)
-        
+
         # Verify the aggregated output contains all 500 revisions
         resp_json = json.loads(response)
         self.assertEqual(len(resp_json['query']['pages']['476583']['revisions']), 500)
@@ -611,7 +611,7 @@ class TestMediaWikiClient(unittest.TestCase):
         str_date = '2016-01-01 00:00'
         dt = str_to_datetime(str_date)
         response = client.get_revisions(476583, last_date=dt)
-        
+
         # Verify the aggregated output contains all 500 revisions
         resp_json = json.loads(response)
         self.assertEqual(len(resp_json['query']['pages']['476583']['revisions']), 500)
