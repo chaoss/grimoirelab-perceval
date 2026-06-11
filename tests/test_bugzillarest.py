@@ -380,6 +380,74 @@ class TestBugzillaRESTBackend(unittest.TestCase):
             with self.assertRaises(requests.exceptions.HTTPError):
                 _ = [bug for bug in bg.fetch(from_date=None)]
 
+    def _mock_client_for_unparseable(self, bugs_side_effect):
+        """Build a mock BugzillaRESTClient whose bug pages come from a list.
+
+        Comments/history/attachments are stubbed (empty, covering every bug id
+        in the fixtures) so the test exercises only the bug-list fetch loop.
+        Injecting at the client boundary avoids httpretty's inability to replay
+        a truncated body without desyncing the mocked connection.
+        """
+        client = unittest.mock.MagicMock()
+        client.bugs.side_effect = bugs_side_effect
+        client.comments.return_value = (
+            '{"bugs": {"1273442": {"comments": []}, '
+            '"1273439": {"comments": []}, "947945": {"comments": []}}}')
+        client.history.return_value = (
+            '{"bugs": [{"id": 1273442, "history": []}, '
+            '{"id": 1273439, "history": []}, {"id": 947945, "history": []}]}')
+        client.attachments.return_value = (
+            '{"bugs": {"1273442": [], "1273439": [], "947945": []}}')
+        return client
+
+    def test_fetch_reduces_batch_on_unparseable_response(self):
+        """Test whether an unparseable (oversized/truncated) response shrinks the batch
+
+        With include_fields=_all, a large batch can return a response too big
+        to parse (truncated JSON). The backend must reduce the batch size and
+        retry rather than abort the whole collection.
+        """
+        page = read_file('data/bugzilla/bugzilla_rest_bugs.json')
+        page_next = read_file('data/bugzilla/bugzilla_rest_bugs_next.json')
+        empty = read_file('data/bugzilla/bugzilla_rest_bugs_empty.json')
+        truncated = '{"bugs": [{"id": 1273442, "summary": "trunc'  # unterminated JSON
+
+        client = self._mock_client_for_unparseable([truncated, page, page_next, empty])
+        with unittest.mock.patch.object(BugzillaREST, '_init_client', return_value=client):
+            bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2)
+            bugs = [bug for bug in bg.fetch(from_date=None)]
+
+        # The oversized batch was retried smaller; all bugs are still collected.
+        self.assertEqual(len(bugs), 3)
+        self.assertEqual(bugs[0]['data']['id'], 1273442)
+        self.assertEqual(bugs[1]['data']['id'], 1273439)
+        self.assertEqual(bugs[2]['data']['id'], 947945)
+
+        # the batch was reduced from 2 to 1 and retried after the parse failure
+        used = [c.kwargs.get('max_bugs') for c in client.bugs.call_args_list]
+        self.assertIn(2, used)
+        self.assertIn(1, used)
+
+    def test_fetch_skips_unparseable_single_bug(self):
+        """Test whether a single unparseable bug is skipped (batch already 1)
+
+        If the response is still unparseable at a batch size of one, that one
+        bug is skipped and collection continues.
+        """
+        page = read_file('data/bugzilla/bugzilla_rest_bugs.json')
+        page_next = read_file('data/bugzilla/bugzilla_rest_bugs_next.json')
+        empty = read_file('data/bugzilla/bugzilla_rest_bugs_empty.json')
+        truncated = '{"bugs": [{"id": 999, "summary": "trunc'  # unterminated JSON
+
+        client = self._mock_client_for_unparseable([truncated, page, page_next, empty])
+        with unittest.mock.patch.object(BugzillaREST, '_init_client', return_value=client):
+            bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=1)
+            bugs = [bug for bug in bg.fetch(from_date=None)]
+
+        # The unparseable bug was skipped; the rest are still collected.
+        self.assertEqual(len(bugs), 3)
+        self.assertEqual(bugs[0]['data']['id'], 1273442)
+
     @httpretty.activate
     def test_search_fields(self):
         """Test whether the search_fields is properly set"""
