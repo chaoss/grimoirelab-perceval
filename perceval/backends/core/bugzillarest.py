@@ -195,11 +195,12 @@ class BugzillaREST(Backend):
                 raw_bugs = self.client.bugs(from_date=from_date, offset=offset,
                                             max_bugs=batch)
                 data = json.loads(raw_bugs)
-            except requests.exceptions.HTTPError as e:
+            except (requests.exceptions.HTTPError, json.JSONDecodeError) as e:
+                status = getattr(getattr(e, 'response', None), 'status_code', None)
                 # A single bug can make Bugzilla return a 400 (e.g. a field
                 # whose data is missing from network storage). Skip that page
-                # and keep going so one bad bug does not wedge the collection.
-                if e.response is not None and e.response.status_code == 400:
+                # so one bad bug does not wedge the whole collection.
+                if status == 400:
                     consecutive_skips += 1
                     if consecutive_skips > MAX_CONSECUTIVE_SKIPS:
                         logger.error("Too many consecutive HTTP 400s (%s) fetching bugs "
@@ -209,22 +210,23 @@ class BugzillaREST(Backend):
                                    offset, e.response.text)
                     offset += batch
                     continue
-                raise
-            except json.JSONDecodeError as e:
-                # include_fields=_all returns large payloads; a big batch can be
-                # truncated and fail to parse. Halve the batch and retry; if a
-                # single bug is still unparseable, skip it and move on.
+                # Re-raise non-recoverable HTTP errors (e.g. 401/403/404).
+                if status is not None and not (500 <= status < 600):
+                    raise
+                # Recoverable: a transient 5xx, or an unparseable/oversized
+                # response (include_fields=_all returns large payloads). Halve
+                # the batch and retry; if it still fails at a single bug, skip it.
                 if batch > 1:
                     batch = max(1, batch // 2)
-                    logger.warning("Unparseable bugs response at offset %s; reducing "
+                    logger.warning("Recoverable error fetching bugs at offset %s; reducing "
                                    "batch to %s and retrying: %s", offset, batch, e)
                     continue
                 consecutive_skips += 1
                 if consecutive_skips > MAX_CONSECUTIVE_SKIPS:
-                    logger.error("Too many consecutive unparseable bugs (%s) fetching "
+                    logger.error("Too many consecutive recoverable errors (%s) fetching "
                                  "from %s; aborting", consecutive_skips, self.url)
                     raise
-                logger.warning("Skipping unparseable bug at offset %s: %s", offset, e)
+                logger.warning("Skipping bug at offset %s after repeated error: %s", offset, e)
                 offset += 1
                 continue
 

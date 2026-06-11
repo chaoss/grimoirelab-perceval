@@ -428,6 +428,35 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         self.assertIn(2, used)
         self.assertIn(1, used)
 
+    def test_fetch_reduces_batch_on_server_error(self):
+        """Test whether a transient 5xx shrinks the batch and retries
+
+        Large include_fields=_all batches can make Bugzilla return a transient
+        502/503/504. Rather than abort the whole collection, the backend reduces
+        the batch (a smaller request is also less likely to fail) and retries.
+        """
+        page = read_file('data/bugzilla/bugzilla_rest_bugs.json')
+        page_next = read_file('data/bugzilla/bugzilla_rest_bugs_next.json')
+        empty = read_file('data/bugzilla/bugzilla_rest_bugs_empty.json')
+
+        bad_gateway = requests.Response()
+        bad_gateway.status_code = 502
+        server_error = requests.exceptions.HTTPError(
+            "502 Server Error: Bad Gateway", response=bad_gateway)
+
+        client = self._mock_client_for_unparseable([server_error, page, page_next, empty])
+        with unittest.mock.patch.object(BugzillaREST, '_init_client', return_value=client):
+            bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2)
+            bugs = [bug for bug in bg.fetch(from_date=None)]
+
+        # The 5xx batch was retried smaller; all bugs are still collected.
+        self.assertEqual(len(bugs), 3)
+        self.assertEqual(bugs[0]['data']['id'], 1273442)
+        self.assertEqual(bugs[2]['data']['id'], 947945)
+        used = [c.kwargs.get('max_bugs') for c in client.bugs.call_args_list]
+        self.assertIn(2, used)
+        self.assertIn(1, used)
+
     def test_fetch_skips_unparseable_single_bug(self):
         """Test whether a single unparseable bug is skipped (batch already 1)
 
