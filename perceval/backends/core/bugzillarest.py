@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 CATEGORY_BUG = "bug"
 MAX_BUGS = 500  # Maximum number of bugs per query
 MAX_CONTENTS = 25  # Maximum number of bug contents (history, comments) per query
+MAX_CONSECUTIVE_SKIPS = 100  # Abort after this many consecutive HTTP 400 pages
 
 
 class BugzillaREST(Backend):
@@ -184,12 +185,31 @@ class BugzillaREST(Backend):
     def __fetch_and_parse_bugs(self, from_date):
         max_contents = min(MAX_CONTENTS, self.max_bugs)
         offset = 0
+        consecutive_skips = 0
 
         while True:
             logger.debug("Fetching and parsing bugs from: %s, offset: %s, limit: %s ",
                          str(from_date), offset, self.max_bugs)
-            raw_bugs = self.client.bugs(from_date=from_date, offset=offset,
-                                        max_bugs=self.max_bugs)
+            try:
+                raw_bugs = self.client.bugs(from_date=from_date, offset=offset,
+                                            max_bugs=self.max_bugs)
+            except requests.exceptions.HTTPError as e:
+                # A single bug can make Bugzilla return a 400 (e.g. a field
+                # whose data is missing from network storage). Skip that page
+                # and keep going so one bad bug does not wedge the collection.
+                if e.response is not None and e.response.status_code == 400:
+                    consecutive_skips += 1
+                    if consecutive_skips > MAX_CONSECUTIVE_SKIPS:
+                        logger.error("Too many consecutive HTTP 400s (%s) fetching bugs "
+                                     "from %s; aborting", consecutive_skips, self.url)
+                        raise
+                    logger.warning("Skipping bugs page at offset %s after HTTP 400: %s",
+                                   offset, e.response.text)
+                    offset += self.max_bugs
+                    continue
+                raise
+
+            consecutive_skips = 0
 
             data = json.loads(raw_bugs)
             buglist = data['bugs']
