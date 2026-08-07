@@ -3388,6 +3388,54 @@ class TestGitHubClient(unittest.TestCase):
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
 
     @httpretty.activate
+    def test_conditional_request_not_modified(self):
+        """Test whether a stored ETag revalidates unchanged data with a 304"""
+
+        issues = read_file('data/github/github_request')
+        rate_limit = read_file('data/github/rate_limit')
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_RATE_LIMIT,
+                               body=rate_limit,
+                               status=200,
+                               forcing_headers={
+                                   'X-RateLimit-Remaining': '20',
+                                   'X-RateLimit-Reset': '15'
+                               })
+
+        httpretty.register_uri(httpretty.GET,
+                               GITHUB_ISSUES_URL,
+                               responses=[
+                                   httpretty.Response(body=issues, status=200,
+                                                      forcing_headers={
+                                                          'ETag': '"aefc8f27"',
+                                                          'X-RateLimit-Remaining': '19',
+                                                          'X-RateLimit-Reset': '15'
+                                                      }),
+                                   httpretty.Response(body="", status=304,
+                                                      forcing_headers={
+                                                          'ETag': '"aefc8f27"',
+                                                          'X-RateLimit-Remaining': '18',
+                                                          'X-RateLimit-Reset': '15'
+                                                      })
+                               ])
+
+        client = GitHubClient("zhquan_example", "repo", ["aaa"], None)
+
+        # First run caches the ETag and does not send a conditional header
+        first = [raw for raw in client.issues()]
+        self.assertEqual(first[0], issues)
+        self.assertNotIn('If-None-Match', httpretty.latest_requests()[-1].headers)
+
+        # Second run replays the ETag; the 304 is served from cache with the body
+        second = [raw for raw in client.issues()]
+        self.assertEqual(second[0], issues)
+        self.assertEqual(httpretty.last_request().headers['If-None-Match'], '"aefc8f27"')
+
+        # The rate limit is still updated from the 304 response headers
+        self.assertEqual(client.rate_limit, 18)
+
+    @httpretty.activate
     def test_issues_github_app(self):
         """Test issues API call using GitHub APP"""
 

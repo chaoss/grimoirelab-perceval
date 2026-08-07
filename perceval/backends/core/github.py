@@ -635,6 +635,8 @@ class GitHubClient(HttpClient, RateLimitHandler):
     # API headers
     HAUTHORIZATION = 'Authorization'
     HACCEPT = 'Accept'
+    HIF_NONE_MATCH = 'If-None-Match'
+    HETAG = 'ETag'
 
     # Resource parameters
     PSTATE = 'state'
@@ -669,6 +671,12 @@ class GitHubClient(HttpClient, RateLimitHandler):
         self.max_items = max_items
         self.github_app_id = github_app_id
         self.github_app_pk_filepath = github_app_pk_filepath
+
+        # Conditional-request (ETag) cache: {request key: (etag, response)}.
+        # Only used for live GET requests without an archive, so recorded and
+        # replayed responses keep their full body.
+        self._etag_cache = {}
+        self._etag_enabled = (not from_archive) and (archive is None)
 
         if base_url:
             base_url = urijoin(base_url, 'api', 'v3')
@@ -910,6 +918,16 @@ class GitHubClient(HttpClient, RateLimitHandler):
                 logger.debug("GitHub APP with {} ID: access token expired, creating new one".format(self.github_app_id))
                 self._choose_best_api_token()
 
+        # Replay a stored ETag as a conditional request so unchanged
+        # resources are revalidated with a cheap "304 Not Modified".
+        cache_key = None
+        if self._etag_enabled and method == HttpClient.GET:
+            cache_key = self._conditional_request_key(url, payload)
+            cached = self._etag_cache.get(cache_key)
+            if cached:
+                headers = dict(headers) if headers else {}
+                headers[self.HIF_NONE_MATCH] = cached[0]
+
         response = super().fetch(url, payload, headers, method, stream, auth)
 
         if not self.from_archive:
@@ -918,7 +936,25 @@ class GitHubClient(HttpClient, RateLimitHandler):
             else:
                 self.update_rate_limit(response)
 
+        # A 304 carries no body: return the cached response instead. Otherwise
+        # store the ETag (if any) to condition the next identical request.
+        if cache_key is not None:
+            if response.status_code == 304:
+                response = self._etag_cache[cache_key][1]
+            elif response.status_code == 200 and self.HETAG in response.headers:
+                self._etag_cache[cache_key] = (response.headers[self.HETAG], response)
+
         return response
+
+    def _conditional_request_key(self, url, payload):
+        """Build a stable cache key for a GET request from its URL and params."""
+
+        if not payload:
+            return url
+
+        params = '&'.join('%s=%s' % (key, payload[key]) for key in sorted(payload))
+        separator = '&' if '?' in url else '?'
+        return url + separator + params
 
     def fetch_items(self, path, payload):
         """Return the items from github API using links pagination"""

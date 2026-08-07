@@ -1,0 +1,12 @@
+title: Conditional requests (ETag) for the GitHub backend
+category: performance
+author: null
+issue: 915
+notes: >
+  The GitHub client now stores the ETag returned for each resource and
+  replays it as an If-None-Match header on the next request. Unchanged
+  pull requests, issues and their sub-resources are revalidated with a
+  cheap "304 Not Modified" that reuses the cached body, instead of
+  re-downloading the full response on every collection run. Because a
+  304 does not count against the token's primary rate limit, repeated
+  runs use less rate-limit budget and bandwidth.
