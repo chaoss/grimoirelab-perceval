@@ -1334,7 +1334,7 @@ class GitRepository:
             return [ref.hash.encode('utf-8') for ref in refs
                     if not ref.refname.endswith('^{}')]
 
-        def determine_wants(refs):
+        def determine_wants(refs, depth=None):
             remote_refs = prepare_refs(self._discover_refs(remote=True))
             local_refs = prepare_refs(self._discover_refs())
             wants = [ref for ref in remote_refs if ref not in local_refs]
