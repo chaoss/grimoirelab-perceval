@@ -1,5 +1,15 @@
 # Releases
 
+## perceval 1.6.1 - (2026-09-21)
+
+**Dependencies updateds:**
+
+ * Dulwich 1.x dependency updated\
+   Dulwich dependency has been updated to 1.x. It required to update the
+   internals of the Git backend to use the  newests versions of the
+   library.
+
+
 ## perceval 1.6.0 - (2026-09-16)
 
 **Performance improvements:**
