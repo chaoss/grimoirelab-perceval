@@ -1,0 +1,55 @@
+{
+    "error_code": null,
+    "error_info": null,
+    "result": {
+        "cursor": {
+            "after": null,
+            "before": "334",
+            "limit": 3,
+            "order": "outdated"
+        },
+        "data": [
+            {
+                "attachments": {
+                    "projects": {
+                        "projectPHIDs": [
+                            "PHID-PROJ-zi2ndtoy3fh5pnbqzfdo",
+                            "PHID-PROJ-2qnt6thbrd7qnx5bitzy"
+                        ]
+                    }
+                },
+                "fields": {
+                    "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
+                    "dateCreated": 1465815168,
+                    "dateModified": 1467196707,
+                    "name": "Task 296",
+                    "ownerPHID": "PHID-USER-pr5fcxy4xk5ofqsfqcfc",
+                    "points": null,
+                    "policy": {
+                        "edit": "users",
+                        "view": "users"
+                    },
+                    "priority": {
+                        "color": "yellow",
+                        "name": "Low",
+                        "subpriority": -338029833.48147,
+                        "value": 25
+                    },
+                    "spacePHID": "PHID-SPCE-ik4ugs53e7kouufaltuu",
+                    "status": {
+                        "color": null,
+                        "name": "Open",
+                        "value": "open"
+                    }
+                },
+                "id": 296,
+                "phid": "PHID-TASK-itt7lyrtbwo3bdek2u3e",
+                "type": "TASK"
+            }
+        ],
+        "maps": {},
+        "query": {
+            "queryKey": "AAAA"
+        }
+    }
+}

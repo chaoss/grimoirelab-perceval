@@ -1,0 +1,8 @@
+---
+title: Phorge backend support
+category: added
+author: Jose Javier Merchante <jjmerchante@bitergia.com>
+issue: null
+notes: >
+  Added a new Phorge backend based on Phabricator, with updated
+  users and transactions API endpoints for improved compatibility.

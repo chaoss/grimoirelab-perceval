@@ -1,0 +1,189 @@
+{
+    "result": {
+        "data": [
+            {
+                "id": 27101,
+                "phid": "PHID-XACT-TASK-000000000000001",
+                "type": "comment",
+                "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
+                "objectPHID": "PHID-TASK-000000000000001",
+                "dateCreated": 1092508454,
+                "dateModified": 1092508454,
+                "groupID": null,
+                "comments": [
+                    {
+                        "id": 7497,
+                        "phid": "PHID-XCMT-000000000000001",
+                        "version": 1,
+                        "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
+                        "dateCreated": 1092508454,
+                        "dateModified": 1092508454,
+                        "removed": false,
+                        "content": {
+                            "raw": "Initial issue discussion.\n\nFollow-up details were added after review.\n\nThe issue was then marked as resolved."
+                        }
+                    }
+                ],
+                "fields": {}
+            },
+            {
+                "id": 27094,
+                "phid": "PHID-XACT-TASK-000000000000002",
+                "type": "comment",
+                "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
+                "objectPHID": "PHID-TASK-000000000000001",
+                "dateCreated": 1092506820,
+                "dateModified": 1092506820,
+                "groupID": null,
+                "comments": [
+                    {
+                        "id": 7496,
+                        "phid": "PHID-XCMT-000000000000002",
+                        "version": 1,
+                        "authorPHID": "PHID-USER-ojtcpympsmwenszuef7p",
+                        "dateCreated": 1092506820,
+                        "dateModified": 1092506820,
+                        "removed": false,
+                        "content": {
+                            "raw": "A related behavior was reported and needs verification."
+                        }
+                    }
+                ],
+                "fields": {}
+            },
+            {
+                "id": 27093,
+                "phid": "PHID-XACT-TASK-000000000000003",
+                "type": "comment",
+                "authorPHID": "PHID-USER-mjr7pnwpg6slsnjcqki7",
+                "objectPHID": "PHID-TASK-000000000000001",
+                "dateCreated": 1092505226,
+                "dateModified": 1092505226,
+                "groupID": null,
+                "comments": [
+                    {
+                        "id": 7495,
+                        "phid": "PHID-XCMT-000000000000003",
+                        "version": 1,
+                        "authorPHID": "PHID-USER-mjr7pnwpg6slsnjcqki7",
+                        "dateCreated": 1092505226,
+                        "dateModified": 1092505226,
+                        "removed": false,
+                        "content": {
+                            "raw": "Reproduced in a test environment.\n\nBoth previous and updated states should remain tracked after the change."
+                        }
+                    }
+                ],
+                "fields": {}
+            },
+            {
+                "id": 27091,
+                "phid": "PHID-XACT-TASK-000000000000004",
+                "type": "title",
+                "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
+                "objectPHID": "PHID-TASK-000000000000001",
+                "dateCreated": 1092501660,
+                "dateModified": 1092501660,
+                "groupID": null,
+                "comments": [],
+                "fields": {
+                    "old": null,
+                    "new": null
+                }
+            },
+            {
+                "id": 27090,
+                "phid": "PHID-XACT-TASK-000000000000005",
+                "type": null,
+                "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
+                "objectPHID": "PHID-TASK-000000000000001",
+                "dateCreated": 1416595596,
+                "dateModified": 1416595596,
+                "groupID": null,
+                "comments": [],
+                "fields": {}
+            },
+            {
+                "id": 27089,
+                "phid": "PHID-XACT-TASK-000000000000006",
+                "type": "subscribers",
+                "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
+                "objectPHID": "PHID-TASK-000000000000001",
+                "dateCreated": 1416595596,
+                "dateModified": 1416595596,
+                "groupID": null,
+                "comments": [],
+                "fields": {
+                    "operations": [
+                        {
+                            "operation": "add",
+                            "phid": "PHID-MLST-000000000000001"
+                        }
+                    ]
+                }
+            },
+            {
+                "id": 27088,
+                "phid": "PHID-XACT-TASK-000000000000007",
+                "type": "priority",
+                "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
+                "objectPHID": "PHID-TASK-000000000000001",
+                "dateCreated": 1416595596,
+                "dateModified": 1416595596,
+                "groupID": null,
+                "comments": [],
+                "fields": {
+                    "old": {
+                        "value": null,
+                        "name": null
+                    },
+                    "new": {
+                        "value": 50,
+                        "name": "Medium"
+                    }
+                }
+            },
+            {
+                "id": 27087,
+                "phid": "PHID-XACT-TASK-000000000000008",
+                "type": "status",
+                "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
+                "objectPHID": "PHID-TASK-000000000000001",
+                "dateCreated": 1416595596,
+                "dateModified": 1416595596,
+                "groupID": null,
+                "comments": [],
+                "fields": {
+                    "old": null,
+                    "new": "open"
+                }
+            },
+            {
+                "id": 27086,
+                "phid": "PHID-XACT-TASK-000000000000009",
+                "type": "projects",
+                "authorPHID": "PHID-USER-2uk52xorcqb6sjvp467y",
+                "objectPHID": "PHID-TASK-000000000000001",
+                "dateCreated": 1416595596,
+                "dateModified": 1416595596,
+                "groupID": null,
+                "comments": [],
+                "fields": {
+                    "operations": [
+                        {
+                            "operation": "add",
+                            "phid": "PHID-PROJ-2qnt6thbrd7qnx5bitzy"
+                        }
+                    ]
+                }
+            }
+        ],
+        "cursor": {
+            "limit": 100,
+            "after": null,
+            "before": null
+        }
+    },
+    "error_code": null,
+    "error_info": null
+}
