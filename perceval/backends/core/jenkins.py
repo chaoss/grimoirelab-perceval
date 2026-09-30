@@ -93,22 +93,6 @@ class Jenkins(Backend):
 
         self.client = None
 
-    def fetch(self, category=CATEGORY_BUILD):
-        """Fetch the builds from the url.
-
-        The method retrieves, from a Jenkins url, the
-        builds updated since the given date.
-
-        :param category: the category of items to fetch
-
-        :returns: a generator of builds
-        """
-
-        kwargs = {}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the contents
 

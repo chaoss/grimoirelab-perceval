@@ -88,27 +88,6 @@ class Discourse(Backend):
 
         self.client = None
 
-    def fetch(self, category=CATEGORY_TOPIC, from_date=DEFAULT_DATETIME):
-        """Fetch the topics from the Discurse board.
-
-        The method retrieves, from a Discourse board the topics
-        updated since the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain topics updated since this date
-
-        :returns: a generator of topics
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-
-        kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the topics
 
@@ -118,7 +97,10 @@ class Discourse(Backend):
         :returns: a generator of items
         """
 
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+        from_date = datetime_to_utc(from_date)
 
         logger.info("Looking for topics at '%s', updated from '%s'",
                     self.url, str(from_date))

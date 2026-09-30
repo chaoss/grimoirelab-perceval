@@ -75,27 +75,6 @@ class Supybot(Backend):
         self.uri = uri
         self.dirpath = dirpath
 
-    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
-        """Fetch the messages from the Supybot IRC logger.
-
-        The method parsers and returns the messages saved on the
-        IRC log files and stored by Supybot in `dirpath`.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain messages since this date
-
-        :returns: a generator of messages
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-
-        kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
 
@@ -104,7 +83,11 @@ class Supybot(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        from_date = datetime_to_utc(from_date)
 
         logger.info("Fetching messages of '%s' from %s",
                     self.uri, str(from_date))

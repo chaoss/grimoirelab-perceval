@@ -97,21 +97,6 @@ class Groupsio(MBox):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
-        """Fetch the messages from a Groups.io group.
-
-        The method fetches the mbox files from a remote Groups.io group
-        and retrieves the messages stored on them.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain messages since this date
-
-        :returns: a generator of messages
-        """
-        items = super().fetch(category, from_date)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
 
@@ -120,7 +105,9 @@ class Groupsio(MBox):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
 
         logger.info("Looking for messages from '%s' since %s",
                     self.uri, str(from_date))

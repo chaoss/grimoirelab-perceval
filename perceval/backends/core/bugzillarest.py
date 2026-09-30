@@ -86,25 +86,6 @@ class BugzillaREST(Backend):
         self.max_bugs = max(1, max_bugs)
         self.client = None
 
-    def fetch(self, category=CATEGORY_BUG, from_date=DEFAULT_DATETIME):
-        """Fetch the bugs from the repository.
-
-        The method retrieves, from a Bugzilla repository, the bugs
-        updated since the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain bugs updated since this date
-
-        :returns: a generator of bugs
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the bugs
 
@@ -114,7 +95,9 @@ class BugzillaREST(Backend):
         :returns: a generator of items
         """
 
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
 
         logger.info("Looking for bugs: '%s' updated from '%s'",
                     self.url, str(from_date))
