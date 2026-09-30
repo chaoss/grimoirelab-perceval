@@ -83,7 +83,7 @@ class Git(Backend):
         self.gitpath = gitpath
 
     def fetch(self, category=CATEGORY_COMMIT, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
-              branches=None, latest_items=False, recovery_commit=None, no_update=False):
+              branches=None, latest_items=False, recovery_commit=None, no_update=False, include_patch_id=False):
         """Fetch commits.
 
         The method retrieves from a Git repository or a log file
@@ -134,7 +134,8 @@ class Git(Backend):
             'branches': branches,
             'latest_items': latest_items,
             'recovery_commit': recovery_commit,
-            'no_update': no_update
+            'no_update': no_update,
+            'include_patch_id': include_patch_id
         }
         items = super().fetch(category, **kwargs)
 
@@ -154,6 +155,7 @@ class Git(Backend):
         latest_items = kwargs['latest_items']
         no_update = kwargs['no_update']
         recovery_commit = kwargs['recovery_commit']
+        include_patch_id = kwargs.get('include_patch_id', False)
 
         ncommits = 0
 
@@ -164,7 +166,7 @@ class Git(Backend):
                 commits = self._fetch_from_log()
             else:
                 commits = self._fetch_from_repo(from_date, to_date, branches,
-                                                latest_items, no_update)
+                                                latest_items, no_update, include_patch_id)
 
             for commit in commits:
                 yield commit
@@ -286,7 +288,7 @@ class Git(Backend):
                     self.uri, self.gitpath)
         return self.parse_git_log_from_file(self.gitpath)
 
-    def _fetch_from_repo(self, from_date, to_date, branches, latest_items=False, no_update=False):
+    def _fetch_from_repo(self, from_date, to_date, branches, latest_items=False, no_update=False, include_patch_id=False):
         # When no latest items are set or the repository has not
         # been cloned use the default mode
         default_mode = not latest_items or not os.path.exists(self.gitpath)
@@ -294,13 +296,13 @@ class Git(Backend):
         repo = self._create_git_repository()
 
         if default_mode:
-            commits = self._fetch_commits_from_repo(repo, from_date, to_date, branches, no_update)
+            commits = self._fetch_commits_from_repo(repo, from_date, to_date, branches, no_update, include_patch_id)
         else:
-            commits = self._fetch_newest_commits_from_repo(repo)
+            commits = self._fetch_newest_commits_from_repo(repo, include_patch_id)
 
         return commits
 
-    def _fetch_commits_from_repo(self, repo, from_date, to_date, branches, no_update):
+    def _fetch_commits_from_repo(self, repo, from_date, to_date, branches, no_update, include_patch_id=False):
         if branches is None:
             branches_text = "all"
         elif len(branches) == 0:
@@ -327,9 +329,47 @@ class Git(Backend):
             repo.update()
 
         gitlog = repo.log(from_date, to_date, branches)
-        return self.parse_git_log_from_iter(gitlog)
 
-    def _fetch_newest_commits_from_repo(self, repo):
+        commits = list(self.parse_git_log_from_iter(gitlog))
+        if include_patch_id:
+            import subprocess
+            import gc
+            import time
+
+            for commit in commits:
+                try:
+                    commit_hash = commit['data']['commit']
+
+                    show_result = subprocess.run(
+                        ["git", "show", commit_hash],
+                        cwd=repo.path,
+                        text=True,
+                        capture_output=True,
+                        check=True
+                    )
+
+                    patch_result = subprocess.run(
+                        ["git", "patch-id"],
+                        input=show_result.stdout,
+                        cwd=repo.path,
+                        text=True,
+                        capture_output=True,
+                        check=True
+                    )
+
+                    patch_id = patch_result.stdout.split()[0] if patch_result.stdout else None
+
+            # IMPORTANT: DO NOT TOUCH core data
+                    commit['patch_id'] = patch_id
+
+                except Exception:
+                    commit['patch_id'] = None
+            gc.collect()
+            time.sleep(0.1)
+
+        return commits
+
+    def _fetch_newest_commits_from_repo(self, repo, include_patch_id=False):
         logger.info("Fetching latest commits: '%s' git repository",
                     self.uri)
 
@@ -338,7 +378,27 @@ class Git(Backend):
             return []
 
         gitshow = repo.show(hashes)
-        return self.parse_git_log_from_iter(gitshow)
+
+        commits = list(self.parse_git_log_from_iter(gitshow))
+
+        if include_patch_id:
+            import subprocess
+            for commit in commits:
+                try:
+                    commit_hash = commit['data']['commit']
+
+                    result = subprocess.check_output(
+                        f"git show {commit_hash} | git patch-id",
+                        shell=True,
+                        cwd=repo.path
+                    )
+
+                    patch_id = result.decode().split()[0]
+                    commit['data']['patch_id'] = patch_id
+                except Exception:
+                    commit['data']['patch_id'] = None
+
+        return commits
 
     def __fetch_from_packs(self, repo, packs, from_commit):
         """Retrieve commits from packfiles starting with the pack containing from_commit"""

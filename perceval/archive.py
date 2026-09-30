@@ -92,16 +92,17 @@ class Archive:
         self.category = None
         self.backend_params = None
         self.created_on = None
-
         self._db = sqlite3.connect(self.archive_path)
-
         self._verify_archive()
         self._load_metadata()
 
     def __del__(self):
-        conn = getattr(self, '_db', None)
-        if conn:
-            conn.close()
+        self.close()
+
+    def close(self):
+        if hasattr(self, "_db") and self._db:
+            self._db.close()
+            self._db = None
 
     def init_metadata(self, origin, backend_name, backend_version,
                       category, backend_params):
@@ -258,6 +259,7 @@ class Archive:
 
         logger.debug("Creating archive %s", archive_path)
         archive = cls(archive_path)
+
         logger.debug("Achive %s was created", archive_path)
 
         return archive
