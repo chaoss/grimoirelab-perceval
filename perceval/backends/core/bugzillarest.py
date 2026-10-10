@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 CATEGORY_BUG = "bug"
 MAX_BUGS = 500  # Maximum number of bugs per query
 MAX_CONTENTS = 25  # Maximum number of bug contents (history, comments) per query
+MAX_CONSECUTIVE_SKIPS = 100  # Abort after this many consecutive skipped pages (400 / unparseable)
 
 
 class BugzillaREST(Backend):
@@ -182,16 +183,53 @@ class BugzillaREST(Backend):
                                   ssl_verify=self.ssl_verify)
 
     def __fetch_and_parse_bugs(self, from_date):
-        max_contents = min(MAX_CONTENTS, self.max_bugs)
         offset = 0
+        consecutive_skips = 0
+        batch = self.max_bugs
 
         while True:
+            max_contents = min(MAX_CONTENTS, batch)
             logger.debug("Fetching and parsing bugs from: %s, offset: %s, limit: %s ",
-                         str(from_date), offset, self.max_bugs)
-            raw_bugs = self.client.bugs(from_date=from_date, offset=offset,
-                                        max_bugs=self.max_bugs)
+                         str(from_date), offset, batch)
+            try:
+                raw_bugs = self.client.bugs(from_date=from_date, offset=offset,
+                                            max_bugs=batch)
+                data = json.loads(raw_bugs)
+            except requests.exceptions.HTTPError as e:
+                # A single bug can make Bugzilla return a 400 (e.g. a field
+                # whose data is missing from network storage). Skip that page
+                # and keep going so one bad bug does not wedge the collection.
+                if e.response is not None and e.response.status_code == 400:
+                    consecutive_skips += 1
+                    if consecutive_skips > MAX_CONSECUTIVE_SKIPS:
+                        logger.error("Too many consecutive HTTP 400s (%s) fetching bugs "
+                                     "from %s; aborting", consecutive_skips, self.url)
+                        raise
+                    logger.warning("Skipping bugs page at offset %s after HTTP 400: %s",
+                                   offset, e.response.text)
+                    offset += batch
+                    continue
+                raise
+            except json.JSONDecodeError as e:
+                # include_fields=_all returns large payloads; a big batch can be
+                # truncated and fail to parse. Halve the batch and retry; if a
+                # single bug is still unparseable, skip it and move on.
+                if batch > 1:
+                    batch = max(1, batch // 2)
+                    logger.warning("Unparseable bugs response at offset %s; reducing "
+                                   "batch to %s and retrying: %s", offset, batch, e)
+                    continue
+                consecutive_skips += 1
+                if consecutive_skips > MAX_CONSECUTIVE_SKIPS:
+                    logger.error("Too many consecutive unparseable bugs (%s) fetching "
+                                 "from %s; aborting", consecutive_skips, self.url)
+                    raise
+                logger.warning("Skipping unparseable bug at offset %s: %s", offset, e)
+                offset += 1
+                continue
 
-            data = json.loads(raw_bugs)
+            consecutive_skips = 0
+
             buglist = data['bugs']
 
             tbugs = len(buglist)
@@ -214,7 +252,8 @@ class BugzillaREST(Backend):
                     bug['attachments'] = attachments[bug_id]
                     yield bug
 
-            offset += self.max_bugs
+            offset += batch
+            batch = self.max_bugs  # restore after a successful (possibly reduced) fetch
 
     def __fetch_and_parse_comments(self, *bug_ids):
         logger.debug("Fetching and parsing comments")
