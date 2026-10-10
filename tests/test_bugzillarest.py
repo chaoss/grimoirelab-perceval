@@ -29,8 +29,10 @@ import datetime
 import os
 import shutil
 import unittest
+import unittest.mock
 
 import httpretty
+import requests
 
 from perceval.backend import BackendCommandArgumentParser
 from perceval.errors import BackendError
@@ -106,6 +108,87 @@ def setup_http_server():
                            responses=[
                                httpretty.Response(body=request_callback)
                                for _ in range(3)
+                           ])
+
+    http_urls = [BUGZILLA_BUGS_COMMENTS_1273442_URL,
+                 BUGZILLA_BUGS_HISTORY_1273442_URL,
+                 BUGZILLA_BUGS_ATTACHMENTS_1273442_URL]
+
+    suffixes = ['comment', 'history', 'attachment']
+
+    for http_url in [BUGZILLA_BUG_947945_URL]:
+        for suffix in suffixes:
+            http_urls.append(http_url + suffix)
+
+    for req_url in http_urls:
+        httpretty.register_uri(httpretty.GET,
+                               req_url,
+                               responses=[
+                                   httpretty.Response(body=request_callback)
+                               ])
+
+    return http_requests
+
+
+def setup_http_server_with_initial_error():
+    """Like setup_http_server, but the first /rest/bug page returns HTTP 400.
+
+    Mimics a single BMO bug that 400s on include_fields=_all
+    ("Failed to fetch key ... from network storage"), which otherwise
+    wedges the whole collection.
+    """
+    http_requests = []
+
+    bodies_bugs = [read_file('data/bugzilla/bugzilla_rest_bugs.json', mode='rb'),
+                   read_file('data/bugzilla/bugzilla_rest_bugs_next.json', mode='rb'),
+                   read_file('data/bugzilla/bugzilla_rest_bugs_empty.json', mode='rb')]
+    body_comments = [read_file('data/bugzilla/bugzilla_rest_bugs_comments.json', mode='rb'),
+                     read_file('data/bugzilla/bugzilla_rest_bugs_comments_empty.json', mode='rb')]
+    body_history = [read_file('data/bugzilla/bugzilla_rest_bugs_history.json', mode='rb'),
+                    read_file('data/bugzilla/bugzilla_rest_bugs_history_empty.json', mode='rb')]
+    body_attachments = [read_file('data/bugzilla/bugzilla_rest_bugs_attachments.json', mode='rb'),
+                        read_file('data/bugzilla/bugzilla_rest_bugs_attachments_empty.json', mode='rb')]
+
+    error_body = ('{"error":true,"code":68000,'
+                  '"message":"Failed to fetch key 9327669 from network storage: Not Found"}')
+
+    def request_callback(method, uri, headers):
+        if uri.startswith(BUGZILLA_VERSION_URL):
+            body = '{"version":"5.1.2"}'
+        elif uri.startswith(BUGZILLA_BUGS_COMMENTS_1273442_URL):
+            body = body_comments[0]
+        elif uri.startswith(BUGZILLA_BUGS_HISTORY_1273442_URL):
+            body = body_history[0]
+        elif uri.startswith(BUGZILLA_BUGS_ATTACHMENTS_1273442_URL):
+            body = body_attachments[0]
+        elif uri.startswith(BUGZILLA_BUG_947945_URL):
+            if uri.find('comment') > 0:
+                body = body_comments[1]
+            elif uri.find('history') > 0:
+                body = body_history[1]
+            else:
+                body = body_attachments[1]
+        else:
+            body = bodies_bugs.pop(0)
+
+        http_requests.append(httpretty.last_request())
+
+        return (200, headers, body)
+
+    httpretty.register_uri(httpretty.GET,
+                           BUGZILLA_VERSION_URL,
+                           responses=[
+                               httpretty.Response(body=request_callback)
+                               for _ in range(3)
+                           ])
+
+    # First bug page 400s (the broken bug); the rest succeed.
+    httpretty.register_uri(httpretty.GET,
+                           BUGZILLA_BUGS_URL,
+                           responses=[
+                               httpretty.Response(body=error_body, status=400),
+                               *[httpretty.Response(body=request_callback)
+                                 for _ in range(3)]
                            ])
 
     http_urls = [BUGZILLA_BUGS_COMMENTS_1273442_URL,
@@ -256,6 +339,143 @@ class TestBugzillaRESTBackend(unittest.TestCase):
 
         for i in range(len(expected)):
             self.assertDictEqual(http_requests[i].querystring, expected[i])
+
+    @httpretty.activate
+    def test_fetch_skips_bug_page_on_http_400(self):
+        """Test whether a bug page that returns HTTP 400 is skipped
+
+        A single bug can make Bugzilla return a 400 (e.g. a field whose
+        data is missing from network storage). The whole collection must
+        not abort: the failing page is skipped and the rest are fetched.
+        """
+        setup_http_server_with_initial_error()
+
+        bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2)
+        bugs = [bug for bug in bg.fetch(from_date=None)]
+
+        # The 400 page was skipped; the remaining pages still yield all bugs.
+        self.assertEqual(len(bugs), 3)
+        self.assertEqual(bugs[0]['data']['id'], 1273442)
+        self.assertEqual(bugs[1]['data']['id'], 1273439)
+        self.assertEqual(bugs[2]['data']['id'], 947945)
+
+    @httpretty.activate
+    def test_fetch_aborts_after_too_many_consecutive_400s(self):
+        """Test whether persistent HTTP 400s abort instead of looping forever"""
+
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_VERSION_URL,
+                               body='{"version":"5.1.2"}')
+        error_body = ('{"error":true,"code":68000,'
+                      '"message":"Failed to fetch key 9327669 from network storage: Not Found"}')
+        httpretty.register_uri(httpretty.GET,
+                               BUGZILLA_BUGS_URL,
+                               body=error_body,
+                               status=400)
+
+        bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=1)
+
+        with unittest.mock.patch(
+                'perceval.backends.core.bugzillarest.MAX_CONSECUTIVE_SKIPS', 3):
+            with self.assertRaises(requests.exceptions.HTTPError):
+                _ = [bug for bug in bg.fetch(from_date=None)]
+
+    def _mock_client_for_unparseable(self, bugs_side_effect):
+        """Build a mock BugzillaRESTClient whose bug pages come from a list.
+
+        Comments/history/attachments are stubbed (empty, covering every bug id
+        in the fixtures) so the test exercises only the bug-list fetch loop.
+        Injecting at the client boundary avoids httpretty's inability to replay
+        a truncated body without desyncing the mocked connection.
+        """
+        client = unittest.mock.MagicMock()
+        client.bugs.side_effect = bugs_side_effect
+        client.comments.return_value = (
+            '{"bugs": {"1273442": {"comments": []}, '
+            '"1273439": {"comments": []}, "947945": {"comments": []}}}')
+        client.history.return_value = (
+            '{"bugs": [{"id": 1273442, "history": []}, '
+            '{"id": 1273439, "history": []}, {"id": 947945, "history": []}]}')
+        client.attachments.return_value = (
+            '{"bugs": {"1273442": [], "1273439": [], "947945": []}}')
+        return client
+
+    def test_fetch_reduces_batch_on_unparseable_response(self):
+        """Test whether an unparseable (oversized/truncated) response shrinks the batch
+
+        With include_fields=_all, a large batch can return a response too big
+        to parse (truncated JSON). The backend must reduce the batch size and
+        retry rather than abort the whole collection.
+        """
+        page = read_file('data/bugzilla/bugzilla_rest_bugs.json')
+        page_next = read_file('data/bugzilla/bugzilla_rest_bugs_next.json')
+        empty = read_file('data/bugzilla/bugzilla_rest_bugs_empty.json')
+        truncated = '{"bugs": [{"id": 1273442, "summary": "trunc'  # unterminated JSON
+
+        client = self._mock_client_for_unparseable([truncated, page, page_next, empty])
+        with unittest.mock.patch.object(BugzillaREST, '_init_client', return_value=client):
+            bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2)
+            bugs = [bug for bug in bg.fetch(from_date=None)]
+
+        # The oversized batch was retried smaller; all bugs are still collected.
+        self.assertEqual(len(bugs), 3)
+        self.assertEqual(bugs[0]['data']['id'], 1273442)
+        self.assertEqual(bugs[1]['data']['id'], 1273439)
+        self.assertEqual(bugs[2]['data']['id'], 947945)
+
+        # the batch was reduced from 2 to 1 and retried after the parse failure
+        used = [c.kwargs.get('max_bugs') for c in client.bugs.call_args_list]
+        self.assertIn(2, used)
+        self.assertIn(1, used)
+
+    def test_fetch_reduces_batch_on_server_error(self):
+        """Test whether a transient 5xx shrinks the batch and retries
+
+        Large include_fields=_all batches can make Bugzilla return a transient
+        502/503/504. Rather than abort the whole collection, the backend reduces
+        the batch (a smaller request is also less likely to fail) and retries.
+        """
+        page = read_file('data/bugzilla/bugzilla_rest_bugs.json')
+        page_next = read_file('data/bugzilla/bugzilla_rest_bugs_next.json')
+        empty = read_file('data/bugzilla/bugzilla_rest_bugs_empty.json')
+
+        bad_gateway = requests.Response()
+        bad_gateway.status_code = 502
+        server_error = requests.exceptions.HTTPError(
+            "502 Server Error: Bad Gateway", response=bad_gateway)
+
+        client = self._mock_client_for_unparseable([server_error, page, page_next, empty])
+        with unittest.mock.patch.object(BugzillaREST, '_init_client', return_value=client):
+            bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2)
+            bugs = [bug for bug in bg.fetch(from_date=None)]
+
+        # The 5xx batch was retried smaller; all bugs are still collected.
+        self.assertEqual(len(bugs), 3)
+        self.assertEqual(bugs[0]['data']['id'], 1273442)
+        self.assertEqual(bugs[2]['data']['id'], 947945)
+        used = [c.kwargs.get('max_bugs') for c in client.bugs.call_args_list]
+        self.assertIn(2, used)
+        self.assertIn(1, used)
+
+    def test_fetch_skips_unparseable_single_bug(self):
+        """Test whether a single unparseable bug is skipped (batch already 1)
+
+        If the response is still unparseable at a batch size of one, that one
+        bug is skipped and collection continues.
+        """
+        page = read_file('data/bugzilla/bugzilla_rest_bugs.json')
+        page_next = read_file('data/bugzilla/bugzilla_rest_bugs_next.json')
+        empty = read_file('data/bugzilla/bugzilla_rest_bugs_empty.json')
+        truncated = '{"bugs": [{"id": 999, "summary": "trunc'  # unterminated JSON
+
+        client = self._mock_client_for_unparseable([truncated, page, page_next, empty])
+        with unittest.mock.patch.object(BugzillaREST, '_init_client', return_value=client):
+            bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=1)
+            bugs = [bug for bug in bg.fetch(from_date=None)]
+
+        # The unparseable bug was skipped; the rest are still collected.
+        self.assertEqual(len(bugs), 3)
+        self.assertEqual(bugs[0]['data']['id'], 1273442)
 
     @httpretty.activate
     def test_search_fields(self):
