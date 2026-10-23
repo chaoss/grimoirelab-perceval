@@ -1,0 +1,7 @@
+title: 'Include HTTP error response bodies in debug logs'
+category: fixed
+author: NancyD2017
+issue: 671
+notes: >
+  Include the HTTP response body in debug logs when a request fails,
+  making it easier to investigate errors beyond the status code.
