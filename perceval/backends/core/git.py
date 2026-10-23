@@ -926,6 +926,10 @@ class _GraphWalker:
             ref.hash.encode('utf-8') for ref in local_refs
             if ref.refname.startswith('refs/heads/')
         ]
+        # Shallow commits of the local repository. Repositories are never
+        # cloned with a depth, so there are none, but some Dulwich versions
+        # (0.23.x) read this attribute without checking it exists (#876).
+        self.shallow = set()
 
     def ack(self, sha):
         pass
