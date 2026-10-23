@@ -44,7 +44,9 @@ from perceval.backends.core.git import (EmptyRepositoryError,
                                         Git,
                                         GitCommand,
                                         GitParser,
-                                        GitRepository)
+                                        GitRef,
+                                        GitRepository,
+                                        _GraphWalker)
 
 
 class TestCaseGit(unittest.TestCase):
@@ -1643,6 +1645,33 @@ class TestEmptyRepositoryError(TestCaseGit):
 
         e = EmptyRepositoryError(repository='gittest')
         self.assertEqual('gittest is empty', str(e))
+
+
+class TestGraphWalker(unittest.TestCase):
+    """_GraphWalker tests"""
+
+    def test_heads(self):
+        """Test whether only the heads of the branches are walked"""
+
+        refs = [
+            GitRef('456a68ee1407a77f3e804a30dff245bb6c6b872f', 'refs/heads/master'),
+            GitRef('51a3b654f252210572297f47597b31527c475fb8', 'refs/tags/v0.1'),
+        ]
+        graph_walker = _GraphWalker(refs)
+
+        self.assertEqual(next(graph_walker), b'456a68ee1407a77f3e804a30dff245bb6c6b872f')
+        self.assertIsNone(next(graph_walker))
+
+    def test_shallow(self):
+        """Test whether the walker reports no shallow commits
+
+        Dulwich 0.23.x reads `shallow` from the graph walker without
+        checking it exists (#876).
+        """
+
+        graph_walker = _GraphWalker([])
+
+        self.assertEqual(graph_walker.shallow, set())
 
 
 def count_commits(gitpath):

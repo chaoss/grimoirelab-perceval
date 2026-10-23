@@ -1,0 +1,11 @@
+---
+title: Git sync failing with some Dulwich versions
+category: fixed
+author: Tanmay Baranwal <baranwaltanmay16@gmail.com>
+issue: 876
+notes: >
+  Fetching the latest commits of a remote git repository failed
+  with `'_GraphWalker' object has no attribute 'shallow'` when
+  Dulwich 0.23.x was installed, which the supported version range
+  still allows. The graph walker now reports its (empty) list of
+  shallow commits, so it works with every Dulwich version.
