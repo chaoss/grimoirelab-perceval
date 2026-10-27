@@ -179,6 +179,13 @@ class HttpClient:
 
         try:
             response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            logger.debug("HTTP error %s: %s",
+                         response.status_code, response.text)
+            if self.archive:
+                url, headers, payload = self.sanitize_for_archive(url, headers, payload)
+                self.archive.store(url, payload, headers, e)
+            raise
         except Exception as e:
             if self.archive:
                 url, headers, payload = self.sanitize_for_archive(url, headers, payload)
