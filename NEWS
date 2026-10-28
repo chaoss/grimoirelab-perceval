@@ -1,5 +1,9 @@
 # Releases
 
+  ## perceval 1.6.2 - (2026-10-28)
+  
+  * Update Poetry's package dependencies
+
 ## perceval 1.6.1 - (2026-09-21)
 
 **Dependencies updateds:**
