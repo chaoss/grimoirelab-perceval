@@ -60,7 +60,7 @@ Run 'perceval <backend> --help' to get information about a specific backend.
 
 ## Requirements
 
- * Python >= 3.10
+ * Python >= 3.11
  * Poetry >= 1.2
  * git
  * build-essential
