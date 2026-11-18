@@ -1,0 +1,8 @@
+---
+title: Python minimum version updated
+category: dependency
+author: Santiago Dueñas <sduenas@grimoirelab.org>
+issue: null
+notes: >
+  Python 3.10 reached its end of life in October 2026.
+  Python 3.11 is the minimum version required by the project.
