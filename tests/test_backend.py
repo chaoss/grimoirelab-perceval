@@ -32,6 +32,7 @@ import json
 import os
 import shutil
 import sqlite3
+import sys
 import tempfile
 import unittest
 import unittest.mock
@@ -402,6 +403,18 @@ class CredentialBackendCommand(BackendCommand):
         return parser
 
 
+class ListCredentialBackend(CredentialBackend):
+    """Backend that accepts a pool of API tokens."""
+
+    CREDENTIAL_LIST_FIELDS = ('api_token',)
+
+
+class ListCredentialBackendCommand(CredentialBackendCommand):
+    """BackendCommand that uses ListCredentialBackend with secrets_manager enabled."""
+
+    BACKEND = ListCredentialBackend
+
+
 class TestBackend(unittest.TestCase):
     """Unit tests for Backend"""
 
@@ -455,6 +468,11 @@ class TestBackend(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             b.has_resuming()
+
+    def test_credential_list_fields(self):
+        """Test whether by default no credential field takes a list"""
+
+        self.assertEqual(Backend.CREDENTIAL_LIST_FIELDS, ())
 
     def test_metadata_id(self):
         """Test whether an NotImplementedError exception is thrown"""
@@ -1256,7 +1274,7 @@ class TestBackendCommandArgumentParser(unittest.TestCase):
 
         self.assertEqual(cmd.parsed_args.user, 'alice')
         self.assertEqual(cmd.parsed_args.password, 'secret')
-        self.assertEqual(cmd.parsed_args.api_token, ['tok123'])
+        self.assertEqual(cmd.parsed_args.api_token, 'tok123')
         mock_get.assert_called_once_with('prod-credentials')
 
 
@@ -1293,7 +1311,7 @@ class TestBackendCommandPreInit(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_path)
 
-    def _run_with_mock_manager(self, credentials):
+    def _run_with_mock_manager(self, credentials, command_class=CredentialBackendCommand):
         mock_manager = unittest.mock.MagicMock()
         mock_manager.resolve_credentials.return_value = credentials
 
@@ -1305,10 +1323,10 @@ class TestBackendCommandPreInit(unittest.TestCase):
                 '--output', self.fout_path,
                 'http://example.com/']
 
-        with unittest.mock.patch.object(CredentialBackendCommand,
+        with unittest.mock.patch.object(command_class,
                                         '_build_manager',
                                         return_value=mock_manager):
-            cmd = CredentialBackendCommand(*args)
+            cmd = command_class(*args)
 
         captured = {}
         original_big_init = BackendItemsGenerator.__init__
@@ -1359,14 +1377,71 @@ class TestBackendCommandPreInit(unittest.TestCase):
         items = [i for i in convert_cmd_output_to_json(self.fout_path)]
         self.assertEqual(len(items), 5)
 
-    def test_api_token_injected_as_list(self):
-        """api_token from the manager is wrapped in a list before reaching the backend"""
+    def test_api_token_injected_as_string(self):
+        """api_token reaches backends that accept a single token as a string"""
 
         backend, _ = self._run_with_mock_manager({
             'api_token': 'tok123'
         })
 
+        self.assertEqual(backend.api_token, 'tok123')
+
+    def test_api_token_injected_as_list(self):
+        """api_token is converted to a list for backends that accept a pool of tokens"""
+
+        backend, _ = self._run_with_mock_manager({
+            'api_token': 'tok123'
+        }, command_class=ListCredentialBackendCommand)
+
         self.assertEqual(backend.api_token, ['tok123'])
+
+    def test_api_token_pool_injected_as_list(self):
+        """A pool of tokens stored in a single field reaches the backend as a list"""
+
+        backend, _ = self._run_with_mock_manager({
+            'api_token': 'tok1, tok2\ntok3'
+        }, command_class=ListCredentialBackendCommand)
+
+        self.assertEqual(backend.api_token, ['tok1', 'tok2', 'tok3'])
+
+    def test_empty_api_token(self):
+        """Test whether the command fails when the API token in the secret is empty"""
+
+        item = {'fields': [{'name': 'api_token', 'value': ''}]}
+
+        with unittest.mock.patch.object(BitwardenManager, '__init__', lambda self, *a, **kw: None), \
+             unittest.mock.patch.object(BitwardenManager, 'login'), \
+             unittest.mock.patch.object(BitwardenManager, 'logout'), \
+             unittest.mock.patch.object(BitwardenManager, 'get_secret', return_value=item):
+            args = ['--output', self.fout_path, 'http://example.com/',
+                    '--secrets-manager', 'bitwarden',
+                    '--secret-name', 'my-item',
+                    '--bw-client-id', 'client_id',
+                    '--bw-client-secret', 'client_secret',
+                    '--bw-master-password', 'master_pass']
+            with self.assertRaises(RuntimeError) as ctx:
+                ListCredentialBackendCommand(*args)
+
+        msg = str(ctx.exception)
+        self.assertIn("Invalid credentials in secret 'my-item' for ListCredentialBackend", msg)
+        self.assertIn("'api_token' is empty", msg)
+        self.assertNotIn("retrieving", msg)
+
+    def test_api_token_pool_for_single_token_backend(self):
+        """_pre_init fails when a backend that accepts a single token receives several"""
+
+        mock_manager = unittest.mock.MagicMock()
+        mock_manager.resolve_credentials.return_value = {'api_token': ['tok1', 'tok2']}
+
+        with unittest.mock.patch.object(CredentialBackendCommand,
+                                        '_build_manager',
+                                        return_value=mock_manager):
+            args = ['--output', self.fout_path, 'http://example.com/',
+                    '--secrets-manager', 'bitwarden',
+                    '--secret-name', 'my-item']
+            with self.assertRaises(RuntimeError) as ctx:
+                CredentialBackendCommand(*args)
+        self.assertIn("'api_token' must have a single value", str(ctx.exception))
 
     def test_all_credential_fields_injected(self):
         """All credential fields from the manager reach the backend"""
@@ -1378,7 +1453,7 @@ class TestBackendCommandPreInit(unittest.TestCase):
 
         self.assertEqual(backend.user, 'carol')
         self.assertEqual(backend.password, 'pw2')
-        self.assertEqual(backend.api_token, ['key999'])
+        self.assertEqual(backend.api_token, 'key999')
         self.assertEqual(backend.email, 'carol@example.com')
 
     def test_manager_failure_raises_runtime_error(self):
@@ -1396,6 +1471,22 @@ class TestBackendCommandPreInit(unittest.TestCase):
                     '--bw-client-id', 'cid',
                     '--bw-client-secret', 'csecret',
                     '--bw-master-password', 'mpass']
+            with self.assertRaises(RuntimeError) as ctx:
+                CredentialBackendCommand(*args)
+        self.assertIn('Error retrieving credentials', str(ctx.exception))
+
+    def test_manager_not_installed(self):
+        """Test whether the command fails when the secrets manager is not installed"""
+
+        # Setting a module to None in 'sys.modules' makes its import fail
+        modules = {'grimoirelab_toolkit.credential_manager.hc_manager': None}
+
+        with unittest.mock.patch.dict(sys.modules, modules):
+            args = ['--output', self.fout_path, 'http://example.com/',
+                    '--secrets-manager', 'hashicorp',
+                    '--secret-name', 'my-item',
+                    '--vault-url', 'http://vault:8200',
+                    '--vault-token', 'vtoken']
             with self.assertRaises(RuntimeError) as ctx:
                 CredentialBackendCommand(*args)
         self.assertIn('Error retrieving credentials', str(ctx.exception))

@@ -39,6 +39,7 @@ from grimoirelab_toolkit.datetime import (datetime_utcnow,
                                           str_to_datetime,
                                           unixtime_to_datetime)
 from .archive import Archive, ArchiveManager
+from .credentials import CREDENTIAL_FIELDS, normalize_credentials
 from .errors import ArchiveError, BackendError, BackendCommandArgumentParserError
 from ._version import __version__
 
@@ -191,6 +192,16 @@ class Backend:
     request.
 
     To access this field, please prefer :func:`origin_unique_field`.
+    """
+
+    CREDENTIAL_LIST_FIELDS = ()
+    """Credential fields that this backend accepts as a list of values.
+
+    Credentials retrieved from a secrets manager are converted to the
+    type of value the backend expects. When a backend accepts several
+    values for a credential field (e.g. a pool of API tokens), that
+    field must be listed here, so its value is converted into a list.
+    Any other field is passed to the backend as a single value.
     """
 
     def __init__(self, origin, tag=None, archive=None, blacklist_ids=None, ssl_verify=True):
@@ -876,26 +887,31 @@ class BackendCommand:
 
         try:
             manager = self._build_manager()
-            field_names = ['user', 'password', 'api_token', 'email', 'access_token', 'user_id']
 
             credentials = manager.resolve_credentials(
                 secret_name=self.parsed_args.secret_name,
-                field_names=field_names,
+                field_names=CREDENTIAL_FIELDS,
             )
-
-            # Post-process: GitHub backend expects api_token as a list
-            if 'api_token' in credentials:
-                credentials['api_token'] = [credentials['api_token']]
-
-            # Inject resolved credentials into parsed_args
-            for param_name, value in credentials.items():
-                setattr(self.parsed_args, param_name, value)
-                logger.info('Using %s from secrets manager', param_name)
-
-        except ImportError:
-            logging.warning('Credential management module not found. Using command line credentials.')
         except Exception as e:
             raise RuntimeError('Error retrieving credentials from secret manager: %s' % str(e)) from e
+
+        # Convert the values to the type the backend expects
+        try:
+            credentials = normalize_credentials(
+                credentials,
+                list_fields=self.BACKEND.CREDENTIAL_LIST_FIELDS,
+            )
+        except ValueError as e:
+            msg = (
+                f"Invalid credentials in secret '{self.parsed_args.secret_name}' "
+                f"for {self.BACKEND.__name__}: {e}"
+            )
+            raise RuntimeError(msg) from e
+
+        # Inject resolved credentials into parsed_args
+        for param_name, value in credentials.items():
+            setattr(self.parsed_args, param_name, value)
+            logger.info('Using %s from secrets manager', param_name)
 
     def _build_manager(self):
         """Build and return a credential manager instance from parsed CLI args.

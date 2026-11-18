@@ -196,6 +196,11 @@ class TestGitHubBackend(unittest.TestCase):
 
         self.assertEqual(GitHub.has_archiving(), True)
 
+    def test_credential_list_fields(self):
+        """Test whether api_token is the only credential field that takes a list"""
+
+        self.assertEqual(GitHub.CREDENTIAL_LIST_FIELDS, ('api_token',))
+
     @httpretty.activate
     def test_fetch_issues(self):
         """Test whether a list of issues is returned"""
