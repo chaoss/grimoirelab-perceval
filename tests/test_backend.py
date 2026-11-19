@@ -55,6 +55,7 @@ from perceval.backend import (Backend,
                               fetch_from_archive,
                               find_backends,
                               logger as backend_logger)
+from perceval.credentials import CREDENTIAL_FIELDS
 from perceval.errors import ArchiveError, BackendError, BackendCommandArgumentParserError
 from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
@@ -1952,6 +1953,102 @@ class TestBackendItemsGenerator(unittest.TestCase):
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['classified_fields_filtered'], None)
 
+    def test_init_items_with_credentials(self):
+        """Test whether the credentials are retrieved from the credential manager"""
+
+        mock_manager = unittest.mock.MagicMock()
+        mock_manager.resolve_credentials.return_value = {
+            'user': 'alice',
+            'password': 'secret',
+            'api_token': 'tok1,tok2'
+        }
+        args = {
+            'origin': 'http://example.com/',
+            'api_token': 'plain-token'
+        }
+
+        with BackendItemsGenerator(ListCredentialBackend, args, 'mock_item',
+                                   credential_manager=mock_manager,
+                                   secret_name='my-item') as big:
+            items = [item for item in big.items]
+
+            self.assertEqual(len(items), 5)
+            self.assertEqual(big.backend.user, 'alice')
+            self.assertEqual(big.backend.password, 'secret')
+            self.assertEqual(big.backend.api_token, ['tok1', 'tok2'])
+
+        mock_manager.resolve_credentials.assert_called_once_with(
+            secret_name='my-item',
+            field_names=CREDENTIAL_FIELDS
+        )
+
+        # Credentials are not added to the given arguments
+        self.assertNotIn('user', args)
+        self.assertNotIn('password', args)
+        self.assertEqual(args['api_token'], 'plain-token')
+
+    def test_init_credential_manager_without_secret_name(self):
+        """Test whether credentials are not retrieved when no secret name is given"""
+
+        mock_manager = unittest.mock.MagicMock()
+        args = {
+            'origin': 'http://example.com/',
+            'user': 'bob'
+        }
+
+        with BackendItemsGenerator(CredentialBackend, args, 'mock_item',
+                                   credential_manager=mock_manager) as big:
+            items = [item for item in big.items]
+
+            self.assertEqual(len(items), 5)
+            self.assertEqual(big.backend.user, 'bob')
+            self.assertIsNone(big.backend.password)
+
+        mock_manager.resolve_credentials.assert_not_called()
+
+    def test_init_secret_name_without_credential_manager(self):
+        """Test whether it fails when a secret name is given without a credential manager"""
+
+        args = {
+            'origin': 'http://example.com/'
+        }
+
+        with self.assertRaisesRegex(ValueError, 'credential manager is required'):
+            BackendItemsGenerator(CredentialBackend, args, 'mock_item',
+                                  secret_name='my-item')
+
+    def test_init_invalid_credentials(self):
+        """Test whether it fails when the secret has invalid values"""
+
+        mock_manager = unittest.mock.MagicMock()
+        mock_manager.resolve_credentials.return_value = {'api_token': ''}
+        args = {
+            'origin': 'http://example.com/'
+        }
+
+        with self.assertRaisesRegex(RuntimeError,
+                                    "Invalid credentials in secret 'my-item' "
+                                    "for ListCredentialBackend: 'api_token' is empty"):
+            BackendItemsGenerator(ListCredentialBackend, args, 'mock_item',
+                                  credential_manager=mock_manager,
+                                  secret_name='my-item')
+
+    def test_init_credential_manager_failure(self):
+        """Test whether it fails when the credentials can't be retrieved"""
+
+        mock_manager = unittest.mock.MagicMock()
+        mock_manager.resolve_credentials.side_effect = Exception('connection refused')
+        args = {
+            'origin': 'http://example.com/'
+        }
+
+        with self.assertRaisesRegex(RuntimeError,
+                                    'Error retrieving credentials from secret manager: '
+                                    'connection refused'):
+            BackendItemsGenerator(CredentialBackend, args, 'mock_item',
+                                  credential_manager=mock_manager,
+                                  secret_name='my-item')
+
     def test_init_items_from_archive(self):
         """Test whether a set of items is fetched from the archive"""
 
@@ -2485,6 +2582,50 @@ class TestFetch(unittest.TestCase):
             self.assertEqual(item['uuid'], expected_uuid)
             self.assertEqual(item['tag'], 'test')
             self.assertEqual(item['classified_fields_filtered'], None)
+
+    def test_items_with_credentials(self):
+        """Test whether the credentials are retrieved from the credential manager"""
+
+        mock_manager = unittest.mock.MagicMock()
+        mock_manager.resolve_credentials.return_value = {
+            'user': 'alice',
+            'api_token': 'tok1'
+        }
+        args = {
+            'origin': 'http://example.com/'
+        }
+
+        with unittest.mock.patch.object(CredentialBackend, '__init__',
+                                        side_effect=CredentialBackend.__init__,
+                                        autospec=True) as mock_init:
+            items = fetch(CredentialBackend, args, 'mock_item',
+                          credential_manager=mock_manager,
+                          secret_name='my-item')
+            items = [item for item in items]
+
+        self.assertEqual(len(items), 5)
+        init_kwargs = mock_init.call_args.kwargs
+        self.assertEqual(init_kwargs['user'], 'alice')
+        self.assertEqual(init_kwargs['api_token'], 'tok1')
+        mock_manager.resolve_credentials.assert_called_once_with(
+            secret_name='my-item',
+            field_names=CREDENTIAL_FIELDS
+        )
+        # Credentials are not added to the given arguments
+        self.assertNotIn('user', args)
+        self.assertNotIn('api_token', args)
+
+    def test_secret_name_without_credential_manager(self):
+        """Test whether it fails when a secret name is given without a credential manager"""
+
+        args = {
+            'origin': 'http://example.com/'
+        }
+
+        with self.assertRaisesRegex(ValueError, 'credential manager is required'):
+            items = fetch(CredentialBackend, args, 'mock_item',
+                          secret_name='my-item')
+            _ = [item for item in items]
 
     def test_items_storing_archive(self):
         """Test whether items are stored in an archive"""

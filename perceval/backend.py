@@ -39,7 +39,10 @@ from grimoirelab_toolkit.datetime import (datetime_utcnow,
                                           str_to_datetime,
                                           unixtime_to_datetime)
 from .archive import Archive, ArchiveManager
-from .credentials import CREDENTIAL_FIELDS, normalize_credentials
+from .credentials import (CREDENTIAL_FIELDS,
+                          SECRETS_MANAGERS,
+                          build_credential_manager,
+                          normalize_credentials)
 from .errors import ArchiveError, BackendError, BackendCommandArgumentParserError
 from ._version import __version__
 
@@ -770,7 +773,7 @@ class BackendCommandArgumentParser:
 
         group = self.parser.add_argument_group('secrets manager arguments')
         group.add_argument('--secrets-manager', dest='secrets_manager',
-                           choices=['bitwarden', 'hashicorp'],
+                           choices=SECRETS_MANAGERS,
                            help="Secrets manager service to use for credential retrieval")
         group.add_argument('--secret-name', dest='secret_name',
                            help="Name of the secret entry in the secrets manager")
@@ -887,26 +890,11 @@ class BackendCommand:
 
         try:
             manager = self._build_manager()
-
-            credentials = manager.resolve_credentials(
-                secret_name=self.parsed_args.secret_name,
-                field_names=CREDENTIAL_FIELDS,
-            )
         except Exception as e:
             raise RuntimeError('Error retrieving credentials from secret manager: %s' % str(e)) from e
 
-        # Convert the values to the type the backend expects
-        try:
-            credentials = normalize_credentials(
-                credentials,
-                list_fields=self.BACKEND.CREDENTIAL_LIST_FIELDS,
-            )
-        except ValueError as e:
-            msg = (
-                f"Invalid credentials in secret '{self.parsed_args.secret_name}' "
-                f"for {self.BACKEND.__name__}: {e}"
-            )
-            raise RuntimeError(msg) from e
+        credentials = _retrieve_credentials(self.BACKEND, manager,
+                                            self.parsed_args.secret_name)
 
         # Inject resolved credentials into parsed_args
         for param_name, value in credentials.items():
@@ -919,33 +907,15 @@ class BackendCommand:
         :returns: A credential manager instance
         :rtype: CredentialManager
         """
-        manager_type = self.parsed_args.secrets_manager
-
-        if manager_type == 'bitwarden':
-            bw_client_id = getattr(self.parsed_args, 'bw_client_id', None)
-            bw_client_secret = getattr(self.parsed_args, 'bw_client_secret', None)
-            bw_master_password = getattr(self.parsed_args, 'bw_master_password', None)
-
-            if not all([bw_client_id, bw_client_secret, bw_master_password]):
-                raise ValueError(
-                    'Bitwarden requires --bw-client-id, --bw-client-secret, and --bw-master-password'
-                )
-
-            from grimoirelab_toolkit.credential_manager.bw_manager import BitwardenManager
-            return BitwardenManager(bw_client_id, bw_client_secret, bw_master_password)
-
-        elif manager_type == 'hashicorp':
-            vault_url = getattr(self.parsed_args, 'vault_url', None)
-            vault_token = getattr(self.parsed_args, 'vault_token', None)
-            vault_certificate = getattr(self.parsed_args, 'vault_certificate', None)
-
-            if not all([vault_url, vault_token]):
-                raise ValueError('HashiCorp Vault requires --vault-url and --vault-token')
-
-            from grimoirelab_toolkit.credential_manager.hc_manager import HashicorpManager
-            return HashicorpManager(vault_url, vault_token, vault_certificate)
-
-        raise ValueError(f"Unsupported secrets manager: '{manager_type}'")
+        return build_credential_manager(
+            self.parsed_args.secrets_manager,
+            bw_client_id=getattr(self.parsed_args, 'bw_client_id', None),
+            bw_client_secret=getattr(self.parsed_args, 'bw_client_secret', None),
+            bw_master_password=getattr(self.parsed_args, 'bw_master_password', None),
+            vault_url=getattr(self.parsed_args, 'vault_url', None),
+            vault_token=getattr(self.parsed_args, 'vault_token', None),
+            vault_certificate=getattr(self.parsed_args, 'vault_certificate', None),
+        )
 
     def _post_init(self):
         """Override to execute after backend is initialized."""
@@ -1035,12 +1005,24 @@ class BackendItemsGenerator:
     :param manager: archive manager where the items will be retrieved
     :param fetch_archive: If enabled, items are fetched from archives
     :param archived_after: return items archived after this date
+    :param credential_manager: credential manager used to retrieve
+        the credentials of the backend
+    :param secret_name: name of the secret, stored in the credential
+        manager, with the credentials of the backend
     """
     def __init__(self, backend_class, backend_args, category,
                  filter_classified=False, manager=None,
-                 fetch_archive=False, archived_after=None):
+                 fetch_archive=False, archived_after=None,
+                 credential_manager=None, secret_name=None):
+        credentials = _retrieve_credentials(backend_class, credential_manager,
+                                            secret_name)
+
+        # Credentials must go last, so they override any
+        # argument with the same name in 'backend_args'
+        init_backend_args = {**backend_args, **credentials}
+
         init_args = find_signature_parameters(backend_class.__init__,
-                                              backend_args)
+                                              init_backend_args)
 
         if not fetch_archive:
             archive = manager.create_archive() if manager else None
@@ -1218,8 +1200,60 @@ def uuid(*args):
     return uuid_sha1
 
 
+def _retrieve_credentials(backend_class, credential_manager, secret_name):
+    """Retrieve the credentials of a backend from a credential manager.
+
+    When `secret_name` is given, the credentials stored in that secret
+    are retrieved from `credential_manager`. When it is not given,
+    there are no credentials to retrieve, so an empty dict is returned.
+
+    The values are converted to the type the backend expects (see
+    `normalize_credentials`).
+
+    :param backend_class: backend class that will use the credentials
+    :param credential_manager: credential manager instance
+    :param secret_name: name of the secret in the credential manager
+
+    :returns: a dict with the credentials
+
+    :raises ValueError: when `secret_name` is given but `credential_manager`
+        is not
+    :raises RuntimeError: when the credentials can't be retrieved from
+        the credential manager or the secret has invalid values
+    """
+    if not secret_name:
+        return {}
+
+    if not credential_manager:
+        msg = f"A credential manager is required to retrieve the secret '{secret_name}'"
+        raise ValueError(msg)
+
+    try:
+        credentials = credential_manager.resolve_credentials(
+            secret_name=secret_name,
+            field_names=CREDENTIAL_FIELDS,
+        )
+    except Exception as e:
+        raise RuntimeError('Error retrieving credentials from secret manager: %s' % str(e)) from e
+
+    try:
+        credentials = normalize_credentials(
+            credentials,
+            list_fields=backend_class.CREDENTIAL_LIST_FIELDS,
+        )
+    except ValueError as e:
+        msg = f"Invalid credentials in secret '{secret_name}' for {backend_class.__name__}: {e}"
+        raise RuntimeError(msg) from e
+
+    # Only the names of the fields are logged, never their values
+    logger.debug("Using %s from secret '%s'",
+                 ', '.join(credentials.keys()), secret_name)
+
+    return credentials
+
+
 def fetch(backend_class, backend_args, category, filter_classified=False,
-          manager=None):
+          manager=None, credential_manager=None, secret_name=None):
     """Fetch items using the given backend.
 
     Generator to get items using the given backend class. When
@@ -1229,6 +1263,10 @@ def fetch(backend_class, backend_args, category, filter_classified=False,
 
     The parameters needed to initialize the `backend` class and
     get the items are given using `backend_args` dict parameter.
+    When `secret_name` is given, the credentials stored in that
+    secret are retrieved from `credential_manager` and used to
+    initialize the backend. Credentials override the arguments
+    with the same name.
 
     :param backend_class: backend class to fetch items
     :param backend_args: dict of arguments needed to fetch the items
@@ -1236,11 +1274,22 @@ def fetch(backend_class, backend_args, category, filter_classified=False,
        If None, it will use the default backend category
     :param filter_classified: remove classified fields from the resulting items
     :param manager: archive manager needed to store the items
+    :param credential_manager: credential manager used to retrieve
+        the credentials of the backend
+    :param secret_name: name of the secret, stored in the credential
+        manager, with the credentials of the backend
 
     :returns: a generator of items
     """
+    credentials = _retrieve_credentials(backend_class, credential_manager,
+                                        secret_name)
+
+    # Credentials must go last, so they override any
+    # argument with the same name in 'backend_args'
+    init_backend_args = {**backend_args, **credentials}
+
     init_args = find_signature_parameters(backend_class.__init__,
-                                          backend_args)
+                                          init_backend_args)
     archive = manager.create_archive() if manager else None
     init_args['archive'] = archive
 
