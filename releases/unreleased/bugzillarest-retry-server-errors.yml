@@ -1,0 +1,10 @@
+title: Recover from transient server errors during Bugzilla collection
+category: fixed
+author: Arron Atchison <aatchison@thunderbird.net>
+notes: >
+    Large include_fields=_all batches can make the Bugzilla REST API return a
+    transient 5xx (e.g. 502 Bad Gateway). The backend previously aborted the
+    whole collection. It now treats a 5xx like an oversized response: it reduces
+    the batch size and retries (a smaller request is also less likely to fail),
+    skipping a single bug only after repeated failures. Non-recoverable HTTP
+    errors are still raised.

@@ -1,0 +1,13 @@
+title: Resilient Bugzilla collection against bad bug responses
+category: fixed
+author: Arron Atchison <aatchison@thunderbird.net>
+notes: >
+    A single bug could wedge Bugzilla collection indefinitely. Some bugs make
+    the REST API return an HTTP 400 (for example, when a field's data is
+    missing from the server's network storage), and a large batch fetched with
+    all fields can return a response too big to be parsed. In both cases the
+    backend used to abort the whole collection. It now logs and skips a bug
+    page that returns a 400, and on an unparseable (oversized/truncated)
+    response it reduces the batch size and retries, skipping a single
+    unparseable bug if needed. A safety cap aborts after too many consecutive
+    failures so genuine problems still surface.
