@@ -74,6 +74,7 @@ SUMMARY_LOG_REPORT = """INFO:perceval.backend:Summary of results
 \t   Total items: \t5
 \tItems produced: \t5
 \t Items skipped: \t0
+\t Items removed: \t0
 
 \tLast item UUID: \t6130c145435d661565bd7d402be403bea7cfb6b5
 \tLast item date: \t2016-01-01 00:00:04+00:00
@@ -2227,6 +2228,7 @@ class TestSummary(unittest.TestCase):
 
         self.assertEqual(summary.fetched, 0)
         self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.removed, 0)
         self.assertEqual(summary.total, 0)
         self.assertIsNone(summary.min_updated_on)
         self.assertIsNone(summary.max_updated_on)
@@ -2357,6 +2359,46 @@ class TestSummary(unittest.TestCase):
         self.assertEqual(summary.min_offset, 0)
         self.assertEqual(summary.max_offset, 2)
         self.assertEqual(summary.last_offset, 1)
+
+    def test_update_removed(self):
+        """Test whether removed items only update the removed counter"""
+
+        items = [
+            {
+                "updated_on": 1483228800.0,
+                "uuid": "0fa16dc4edab9130a14914a8d797f634d13b4ff4",
+                "offset": 0
+            },
+            {
+                "updated_on": 1483228900.0,
+                "uuid": "0fa16dc4edab9130a14914a8d797f634d13b4aa4",
+                "offset": None,
+                "removed": True
+            },
+            {
+                "updated_on": 1483228950.0,
+                "uuid": "0fa16dc4edab9130a14914a8d797f634d13b4bb4",
+                "offset": None,
+                "removed": True
+            }
+        ]
+
+        summary = Summary()
+
+        for item in items:
+            summary.update(item)
+
+        self.assertEqual(summary.fetched, 1)
+        self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.removed, 2)
+        self.assertEqual(summary.total, 1)
+        self.assertEqual(summary.min_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.max_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.last_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.last_uuid, "0fa16dc4edab9130a14914a8d797f634d13b4ff4")
+        self.assertEqual(summary.min_offset, 0)
+        self.assertEqual(summary.max_offset, 0)
+        self.assertEqual(summary.last_offset, 0)
 
 
 class TestMetadata(unittest.TestCase):

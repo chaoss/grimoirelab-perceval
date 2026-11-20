@@ -37,7 +37,9 @@ import threading
 import dulwich.client
 import dulwich.repo
 
-from grimoirelab_toolkit.datetime import datetime_to_utc, str_to_datetime
+from grimoirelab_toolkit.datetime import (datetime_to_utc,
+                                          datetime_utcnow,
+                                          str_to_datetime)
 
 from ...backend import (Backend,
                         BackendCommand,
@@ -46,6 +48,7 @@ from ...errors import RepositoryError, ParseError
 from ...utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
 
 CATEGORY_COMMIT = 'commit'
+CATEGORY_REMOVED_COMMIT = 'removed_commit'
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +74,7 @@ class Git(Backend):
     :raises RepositoryError: raised when there was an error cloning or
         updating the repository.
     """
-    version = '1.0.1'
+    version = '1.1.0'
 
     CATEGORIES = [CATEGORY_COMMIT]
 
@@ -83,7 +86,8 @@ class Git(Backend):
         self.gitpath = gitpath
 
     def fetch(self, category=CATEGORY_COMMIT, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
-              branches=None, latest_items=False, recovery_commit=None, no_update=False):
+              branches=None, latest_items=False, recovery_commit=None, no_update=False,
+              track_removed=False):
         """Fetch commits.
 
         The method retrieves from a Git repository or a log file
@@ -108,6 +112,16 @@ class Git(Backend):
         when the commits are fetched from a Git log file or when
         `latest_items` flag is set.
 
+        The parameter `track_removed` also returns the commits that
+        are no longer reachable from any branch or tag since the last
+        time this method was called (e.g., after a force-push, or
+        after deleting a branch or a tag). Removed commits are
+        returned before the newest commits. Their category is
+        `removed_commit`, they include the field `removed` set to
+        `True`, and their data only contains the hash of the commit.
+        This parameter only works together with `latest_items`;
+        it is ignored otherwise.
+
         The class raises a `RepositoryError` exception when an error
         occurs accessing the repository.
 
@@ -120,6 +134,8 @@ class Git(Backend):
             newest commits
         :param recovery_commit: recover from this commit no updating the repo
         :param no_update: if enabled, don't update the repo with the latest changes
+        :param track_removed: if enabled, together with `latest_items`,
+            also return the commits removed from the repository
 
         :returns: a generator of commits
         """
@@ -134,7 +150,8 @@ class Git(Backend):
             'branches': branches,
             'latest_items': latest_items,
             'recovery_commit': recovery_commit,
-            'no_update': no_update
+            'no_update': no_update,
+            'track_removed': track_removed
         }
         items = super().fetch(category, **kwargs)
 
@@ -154,8 +171,10 @@ class Git(Backend):
         latest_items = kwargs['latest_items']
         no_update = kwargs['no_update']
         recovery_commit = kwargs['recovery_commit']
+        track_removed = kwargs.get('track_removed', False)
 
         ncommits = 0
+        nremoved = 0
 
         try:
             if recovery_commit:
@@ -164,16 +183,24 @@ class Git(Backend):
                 commits = self._fetch_from_log()
             else:
                 commits = self._fetch_from_repo(from_date, to_date, branches,
-                                                latest_items, no_update)
+                                                latest_items, no_update,
+                                                track_removed)
 
             for commit in commits:
                 yield commit
-                ncommits += 1
+                if isinstance(commit, _RemovedCommit):
+                    nremoved += 1
+                else:
+                    ncommits += 1
         except EmptyRepositoryError:
             pass
 
         logger.info("Fetch process completed: %s commits fetched",
                     ncommits)
+
+        if track_removed:
+            logger.info("Removed commits tracked: %s commits removed",
+                        nremoved)
 
     @classmethod
     def has_archiving(cls):
@@ -197,11 +224,23 @@ class Git(Backend):
         This method takes items, overriding `metadata` decorator,
         to add extra information related to Git.
 
+        Removed commits are marked with the field `removed` set
+        to `True`. Their offset is `None` because they cannot be
+        used to resume the fetch process.
+
         :param item: an item fetched by a backend
         :param filter_classified: sets if classified fields were filtered
         """
+        removed = isinstance(item, _RemovedCommit)
+
         item = super().metadata(item, filter_classified=filter_classified)
-        item['offset'] = item['data']['commit']
+
+        if removed:
+            item['data'] = dict(item['data'])
+            item['removed'] = True
+            item['offset'] = None
+        else:
+            item['offset'] = item['data']['commit']
 
         return item
 
@@ -219,10 +258,16 @@ class Git(Backend):
         This date is converted to UNIX timestamp format taking into
         account the timezone of the date.
 
+        For removed commits, the timestamp is the time when the
+        removal was detected.
+
         :param item: item generated by the backend
 
         :returns: a UNIX timestamp
         """
+        if isinstance(item, _RemovedCommit):
+            return item.removed_on
+
         ts = item['CommitDate']
         ts = str_to_datetime(ts)
 
@@ -232,9 +277,13 @@ class Git(Backend):
     def metadata_category(item):
         """Extracts the category from a Git item.
 
-        This backend only generates one type of item which is
-        'commit'.
+        This backend generates 'commit' items. When removed
+        commits are tracked, it also generates 'removed_commit'
+        items for the commits removed from the repository.
         """
+        if isinstance(item, _RemovedCommit):
+            return CATEGORY_REMOVED_COMMIT
+
         return CATEGORY_COMMIT
 
     @staticmethod
@@ -286,7 +335,8 @@ class Git(Backend):
                     self.uri, self.gitpath)
         return self.parse_git_log_from_file(self.gitpath)
 
-    def _fetch_from_repo(self, from_date, to_date, branches, latest_items=False, no_update=False):
+    def _fetch_from_repo(self, from_date, to_date, branches, latest_items=False, no_update=False,
+                         track_removed=False):
         # When no latest items are set or the repository has not
         # been cloned use the default mode
         default_mode = not latest_items or not os.path.exists(self.gitpath)
@@ -296,7 +346,7 @@ class Git(Backend):
         if default_mode:
             commits = self._fetch_commits_from_repo(repo, from_date, to_date, branches, no_update)
         else:
-            commits = self._fetch_newest_commits_from_repo(repo)
+            commits = self._fetch_newest_commits_from_repo(repo, track_removed)
 
         return commits
 
@@ -329,9 +379,13 @@ class Git(Backend):
         gitlog = repo.log(from_date, to_date, branches)
         return self.parse_git_log_from_iter(gitlog)
 
-    def _fetch_newest_commits_from_repo(self, repo):
+    def _fetch_newest_commits_from_repo(self, repo, track_removed=False):
         logger.info("Fetching latest commits: '%s' git repository",
                     self.uri)
+
+        if track_removed:
+            hashes, removed = repo.sync(track_removed=True)
+            return self._fetch_removed_and_newest_commits(repo, hashes, removed)
 
         hashes = repo.sync()
         if not hashes:
@@ -339,6 +393,18 @@ class Git(Backend):
 
         gitshow = repo.show(hashes)
         return self.parse_git_log_from_iter(gitshow)
+
+    def _fetch_removed_and_newest_commits(self, repo, hashes, removed):
+        """Generate the removed commits followed by the newest commits"""
+
+        removed_on = datetime_utcnow().timestamp()
+
+        for commit in removed:
+            yield _RemovedCommit(commit, removed_on)
+
+        if hashes:
+            gitshow = repo.show(hashes)
+            yield from self.parse_git_log_from_iter(gitshow)
 
     def __fetch_from_packs(self, repo, packs, from_commit):
         """Retrieve commits from packfiles starting with the pack containing from_commit"""
@@ -438,6 +504,10 @@ class GitCommand(BackendCommand):
         group.add_argument('--branches', dest='branches',
                            nargs='+', type=str, default=None,
                            help="Fetch commits only from these branches")
+        group.add_argument('--track-removed', dest='track_removed',
+                           action='store_true',
+                           help="Also return the commits removed from the repository "
+                                "(only with --latest-items)")
 
         # Mutual exclusive parameters
         exgroup = group.add_mutually_exclusive_group()
@@ -918,6 +988,22 @@ class EmptyRepositoryError(RepositoryError):
 GitRef = collections.namedtuple('GitRef', ['hash', 'refname'])
 
 
+class _RemovedCommit(dict):
+    """Commit removed from the repository.
+
+    Raw item that represents a commit which is no longer reachable
+    from any branch or tag of the repository. Its only data is the
+    hash of the commit. The time when the removal was detected is
+    stored in `removed_on` as a UNIX timestamp.
+
+    :param commit: hash of the removed commit
+    :param removed_on: UNIX timestamp of the removal detection
+    """
+    def __init__(self, commit, removed_on):
+        super().__init__(commit=commit)
+        self.removed_on = removed_on
+
+
 class _GraphWalker:
     """Commit walker needed by fetch_pack"""
 
@@ -1106,7 +1192,7 @@ class GitRepository:
         logger.debug("Git %s repository updated into %s",
                      self.uri, self.dirpath)
 
-    def sync(self):
+    def sync(self, track_removed=False):
         """Keep the repository in sync.
 
         This method will synchronize the repository with its 'origin',
@@ -1117,11 +1203,24 @@ class GitRepository:
         The method also returns a list of hashes related to the new
         commits fetched during the process.
 
-        :returns: list of new commits
+        When `track_removed` is set, the method also returns the list
+        of commits that are no longer reachable from any branch or tag
+        after the synchronization (e.g., commits removed by a force-push
+        or by deleting a branch or a tag). In this case, the result is
+        a tuple with the list of new commits and the list of removed
+        commits.
+
+        :param track_removed: also return the commits removed from
+            the repository
+
+        :returns: list of new commits; or a tuple with the lists of
+            new and removed commits when `track_removed` is set
 
         :raises RepositoryError: when an error occurs synchronizing
             the repository
         """
+        old_refs = self._discover_refs() if track_removed else None
+
         pack_name, refs = self._fetch_pack()
 
         if pack_name:
@@ -1135,6 +1234,10 @@ class GitRepository:
 
         logger.debug("Git repository %s (%s) is synced",
                      self.uri, self.dirpath)
+
+        if track_removed:
+            removed = self._find_removed_commits(old_refs)
+            return commits, removed
 
         return commits
 
@@ -1418,6 +1521,46 @@ class GitRepository:
         # Prune repository to remove old branches
         cmd = ['git', 'remote', 'prune', 'origin']
         self._exec(cmd, cwd=self.dirpath, env=self.gitenv)
+
+    def _find_removed_commits(self, old_refs):
+        """Find the commits that are no longer reachable.
+
+        Compare the refs the repository had before the sync process
+        with the current ones. Commits reachable from those old refs
+        which were deleted or moved, but not reachable from any of the
+        current branches, tags, remote refs or refs of alternate
+        repositories (the same refs used by `log`), are considered
+        removed. The objects of these commits are still in the
+        repository because they are never pruned during the sync
+        process.
+
+        :param old_refs: list of local refs before the sync process
+
+        :returns: list of removed commits, from the oldest to the newest
+        """
+        current_refs = set(self._discover_refs())
+        old_tips = {ref.hash for ref in old_refs if ref not in current_refs}
+
+        if not old_tips:
+            return []
+
+        cmd_rev_list = ['git', 'rev-list', '--topo-order', '--reverse']
+        cmd_rev_list.extend(sorted(old_tips))
+
+        # Commits are still available when they are reachable
+        # from the same refs used to fetch commits with 'log'
+        cmd_rev_list.extend(['--not', '--branches', '--tags', '--remotes=origin'])
+        if self.has_alternates():
+            cmd_rev_list.append('--alternate-refs')
+
+        outs = self._exec(cmd_rev_list, cwd=self.dirpath, env=self.gitenv)
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+        removed = outs.split('\n') if outs else []
+
+        logger.debug("Git repository %s (%s) has %s removed commits",
+                     self.uri, self.dirpath, len(removed))
+
+        return removed
 
     def _discover_refs(self, remote=False):
         """Get the current list of local or remote refs."""
