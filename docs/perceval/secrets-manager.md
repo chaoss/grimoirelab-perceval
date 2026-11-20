@@ -47,6 +47,20 @@ Store your credentials in the vault using these exact names:
 
 Only the fields present in the vault are used; the rest are silently ignored.
 
+Fields present in the vault must have a value. Empty fields, or values
+that are not strings or numbers, produce an error. Numbers are
+converted to strings.
+
+### Pools of API tokens
+
+Backends that accept a pool of API tokens (`github` and `githubql`)
+receive `api_token` as a list. The tokens can be stored in a single
+field, separated by commas or new lines (e.g. `ghp_xxxx,ghp_yyyy`).
+In HashiCorp Vault they can also be stored as a JSON list.
+
+Any other backend receives `api_token` as a single value, so storing
+several tokens for them will produce an error.
+
 ## Bitwarden
 
 Store your credentials in a Bitwarden item using Perceval's expected field

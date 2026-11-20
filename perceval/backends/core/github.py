@@ -122,6 +122,8 @@ class GitHub(Backend):
 
     CATEGORIES = [CATEGORY_ISSUE, CATEGORY_PULL_REQUEST, CATEGORY_REPO]
 
+    CREDENTIAL_LIST_FIELDS = ('api_token',)
+
     CLASSIFIED_FIELDS = [
         ['user_data'],
         ['merged_by_data'],
