@@ -81,28 +81,6 @@ class Slack(Backend):
 
         self._users = {}
 
-    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
-        """Fetch the messages from the channel.
-
-        This method fetches the messages stored on the channel that were
-        sent since the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain messages sent since this date
-
-        :returns: a generator of messages
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-        latest = datetime_utcnow().timestamp()
-
-        kwargs = {'from_date': from_date, 'latest': latest}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
 
@@ -111,8 +89,14 @@ class Slack(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
-        latest = kwargs['latest']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        from_date = datetime_to_utc(from_date)
+        latest = kwargs.get('latest')
+        if not latest:
+            latest = datetime_utcnow().timestamp()
 
         logger.info("Fetching messages of '%s' channel from %s",
                     self.channel, str(from_date))

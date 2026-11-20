@@ -102,27 +102,6 @@ class Launchpad(Backend):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
-        """Fetch the issues from a project (distribution/package).
-
-        The method retrieves, from a Launchpad project, the issues
-        updated since the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain issues updated since this date
-
-        :returns: a generator of issues
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-
-        kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the issues
 
@@ -131,7 +110,11 @@ class Launchpad(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        from_date = datetime_to_utc(from_date)
 
         logger.info("Fetching issues of '%s' distribution from %s",
                     self.distribution, str(from_date))

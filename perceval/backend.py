@@ -273,7 +273,7 @@ class Backend:
         """
         raise NotImplementedError
 
-    def fetch(self, category, filter_classified=False, **kwargs):
+    def fetch(self, category=None, **kwargs):
         """Fetch items from the repository.
 
         The method retrieves items from a repository.
@@ -288,24 +288,29 @@ class Backend:
         compatible.
 
         :param category: the category of the items fetched
-        :param filter_classified: remove classified fields from the resulting items
-        :param kwargs: a list of other parameters (e.g., from_date, offset, etc.
-        specific for each backend)
+        :param kwargs: a list of other parameters (e.g., from_date, offset, filter_classified
+        etc. specific for each backend)
 
         :returns: a generator of items
 
         :raises BackendError: either when the category is not valid or
             'filter_classified' and 'archive' are active at the same time.
         """
-        self._summary = Summary()
+        # If category is not set, try to use the first one defined in CATEGORIES
+        if not category and self.categories:
+            category = self.categories[0]
 
         if category not in self.categories:
             cause = "%s category not valid for %s" % (category, self.__class__.__name__)
             raise BackendError(cause=cause)
 
+        filter_classified = kwargs.get('filter_classified', False)
+
         if filter_classified and self.archive:
             cause = "classified fields filtering is not compatible with archiving items"
             raise BackendError(cause=cause)
+
+        self._summary = Summary()
 
         if self.archive:
             self.archive.init_metadata(self.origin, self.__class__.__name__, self.version, category,

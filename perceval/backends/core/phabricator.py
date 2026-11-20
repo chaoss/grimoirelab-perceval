@@ -84,26 +84,6 @@ class Phabricator(Backend):
         self._users = {}
         self._projects = {}
 
-    def fetch(self, category=CATEGORY_TASK, from_date=DEFAULT_DATETIME):
-        """Fetch the tasks from the server.
-
-        This method fetches the tasks stored on the server that were
-        updated since the given date. The transactions data related
-        to each task is also included within them.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain tasks updated since this date
-
-        :returns: a generator of tasks
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the tasks
 
@@ -112,7 +92,9 @@ class Phabricator(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
 
         logger.info("Fetching tasks of '%s' from %s", self.url, str(from_date))
 

@@ -81,27 +81,6 @@ class Redmine(Backend):
 
         self._users = {}
 
-    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
-        """Fetch the issues from the server.
-
-        This method fetches the issues stored on the server that were
-        updated since the given date. Data about attachments, journals
-        and watchers (among others) are included within each issue.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain issues updated since this date
-
-        :returns: a generator of issues
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-        kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the issues
 
@@ -110,7 +89,11 @@ class Redmine(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+
+        from_date = datetime_to_utc(from_date)
 
         logger.info("Fetching issues of '%s' from %s",
                     self.url, str(from_date))

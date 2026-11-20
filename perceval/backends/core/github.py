@@ -182,43 +182,6 @@ class GitHub(Backend):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_ISSUE, from_date=GITHUB_DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
-              filter_classified=False):
-        """Fetch the issues/pull requests from the repository.
-
-        The method retrieves, from a GitHub repository, the issues/pull requests
-        updated since the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain issues/pull requests updated since this date
-        :param to_date: obtain issues/pull requests until a specific date (included)
-        :param filter_classified: remove classified fields from the resulting items
-
-        :returns: a generator of issues
-        """
-        self.exclude_user_data = filter_classified
-
-        if self.exclude_user_data:
-            logger.info("Excluding user data. Personal user information won't be collected from the API.")
-
-        if not from_date:
-            from_date = GITHUB_DEFAULT_DATETIME
-        if not to_date:
-            to_date = DEFAULT_LAST_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-        to_date = datetime_to_utc(to_date)
-
-        kwargs = {
-            'from_date': from_date,
-            'to_date': to_date
-        }
-        items = super().fetch(category,
-                              filter_classified=filter_classified,
-                              **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the items (issues or pull_requests or repo information)
 
@@ -227,8 +190,22 @@ class GitHub(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
-        to_date = kwargs['to_date']
+        self.exclude_user_data = kwargs.get('filter_classified', False)
+
+        if self.exclude_user_data:
+            logger.info("Excluding user data. Personal user information won't be collected from the API.")
+
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = GITHUB_DEFAULT_DATETIME
+
+        to_date = kwargs.get('to_date')
+        if not to_date:
+            to_date = DEFAULT_LAST_DATETIME
+
+        # Ensure dates are UTC
+        from_date = datetime_to_utc(from_date)
+        to_date = datetime_to_utc(to_date)
 
         if category == CATEGORY_ISSUE:
             items = self.__fetch_issues(from_date, to_date)

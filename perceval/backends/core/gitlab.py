@@ -152,27 +152,6 @@ class GitLab(Backend):
 
         return search_fields
 
-    def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
-        """Fetch the issues or merge requests from the repository.
-
-        The method retrieves, from a GitLab repository, the issues or merge requests
-        updated since the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain items updated since this date
-
-        :returns: a generator of items
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-
-        kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the items (issues or merge_requests)
 
@@ -181,7 +160,10 @@ class GitLab(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+        from_date = datetime_to_utc(from_date)
 
         if category == CATEGORY_ISSUE:
             items = self.__fetch_issues(from_date)
