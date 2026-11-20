@@ -47,6 +47,30 @@ from perceval.backends.core.git import (EmptyRepositoryError,
                                         GitRepository)
 
 
+def git_exec(gitpath, *args, input_data=None):
+    """Run a Git command in a repository and return its output.
+
+    The user name and email are set to mocked values, so commands
+    that require them, like `commit` or `tag`, can be run in any
+    environment.
+
+    :param gitpath: path where the command will be run
+    :param args: Git command and its arguments
+    :param input_data: data sent to the standard input of the command
+
+    :returns: the output of the command as a string
+    """
+    cmd = ['git', '-c', 'user.name="mock"',
+           '-c', 'user.email="mock@example.com"']
+    cmd.extend(args)
+
+    outs = subprocess.check_output(cmd, input=input_data,
+                                   stderr=subprocess.STDOUT,
+                                   cwd=gitpath, env={'LANG': 'C'})
+
+    return outs.decode('utf-8', errors='surrogateescape').strip()
+
+
 class TestCaseGit(unittest.TestCase):
     """Base case for Git tests"""
 
@@ -85,15 +109,12 @@ class TestGitBackend(TestCaseGit):
             ('gitalternates', cls.git_alternates_path)
         ]
 
-        fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
-
         for repo_name, repo_path in repos:
             tar_path = os.path.join(data_path, repo_name + '.tar.gz')
             subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_repo_path])
 
             origin_path = os.path.join(cls.tmp_repo_path, repo_name)
-            subprocess.check_call(['git', 'clone', '-q', '--bare', origin_path, repo_path],
-                                  stderr=fdout)
+            git_exec(cls.tmp_path, 'clone', '-q', '--bare', origin_path, repo_path)
 
     @classmethod
     def tearDownClass(cls):
@@ -521,13 +542,13 @@ class TestGitBackend(TestCaseGit):
         """Test whether latest commits are fetched from a Git repository"""
 
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
-        new_file = os.path.join(editable_path, 'newfile')
+        new_file = os.path.join(working_dirpath, 'newfile')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        git = Git(editable_path, new_path)
+        git = Git(working_dirpath, new_path)
         commits = [commit for commit in git.fetch(latest_items=True)]
 
         # Count the number of commits before adding some new
@@ -544,57 +565,38 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(len(commits), len(expected))
 
         for x in range(len(commits)):
-            expected_uuid = uuid(editable_path, expected[x][0])
+            expected_uuid = uuid(working_dirpath, expected[x][0])
             commit = commits[x]
             self.assertEqual(commit['data']['commit'], expected[x][0])
-            self.assertEqual(commit['origin'], editable_path)
+            self.assertEqual(commit['origin'], working_dirpath)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
             self.assertEqual(commit['category'], 'commit')
-            self.assertEqual(commit['tag'], editable_path)
+            self.assertEqual(commit['tag'], working_dirpath)
 
         # Create some new commits
-        cmd = ['git', 'checkout', '-b', 'mybranch']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'checkout', '-b', 'mybranch')
 
         with open(new_file, 'w') as f:
             f.write("Testing sync method")
 
-        cmd = ['git', 'add', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Testing sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', 'rm', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Removing testing file for sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'add', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Testing sync')
+        git_exec(working_dirpath, 'rm', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Removing testing file for sync')
 
         # Two new commits should have been fetched
         commits = [commit for commit in git.fetch(latest_items=True)]
         self.assertEqual(len(commits), 2)
 
         # Remove 'lzp' branch and check that the number of new commits is 0
-        cmd = ['git', 'branch', '-D', 'lzp']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'branch', '-D', 'lzp')
 
         commits = [commit for commit in git.fetch(latest_items=True)]
         self.assertEqual(len(commits), 0)
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_fetch_latest_items_from_empty_repository(self):
@@ -619,13 +621,13 @@ class TestGitBackend(TestCaseGit):
         """Test whether new commits aren't fetched when no_update flag is set"""
 
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
-        new_file = os.path.join(editable_path, 'newfile')
+        new_file = os.path.join(working_dirpath, 'newfile')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        git = Git(editable_path, new_path)
+        git = Git(working_dirpath, new_path)
         commits = [commit for commit in git.fetch()]
 
         # Count the number of commits before adding some new
@@ -642,42 +644,25 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(len(commits), len(expected))
 
         for x in range(len(commits)):
-            expected_uuid = uuid(editable_path, expected[x][0])
+            expected_uuid = uuid(working_dirpath, expected[x][0])
             commit = commits[x]
             self.assertEqual(commit['data']['commit'], expected[x][0])
-            self.assertEqual(commit['origin'], editable_path)
+            self.assertEqual(commit['origin'], working_dirpath)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
             self.assertEqual(commit['category'], 'commit')
-            self.assertEqual(commit['tag'], editable_path)
+            self.assertEqual(commit['tag'], working_dirpath)
 
         # Create some new commits
-        cmd = ['git', 'checkout', '-b', 'mybranch']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'checkout', '-b', 'mybranch')
 
         with open(new_file, 'w') as f:
             f.write("Testing sync method")
 
-        cmd = ['git', 'add', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Testing sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', 'rm', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Removing testing file for sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'add', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Testing sync')
+        git_exec(working_dirpath, 'rm', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Removing testing file for sync')
 
         # Two new commits are added to the repo but are not fetched
         commits = [commit for commit in git.fetch(no_update=True)]
@@ -687,7 +672,7 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(len(commits), 11)
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_fetch_from_file(self):
@@ -723,12 +708,12 @@ class TestGitBackend(TestCaseGit):
         """Test whether recovery from a commits in first execution works"""
 
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        git = Git(editable_path, new_path)
+        git = Git(working_dirpath, new_path)
         commits = [commit for commit in git.fetch()]
 
         # Count the number of commits before adding some new
@@ -745,7 +730,7 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(len(commits), len(expected))
 
         for x in range(len(commits)):
-            expected_uuid = uuid(editable_path, expected[x][0])
+            expected_uuid = uuid(working_dirpath, expected[x][0])
             commit = commits[x]
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['data']['commit'], expected[x][0])
@@ -759,55 +744,38 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(len(commits_recovery), len(expected_recovery))
 
         for x in range(len(commits_recovery)):
-            expected_uuid = uuid(editable_path, expected_recovery[x][0])
+            expected_uuid = uuid(working_dirpath, expected_recovery[x][0])
             commit = commits_recovery[x]
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['data']['commit'], expected_recovery[x][0])
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_fetch_recovery_from_packs(self):
         """Test whether recovery from a commits in a repo with packs works"""
 
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
-        new_file = os.path.join(editable_path, 'newfile')
+        new_file = os.path.join(working_dirpath, 'newfile')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        git = Git(editable_path, new_path)
+        git = Git(working_dirpath, new_path)
         _ = [commit for commit in git.fetch()]
 
         # Create some new commits
-        cmd = ['git', 'checkout', '-b', 'mybranch']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'checkout', '-b', 'mybranch')
 
         with open(new_file, 'w') as f:
             f.write("Testing sync method")
 
-        cmd = ['git', 'add', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Testing sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', 'rm', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Removing testing file for sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'add', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Testing sync')
+        git_exec(working_dirpath, 'rm', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Removing testing file for sync')
 
         # Two new commits should have been fetched
         commits = [commit for commit in git.fetch(latest_items=True)]
@@ -821,7 +789,7 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(commits_recovery[1]['uuid'], commits[1]['uuid'])
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_git_parser(self):
@@ -1648,22 +1616,15 @@ class TestEmptyRepositoryError(TestCaseGit):
 def count_commits(gitpath):
     """Get the number of commits counting the entries on the log"""
 
-    cmd = ['git', 'log', '--oneline', '--all']
-    gitlog = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                     cwd=gitpath,
-                                     env={'LANG': 'C', 'PAGER': ''})
-    commits = gitlog.strip(b'\n').split(b'\n')
+    gitlog = git_exec(gitpath, 'log', '--oneline', '--all')
+    commits = gitlog.split('\n')
     return len(commits)
 
 
 def discover_refs(gitpath):
     """Get the references of local repository"""
 
-    cmd = ['git', 'show-ref']
-    gitrefs = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                      cwd=gitpath,
-                                      env={'LANG': 'C', 'PAGER': ''})
-    outs = gitrefs.decode('utf-8', errors='surrogateescape').rstrip()
+    outs = git_exec(gitpath, 'show-ref')
 
     refs = {}
 
@@ -1699,15 +1660,12 @@ class TestGitRepository(TestCaseGit):
             ('gitalternates', cls.git_alternates_path)
         ]
 
-        fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
-
         for repo_name, repo_path in repos:
             tar_path = os.path.join(data_path, repo_name + '.tar.gz')
             subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_repo_path])
 
             origin_path = os.path.join(cls.tmp_repo_path, repo_name)
-            subprocess.check_call(['git', 'clone', '-q', '--bare', origin_path, repo_path],
-                                  stderr=fdout)
+            git_exec(cls.tmp_path, 'clone', '-q', '--bare', origin_path, repo_path)
 
     @classmethod
     def tearDownClass(cls):
@@ -1917,11 +1875,9 @@ class TestGitRepository(TestCaseGit):
         self.assertEqual(refs['refs/heads/master'],
                          '456a68ee1407a77f3e804a30dff245bb6c6b872f')
 
-        cmd = ['git', 'update-ref',
-               'refs/heads/master',
-               '589bb080f059834829a2a5955bebfd7c2baa110a']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=new_path, env={'LANG': 'C'})
+        git_exec(new_path, 'update-ref',
+                 'refs/heads/master',
+                 '589bb080f059834829a2a5955bebfd7c2baa110a')
 
         # Check the new reference of 'refs/heads/master'
         refs = discover_refs(new_path)
@@ -1951,46 +1907,29 @@ class TestGitRepository(TestCaseGit):
         """Test if the repository is synchonized with its remote repo"""
 
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
-        new_file = os.path.join(editable_path, 'newfile')
+        new_file = os.path.join(working_dirpath, 'newfile')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        repo = GitRepository.clone(editable_path, new_path)
+        repo = GitRepository.clone(working_dirpath, new_path)
         repo.sync()
 
         # Count the number of commits before adding some new
         ncommits = count_commits(new_path)
         self.assertEqual(ncommits, 9)
 
-        cmd = ['git', 'checkout', '-b', 'mybranch']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'checkout', '-b', 'mybranch')
 
         # Create a new file and commit it to the repository
         with open(new_file, 'w') as f:
             f.write("Testing sync method")
 
-        cmd = ['git', 'add', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Testing sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', 'rm', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Removing testing file for sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'add', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Testing sync')
+        git_exec(working_dirpath, 'rm', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Removing testing file for sync')
 
         # Count the number of commits and refs after adding
         # the branch and the file
@@ -2009,9 +1948,7 @@ class TestGitRepository(TestCaseGit):
         self.assertListEqual(refs, expected)
 
         # Remove 'lzp' branch and check the number of commits and refs
-        cmd = ['git', 'branch', '-D', 'lzp']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'branch', '-D', 'lzp')
 
         new_commits = repo.sync()
         ncommits = count_commits(new_path)
@@ -2027,24 +1964,22 @@ class TestGitRepository(TestCaseGit):
         self.assertListEqual(refs, expected)
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_tag_removal_sync(self):
         """Test sync process for tag removal"""
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        repo = GitRepository.clone(editable_path, new_path)
+        repo = GitRepository.clone(working_dirpath, new_path)
         repo.sync()
 
         # Add a tag 'v.0.0-lw' to the refs and check that it exists
-        cmd = ['git', 'tag', 'v.0.0-lw']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'tag', 'v.0.0-lw')
 
         new_commits = repo.sync()
         self.assertEqual(len(new_commits), 0)
@@ -2054,9 +1989,7 @@ class TestGitRepository(TestCaseGit):
         self.assertIn('refs/tags/v.0.0-lw', refs)
 
         # Delete the tag 'v.0.0-lw' and check that it has been deleted from refs
-        cmd = ['git', 'tag', '-d', 'v.0.0-lw']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'tag', '-d', 'v.0.0-lw')
 
         new_commits = repo.sync()
         self.assertEqual(len(new_commits), 0)
@@ -2067,7 +2000,7 @@ class TestGitRepository(TestCaseGit):
         self.assertIn('refs/heads/master', refs)
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_sync_from_empty_repos(self):
@@ -2287,23 +2220,14 @@ class TestGitRepository(TestCaseGit):
         repo = GitRepository.clone(self.git_path, new_path)
 
         # Create a loose object in the repository
-        process = subprocess.Popen(['git', 'hash-object', '-w', '--stdin'],
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.DEVNULL,
-                                   cwd=new_path,
-                                   env={'LANG': 'C'})
-        process.communicate(input=b"Data test")
+        git_exec(new_path, 'hash-object', '-w', '--stdin',
+                 input_data=b"Data test")
 
         self.assertTrue(repo.has_loose_objects())
 
         # Group loose objects in a packfile and remove unreachable objects
-        subprocess.run(['git', 'gc'],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                       cwd=new_path, check=True)
-        subprocess.run(['git', 'prune'],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                       cwd=new_path, check=True)
+        git_exec(new_path, 'gc')
+        git_exec(new_path, 'prune')
 
         self.assertFalse(repo.has_loose_objects())
 
