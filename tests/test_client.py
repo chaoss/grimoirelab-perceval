@@ -205,6 +205,26 @@ class TestHttpClient(unittest.TestCase):
             _ = client.fetch(CLIENT_SUPERMAN_URL)
 
     @httpretty.activate
+    def test_fetch_http_error_logs_body(self):
+        """HTTP error body is logged at debug"""
+
+        httpretty.register_uri(httpretty.GET,
+                               CLIENT_SUPERMAN_URL,
+                               body='{"message":"nope"}',
+                               status=403)
+
+        client = MockedClient(CLIENT_API_URL, sleep_time=0.1, max_retries=1)
+
+        with self.assertLogs('perceval.client', level='DEBUG') as cm:
+            with self.assertRaises(requests.exceptions.HTTPError):
+                client.fetch(CLIENT_SUPERMAN_URL)
+
+        self.assertIn('nope', '\n'.join(cm.output))
+        self.assertTrue(
+            any('HTTP error' in message for message in cm.output)
+        )
+
+    @httpretty.activate
     def test_fetch_post(self):
         """Test fetch method"""
 
