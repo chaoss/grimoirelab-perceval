@@ -1,0 +1,18 @@
+---
+title: Track commits removed from Git repositories
+category: added
+author: Santiago Dueñas <sduenas@grimoirelab.org>
+issue: null
+notes: >
+  Git backend can report commits that are no longer
+  reachable from any branch or tag of the repository,
+  for example, after a force-push or after deleting a
+  branch or a tag. Use the parameter `track_removed`
+  (`--track-removed` in the command line) together with
+  `latest_items` to enable it. Removed commits are
+  returned before the newest commits, as items of the
+  category `removed_commit`, with the field `removed`
+  set to `True` and the commit hash as the only data. Each
+  removed commit is reported only once. The fetch summary
+  includes a new counter for these items, and they are not
+  taken into account to resume the fetch process.

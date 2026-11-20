@@ -976,6 +976,7 @@ class BackendCommand:
             "\t   Total items: \t{total}\n"
             "\tItems produced: \t{fetched}\n"
             "\t Items skipped: \t{skipped}\n"
+            "\t Items removed: \t{removed}\n"
             "\n"
             "\tLast item UUID: \t{last_uuid}\n"
             "\tLast item date: \t{last_updated_on}\n"
@@ -993,6 +994,7 @@ class BackendCommand:
             'total': summary.total,
             'fetched': summary.fetched,
             'skipped': summary.skipped,
+            'removed': summary.removed,
             'last_uuid': summary.last_uuid or '-',
             'last_updated_on': summary.last_updated_on or '-',
             'min_updated_on': summary.min_updated_on or '-',
@@ -1146,12 +1148,18 @@ class Summary:
     Furthermore, for backends using offsets, the corresponding summary
     contains the minimum, maximum and last offsets retrieved.
 
+    The summary also counts the removed items, these are, items
+    with the field `removed` set to `True`. Removed items are not
+    considered fetched items, so they don't modify any other
+    attribute of the summary.
+
     Finally, the summary also includes some extra fields, which can
     be used by any backend to include fetch-specific information.
     """
     def __init__(self):
         self.fetched = 0
         self.skipped = 0
+        self.removed = 0
         self.min_updated_on = None
         self.max_updated_on = None
         self.last_updated_on = None
@@ -1172,6 +1180,10 @@ class Summary:
 
         :param item: a Perceval item
         """
+        if item.get('removed', False):
+            self.removed += 1
+            return
+
         self.fetched += 1
         self.last_uuid = item['uuid']
 
