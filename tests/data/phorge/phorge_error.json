@@ -1,0 +1,5 @@
+{
+    "error_code": "ERR-CONDUIT-CORE",
+    "error_info": "The value for parameter 'constraints' is not valid JSON. All parameters must be encoded as JSON values, including strings (which means you need to surround them in double quotes). Check your syntax. Value was: fdsafd.",
+    "result": null
+}

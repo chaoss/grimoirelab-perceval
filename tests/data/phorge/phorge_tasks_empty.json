@@ -1,0 +1,17 @@
+{
+    "error_code": null,
+    "error_info": null,
+    "result": {
+        "cursor": {
+            "after": null,
+            "before": null,
+            "limit": 100,
+            "order": null
+        },
+        "data": [],
+        "maps": {},
+        "query": {
+            "queryKey": "eTMBdZUyq5cD"
+        }
+    }
+}
