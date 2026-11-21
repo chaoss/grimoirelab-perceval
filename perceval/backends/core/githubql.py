@@ -322,34 +322,6 @@ class GitHubQL(GitHub):
                          sleep_for_rate, min_rate_to_sleep, max_retries,
                          sleep_time, max_items, ssl_verify)
 
-    def fetch(self, category=CATEGORY_EVENT, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME):
-        """Fetch the issue events from the repository.
-
-        The method retrieves, from a GitHub repository, the issue events
-        since/until a given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain issue events since this date
-        :param to_date: obtain issue events until this date (included)
-
-        :returns: a generator of events
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-        if not to_date:
-            to_date = DEFAULT_LAST_DATETIME
-
-        from_date = datetime_to_utc(from_date)
-        to_date = datetime_to_utc(to_date)
-
-        kwargs = {
-            'from_date': from_date,
-            'to_date': to_date
-        }
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the items
 
@@ -358,8 +330,15 @@ class GitHubQL(GitHub):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
-        to_date = kwargs['to_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+        from_date = datetime_to_utc(from_date)
+
+        to_date = kwargs.get('to_date')
+        if not to_date:
+            to_date = DEFAULT_LAST_DATETIME
+        to_date = datetime_to_utc(to_date)
 
         items = self.__fetch_events(from_date, to_date)
 

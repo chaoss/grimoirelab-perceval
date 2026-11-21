@@ -63,20 +63,6 @@ class RSS(Backend):
         self.url = url
         self.client = None
 
-    def fetch(self, category=CATEGORY_ENTRY):
-        """Fetch the entries from the url.
-
-        The method retrieves all entries from a RSS url
-
-        :param category: the category of items to fetch
-
-        :returns: a generator of entries
-        """
-        kwargs = {}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the entries
 

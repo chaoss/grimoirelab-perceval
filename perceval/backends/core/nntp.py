@@ -84,25 +84,6 @@ class NNTP(Backend):
         self.group = group
         self.client = None
 
-    def fetch(self, category=CATEGORY_ARTICLE, offset=DEFAULT_OFFSET):
-        """Fetch articles posted on a news group.
-
-        This method fetches those messages or articles published
-        on a news group starting on the given offset.
-
-        :param category: the category of items to fetch
-        :param offset: obtain messages from this offset
-
-        :returns: a generator of articles
-        """
-        if not offset:
-            offset = DEFAULT_OFFSET
-
-        kwargs = {'offset': offset}
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the articles
 
@@ -111,7 +92,9 @@ class NNTP(Backend):
 
         :returns: a generator of items
         """
-        offset = kwargs['offset']
+        offset = kwargs.get('offset')
+        if not offset:
+            offset = DEFAULT_OFFSET
 
         logger.info("Fetching articles of '%s' group on '%s' offset %s",
                     self.group, self.host, str(offset))

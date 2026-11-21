@@ -86,28 +86,6 @@ class RocketChat(Backend):
         self.min_rate_to_sleep = min_rate_to_sleep
         self.client = None
 
-    def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME, filter_classified=False):
-        """Fetch the messages from the channel.
-
-        This method fetches the messages stored on the channel that were
-        sent since the given date.
-
-        :param category: the category of items to fetch
-        :param from_date: obtain messages sent since this date
-        :param filter_classified: remove classified fields from the resulting items
-
-        :returns: a generator of messages
-        """
-        if not from_date:
-            from_date = DEFAULT_DATETIME
-        from_date = datetime_to_utc(from_date)
-
-        kwargs = {'from_date': from_date}
-
-        items = super().fetch(category, **kwargs)
-
-        return items
-
     def fetch_items(self, category, **kwargs):
         """Fetch the messages.
 
@@ -116,7 +94,10 @@ class RocketChat(Backend):
 
         :returns: a generator of items
         """
-        from_date = kwargs['from_date']
+        from_date = kwargs.get('from_date')
+        if not from_date:
+            from_date = DEFAULT_DATETIME
+        from_date = datetime_to_utc(from_date)
         logger.info("Fetching messages of channel: %s from date: %s",
                     self.channel, from_date)
 
