@@ -116,9 +116,40 @@ $ perceval github \
 
 ## Programmatic usage
 
-The credential resolution logic is also available in `grimoirelab-toolkit`
-via the `CredentialManager` base class, so it can be used from any Python
-code without going through the CLI:
+When Perceval is used as a library, `BackendItemsGenerator` and `fetch`
+accept a credential manager and the name of the secret. The credentials
+are retrieved before the backend is initialized and they override any
+argument with the same name. They are not added to the given dict of
+arguments.
+
+```python
+from perceval.backend import BackendItemsGenerator
+from perceval.backends.core.github import GitHub
+from perceval.credentials import build_credential_manager
+
+manager = build_credential_manager(
+    'hashicorp',
+    vault_url='https://vault.example.com',
+    vault_token='hvs.your-token'
+)
+
+args = {'owner': 'chaoss', 'repository': 'grimoirelab-perceval'}
+
+with BackendItemsGenerator(GitHub, args, 'issue',
+                           credential_manager=manager,
+                           secret_name='GitHub') as big:
+    for item in big.items:
+        print(item['uuid'])
+```
+
+`build_credential_manager` accepts `bw_client_id`, `bw_client_secret`
+and `bw_master_password` for Bitwarden, and `vault_url`, `vault_token`
+and `vault_certificate` for HashiCorp Vault. The secret name for
+HashiCorp Vault is the path of the secret in the `secret` KV engine,
+so `GitHub` is read from `secret/GitHub`.
+
+The managers are also available in `grimoirelab-toolkit` via the
+`CredentialManager` base class:
 
 ```python
 from grimoirelab_toolkit.credential_manager import BitwardenManager
@@ -131,9 +162,6 @@ print(credentials)  # {'api_token': 'ghp_...'}
 
 # HashiCorp Vault example
 hc_manager = HashicorpManager("https://vault.example.com", "hvs.your-token")
-credentials = hc_manager.resolve_credentials("secret/GitHub", ["api_token"])
+credentials = hc_manager.resolve_credentials("GitHub", ["api_token"])
 print(credentials)  # {'api_token': 'ghp_...'}
 ```
-
-This is useful for consumers like KingArthur or custom scripts that use
-Perceval's `Backend` class directly without the CLI.
