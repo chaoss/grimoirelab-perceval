@@ -73,6 +73,7 @@ class Backend:
      - [Optional] :data:`CLASSIFIED_FIELDS`, to hide certain fields from results
      - [Optional] :data:`EXTRA_SEARCH_FIELDS`, to add easy access fields to items
      - [Optional] :data:`ORIGIN_UNIQUE_FIELD`, to enable item blacklisting
+     - [Optional] :data:`REMOVED_CATEGORIES`, to report items removed from the repository
 
     For more information on the details of implementing these methods, please
     see the docs on each method.
@@ -122,6 +123,18 @@ class Backend:
     Implementing backends can define any category they need, as long as
     categories are short, descriptive, snake_case strings, such as "commit",
     "merge_request", or "pull_request".
+    """
+
+    REMOVED_CATEGORIES = []
+    """A list of categories of the items removed from the repository.
+
+    Some backends can report items that were removed from the repository
+    since the last time they were fetched. These items have their own
+    categories, which are not listed in `CATEGORIES` because they cannot
+    be fetched by themselves.
+
+    In the summary of a fetch process, items of these categories are only
+    counted as removed items; they don't update any other attribute.
     """
 
     CLASSIFIED_FIELDS = []
@@ -329,7 +342,7 @@ class Backend:
                 item = self.filter_classified_data(item)
 
             metadata_item = self.metadata(item, filter_classified=filter_classified)
-            self.summary.update(metadata_item)
+            self._update_summary(metadata_item)
 
             yield metadata_item
 
@@ -351,9 +364,22 @@ class Backend:
 
         for item in self.fetch_items(self.archive.category, **self.archive.backend_params):
             metadata_item = self.metadata(item)
-            self.summary.update(metadata_item)
+            self._update_summary(metadata_item)
 
             yield metadata_item
+
+    def _update_summary(self, item):
+        """Update the summary with an item.
+
+        Items of the categories listed in `REMOVED_CATEGORIES`
+        are only counted as removed items.
+
+        :param item: an item with its metadata
+        """
+        if item['category'] in self.REMOVED_CATEGORIES:
+            self.summary.update_removed()
+        else:
+            self.summary.update(item)
 
     def filter_classified_data(self, item):
         """Remove classified or confidential data from an item.
@@ -976,6 +1002,7 @@ class BackendCommand:
             "\t   Total items: \t{total}\n"
             "\tItems produced: \t{fetched}\n"
             "\t Items skipped: \t{skipped}\n"
+            "\t Items removed: \t{removed}\n"
             "\n"
             "\tLast item UUID: \t{last_uuid}\n"
             "\tLast item date: \t{last_updated_on}\n"
@@ -993,6 +1020,7 @@ class BackendCommand:
             'total': summary.total,
             'fetched': summary.fetched,
             'skipped': summary.skipped,
+            'removed': summary.removed,
             'last_uuid': summary.last_uuid or '-',
             'last_updated_on': summary.last_updated_on or '-',
             'min_updated_on': summary.min_updated_on or '-',
@@ -1146,12 +1174,18 @@ class Summary:
     Furthermore, for backends using offsets, the corresponding summary
     contains the minimum, maximum and last offsets retrieved.
 
+    The summary also counts the items removed from the repository.
+    These items are part of the total, but they are not considered
+    fetched items, so they don't modify any other attribute of the
+    summary, like the last UUID, the dates or the offsets.
+
     Finally, the summary also includes some extra fields, which can
     be used by any backend to include fetch-specific information.
     """
     def __init__(self):
         self.fetched = 0
         self.skipped = 0
+        self.removed = 0
         self.min_updated_on = None
         self.max_updated_on = None
         self.last_updated_on = None
@@ -1163,9 +1197,9 @@ class Summary:
 
     @property
     def total(self):
-        """Number of items retrieved. This includes fetched and skipped items."""
+        """Number of items retrieved. This includes fetched, skipped and removed items."""
 
-        return self.fetched + self.skipped
+        return self.fetched + self.skipped + self.removed
 
     def update(self, item):
         """Update the summary attributes by accessing the item data.
@@ -1185,6 +1219,14 @@ class Summary:
             self.last_offset = offset
             self.min_offset = offset if self.min_offset is None else min(self.min_offset, offset)
             self.max_offset = offset if self.max_offset is None else max(self.max_offset, offset)
+
+    def update_removed(self):
+        """Count an item removed from the repository.
+
+        Only the number of removed items is updated; the
+        rest of the attributes of the summary are not modified.
+        """
+        self.removed += 1
 
 
 def uuid(*args):

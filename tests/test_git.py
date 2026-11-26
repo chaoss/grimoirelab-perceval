@@ -37,6 +37,8 @@ import unittest.mock
 
 import dateutil.tz
 
+from grimoirelab_toolkit.datetime import datetime_utcnow
+
 from perceval.backend import BackendCommandArgumentParser, uuid
 from perceval.errors import RepositoryError
 from perceval.utils import DEFAULT_DATETIME, DEFAULT_LAST_DATETIME
@@ -45,6 +47,53 @@ from perceval.backends.core.git import (EmptyRepositoryError,
                                         GitCommand,
                                         GitParser,
                                         GitRepository)
+
+
+def git_exec(gitpath, *args, input_data=None):
+    """Run a Git command in a repository and return its output.
+
+    The user name and email are set to mocked values, so commands
+    that require them, like `commit` or `tag`, can be run in any
+    environment.
+
+    :param gitpath: path where the command will be run
+    :param args: Git command and its arguments
+    :param input_data: data sent to the standard input of the command
+
+    :returns: the output of the command as a string
+    """
+    cmd = ['git', '-c', 'user.name="mock"',
+           '-c', 'user.email="mock@example.com"']
+    cmd.extend(args)
+
+    outs = subprocess.check_output(cmd, input=input_data,
+                                   stderr=subprocess.STDOUT,
+                                   cwd=gitpath, env={'LANG': 'C'})
+
+    return outs.decode('utf-8', errors='surrogateescape').strip()
+
+
+def create_commit(gitpath, message, filename='newfile'):
+    """Create a commit in a working repository and return its hash.
+
+    The content of `filename` is replaced by `message`, so each
+    call adds a new change to the repository.
+
+    :param gitpath: path to the working repository
+    :param message: message of the commit
+    :param filename: name of the file to change
+
+    :returns: the hash of the new commit
+    """
+    filepath = os.path.join(gitpath, filename)
+
+    with open(filepath, 'w') as f:
+        f.write(message)
+
+    git_exec(gitpath, 'add', filepath)
+    git_exec(gitpath, 'commit', '-m', message)
+
+    return git_exec(gitpath, 'rev-parse', 'HEAD')
 
 
 class TestCaseGit(unittest.TestCase):
@@ -85,15 +134,12 @@ class TestGitBackend(TestCaseGit):
             ('gitalternates', cls.git_alternates_path)
         ]
 
-        fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
-
         for repo_name, repo_path in repos:
             tar_path = os.path.join(data_path, repo_name + '.tar.gz')
             subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_repo_path])
 
             origin_path = os.path.join(cls.tmp_repo_path, repo_name)
-            subprocess.check_call(['git', 'clone', '-q', '--bare', origin_path, repo_path],
-                                  stderr=fdout)
+            git_exec(cls.tmp_path, 'clone', '-q', '--bare', origin_path, repo_path)
 
     @classmethod
     def tearDownClass(cls):
@@ -521,13 +567,13 @@ class TestGitBackend(TestCaseGit):
         """Test whether latest commits are fetched from a Git repository"""
 
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
-        new_file = os.path.join(editable_path, 'newfile')
+        new_file = os.path.join(working_dirpath, 'newfile')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        git = Git(editable_path, new_path)
+        git = Git(working_dirpath, new_path)
         commits = [commit for commit in git.fetch(latest_items=True)]
 
         # Count the number of commits before adding some new
@@ -544,57 +590,38 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(len(commits), len(expected))
 
         for x in range(len(commits)):
-            expected_uuid = uuid(editable_path, expected[x][0])
+            expected_uuid = uuid(working_dirpath, expected[x][0])
             commit = commits[x]
             self.assertEqual(commit['data']['commit'], expected[x][0])
-            self.assertEqual(commit['origin'], editable_path)
+            self.assertEqual(commit['origin'], working_dirpath)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
             self.assertEqual(commit['category'], 'commit')
-            self.assertEqual(commit['tag'], editable_path)
+            self.assertEqual(commit['tag'], working_dirpath)
 
         # Create some new commits
-        cmd = ['git', 'checkout', '-b', 'mybranch']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'checkout', '-b', 'mybranch')
 
         with open(new_file, 'w') as f:
             f.write("Testing sync method")
 
-        cmd = ['git', 'add', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Testing sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', 'rm', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Removing testing file for sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'add', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Testing sync')
+        git_exec(working_dirpath, 'rm', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Removing testing file for sync')
 
         # Two new commits should have been fetched
         commits = [commit for commit in git.fetch(latest_items=True)]
         self.assertEqual(len(commits), 2)
 
         # Remove 'lzp' branch and check that the number of new commits is 0
-        cmd = ['git', 'branch', '-D', 'lzp']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'branch', '-D', 'lzp')
 
         commits = [commit for commit in git.fetch(latest_items=True)]
         self.assertEqual(len(commits), 0)
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_fetch_latest_items_from_empty_repository(self):
@@ -619,13 +646,13 @@ class TestGitBackend(TestCaseGit):
         """Test whether new commits aren't fetched when no_update flag is set"""
 
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
-        new_file = os.path.join(editable_path, 'newfile')
+        new_file = os.path.join(working_dirpath, 'newfile')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        git = Git(editable_path, new_path)
+        git = Git(working_dirpath, new_path)
         commits = [commit for commit in git.fetch()]
 
         # Count the number of commits before adding some new
@@ -642,42 +669,25 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(len(commits), len(expected))
 
         for x in range(len(commits)):
-            expected_uuid = uuid(editable_path, expected[x][0])
+            expected_uuid = uuid(working_dirpath, expected[x][0])
             commit = commits[x]
             self.assertEqual(commit['data']['commit'], expected[x][0])
-            self.assertEqual(commit['origin'], editable_path)
+            self.assertEqual(commit['origin'], working_dirpath)
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['updated_on'], expected[x][1])
             self.assertEqual(commit['category'], 'commit')
-            self.assertEqual(commit['tag'], editable_path)
+            self.assertEqual(commit['tag'], working_dirpath)
 
         # Create some new commits
-        cmd = ['git', 'checkout', '-b', 'mybranch']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'checkout', '-b', 'mybranch')
 
         with open(new_file, 'w') as f:
             f.write("Testing sync method")
 
-        cmd = ['git', 'add', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Testing sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', 'rm', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Removing testing file for sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'add', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Testing sync')
+        git_exec(working_dirpath, 'rm', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Removing testing file for sync')
 
         # Two new commits are added to the repo but are not fetched
         commits = [commit for commit in git.fetch(no_update=True)]
@@ -687,7 +697,7 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(len(commits), 11)
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_fetch_from_file(self):
@@ -723,12 +733,12 @@ class TestGitBackend(TestCaseGit):
         """Test whether recovery from a commits in first execution works"""
 
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        git = Git(editable_path, new_path)
+        git = Git(working_dirpath, new_path)
         commits = [commit for commit in git.fetch()]
 
         # Count the number of commits before adding some new
@@ -745,7 +755,7 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(len(commits), len(expected))
 
         for x in range(len(commits)):
-            expected_uuid = uuid(editable_path, expected[x][0])
+            expected_uuid = uuid(working_dirpath, expected[x][0])
             commit = commits[x]
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['data']['commit'], expected[x][0])
@@ -759,55 +769,38 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(len(commits_recovery), len(expected_recovery))
 
         for x in range(len(commits_recovery)):
-            expected_uuid = uuid(editable_path, expected_recovery[x][0])
+            expected_uuid = uuid(working_dirpath, expected_recovery[x][0])
             commit = commits_recovery[x]
             self.assertEqual(commit['uuid'], expected_uuid)
             self.assertEqual(commit['data']['commit'], expected_recovery[x][0])
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_fetch_recovery_from_packs(self):
         """Test whether recovery from a commits in a repo with packs works"""
 
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
-        new_file = os.path.join(editable_path, 'newfile')
+        new_file = os.path.join(working_dirpath, 'newfile')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        git = Git(editable_path, new_path)
+        git = Git(working_dirpath, new_path)
         _ = [commit for commit in git.fetch()]
 
         # Create some new commits
-        cmd = ['git', 'checkout', '-b', 'mybranch']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'checkout', '-b', 'mybranch')
 
         with open(new_file, 'w') as f:
             f.write("Testing sync method")
 
-        cmd = ['git', 'add', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Testing sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', 'rm', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Removing testing file for sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'add', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Testing sync')
+        git_exec(working_dirpath, 'rm', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Removing testing file for sync')
 
         # Two new commits should have been fetched
         commits = [commit for commit in git.fetch(latest_items=True)]
@@ -821,7 +814,7 @@ class TestGitBackend(TestCaseGit):
         self.assertEqual(commits_recovery[1]['uuid'], commits[1]['uuid'])
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_git_parser(self):
@@ -920,6 +913,400 @@ class TestGitBackend(TestCaseGit):
         self.assertDictEqual(file, expected_file)
 
 
+class TestGitBackendRemovedCommits(TestCaseGit):
+    """Git backend tests for commits removed from the repository"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+        data_path = os.path.dirname(os.path.abspath(__file__))
+        tar_path = os.path.join(data_path, 'data/git/gittest.tar.gz')
+        subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_path])
+
+        cls.origin_path = os.path.join(cls.tmp_path, 'gittest')
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp_path)
+
+    def setUp(self):
+        super().setUp()
+
+        # The working copy acts as the remote repository
+        self.working_dirpath = os.path.join(self.tmp_path, 'editgit')
+        self.git_path = os.path.join(self.tmp_path, 'newgit')
+
+        shutil.copytree(self.origin_path, self.working_dirpath)
+        self.addCleanup(shutil.rmtree, self.working_dirpath)
+        self.addCleanup(shutil.rmtree, self.git_path, ignore_errors=True)
+
+        # The first time, the repository is cloned and
+        # all its commits are fetched
+        self.git = Git(self.working_dirpath, self.git_path)
+        self.initial_commits = self.fetch_latest_items()
+
+    def fetch_latest_items(self, track_removed=True):
+        """Fetch the latest commits from the working repository"""
+
+        commits = self.git.fetch(latest_items=True,
+                                 track_removed=track_removed)
+        return [commit for commit in commits]
+
+    def amend_new_commit(self):
+        """Create and fetch a commit in a new branch, and amend it later"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        original_commit = create_commit(self.working_dirpath, 'Testing removed commits')
+
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 1)
+        self.assertEqual(commits[0]['data']['commit'], original_commit)
+        self.assertEqual(commits[0]['category'], 'commit')
+
+        git_exec(self.working_dirpath, 'commit', '--amend', '-m', 'Testing removed commits (amended)')
+        amended_commit = git_exec(self.working_dirpath, 'rev-parse', 'HEAD')
+
+        return original_commit, amended_commit
+
+    def test_initial_fetch(self):
+        """Test whether no removed commits are fetched the first time"""
+
+        self.assertEqual(len(self.initial_commits), 9)
+
+        for commit in self.initial_commits:
+            self.assertEqual(commit['category'], 'commit')
+
+        self.assertEqual(self.git.summary.fetched, 9)
+        self.assertEqual(self.git.summary.removed, 0)
+
+    def test_track_removed_on_first_fetch(self):
+        """Test whether it logs that removed commits are not tracked when the repository is cloned"""
+
+        git_path = os.path.join(self.tmp_path, 'firstgit')
+        self.addCleanup(shutil.rmtree, git_path, ignore_errors=True)
+
+        git = Git(self.working_dirpath, git_path)
+
+        with self.assertLogs('perceval.backends.core.git', level='INFO') as cm:
+            commits = [commit for commit in git.fetch(latest_items=True, track_removed=True)]
+
+        self.assertEqual(len(commits), 9)
+
+        expected = ("INFO:perceval.backends.core.git:"
+                    "Removed commits not tracked in '{}' git repository; "
+                    "not available when the repository is cloned for the first time").format(self.working_dirpath)
+        self.assertIn(expected, cm.output)
+
+    def test_removed_commit_item(self):
+        """Test the contents of the items of removed commits"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        removed_commit = create_commit(self.working_dirpath, 'Testing removed commits')
+
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 1)
+        self.assertEqual(commits[0]['data']['commit'], removed_commit)
+        self.assertEqual(commits[0]['category'], 'commit')
+
+        git_exec(self.working_dirpath, 'checkout', 'master')
+        git_exec(self.working_dirpath, 'branch', '-D', 'mybranch')
+
+        before = datetime_utcnow().timestamp()
+        commits = self.fetch_latest_items()
+        after = datetime_utcnow().timestamp()
+
+        self.assertEqual(len(commits), 1)
+
+        commit = commits[0]
+        self.assertEqual(commit['backend_name'], 'Git')
+        self.assertEqual(commit['origin'], self.working_dirpath)
+        self.assertEqual(commit['uuid'], uuid(self.working_dirpath, removed_commit))
+        self.assertEqual(commit['category'], 'removed_commit')
+        self.assertEqual(commit['tag'], self.working_dirpath)
+        self.assertIsNone(commit['offset'])
+        self.assertDictEqual(commit['data'], {'commit': removed_commit})
+        self.assertDictEqual(commit['search_fields'], {'item_id': removed_commit})
+        self.assertGreaterEqual(commit['updated_on'], before)
+        self.assertLessEqual(commit['updated_on'], after)
+
+    def test_amended_commit(self):
+        """Test whether amended commits are fetched as removed before the new ones"""
+
+        original_commit, amended_commit = self.amend_new_commit()
+
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 2)
+
+        commit = commits[0]
+        self.assertEqual(commit['data']['commit'], original_commit)
+        self.assertEqual(commit['category'], 'removed_commit')
+
+        commit = commits[1]
+        self.assertEqual(commit['data']['commit'], amended_commit)
+        self.assertEqual(commit['category'], 'commit')
+        self.assertEqual(commit['offset'], amended_commit)
+
+    def test_summary(self):
+        """Test whether removed commits are not counted as fetched items"""
+
+        original_commit, amended_commit = self.amend_new_commit()
+
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 2)
+        self.assertEqual(commits[0]['data']['commit'], original_commit)
+        self.assertEqual(commits[0]['category'], 'removed_commit')
+        self.assertEqual(commits[1]['data']['commit'], amended_commit)
+        self.assertEqual(commits[1]['category'], 'commit')
+
+        summary = self.git.summary
+        self.assertEqual(summary.fetched, 1)
+        self.assertEqual(summary.removed, 1)
+        self.assertEqual(summary.total, 2)
+        self.assertEqual(summary.last_uuid, uuid(self.working_dirpath, amended_commit))
+        self.assertEqual(summary.last_offset, amended_commit)
+
+    def test_removed_commits_not_repeated(self):
+        """Test whether removed commits are fetched only once"""
+
+        original_commit, amended_commit = self.amend_new_commit()
+
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 2)
+        self.assertEqual(commits[0]['data']['commit'], original_commit)
+        self.assertEqual(commits[0]['category'], 'removed_commit')
+        self.assertEqual(commits[1]['data']['commit'], amended_commit)
+        self.assertEqual(commits[1]['category'], 'commit')
+
+        commits = self.fetch_latest_items()
+        self.assertListEqual(commits, [])
+        self.assertEqual(self.git.summary.removed, 0)
+
+    def test_deleted_branch(self):
+        """Test whether the commits of a deleted branch are removed"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        first_commit = create_commit(self.working_dirpath, 'First commit')
+        second_commit = create_commit(self.working_dirpath, 'Second commit')
+
+        # New commits can come in any order
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 2)
+
+        hashes = [commit['data']['commit'] for commit in commits]
+        self.assertCountEqual(hashes, [first_commit, second_commit])
+
+        for commit in commits:
+            self.assertEqual(commit['category'], 'commit')
+
+        git_exec(self.working_dirpath, 'checkout', 'master')
+        git_exec(self.working_dirpath, 'branch', '-D', 'mybranch')
+
+        # Removed commits are sorted from the oldest to the newest
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 2)
+        self.assertEqual(commits[0]['data']['commit'], first_commit)
+        self.assertEqual(commits[0]['category'], 'removed_commit')
+        self.assertEqual(commits[1]['data']['commit'], second_commit)
+        self.assertEqual(commits[1]['category'], 'removed_commit')
+
+    def test_deleted_merged_branch(self):
+        """Test whether no commits are removed when a merged branch is deleted"""
+
+        git_exec(self.working_dirpath, 'branch', '-D', 'lzp')
+
+        commits = self.fetch_latest_items()
+        self.assertListEqual(commits, [])
+
+    def test_rewound_branch(self):
+        """Test whether commits are removed when a branch is rewound"""
+
+        # No new objects are fetched. The merge commit and the
+        # commit from 'lzp' are removed because that branch
+        # is also deleted.
+        git_exec(self.working_dirpath, 'branch', '-D', 'lzp')
+        git_exec(self.working_dirpath, 'reset', '--hard', 'HEAD~1')
+
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 2)
+        self.assertEqual(commits[0]['data']['commit'], '51a3b654f252210572297f47597b31527c475fb8')
+        self.assertEqual(commits[0]['category'], 'removed_commit')
+        self.assertEqual(commits[1]['data']['commit'], '456a68ee1407a77f3e804a30dff245bb6c6b872f')
+        self.assertEqual(commits[1]['category'], 'removed_commit')
+
+    def test_partially_rewritten_branch(self):
+        """Test whether only the rewritten commits of a branch are removed"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        first_commit = create_commit(self.working_dirpath, 'First commit')
+        second_commit = create_commit(self.working_dirpath, 'Second commit')
+        third_commit = create_commit(self.working_dirpath, 'Third commit')
+
+        # New commits can come in any order
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 3)
+
+        hashes = [commit['data']['commit'] for commit in commits]
+        self.assertCountEqual(hashes, [first_commit, second_commit, third_commit])
+
+        for commit in commits:
+            self.assertEqual(commit['category'], 'commit')
+
+        # Rewrite the history after the first commit. The second
+        # and the third commits are replaced by two new ones, while
+        # the first commit is kept.
+        git_exec(self.working_dirpath, 'reset', '--hard', first_commit)
+        fourth_commit = create_commit(self.working_dirpath, 'Fourth commit')
+        fifth_commit = create_commit(self.working_dirpath, 'Fifth commit')
+
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 4)
+
+        # Removed commits come first, from the oldest to the newest
+        self.assertEqual(commits[0]['data']['commit'], second_commit)
+        self.assertEqual(commits[0]['category'], 'removed_commit')
+        self.assertEqual(commits[1]['data']['commit'], third_commit)
+        self.assertEqual(commits[1]['category'], 'removed_commit')
+
+        # New commits can come in any order
+        hashes = [commit['data']['commit'] for commit in commits[2:]]
+        self.assertCountEqual(hashes, [fourth_commit, fifth_commit])
+
+        for commit in commits[2:]:
+            self.assertEqual(commit['category'], 'commit')
+
+        self.assertEqual(self.git.summary.fetched, 2)
+        self.assertEqual(self.git.summary.removed, 2)
+
+    def test_removed_commits_not_tracked(self):
+        """Test whether removed commits are not fetched when they are not tracked"""
+
+        _, amended_commit = self.amend_new_commit()
+
+        commits = self.fetch_latest_items(track_removed=False)
+        self.assertEqual(len(commits), 1)
+        self.assertEqual(commits[0]['data']['commit'], amended_commit)
+        self.assertEqual(commits[0]['category'], 'commit')
+        self.assertEqual(self.git.summary.removed, 0)
+
+    def test_removed_commits_not_tracked_before(self):
+        """Test whether commits removed during a sync without tracking are not returned later"""
+
+        _, amended_commit = self.amend_new_commit()
+
+        # The original commit is removed in this sync but
+        # removed commits are not tracked
+        commits = self.fetch_latest_items(track_removed=False)
+        self.assertEqual(len(commits), 1)
+        self.assertEqual(commits[0]['data']['commit'], amended_commit)
+        self.assertEqual(commits[0]['category'], 'commit')
+
+        # Removed commits are only the ones removed in the current
+        # sync, so the original commit is not returned now
+        commits = self.fetch_latest_items()
+        self.assertListEqual(commits, [])
+        self.assertEqual(self.git.summary.fetched, 0)
+        self.assertEqual(self.git.summary.removed, 0)
+
+    def test_only_removed_commits(self):
+        """Test the summary when only removed commits are fetched"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        first_commit = create_commit(self.working_dirpath, 'First commit')
+        second_commit = create_commit(self.working_dirpath, 'Second commit')
+
+        # New commits can come in any order
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 2)
+
+        hashes = [commit['data']['commit'] for commit in commits]
+        self.assertCountEqual(hashes, [first_commit, second_commit])
+
+        for commit in commits:
+            self.assertEqual(commit['category'], 'commit')
+
+        # Remove the last commit without adding new ones
+        git_exec(self.working_dirpath, 'reset', '--hard', first_commit)
+
+        commits = self.fetch_latest_items()
+        self.assertEqual(len(commits), 1)
+        self.assertEqual(commits[0]['data']['commit'], second_commit)
+        self.assertEqual(commits[0]['category'], 'removed_commit')
+
+        # Removed commits only update the removed counter and the total
+        summary = self.git.summary
+        self.assertEqual(summary.fetched, 0)
+        self.assertEqual(summary.removed, 1)
+        self.assertEqual(summary.total, 1)
+        self.assertIsNone(summary.last_uuid)
+        self.assertIsNone(summary.min_updated_on)
+        self.assertIsNone(summary.max_updated_on)
+        self.assertIsNone(summary.last_updated_on)
+        self.assertIsNone(summary.min_offset)
+        self.assertIsNone(summary.max_offset)
+        self.assertIsNone(summary.last_offset)
+
+    def test_track_removed_without_latest_items(self):
+        """Test whether removed commits are ignored when latest items are not fetched"""
+
+        _, amended_commit = self.amend_new_commit()
+
+        with self.assertLogs('perceval.backends.core.git', level='INFO') as cm:
+            commits = [commit for commit in self.git.fetch(track_removed=True)]
+
+        self.assertEqual(len(commits), 10)
+        self.assertEqual(commits[-1]['data']['commit'], amended_commit)
+
+        for commit in commits:
+            self.assertEqual(commit['category'], 'commit')
+
+        self.assertEqual(self.git.summary.removed, 0)
+
+        expected = ("INFO:perceval.backends.core.git:"
+                    "Removed commits not tracked in '{}' git repository; "
+                    "only available when fetching the latest items").format(self.working_dirpath)
+        self.assertIn(expected, cm.output)
+
+    def test_track_removed_on_recovery(self):
+        """Test whether removed commits are ignored when recovering from a commit"""
+
+        from_commit = 'c6ba8f7a1058db3e6b4bc6f1090e932b107605fb'
+
+        with self.assertLogs('perceval.backends.core.git', level='INFO') as cm:
+            commits = [commit for commit in self.git.fetch(recovery_commit=from_commit,
+                                                           track_removed=True)]
+
+        self.assertEqual(len(commits), 5)
+        self.assertEqual(commits[0]['data']['commit'], from_commit)
+
+        for commit in commits:
+            self.assertEqual(commit['category'], 'commit')
+
+        expected = ("INFO:perceval.backends.core.git:"
+                    "Removed commits not tracked in '{}' git repository; "
+                    "not available when recovering from a commit").format(self.working_dirpath)
+        self.assertIn(expected, cm.output)
+
+    def test_track_removed_from_log_file(self):
+        """Test whether removed commits are ignored when commits are fetched from a log file"""
+
+        log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/git/git_log.txt')
+        git = Git('http://example.com.git', log_path)
+
+        with self.assertLogs('perceval.backends.core.git', level='INFO') as cm:
+            commits = [commit for commit in git.fetch(track_removed=True)]
+
+        self.assertEqual(len(commits), 10)
+
+        for commit in commits:
+            self.assertEqual(commit['category'], 'commit')
+
+        expected = ("INFO:perceval.backends.core.git:"
+                    "Removed commits not tracked in 'http://example.com.git' git repository; "
+                    "not available when fetching from a log file")
+        self.assertIn(expected, cm.output)
+
+
 class TestGitCommand(TestCaseGit):
     """GitCommand tests"""
 
@@ -996,6 +1383,7 @@ class TestGitCommand(TestCaseGit):
         self.assertEqual(parsed_args.to_date, DEFAULT_LAST_DATETIME)
         self.assertEqual(parsed_args.branches, None)
         self.assertTrue(parsed_args.no_update)
+        self.assertFalse(parsed_args.track_removed)
         self.assertTrue(parsed_args.ssl_verify)
 
         args = ['http://example.com/',
@@ -1029,6 +1417,17 @@ class TestGitCommand(TestCaseGit):
         self.assertFalse(parsed_args.no_update)
         self.assertFalse(parsed_args.latest_items)
         self.assertTrue(parsed_args.ssl_verify)
+
+        args = ['http://example.com/',
+                '--git-path', '/tmp/gitpath',
+                '--latest-items',
+                '--track-removed']
+
+        parsed_args = parser.parse(*args)
+        self.assertEqual(parsed_args.git_path, '/tmp/gitpath')
+        self.assertEqual(parsed_args.uri, 'http://example.com/')
+        self.assertTrue(parsed_args.latest_items)
+        self.assertTrue(parsed_args.track_removed)
 
     def test_mutual_exclusive_update(self):
         """Test whether an exception is thrown when no-update and latest-items flags are set"""
@@ -1648,22 +2047,15 @@ class TestEmptyRepositoryError(TestCaseGit):
 def count_commits(gitpath):
     """Get the number of commits counting the entries on the log"""
 
-    cmd = ['git', 'log', '--oneline', '--all']
-    gitlog = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                     cwd=gitpath,
-                                     env={'LANG': 'C', 'PAGER': ''})
-    commits = gitlog.strip(b'\n').split(b'\n')
+    gitlog = git_exec(gitpath, 'log', '--oneline', '--all')
+    commits = gitlog.split('\n')
     return len(commits)
 
 
 def discover_refs(gitpath):
     """Get the references of local repository"""
 
-    cmd = ['git', 'show-ref']
-    gitrefs = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                      cwd=gitpath,
-                                      env={'LANG': 'C', 'PAGER': ''})
-    outs = gitrefs.decode('utf-8', errors='surrogateescape').rstrip()
+    outs = git_exec(gitpath, 'show-ref')
 
     refs = {}
 
@@ -1699,15 +2091,12 @@ class TestGitRepository(TestCaseGit):
             ('gitalternates', cls.git_alternates_path)
         ]
 
-        fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
-
         for repo_name, repo_path in repos:
             tar_path = os.path.join(data_path, repo_name + '.tar.gz')
             subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_repo_path])
 
             origin_path = os.path.join(cls.tmp_repo_path, repo_name)
-            subprocess.check_call(['git', 'clone', '-q', '--bare', origin_path, repo_path],
-                                  stderr=fdout)
+            git_exec(cls.tmp_path, 'clone', '-q', '--bare', origin_path, repo_path)
 
     @classmethod
     def tearDownClass(cls):
@@ -1917,11 +2306,9 @@ class TestGitRepository(TestCaseGit):
         self.assertEqual(refs['refs/heads/master'],
                          '456a68ee1407a77f3e804a30dff245bb6c6b872f')
 
-        cmd = ['git', 'update-ref',
-               'refs/heads/master',
-               '589bb080f059834829a2a5955bebfd7c2baa110a']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=new_path, env={'LANG': 'C'})
+        git_exec(new_path, 'update-ref',
+                 'refs/heads/master',
+                 '589bb080f059834829a2a5955bebfd7c2baa110a')
 
         # Check the new reference of 'refs/heads/master'
         refs = discover_refs(new_path)
@@ -1951,46 +2338,29 @@ class TestGitRepository(TestCaseGit):
         """Test if the repository is synchonized with its remote repo"""
 
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
-        new_file = os.path.join(editable_path, 'newfile')
+        new_file = os.path.join(working_dirpath, 'newfile')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        repo = GitRepository.clone(editable_path, new_path)
+        repo = GitRepository.clone(working_dirpath, new_path)
         repo.sync()
 
         # Count the number of commits before adding some new
         ncommits = count_commits(new_path)
         self.assertEqual(ncommits, 9)
 
-        cmd = ['git', 'checkout', '-b', 'mybranch']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'checkout', '-b', 'mybranch')
 
         # Create a new file and commit it to the repository
         with open(new_file, 'w') as f:
             f.write("Testing sync method")
 
-        cmd = ['git', 'add', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Testing sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', 'rm', new_file]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
-
-        cmd = ['git', '-c', 'user.name="mock"',
-               '-c', 'user.email="mock@example.com"',
-               'commit', '-m', 'Removing testing file for sync']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'add', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Testing sync')
+        git_exec(working_dirpath, 'rm', new_file)
+        git_exec(working_dirpath, 'commit', '-m', 'Removing testing file for sync')
 
         # Count the number of commits and refs after adding
         # the branch and the file
@@ -2009,9 +2379,7 @@ class TestGitRepository(TestCaseGit):
         self.assertListEqual(refs, expected)
 
         # Remove 'lzp' branch and check the number of commits and refs
-        cmd = ['git', 'branch', '-D', 'lzp']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'branch', '-D', 'lzp')
 
         new_commits = repo.sync()
         ncommits = count_commits(new_path)
@@ -2027,24 +2395,22 @@ class TestGitRepository(TestCaseGit):
         self.assertListEqual(refs, expected)
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
         shutil.rmtree(new_path)
 
     def test_tag_removal_sync(self):
         """Test sync process for tag removal"""
         origin_path = os.path.join(self.tmp_repo_path, 'gittest')
-        editable_path = os.path.join(self.tmp_path, 'editgit')
+        working_dirpath = os.path.join(self.tmp_path, 'editgit')
         new_path = os.path.join(self.tmp_path, 'newgit')
 
-        shutil.copytree(origin_path, editable_path)
+        shutil.copytree(origin_path, working_dirpath)
 
-        repo = GitRepository.clone(editable_path, new_path)
+        repo = GitRepository.clone(working_dirpath, new_path)
         repo.sync()
 
         # Add a tag 'v.0.0-lw' to the refs and check that it exists
-        cmd = ['git', 'tag', 'v.0.0-lw']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'tag', 'v.0.0-lw')
 
         new_commits = repo.sync()
         self.assertEqual(len(new_commits), 0)
@@ -2054,9 +2420,7 @@ class TestGitRepository(TestCaseGit):
         self.assertIn('refs/tags/v.0.0-lw', refs)
 
         # Delete the tag 'v.0.0-lw' and check that it has been deleted from refs
-        cmd = ['git', 'tag', '-d', 'v.0.0-lw']
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=editable_path, env={'LANG': 'C'})
+        git_exec(working_dirpath, 'tag', '-d', 'v.0.0-lw')
 
         new_commits = repo.sync()
         self.assertEqual(len(new_commits), 0)
@@ -2067,7 +2431,19 @@ class TestGitRepository(TestCaseGit):
         self.assertIn('refs/heads/master', refs)
 
         # Cleanup
-        shutil.rmtree(editable_path)
+        shutil.rmtree(working_dirpath)
+        shutil.rmtree(new_path)
+
+    def test_sync_track_removed_from_repos_without_refs(self):
+        """Test if no removed commits are found on repositories with no refs"""
+
+        new_path = os.path.join(self.tmp_path, 'norefs')
+
+        repo = GitRepository.clone(self.git_no_refs_path, new_path)
+        new_commits, removed_commits = repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [])
+        self.assertListEqual(removed_commits, [])
+
         shutil.rmtree(new_path)
 
     def test_sync_from_empty_repos(self):
@@ -2287,23 +2663,14 @@ class TestGitRepository(TestCaseGit):
         repo = GitRepository.clone(self.git_path, new_path)
 
         # Create a loose object in the repository
-        process = subprocess.Popen(['git', 'hash-object', '-w', '--stdin'],
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.DEVNULL,
-                                   cwd=new_path,
-                                   env={'LANG': 'C'})
-        process.communicate(input=b"Data test")
+        git_exec(new_path, 'hash-object', '-w', '--stdin',
+                 input_data=b"Data test")
 
         self.assertTrue(repo.has_loose_objects())
 
         # Group loose objects in a packfile and remove unreachable objects
-        subprocess.run(['git', 'gc'],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                       cwd=new_path, check=True)
-        subprocess.run(['git', 'prune'],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                       cwd=new_path, check=True)
+        git_exec(new_path, 'gc')
+        git_exec(new_path, 'prune')
 
         self.assertFalse(repo.has_loose_objects())
 
@@ -2367,6 +2734,214 @@ class TestGitRepository(TestCaseGit):
             _ = [line for line in gitshow]
 
         shutil.rmtree(new_path)
+
+
+class TestGitRepositoryRemovedCommits(TestCaseGit):
+    """GitRepository tests for commits removed from the remote repository"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp_path = tempfile.mkdtemp(prefix='perceval_')
+
+        data_path = os.path.dirname(os.path.abspath(__file__))
+        tar_path = os.path.join(data_path, 'data/git/gittest.tar.gz')
+        subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_path])
+
+        cls.origin_path = os.path.join(cls.tmp_path, 'gittest')
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp_path)
+
+    def setUp(self):
+        super().setUp()
+
+        # The working copy acts as the remote repository
+        self.working_dirpath = os.path.join(self.tmp_path, 'editgit')
+        self.git_path = os.path.join(self.tmp_path, 'newgit')
+
+        shutil.copytree(self.origin_path, self.working_dirpath)
+        self.addCleanup(shutil.rmtree, self.working_dirpath)
+        self.addCleanup(shutil.rmtree, self.git_path, ignore_errors=True)
+
+        self.repo = GitRepository.clone(self.working_dirpath, self.git_path)
+
+    def test_sync_no_changes(self):
+        """Test whether no commits are removed when the remote did not change"""
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [])
+        self.assertListEqual(removed_commits, [])
+
+    def test_sync_amended_commit(self):
+        """Test whether amended commits are removed but kept in the repository"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        original_commit = create_commit(self.working_dirpath, 'Testing sync')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [original_commit])
+        self.assertListEqual(removed_commits, [])
+
+        git_exec(self.working_dirpath, 'commit', '--amend', '-m', 'Testing sync (amended)')
+        amended_commit = git_exec(self.working_dirpath, 'rev-parse', 'HEAD')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [amended_commit])
+        self.assertListEqual(removed_commits, [original_commit])
+
+        # The object of the removed commit is still in the repository
+        object_type = git_exec(self.git_path, 'cat-file', '-t', original_commit)
+        self.assertEqual(object_type, 'commit')
+
+    def test_sync_removed_commits_not_repeated(self):
+        """Test whether removed commits are returned only once"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        removed_commit = create_commit(self.working_dirpath, 'Testing sync')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [removed_commit])
+        self.assertListEqual(removed_commits, [])
+
+        git_exec(self.working_dirpath, 'checkout', 'master')
+        git_exec(self.working_dirpath, 'branch', '-D', 'mybranch')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [])
+        self.assertListEqual(removed_commits, [removed_commit])
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [])
+        self.assertListEqual(removed_commits, [])
+
+    def test_sync_deleted_branch(self):
+        """Test whether the commits of a deleted branch are removed"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        first_commit = create_commit(self.working_dirpath, 'First commit')
+        second_commit = create_commit(self.working_dirpath, 'Second commit')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertCountEqual(new_commits, [first_commit, second_commit])
+        self.assertListEqual(removed_commits, [])
+
+        git_exec(self.working_dirpath, 'checkout', 'master')
+        git_exec(self.working_dirpath, 'branch', '-D', 'mybranch')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [])
+        self.assertListEqual(removed_commits, [first_commit, second_commit])
+
+        refs = [ref for ref in discover_refs(self.git_path).keys()]
+        refs.sort()
+        self.assertListEqual(refs, ['refs/heads/lzp', 'refs/heads/master'])
+
+    def test_sync_deleted_tag(self):
+        """Test whether commits only reachable from a tag are removed when the tag is deleted"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'tagged')
+        tagged_commit = create_commit(self.working_dirpath, 'Testing tags')
+        git_exec(self.working_dirpath, 'tag', '-a', 'v1.0', '-m', 'Version 1.0')
+        git_exec(self.working_dirpath, 'checkout', 'master')
+        git_exec(self.working_dirpath, 'branch', '-D', 'tagged')
+
+        # The commit is still reachable from the tag
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [tagged_commit])
+        self.assertListEqual(removed_commits, [])
+
+        git_exec(self.working_dirpath, 'tag', '-d', 'v1.0')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [])
+        self.assertListEqual(removed_commits, [tagged_commit])
+
+    def test_sync_partially_rewritten_branch(self):
+        """Test whether only the rewritten commits of a branch are removed"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        first_commit = create_commit(self.working_dirpath, 'First commit')
+        second_commit = create_commit(self.working_dirpath, 'Second commit')
+        third_commit = create_commit(self.working_dirpath, 'Third commit')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertCountEqual(new_commits, [first_commit, second_commit, third_commit])
+        self.assertListEqual(removed_commits, [])
+
+        # Rewrite the history after the first commit. The second
+        # and the third commits are replaced by two new ones, while
+        # the first commit is kept.
+        git_exec(self.working_dirpath, 'reset', '--hard', first_commit)
+        fourth_commit = create_commit(self.working_dirpath, 'Fourth commit')
+        fifth_commit = create_commit(self.working_dirpath, 'Fifth commit')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertCountEqual(new_commits, [fourth_commit, fifth_commit])
+        self.assertListEqual(removed_commits, [second_commit, third_commit])
+
+    def test_sync_commits_reachable_from_alternates(self):
+        """Test whether commits reachable from refs of alternate repositories are not removed"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        branch_commit = create_commit(self.working_dirpath, 'Testing alternates')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [branch_commit])
+        self.assertListEqual(removed_commits, [])
+
+        # Borrow objects from another repository where
+        # the commit is still reachable from a branch
+        alternate_path = os.path.join(self.tmp_path, 'alternategit')
+        git_exec(self.tmp_path, 'clone', '-q', '--bare', self.working_dirpath, alternate_path)
+        self.addCleanup(shutil.rmtree, alternate_path)
+
+        alternates_path = os.path.join(self.git_path, 'objects/info/alternates')
+        with open(alternates_path, 'w') as f:
+            f.write(os.path.join(alternate_path, 'objects') + '\n')
+
+        git_exec(self.working_dirpath, 'checkout', 'master')
+        git_exec(self.working_dirpath, 'branch', '-D', 'mybranch')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [])
+        self.assertListEqual(removed_commits, [])
+
+    def test_sync_removed_commits_not_tracked_before(self):
+        """Test whether commits removed during a sync without tracking are not returned later"""
+
+        git_exec(self.working_dirpath, 'checkout', '-b', 'mybranch')
+        original_commit = create_commit(self.working_dirpath, 'Testing sync')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [original_commit])
+        self.assertListEqual(removed_commits, [])
+
+        git_exec(self.working_dirpath, 'commit', '--amend', '-m', 'Testing sync (amended)')
+        amended_commit = git_exec(self.working_dirpath, 'rev-parse', 'HEAD')
+
+        # The original commit is removed in this sync but
+        # removed commits are not tracked
+        new_commits = self.repo.sync()
+        self.assertListEqual(new_commits, [amended_commit])
+
+        # Only the refs changed in the current sync are compared,
+        # so the original commit is not returned now
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [])
+        self.assertListEqual(removed_commits, [])
+
+    def test_sync_rewound_branch(self):
+        """Test whether commits are removed when a branch is rewound"""
+
+        # No new objects are fetched. The merge commit is removed
+        # but not the commit from 'lzp' because that branch still
+        # exists.
+        git_exec(self.working_dirpath, 'reset', '--hard', 'HEAD~1')
+
+        new_commits, removed_commits = self.repo.sync(track_removed=True)
+        self.assertListEqual(new_commits, [])
+        self.assertListEqual(removed_commits, ['456a68ee1407a77f3e804a30dff245bb6c6b872f'])
 
 
 if __name__ == "__main__":

@@ -74,6 +74,7 @@ SUMMARY_LOG_REPORT = """INFO:perceval.backend:Summary of results
 \t   Total items: \t5
 \tItems produced: \t5
 \t Items skipped: \t0
+\t Items removed: \t0
 
 \tLast item UUID: \t6130c145435d661565bd7d402be403bea7cfb6b5
 \tLast item date: \t2016-01-01 00:00:04+00:00
@@ -129,6 +130,19 @@ class MockedBackend(Backend):
     @staticmethod
     def metadata_category(item):
         return item['category']
+
+
+class MockedBackendRemovedItems(MockedBackend):
+    """Mocked backend for testing items removed from the repository"""
+
+    REMOVED_CATEGORY = "removed_mock_item"
+    REMOVED_CATEGORIES = [REMOVED_CATEGORY]
+
+    def fetch_items(self, category, **kwargs):
+        for x in range(MockedBackend.ITEMS):
+            # Even items were removed from the repository
+            item_category = self.REMOVED_CATEGORY if x % 2 == 0 else category
+            yield {'item': x, 'category': item_category}
 
 
 class MockedBackendBlacklist(MockedBackend):
@@ -667,6 +681,29 @@ class TestBackend(unittest.TestCase):
         self.assertEqual(b.summary.last_uuid, '82475202a5efc42c75add425c47ac032340f4f3d')
         self.assertEqual(b.summary.skipped, 0)
         self.assertEqual(b.summary.total, 5)
+
+    def test_summary_removed_items(self):
+        """Test whether items of removed categories are only counted as removed in the summary"""
+
+        b = MockedBackendRemovedItems('test')
+
+        items = [item for item in b.fetch()]
+        self.assertEqual(len(items), 5)
+
+        categories = [item['category'] for item in items]
+        expected = ['removed_mock_item', 'mock_item', 'removed_mock_item',
+                    'mock_item', 'removed_mock_item']
+        self.assertListEqual(categories, expected)
+
+        # Only items 1 and 3 update the summary
+        self.assertEqual(b.summary.fetched, 2)
+        self.assertEqual(b.summary.removed, 3)
+        self.assertEqual(b.summary.skipped, 0)
+        self.assertEqual(b.summary.total, 5)
+        self.assertEqual(b.summary.min_updated_on.isoformat(), '2016-01-01T00:00:01+00:00')
+        self.assertEqual(b.summary.max_updated_on.isoformat(), '2016-01-01T00:00:03+00:00')
+        self.assertEqual(b.summary.last_updated_on.isoformat(), '2016-01-01T00:00:03+00:00')
+        self.assertEqual(b.summary.last_uuid, uuid('test', '3'))
 
     def test_init_archive(self):
         """Test whether the archive is properly initialized when executing the fetch method"""
@@ -2227,6 +2264,7 @@ class TestSummary(unittest.TestCase):
 
         self.assertEqual(summary.fetched, 0)
         self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.removed, 0)
         self.assertEqual(summary.total, 0)
         self.assertIsNone(summary.min_updated_on)
         self.assertIsNone(summary.max_updated_on)
@@ -2357,6 +2395,32 @@ class TestSummary(unittest.TestCase):
         self.assertEqual(summary.min_offset, 0)
         self.assertEqual(summary.max_offset, 2)
         self.assertEqual(summary.last_offset, 1)
+
+    def test_update_removed(self):
+        """Test whether removed items only update the removed counter and the total"""
+
+        item = {
+            "updated_on": 1483228800.0,
+            "uuid": "0fa16dc4edab9130a14914a8d797f634d13b4ff4",
+            "offset": 0
+        }
+
+        summary = Summary()
+        summary.update(item)
+        summary.update_removed()
+        summary.update_removed()
+
+        self.assertEqual(summary.fetched, 1)
+        self.assertEqual(summary.skipped, 0)
+        self.assertEqual(summary.removed, 2)
+        self.assertEqual(summary.total, 3)
+        self.assertEqual(summary.min_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.max_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.last_updated_on.timestamp(), 1483228800.0)
+        self.assertEqual(summary.last_uuid, "0fa16dc4edab9130a14914a8d797f634d13b4ff4")
+        self.assertEqual(summary.min_offset, 0)
+        self.assertEqual(summary.max_offset, 0)
+        self.assertEqual(summary.last_offset, 0)
 
 
 class TestMetadata(unittest.TestCase):
